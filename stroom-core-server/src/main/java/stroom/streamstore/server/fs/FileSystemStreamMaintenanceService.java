@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server.fs;
@@ -28,7 +29,7 @@ import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.shared.FeedService;
+import stroom.feed.server.FeedService;
 import stroom.node.shared.Volume;
 import stroom.security.Secured;
 import stroom.streamstore.server.FileArrayList;
@@ -36,12 +37,15 @@ import stroom.streamstore.server.FindStreamVolumeCriteria;
 import stroom.streamstore.server.ScanVolumePathResult;
 import stroom.streamstore.server.StreamMaintenanceService;
 import stroom.streamstore.server.StreamRange;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamstore.shared.StreamVolume;
+import stroom.util.io.FileUtil;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * API used by the tasks to interface to the stream store under the bonnet.
@@ -144,7 +149,7 @@ public class FileSystemStreamMaintenanceService
         boolean allOk = true;
 
         for (final StreamVolume streamVolume : toDelete) {
-            final File rootFile = FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(),
+            final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(),
                     streamVolume.getStream(), streamTypeService.load(streamVolume.getStream().getStreamType()));
             allOk &= deleteAllFiles(rootFile);
         }
@@ -152,18 +157,18 @@ public class FileSystemStreamMaintenanceService
         return allOk;
     }
 
-    private boolean deleteAllFiles(final File file) {
+    private boolean deleteAllFiles(final Path file) {
         boolean allOk = true;
-        if (file.isFile()) {
-            if (!file.delete()) {
-                LOGGER.error("Failed to delete file {}", file.getAbsolutePath());
+        if (Files.isRegularFile(file)) {
+            if (!FileUtil.delete(file)) {
+                LOGGER.error("Failed to delete file {}", FileUtil.getCanonicalPath(file));
                 allOk = false;
             }
-            final List<File> kids = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(file);
+            final List<Path> kids = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(file);
 
-            for (final File kid : kids) {
-                if (!kid.delete()) {
-                    LOGGER.error("Failed to delete file {}", kid.getAbsolutePath());
+            for (final Path kid : kids) {
+                if (!FileUtil.delete(kid)) {
+                    LOGGER.error("Failed to delete file {}", FileUtil.getCanonicalPath(kid));
                     allOk = false;
                 }
             }
@@ -185,9 +190,9 @@ public class FileSystemStreamMaintenanceService
         final List<StreamVolume> volumeMatches = entityManager.executeQueryResultList(sql);
 
         for (final StreamVolume volumeMatch : volumeMatches) {
-            final File rootFile = FileSystemStreamTypeUtil.createRootStreamFile(volumeMatch.getVolume(),
+            final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(volumeMatch.getVolume(),
                     volumeMatch.getStream(), streamTypeService.load(volumeMatch.getStream().getStreamType()));
-            if (rootFile.isFile()) {
+            if (Files.isRegularFile(rootFile)) {
                 results.add(rootFile);
                 results.addAll(FileSystemStreamTypeUtil.findAllDescendantStreamFileList(rootFile));
             }
@@ -206,25 +211,25 @@ public class FileSystemStreamMaintenanceService
 
         final Map<String, List<String>> filesKeyedByBaseName = new HashMap<>();
         final Map<String, StreamVolume> streamsKeyedByBaseName = new HashMap<>();
-        final File directory;
+        final Path directory;
 
         if (StringUtils.hasText(repoPath)) {
-            directory = new File(FileSystemUtil.createFileTypeRoot(volume), repoPath);
+            directory = FileSystemUtil.createFileTypeRoot(volume).resolve(repoPath);
         } else {
             directory = FileSystemUtil.createFileTypeRoot(volume);
         }
 
-        if (!directory.isDirectory()) {
+        if (!Files.isDirectory(directory)) {
             LOGGER.debug("scanDirectory() - {} - Skipping as root is not a directory !!", directory);
             return result;
         }
         // Get the list of kids
-        final String[] kids = directory.list();
+        final List<String> kids = FileUtil.list(directory).stream().map(p -> p.getFileName().toString()).collect(Collectors.toList());
 
-        LOGGER.debug("scanDirectory() - {}", directory.getAbsolutePath());
+        LOGGER.debug("scanDirectory() - {}", FileUtil.getCanonicalPath(directory));
 
         if (kids != null) {
-            result.setFileCount(kids.length);
+            result.setFileCount(kids.size());
         }
 
         // Here we check the file system for files before querying the database.
@@ -269,21 +274,21 @@ public class FileSystemStreamMaintenanceService
     }
 
     private void buildFilesKeyedByBaseName(final ScanVolumePathResult result, final String repoPath,
-                                           final Map<String, List<String>> filesKeyedByBaseName, final File directory, final String[] kids) {
+                                           final Map<String, List<String>> filesKeyedByBaseName, final Path directory, final List<String> kids) {
         if (kids != null) {
-            for (int i = 0; i < kids.length; i++) {
-                final File kidFile = new File(directory, kids[i]);
+            for (final String kid : kids) {
+                final Path kidFile = directory.resolve(kid);
 
-                if (kidFile.isDirectory()) {
+                if (Files.isDirectory(kidFile)) {
                     if (StringUtils.hasText(repoPath)) {
-                        result.addChildDirectory(repoPath + FileSystemUtil.SEPERATOR_CHAR + kids[i]);
+                        result.addChildDirectory(repoPath + FileSystemUtil.SEPERATOR_CHAR + kid);
                     } else {
-                        result.addChildDirectory(kids[i]);
+                        result.addChildDirectory(kid);
                     }
 
                 } else {
                     // Add to our list
-                    final String fileName = kids[i];
+                    final String fileName = kid;
                     String baseName = fileName;
                     final int baseNameSplit = fileName.indexOf(".");
                     if (baseNameSplit != -1) {
@@ -304,38 +309,39 @@ public class FileSystemStreamMaintenanceService
         }
     }
 
-    private void tryDelete(final ScanVolumePathResult result, final boolean doDeleete, final File deleteFile,
+    private void tryDelete(final ScanVolumePathResult result, final boolean doDeleete, final Path deleteFile,
                            final long oldFileTime) {
         try {
-            final long lastModified = deleteFile.lastModified();
+            final long lastModified = Files.getLastModifiedTime(deleteFile).toMillis();
 
             if (lastModified < oldFileTime) {
                 if (doDeleete) {
-                    if (deleteFile.delete()) {
-                        LOGGER.debug("tryDelete() - Deleted file {}", deleteFile.getAbsolutePath());
-                    } else {
-                        LOGGER.error("tryDelete() - Failed to delete file {}", deleteFile.getAbsolutePath());
+                    try {
+                        Files.delete(deleteFile);
+                        LOGGER.debug("tryDelete() - Deleted file {}", FileUtil.getCanonicalPath(deleteFile));
+                    } catch (final IOException e) {
+                        LOGGER.error("tryDelete() - Failed to delete file {}", FileUtil.getCanonicalPath(deleteFile));
                     }
                 }
-                result.addDelete(deleteFile.getAbsolutePath());
+                result.addDelete(FileUtil.getCanonicalPath(deleteFile));
 
             } else {
-                LOGGER.debug("tryDelete() - File too new to delete {}", deleteFile.getAbsolutePath());
+                LOGGER.debug("tryDelete() - File too new to delete {}", FileUtil.getCanonicalPath(deleteFile));
                 result.incrementTooNewToDeleteCount();
             }
         } catch (final Exception ex) {
-            LOGGER.error("tryDelete() - Failed to delete file {}", deleteFile.getAbsolutePath(), ex);
+            LOGGER.error("tryDelete() - Failed to delete file {}", FileUtil.getCanonicalPath(deleteFile), ex);
         }
     }
 
-    private void checkEmptyDirectory(final ScanVolumePathResult result, final boolean doDeleete, final File directory,
-                                     final long oldFileTime, final String[] kids) {
-        if (kids == null || kids.length == 0) {
+    private void checkEmptyDirectory(final ScanVolumePathResult result, final boolean doDeleete, final Path directory,
+                                     final long oldFileTime, final List<String> kids) {
+        if (kids == null || kids.size() == 0) {
             tryDelete(result, doDeleete, directory, oldFileTime);
         }
     }
 
-    private void deleteUnknownFiles(final ScanVolumePathResult result, final boolean doDelete, final File directory,
+    private void deleteUnknownFiles(final ScanVolumePathResult result, final boolean doDelete, final Path directory,
                                     final long oldFileTime, final Map<String, List<String>> filesKeyedByBaseName,
                                     final Map<String, StreamVolume> streamsKeyedByBaseName) {
         // OK now we can go through all the files that exist on the file
@@ -348,16 +354,16 @@ public class FileSystemStreamMaintenanceService
             // Case 1 - No stream volume found !
             if (md == null) {
                 for (final String file : files) {
-                    tryDelete(result, doDelete, new File(directory, file), oldFileTime);
+                    tryDelete(result, doDelete, directory.resolve(file), oldFileTime);
                 }
             } else {
                 // Case 2 - match
                 for (final String file : files) {
-                    LOGGER.debug("processDirectory() - {}/{} belongs to stream {}", new Object[]{
+                    LOGGER.debug("processDirectory() - {}/{} belongs to stream {}",
                             directory,
                             file,
                             md.getStream().getId()
-                    });
+                    );
                 }
             }
         }

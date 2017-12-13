@@ -1,0 +1,16 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<script>
+   <dependenciesXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+	&lt;docs&gt;
+        &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;49a5f46c-f627-49ed-afb9-0066b99e235a&lt;/uuid&gt;
+&lt;name&gt;Common&lt;/name&gt;
+&lt;/doc&gt;
+	&lt;/docs&gt;
+    </dependenciesXML>
+   <description>Git commit: 54ee8ab06163f37c179b38616a4b1e3a6cf473ae
+Git commit time: 2016-09-21 17:10:16 +0100</description>
+   <name>DayWeekHeatMap</name>
+   <uuid>abb0e349-b61a-4946-9231-86d5a98596c7</uuid>
+</script>

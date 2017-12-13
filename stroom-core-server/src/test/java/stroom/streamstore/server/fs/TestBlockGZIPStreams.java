@@ -25,18 +25,18 @@ import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestBlockGZIPStreams extends StroomUnitTest {
     @Test
     public void testSimple() throws IOException {
-        final File testFile = File.createTempFile("test", ".bgz", getCurrentTestDir());
+        final Path testFile = Files.createTempFile(getCurrentTestDir(), "test", ".bgz");
         FileUtil.deleteFile(testFile);
         final OutputStream os = new BufferedOutputStream(new BlockGZIPOutputFile(testFile, 100));
 
@@ -46,7 +46,7 @@ public class TestBlockGZIPStreams extends StroomUnitTest {
 
         os.close();
 
-        try (BlockGZIPInputStream bgzi = new BlockGZIPInputStream(new FileInputStream(testFile));
+        try (BlockGZIPInputStream bgzi = new BlockGZIPInputStream(Files.newInputStream(testFile));
              final LineNumberReader in = new LineNumberReader(
                      new InputStreamReader(bgzi, StreamUtil.DEFAULT_CHARSET))) {
             String line;

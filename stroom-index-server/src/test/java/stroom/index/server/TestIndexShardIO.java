@@ -77,7 +77,7 @@ public class TestIndexShardIO extends StroomUnitTest {
     @Test
     public void testOpenCloseManyWrite() throws IOException {
         final Volume volume = new Volume();
-        volume.setPath(getCurrentTestDir().getAbsolutePath());
+        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final Index index = new Index();
         index.setName("Test");
 
@@ -110,7 +110,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final Volume volume = new Volume();
-        volume.setPath(getCurrentTestDir().getAbsolutePath());
+        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndex(index);
         idx1.setPartition("all");
@@ -287,7 +287,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final Volume volume = new Volume();
-        volume.setPath(getCurrentTestDir().getAbsolutePath());
+        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndex(index);
         idx1.setPartition("all");
@@ -318,7 +318,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final Volume volume = new Volume();
-        volume.setPath(getCurrentTestDir().getAbsolutePath());
+        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndex(index);
         idx1.setPartition("all");
@@ -349,7 +349,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final Volume volume = new Volume();
-        final Path testDir = getCurrentTestDir().toPath();
+        final Path testDir = getCurrentTestDir();
         volume.setPath(FileUtil.getCanonicalPath(testDir));
         FileSystemUtil.deleteDirectory(testDir);
         final IndexShard idx1 = new IndexShard();

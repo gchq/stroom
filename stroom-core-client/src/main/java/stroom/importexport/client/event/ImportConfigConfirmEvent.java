@@ -19,7 +19,7 @@ package stroom.importexport.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.entity.shared.ImportState;
+import stroom.importexport.shared.ImportState;
 import stroom.util.shared.ResourceKey;
 
 import java.util.List;

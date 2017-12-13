@@ -63,4 +63,6 @@ public interface StroomEntityManager extends Flushable {
     void shutdown();
 
     void setFlushMode(FlushModeType mode);
+
+    void clearContext();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,22 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.servlet;
 
 import org.springframework.stereotype.Component;
+import stroom.node.server.NodeService;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.NodeService;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
-import stroom.pool.SecurityHelper;
+import stroom.security.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 
@@ -47,8 +48,10 @@ import java.util.List;
  * SERVLET that reports status of Stroom for scripting purposes.
  * </p>
  */
-@Component
+@Component(StatusServletImpl.BEAN_NAME)
 public class StatusServletImpl extends HttpServlet implements StatusServlet {
+    public static final String BEAN_NAME = "statusServlet";
+
     private static final long serialVersionUID = 1L;
     private static final String INFO = "INFO";
     private static final String WARN = "WARN";
@@ -65,7 +68,7 @@ public class StatusServletImpl extends HttpServlet implements StatusServlet {
     private transient SecurityContext securityContext;
 
     @Inject
-    public StatusServletImpl(final NodeService nodeService, final ClientPropertiesService clientPropertiesService, final VolumeService volumeService, final SecurityContext securityContext) {
+    StatusServletImpl(final NodeService nodeService, final ClientPropertiesService clientPropertiesService, final VolumeService volumeService, final SecurityContext securityContext) {
         this.nodeService = nodeService;
         this.clientPropertiesService = clientPropertiesService;
         this.volumeService = volumeService;
@@ -87,7 +90,7 @@ public class StatusServletImpl extends HttpServlet implements StatusServlet {
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
-        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
             response.setContentType("text/plain");
 
             final PrintWriter pw = response.getWriter();
@@ -97,8 +100,6 @@ public class StatusServletImpl extends HttpServlet implements StatusServlet {
             reportVolumeStatus(pw);
 
             pw.close();
-        } finally {
-            securityContext.popUser();
         }
     }
 

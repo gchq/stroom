@@ -21,19 +21,6 @@
 
 
     <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-        <g:north size="45">
-
-            <g:FlowPanel>
-                <g:VerticalPanel styleName="{style.checkBoxArea}">
-                    <tickbox:TickBox ui:field="statusNotEnabled" text="Account Disabled"/>
-                    <tickbox:TickBox ui:field="loginNeverExpires" text="Login Never Expires"/>
-                </g:VerticalPanel>
-                <g:Button ui:field="resetPassword" text="Reset Password" styleName="gwt-Button {style.resetPassword}"/>
-                <g:Button ui:field="emailResetPassword" text="Email Reset Password"
-                          styleName="gwt-Button {style.resetPassword}"/>
-            </g:FlowPanel>
-
-        </g:north>
         <g:center>
             <g:MySplitLayoutPanel width="100%" height="100%">
                 <g:north size="200">

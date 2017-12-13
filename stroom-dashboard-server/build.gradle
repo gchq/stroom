@@ -20,7 +20,6 @@ dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
-    compile project(':stroom-core-shared')
     compile project(':stroom-security-api')
 
     compile libs.stroomExpression
@@ -36,7 +35,6 @@ dependencies {
     compile libs.poi
     compile libs.poi_ooxml
     compile libs.slf4j_api
-    compile libs.spring_aop
     compile libs.spring_context
     compile libs.spring_core
     compile libs.spring_tx

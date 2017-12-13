@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.importexport.server;
@@ -21,16 +22,16 @@ import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
-import stroom.entity.shared.ImportState;
-import stroom.entity.shared.ImportState.ImportMode;
-import stroom.entity.shared.ImportState.State;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.State;
+import stroom.explorer.server.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.v2.DocRef;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -38,10 +39,11 @@ import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreServerTestFileUtil;
+import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
+import stroom.xmlschema.server.XMLSchemaService;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
-import stroom.xmlschema.shared.XMLSchemaService;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -64,49 +66,47 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     @Resource
     private ImportExportSerializer importExportSerializer;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
-    private FolderService folderService;
+    private ExplorerService explorerService;
 
     private DocRefs buildFindFolderCriteria() {
         final DocRefs criteria = new DocRefs();
-        criteria.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
+        criteria.add(ExplorerConstants.ROOT_DOC_REF);
         return criteria;
     }
 
     @Test
     public void testExport() throws IOException {
-        final Feed eventFeed = commonTestScenarioCreator.createSimpleFeed();
-        final DocRef docRef = DocRefUtil.create(eventFeed);
-//        final Folder folder = folderService.load(eventFeed.getFolder());
-
-//        final String eventFeedPath = folder.getName() + "/" + eventFeed.getName();
+        final DocRef docRef = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
+        Feed eventFeed = feedService.readDocument(docRef);
+        eventFeed.setDescription("Original Description");
+        feedService.save(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
 
         BaseResultList<XMLSchema> allSchemas = xmlSchemaService.find(new FindXMLSchemaCriteria());
 
-        final Path testDataDir = getCurrentTestPath().resolve("ExportTest");
+        final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
         FileSystemUtil.deleteDirectory(testDataDir);
         Files.createDirectories(testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, null);
+        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
 
         List<ImportState> list = new ArrayList<>();
         importExportSerializer.read(testDataDir, list, ImportMode.CREATE_CONFIRMATION);
+        Assert.assertTrue(list.size() > 0);
 
         // Should all be relative
         Map<DocRef, ImportState> map = new HashMap<>();
         for (final ImportState confirmation : list) {
-//            Assert.assertTrue("Expected to start with / " + confirmation.getSourcePath(),
-//                    confirmation.getSourcePath().startsWith("/"));
             map.put(confirmation.getDocRef(), confirmation);
         }
 
-        Assert.assertTrue(list.size() > 0);
         Assert.assertEquals(State.EQUAL, map.get(docRef).getState());
 
+        eventFeed = feedService.readDocument(docRef);
         eventFeed.setDescription("New Description");
         feedService.save(eventFeed);
         for (final XMLSchema xmlSchema : allSchemas) {
@@ -148,23 +148,28 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     public void testPipeline() throws IOException {
-        final DocRef folder = DocRefUtil.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
-        final PipelineEntity parentPipeline = pipelineEntityService.create(folder, "Parent");
+        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef parentPipelineRef = explorerService.create(PipelineEntity.ENTITY_TYPE, "Parent", folder, null);
+        final PipelineEntity parentPipeline = pipelineService.readDocument(parentPipelineRef);
 
-        final PipelineEntity childPipeline = pipelineEntityService.create(folder, "Child");
+        final DocRef childPipelineRef = explorerService.create(PipelineEntity.ENTITY_TYPE, "Child", folder, null);
+        final PipelineEntity childPipeline = pipelineService.readDocument(childPipelineRef);
         childPipeline.setParentPipeline(DocRefUtil.create(parentPipeline));
-        pipelineEntityService.save(childPipeline);
+        pipelineService.save(childPipeline);
 
-        Assert.assertEquals(2, pipelineEntityService.find(new FindPipelineEntityCriteria()).size());
+        Assert.assertEquals(2, pipelineService.find(new FindPipelineEntityCriteria()).size());
 
-        final Path testDataDir = getCurrentTestPath().resolve("ExportTest");
+        final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
         FileSystemUtil.deleteDirectory(testDataDir);
         Files.createDirectories(testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, null);
+        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
 
-        final String childXml = new String(Files.readAllBytes(testDataDir.resolve(folder.getName()).resolve("Child.Pipeline.xml")));
+        final String fileNamePrefix = ImportExportFileNameUtil.createFilePrefix(childPipelineRef);
+        final String fileName = fileNamePrefix + ".xml";
+        final Path path = testDataDir.resolve(folder.getName()).resolve(fileName);
+        final String childXml = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
 
         Assert.assertTrue("Parent reference not serialised\n" + childXml,
                 childXml.contains("&lt;name&gt;Parent&lt;/name&gt;"));
@@ -172,17 +177,17 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         // Remove all entities from the database.
         clean(true);
 
-        Assert.assertEquals(0, pipelineEntityService.find(new FindPipelineEntityCriteria()).size());
+        Assert.assertEquals(0, pipelineService.find(new FindPipelineEntityCriteria()).size());
 
         importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        Assert.assertEquals(2, pipelineEntityService.find(new FindPipelineEntityCriteria()).size());
+        Assert.assertEquals(2, pipelineService.find(new FindPipelineEntityCriteria()).size());
     }
 
     @Test
     public void test() throws IOException {
-        final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().toPath().resolve("samples/config");
-        final Path outDir = StroomCoreServerTestFileUtil.getTestOutputDir().toPath().resolve("samples/config");
+        final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config");
+        final Path outDir = StroomCoreServerTestFileUtil.getTestOutputDir().resolve("samples/config");
 
         FileSystemUtil.deleteDirectory(outDir);
         Files.createDirectories(outDir);
@@ -191,10 +196,10 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         importExportSerializer.read(inDir, null, ImportMode.IGNORE_CONFIRMATION);
 
         // Write to output.
-        importExportSerializer.write(outDir, buildFindFolderCriteria(), true, null);
+        importExportSerializer.write(outDir, buildFindFolderCriteria(), true, new ArrayList<>());
 
         // Compare input and output directory.
-        ComparisonHelper.compareDirs(inDir.toFile(), outDir.toFile());
+        ComparisonHelper.compareDirs(inDir, outDir);
 
         // If the comparison was ok then delete the output.
         FileSystemUtil.deleteDirectory(outDir);

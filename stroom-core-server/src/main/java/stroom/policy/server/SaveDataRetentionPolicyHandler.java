@@ -12,13 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.policy.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.policy.shared.DataRetentionPolicy;
-import stroom.policy.shared.SaveDataRetentionPolicyAction;
+import stroom.ruleset.shared.DataRetentionPolicy;
+import stroom.ruleset.shared.SaveDataRetentionPolicyAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;

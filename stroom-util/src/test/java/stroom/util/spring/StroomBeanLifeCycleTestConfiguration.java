@@ -44,7 +44,7 @@ class StroomBeanLifeCycleTestConfiguration {
 
     @Bean
     public StroomBeanLifeCycle stroomBeanLifeCycle() {
-        return new StroomBeanLifeCycle();
+        return new StroomBeanLifeCycle(stroomBeanStore());
     }
 
     @Bean

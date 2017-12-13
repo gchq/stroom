@@ -35,7 +35,7 @@ import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
@@ -53,14 +53,14 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private static final String FROM_ELEMENT = "from";
     private static final String TO_ELEMENT = "to";
     private static final String VALUE_ELEMENT = "value";
+
+    private final MapStoreHolder mapStoreHolder;
+    private final EventListInternPool internPool;
+    private final ErrorReceiverProxy errorReceiverProxy;
+
     private final EventListBuilder handler = EventListBuilderFactory.createBuilder();
     private final CharBuffer contentBuffer = new CharBuffer(20);
-    @Resource
-    private MapStoreHolder mapStoreHolder;
-    @Resource
-    private EventListInternPool internPool;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
+
     private String map;
     private String key;
     private boolean inValue;
@@ -68,6 +68,15 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private Long rangeTo;
     private boolean warnOnDuplicateKeys = false;
     private boolean overrideExistingValues = true;
+
+    @Inject
+    public ReferenceDataFilter(final MapStoreHolder mapStoreHolder,
+                               final EventListInternPool internPool,
+                               final ErrorReceiverProxy errorReceiverProxy) {
+        this.mapStoreHolder = mapStoreHolder;
+        this.internPool = internPool;
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
 
     /**
      * This method looks for a post processing function. If it finds one it does

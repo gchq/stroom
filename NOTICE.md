@@ -131,7 +131,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | net.java.dev.jets3t                       | jets3t                                       | 0.9.0            | APL 2.0       |         |               |
 | org.codehaus.jettison                     | jettison                                     | 1.1              | APL 2.0       |         |               |
 | org.mortbay.jetty                         | jetty-sslengine                              | 6.1.26           | APL 2.0       |         |               |
-| com.google.code.findbugs                  | jsr305                                       | 1.3.9            | APL 2.0       |         |               |
 | org.fusesource.leveldbjni                 | leveldbjni-all                               | 1.8              | APL 2.0       |         |               |
 | log4j                                     | log4j                                        | 1.2.17           | APL 2.0       |         |               |
 | org.apache.lucene                         | lucene-analyzers-common                      | 4.6.1            | APL 2.0       |         |               |
@@ -208,9 +207,7 @@ The table below includes licences for all Maven dependencies. Not included in th
 | com.mchange                               | mchange-commons-java                         | 0.2.9            | EPL 1.0       |         |               |
 | com.thoughtworks.paranamer                | paranamer                                    | 2.3              | EPL 1.0       |         |               |
 | mysql                                     | mysql-connector-java                         | 5.1.40           | GPL\*         |         |               |
-| net.sourceforge.findbugs                  | annotations                                  | 1.3.2            | LGPL          |         |               |
 | org.beanshell                             | bsh-core                                     | 2.0b4            | LGPL          |         |               |
-| com.github.stephenc.findbugs              | findbugs-annotations                         | 1.3.9-1          | LGPL          |         |               |
 | org.hibernate.common                      | hibernate-commons-annotations                | 4.0.5.Final      | LGPL          |         |               |
 | org.hibernate                             | hibernate-core                               | 4.3.8.Final      | LGPL          |         |               |
 | org.hibernate                             | hibernate-entitymanager                      | 4.3.8.Final      | LGPL          |         |               |

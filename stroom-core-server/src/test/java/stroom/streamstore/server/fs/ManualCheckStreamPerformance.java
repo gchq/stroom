@@ -24,14 +24,13 @@ import stroom.util.thread.ThreadUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -41,8 +40,8 @@ public abstract class ManualCheckStreamPerformance {
     static int testThreadCount = 10;
     static int testSize = 100000;
 
-    public static File getTempFile() throws IOException {
-        final File tempFile = File.createTempFile("test", "test", FileUtil.getTempDir());
+    public static Path getTempFile() throws IOException {
+        final Path tempFile = Files.createTempFile(FileUtil.getTempDir(), "test", "test");
         FileUtil.deleteFile(tempFile);
         return tempFile;
     }
@@ -208,7 +207,7 @@ public abstract class ManualCheckStreamPerformance {
     }
 
     public static class BlockGzipManualCheckStreamPerformance extends ManualCheckStreamPerformance {
-        File tempFile;
+        Path tempFile;
         int blockSize;
         long blockCount;
 
@@ -229,7 +228,7 @@ public abstract class ManualCheckStreamPerformance {
 
         @Override
         public long getFileSize() throws IOException {
-            return tempFile.length();
+            return Files.size(tempFile);
         }
 
         @Override
@@ -244,22 +243,22 @@ public abstract class ManualCheckStreamPerformance {
     }
 
     public static class UncompressedCheckStreamPerformance extends ManualCheckStreamPerformance {
-        File tempFile;
+        Path tempFile;
 
         @Override
         public InputStream getInputStream() throws IOException {
-            return new BufferedInputStream(new FileInputStream(tempFile));
+            return new BufferedInputStream(Files.newInputStream(tempFile));
         }
 
         @Override
         public OutputStream getOutputStream() throws IOException {
             tempFile = getTempFile();
-            return new BufferedOutputStream(new FileOutputStream(tempFile));
+            return new BufferedOutputStream(Files.newOutputStream(tempFile));
         }
 
         @Override
         public long getFileSize() throws IOException {
-            return tempFile.length();
+            return Files.size(tempFile);
         }
 
         @Override
@@ -273,22 +272,22 @@ public abstract class ManualCheckStreamPerformance {
     }
 
     public static class GzipCheckStreamPerformance extends ManualCheckStreamPerformance {
-        File tempFile;
+        Path tempFile;
 
         @Override
         public InputStream getInputStream() throws IOException {
-            return new BufferedInputStream(new GZIPInputStream(new FileInputStream(tempFile)));
+            return new BufferedInputStream(new GZIPInputStream(Files.newInputStream(tempFile)));
         }
 
         @Override
         public OutputStream getOutputStream() throws IOException {
             tempFile = getTempFile();
-            return new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(tempFile)));
+            return new BufferedOutputStream(new GZIPOutputStream(Files.newOutputStream(tempFile)));
         }
 
         @Override
         public long getFileSize() throws IOException {
-            return tempFile.length();
+            return Files.size(tempFile);
         }
 
         @Override

@@ -28,7 +28,6 @@ import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
@@ -163,9 +162,9 @@ public class EntityServiceExceptionUtil {
         boolean networkRelated = thEx.getClass().getName().contains(".net");
         final String message = thEx.getMessage();
         if (message != null) {
-            if (thEx instanceof FileNotFoundException && message.contains("http:")) {
-                networkRelated = true;
-            }
+//            if (thEx instanceof FileNotFoundException && message.contains("http:")) {
+//                networkRelated = true;
+//            }
             if (thEx instanceof IOException && message.contains("http")) {
                 networkRelated = true;
             }

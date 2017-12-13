@@ -12,21 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server.fs;
 
-import event.logging.BaseAdvancedQueryItem;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.BaseAdvancedQueryOperator.Or;
-import event.logging.TermCondition;
-import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.CriteriaLoggingUtil;
-import stroom.entity.server.QueryDataLogUtil;
 import stroom.entity.server.util.EntityServiceLogUtil;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
@@ -39,49 +35,52 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.FolderIdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Sort.Direction;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.node.server.NodeCache;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.Volume;
-import stroom.node.shared.VolumeService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.StreamException;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeFieldUse;
+import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamstore.shared.StreamVolume;
+import stroom.streamtask.server.ExpressionToFindCriteria;
+import stroom.streamtask.server.ExpressionToFindCriteria.Context;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -112,8 +111,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreImpl.class);
     private static final Set<String> SOURCE_FETCH_SET;
     private static final FieldMap FIELD_MAP = new FieldMap()
-            .add(FindStreamCriteria.FIELD_ID, BaseEntity.ID, "id")
-            .add(FindStreamCriteria.FIELD_CREATE_MS, Stream.CREATE_MS, "createMs");
+            .add(OldFindStreamCriteria.FIELD_ID, BaseEntity.ID, "id")
+            .add(StreamDataSource.CREATE_TIME, Stream.CREATE_MS, "createMs");
 
     static {
         final Set<String> set = new HashSet<>();
@@ -126,10 +125,11 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final NodeCache nodeCache;
     private final StreamProcessorService streamProcessorService;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final FeedService feedService;
     private final StreamTypeService streamTypeService;
     private final VolumeService volumeService;
+    private final ExpressionToFindCriteria expressionToFindCriteria;
     private final SecurityContext securityContext;
 
     // /**
@@ -174,32 +174,34 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               final StroomDatabaseInfo stroomDatabaseInfo,
                               final NodeCache nodeCache,
                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
-                              @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
+                              @Named("cachedPipelineService") final PipelineService pipelineService,
                               @Named("cachedFeedService") final FeedService feedService,
                               @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                               final VolumeService volumeService,
                               final StreamAttributeValueFlush streamAttributeValueFlush,
+                              final ExpressionToFindCriteria expressionToFindCriteria,
                               final SecurityContext securityContext) {
         this.entityManager = entityManager;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.nodeCache = nodeCache;
         this.streamProcessorService = streamProcessorService;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.feedService = feedService;
         this.streamTypeService = streamTypeService;
         this.volumeService = volumeService;
 //        this.fileSystemStreamStoreTransactionHelper = fileSystemStreamStoreTransactionHelper;
         this.streamAttributeValueFlush = streamAttributeValueFlush;
+        this.expressionToFindCriteria = expressionToFindCriteria;
         this.securityContext = securityContext;
     }
 
     public static void main(final String[] args) {
         final int MAX = 200;
-        final FindStreamCriteria outerCriteria = new FindStreamCriteria();
+        final OldFindStreamCriteria outerCriteria = new OldFindStreamCriteria();
         outerCriteria.obtainPageRequest().setLength(1000);
-        outerCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
+        outerCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
         final FileSystemStreamStoreImpl fileSystemStreamStore = new FileSystemStreamStoreImpl(null, null, null, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
         final SqlBuilder sql = new SqlBuilder();
 
         sql.append("SELECT U.* FROM ( ");
@@ -209,12 +211,12 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 sql.append(" UNION ");
             }
             sql.append("( ");
-            final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+            final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
             findStreamCriteria.obtainFeeds().obtainInclude().add((long) i);
             findStreamCriteria.obtainPageRequest().setLength(1000);
             findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
             findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE.getId());
-            findStreamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
+            findStreamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
             fileSystemStreamStore.rawBuildSQL(findStreamCriteria, sql);
             sql.append(") \n");
             doneOne = true;
@@ -228,14 +230,14 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         System.out.println("=========================");
 
         final SqlBuilder sql2 = new SqlBuilder();
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
         for (int i = 0; i < MAX; i++) {
             findStreamCriteria.obtainFeeds().obtainInclude().add((long) i);
         }
         findStreamCriteria.obtainPageRequest().setLength(1000);
         findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
         findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE.getId());
-        findStreamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
+        findStreamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
         fileSystemStreamStore.rawBuildSQL(findStreamCriteria, sql2);
         System.out.println(sql2.toString());
     }
@@ -583,7 +585,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         return 1L;
 
-//        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+//        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
 //        findStreamCriteria.obtainStreamIdSet().add(stream.getId());
 //        if (lockCheck) {
 //            findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
@@ -641,7 +643,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
             // Are we appending?
             if (streamTarget.isAppend()) {
-                final Set<File> childFile = FileSystemStreamTypeUtil.createChildStreamFile(
+                final Set<Path> childFile = FileSystemStreamTypeUtil.createChildStreamPath(
                         ((FileSystemStreamTarget) streamTarget).getFiles(false), StreamType.MANIFEST);
 
                 // Does the manifest exist ... overwrite it
@@ -708,8 +710,15 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
+    public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
+        final Context context = new Context(null, System.currentTimeMillis());
+        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
+        return find(oldFindStreamCriteria);
+    }
+
+    @Override
     @Transactional(readOnly = true)
-    public BaseResultList<Stream> find(final FindStreamCriteria originalCriteria) {
+    public BaseResultList<Stream> find(final OldFindStreamCriteria originalCriteria) {
         final boolean relationshipQuery = originalCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
         final PageRequest pageRequest = originalCriteria.getPageRequest();
         if (relationshipQuery) {
@@ -718,11 +727,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        final FindStreamCriteria queryCriteria = new FindStreamCriteria();
+        final OldFindStreamCriteria queryCriteria = new OldFindStreamCriteria();
         queryCriteria.copyFrom(originalCriteria);
-
-        // Turn all folders in the criteria into feeds.
-        convertFoldersToFeeds(queryCriteria, DocumentPermissionNames.READ);
 
         // Ensure that included feeds are restricted to ones the user can read.
         restrictCriteriaByFeedPermissions(queryCriteria, DocumentPermissionNames.READ);
@@ -781,7 +787,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 if (stream.getStreamProcessor() != null) {
                     if (originalCriteria.getFetchSet().contains(PipelineEntity.ENTITY_TYPE)) {
                         stream.getStreamProcessor()
-                                .setPipeline(pipelineEntityService.load(stream.getStreamProcessor().getPipeline()));
+                                .setPipeline(pipelineService.load(stream.getStreamProcessor().getPipeline()));
                     }
                 }
             }
@@ -812,7 +818,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
     }
 
-    private void restrictCriteriaByFeedPermissions(final FindStreamCriteria findStreamCriteria, final String requiredPermission) {
+    private void restrictCriteriaByFeedPermissions(final OldFindStreamCriteria findStreamCriteria, final String requiredPermission) {
         // We only need to restrict data by feed for non admins.
         if (!securityContext.isAdmin()) {
             // If the user is filtering by feed then make sure they can read all of the feeds that they are filtering by.
@@ -822,8 +828,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             feeds.setMatchAll(Boolean.FALSE);
             final List<Feed> restrictedFeeds = getRestrictedFeeds(requiredPermission);
 
-            if (feeds.size() > 0) {
-                final Set<Long> restrictedFeedIds = restrictedFeeds.stream().map(Feed::getId).collect(Collectors.toSet());
+        if (feeds.size() > 0) {
+            final Set<Long> restrictedFeedIds =
+            restrictedFeeds.stream().map(Feed::getId).collect(Collectors.toSet());
 
                 // Retain only the feeds that the user has the required permission on.
                 feeds.getSet().retainAll(restrictedFeedIds);
@@ -841,29 +848,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         return feedService.find(findFeedCriteria);
     }
 
-    private void convertFoldersToFeeds(final FindStreamCriteria findStreamCriteria, final String requiredPermission) {
-        final FolderIdSet folderIdSet = findStreamCriteria.getFolderIdSet();
-        if (folderIdSet != null) {
-            if (folderIdSet.isConstrained()) {
-                final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
-                findFeedCriteria.setRequiredPermission(requiredPermission);
-                findFeedCriteria.setPageRequest(null);
-                findFeedCriteria.getFolderIdSet().copyFrom(folderIdSet);
-                final List<Feed> folderFeeds = feedService.find(findFeedCriteria);
-
-                // If the user is filtering by feed then make sure they can read all of the feeds that they are filtering by.
-                final EntityIdSet<Feed> feeds = findStreamCriteria.obtainFeeds().obtainInclude();
-
-                // Ensure a user cannot match all feeds.
-                feeds.setMatchAll(Boolean.FALSE);
-                folderFeeds.forEach(feed -> feeds.add(feed.getId()));
-            }
-
-            findStreamCriteria.setFolderIdSet(null);
-        }
-    }
-
-    private void buildRawSelectSQL(final FindStreamCriteria queryCriteria, final SqlBuilder sql) {
+    private void buildRawSelectSQL(final OldFindStreamCriteria queryCriteria, final SqlBuilder sql) {
         // If we are doing more than one feed query (but less than 20) query
         // using union
         if (queryCriteria.getFeeds() != null && queryCriteria.getFeeds().getExclude() == null
@@ -879,7 +864,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                     sql.append(" UNION ALL");
                 }
                 sql.append(" (");
-                final FindStreamCriteria unionCriteria = new FindStreamCriteria();
+                final OldFindStreamCriteria unionCriteria = new OldFindStreamCriteria();
                 unionCriteria.copyFrom(queryCriteria);
                 unionCriteria.obtainFeeds().clear();
                 unionCriteria.obtainFeeds().obtainInclude().add(feedId);
@@ -904,7 +889,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @SuppressWarnings("incomplete-switch")
-    private void rawBuildSQL(final FindStreamCriteria criteria, final SqlBuilder sql) {
+    private void rawBuildSQL(final OldFindStreamCriteria criteria, final SqlBuilder sql) {
         sql.append("SELECT S.*");
         sql.append(" FROM ");
         sql.append(Stream.TABLE_NAME);
@@ -921,7 +906,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.applyRestrictionCriteria(criteria);
     }
 
-    private void appendJoin(final FindStreamCriteria criteria, final SqlBuilder sql) {
+    private void appendJoin(final OldFindStreamCriteria criteria, final SqlBuilder sql) {
         String indexToUse = null;
 
         // Here we try and better second guess a index to use for MYSQL
@@ -972,7 +957,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         if (criteria.getAttributeConditionList() != null) {
             for (int i = 0; i < criteria.getAttributeConditionList().size(); i++) {
                 final StreamAttributeCondition streamAttributeCondition = criteria.getAttributeConditionList().get(i);
-                final DocRef streamAttributeKey = streamAttributeCondition.getStreamAttributeKey();
+                final StreamAttributeKey streamAttributeKey = streamAttributeCondition.getStreamAttributeKey();
 
                 sql.append(" JOIN ");
                 sql.append(StreamAttributeValue.TABLE_NAME);
@@ -997,7 +982,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         appendStreamProcessorJoin(criteria, sql);
     }
 
-    private void appendStreamProcessorJoin(final FindStreamCriteria queryCriteria, final SqlBuilder sql) {
+    private void appendStreamProcessorJoin(final OldFindStreamCriteria queryCriteria, final SqlBuilder sql) {
         if (queryCriteria.getPipelineIdSet() != null && queryCriteria.getPipelineIdSet().isConstrained()) {
             sql.append(" JOIN ");
             sql.append(StreamProcessor.TABLE_NAME);
@@ -1009,7 +994,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
     }
 
-    private void appendStreamCriteria(final FindStreamCriteria criteria, final SqlBuilder sql) {
+    private void appendStreamCriteria(final OldFindStreamCriteria criteria, final SqlBuilder sql) {
         if (criteria.getAttributeConditionList() != null) {
             for (int i = 0; i < criteria.getAttributeConditionList().size(); i++) {
                 final StreamAttributeCondition condition = criteria.getAttributeConditionList().get(i);
@@ -1123,7 +1108,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Stream> findChildren(final FindStreamCriteria fetchCriteria, final List<Stream> streamList) {
+    private List<Stream> findChildren(final OldFindStreamCriteria fetchCriteria, final List<Stream> streamList) {
         final CriteriaSet<Long> criteriaSet = new CriteriaSet<>();
         for (final Stream stream : streamList) {
             criteriaSet.add(stream.getId());
@@ -1344,10 +1329,14 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     @Secured(Stream.DELETE_DATA_PERMISSION)
-    public Long findDelete(final FindStreamCriteria criteria) {
-        // Turn all folders in the criteria into feeds.
-        convertFoldersToFeeds(criteria, DocumentPermissionNames.READ);
+    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
+    public Long findDelete(final FindStreamCriteria criteria) throws RuntimeException {
+        final Context context = new Context(null, System.currentTimeMillis());
+        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
+        return findDelete(oldFindStreamCriteria);
+    }
 
+    private Long findDelete(final OldFindStreamCriteria criteria) {
         // Ensure that included feeds are restricted to ones the user can delete.
         restrictCriteriaByFeedPermissions(criteria, DocumentPermissionNames.DELETE);
 
@@ -1459,102 +1448,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Override
     public FindStreamCriteria createCriteria() {
         return new FindStreamCriteria();
-    }
-
-    @Override
-    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamCriteria findStreamCriteria) {
-        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet",
-                findStreamCriteria.getStreamProcessorIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "folderIdSet", findStreamCriteria.getFolderIdSet());
-        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findStreamCriteria.getFeeds());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", findStreamCriteria.getPipelineIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "streamTypeIdSet", findStreamCriteria.getStreamTypeIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "streamIdSet", findStreamCriteria.getStreamIdSet());
-        CriteriaLoggingUtil.appendCriteriaSet(items, "statusSet", findStreamCriteria.getStatusSet());
-        CriteriaLoggingUtil.appendRangeTerm(items, "streamIdRange", findStreamCriteria.getStreamIdRange());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "parentStreamIdSet", findStreamCriteria.getParentStreamIdSet());
-        CriteriaLoggingUtil.appendRangeTerm(items, "createPeriod", findStreamCriteria.getCreatePeriod());
-        CriteriaLoggingUtil.appendRangeTerm(items, "effectivePeriod", findStreamCriteria.getEffectivePeriod());
-        CriteriaLoggingUtil.appendRangeTerm(items, "statusPeriod", findStreamCriteria.getStatusPeriod());
-        appendStreamAttributeConditionList(items, "attributeConditionList",
-                findStreamCriteria.getAttributeConditionList());
-
-        if (findStreamCriteria.getQueryData() != null) {
-            QueryDataLogUtil.appendExpressionItem(items, null, findStreamCriteria.getQueryData().getExpression());
-        }
-
-        CriteriaLoggingUtil.appendPageRequest(items, findStreamCriteria.getPageRequest());
-    }
-
-    private void appendStreamAttributeConditionList(final List<BaseAdvancedQueryItem> items, final String name,
-                                                    final List<StreamAttributeCondition> list) {
-        if (list != null) {
-            And and = null;
-
-            for (final StreamAttributeCondition condition : list) {
-                if (condition != null && condition.getStreamAttributeKey() != null) {
-                    if (and == null) {
-                        and = new And();
-                    }
-                    appendCondition(and.getAdvancedQueryItems(), condition.getStreamAttributeKey().getDisplayValue(),
-                            condition.getCondition(), condition.getFieldValue());
-                }
-            }
-
-            if (and != null) {
-                items.add(and);
-            }
-        }
-    }
-
-    private void appendCondition(final List<BaseAdvancedQueryItem> items, final String name, final ExpressionTerm.Condition condition,
-                                 final String value) {
-        switch (condition) {
-            case CONTAINS:
-                items.add(EventLoggingUtil.createTerm(name, TermCondition.CONTAINS, value));
-                break;
-            case EQUALS:
-                items.add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, value));
-                break;
-            case GREATER_THAN:
-                items.add(EventLoggingUtil.createTerm(name, TermCondition.GREATER_THAN, value));
-                break;
-            case GREATER_THAN_OR_EQUAL_TO:
-                items.add(EventLoggingUtil.createTerm(name, TermCondition.GREATER_THAN_EQUAL_TO, value));
-                break;
-            case LESS_THAN:
-                items.add(EventLoggingUtil.createTerm(name, TermCondition.LESS_THAN, value));
-                break;
-            case LESS_THAN_OR_EQUAL_TO:
-                items.add(EventLoggingUtil.createTerm(name, TermCondition.LESS_THAN_EQUAL_TO, value));
-                break;
-            case BETWEEN: {
-                final String[] parts = value.split(",");
-                if (parts.length >= 2) {
-                    items.add(EventLoggingUtil.createTerm(name, TermCondition.GREATER_THAN_EQUAL_TO, parts[0]));
-                    items.add(EventLoggingUtil.createTerm(name, TermCondition.LESS_THAN, parts[1]));
-                } else {
-                    items.add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, value));
-                }
-                break;
-            }
-            case IN: {
-                final String[] parts = value.split(",");
-                if (parts.length >= 2) {
-                    final Or or = new Or();
-                    for (final String part : parts) {
-                        or.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, part));
-                    }
-                    items.add(or);
-                } else {
-                    items.add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, value));
-                }
-                break;
-            }
-            case IN_DICTIONARY: {
-                items.add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, "dictionary: " + value));
-            }
-        }
     }
 
     private Feed getFeed(final DocRef docRef) {

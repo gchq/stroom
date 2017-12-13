@@ -1,0 +1,168 @@
+{
+    "tabs" : [ 
+        {
+            "name" : "Data",
+            "controls" : [ 
+                {
+                    "id" : "pointSeries",
+                    "type" :  "field",
+                    "label" : "Point Series"
+                }, 
+                {
+                    "id" : "gridSeries",
+                    "type" :  "field",
+                    "label" : "Grid Series"
+                }, 
+                {
+                    "id" : "eventTime",
+                    "type" :  "field",
+                    "label" : "Event Time"
+                }, 
+                {
+                    "id" : "value",
+                    "type" :  "field",
+                    "label" : "Value"
+                } 
+            ]
+        },    
+        {
+            "name": "Points",
+            "controls": [
+                {
+                    "id": "sortPointSeries",
+                    "type": "selection",
+                    "label": "Sort Point Series",
+                    "values": [
+                        "",
+                        "Ascending",
+                        "Descending"
+                    ],
+                    "defaultValue": "Ascending"
+                },
+                {
+                    "id": "maxPointSeries",
+                    "type": "number",
+                    "label": "Max Point Series",
+                    "defaultValue": "100",
+                    "max": "10000",
+                    "min": "1"
+                },
+                {
+                    "id" : "seriesDateFormat",
+                    "type" : "text",
+                    "label" : "Series Date Format (opt.)",
+                    "defaultValue" : ""
+                },
+                {
+                    "id": "sortGridSeries",
+                    "type": "selection",
+                    "label": "Sort Grid Series",
+                    "values": [
+                        "",
+                        "Ascending",
+                        "Descending"
+                    ],
+                    "defaultValue": "Ascending"
+                },
+                {
+                    "id": "maxGridSeries",
+                    "type": "number",
+                    "label": "Max Grid Series",
+                    "defaultValue": "20",
+                    "max": "36",
+                    "min": "1"
+                },
+                {
+                    "id" : "gridSeriesDateFormat",
+                    "type" : "text",
+                    "label" : "Grid Series Date Format (optional)",
+                    "defaultValue" : ""
+                },
+                {
+                    "id": "synchXAxis",
+                    "type": "selection",
+                    "label": "Synch Event Times",
+                    "values": [
+                        "True",
+                        "False"
+                    ],
+                    "defaultValue": "True"
+                },
+                {
+                    "id": "displayXAxis",
+                    "type": "selection",
+                    "label": "Display X Axis",
+                    "values": [
+                        "True",
+                        "False"
+                    ],
+                    "defaultValue": "True"
+                },
+                {
+                    "id": "displayYAxis",
+                    "type": "selection",
+                    "label": "Display Y Axis",
+                    "values": [
+                        "True",
+                        "False"
+                    ],
+                    "defaultValue": "True"
+                },
+                {
+                    "id": "synchSeries",
+                    "type": "selection",
+                    "label": "Synch Point Series",
+                    "values": [
+                        "True",
+                        "False"
+                    ],
+                    "defaultValue": "True"
+                } 
+            ]
+        } 
+    ],
+    "data" : {
+        "structure" : {
+            "nest": {
+                "key": {
+                    "id": "${gridSeries}",
+                    "sort": {
+                        "enabled": "true",
+                        "direction": "${sortGridSeries}"
+                    }
+                },
+                "nest" : {
+                    "key" : {
+                        "id" : "${pointSeries}",
+                        "sort" : {
+                            "enabled" : "true",
+                            "direction" : "${sortPointSeries}"
+                        }
+                    },
+                    "limit" : {
+                        "enabled" : "true",
+                        "size": "${maxPointSeries}"
+                    },
+                    "values" : {
+                        "fields" : [ 
+                            {
+                                "id" : "${eventTime}",
+                                "sort" : {
+                                    "enabled" : "true",
+                                    "direction" : "Ascending"
+                                }
+                            }, 
+                            {
+                                "id" : "${value}"
+                            } 
+                        ]
+                    }      
+                },
+                "limit": {
+                    "enabled": "true",
+                    "size": "${maxGridSeries}"
+                }
+            }
+        }
+    }
+}

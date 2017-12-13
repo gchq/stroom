@@ -19,11 +19,13 @@ package stroom.util;
 import stroom.util.io.StreamUtil;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +78,7 @@ public final class DataFeedClient {
 
             System.out.println("Using url=" + urlS + " and inputFile=" + inputFileS);
 
-            final File inputFile = new File(inputFileS);
+            final Path inputFile = Paths.get(inputFileS);
 
             final URL url = new URL(urlS);
             final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -102,30 +104,30 @@ public final class DataFeedClient {
 
             connection.connect();
 
-            final FileInputStream fis = new FileInputStream(inputFile);
-            OutputStream out = connection.getOutputStream();
-            // Using Zip Compression we just have 1 file (called 1)
-            if (ZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
-                final ZipOutputStream zout = new ZipOutputStream(out);
-                zout.putNextEntry(new ZipEntry("1"));
-                out = zout;
-                System.out.println("Using ZIP");
-            }
-            if (GZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
-                out = new GZIPOutputStream(out);
-                System.out.println("Using GZIP");
-            }
+            try (final InputStream inputStream = Files.newInputStream(inputFile)) {
+                OutputStream out = connection.getOutputStream();
+                // Using Zip Compression we just have 1 file (called 1)
+                if (ZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
+                    final ZipOutputStream zout = new ZipOutputStream(out);
+                    zout.putNextEntry(new ZipEntry("1"));
+                    out = zout;
+                    System.out.println("Using ZIP");
+                }
+                if (GZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
+                    out = new GZIPOutputStream(out);
+                    System.out.println("Using GZIP");
+                }
 
-            // Write the output
-            final byte[] buffer = new byte[BUFFER_SIZE];
-            int readSize;
-            while ((readSize = fis.read(buffer)) != -1) {
-                out.write(buffer, 0, readSize);
-            }
+                // Write the output
+                final byte[] buffer = new byte[BUFFER_SIZE];
+                int readSize;
+                while ((readSize = inputStream.read(buffer)) != -1) {
+                    out.write(buffer, 0, readSize);
+                }
 
-            out.flush();
-            out.close();
-            fis.close();
+                out.flush();
+                out.close();
+            }
 
             final int response = connection.getResponseCode();
 

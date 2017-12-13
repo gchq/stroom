@@ -19,12 +19,18 @@ package stroom.test;
 import org.junit.Assert;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -33,14 +39,18 @@ import java.util.List;
  */
 @Component
 public class DatabaseCommonTestControlTransactionHelper {
-    @Resource
-    private StroomEntityManager entityManager;
+    private final StroomEntityManager entityManager;
+
+    @Inject
+    public DatabaseCommonTestControlTransactionHelper(final StroomEntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
 
     /**
      * Clear a HIBERNATE context.
      */
     public void clearContext() {
-        entityManager.flush();
+        entityManager.clearContext();
     }
 
     /**
@@ -58,8 +68,6 @@ public class DatabaseCommonTestControlTransactionHelper {
 
     /**
      * Helper.
-     *
-     * @param clazz
      */
     @SuppressWarnings({"unchecked"})
     public void deleteClass(final Class<?> clazz) {
@@ -104,5 +112,55 @@ public class DatabaseCommonTestControlTransactionHelper {
 
     public void shutdown() {
         entityManager.shutdown();
+    }
+
+    public void truncateTable(final String tableName) {
+        truncateTables(Collections.singletonList(tableName));
+    }
+
+    public void truncateTables(final List<String> tableNames) {
+        List<String> truncateStatements = tableNames.stream()
+                .map(tableName -> "TRUNCATE TABLE " + tableName)
+                .collect(Collectors.toList());
+
+        executeStatementsWithNoConstraints(truncateStatements);
+    }
+
+    public void clearTables(final List<String> tableNames) {
+        List<String> deleteStatements = tableNames.stream()
+                .map(tableName -> "DELETE FROM " + tableName)
+                .collect(Collectors.toList());
+
+        executeStatementsWithNoConstraints(deleteStatements);
+    }
+
+    public void enableConstraints() {
+        try (final Connection connection = ConnectionUtil.getConnection()) {
+            String sql = "SET FOREIGN_KEY_CHECKS=1";
+            try {
+                ConnectionUtil.executeStatement(connection, sql);
+            } catch (SQLException e) {
+                throw new RuntimeException(String.format("Error executing %s", sql), e);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error getting connection", e);
+        }
+    }
+
+    private void executeStatementsWithNoConstraints(final List<String> statements) {
+        try (final Connection connection = ConnectionUtil.getConnection()) {
+            List<String> allStatements = new ArrayList<>();
+            allStatements.add("SET FOREIGN_KEY_CHECKS=0");
+            allStatements.addAll(statements);
+            allStatements.add("SET FOREIGN_KEY_CHECKS=1");
+
+            try {
+                ConnectionUtil.executeStatements(connection, allStatements);
+            } catch (SQLException e) {
+                throw new RuntimeException(String.format("Error executing %s", allStatements), e);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error getting connection", e);
+        }
     }
 }

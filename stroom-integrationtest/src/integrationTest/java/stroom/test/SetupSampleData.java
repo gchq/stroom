@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,13 @@
 package stroom.test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
+import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
+import stroom.dictionary.spring.DictionaryConfiguration;
+import stroom.explorer.server.ExplorerConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
@@ -32,7 +35,6 @@ import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskScopeContextHolder;
-import stroom.util.thread.ThreadScopeContextHolder;
 import stroom.visualisation.spring.VisualisationConfiguration;
 
 /**
@@ -44,32 +46,40 @@ public final class SetupSampleData {
         System.setProperty("stroom.connectionTesterClassName",
                 "stroom.entity.server.util.StroomConnectionTesterOkOnException");
 
-        ThreadScopeContextHolder.createContext();
+        TaskScopeContextHolder.addContext();
         try {
-            TaskScopeContextHolder.addContext();
-            try {
-                @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
-                appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,
-                        SecurityConfiguration.MOCK_SECURITY);
-                appContext.register(ScopeConfiguration.class, PersistenceConfiguration.class,
-                        SetupSampleDataComponentScanConfiguration.class, ServerConfiguration.class,
-                        SecurityConfiguration.class, ScopeTestConfiguration.class,
-                        PipelineConfiguration.class, EventLoggingConfiguration.class, IndexConfiguration.class,
-                        SearchConfiguration.class, ScriptConfiguration.class, VisualisationConfiguration.class,
-                        DashboardConfiguration.class, StatisticsConfiguration.class);
-                appContext.refresh();
-                final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
+            @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
+            appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,
+                    SecurityConfiguration.MOCK_SECURITY);
+            appContext.register(
+                    ScopeConfiguration.class,
+                    PersistenceConfiguration.class,
+                    SetupSampleDataComponentScanConfiguration.class,
+                    ServerConfiguration.class,
+                    ExplorerConfiguration.class,
+                    RuleSetConfiguration.class,
+                    SecurityConfiguration.class,
+                    ScopeTestConfiguration.class,
+                    DictionaryConfiguration.class,
+                    PipelineConfiguration.class,
+                    EventLoggingConfiguration.class,
+                    IndexConfiguration.class,
+                    SearchConfiguration.class,
+                    ScriptConfiguration.class,
+                    VisualisationConfiguration.class,
+                    DashboardConfiguration.class,
+                    StatisticsConfiguration.class
+            );
+            appContext.refresh();
+            final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
 
-                commonTestControl.setup();
+            commonTestControl.setup();
 
-                final SetupSampleDataBean setupSampleDataBean = appContext.getBean(SetupSampleDataBean.class);
-                setupSampleDataBean.run(true);
+            final SetupSampleDataBean setupSampleDataBean = appContext.getBean(SetupSampleDataBean.class);
+            setupSampleDataBean.run(true);
 
-            } finally {
-                TaskScopeContextHolder.removeContext();
-            }
         } finally {
-            ThreadScopeContextHolder.destroyContext();
+            TaskScopeContextHolder.removeContext();
         }
     }
 }

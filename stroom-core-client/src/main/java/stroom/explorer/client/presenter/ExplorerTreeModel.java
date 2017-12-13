@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.explorer.client.presenter;
@@ -20,12 +21,11 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
-import stroom.explorer.shared.FetchExplorerDataAction;
-import stroom.explorer.shared.FetchExplorerDataResult;
-import stroom.explorer.shared.FindExplorerDataCriteria;
-import stroom.explorer.shared.SimpleExplorerItem;
+import stroom.explorer.shared.FetchExplorerNodeAction;
+import stroom.explorer.shared.FetchExplorerNodeResult;
+import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.TreeStructure;
 import stroom.util.shared.HasNodeState.NodeState;
 
@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Set;
 
 public class ExplorerTreeModel {
-    public static final ExplorerData NULL_SELECTION = new SimpleExplorerItem(null, null, "None", null);
+    static final ExplorerNode NULL_SELECTION = new ExplorerNode("", "", "None", null);
 
-    private final OpenItems<ExplorerData> openItems = new OpenItems<>();
+    private final OpenItems<ExplorerNode> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();
     private final ExplorerTreeFilterBuilder explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
     private final AbstractExplorerTree explorerTree;
@@ -44,9 +44,9 @@ public class ExplorerTreeModel {
     private final ClientDispatchAsync dispatcher;
 
     private Integer minDepth = 1;
-    private Set<ExplorerData> ensureVisible;
+    private Set<ExplorerNode> ensureVisible;
 
-    private FindExplorerDataCriteria currentCriteria;
+    private FindExplorerNodeCriteria currentCriteria;
     private boolean fetching;
 
     private boolean includeNullSelection;
@@ -81,7 +81,7 @@ public class ExplorerTreeModel {
         explorerTreeFilterBuilder.setRequiredPermissions(requiredPermissions);
     }
 
-    public void setEnsureVisible(final ExplorerData... ensureVisible) {
+    public void setEnsureVisible(final ExplorerNode... ensureVisible) {
         this.ensureVisible = SetUtil.toSet(ensureVisible);
     }
 
@@ -103,20 +103,20 @@ public class ExplorerTreeModel {
     private void fetchData() {
         final ExplorerTreeFilter explorerTreeFilter = explorerTreeFilterBuilder.build();
         if (explorerTreeFilter != null) {
-            final Set<ExplorerData> allOpenItems = openItems.getAllOpenItems();
+            final Set<ExplorerNode> allOpenItems = openItems.getAllOpenItems();
             // Fetch a list of data items that belong to this parent.
-            currentCriteria = new FindExplorerDataCriteria(allOpenItems, explorerTreeFilter, minDepth, ensureVisible);
+            currentCriteria = new FindExplorerNodeCriteria(allOpenItems, explorerTreeFilter, minDepth, ensureVisible);
 
             if (!fetching) {
                 fetching = true;
                 loading.setVisible(true);
                 Scheduler.get().scheduleDeferred(() -> {
-                    final FindExplorerDataCriteria criteria = currentCriteria;
-                    final FetchExplorerDataAction action = new FetchExplorerDataAction(criteria);
+                    final FindExplorerNodeCriteria criteria = currentCriteria;
+                    final FetchExplorerNodeAction action = new FetchExplorerNodeAction(criteria);
                     dispatcher.exec(action).onSuccess(result -> {
                         fetching = false;
 
-                        //                    final Set<ExplorerData> currentOpenItems = getOpenItems();
+                        //                    final Set<ExplorerNode> currentOpenItems = getOpenItems();
                         //                    final ExplorerTreeFilter currentFilter = explorerTreeFilterBuilder.build();
 
                         // Check if the filter settings have changed
@@ -133,7 +133,7 @@ public class ExplorerTreeModel {
                             // folders these were so we can add them to the set of open folders to ensure they
                             // aren't immediately closed on the next refresh.
                             if (result.getOpenedItems() != null) {
-                                for (final ExplorerData openedItem : result.getOpenedItems()) {
+                                for (final ExplorerNode openedItem : result.getOpenedItems()) {
                                     openItems.open(openedItem);
                                 }
                             }
@@ -145,7 +145,7 @@ public class ExplorerTreeModel {
                             this.currentTreeStructure = result.getTreeStructure();
 
                             // Update the tree.
-                            final List<ExplorerData> rows = update();
+                            final List<ExplorerNode> rows = update();
 
                             // If we have been asked to ensure something is visible then chances are we are
                             // expected to select it as well.
@@ -153,21 +153,19 @@ public class ExplorerTreeModel {
                             // that try and select one of the folders that has been forced open in an attempt to
                             // make the requested item visible.
                             if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
-                                ExplorerData nextSelection = criteria.getEnsureVisible().iterator().next();
-
+                                ExplorerNode nextSelection = criteria.getEnsureVisible().iterator().next();
                                 // If we are allowing null selection then select the NULL node if we have been
                                 // asked to ensure NULL is selected after refresh.
                                 if (nextSelection == null && includeNullSelection) {
                                     nextSelection = NULL_SELECTION;
                                 }
-
                                 int index = rows.indexOf(nextSelection);
                                 if (index == -1) {
                                     nextSelection = null;
 
                                     if (result.getOpenedItems() != null) {
                                         for (int i = result.getOpenedItems().size() - 1; i >= 0 && nextSelection == null; i--) {
-                                            final ExplorerData item = result.getOpenedItems().get(i);
+                                            final ExplorerNode item = result.getOpenedItems().get(i);
                                             if (rows.contains(item)) {
                                                 nextSelection = item;
                                             }
@@ -201,10 +199,10 @@ public class ExplorerTreeModel {
         }
     }
 
-    private List<ExplorerData> update() {
+    private List<ExplorerNode> update() {
         // Build the row list from the tree structure.
-        final List<ExplorerData> rows = new ArrayList<>();
-        if (currentTreeStructure != null) {
+        final List<ExplorerNode> rows = new ArrayList<>();
+        if (currentTreeStructure != null && currentTreeStructure.getRoot() != null) {
             addToRows(currentTreeStructure.getRoot(), currentTreeStructure, rows, openItems.getAllOpenItems());
         }
 
@@ -221,13 +219,13 @@ public class ExplorerTreeModel {
         return rows;
     }
 
-    private void addToRows(final ExplorerData parent, final TreeStructure treeStructure, final List<ExplorerData> rows, final Set<ExplorerData> openItems) {
+    private void addToRows(final ExplorerNode parent, final TreeStructure treeStructure, final List<ExplorerNode> rows, final Set<ExplorerNode> openItems) {
         rows.add(parent);
 
         if (openItems.contains(parent)) {
-            final List<ExplorerData> children = treeStructure.getChildren(parent);
+            final List<ExplorerNode> children = treeStructure.getChildren(parent);
             if (children != null) {
-                for (final ExplorerData child : children) {
+                for (final ExplorerNode child : children) {
                     addToRows(child, treeStructure, rows, openItems);
                 }
             }
@@ -242,7 +240,7 @@ public class ExplorerTreeModel {
         }
     }
 
-    protected void onDataChanged(final FetchExplorerDataResult result) {
+    protected void onDataChanged(final FetchExplorerNodeResult result) {
     }
 
     public void reset() {
@@ -260,7 +258,7 @@ public class ExplorerTreeModel {
         this.includeNullSelection = includeNullSelection;
     }
 
-    public void setItemOpen(final ExplorerData item, final boolean open) {
+    public void setItemOpen(final ExplorerNode item, final boolean open) {
         if (item != null) {
             if (open != openItems.isOpen(item)) {
                 refresh(openItems.toggleOpenState(item));
@@ -268,7 +266,7 @@ public class ExplorerTreeModel {
         }
     }
 
-    public void toggleOpenState(final ExplorerData item) {
+    public void toggleOpenState(final ExplorerNode item) {
         if (item != null) {
             refresh(openItems.toggleOpenState(item));
         }

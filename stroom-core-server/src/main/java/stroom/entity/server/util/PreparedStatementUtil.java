@@ -48,6 +48,8 @@ public class PreparedStatementUtil {
                         ps.setString(index, ((String) o));
                     } else if (o instanceof Boolean) {
                         ps.setBoolean(index, ((Boolean) o));
+                    } else if (o instanceof byte[]) {
+                        ps.setBytes(index, ((byte[]) o));
                     } else {
                         ps.setObject(index, o);
                     }

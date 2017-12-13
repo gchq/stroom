@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.index.server;
@@ -20,21 +21,18 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Range;
 import stroom.entity.shared.Sort.Direction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.Index.PartitionBy;
-import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
 import stroom.node.server.NodeCache;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.node.shared.VolumeService;
 import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
@@ -42,8 +40,6 @@ import stroom.util.date.DateUtil;
 import javax.annotation.Resource;
 
 public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
-    @Resource
-    private FolderService folderService;
     @Resource
     private IndexService indexService;
     @Resource
@@ -65,14 +61,12 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void test() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Group"));
-
-        Index index1 = indexService.create(testFolder, "Test Index 1");
+        Index index1 = indexService.create("Test Index 1");
         index1.getVolumes().add(volume);
         index1 = indexService.save(index1);
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 
-        Index index2 = indexService.create(testFolder, "Test Index 2");
+        Index index2 = indexService.create("Test Index 2");
         index2.getVolumes().add(volume);
         index2 = indexService.save(index2);
         final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
@@ -94,13 +88,13 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals(4, indexShardService.find(criteria).size());
 
         // Find shards for index 1
-        criteria.getIndexIdSet().clear();
-        criteria.getIndexIdSet().add(index1);
+        criteria.getIndexSet().clear();
+        criteria.getIndexSet().add(DocRefUtil.create(index1));
         Assert.assertEquals(3, indexShardService.find(criteria).size());
 
         // Find shards for index 2
-        criteria.getIndexIdSet().clear();
-        criteria.getIndexIdSet().add(index2);
+        criteria.getIndexSet().clear();
+        criteria.getIndexSet().add(DocRefUtil.create(index2));
         Assert.assertEquals(1, indexShardService.find(criteria).size());
 
         // Set all the filters
@@ -112,9 +106,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void testOrderBy() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Group"));
-
-        Index index = indexService.create(testFolder, "Test Index 1");
+        Index index = indexService.create("Test Index 1");
         index.getVolumes().add(volume);
         index.setPartitionBy(PartitionBy.MONTH);
         index.setPartitionSize(1);

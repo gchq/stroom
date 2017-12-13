@@ -2,6 +2,9 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-api')
+    compile project(':stroom-explorer-api')
+    compile project(':stroom-docstore-shared')
+    compile project(':stroom-docstore-server')
     compile project(':stroom-statistics-api')
     permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')
@@ -9,7 +12,10 @@ dependencies {
     compile project(':stroom-connectors')
 
     compile libs.eventLogging
+    compile libs.stroomAuthApi
     compile libs.stroomQueryApi
+    compile libs.stroomQueryCommon
+    compile libs.stroomQueryAudit
 
     compile libs.curator_client
     compile libs.curator_framework
@@ -23,25 +29,26 @@ dependencies {
     compile libs.commons_exec
     compile libs.commons_lang
     compile libs.commons_compress
+    compile libs.jackson_annotations
+    compile libs.jackson_databind
     compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.validation_api
     compile libs.ws_rs_api
     compile libs.curator_x_discovery
-    compile libs.aspectjweaver
     compile libs.jersey_client
     compile libs.jersey_common
     compile libs.hibernate_jpa_api
     compile libs.hibernate_core
     compile libs.javassist
     compile libs.slf4j_api
-    compile libs.spring_aop
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_core
     compile libs.xml_apis
     compile libs.flyway_core
+    compile libs.findbugs_jsr
     compile libs.hsqldb
     permitUnusedDeclared libs.hsqldb
     compile libs.vavr
@@ -72,7 +79,6 @@ dependencies {
 
     testCompile libs.junit
     testCompile libs.mockito_core
-    testCompile libs.commons_io
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

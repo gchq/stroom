@@ -26,7 +26,6 @@ dependencies {
     runtime libs.jsinterop_annotations
 
     testCompile libs.junit
-    testCompile libs.mockito_core
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

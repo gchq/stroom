@@ -19,8 +19,10 @@ package stroom.test;
 import org.junit.Before;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
+import stroom.dictionary.spring.DictionaryConfiguration;
+import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
+import stroom.explorer.server.ExplorerConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
@@ -44,6 +46,8 @@ import stroom.visualisation.spring.VisualisationConfiguration;
         ProcessTestServerComponentScanConfiguration.class,
         ServerConfiguration.class,
         SecurityConfiguration.class,
+        ExplorerConfiguration.class,
+        DictionaryConfiguration.class,
         ScopeTestConfiguration.class,
         EventLoggingConfiguration.class,
         IndexConfiguration.class,

@@ -26,6 +26,7 @@ import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -34,11 +35,12 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,16 +53,17 @@ public class UniqueXMLEvents {
     }
 
     public static void main(final String[] args) {
-        try {
-            if (args.length != 2) {
-                System.out.println("Bad arguments - provide input and output XSD files.");
-            }
+        if (args.length != 2) {
+            System.out.println("Bad arguments - provide input and output XSD files.");
+        }
 
-            final File inputXsd = new File(args[0]);
-            final File outputXsd = new File(args[1]);
+        final Path inputXsd = Paths.get(args[0]);
+        final Path outputXsd = Paths.get(args[1]);
 
+        try (final Reader reader = Files.newBufferedReader(inputXsd, StreamUtil.DEFAULT_CHARSET);
+             final Writer writer = Files.newBufferedWriter(outputXsd, StreamUtil.DEFAULT_CHARSET)) {
             final TransformerHandler th = XMLUtil.createTransformerHandler(true);
-            th.setResult(new StreamResult(new FileOutputStream(outputXsd)));
+            th.setResult(new StreamResult(writer));
 
             SAXParser parser = null;
             try {
@@ -78,7 +81,7 @@ public class UniqueXMLEvents {
             final XMLReader xmlReader = parser.getXMLReader();
             xmlReader.setContentHandler(filter);
             xmlReader.setErrorHandler(errorHandler);
-            xmlReader.parse(new InputSource(new InputStreamReader(new FileInputStream(inputXsd), "UTF8")));
+            xmlReader.parse(new InputSource(reader));
 
         } catch (final SAXException | TransformerConfigurationException | IOException e) {
             throw ProcessException.wrap(e);

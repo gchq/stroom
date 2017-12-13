@@ -30,11 +30,11 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
-import stroom.explorer.client.event.HighlightExplorerItemEvent;
+import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.OpenExplorerTabEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
@@ -48,7 +48,7 @@ import stroom.widget.util.client.SelectionType;
 
 public class ExplorerTreePresenter
         extends MyPresenter<ExplorerTreePresenter.ExplorerTreeView, ExplorerTreePresenter.ExplorerTreeProxy>
-        implements ExplorerTreeUiHandlers, RefreshExplorerTreeEvent.Handler, HighlightExplorerItemEvent.Handler,
+        implements ExplorerTreeUiHandlers, RefreshExplorerTreeEvent.Handler, HighlightExplorerNodeEvent.Handler,
         CurrentUserChangedHandler, TabData {
 
     private static final String EXPLORER = "Explorer";
@@ -69,7 +69,7 @@ public class ExplorerTreePresenter
 
         explorerTree = new ExplorerTree(dispatcher, true) {
             @Override
-            protected void doSelect(final ExplorerData selection, final SelectionType selectionType) {
+            protected void doSelect(final ExplorerNode selection, final SelectionType selectionType) {
                 super.doSelect(selection, selectionType);
                 getView().setDeleteEnabled(explorerTree.getSelectionModel().getSelectedItems().size() > 0);
             }
@@ -87,7 +87,7 @@ public class ExplorerTreePresenter
         registerHandler(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
 
         // Register for highlight events.
-        registerHandler(getEventBus().addHandler(HighlightExplorerItemEvent.getType(), this));
+        registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes())));
 
@@ -147,9 +147,9 @@ public class ExplorerTreePresenter
     }
 
     @Override
-    public void onHighlight(final HighlightExplorerItemEvent event) {
-        explorerTree.setSelectedItem(event.getItem());
-        explorerTree.getTreeModel().setEnsureVisible(event.getItem());
+    public void onHighlight(final HighlightExplorerNodeEvent event) {
+        explorerTree.setSelectedItem(event.getExplorerNode());
+        explorerTree.getTreeModel().setEnsureVisible(event.getExplorerNode());
         explorerTree.getTreeModel().refresh();
     }
 

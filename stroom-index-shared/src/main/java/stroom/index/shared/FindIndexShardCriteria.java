@@ -18,6 +18,7 @@ package stroom.index.shared;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityMatcher;
 import stroom.entity.shared.Range;
@@ -25,6 +26,7 @@ import stroom.entity.shared.StringCriteria;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
+import stroom.query.api.v2.DocRef;
 
 public class FindIndexShardCriteria extends BaseCriteria implements EntityMatcher<IndexShard> {
     public static final String FIELD_PARTITION = "Partition";
@@ -32,7 +34,7 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
     private Range<Integer> documentCountRange = new Range<>();
     private EntityIdSet<Node> nodeIdSet = new EntityIdSet<>();
     private EntityIdSet<Volume> volumeIdSet = new EntityIdSet<>();
-    private EntityIdSet<Index> indexIdSet = new EntityIdSet<>();
+    private CriteriaSet<DocRef> indexSet = new CriteriaSet<>();
     private EntityIdSet<IndexShard> indexShardSet = new EntityIdSet<>();
     private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<>();
     private StringCriteria partition = new StringCriteria();
@@ -46,7 +48,7 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         nodeIdSet.copyFrom(criteria.nodeIdSet);
         volumeIdSet.copyFrom(criteria.volumeIdSet);
         documentCountRange = criteria.documentCountRange;
-        indexIdSet.copyFrom(criteria.indexIdSet);
+        indexSet.copyFrom(criteria.indexSet);
         indexShardSet.copyFrom(criteria.indexShardSet);
         indexShardStatusSet.copyFrom(criteria.indexShardStatusSet);
         partition.copyFrom(criteria.partition);
@@ -64,8 +66,8 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         this.documentCountRange = documentCountRange;
     }
 
-    public EntityIdSet<Index> getIndexIdSet() {
-        return indexIdSet;
+    public CriteriaSet<DocRef> getIndexSet() {
+        return indexSet;
     }
 
     public EntityIdSet<IndexShard> getIndexShardSet() {
@@ -87,8 +89,8 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append("indexIdSet=");
-        sb.append(indexIdSet);
+        sb.append("indexSet=");
+        sb.append(indexSet);
         return sb.toString();
     }
 
@@ -100,7 +102,7 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         if (!volumeIdSet.isMatch(indexShard.getVolume())) {
             return false;
         }
-        if (!indexIdSet.isMatch(indexShard.getIndex())) {
+        if (!indexSet.isMatch(DocRefUtil.create(indexShard.getIndex()))) {
             return false;
         }
         if (!indexShardSet.isMatch(indexShard)) {

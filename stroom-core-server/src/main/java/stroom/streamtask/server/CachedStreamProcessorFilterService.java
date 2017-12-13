@@ -19,7 +19,6 @@ package stroom.streamtask.server;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CachingEntityManager;
-import stroom.streamtask.shared.StreamProcessorService;
 
 import javax.inject.Inject;
 
@@ -27,7 +26,7 @@ import javax.inject.Inject;
 @Component("cachedStreamProcessorFilterService")
 public class CachedStreamProcessorFilterService extends StreamProcessorFilterServiceImpl {
     @Inject
-    CachedStreamProcessorFilterService(final CachingEntityManager entityManager, final StreamProcessorService streamProcessorService, final StreamProcessorFilterMarshaller marshaller) {
-        super(entityManager, streamProcessorService, marshaller);
+    CachedStreamProcessorFilterService(final CachingEntityManager entityManager, final StreamProcessorService streamProcessorService) {
+        super(entityManager, streamProcessorService);
     }
 }

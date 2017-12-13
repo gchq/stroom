@@ -16,21 +16,23 @@
 
 package stroom.pipeline.server.writer;
 
+import stroom.util.io.FileUtil;
 import stroom.util.io.WrappedOutputStream;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-public class LockedOutputStream extends WrappedOutputStream {
+class LockedOutputStream extends WrappedOutputStream {
     private static final String UNABLE_TO_RENAME_FILE = "Unable to rename file \"";
     private static final String TO = "\" to \"";
     private static final String QUOTE = "\"";
 
-    final File lockFile;
-    final File outFile;
+    final Path lockFile;
+    final Path outFile;
 
-    public LockedOutputStream(final OutputStream outputStream, final File lockFile, final File outFile) {
+    LockedOutputStream(final OutputStream outputStream, final Path lockFile, final Path outFile) {
         super(outputStream);
         this.lockFile = lockFile;
         this.outFile = outFile;
@@ -41,16 +43,15 @@ public class LockedOutputStream extends WrappedOutputStream {
         super.flush();
         super.close();
 
-        final boolean success = lockFile.renameTo(outFile);
-
-        if (!success) {
-            final StringBuilder message = new StringBuilder();
-            message.append(UNABLE_TO_RENAME_FILE);
-            message.append(lockFile.getAbsolutePath());
-            message.append(TO);
-            message.append(outFile.getAbsolutePath());
-            message.append(QUOTE);
-            throw new IOException(message.toString());
+        try {
+            Files.move(lockFile, outFile);
+        } catch (final IOException e) {
+            final String message = UNABLE_TO_RENAME_FILE +
+                    FileUtil.getCanonicalPath(lockFile) +
+                    TO +
+                    FileUtil.getCanonicalPath(outFile) +
+                    QUOTE;
+            throw new IOException(message);
         }
     }
 }

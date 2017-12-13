@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.server.ScheduledTaskExecutor;
-import stroom.pool.SecurityHelper;
+import stroom.security.SecurityHelper;
 import stroom.security.SecurityContext;
 import stroom.task.server.StroomThreadGroup;
 import stroom.task.server.TaskCallbackAdaptor;
@@ -34,7 +34,6 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanLifeCycle;
 import stroom.util.spring.StroomBeanMethodExecutable;
 import stroom.util.thread.CustomThreadFactory;
-import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -139,26 +138,25 @@ public class LifecycleServiceImpl implements LifecycleService {
 
             // Create the runnable object that will perform execution on all
             // scheduled services.
-            final Runnable runnable = new ThreadScopeRunnable() {
-                private final ReentrantLock lock = new ReentrantLock();
+            final  ReentrantLock lock = new ReentrantLock();
 
-            @Override
-            protected void exec() {
-                if (lock.tryLock()) {
-                    try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
-                        Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
-                        scheduledTaskExecutor.execute();
-                    } catch (final Throwable t) {
-                        LOGGER.error(t.getMessage(), t);
-                    } finally {
+                final Runnable runnable =() ->{
+                    if (lock.tryLock()) {
 
-                        lock.unlock();
+                        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+                            Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
+                            scheduledTaskExecutor.execute();
+                        } catch (final Throwable t) {
+                            LOGGER.error(t.getMessage(), t);
+                        } finally {
+
+                            lock.unlock();
+                        }
+                    } else {
+                        LOGGER.warn("Still trying to execute tasks");
                     }
-                } else {
-                    LOGGER.warn("Still trying to execute tasks");
                 }
-            }
-        };
+            ;
 
             // Create the thread pool that we will use to startup, shutdown and
             // execute lifecycle beans asynchronously.

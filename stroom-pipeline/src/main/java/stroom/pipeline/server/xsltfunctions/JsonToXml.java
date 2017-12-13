@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.xml.converter.json.JSONParser;
 
@@ -37,23 +38,28 @@ import java.io.StringReader;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class JsonToXml extends StroomExtensionFunctionCall {
+class JsonToXml extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        // Get the json string.
-        final String json = getSafeString(functionName, context, arguments, 0);
+        Sequence result = EmptyAtomicSequence.getInstance();
 
-        Sequence sequence = EmptyAtomicSequence.getInstance();
-        if (json != null && json.length() > 0) {
-            try {
-                sequence = jsonToXml(context, json);
-            } catch (final Throwable t) {
-                createWarning(context, t);
+        try {
+            // Get the json string.
+            final String json = getSafeString(functionName, context, arguments, 0);
+
+            if (json != null && json.length() > 0) {
+                try {
+                    result = jsonToXml(context, json);
+                } catch (final Throwable t) {
+                    createWarning(context, t);
+                }
             }
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        return sequence;
+        return result;
     }
 
     static Sequence jsonToXml(final XPathContext context, final String json) throws IOException, SAXException {

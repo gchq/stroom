@@ -40,15 +40,15 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
  */
 @Configuration
 @ComponentScan(basePackages = {
+        "stroom.apiclients",
         "stroom.cache",
         "stroom.cluster",
         "stroom.datafeed",
         "stroom.datasource",
+        "stroom.docstore.server",
         "stroom.db",
-        "stroom.dictionary",
         "stroom.dispatch",
         "stroom.entity",
-        "stroom.explorer",
         "stroom.feed",
         "stroom.folder",
         "stroom.importexport",

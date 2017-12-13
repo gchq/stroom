@@ -18,10 +18,11 @@ package stroom.pipeline.server.writer;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.File;
 import java.io.OutputStream;
+import java.nio.file.Path;
 
 public class TestRandomOutputStreamProvider extends StroomUnitTest {
     @Test
@@ -35,8 +36,8 @@ public class TestRandomOutputStreamProvider extends StroomUnitTest {
         for (int i = 0; i < 1000; i++) {
             final OutputStream outputStream = provider.createOutputStream();
             final LockedOutputStream lockedOutputStream = (LockedOutputStream) outputStream;
-            final File file = lockedOutputStream.lockFile;
-            final String path = file.getAbsolutePath();
+            final Path file = lockedOutputStream.lockFile;
+            final String path = FileUtil.getCanonicalPath(file);
 
             if (path.contains("/t1/")) {
                 found1 = true;
@@ -58,8 +59,8 @@ public class TestRandomOutputStreamProvider extends StroomUnitTest {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
         final FileAppender provider = new FileAppender(null, new PathCreator());
         provider.setOutputPaths(
-                getCurrentTestDir().getAbsolutePath() + "/t1" + name + "," + getCurrentTestDir().getAbsolutePath()
-                        + "/t2" + name + "," + getCurrentTestDir().getAbsolutePath() + "/t3" + name);
+                FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t1" + name + "," + FileUtil.getCanonicalPath(getCurrentTestDir())
+                        + "/t2" + name + "," + FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t3" + name);
         return provider;
     }
 }

@@ -43,7 +43,6 @@ import stroom.entity.client.SaveQueue;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.ResultList;
 import stroom.pipeline.shared.PipelineEntity;
@@ -486,29 +485,19 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void setPipeline(final PipelineEntity pipelineEntity) {
-        action.setFolderId(null);
         action.setPipelineId(pipelineEntity.getId());
         doDataDisplay();
 
     }
 
-    private void setFolder(final Folder folder) {
-        action.setPipelineId(null);
-        action.setFolderId(folder.getId());
-        doDataDisplay();
-    }
-
     private void setNullCriteria() {
         action.setPipelineId(null);
-        action.setFolderId(null);
         doDataDisplay();
     }
 
     @Override
     public void read(final BaseEntity entity) {
-        if (entity instanceof Folder) {
-            setFolder((Folder) entity);
-        } else if (entity instanceof PipelineEntity) {
+        if (entity instanceof PipelineEntity) {
             setPipeline((PipelineEntity) entity);
         } else {
             setNullCriteria();

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.benchmark.server;
@@ -23,41 +24,47 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.jobsystem.shared.JobManager;
+import stroom.node.server.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.NodeService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.server.sql.StatisticEvent;
 import stroom.statistics.server.sql.StatisticTag;
 import stroom.statistics.server.sql.Statistics;
+import stroom.streamstore.server.StreamAttributeMapService;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamAttributeMapService;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.server.StreamProcessorFilterService;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.server.StreamProcessorTask;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterService;
-import stroom.streamtask.shared.StreamProcessorService;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AsyncTaskHelper;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
@@ -78,7 +85,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Scope(StroomScope.TASK)
 public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // 20 min timeout
-    public static final int TIME_OUT = 1000 * 60 * 20;
+    private static final int TIME_OUT = 1000 * 60 * 20;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkClusterExecutor.class);
     private static final String ROOT_TEST_NAME = "Benchmark-Cluster Test";
@@ -88,7 +95,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
 
     private final FeedService feedService;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
     private final ClusterDispatchAsyncHelper dispatchHelper;
@@ -112,7 +119,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
     @Inject
     BenchmarkClusterExecutor(final FeedService feedService,
-                             final PipelineEntityService pipelineEntityService,
+                             final PipelineService pipelineService,
                              final StreamProcessorFilterService streamProcessorFilterService,
                              final StreamProcessorService streamProcessorService,
                              final ClusterDispatchAsyncHelper dispatchHelper,
@@ -127,7 +134,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              @Value("#{propertyConfigurer.getProperty('stroom.benchmark.recordCount')}") final int recordCount,
                              @Value("#{propertyConfigurer.getProperty('stroom.benchmark.concurrentWriters')}") final int concurrentWriters) {
         this.feedService = feedService;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamProcessorService = streamProcessorService;
         this.dispatchHelper = dispatchHelper;
@@ -210,10 +217,10 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 dispatchHelper.execAsync(new ClearServiceClusterTask(task, null), TargetType.ACTIVE);
 
                 final Feed referenceFeed = feedService.find(new FindFeedCriteria(BENCHMARK_REFERENCE)).getFirst();
-                final PipelineEntity referencePipeline = pipelineEntityService
+                final PipelineEntity referencePipeline = pipelineService
                         .find(new FindPipelineEntityCriteria(BENCHMARK_REFERENCE)).getFirst();
                 final Feed eventFeed = feedService.find(new FindFeedCriteria(BENCHMARK_EVENTS)).getFirst();
-                final PipelineEntity eventsPipeline = pipelineEntityService
+                final PipelineEntity eventsPipeline = pipelineService
                         .find(new FindPipelineEntityCriteria(BENCHMARK_EVENTS)).getFirst();
 
                 // Not setup to run benchmark
@@ -323,29 +330,39 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         return System.currentTimeMillis() + TIME_OUT;
     }
 
-    private void processData(final Feed feed, final StreamType rawStreamType, final StreamType processedStreamType,
-                             final StreamProcessor streamProcessor, final Period createPeriod) {
+    private void processData(final Feed feed,
+                             final StreamType rawStreamType,
+                             final StreamType processedStreamType,
+                             final StreamProcessor streamProcessor,
+                             final Period createPeriod) {
         if (!isTerminated()) {
-            final Period processPeriod = new Period(System.currentTimeMillis(), null);
+            final long startTime = System.currentTimeMillis();
 
             // Translate the data across the cluster.
             LOGGER.info("Processing data {}", feed.getName());
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final FindStreamCriteria rawCriteria = new FindStreamCriteria();
-            rawCriteria.obtainFeeds().obtainInclude().add(feed.getId());
-            rawCriteria.setCreatePeriod(createPeriod);
-            rawCriteria.obtainStreamTypeIdSet().add(rawStreamType);
+            final ExpressionOperator rawExpression = new ExpressionOperator.Builder(Op.AND)
+                    .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
+                    .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
+                    .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, rawStreamType.getDisplayValue())
+                    .build();
+            final QueryData rawCriteria = new QueryData();
+            rawCriteria.setExpression(rawExpression);
 
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, rawCriteria);
+
             jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, true);
 
             // Wait for the cluster to stop processing.
+            final ExpressionOperator processedExpression = new ExpressionOperator.Builder(Op.AND)
+                    .addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
+                    .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
+                    .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, processedStreamType.getDisplayValue())
+                    .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                    .build();
             final FindStreamCriteria processedCriteria = new FindStreamCriteria();
-            processedCriteria.setCreatePeriod(processPeriod);
-            processedCriteria.obtainFeeds().obtainInclude().add(feed.getId());
-            processedCriteria.obtainStreamTypeIdSet().add(processedStreamType);
-            processedCriteria.obtainStatusSet().setSingleItem(StreamStatus.UNLOCKED);
+            processedCriteria.setExpression(processedExpression);
 
             boolean complete = false;
 
@@ -379,7 +396,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
             // Record benchmark statistics if we weren't asked to stop.
             if (!isTerminated()) {
-                processPeriod.setToMs(System.currentTimeMillis());
+                final Period processPeriod = new Period(startTime, System.currentTimeMillis());
                 LOGGER.info("Translated {} data in {}", feed.getName(), logExecutionTime);
                 recordTranslationStats(feed, processPeriod);
             }
@@ -458,11 +475,17 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         // "Flush stream attribute values",
         // StreamAttributeValueFlush.class));
 
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
+                .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
+                .addOperator(new ExpressionOperator.Builder(Op.OR)
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.EVENTS.getDisplayValue())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.REFERENCE.getDisplayValue())
+                        .build())
+                .build();
+
         final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
-        criteria.obtainFindStreamCriteria().obtainFeeds().obtainInclude().add(feed);
-        criteria.obtainFindStreamCriteria().setCreatePeriod(processPeriod);
-        criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet().add(StreamType.EVENTS);
-        criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet().add(StreamType.REFERENCE);
+        criteria.obtainFindStreamCriteria().setExpression(expression);
 
         final List<StreamAttributeMap> processedStreams = streamAttributeMapService.find(criteria);
 
@@ -482,7 +505,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
                     checkPeriod(nodePeriod, processedStream);
                 }
-
             }
 
             statisticEventList.add(StatisticEvent.createValue(nowMs,

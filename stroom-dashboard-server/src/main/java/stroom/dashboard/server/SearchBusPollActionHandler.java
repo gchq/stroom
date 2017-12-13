@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server;
@@ -22,7 +23,6 @@ import org.springframework.context.annotation.Scope;
 import stroom.dashboard.server.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.dashboard.shared.QueryService;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
@@ -34,6 +34,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
@@ -74,10 +75,8 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
     @Override
     public SearchBusPollResult exec(final SearchBusPollAction action) {
-        try {
-            // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-            securityContext.elevatePermissions();
-
+        // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             if (LOGGER.isDebugEnabled()) {
                 final StringBuilder sb = new StringBuilder(
                         "Only the following search queries should be active for session '");
@@ -119,8 +118,6 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             return new SearchBusPollResult(searchResultMap);
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 
@@ -209,7 +206,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
                 final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
 
-                final QueryEntity queryEntity = queryService.create(null, "History");
+                final QueryEntity queryEntity = queryService.create("History");
 
                 queryEntity.setDashboardId(queryKey.getDashboardId());
                 queryEntity.setQueryId(queryKey.getQueryId());

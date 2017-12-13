@@ -19,11 +19,13 @@ package stroom.pipeline.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.server.GenericEntityService;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.server.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.pipeline.shared.FetchDocRefsAction;
 import stroom.query.api.v2.DocRef;
+import stroom.security.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedSet;
@@ -36,11 +38,14 @@ import javax.inject.Inject;
 public class FetchDocRefsHandler
         extends AbstractTaskHandler<FetchDocRefsAction, SharedSet<SharedDocRef>> {
     private final Logger LOGGER = LoggerFactory.getLogger(FetchDocRefsHandler.class);
-    private final GenericEntityService genericEntityService;
+    private final ExplorerNodeService explorerNodeService;
+    private final SecurityContext securityContext;
 
     @Inject
-    FetchDocRefsHandler(final GenericEntityService genericEntityService) {
-        this.genericEntityService = genericEntityService;
+    FetchDocRefsHandler(final ExplorerNodeService explorerNodeService,
+                        final SecurityContext securityContext) {
+        this.explorerNodeService = explorerNodeService;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -49,10 +54,12 @@ public class FetchDocRefsHandler
         if (action.getDocRefs() != null) {
             for (final DocRef docRef : action.getDocRefs()) {
                 try {
-                    final DocRef loaded = DocRefUtil.create(genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid()));
-                    final SharedDocRef sharedDocRef = SharedDocRef.create(loaded);
-                    if (sharedDocRef != null) {
-                        result.add(sharedDocRef);
+                    // Only return entries the user has permission to see.
+                    if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.USE)) {
+                        final ExplorerNode explorerNode = explorerNodeService.getNode(docRef);
+                        if (explorerNode != null) {
+                            result.add(SharedDocRef.create(explorerNode.getDocRef()));
+                        }
                     }
                 } catch (final Exception e) {
                     LOGGER.debug(e.getMessage(), e);

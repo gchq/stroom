@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.shared.BaseResultList;
 import stroom.node.server.NodeCache;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.UserTokenUtil;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
@@ -34,7 +36,6 @@ import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
-import stroom.util.shared.UserTokenUtil;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.ExternalShutdownController;
 import stroom.util.task.HasMonitor;
@@ -42,7 +43,6 @@ import stroom.util.task.MonitorInfoUtil;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.CustomThreadFactory;
-import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -303,6 +303,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 @Override
                 protected void exec() {
                     try {
+                        currentTasks.put(task.getId(), taskThread);
                         LOGGER.debug("execAsync()->exec() - {} {} took {}",
                                 task.getClass().getSimpleName(),
                                 task.getTaskName(),
@@ -345,17 +346,11 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
             final Executor executor = getExecutor(threadPool);
             if (executor != null) {
                 currentAsyncTaskCount.incrementAndGet();
-                currentTasks.put(task.getId(), taskThread);
 
                 try {
                     // We might run out of threads and get a can't fork
                     // exception from the thread pool.
-                    executor.execute(new ThreadScopeRunnable() {
-                        @Override
-                        protected void exec() {
-                            taskScopeRunnable.run();
-                        }
-                    });
+                    executor.execute(taskScopeRunnable);
 
                 } catch (final Throwable t) {
                     try {
@@ -366,7 +361,6 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                         taskThread.setThread(null);
                         // Decrease the count of the number of async tasks.
                         currentAsyncTaskCount.decrementAndGet();
-                        currentTasks.remove(task.getId());
                     }
                 }
             }
@@ -393,9 +387,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 }
             }
 
-            securityContext.pushUser(userToken);
-            try {
-
+            try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, userToken)) {
                 // Create a task monitor bean to be injected inside the handler.
                 final TaskMonitorImpl taskMonitor = beanStore.getBean(TaskMonitorImpl.class);
                 if (task instanceof HasMonitor) {
@@ -415,9 +407,6 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 } finally {
                     CurrentTaskState.popState();
                 }
-
-            } finally {
-                securityContext.popUser();
             }
 
         } finally {

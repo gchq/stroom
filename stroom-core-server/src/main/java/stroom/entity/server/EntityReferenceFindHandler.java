@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.server;
@@ -20,7 +21,7 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.server.logging.EntityEventLog;
+import stroom.logging.DocumentEventLog;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
@@ -41,12 +42,12 @@ import java.util.List;
 class EntityReferenceFindHandler
         extends AbstractTaskHandler<EntityReferenceFindAction<BaseCriteria>, ResultList<SharedDocRef>> {
     private final EntityServiceBeanRegistry beanRegistry;
-    private final EntityEventLog entityEventLog;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    EntityReferenceFindHandler(final EntityServiceBeanRegistry beanRegistry, final EntityEventLog entityEventLog) {
+    EntityReferenceFindHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog documentEventLog) {
         this.beanRegistry = beanRegistry;
-        this.entityEventLog = entityEventLog;
+        this.documentEventLog = documentEventLog;
     }
 
     @SuppressWarnings("unchecked")
@@ -72,9 +73,9 @@ class EntityReferenceFindHandler
 
         try {
             resultList = (BaseResultList<BaseEntity>) beanRegistry.invoke("find", action.getCriteria());
-            entityEventLog.search(action.getCriteria(), query, resultList);
+            documentEventLog.search(action.getCriteria(), query, resultList);
         } catch (final RuntimeException e) {
-            entityEventLog.search(action.getCriteria(), query, e);
+            documentEventLog.search(action.getCriteria(), query, e);
 
             throw e;
         }

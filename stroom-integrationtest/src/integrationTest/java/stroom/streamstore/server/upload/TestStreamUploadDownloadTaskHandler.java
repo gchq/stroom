@@ -22,6 +22,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
+import stroom.security.UserTokenUtil;
 import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
@@ -30,6 +31,7 @@ import stroom.streamstore.server.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.server.udload.StreamDownloadSettings;
 import stroom.streamstore.server.udload.StreamDownloadTask;
 import stroom.streamstore.server.udload.StreamUploadTask;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
@@ -38,7 +40,6 @@ import stroom.task.server.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
-import stroom.util.task.ServerTask;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -62,14 +63,14 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
         commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
 
-        final Path file = Files.createTempFile(getCurrentTestPath(), "TestStreamDownloadTaskHandler", ".zip");
+        final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
+        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feed));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
         Assert.assertEquals(2, streamStore.find(findStreamCriteria).size());
 
-        taskManager.exec(new StreamDownloadTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
+        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
 
         Assert.assertEquals(2, streamStore.find(findStreamCriteria).size());
 
@@ -80,7 +81,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         Assert.assertFalse(stroomZipFile.containsEntry("001", StroomZipFileType.Meta));
         stroomZipFile.close();
 
-        taskManager.exec(new StreamUploadTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, DocRefUtil.create(feed),
+        taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, DocRefUtil.create(feed),
                 DocRefUtil.create(StreamType.RAW_EVENTS), null, null));
 
         Assert.assertEquals(4, streamStore.find(findStreamCriteria).size());
@@ -90,12 +91,12 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
     public void testUploadFlatFile() throws IOException {
         final Feed feed = commonTestScenarioCreator.createSimpleFeed();
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
+        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feed));
 
-        final Path file = Files.createTempFile(getCurrentTestPath(), "TestStreamDownloadTaskHandler", ".dat");
+        final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".dat");
         Files.write(file, "TEST".getBytes());
 
-        taskManager.exec(new StreamUploadTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, "test.dat", file, DocRefUtil.create(feed),
+        taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.dat", file, DocRefUtil.create(feed),
                 DocRefUtil.create(StreamType.RAW_EVENTS), null, "Tom:One\nJames:Two\n"));
 
         Assert.assertEquals(1, streamStore.find(findStreamCriteria).size());
@@ -103,7 +104,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
     @Test
     public void testDownloadNestedComplex() throws IOException {
-        final Path file = Files.createTempFile(getCurrentTestPath(), "TestStreamDownloadTaskHandler", ".zip");
+        final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final Feed feed = commonTestScenarioCreator.createSimpleFeed();
 
         final StreamTarget streamTarget = streamStore
@@ -140,12 +141,12 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         streamStore.closeStreamTarget(streamTarget);
 
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
+        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feed));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
         Assert.assertEquals(1, streamStore.find(findStreamCriteria).size());
 
-        taskManager.exec(new StreamDownloadTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
+        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         Assert.assertTrue(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest));
@@ -159,7 +160,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         final String extraMeta = "Z:ALL\n";
 
-        taskManager.exec(new StreamUploadTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, DocRefUtil.create(feed),
+        taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, DocRefUtil.create(feed),
                 DocRefUtil.create(StreamType.RAW_EVENTS), null, extraMeta));
 
         final List<Stream> streamList = streamStore.find(findStreamCriteria);

@@ -17,8 +17,8 @@
 package stroom.importexport.server;
 
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.ImportState;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.Message;
 
 import java.nio.file.Path;

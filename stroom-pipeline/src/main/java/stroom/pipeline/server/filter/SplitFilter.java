@@ -45,13 +45,13 @@ public class SplitFilter extends AbstractXMLFilter {
      * The default depth to split XML. Set to 2 as we normally split on second
      * level elements.
      */
-    public static final int DEFAULT_SPLIT_DEPTH = 2;
+    private static final int DEFAULT_SPLIT_DEPTH = 2;
 
     /**
      * The default number of elements at the split depth to count before we
      * split.
      */
-    public static final int DEFAULT_SPLIT_COUNT = 10000;
+    private static final int DEFAULT_SPLIT_COUNT = 10000;
 
     /**
      * A stack of DOM elements. Elements are put onto the stack within

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.importexport.client.presenter;
@@ -28,11 +29,9 @@ import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
-import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.security.shared.DocumentPermissionNames;
@@ -94,7 +93,7 @@ public class ExportConfigPresenter
         // Disable the popup ok/cancel buttons before we attempt export.
         DisablePopupEvent.fire(this, this);
 
-        final Set<ExplorerData> dataItems = treePresenter.getSelectionModel().getSelectedSet();
+        final Set<ExplorerNode> dataItems = treePresenter.getSelectionModel().getSelectedSet();
         if (dataItems == null || dataItems.size() == 0) {
             // Let the user know that they didn't select anything to export.
             AlertEvent.fireWarn(this, "No folders have been selected for export", null);
@@ -103,14 +102,8 @@ public class ExportConfigPresenter
 
         } else {
             final DocRefs docRefs = new DocRefs();
-            for (final ExplorerData dataItem : dataItems) {
-                if (dataItem instanceof EntityData) {
-                    final EntityData entityData = (EntityData) dataItem;
-                    docRefs.add(entityData.getDocRef());
-                } else {
-                    // It must be the root folder that is selected
-                    docRefs.add(new SharedDocRef(Folder.ENTITY_TYPE, "0", "System"));
-                }
+            for (final ExplorerNode explorerNode : dataItems) {
+                docRefs.add(explorerNode.getDocRef());
             }
 
             clientDispatchAsync.exec(new ExportConfigAction(docRefs))

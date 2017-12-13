@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.importexport.server;
@@ -29,13 +30,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import stroom.node.server.GlobalPropertyService;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.shared.GlobalProperty;
-import stroom.node.shared.GlobalPropertyService;
 import stroom.util.config.StroomProperties;
+import stroom.util.io.FileUtil;
 import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomTestUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -102,7 +103,7 @@ public class TestContentPackImport {
         ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService);
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "false");
 
-        StroomTestUtil.touchFile(testPack1);
+        FileUtil.touch(testPack1);
 
         contentPackImport.startup();
 
@@ -126,9 +127,9 @@ public class TestContentPackImport {
                 .thenReturn(null);
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "true");
 
-        StroomTestUtil.touchFile(testPack1);
-        StroomTestUtil.touchFile(testPack2);
-        StroomTestUtil.touchFile(testPack3);
+        FileUtil.touch(testPack1);
+        FileUtil.touch(testPack2);
+        FileUtil.touch(testPack3);
 
         contentPackImport.startup();
         Mockito.verify(importExportService, Mockito.times(1))
@@ -158,7 +159,7 @@ public class TestContentPackImport {
                 .performImportWithoutConfirmation(Matchers.any());
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "true");
 
-        StroomTestUtil.touchFile(testPack1);
+        FileUtil.touch(testPack1);
 
         contentPackImport.startup();
 
@@ -166,5 +167,4 @@ public class TestContentPackImport {
         Assert.assertFalse(Files.exists(testPack1));
         Assert.assertTrue(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName())));
     }
-
 }

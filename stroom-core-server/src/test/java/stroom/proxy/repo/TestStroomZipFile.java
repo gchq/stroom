@@ -15,9 +15,7 @@ import java.util.zip.ZipOutputStream;
 public class TestStroomZipFile {
     @Test
     public void testRealZip1() throws IOException {
-        Path testDir = TestUtil.getCurrentTestPath();
-        Assert.assertTrue(Files.isDirectory(testDir));
-        final Path uniqueTestDir = TestUtil.createUniqueTestDir(testDir);
+        Path uniqueTestDir = Files.createTempDirectory("stroom");
         Assert.assertTrue(Files.isDirectory(uniqueTestDir));
         final Path file = Files.createTempFile(uniqueTestDir, "TestStroomZipFile", ".zip");
         System.out.println(file.toAbsolutePath().toString());
@@ -50,7 +48,7 @@ public class TestStroomZipFile {
 
     @Test
     public void testRealZip2() throws IOException {
-        final Path file = Files.createTempFile(TestUtil.createUniqueTestDir(TestUtil.getCurrentTestPath()), "TestStroomZipFile", ".zip");
+        final Path file = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         ZipOutputStream zipOutputStream = null;
         try {
             zipOutputStream = new ZipOutputStream(Files.newOutputStream(file));

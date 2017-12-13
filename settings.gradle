@@ -14,10 +14,11 @@ rootProject.name = 'stroom'
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-// Proxy projects.
-include 'stroom-proxy-app'
+// Proxy project.
+include 'stroom-proxy'
 
 // Shared projects.
 include 'stroom-util-shared'
@@ -25,14 +26,17 @@ include 'stroom-entity-shared'
 
 // API projects
 include 'stroom-security-api'
+include 'stroom-explorer-api'
 include 'stroom-statistics-api'
 
 // More shared projects.
 include 'stroom-core-shared'
 include 'stroom-security-shared'
+include 'stroom-docstore-shared'
 include 'stroom-index-shared'
 include 'stroom-statistics-shared'
 include 'stroom-dashboard-shared'
+include 'stroom-ruleset-shared'
 
 // Client projects
 include 'stroom-security-client-api'
@@ -55,17 +59,29 @@ include 'stroom-config'
 
 include 'stroom-util'
 include 'stroom-core-server'
+include 'stroom-docstore-server'
+include 'stroom-explorer-server'
 include 'stroom-pipeline'
 include 'stroom-security-server'
 include 'stroom-index-server'
 include 'stroom-statistics-server'
 include 'stroom-dashboard-server'
+include 'stroom-ruleset-server'
 include 'stroom-connectors'
 include 'stroom-kafka-client-impl_0_10_0_1'
 
 // Package it all together.
 include 'stroom-app'
 
+// Headless
+include 'stroom-headless'
+
 // Integration tests.
 include 'stroom-integrationtest'
-
+include 'stroom-annotations-server'
+include 'stroom-elastic-server'
+include 'stroom-elastic-client'
+include 'stroom-elastic-shared'
+include 'stroom-elastic-client-impl_5_6_4'
+include 'stroom-annotations-shared'
+include 'stroom-annotations-client'

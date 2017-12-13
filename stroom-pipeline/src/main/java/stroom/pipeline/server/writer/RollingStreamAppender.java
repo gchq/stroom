@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.writer;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinationFactory;
@@ -28,15 +29,17 @@ import stroom.pipeline.destination.StreamKey;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -58,6 +61,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private final StreamTypeService streamTypeService;
     private final NodeCache nodeCache;
 
+    private DocRef feedRef;
     private Feed feed;
     private String streamType;
     private boolean segmentOutput = true;
@@ -111,8 +115,17 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     @Override
     void validateSpecificSettings() {
         if (feed == null) {
-            // Use current feed if none other has been specified.
-            feed = feedService.load(streamHolder.getStream().getFeed());
+            if (feedRef != null) {
+                feed = feedService.loadByUuid(feedRef.getUuid());
+            } else {
+                final Stream parentStream = streamHolder.getStream();
+                if (parentStream == null) {
+                    throw new ProcessException("Unable to determine feed as no parent stream set");
+                }
+
+                // Use current feed if none other has been specified.
+                feed = feedService.load(parentStream.getFeed());
+            }
         }
 
         if (streamType == null) {
@@ -121,8 +134,9 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
-    public void setFeed(final Feed feed) {
-        this.feed = feed;
+    @PipelinePropertyDocRef(types=Feed.ENTITY_TYPE)
+    public void setFeed(final DocRef feedRef) {
+        this.feedRef = feedRef;
     }
 
     @PipelineProperty(description = "The stream type that the output stream should be written as. This must be specified.")

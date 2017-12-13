@@ -64,9 +64,6 @@ public class JSONWriter extends AbstractWriter {
     private boolean indentOutput = false;
     private String currentKey;
 
-    public JSONWriter() {
-    }
-
     @Inject
     public JSONWriter(final ErrorReceiverProxy errorReceiverProxy) {
         super(errorReceiverProxy);

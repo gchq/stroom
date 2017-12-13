@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.node.server;
@@ -25,16 +26,15 @@ import stroom.entity.server.util.BaseEntityUtil;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.NodeService;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
-import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -130,6 +130,7 @@ public class NodeConfigForTesting implements NodeConfig {
                 if (realNode == null) {
                     realNode = BaseEntityUtil.clone(node);
                     realNode.setRack(BaseEntityUtil.findByName(realRackList, realNode.getRack().getName()));
+                    LOGGER.debug("Persisting node {}", realNode);
                     realNode = stroomEntityManager.saveEntity(realNode);
                 }
                 realNodeList.add(realNode);
@@ -147,7 +148,7 @@ public class NodeConfigForTesting implements NodeConfig {
                 }
 
                 if (!found) {
-                    new File(volume.getPath()).mkdirs();
+                    Files.createDirectories(Paths.get(volume.getPath()));
 
                     final Node node = BaseEntityUtil.findByName(realNodeList, volume.getNode().getName());
 

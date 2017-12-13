@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.statistics.server.sql.pipeline.filter;
@@ -22,6 +23,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.server.MockDocumentEntityService;
+import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
@@ -88,7 +90,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
@@ -101,7 +103,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
@@ -163,7 +165,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         statisticsDataSource.setStatisticType(StatisticType.VALUE);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
@@ -177,7 +179,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
@@ -214,7 +216,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -227,7 +229,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -241,7 +243,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -254,7 +256,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -272,7 +274,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.VALUE);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -286,7 +288,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -300,7 +302,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -313,7 +315,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -327,7 +329,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -340,7 +342,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -354,7 +356,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -367,7 +369,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -385,7 +387,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -398,7 +400,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -408,7 +410,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     private String getString(final String resourceName) {
-        return StreamUtil.streamToString(StroomStatisticsServerTestFileUtil.getInputStream(resourceName));
+        return StroomStatisticsServerTestFileUtil.getString(resourceName);
     }
 
     @Override

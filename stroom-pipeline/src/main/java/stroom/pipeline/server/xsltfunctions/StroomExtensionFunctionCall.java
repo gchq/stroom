@@ -32,18 +32,16 @@ import stroom.util.shared.Severity;
 
 import java.util.List;
 
-public abstract class StroomExtensionFunctionCall {
+abstract class StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomExtensionFunctionCall.class);
 
     private ErrorReceiver errorReceiver;
     private LocationFactory locationFactory;
     private List<PipelineReference> pipelineReferences;
 
-    protected abstract Sequence call(String functionName, XPathContext context, Sequence[] arguments)
-            throws XPathException;
+    abstract Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException;
 
-    protected String getSafeString(final String functionName, final XPathContext context, final Sequence[] arguments,
-                                   final int index) throws XPathException {
+    String getSafeString(final String functionName, final XPathContext context, final Sequence[] arguments, final int index) throws XPathException {
         String string = null;
         final Sequence sequence = arguments[index];
         if (sequence != null) {
@@ -65,8 +63,7 @@ public abstract class StroomExtensionFunctionCall {
         return string;
     }
 
-    protected Boolean getSafeBoolean(final String functionName, final XPathContext context, final Sequence[] arguments,
-                                     final int index) throws XPathException {
+    Boolean getSafeBoolean(final String functionName, final XPathContext context, final Sequence[] arguments, final int index) throws XPathException {
         Boolean bool = null;
         final Sequence sequence = arguments[index];
         if (sequence != null) {
@@ -88,7 +85,7 @@ public abstract class StroomExtensionFunctionCall {
         return bool;
     }
 
-    protected void outputWarning(final XPathContext context, final StringBuilder msg, final Throwable e) {
+    void outputWarning(final XPathContext context, final StringBuilder msg, final Throwable e) {
         if (e != null) {
             msg.append(' ');
             msg.append(e.getMessage());
@@ -100,7 +97,7 @@ public abstract class StroomExtensionFunctionCall {
         log(context, Severity.WARNING, msg.toString(), e);
     }
 
-    protected void log(final XPathContext context, final Severity severity, final String message, final Throwable e) {
+    void log(final XPathContext context, final Severity severity, final String message, final Throwable e) {
         final Location location = getLocation(context);
         errorReceiver.log(severity, location, getClass().getSimpleName(), message, e);
     }
@@ -115,42 +112,17 @@ public abstract class StroomExtensionFunctionCall {
         return locationFactory.create();
     }
 
-    /**
-     * Return an object capable of compiling this IntegratedFunction call to
-     * Java source code. The returned object may be null, in which case Java
-     * code generation is not supported for this IntegratedFunction. If the
-     * returned object is not null, it must implement the interface
-     * com.saxonica.codegen.IntegratedFunctionCompiler. The default
-     * implementation returns null
-     *
-     * @return an instance of com.saxonica.codegen.IntegratedFunctionCompiler
-     * that generates Java code to implement the call on this extension
-     * function
-     */
-    public Object getCompilerForJava() {
-        try {
-            return Class.forName("com.saxonica.codegen.IntegratedFunctionCompiler").newInstance();
-        } catch (final InstantiationException e) {
-            return null;
-        } catch (final IllegalAccessException e) {
-            return null;
-        } catch (final ClassNotFoundException e) {
-            return null;
-        }
-    }
-
-    public void configure(final ErrorReceiver errorReceiver, final LocationFactory locationFactory,
-                          final List<PipelineReference> pipelineReferences) {
+    void configure(final ErrorReceiver errorReceiver, final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences) {
         this.errorReceiver = errorReceiver;
         this.locationFactory = locationFactory;
         this.pipelineReferences = pipelineReferences;
     }
 
-    public ErrorReceiver getErrorReceiver() {
+    ErrorReceiver getErrorReceiver() {
         return errorReceiver;
     }
 
-    public List<PipelineReference> getPipelineReferences() {
+    List<PipelineReference> getPipelineReferences() {
         return pipelineReferences;
     }
 }

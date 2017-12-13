@@ -19,6 +19,7 @@ package stroom.security.server;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Component;
 
+//TODO Why is this a component?
 @Component
 public class BCryptPasswordEncoder implements PasswordEncoder {
     @Override

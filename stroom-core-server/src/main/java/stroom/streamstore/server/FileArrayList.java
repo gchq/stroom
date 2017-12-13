@@ -18,9 +18,9 @@ package stroom.streamstore.server;
 
 import stroom.util.shared.SharedObject;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
-public class FileArrayList extends ArrayList<File> implements SharedObject {
+public class FileArrayList extends ArrayList<Path> implements SharedObject {
     private static final long serialVersionUID = -8296402199606588230L;
 }

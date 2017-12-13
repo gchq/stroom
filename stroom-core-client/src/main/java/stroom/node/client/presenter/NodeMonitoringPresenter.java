@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.node.client.presenter;
@@ -35,7 +36,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
-import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.node.shared.FetchNodeInfoAction;
@@ -267,7 +268,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (ok) {
                     if (node.getClusterURL() == null || !node.getClusterURL().equals(editor.getClusterUrl())) {
                         node.setClusterURL(editor.getClusterUrl());
-                        dispatcher.exec(new EntityServiceSaveAction<>(node)).onSuccess(result -> refresh());
+                        dispatcher.exec(new DocumentServiceWriteAction<>(node)).onSuccess(result -> refresh());
                     }
                 }
 

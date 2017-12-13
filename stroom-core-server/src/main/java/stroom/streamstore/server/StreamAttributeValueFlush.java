@@ -16,10 +16,11 @@
 
 package stroom.streamstore.server;
 
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Flushable;
 import stroom.feed.MetaMap;
 import stroom.streamstore.shared.Stream;
 
-public interface StreamAttributeValueFlush extends Flushable {
+public interface StreamAttributeValueFlush extends Flushable, Clearable {
     void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap);
 }

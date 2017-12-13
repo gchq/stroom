@@ -17,6 +17,7 @@
 package stroom.security.client.gin;
 
 import com.google.inject.Singleton;
+import stroom.changepassword.client.ChangePasswordPlugin;
 import stroom.core.client.gin.PluginModule;
 import stroom.entity.client.presenter.ManageEntityPresenter.ManageEntityView;
 import stroom.entity.client.view.ManageEntityViewImpl;
@@ -27,7 +28,6 @@ import stroom.login.client.view.LoginViewImpl;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.client.CurrentUser;
 import stroom.security.client.ManageUserPlugin;
-import stroom.security.client.presenter.ChangePasswordPlugin;
 import stroom.security.client.presenter.ChangePasswordPresenter;
 import stroom.security.client.presenter.ChangePasswordPresenter.ChangePasswordProxy;
 import stroom.security.client.presenter.ChangePasswordPresenter.ChangePasswordView;

@@ -34,7 +34,7 @@ import com.google.gwt.view.client.CellPreviewEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasNodeState;
 import stroom.widget.spinner.client.SpinnerSmall;
@@ -50,16 +50,16 @@ import java.util.Set;
 
 public class ExplorerTree extends AbstractExplorerTree {
     private final ExplorerTreeModel treeModel;
-    private final MultiSelectionModel<ExplorerData> selectionModel;
+    private final MultiSelectionModel<ExplorerNode> selectionModel;
     private final ScrollPanel scrollPanel;
-    private final CellTable<ExplorerData> cellTable;
+    private final CellTable<ExplorerNode> cellTable;
     private final DoubleSelectTest doubleClickTest = new DoubleSelectTest();
     private final boolean allowMultiSelect;
     private String expanderClassName;
 
     // Required for multiple selection using shift and control key modifiers.
-    private ExplorerData multiSelectStart;
-    private List<ExplorerData> rows;
+    private ExplorerNode multiSelectStart;
+    private List<ExplorerNode> rows;
 
     ExplorerTree(final ClientDispatchAsync dispatcher, final boolean allowMultiSelect) {
         this.allowMultiSelect = allowMultiSelect;
@@ -75,16 +75,16 @@ public class ExplorerTree extends AbstractExplorerTree {
         final ExplorerTreeResources resources = GWT.create(ExplorerTreeResources.class);
         cellTable = new CellTable<>(Integer.MAX_VALUE, resources);
         cellTable.setWidth("100%");
-        cellTable.addColumn(new Column<ExplorerData, ExplorerData>(explorerCell) {
+        cellTable.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
             @Override
-            public ExplorerData getValue(ExplorerData object) {
+            public ExplorerNode getValue(ExplorerNode object) {
                 return object;
             }
         });
 
         cellTable.setLoadingIndicator(null);
 
-        final MultiSelectionModelImpl<ExplorerData> multiSelectionModel = new MultiSelectionModelImpl<ExplorerData>() {
+        final MultiSelectionModelImpl<ExplorerNode> multiSelectionModel = new MultiSelectionModelImpl<ExplorerNode>() {
             @Override
             public HandlerRegistration addSelectionHandler(final Handler handler) {
                 return addHandler(handler, MultiSelectEvent.getType());
@@ -119,7 +119,7 @@ public class ExplorerTree extends AbstractExplorerTree {
     }
 
     @Override
-    void setData(final List<ExplorerData> rows) {
+    void setData(final List<ExplorerNode> rows) {
         this.rows = rows;
         cellTable.setRowData(0, rows);
         cellTable.setRowCount(rows.size(), true);
@@ -153,7 +153,7 @@ public class ExplorerTree extends AbstractExplorerTree {
                 moveSelection(+1);
                 break;
             case KeyCodes.KEY_ENTER:
-                final ExplorerData selected = selectionModel.getSelected();
+                final ExplorerNode selected = selectionModel.getSelected();
                 if (selected != null) {
                     final boolean doubleClick = doubleClickTest.test(selected);
                     doSelect(selected, new SelectionType(doubleClick, false));
@@ -167,7 +167,7 @@ public class ExplorerTree extends AbstractExplorerTree {
     }
 
     private void moveSelection(int plus) {
-        ExplorerData currentSelection = selectionModel.getSelected();
+        ExplorerNode currentSelection = selectionModel.getSelected();
         if (currentSelection == null) {
             selectFirstItem();
         } else {
@@ -175,7 +175,7 @@ public class ExplorerTree extends AbstractExplorerTree {
             if (index == -1) {
                 selectFirstItem();
             } else {
-                final ExplorerData newSelection = cellTable.getVisibleItem(index + plus);
+                final ExplorerNode newSelection = cellTable.getVisibleItem(index + plus);
                 if (newSelection != null) {
                     setSelectedItem(newSelection);
                 } else {
@@ -186,12 +186,12 @@ public class ExplorerTree extends AbstractExplorerTree {
     }
 
     private void selectFirstItem() {
-        final ExplorerData firstItem = cellTable.getVisibleItem(0);
+        final ExplorerNode firstItem = cellTable.getVisibleItem(0);
         setSelectedItem(firstItem);
     }
 
-    private int getItemIndex(ExplorerData item) {
-        final List<ExplorerData> items = cellTable.getVisibleItems();
+    private int getItemIndex(ExplorerNode item) {
+        final List<ExplorerNode> items = cellTable.getVisibleItems();
         if (items != null) {
             for (int i = 0; i < items.size(); i++) {
                 if (EqualsUtil.isEquals(items.get(i), item)) {
@@ -204,14 +204,14 @@ public class ExplorerTree extends AbstractExplorerTree {
     }
 
     @Override
-    protected void setInitialSelectedItem(final ExplorerData selection) {
+    protected void setInitialSelectedItem(final ExplorerNode selection) {
         selectionModel.clear();
         setSelectedItem(selection);
         scrollSelectedIntoView();
     }
 
     private void scrollSelectedIntoView() {
-        final ExplorerData selected = selectionModel.getSelected();
+        final ExplorerNode selected = selectionModel.getSelected();
         if (selected != null) {
             final int index = getItemIndex(selected);
             if (index > 0) {
@@ -222,7 +222,7 @@ public class ExplorerTree extends AbstractExplorerTree {
         }
     }
 
-    protected void setSelectedItem(ExplorerData selection) {
+    protected void setSelectedItem(ExplorerNode selection) {
         if (treeModel.isIncludeNullSelection() && selection == null) {
             selection = ExplorerTreeModel.NULL_SELECTION;
         }
@@ -230,7 +230,7 @@ public class ExplorerTree extends AbstractExplorerTree {
         doSelect(selection, new SelectionType(false, false));
     }
 
-    protected void doSelect(final ExplorerData selection, final SelectionType selectionType) {
+    protected void doSelect(final ExplorerNode selection, final SelectionType selectionType) {
         if (selection == null) {
             multiSelectStart = null;
             selectionModel.clear();
@@ -270,7 +270,7 @@ public class ExplorerTree extends AbstractExplorerTree {
         return treeModel;
     }
 
-    public MultiSelectionModel<ExplorerData> getSelectionModel() {
+    public MultiSelectionModel<ExplorerNode> getSelectionModel() {
         return selectionModel;
     }
 
@@ -293,13 +293,13 @@ public class ExplorerTree extends AbstractExplorerTree {
         ExplorerTreeStyle cellTableStyle();
     }
 
-    private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerData> {
-        MySelectionEventManager(AbstractCellTable<ExplorerData> table) {
+    private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerNode> {
+        MySelectionEventManager(AbstractCellTable<ExplorerNode> table) {
             super(table);
         }
 
         @Override
-        public void onCellPreview(CellPreviewEvent<ExplorerData> event) {
+        public void onCellPreview(CellPreviewEvent<ExplorerNode> event) {
             final NativeEvent nativeEvent = event.getNativeEvent();
             final String type = nativeEvent.getType();
 
@@ -315,7 +315,7 @@ public class ExplorerTree extends AbstractExplorerTree {
                     cellTable.setKeyboardSelectedRow(event.getIndex());
                     ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, x, y);
                 } else if ((button & NativeEvent.BUTTON_LEFT) != 0) {
-                    final ExplorerData selectedItem = event.getValue();
+                    final ExplorerNode selectedItem = event.getValue();
                     if (selectedItem != null && (button & NativeEvent.BUTTON_LEFT) != 0) {
                         if (HasNodeState.NodeState.LEAF.equals(selectedItem.getNodeState())) {
                             final boolean doubleClick = doubleClickTest.test(selectedItem);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server;
@@ -27,7 +28,6 @@ import stroom.jobsystem.server.ClusterLockService;
 import stroom.node.server.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
@@ -45,11 +45,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Component
 public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
-    public static final String LOCK_NAME = "StreamAttributeDelete";
-    public static final int MONTH_OLD_MS = 1000 * 60 * 60 * 24 * 30;
-    public static final int BATCH_SIZE = 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
-    final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
+
+    public static final int BATCH_SIZE = 1000;
+
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
@@ -61,9 +60,16 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
     @Resource
     private ClusterLockService clusterLockService;
 
+    private final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
+
     @Override
     public void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap) {
         queue.add(new AsyncFlush(stream, append, metaMap));
+    }
+
+    @Override
+    public void clear() {
+        queue.clear();
     }
 
     @StroomShutdown
@@ -101,7 +107,7 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
             final FindStreamAttributeValueCriteria criteria = new FindStreamAttributeValueCriteria();
 
             final ArrayList<AsyncFlush> batchInsert = new ArrayList<>();
-            AsyncFlush item = null;
+            AsyncFlush item;
             while ((item = queue.poll()) != null && batchInsert.size() < BATCH_SIZE) {
                 batchInsert.add(item);
                 criteria.obtainStreamIdSet().add(item.getStream());
@@ -121,12 +127,8 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
                 // Key by the StreamAttributeKey pk
                 final Map<Long, Map<Long, StreamAttributeValue>> streamToAttributeMap = new HashMap<>();
                 for (final StreamAttributeValue value : streamAttributeValueService.find(criteria)) {
-                    Map<Long, StreamAttributeValue> map = streamToAttributeMap.get(value.getStreamId());
-                    if (map == null) {
-                        map = new HashMap<>();
-                        streamToAttributeMap.put(value.getStreamId(), map);
-                    }
-                    map.put(value.getStreamAttributeKeyId(), value);
+                    streamToAttributeMap.computeIfAbsent(value.getStreamId(), k -> new HashMap<>())
+                            .put(value.getStreamAttributeKeyId(), value);
                 }
 
                 final List<StreamAttributeValue> batchUpdate = new ArrayList<>();

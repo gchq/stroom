@@ -65,7 +65,8 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     private long[] eventIds;
 
     @Inject
-    public IdEnrichmentFilter(final StreamHolder streamHolder, final ErrorReceiverProxy errorReceiverProxy) {
+    public IdEnrichmentFilter(final StreamHolder streamHolder,
+                              final ErrorReceiverProxy errorReceiverProxy) {
         this.streamHolder = streamHolder;
         this.errorReceiverProxy = errorReceiverProxy;
     }

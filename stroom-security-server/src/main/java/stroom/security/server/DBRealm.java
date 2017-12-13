@@ -16,12 +16,10 @@
 
 package stroom.security.server;
 
-import org.apache.shiro.authc.AccountException;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.realm.AuthenticatingRealm;
 import org.slf4j.Logger;
@@ -29,18 +27,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import stroom.entity.shared.EntityServiceException;
 import stroom.node.server.StroomPropertyService;
-import stroom.security.server.exception.AccountExpiredException;
-import stroom.security.server.exception.BadCredentialsException;
-import stroom.security.server.exception.DisabledException;
-import stroom.security.server.exception.LockedException;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserStatus;
-import stroom.util.cert.CertificateUtil;
-import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.regex.Pattern;
@@ -54,6 +47,7 @@ public class DBRealm extends AuthenticatingRealm {
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;
     private final StroomPropertyService stroomPropertyService;
+    private final SecurityContext securityContext;
 
     private String cachedRegex;
     private Pattern cachedPattern;
@@ -63,18 +57,20 @@ public class DBRealm extends AuthenticatingRealm {
     @Inject
     public DBRealm(final UserService userService, final UserAppPermissionService userAppPermissionService,
                    final StroomPropertyService stroomPropertyService,
-                   final CredentialsMatcher matcher) {
+                   final CredentialsMatcher matcher,
+                   final SecurityContext securityContext) {
         super(matcher);
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
         this.stroomPropertyService = stroomPropertyService;
+        this.securityContext = securityContext;
+        createOrRefreshAdmin();
     }
 
     @Override
     public boolean supports(final AuthenticationToken token) {
-        return token != null && (token instanceof UsernamePasswordToken ||
-                token instanceof CertificateAuthenticationToken ||
-                token instanceof JWTAuthenticationToken);
+        return token != null
+                && (token instanceof JWTAuthenticationToken);
     }
 
     @Override
@@ -82,148 +78,37 @@ public class DBRealm extends AuthenticatingRealm {
             throws AuthenticationException {
         if (token instanceof JWTAuthenticationToken) {
             final JWTAuthenticationToken jwtAuthenticationToken = (JWTAuthenticationToken) token;
-            return authenticateWithJWT(jwtAuthenticationToken);
+            return doGetJwtAuthenticationInfo(jwtAuthenticationToken);
         }
-
-        if (token instanceof CertificateAuthenticationToken) {
-            final CertificateAuthenticationToken certificateAuthenticationToken = (CertificateAuthenticationToken) token;
-            return authenticateWithCertificate(certificateAuthenticationToken);
-        }
-
-        if (token instanceof UsernamePasswordToken) {
-            final UsernamePasswordToken usernamePasswordToken = (UsernamePasswordToken) token;
-            return authenticateWithUsernamePassword(usernamePasswordToken);
-        }
-
         throw new AuthenticationException("Token type '" + token.getClass().getSimpleName() + "' is not supported");
     }
 
-    private AuthenticationInfo authenticateWithJWT(final JWTAuthenticationToken token)
+    private AuthenticationInfo doGetJwtAuthenticationInfo(final JWTAuthenticationToken token)
             throws AuthenticationException {
         String userId = null;
         if (token != null && token.getUserId() != null) {
             userId = token.getUserId().toString();
         }
 
-        final User user = loadUserByUsername(userId);
+        User user = loadUserByUsername(userId);
 
         if (StringUtils.hasText(userId) && user == null) {
-            throw new EntityServiceException(userId + " does not exist");
+            // At this point the user has been authenticated using JWT.
+            // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
+            // some way of sensibly referencing the user and something to attach permissions to.
+            // We need to elevate the user because no one is currently logged in.
+            try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+                userService.createUser(userId);
+            }
         }
 
+        securityContext.pushUser(UserTokenUtil.create((String) token.getUserId(), null, token.getToken()));
+
         if (user != null) {
-            check(user);
             return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());
         }
 
         return null;
-    }
-
-    private AuthenticationInfo authenticateWithCertificate(final CertificateAuthenticationToken token)
-            throws AuthenticationException {
-        try {
-            if (!allowCertificateAuthentication()) {
-                throw new EntityServiceException("Certificate authentication is not allowed");
-            }
-
-            final Pattern pattern = getPattern();
-
-            if (pattern == null) {
-                throw new EntityServiceException("No valid certificateDNPattern found");
-            }
-
-            final String dn = (String) token.getCredentials();
-            final String username = CertificateUtil.extractUserIdFromDN(dn, pattern);
-
-            if (LOGGER.isDebugEnabled()) {
-                final String cn = CertificateUtil.extractCNFromDN(dn);
-                LOGGER.debug("authenticate() - dn=" + dn + ", cn=" + cn + ", userId=" + username);
-            }
-
-            final User user = loadUserByUsername(username);
-
-            if (StringUtils.hasText(username) && user == null) {
-                throw new EntityServiceException(username + " does not exist");
-            }
-
-            if (user != null) {
-                check(user);
-                return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());
-            }
-        } catch (final AuthenticationException e) {
-            throw e;
-        } catch (final Exception e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new BadCredentialsException(e.getMessage());
-        }
-
-        return null;
-    }
-
-    private AuthenticationInfo authenticateWithUsernamePassword(final UsernamePasswordToken token)
-            throws AuthenticationException {
-        try {
-            final String username = token.getUsername();
-
-            // Null username is invalid
-            if (username == null) {
-                throw new AccountException("Null user names are not allowed by this realm.");
-            }
-
-            final User user = loadUserByUsername(username);
-
-            if (StringUtils.hasText(username) && user == null) {
-                throw new BadCredentialsException("Bad Credentials");
-            }
-
-            if (user != null) {
-                check(user);
-                return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());
-            }
-        } catch (final AuthenticationException e) {
-            throw e;
-        } catch (final Exception e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new BadCredentialsException(e.getMessage());
-        }
-
-        return null;
-    }
-
-    private boolean allowCertificateAuthentication() {
-        return stroomPropertyService.getBooleanProperty("stroom.security.allowCertificateAuthentication", false);
-    }
-
-    private Pattern getPattern() {
-        final String regex = stroomPropertyService.getProperty("stroom.security.certificateDNPattern");
-        if (!EqualsUtil.isEquals(cachedRegex, regex)) {
-            cachedRegex = regex;
-            cachedPattern = null;
-
-            if (regex != null) {
-                try {
-                    cachedPattern = Pattern.compile(regex);
-                } catch (final RuntimeException e) {
-                    final String message = "Problem compiling certificateDNPattern regex: " + e.getMessage();
-                    LOGGER.error(message, e);
-                    throw new EntityServiceException(message);
-                }
-            }
-        }
-
-        return cachedPattern;
-    }
-
-    private void check(final User user) {
-        if (UserStatus.LOCKED.equals(user.getStatus())) {
-            throw new LockedException("User account is locked");
-        } else if (UserStatus.DISABLED.equals(user.getStatus())) {
-            throw new DisabledException("User account has been deactivated");
-        } else if (UserStatus.EXPIRED.equals(user.getStatus())) {
-            throw new AccountExpiredException("User account has expired");
-        } else if (!UserStatus.ENABLED.equals(user.getStatus())) {
-            throw new DisabledException("User account is not enabled");
-        }
     }
 
     private User loadUserByUsername(final String username) throws DataAccessException {
@@ -258,27 +143,30 @@ public class DBRealm extends AuthenticatingRealm {
      * @return a new admin user
      */
     public UserRef createOrRefreshAdmin() {
-        // Ensure all perms have been created
-        userAppPermissionService.init();
+        UserRef userRef;
 
-        UserRef userRef = userService.getUserByName(UserService.INITIAL_ADMIN_ACCOUNT);
-        if (userRef == null) {
-            User user = new User();
-            user.setName(UserService.INITIAL_ADMIN_ACCOUNT);
-            // Save the admin account.
-            user = userService.save(user);
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            // Ensure all perms have been created
+            userAppPermissionService.init();
 
-            final UserRef userGroup = createOrRefreshAdminUserGroup();
-            try {
-                userService.addUserToGroup(UserRefFactory.create(user), userGroup);
-            } catch (final RuntimeException e) {
-                // Expected.
-                LOGGER.debug(e.getMessage());
+            userRef = userService.getUserByName(UserService.INITIAL_ADMIN_ACCOUNT);
+            if (userRef == null) {
+                User user = new User();
+                user.setName(UserService.INITIAL_ADMIN_ACCOUNT);
+                // Save the admin account.
+                user = userService.save(user);
+
+                final UserRef userGroup = createOrRefreshAdminUserGroup();
+                try {
+                    userService.addUserToGroup(UserRefFactory.create(user), userGroup);
+                } catch (final RuntimeException e) {
+                    // Expected.
+                    LOGGER.debug(e.getMessage());
+                }
+
+                userRef = UserRefFactory.create(user);
             }
-
-            userRef = UserRefFactory.create(user);
         }
-
         return userRef;
     }
 
@@ -292,22 +180,24 @@ public class DBRealm extends AuthenticatingRealm {
     }
 
     private UserRef createOrRefreshAdminUserGroup(final String userGroupName) {
-        final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
-        findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
+        UserRef newUserGroup;
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
+            findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
 
-        final User userGroup = userService.find(findUserGroupCriteria).getFirst();
-        if (userGroup != null) {
-            return UserRefFactory.create(userGroup);
+            final User userGroup = userService.find(findUserGroupCriteria).getFirst();
+            if (userGroup != null) {
+                return UserRefFactory.create(userGroup);
+            }
+
+            newUserGroup = userService.createUserGroup(userGroupName);
+            try {
+                userAppPermissionService.addPermission(newUserGroup, PermissionNames.ADMINISTRATOR);
+            } catch (final RuntimeException e) {
+                // Expected.
+                LOGGER.debug(e.getMessage());
+            }
         }
-
-        final UserRef newUserGroup = userService.createUserGroup(userGroupName);
-        try {
-            userAppPermissionService.addPermission(newUserGroup, PermissionNames.ADMINISTRATOR);
-        } catch (final RuntimeException e) {
-            // Expected.
-            LOGGER.debug(e.getMessage());
-        }
-
         return newUserGroup;
     }
 }

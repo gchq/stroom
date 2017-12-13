@@ -22,9 +22,8 @@ import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreClientTestFileUtil;
 import stroom.util.io.StreamUtil;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class TestXmlFormatter {
     private static final String PRE_START_ELEMENT = "<pre class=\"xmlArea-ContentPre\">";
@@ -70,21 +69,21 @@ public class TestXmlFormatter {
         test("TestAttributes4");
     }
 
-    private void test(final String name) throws FileNotFoundException {
+    private void test(final String name) {
         // Get the testing directory.
-        final File testDataDir = StroomCoreClientTestFileUtil.getTestResourcesDir();
-        final File testDir = new File(testDataDir, "TestXmlFormatter");
-        final File inFile = new File(testDir, name + ".in");
+        final Path testDataDir = StroomCoreClientTestFileUtil.getTestResourcesDir();
+        final Path testDir = testDataDir.resolve("TestXmlFormatter");
+        final Path inFile = testDir.resolve(name + ".in");
 
         final String inXML = StreamUtil.fileToString(inFile);
 
         // Output styled marked up output.
         final String tmpXML = new XmlFormatter().format(inXML);
-        final File tmpFile = new File(testDir, name + ".tmp");
+        final Path tmpFile = testDir.resolve(name + ".tmp");
         StreamUtil.stringToFile(tmpXML, tmpFile);
 
         // Compare styled marked up output.
-        final File outFile = new File(testDir, name + ".out");
+        final Path outFile = testDir.resolve(name + ".out");
         final String outXML = StreamUtil.fileToString(outFile);
         ComparisonHelper.compareStrings(outXML, tmpXML, "The output does not match reference at index: ");
     }

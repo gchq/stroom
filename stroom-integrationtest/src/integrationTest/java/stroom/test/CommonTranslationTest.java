@@ -33,8 +33,8 @@ import stroom.task.server.TaskMonitorImpl;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -45,30 +45,30 @@ import java.util.Set;
 public class CommonTranslationTest {
     public static final String FEED_NAME = "TEST_FEED";
     private static final String DIR = "CommonTranslationTest/";
-    public static final File VALID_RESOURCE_NAME = StroomProcessTestFileUtil
+    public static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "NetworkMonitoringSample.in");
-    public static final File INVALID_RESOURCE_NAME = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
+    public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
 
-    private static final File CSV = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "CSV.ds");
-    private static final File CSV_WITH_HEADING = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "CSVWithHeading.ds");
-    private static final File XSLT_HOST_NAME_TO_LOCATION = StroomProcessTestFileUtil
+    private static final Path CSV = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSV.ds");
+    private static final Path CSV_WITH_HEADING = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSVWithHeading.ds");
+    private static final Path XSLT_HOST_NAME_TO_LOCATION = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SampleRefData-HostNameToLocation.xsl");
-    private static final File XSLT_HOST_NAME_TO_IP = StroomProcessTestFileUtil
+    private static final Path XSLT_HOST_NAME_TO_IP = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SampleRefData-HostNameToIP.xsl");
-    private static final File XSLT_NETWORK_MONITORING = StroomProcessTestFileUtil
+    private static final Path XSLT_NETWORK_MONITORING = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "NetworkMonitoring.xsl");
-    private static final File REFDATA_HOST_NAME_TO_LOCATION = StroomProcessTestFileUtil
+    private static final Path REFDATA_HOST_NAME_TO_LOCATION = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SampleRefData-HostNameToLocation.in");
-    private static final File REFDATA_HOST_NAME_TO_IP = StroomProcessTestFileUtil
+    private static final Path REFDATA_HOST_NAME_TO_IP = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SampleRefData-HostNameToIP.in");
 
     private static final String REFFEED_HOSTNAME_TO_LOCATION = "HOSTNAME_TO_LOCATION";
     private static final String REFFEED_HOSTNAME_TO_IP = "HOSTNAME_TO_IP";
 
     private static final String ID_TO_USER = "ID_TO_USER";
-    private static final File EMPLOYEE_REFERENCE_XSL = StroomProcessTestFileUtil
+    private static final Path EMPLOYEE_REFERENCE_XSL = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "EmployeeReference.xsl");
-    private static final File EMPLOYEE_REFERENCE_CSV = StroomProcessTestFileUtil
+    private static final Path EMPLOYEE_REFERENCE_CSV = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "EmployeeReference.in");
 
     @Resource
@@ -106,7 +106,7 @@ public class CommonTranslationTest {
         setup(FEED_NAME, VALID_RESOURCE_NAME);
     }
 
-    public void setup(final String feedName, final File dataLocation) throws IOException {
+    public void setup(final String feedName, final Path dataLocation) throws IOException {
         // commonTestControl.setup();
 
         // Setup the feed definitions.

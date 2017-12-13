@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,28 +12,31 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.shared;
 
-public abstract class AbstractEntityAction<E extends Entity> extends Action<E> implements HasEntity<E> {
+import stroom.query.api.v2.DocRef;
+import stroom.util.shared.SharedObject;
+
+public abstract class AbstractEntityAction<R extends SharedObject> extends Action<R> {
     private static final long serialVersionUID = 8804463889602947196L;
 
-    private E entity;
+    private DocRef docRef;
     private String taskName;
 
     public AbstractEntityAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public AbstractEntityAction(final E entity, final String taskName) {
-        this.entity = entity;
+    public AbstractEntityAction(final DocRef docRef, final String taskName) {
+        this.docRef = docRef;
         this.taskName = taskName;
     }
 
-    @Override
-    public E getEntity() {
-        return entity;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
     @Override

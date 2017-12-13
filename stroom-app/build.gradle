@@ -1,6 +1,6 @@
 plugins {
     //id 'com.github.johnrengelman.shadow' version '2.0.0'
-    id "com.benjaminsproule.swagger" version "0.1.4"
+    id "com.benjaminsproule.swagger" version "0.1.9"
 
     //plugin to generate a list of licennces for all deps and to check for incompatibilities
     //usage: honkerCheck honkerGenNotice honkerGenDependencies
@@ -50,52 +50,38 @@ shadowJar {
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-proxy')
+    compile project(':stroom-explorer-server')
     compile project(':stroom-security-server')
+    permitUnusedDeclared project(':stroom-security-server') //not clear why it thinks this is unused
     compile project(':stroom-index-server')
     compile project(':stroom-statistics-api')
-    permitUnusedDeclared project(':stroom-statistics-api') // not clear why it thinks this is unused
-    compile project(':stroom-util')
+    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
+    compile project(':stroom-entity-shared')
+    permitUnusedDeclared project(':stroom-entity-shared') //not clear why it thinks this is unused
+    compile project(':stroom-index-shared')
+    permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
+//    compile project(':stroom-util')
     compile project(':stroom-pipeline')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-statistics-server')
+    compile project(':stroom-annotations-server')
+    compile project(':stroom-elastic-server')
+    compile project(':stroom-ruleset-server')
 
-    //    compile project(':stroom-module')
-//
-//    compile project(':stroom-core-shared')
-//    compile project(':stroom-core-server')
-//    compile project(':stroom-security-server')
-//    compile project(':stroom-index-server')
-//    compile project(':stroom-statistics-api')
-//    permitUnusedDeclared project(':stroom-statistics-api') // not clear why it thinks this is unused
-//    compile project(':stroom-util')
-//    compile project(':stroom-pipeline')
-//    compile project(':stroom-dashboard-server')
-//    compile project(':stroom-statistics-server')
-//
-//    compile urlDependencies.get(urlLibs.stroomQueryApi)
-//    compile urlDependencies.get(urlLibs.stroomQueryCommon)
-//
-//    compile(libs.dropwizard_core) {
-//        exclude(group: "org.glassfish.web", module: "javax.el")
-//    }
+    compile libs.stroomQueryApi
+
     compile libs.dropwizard_lifecycle
-//    compile libs.dropwizard_jersey
-//    compile libs.dropwizard_jetty
-//    compile libs.dropwizard_metrics_healthchecks
     compile libs.guava
+    compile libs.guice3
+    compile libs.jackson_annotations
     compile libs.javax_inject
-//    compile libs.javax_servlet_api
     compile libs.jetty_servlet
     compile libs.shiro_web
-//    compile libs.slf4j_api
     compile libs.spring_core
     compile libs.spring_beans
     compile libs.spring_context
-
-
-
-
-
 
     compile (libs.dropwizard_assets) {
         exclude ( group: "org.glassfish.web", module: "javax.el" )
@@ -107,11 +93,19 @@ dependencies {
     compile libs.dropwizard_jetty
     compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_servlets
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_configuration
+    compile libs.guava
+//    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+//    compile libs.javax_validation
     compile libs.javax_servlet_api
     compile libs.jetty_server
     compile libs.jetty_servlets
     compile libs.logback_classic
     compile libs.slf4j_api
+    compile libs.ws_rs_api
 
     runtime libs.shiro_web
     runtime libs.javax_el
@@ -198,6 +192,11 @@ swagger {
         outputPath = "${swaggerDir}/document.html"
         swaggerDirectory = "${swaggerDir}"
     }
+}
+
+task dist(type: Zip) {
+    from 'src/dist'
+    from shadowJar.outputs.files
 }
 
 tasks.build.dependsOn generateSwaggerDocumentation

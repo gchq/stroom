@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server.fs;
@@ -22,19 +23,20 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.policy.shared.DataRetentionRule;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.server.ExpressionMatcher;
-import stroom.streamstore.server.StreamFields;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.task.TaskMonitor;
@@ -60,21 +62,21 @@ public class DataRetentionTransactionHelper {
 
     private final DataSource dataSource;
     private final FileSystemStreamStore fileSystemStreamStore;
-    private final DictionaryService dictionaryService;
+    private final DictionaryStore dictionaryStore;
 
     @Inject
-    public DataRetentionTransactionHelper(final DataSource dataSource, final FileSystemStreamStore fileSystemStreamStore, final DictionaryService dictionaryService) {
+    public DataRetentionTransactionHelper(final DataSource dataSource, final FileSystemStreamStore fileSystemStreamStore, final DictionaryStore dictionaryStore) {
         this.dataSource = dataSource;
         this.fileSystemStreamStore = fileSystemStreamStore;
-        this.dictionaryService = dictionaryService;
+        this.dictionaryStore = dictionaryStore;
     }
 
     @Transactional(propagation = Propagation.NEVER, readOnly = true)
     public void deleteMatching(final Period ageRange, final List<DataRetentionRule> rules, final Map<DataRetentionRule, Optional<Long>> ageMap, final TaskMonitor taskMonitor) {
         // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
         final Set<String> fieldSet = new HashSet<>();
-        fieldSet.add(StreamFields.STREAM_ID);
-        fieldSet.add(StreamFields.CREATED_ON);
+        fieldSet.add(StreamDataSource.STREAM_ID);
+        fieldSet.add(StreamDataSource.CREATE_TIME);
 
         // Also make sure we create a list of rules that are enabled and have at least one enabled term.
         final List<DataRetentionRule> activeRules = new ArrayList<>();
@@ -97,7 +99,7 @@ public class DataRetentionTransactionHelper {
         final long rowCount = getRowCount(ageRange, fieldSet);
         long rowNum = 1;
 
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryService);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), dictionaryStore);
 
         final SqlBuilder sql = getSql(ageRange, fieldSet, false);
         try (final Connection connection = dataSource.getConnection()) {
@@ -107,7 +109,7 @@ public class DataRetentionTransactionHelper {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         final Map<String, Object> attributeMap = createAttributeMap(resultSet, fieldSet);
-                        final Long streamId = (Long) attributeMap.get(StreamFields.STREAM_ID);
+                        final Long streamId = (Long) attributeMap.get(StreamDataSource.STREAM_ID);
                         try {
                             final String streamInfo = "stream " + rowNum++ + " of " + rowCount + " (stream id=" + streamId + ")";
                             info(taskMonitor, "Examining " + streamInfo);
@@ -115,7 +117,7 @@ public class DataRetentionTransactionHelper {
                             final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules);
                             if (matchingRule != null) {
                                 ageMap.get(matchingRule).ifPresent(age -> {
-                                    final Long createMs = (Long) attributeMap.get(StreamFields.CREATED_ON);
+                                    final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATE_TIME);
                                     if (createMs < age) {
                                         info(taskMonitor, "Deleting " + streamInfo);
                                         fileSystemStreamStore.deleteStream(Stream.createStub(streamId));
@@ -161,10 +163,10 @@ public class DataRetentionTransactionHelper {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT");
 
-        final boolean includeStream = addFieldsToQuery(StreamFields.getStreamFields(), fieldSet, sql, "S");
-        final boolean includeFeed = addFieldsToQuery(StreamFields.getFeedFields(), fieldSet, sql, "F");
-        final boolean includeStreamType = addFieldsToQuery(StreamFields.getStreamTypeFields(), fieldSet, sql, "ST");
-        final boolean includePipeline = addFieldsToQuery(StreamFields.getPipelineFields(), fieldSet, sql, "P");
+        final boolean includeStream = addFieldsToQuery(StreamDataSource.getStreamFields(), fieldSet, sql, "S");
+        final boolean includeFeed = addFieldsToQuery(StreamDataSource.getFeedFields(), fieldSet, sql, "F");
+        final boolean includeStreamType = addFieldsToQuery(StreamDataSource.getStreamTypeFields(), fieldSet, sql, "ST");
+        final boolean includePipeline = addFieldsToQuery(StreamDataSource.getPipelineFields(), fieldSet, sql, "P");
 
         if (count) {
             sql.setLength(0);
@@ -208,7 +210,7 @@ public class DataRetentionTransactionHelper {
         final Map<String, Object> attributeMap = new HashMap<>();
         fieldSet.forEach(fieldName -> {
             try {
-                final DataSourceField field = StreamFields.getFieldMap().get(fieldName);
+                final DataSourceField field = StreamDataSource.getFieldMap().get(fieldName);
                 switch (field.getType()) {
                     case FIELD:
                         final String string = resultSet.getString(fieldName);
@@ -248,20 +250,8 @@ public class DataRetentionTransactionHelper {
     }
 
     private void addToFieldSet(final DataRetentionRule rule, final Set<String> fieldSet) {
-        if (rule.isEnabled() && rule.getExpression() != null) {
-            addChildren(rule.getExpression(), fieldSet);
-        }
-    }
-
-    private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
-        if (item.enabled()) {
-            if (item instanceof ExpressionOperator) {
-                final ExpressionOperator operator = (ExpressionOperator) item;
-                operator.getChildren().forEach(i -> addChildren(i, fieldSet));
-            } else if (item instanceof ExpressionTerm) {
-                final ExpressionTerm term = (ExpressionTerm) item;
-                fieldSet.add(term.getField());
-            }
+        if (rule.isEnabled()) {
+            fieldSet.addAll(ExpressionUtil.fields(rule.getExpression()));
         }
     }
 }

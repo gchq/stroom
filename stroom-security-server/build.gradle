@@ -15,13 +15,15 @@
  */
 
 dependencies {
-    compile project(':stroom-core-server')
     compile project(':stroom-entity-shared')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-server')
     compile project(':stroom-security-api')
     compile project(':stroom-security-shared')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
+    compile libs.stroomAuthApi
     compile libs.stroomQueryApi
     compile libs.eventLogging
     compile libs.aspectjrt
@@ -29,13 +31,11 @@ dependencies {
     compile libs.guava
     compile libs.hibernate_jpa_api
     compile libs.jBCrypt
-    compile libs.java_jwt
     compile libs.jackson_annotations
-    compile libs.javax_annotation_api
     compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api
-    compile libs.jose4j
+    compile libs.javax_validation
     compile libs.shiro_core
     compile libs.shiro_spring
     compile libs.shiro_web
@@ -45,15 +45,17 @@ dependencies {
     compile libs.spring_context_support
     compile libs.spring_core
     compile libs.spring_tx
+    compile libs.jose4j
+    compile libs.ws_rs_api
     compile libs.swagger_annotations
-    compile libs.jersey_server
     compile libs.ws_rs_api
 
-    compile libs.dropwizard_metrics_annotation
+    // Do not remove this as it is needed by Spring to send emails.
+    compile libs.javax_mail_api
+    permitUnusedDeclared libs.javax_mail_api
 
     runtime libs.shiro_aspectj
 
-    testCompile project(path: ':stroom-entity-shared', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 

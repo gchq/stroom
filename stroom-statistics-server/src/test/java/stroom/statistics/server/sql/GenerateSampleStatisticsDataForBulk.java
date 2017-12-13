@@ -19,10 +19,10 @@ package stroom.statistics.server.sql;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -49,23 +49,15 @@ public class GenerateSampleStatisticsDataForBulk {
     public static void main(final String[] args) throws Exception {
         System.out.println("Writing value data...");
 
-        Writer writer;
-
-        writer = new FileWriter(new File("StatsBulkTestData_Values.xml"));
-
-        generateValueData(writer);
-        writer.close();
-
+        try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsBulkTestData_Values.xml"))) {
+            generateValueData(writer);
+        }
         System.out.println("Writing count data...");
 
-        writer = new FileWriter(new File("StatsBulkTestData_Counts.xml"));
-
-        generateCountData(writer);
-
-        writer.close();
-
+        try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsBulkTestData_Counts.xml"))) {
+            generateCountData(writer);
+        }
         System.out.println("Finished!");
-
     }
 
     public static String generateValueData(final Writer writer) throws IOException {

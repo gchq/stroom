@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.task;
@@ -23,8 +24,8 @@ import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.destination.Destination;
@@ -33,6 +34,7 @@ import stroom.pipeline.server.DefaultErrorWriter;
 import stroom.pipeline.server.EncodingSelection;
 import stroom.pipeline.server.ErrorWriterProxy;
 import stroom.pipeline.server.LocationFactoryProxy;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.StreamLocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ErrorStatistics;
@@ -44,7 +46,6 @@ import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.server.factory.Processor;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
@@ -55,6 +56,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -102,7 +104,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private final PipelineFactory pipelineFactory;
     private final StreamStore streamStore;
     private final FeedService feedService;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final TaskMonitor taskMonitor;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
@@ -130,7 +132,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     public PipelineStreamProcessor(final PipelineFactory pipelineFactory,
                                    final StreamStore streamStore,
                                    @Named("cachedFeedService") final FeedService feedService,
-                                   @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
+                                   @Named("cachedPipelineService") final PipelineService pipelineService,
                                    final TaskMonitor taskMonitor,
                                    final PipelineHolder pipelineHolder,
                                    final FeedHolder feedHolder,
@@ -150,7 +152,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = streamStore;
         this.feedService = feedService;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.taskMonitor = taskMonitor;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
@@ -216,7 +218,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             feedHolder.setFeed(feed);
 
             // Set the pipeline so it can be used by a filter if needed.
-            pipelineEntity = pipelineEntityService.load(streamProcessor.getPipeline());
+            pipelineEntity = pipelineService.load(streamProcessor.getPipeline());
             pipelineHolder.setPipeline(pipelineEntity);
 
             // Create some processing info.
@@ -295,7 +297,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
      * unlock it).
      */
     private void checkSuperseded(final long processStartTime) {
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.obtainParentStreamIdSet().add(streamSource.getStream());
         findStreamCriteria.obtainStatusSet().setMatchAll(true);
         findStreamCriteria.obtainStreamProcessorIdSet().add(streamProcessor);
@@ -332,11 +334,11 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             // and is not already deleted then select it for deletion.
             if ((latestStreamTaskId == null || !latestStreamTaskId.equals(stream.getStreamTaskId()))
                     && !StreamStatus.DELETED.equals(stream.getStatus())) {
-                findDeleteStreamCriteria.obtainStreamIdSet().add(stream);
+                findDeleteStreamCriteria.obtainSelectedIdSet().add(stream.getId());
             }
         }
         // If we have found any to delete then delete them now.
-        if (findDeleteStreamCriteria.obtainStreamIdSet().isConstrained()) {
+        if (findDeleteStreamCriteria.obtainSelectedIdSet().isConstrained()) {
             final long deleteCount = streamStore.findDelete(findDeleteStreamCriteria);
             LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
         }

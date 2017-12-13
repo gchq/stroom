@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search;
@@ -19,27 +20,14 @@ package stroom.search;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
+import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.*;
+
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.util.config.StroomProperties;
 
@@ -171,7 +159,7 @@ public class TestEventSearch extends AbstractSearchTest {
 
     private TableSettings createTableSettings(final Index index, final boolean extractValues) {
         final Field idField = new Field.Builder()
-                .name("Id")
+                .name("IdTreeNode")
                 .expression(ParamUtil.makeParam("StreamId"))
                 .build();
 
@@ -185,13 +173,15 @@ public class TestEventSearch extends AbstractSearchTest {
         return new TableSettings(null, Arrays.asList(idField, timeField), extractValues, DocRefUtil.create(resultPipeline), null, null);
     }
 
-    private ExpressionOperator.Builder buildExpression(final String userField, final String userTerm, final String from,
-                                              final String to, final String wordsField, final String wordsTerm) {
-        final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
-        operator.addTerm(userField, Condition.CONTAINS, userTerm);
-        operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
-        operator.addTerm(wordsField, Condition.CONTAINS, wordsTerm);
-
-        return operator;
+    private ExpressionOperator.Builder buildExpression(final String userField,
+                                                       final String userTerm,
+                                                       final String from,
+                                                       final String to,
+                                                       final String wordsField,
+                                                       final String wordsTerm) {
+        return new ExpressionOperator.Builder()
+                .addTerm(userField, Condition.CONTAINS, userTerm)
+                .addTerm("EventTime", Condition.BETWEEN, from + "," + to)
+                .addTerm(wordsField, Condition.CONTAINS, wordsTerm);
     }
 }

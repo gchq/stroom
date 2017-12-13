@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.state;
@@ -24,8 +25,8 @@ import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomScope;
 
@@ -78,6 +79,10 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
             return getPipeline();
         }
 
+        return getMetaData().get(key);
+    }
+
+    public MetaMap getMetaData() throws IOException {
         // Determine if we need to read the meta stream.
         if (metaData == null || lastMetaStreamNo != streamHolder.getStreamNo()) {
             metaData = new MetaMap();
@@ -99,8 +104,7 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
                 }
             }
         }
-
-        return metaData.get(key);
+        return metaData;
     }
 
     private String getFeed() {

@@ -31,25 +31,10 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
     private String defaultValue;
     private boolean pipelineReference;
     private boolean dataEntity;
+    private String[] docRefTypes;
 
     public PipelinePropertyType() {
         // Default constructor necessary for GWT serialisation.
-    }
-
-    public PipelinePropertyType(final PipelineElementType elementType, final String name, final String type) {
-        this(elementType, name, type, null, null, false, false);
-    }
-
-    public PipelinePropertyType(final PipelineElementType elementType, final String name, final String type,
-                                final String description, final String defaultValue, final boolean pipelineReference,
-                                final boolean dataEntity) {
-        this.elementType = elementType;
-        this.name = name;
-        this.type = type;
-        this.description = description;
-        this.defaultValue = defaultValue;
-        this.pipelineReference = pipelineReference;
-        this.dataEntity = dataEntity;
     }
 
     public PipelineElementType getElementType() {
@@ -79,6 +64,10 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
 
     public boolean isDataEntity() {
         return dataEntity;
+    }
+
+    public String[] getDocRefTypes() {
+        return docRefTypes;
     }
 
     @Override
@@ -114,5 +103,57 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
     @Override
     public String toString() {
         return name;
+    }
+
+    public static class Builder {
+        private final PipelinePropertyType instance;
+
+        public Builder() {
+            this.instance = new PipelinePropertyType();
+        }
+
+        public Builder elementType(final PipelineElementType value) {
+            this.instance.elementType = value;
+            return this;
+        }
+
+        public Builder name(final String value) {
+            this.instance.name = value;
+            return this;
+        }
+
+        public Builder type(final String value) {
+            this.instance.type = value;
+            return this;
+        }
+
+        public Builder description(final String value) {
+            this.instance.description = value;
+            return this;
+        }
+
+        public Builder defaultValue(final String value) {
+            this.instance.defaultValue = value;
+            return this;
+        }
+
+        public Builder pipelineReference(final boolean value) {
+            this.instance.pipelineReference = value;
+            return this;
+        }
+
+        public Builder dataEntity(final boolean value) {
+            this.instance.dataEntity = value;
+            return this;
+        }
+
+        public Builder docRefTypes(final String[] value) {
+            this.instance.docRefTypes = value;
+            return this;
+        }
+
+        public PipelinePropertyType build() {
+            return instance;
+        }
     }
 }

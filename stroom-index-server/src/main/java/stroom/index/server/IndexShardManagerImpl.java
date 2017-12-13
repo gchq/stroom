@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.index.shared.IndexShardService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
@@ -36,7 +35,6 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -217,34 +215,27 @@ public class IndexShardManagerImpl implements IndexShardManager {
             executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + remaining.get() + " index shards to " + action.getName()), 10, 10, TimeUnit.SECONDS);
 
             // Perform action on all of the index shard writers in parallel.
-            shards.parallelStream().forEach(shard -> new ThreadScopeRunnable() {
-                @Override
-                protected void exec() {
-                    try {
-                        switch (action) {
-                            case FLUSH:
-                                final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
-                                if (indexShardWriter != null) {
-                                    LOGGER.debug(() -> action.getActivity() + " index shard " + shard.getId());
-                                    shardCount.incrementAndGet();
-                                    indexShardWriter.flush();
-                                }
-                                break;
+            shards.parallelStream().forEach(shard -> {
+                try {
+                    switch (action) {
+                        case FLUSH:
+                            shardCount.incrementAndGet();
+                            indexShardWriterCache.flush(shard.getId());
+                            break;
 //                                case CLOSE:
 //                                    indexShardWriter.close();
 //                                    break;
-                            case DELETE:
-                                shardCount.incrementAndGet();
-                                setStatus(shard.getId(), IndexShardStatus.DELETED);
-                                break;
-                        }
-                    } catch (final Exception e) {
-                        LOGGER.error(e::getMessage, e);
+                        case DELETE:
+                            shardCount.incrementAndGet();
+                            indexShardWriterCache.delete(shard.getId());
+                            break;
                     }
-
-                    remaining.getAndDecrement();
+                } catch (final Exception e) {
+                    LOGGER.error(e::getMessage, e);
                 }
-            }.run());
+
+                remaining.getAndDecrement();
+            });
 
             // Shut down the progress logging executor.
             executor.shutdown();

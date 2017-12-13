@@ -34,6 +34,7 @@ import stroom.pipeline.server.factory.Processor;
 import stroom.pipeline.server.factory.TakesInput;
 import stroom.pipeline.server.factory.TakesReader;
 import stroom.pipeline.server.factory.Target;
+import stroom.pipeline.server.factory.Terminator;
 import stroom.pipeline.server.filter.ExitSteppingException;
 import stroom.pipeline.server.filter.NullXMLFilter;
 import stroom.pipeline.server.filter.XMLFilter;
@@ -280,5 +281,9 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
 
     public ErrorReceiverProxy getErrorReceiverProxy() {
         return errorReceiverProxy;
+    }
+
+    @Override
+    public void setTerminator(final Terminator terminator) {
     }
 }

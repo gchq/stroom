@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,14 +31,18 @@ import java.util.List;
 public class StroomBeanLifeCycle {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanLifeCycle.class);
 
-    @Resource
-    private StroomBeanStore stroomBeanStore;
+    private final StroomBeanStore stroomBeanStore;
 
     private volatile boolean shuttingDown;
     private volatile boolean initialised = false;
 
     private volatile List<StroomBeanMethod> startPendingBeans = null;
     private volatile List<StroomBeanMethod> stopPendingBeans = null;
+
+    @Inject
+    public StroomBeanLifeCycle(final StroomBeanStore stroomBeanStore) {
+        this.stroomBeanStore = stroomBeanStore;
+    }
 
     /**
      * @return things that need running at start up of null if they have all

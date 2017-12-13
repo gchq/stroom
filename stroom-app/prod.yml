@@ -1,13 +1,15 @@
 server:
-  type: simple
-  applicationContextPath: /
-  adminContextPath: /admin
-  connector:
-    type: http
-    port: 8080
+  applicationContextPath: ${APPLICATION_CONTEXT_PATH:- /}
+  adminContextPath: ${ADMIN_CONTEXT_PATH:- /admin}
+  applicationConnectors:
+    - type: http
+      port: 8080
+  adminConnectors:
+    - type: http
+      port: 8081
 
 logging:
-  level: ERROR
+  level: ${STROOM_LOGGING_LEVEL:- ERROR}
   loggers:
     stroom: INFO
     io.dropwizard: INFO

@@ -1,0 +1,15 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<visualisation>
+   <description>Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4
+Git commit time: 2016-09-21 17:03:32 +0100</description>
+   <functionName>visualisations.Bubble</functionName>
+   <name>Bubble</name>
+   <scriptRefXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+           &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;866a3f1d-26e3-44d1-819e-968bc767a4af&lt;/uuid&gt;
+&lt;name&gt;Bubble&lt;/name&gt;
+&lt;/doc&gt;
+    </scriptRefXML>
+   <uuid>b6ab11cd-ab60-42a5-885d-5c4d5911f964</uuid>
+</visualisation>

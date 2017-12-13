@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.task;
@@ -21,10 +22,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
 import stroom.node.server.NodeCache;
+import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.XSLT;
-import stroom.pipeline.shared.XSLTService;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -38,12 +39,12 @@ import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -54,23 +55,23 @@ import java.util.Set;
 public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     private static final String DIR = "GenericTestTranslationTaskFactory/";
 
-    private static final File FORMAT_DEFINITION = StroomProcessTestFileUtil
+    private static final Path FORMAT_DEFINITION = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SimpleCSVSplitter.ds");
-    private static final File XSLT_HOST_NAME_TO_IP = StroomProcessTestFileUtil
+    private static final Path XSLT_HOST_NAME_TO_IP = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SampleRefData-HostNameToIP.xsl");
 
-    private static final File IMPORTED_XSLT = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "imported.xsl");
-    private static final File SAMPLE_XSLT = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "sample.xsl");
+    private static final Path IMPORTED_XSLT = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "imported.xsl");
+    private static final Path SAMPLE_XSLT = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "sample.xsl");
 
     private static final String REFERENCE_FEED_NAME = "HOSTNAME_TO_IP";
     private static final String EVENT_FEED_NAME = "TEST_FEED";
 
-    private static final File REFERENCE_DATA = StroomProcessTestFileUtil
+    private static final Path REFERENCE_DATA = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SampleRefData-HostNameToIP.in");
-    private static final File VALID_DATA = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "SampleEvt.in");
-    private static final File INVALID_XSL = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "Invalid.nxsl");
-    private static final File INVALID_DATA = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
-    private static final File EMPTY_DATA = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "Empty.in");
+    private static final Path VALID_DATA = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "SampleEvt.in");
+    private static final Path INVALID_XSL = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Invalid.nxsl");
+    private static final Path INVALID_DATA = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
+    private static final Path EMPTY_DATA = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Empty.in");
 
     private static final int NO_OF_REFERENCE_FILES = 3;
     private static final int NO_OF_EVENT_FILES = 10;
@@ -324,10 +325,10 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      *
      * @param data The path of the data to replicate.
      */
-    private void createStore(final File data, final File reference, final File xslt) {
+    private void createStore(final Path data, final Path reference, final Path xslt) {
         try {
             // Add imported XSLT.
-            final XSLT xsltImport = xsltService.create(commonTestScenarioCreator.getTestFolder(), "imported.xsl");
+            final XSLT xsltImport = xsltService.create("imported.xsl");
             xsltImport.setDescription("Imported XSLT");
             xsltImport.setData(StreamUtil.fileToString(IMPORTED_XSLT));
             xsltService.save(xsltImport);
@@ -348,9 +349,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             }
 
             // Force creation of stream tasks.
-            if (streamTaskCreator instanceof StreamTaskCreator) {
-                streamTaskCreator.createTasks(new TaskMonitorImpl());
-            }
+            streamTaskCreator.createTasks(new TaskMonitorImpl());
 
         } catch (final Exception ex) {
             ex.printStackTrace();

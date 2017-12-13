@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.security.client.presenter;
@@ -20,9 +21,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.Folder;
-import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.item.client.ItemListBox;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
@@ -59,54 +59,50 @@ public class DocumentPermissionsPresenter
         view.setTabsView(tabPresenter.getView());
     }
 
-    public void show(final ExplorerData explorerData) {
-        if (explorerData instanceof EntityData) {
-            final EntityData entityData = (EntityData) explorerData;
+    public void show(final ExplorerNode explorerNode) {
+        getView().setCascasdeVisible(ExplorerConstants.FOLDER.equals(explorerNode.getType()));
+        final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
+        final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerNode);
 
-            getView().setCascasdeVisible(Folder.ENTITY_TYPE.equals(entityData.getType()));
-            final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(entityData);
-            final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(entityData);
+        final TabData groups = tabPresenter.addTab("Groups", groupsPresenter);
+        final TabData users = tabPresenter.addTab("Users", usersPresenter);
 
-            final TabData groups = tabPresenter.addTab("Groups", groupsPresenter);
-            final TabData users = tabPresenter.addTab("Users", usersPresenter);
+        tabPresenter.changeSelectedTab(groups);
 
-            tabPresenter.changeSelectedTab(groups);
+        final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(explorerNode.getDocRef());
+        dispatcher.exec(fetchAllDocumentPermissionsAction).onSuccess(documentPermissions -> {
+            usersPresenter.setDocumentPermissions(documentPermissions, false, changeSet);
+            groupsPresenter.setDocumentPermissions(documentPermissions, true, changeSet);
 
-            final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(entityData.getDocRef());
-            dispatcher.exec(fetchAllDocumentPermissionsAction).onSuccess(documentPermissions -> {
-                usersPresenter.setDocumentPermissions(documentPermissions, false, changeSet);
-                groupsPresenter.setDocumentPermissions(documentPermissions, true, changeSet);
-
-                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            dispatcher.exec(new ChangeDocumentPermissionsAction(documentPermissions.getDocument(), changeSet, getView().getCascade().getSelectedItem()))
-                                    .onSuccess(res -> hide(autoClose, ok));
-                        } else {
-                            hide(autoClose, ok);
-                        }
+            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                @Override
+                public void onHideRequest(final boolean autoClose, final boolean ok) {
+                    if (ok) {
+                        dispatcher.exec(new ChangeDocumentPermissionsAction(documentPermissions.getDocument(), changeSet, getView().getCascade().getSelectedItem()))
+                                .onSuccess(res -> hide(autoClose, ok));
+                    } else {
+                        hide(autoClose, ok);
                     }
-
-                    @Override
-                    public void onHide(boolean autoClose, boolean ok) {
-                    }
-                };
-
-                PopupSize popupSize;
-                if (Folder.ENTITY_TYPE.equals(entityData.getType())) {
-                    popupSize = new PopupSize(384, 664, 384, 664, true);
-                } else {
-                    popupSize = new PopupSize(384, 500, 384, 500, true);
                 }
 
-                ShowPopupEvent.fire(DocumentPermissionsPresenter.this, DocumentPermissionsPresenter.this, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Set " + entityData.getType() + " Permissions", popupUiHandlers);
-            });
-        }
+                @Override
+                public void onHide(boolean autoClose, boolean ok) {
+                }
+            };
+
+            PopupSize popupSize;
+            if (ExplorerConstants.FOLDER.equals(explorerNode.getType())) {
+                popupSize = new PopupSize(384, 664, 384, 664, true);
+            } else {
+                popupSize = new PopupSize(384, 500, 384, 500, true);
+            }
+
+            ShowPopupEvent.fire(DocumentPermissionsPresenter.this, DocumentPermissionsPresenter.this, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Set " + explorerNode.getType() + " Permissions", popupUiHandlers);
+        });
     }
 
-    private DocumentPermissionsTabPresenter getTabPresenter(final EntityData entity) {
-        if (Folder.ENTITY_TYPE.equals(entity.getType())) {
+    private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {
+        if (ExplorerConstants.FOLDER.equals(entity.getType())) {
             return folderPermissionsListPresenterProvider.get();
         }
 

@@ -24,25 +24,23 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexService;
+import stroom.pipeline.server.PipelineService;
 import stroom.index.shared.IndexShardKey;
-import stroom.pipeline.server.PipelineMarshaller;
+import stroom.pipeline.server.PipelineTestUtil;
+import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
 import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.XSLT;
-import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.shared.Stream;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.PipelineTestUtil;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.annotation.Resource;
@@ -66,9 +64,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Resource
     private MockIndexShardWriterCache indexShardWriterCache;
     @Resource
-    private PipelineEntityService pipelineEntityService;
-    @Resource
-    private PipelineMarshaller pipelineMarshaller;
+    private PipelineService pipelineService;
     @Resource
     private StreamHolder streamHolder;
     @Resource
@@ -83,8 +79,8 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Test
     public void testSimple() {
         // Setup the XSLT.
-        XSLT xslt = xsltService.create(null, "Indexing XSLT");
-        xslt.setData(StreamUtil.streamToString(StroomProcessTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
+        XSLT xslt = xsltService.create("Indexing XSLT");
+        xslt.setData(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
         xslt = xsltService.save(xslt);
 
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
@@ -99,7 +95,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         indexFields.add(IndexField.createField("ProcessCommand"));
 
         // Setup the target index
-        Index index = indexService.create(null, "Test index");
+        Index index = indexService.create("Test index");
         index.setIndexFieldsObject(indexFields);
         index = indexService.save(index);
 
@@ -111,17 +107,17 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         streamHolder.setStream(stream);
 
         // Create the pipeline.
-        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller,
-                StroomProcessTestFileUtil.getString(PIPELINE));
+        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
+                StroomPipelineTestFileUtil.getString(PIPELINE));
         pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
         pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
-        pipelineEntity = pipelineEntityService.save(pipelineEntity);
+        pipelineEntity = pipelineService.save(pipelineEntity);
 
         // Create the parser.
         final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-        final InputStream inputStream = StroomProcessTestFileUtil.getInputStream(SAMPLE_INDEX_INPUT);
+        final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_INPUT);
         pipeline.process(inputStream);
 
         // Make sure we only used one writer.

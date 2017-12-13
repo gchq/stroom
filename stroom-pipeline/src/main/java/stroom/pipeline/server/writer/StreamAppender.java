@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.writer;
@@ -19,25 +20,27 @@ package stroom.pipeline.server.writer;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
@@ -61,20 +64,20 @@ public class StreamAppender extends AbstractAppender {
     private final MetaData metaData;
     private final StreamCloser streamCloser;
 
-    private Feed feed;
+    private DocRef feedRef;
     private String streamType;
     private boolean segmentOutput = true;
     private StreamTarget streamTarget;
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
-                   final StreamStore streamStore,
-                   final StreamHolder streamHolder,
-                   final FeedService feedService,
-                   final StreamTypeService streamTypeService,
-                   final StreamProcessorHolder streamProcessorHolder,
-                   final MetaData metaData,
-                   final StreamCloser streamCloser) {
+                          final StreamStore streamStore,
+                          final StreamHolder streamHolder,
+                          final FeedService feedService,
+                          final StreamTypeService streamTypeService,
+                          final StreamProcessorHolder streamProcessorHolder,
+                          final MetaData metaData,
+                          final StreamCloser streamCloser) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
@@ -90,7 +93,10 @@ public class StreamAppender extends AbstractAppender {
     protected OutputStream createOutputStream() throws IOException {
         final Stream parentStream = streamHolder.getStream();
 
-        if (feed == null) {
+        Feed feed;
+        if (feedRef != null) {
+            feed = feedService.loadByUuid(feedRef.getUuid());
+        } else {
             if (parentStream == null) {
                 throw new ProcessException("Unable to determine feed as no parent stream set");
             }
@@ -113,7 +119,7 @@ public class StreamAppender extends AbstractAppender {
                 streamProcessorHolder.getStreamProcessor(), streamProcessorHolder.getStreamTask());
 
         streamTarget = streamStore.openStreamTarget(stream);
-        OutputStream targetOutputStream = null;
+        OutputStream targetOutputStream;
 
         // Let the stream closer handle closing it
         streamCloser.add(streamTarget);
@@ -153,9 +159,10 @@ public class StreamAppender extends AbstractAppender {
         }
     }
 
+    @PipelinePropertyDocRef(types = Feed.ENTITY_TYPE)
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
-    public void setFeed(final Feed feed) {
-        this.feed = feed;
+    public void setFeed(final DocRef feedRef) {
+        this.feedRef = feedRef;
     }
 
     @PipelineProperty(description = "The stream type that the output stream should be written as. This must be specified.")
@@ -163,7 +170,7 @@ public class StreamAppender extends AbstractAppender {
         this.streamType = streamType;
     }
 
-    @PipelineProperty(description = "Shoud the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
+    @PipelineProperty(description = "Should the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
     }

@@ -24,7 +24,8 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.server.logging.StreamEventLog;
+import stroom.logging.StreamEventLog;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
@@ -82,7 +83,7 @@ public final class ImportFileServlet extends HttpServlet {
 
             final ResourceKey uuid = sessionResourceStore.createTempFile(fileItem.getName());
             final Path file = sessionResourceStore.getTempFile(uuid);
-            streamEventLog.importStream(new Date(), "Import", file.toAbsolutePath().toString(), null);
+            streamEventLog.importStream(new Date(), "Import", FileUtil.getCanonicalPath(file), null);
 
             StreamUtil.streamToStream(inputStream, Files.newOutputStream(file));
 

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search;
@@ -21,14 +22,14 @@ import org.junit.Test;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
+import stroom.index.server.IndexService;
+import stroom.index.server.IndexShardService;
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardService;
-import stroom.query.api.v2.ExpressionOperator;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -88,13 +89,14 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Test
     public void testBooleanQuery() throws Exception {
         final String field = "Command";
-        final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
-        final ExpressionOperator.OBuilder<?> innerAndCondition = expression.addOperator(Op.AND);
-        innerAndCondition.addTerm(field, Condition.CONTAINS, "service");
-        innerAndCondition.addTerm(field, Condition.CONTAINS, "cwhp");
-        innerAndCondition.addTerm(field, Condition.CONTAINS, "authorize");
-        innerAndCondition.addTerm(field, Condition.CONTAINS, "deviceGroup");
-        expression.addTerm("UserId", Condition.CONTAINS, "user5");
+        final ExpressionOperator.Builder expression = new ExpressionOperator.Builder()
+                .addOperator(new ExpressionOperator.Builder(Op.AND)
+                    .addTerm(field, Condition.CONTAINS, "service")
+                    .addTerm(field, Condition.CONTAINS, "cwhp")
+                    .addTerm(field, Condition.CONTAINS, "authorize")
+                    .addTerm(field, Condition.CONTAINS, "deviceGroup")
+                    .build())
+                .addTerm("UserId", Condition.CONTAINS, "user5");
         test(expression, 1, 5);
     }
 
@@ -104,8 +106,9 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final ExpressionOperator.Builder orCondition = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
         orCondition.addTerm("UserId", Condition.CONTAINS, "user6");
 
-        final ExpressionOperator.OBuilder<?> andCondition = orCondition.addOperator(Op.AND);
-        andCondition.addTerm("UserId", Condition.CONTAINS, "user1");
+        final ExpressionOperator.Builder andCondition = orCondition.addOperator(new ExpressionOperator.Builder(Op.AND)
+                .addTerm("UserId", Condition.CONTAINS, "user1")
+                .build());
 
         // Check there are 4 events.
         test(andCondition, 1, 4);
@@ -131,9 +134,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         test(expression, 1, 2);
     }
 
-    private void test(final ExpressionOperator.ABuilder<?, ?> expression,
-                      final long expectedStreams,
-                      final long expectedEvents)
+    private void test(final ExpressionOperator.Builder expression, final long expectedStreams, final long expectedEvents)
             throws Exception {
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();
 

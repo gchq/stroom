@@ -12,41 +12,38 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.test;
 
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
+import stroom.feed.StroomHeaderArguments;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
-import stroom.feed.shared.FeedService;
+import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexService;
 import stroom.node.server.NodeCache;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.node.shared.VolumeService;
-import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.*;
+import stroom.streamtask.server.StreamProcessorFilterService;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilterService;
-import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
-import stroom.feed.StroomHeaderArguments;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
@@ -61,7 +58,6 @@ import java.util.List;
 public class CommonTestScenarioCreator {
     private final FeedService feedService;
     private final StreamStore streamStore;
-    private final FolderService folderService;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final IndexService indexService;
@@ -69,10 +65,9 @@ public class CommonTestScenarioCreator {
     private final NodeCache nodeCache;
 
     @Inject
-    CommonTestScenarioCreator(final FeedService feedService, final StreamStore streamStore, final FolderService folderService, final StreamProcessorService streamProcessorService, final StreamProcessorFilterService streamProcessorFilterService, final IndexService indexService, final VolumeService volumeService, final NodeCache nodeCache) {
+    CommonTestScenarioCreator(final FeedService feedService, final StreamStore streamStore, final StreamProcessorService streamProcessorService, final StreamProcessorFilterService streamProcessorFilterService, final IndexService indexService, final VolumeService volumeService, final NodeCache nodeCache) {
         this.feedService = feedService;
         this.streamStore = streamStore;
-        this.folderService = folderService;
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.indexService = indexService;
@@ -80,14 +75,16 @@ public class CommonTestScenarioCreator {
         this.nodeCache = nodeCache;
     }
 
-    public DocRef getTestFolder() {
-        Folder globalGroup = null;
-        globalGroup = folderService.loadByName(null, "GlobalGroup");
-        if (globalGroup == null) {
-            globalGroup = folderService.create(null, "GlobalGroup");
-        }
-        return DocRefUtil.create(globalGroup);
-    }
+//    public DocRef getTestFolder() {
+////        Folder globalGroup = null;
+////        globalGroup = folderService.loadByName(null, "GlobalGroup");
+////        if (globalGroup == null) {
+////            globalGroup = folderService.create(null, "GlobalGroup");
+////        }
+////        return DocRef.create(globalGroup);
+//
+//        return null;
+//    }
 
     public Feed createSimpleFeed() {
         return createSimpleFeed("Junit");
@@ -97,8 +94,7 @@ public class CommonTestScenarioCreator {
      * @return a basic feed
      */
     public Feed createSimpleFeed(final String name) {
-        final DocRef folder = getTestFolder();
-        Feed feed = feedService.create(folder, FileSystemTestUtil.getUniqueTestString());
+        Feed feed = feedService.create(FileSystemTestUtil.getUniqueTestString());
         feed.setDescription(name);
         feed.setStatus(FeedStatus.RECEIVE);
         feed.setStreamType(StreamType.RAW_EVENTS);
@@ -108,8 +104,7 @@ public class CommonTestScenarioCreator {
     }
 
     public Feed createSimpleFeed(final String name, final String uuid) {
-        final DocRef folder = getTestFolder();
-        Feed feed = feedService.create(folder, FileSystemTestUtil.getUniqueTestString());
+        Feed feed = feedService.create(FileSystemTestUtil.getUniqueTestString());
         feed.setUuid(uuid);
         feed.setDescription(name);
         feed.setStatus(FeedStatus.RECEIVE);
@@ -120,19 +115,24 @@ public class CommonTestScenarioCreator {
     }
 
     public void createBasicTranslateStreamProcessor(final Feed feed) {
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
 
-        createStreamProcessor(findStreamCriteria);
+        final QueryData findStreamQueryData = new QueryData.Builder()
+                .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                    .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                    .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                    .build())
+                .build();
+
+        createStreamProcessor(findStreamQueryData);
     }
 
-    public void createStreamProcessor(final FindStreamCriteria findStreamCriteria) {
+    public void createStreamProcessor(final QueryData queryData) {
         StreamProcessor streamProcessor = new StreamProcessor();
         streamProcessor.setEnabled(true);
         streamProcessor = streamProcessorService.save(streamProcessor);
 
-        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamCriteria);
+        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, queryData);
     }
 
     public Index createIndex(final String name) {
@@ -144,10 +144,8 @@ public class CommonTestScenarioCreator {
     }
 
     public Index createIndex(final String name, final IndexFields indexFields, final int maxDocsPerShard) {
-        final DocRef folder = getTestFolder();
-
         // Create a test index.
-        Index index = indexService.create(folder, name);
+        Index index = indexService.create(name);
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setIndexFieldsObject(indexFields);
 
@@ -180,11 +178,7 @@ public class CommonTestScenarioCreator {
         final InputStream inputStream = new ByteArrayInputStream("line1\nline2".getBytes(StreamUtil.DEFAULT_CHARSET));
 
         final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-        try {
-            writer.write(inputStream, new RASegmentOutputStream(target));
-        } catch (final IOException ioEx) {
-            throw new RuntimeException(ioEx);
-        }
+        writer.write(inputStream, new RASegmentOutputStream(target));
 
         target.getAttributeMap().put(StroomHeaderArguments.FEED, feed.getName());
 
@@ -206,11 +200,7 @@ public class CommonTestScenarioCreator {
                 + "Version=\"3.0.0\"/>").getBytes(StreamUtil.DEFAULT_CHARSET));
 
         final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-        try {
-            writer.write(inputStream, new RASegmentOutputStream(target));
-        } catch (final IOException ioEx) {
-            throw new RuntimeException(ioEx);
-        }
+        writer.write(inputStream, new RASegmentOutputStream(target));
         streamStore.closeStreamTarget(target);
         return target.getStream();
     }

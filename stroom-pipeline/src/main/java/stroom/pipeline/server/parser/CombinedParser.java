@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.parser;
@@ -25,6 +26,7 @@ import stroom.cache.server.ParserFactoryPool;
 import stroom.cache.server.StoredParserFactory;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.SupportsCodeInjection;
+import stroom.pipeline.server.TextConverterService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -32,13 +34,14 @@ import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.server.reader.InvalidCharFilterReader;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverterService;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
+import stroom.query.api.v2.DocRef;
 import stroom.resource.server.BOMRemovalInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomScope;
@@ -77,7 +80,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     private boolean fixInvalidChars = false;
     private String injectedCode;
     private boolean usePool = true;
-    private TextConverter textConverter;
+    private DocRef textConverterRef;
     private PoolItem<StoredParserFactory> poolItem;
 
     @Inject
@@ -113,7 +116,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
             // To support legacy usage that did not provide a value for parser
             // type we need to make choice based on the presence of an assigned
             // text converter.
-            if (textConverter == null) {
+            if (textConverterRef == null) {
                 // Make an XML reader that produces SAX events.
                 xmlReader = createXMLReader();
             } else {
@@ -139,7 +142,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     private XMLReader createTextConverter() throws SAXException {
-        if (textConverter == null) {
+        if (textConverterRef == null) {
             throw new ProcessException(
                     "No text converter has been assigned to the parser but parsers of type '" + type + "' require one");
         }
@@ -150,10 +153,10 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         // TODO: We need to use the cached TextConverter service ideally but
         // before we do it needs to be aware cluster wide when TextConverter has
         // been updated.
-        final TextConverter tc = textConverterService.load(textConverter);
+        final TextConverter tc = textConverterService.loadByUuid(textConverterRef.getUuid());
         if (tc == null) {
             throw new ProcessException(
-                    "TextConverter \"" + textConverter.getName() + "\" appears to have been deleted");
+                    "TextConverter \"" + textConverterRef.getName() + "\" appears to have been deleted");
         }
 
         // If we are in stepping mode and have made code changes then we want to
@@ -233,8 +236,9 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.")
-    public void setTextConverter(final TextConverter textConverter) {
-        this.textConverter = textConverter;
+    @PipelinePropertyDocRef(types=TextConverter.ENTITY_TYPE)
+    public void setTextConverter(final DocRef textConverterRef) {
+        this.textConverterRef = textConverterRef;
     }
 
     @PipelineProperty(description = "Fix invalid XML characters from the input stream.", defaultValue = "false")

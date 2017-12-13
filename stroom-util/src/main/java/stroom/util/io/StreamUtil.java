@@ -16,19 +16,17 @@
 
 package stroom.util.io;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Locale;
 
 /**
@@ -84,6 +82,10 @@ public final class StreamUtil {
         return baos.toString(charset);
     }
 
+    public static byte[] streamToBytes(final InputStream stream) {
+        return doStreamToBuffer(stream, true).toByteArray();
+    }
+
     public static ByteArrayOutputStream streamToBuffer(final InputStream stream) {
         return doStreamToBuffer(stream, true);
     }
@@ -117,29 +119,23 @@ public final class StreamUtil {
     /**
      * Takes a string and writes it to a file.
      */
-    public static void stringToFile(final String string, final File file) {
+    public static void stringToFile(final String string, final Path file) {
         stringToFile(string, file, DEFAULT_CHARSET);
     }
 
     /**
      * Takes a string and writes it to a file.
      */
-    public static void stringToFile(final String string, final File file, final Charset charset) {
-        if (file.isFile()) {
-            FileUtil.deleteFile(file);
-        }
-        FileUtil.mkdirs(file.getParentFile());
-
-        OutputStream os = null;
+    public static void stringToFile(final String string, final Path file, final Charset charset) {
         try {
-            os = new BufferedOutputStream(new FileOutputStream(file));
-            os.write(string.getBytes(charset));
-            os.flush();
+            if (Files.isRegularFile(file)) {
+                FileUtil.deleteFile(file);
+            }
+            Files.createDirectories(file.getParent());
+            Files.write(file, string.getBytes(charset));
         } catch (final IOException ioEx) {
             // Wrap it
             throw new RuntimeException(ioEx);
-        } finally {
-            CloseableUtil.closeLogAndIgnoreException(os);
         }
     }
 
@@ -165,28 +161,34 @@ public final class StreamUtil {
         }
     }
 
-    public static String fileToString(final File file) {
+    public static String fileToString(final Path file) {
         return fileToString(file, DEFAULT_CHARSET);
     }
 
     /**
      * Reads a file and returns it as a string.
      */
-    public static String fileToString(final File file, final Charset charset) {
-        return streamToString(fileToStream(file), charset);
-    }
-
-    /**
-     * Reads a file and returns it as a stream.
-     */
-    public static InputStream fileToStream(final File file) {
+    public static String fileToString(final Path file, final Charset charset) {
         try {
-            return new BufferedInputStream(new FileInputStream(file));
+            final byte[] bytes = Files.readAllBytes(file);
+            return new String(bytes, charset);
         } catch (final IOException ioEx) {
             // Wrap it
             throw new RuntimeException(ioEx);
         }
     }
+
+//    /**
+//     * Reads a file and returns it as a stream.
+//     */
+//    public static InputStream fileToStream(final Path file) {
+//        try (final InputStream is = new BufferedInputStream(Files.newInputStream(file)) ){
+//            return new BufferedInputStream(Files.newInputStream(file));
+//        } catch (final IOException ioEx) {
+//            // Wrap it
+//            throw new RuntimeException(ioEx);
+//        }
+//    }
 
     /**
      * Take a stream to a file.
@@ -195,18 +197,19 @@ public final class StreamUtil {
      * @param outputFileName to (over)write and close
      */
     public static void streamToFile(final InputStream inputStream, final String outputFileName) {
-        streamToFile(inputStream, new File(outputFileName));
+        streamToFile(inputStream, Paths.get(outputFileName));
     }
 
-    public static void streamToFile(final InputStream inputStream, final File file) {
+    public static void streamToFile(final InputStream inputStream, final Path file) {
         try {
-            if (file.isFile()) {
+            if (Files.isRegularFile(file)) {
                 FileUtil.deleteFile(file);
             }
-            FileUtil.mkdirs(file.getParentFile());
+            Files.createDirectories(file.getParent());
 
-            final FileOutputStream fos = new FileOutputStream(file);
-            streamToStream(inputStream, fos);
+            try (final OutputStream fos = Files.newOutputStream(file)) {
+                streamToStream(inputStream, fos);
+            }
         } catch (final IOException ioEx) {
             // Wrap it
             throw new RuntimeException(ioEx);
@@ -216,25 +219,15 @@ public final class StreamUtil {
     /**
      * Copy file to file.
      *
-     * @param fromFile the File to copy (readable, non-null file)
-     * @param toFile   the File to copy to (non-null, parent dir exists)
+     * @param fromFile the Path to copy (readable, non-null file)
+     * @param toFile   the Path to copy to (non-null, parent dir exists)
      * @throws IOException
      */
-    public static void copyFile(final File fromFile, final File toFile) throws IOException {
-        FileInputStream in = null;
-        FileOutputStream out = null;
-        try {
-            in = new FileInputStream(fromFile);
-            out = new FileOutputStream(toFile);
-            streamToStream(in, out);
-        } finally {
-            if (out != null) {
-                out.close();
-            }
-            if (in != null) {
-                in.close();
-            }
-        }
+    public static void copyFile(final Path fromFile, final Path toFile) throws IOException {
+        Files.copy(fromFile, toFile);
+//        try (final InputStream in = Files.newInputStream(fromFile); final OutputStream out = Files.newOutputStream(toFile)) {
+//            streamToStream(in, out);
+//        }
     }
 
     /**

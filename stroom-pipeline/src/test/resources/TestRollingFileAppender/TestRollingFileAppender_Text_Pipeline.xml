@@ -107,14 +107,14 @@
           <element>rollingFileAppender</element>
           <name>fileName</name>
           <value>
-              <string>TestRollingFileAppender.txt.lock</string>
+              <string>TestRollingFileAppender_Text.lock</string>
           </value>
       </property>
       <property>
           <element>rollingFileAppender</element>
           <name>rolledFileName</name>
           <value>
-              <string>TestRollingFileAppender.txt</string>
+              <string>TestRollingFileAppender_Text.tmp</string>
           </value>
       </property>
       <property>
@@ -143,23 +143,11 @@
       <link> 
         <from>translationFilter</from> 
         <to>decorationFilter</to> 
-      </link> 
-      
-      
-<!--       <link>  -->
-<!--         <from>decorationFilter</from>  -->
-<!--         <to>schemaSplitFilter</to>  -->
-<!--       </link> -->
-<!--       <link>  -->
-<!--         <from>schemaSplitFilter</from>  -->
-<!--         <to>schemaFilter</to>  -->
-<!--       </link>  -->
-      
+      </link>
       <link> 
         <from>decorationFilter</from> 
         <to>schemaFilter</to> 
-      </link>       
-      
+      </link>
       <link> 
         <from>schemaFilter</from> 
         <to>recordOutputFilter</to> 

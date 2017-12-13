@@ -18,6 +18,7 @@ package stroom.statistics.server.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;

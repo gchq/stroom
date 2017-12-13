@@ -22,9 +22,8 @@ import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreClientTestFileUtil;
 import stroom.util.io.StreamUtil;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class TestXMLStyler {
     private static final String PRE_START_ELEMENT = "<pre class=\"xmlArea-ContentPre\">";
@@ -70,31 +69,31 @@ public class TestXMLStyler {
         test("TestAttributes4");
     }
 
-    private void test(final String name) throws FileNotFoundException {
+    private void test(final String name) {
         // Get the testing directory.
-        final File testDataDir = StroomCoreClientTestFileUtil.getTestResourcesDir();
-        final File testDir = new File(testDataDir, "TestXMLStyler");
-        final File inFile = new File(testDir, name + ".in");
+        final Path testDataDir = StroomCoreClientTestFileUtil.getTestResourcesDir();
+        final Path testDir = testDataDir.resolve("TestXMLStyler");
+        final Path inFile = testDir.resolve(name + ".in");
 
         final String inXML = StreamUtil.fileToString(inFile);
 
         // Output styled marked up output.
         final String tmpXML = new XMLStyler().processXML(inXML, true, true, 1, null);
-        final File tmpFile = new File(testDir, name + ".tmp");
+        final Path tmpFile = testDir.resolve(name + ".tmp");
         StreamUtil.stringToFile(tmpXML, tmpFile);
 
         // Output text.
         final String text = getText(tmpXML);
-        final File textTmpFile = new File(testDir, name + "_Text.tmp");
+        final Path textTmpFile = testDir.resolve(name + "_Text.tmp");
         StreamUtil.stringToFile(text, textTmpFile);
 
         // Compare styled marked up output.
-        final File outFile = new File(testDir, name + ".out");
+        final Path outFile = testDir.resolve(name + ".out");
         final String outXML = StreamUtil.fileToString(outFile);
         ComparisonHelper.compareStrings(outXML, tmpXML, "The output does not match reference at index: ");
 
         // Compare text output.
-        final File textOutFile = new File(testDir, name + "_Text.out");
+        final Path textOutFile = testDir.resolve(name + "_Text.out");
         final String textOut = StreamUtil.fileToString(textOutFile);
         ComparisonHelper.compareStrings(textOut, text, "The output does not match reference at index: ");
     }

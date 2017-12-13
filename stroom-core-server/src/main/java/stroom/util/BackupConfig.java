@@ -16,18 +16,22 @@
 
 package stroom.util;
 
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.stream.Stream;
 
 public class BackupConfig {
     public static void main(final String[] args) throws IOException {
@@ -60,15 +64,19 @@ public class BackupConfig {
                     final String target = parts[1];
 
                     if (backUpPaths.size() > 0 && source.endsWith("/store/")) {
-                        final File sourceDir = new File(source);
-                        for (final String child : sourceDir.list()) {
-                            for (final String backupPath : backUpPaths) {
-                                final File sourcePath = new File(source + child + "/./" + backupPath);
-                                if (sourcePath.isDirectory()) {
-                                    printWriter.println(
-                                            source + child + "/./" + backupPath + "/\t" + target + child + "/");
+                        final Path sourceDir = Paths.get(source);
+                        final Path targetDir = Paths.get(target);
+                        try (final Stream<Path> stream = Files.list(sourceDir)) {
+                            stream.forEach(p -> {
+                                for (final String backupPath : backUpPaths) {
+                                    final Path sourcePath = p.resolve(backupPath);
+                                    final Path targetPath = targetDir.resolve(backupPath);
+                                    if (Files.isDirectory(sourcePath)) {
+                                        printWriter.println(
+                                                FileUtil.getCanonicalPath(sourcePath) + "/\t" + FileUtil.getCanonicalPath(targetPath) + "/");
+                                    }
                                 }
-                            }
+                            });
                         }
                     } else {
                         printWriter.println(source + "./\t" + target);

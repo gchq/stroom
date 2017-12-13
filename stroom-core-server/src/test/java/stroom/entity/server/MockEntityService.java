@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.server;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.BaseEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Entity;
-import stroom.entity.shared.FindService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,9 +45,6 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
     }
 
     public boolean isMatch(final C criteria, final E entity) {
-//        if (entity instanceof NamedEntity && criteria instanceof FindNamedEntityCriteria) {
-//            return ((FindNamedEntityCriteria) criteria).getName().isMatch(((NamedEntity) entity).getName());
-//        }
         return true;
     }
 
@@ -62,14 +58,6 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
         }
         return BaseResultList.createUnboundedList(list);
     }
-
-//    @Override
-//    public E create(final E entity) throws RuntimeException {
-//        if (entity.isPersistent()) {
-//            throw new EntityServiceException("Entity is already persistent");
-//        }
-//        return save(entity);
-//    }
 
     @Override
     public E load(final E entity) throws RuntimeException {
@@ -92,11 +80,6 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
 
     @Override
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
-        return map.get(id);
-    }
-
-    @Override
-    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
         return map.get(id);
     }
 

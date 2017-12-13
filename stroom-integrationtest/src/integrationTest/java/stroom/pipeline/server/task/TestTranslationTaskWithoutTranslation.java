@@ -30,20 +30,20 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestTranslationTaskWithoutTranslation/";
     private static final String FEED_NAME = "TEST_FEED";
-    private static final File RESOURCE_NAME = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "TestTask.out");
+    private static final Path RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "TestTask.out");
 
     @Resource
     private MockStreamStore streamStore;
@@ -79,15 +79,15 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
             Assert.assertEquals(message, 0, processor.getMarkerCount(Severity.SEVERITIES));
         }
 
-        final File inputDir = new File(StroomProcessTestFileUtil.getTestResourcesDir(), DIR);
-        final File outputDir = new File(StroomProcessTestFileUtil.getTestOutputDir(), DIR);
+        final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
+        final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
         for (final Stream stream : streamStore.getFileData().keySet()) {
             if (stream.getStreamType() == StreamType.EVENTS) {
                 final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamType().getId());
 
                 // Write the actual XML out.
-                final OutputStream os = StroomProcessTestFileUtil.getOutputStream(outputDir, "TestTask.out");
+                final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTask.out");
                 os.write(data);
                 os.flush();
                 os.close();
@@ -119,7 +119,7 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
         return results;
     }
 
-    private void setup(final String feedName, final File dataLocation) throws IOException {
+    private void setup(final String feedName, final Path dataLocation) throws IOException {
         storeCreationTool.addEventData(feedName, null, null, null, dataLocation, null);
     }
 }

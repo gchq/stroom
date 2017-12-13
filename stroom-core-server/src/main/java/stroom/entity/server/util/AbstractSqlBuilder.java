@@ -26,6 +26,7 @@ import stroom.entity.shared.Range;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.StringCriteria;
+import stroom.query.api.v2.DocRef;
 
 import javax.persistence.Query;
 import java.util.HashSet;
@@ -256,6 +257,47 @@ public abstract class AbstractSqlBuilder extends CoreSqlBuilder {
 
     /**
      * <p>
+     * Add a doc ref set query like A in ('A','B').
+     * </p>
+     */
+    public void appendDocRefSetQuery(final String fieldOrEntity,
+                                       final CriteriaSet<DocRef> set) {
+        if (set != null && set.isConstrained()) {
+            append(" AND");
+            internalAppendDocRefSetSetQuery(fieldOrEntity, set);
+        }
+    }
+
+    private void internalAppendDocRefSetSetQuery(final String fieldOrEntity,
+                                                final CriteriaSet<DocRef> set) {
+        if (set.isMatchNothing()) {
+            // Force the query to return nothing if the set is empty.
+            append(" 1=2");
+
+        } else if (Boolean.TRUE.equals(set.getMatchNull())) {
+            append(" ");
+
+            if (set.size() > 0) {
+                append("(");
+                appendDocRefSet(fieldOrEntity, set);
+                append(" OR ");
+                appendNull(fieldOrEntity);
+                append(")");
+
+            } else {
+                appendNull(fieldOrEntity);
+            }
+
+        } else {
+            append(" ");
+            appendDocRefSet(fieldOrEntity, set);
+        }
+    }
+
+    abstract void appendDocRefSet(String fieldOrEntity, CriteriaSet<DocRef> set);
+
+    /**
+     * <p>
      * Add a set query like A in ('A','B').
      * </p>
      */
@@ -373,7 +415,7 @@ public abstract class AbstractSqlBuilder extends CoreSqlBuilder {
         if (range != null) {
             final Number size = range.size();
             // Exact range
-            if (size != null && size.longValue() == 1) {
+            if (size != null && size.longValue() == 0) {
                 append(" AND ");
                 append(field);
                 append(" = ");
@@ -388,7 +430,7 @@ public abstract class AbstractSqlBuilder extends CoreSqlBuilder {
                 if (range.getTo() != null) {
                     append(" AND ");
                     append(field);
-                    append(" < ");
+                    append(" <= ");
                     arg(range.getTo());
                 }
                 if (range.isMatchNull()) {

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search;
@@ -26,8 +27,10 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.entity.shared.DocRefUtil;
 import stroom.index.server.FieldFactory;
 import stroom.index.server.IndexShardKeyUtil;
+import stroom.index.server.IndexShardService;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.server.Indexer;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -37,7 +40,6 @@ import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
 import stroom.search.server.MaxHitCollector;
 import stroom.search.server.shard.IndexShardSearcher;
 import stroom.search.server.shard.IndexShardSearcherImpl;
@@ -61,7 +63,7 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
     @Test
     public void testSimple() throws IOException {
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
-        final IndexField idField = IndexField.createField("Id", AnalyzerType.ALPHA_NUMERIC, false, true, true, false);
+        final IndexField idField = IndexField.createField("IdTreeNode", AnalyzerType.ALPHA_NUMERIC, false, true, true, false);
         final IndexField testField = IndexField.createField("test", AnalyzerType.ALPHA_NUMERIC, false, true, true,
                 false);
         final IndexField nonStoreField = IndexField.createField("nonstore", AnalyzerType.ALPHA_NUMERIC, false, false,
@@ -93,7 +95,7 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
         indexShardWriterCache.flushAll();
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexIdSet().add(index);
+        criteria.getIndexSet().add(DocRefUtil.create(index));
         final List<IndexShard> shards = indexShardService.find(criteria);
 
         // Open readers and add reader searcher to the multi searcher.

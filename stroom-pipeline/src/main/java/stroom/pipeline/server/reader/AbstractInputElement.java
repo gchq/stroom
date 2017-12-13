@@ -20,6 +20,7 @@ import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.TakesInput;
 import stroom.pipeline.server.factory.Target;
+import stroom.pipeline.server.factory.Terminator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,5 +44,9 @@ public abstract class AbstractInputElement extends AbstractIOElement implements 
 
     protected InputStream insertFilter(final InputStream inputStream, final String encoding) {
         return inputStream;
+    }
+
+    @Override
+    public void setTerminator(final Terminator terminator) {
     }
 }

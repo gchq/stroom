@@ -22,11 +22,14 @@ import org.slf4j.LoggerFactory;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FileUtilException;
+import stroom.util.thread.ThreadUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,6 +56,9 @@ import java.util.stream.Stream;
  * Any files ended in .lock are locked output streams that have not yet closed.
  */
 public final class FileSystemUtil {
+    public static final int MKDIR_RETRY_COUNT = 2;
+    public static final int MKDIR_RETRY_SLEEP_MS = 100;
+
     /**
      * We use this rather than the File.separator as we need to be standard
      * across Windows and UNIX.
@@ -81,14 +87,14 @@ public final class FileSystemUtil {
     /**
      * Create a root path.
      */
-    public static File createFileTypeRoot(final Volume volume) {
+    public static Path createFileTypeRoot(final Volume volume) {
         return createFileTypeRoot(volume, null);
     }
 
     /**
      * Create a root path.
      */
-    public static File createFileTypeRoot(final Volume volume, final StreamType streamType) {
+    public static Path createFileTypeRoot(final Volume volume, final StreamType streamType) {
         StringBuilder builder = new StringBuilder();
         builder.append(volume.getPath());
         builder.append(SEPERATOR_CHAR);
@@ -97,7 +103,7 @@ public final class FileSystemUtil {
             builder.append(SEPERATOR_CHAR);
             builder.append(streamType.toString());
         }
-        return new File(builder.toString());
+        return Paths.get(builder.toString());
     }
 
     public static String encodeFileName(String fileName) {
@@ -129,13 +135,17 @@ public final class FileSystemUtil {
         return builder.toString();
     }
 
-    public static boolean deleteAnyFile(final Collection<File> files) {
+    public static boolean deleteAnyPath(final Collection<Path> files) {
         boolean ok = true;
-        for (File file : files) {
-            if (file.isFile()) {
-                ok &= file.delete();
+        for (Path file : files) {
+            if (Files.isRegularFile(file)) {
+                try {
+                    Files.delete(file);
+                } catch (final IOException e) {
+                    ok = false;
+                }
             } else {
-                if (file.isDirectory()) {
+                if (Files.isDirectory(file)) {
                     ok &= deleteDirectory(file);
                 }
             }
@@ -143,74 +153,29 @@ public final class FileSystemUtil {
         return ok;
     }
 
-    public static boolean isAllFile(final Collection<File> files) {
+    public static boolean isAllFile(final Collection<Path> files) {
         boolean allFiles = true;
-        for (File file : files) {
-            allFiles &= file.isFile();
+        for (Path file : files) {
+            allFiles &= Files.isRegularFile(file);
         }
         return allFiles;
     }
 
-    public static boolean isAllParentDirectoryExist(final Collection<File> files) {
+    public static boolean isAllParentDirectoryExist(final Collection<Path> files) {
         boolean allDirs = true;
-        for (File file : files) {
-            allDirs &= file.getParentFile().isDirectory();
+        for (Path file : files) {
+            allDirs &= Files.isDirectory(file.getParent());
         }
         return allDirs;
     }
 
-    public static boolean updateLastModified(final Collection<File> files, final long lastModified) {
+    public static boolean updateLastModified(final Collection<Path> files, final long lastModified) {
         boolean allOk = true;
-        for (File file : files) {
-            allOk &= file.setLastModified(lastModified);
-        }
-        return allOk;
-    }
-
-    public static boolean deleteDirectory(final File path) {
-        boolean success = true;
-        if (path != null && path.isDirectory()) {
-            if (deleteContents(path)) {
-                final boolean deleteDir = path.delete();
-                if (!deleteDir) {
-                    LOGGER.error("Failed to delete file " + path);
-                    success = false;
-                } else {
-                    LOGGER.debug("Deleted file " + path);
-                }
-            } else {
-                LOGGER.error("Failed to delete file " + path);
-                success = false;
-            }
-        }
-        return success;
-    }
-
-    public static boolean deleteContents(final File path) {
-        boolean allOk = true;
-        File[] kids = path.listFiles();
-        if (kids != null) {
-            for (File kid : kids) {
-                if (kid.isFile()) {
-                    if (!kid.delete()) {
-                        LOGGER.error("Failed to delete file " + kid);
-                        allOk = false;
-                    } else if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Deleted file " + kid);
-                    }
-                } else {
-                    boolean kidsDeleted = deleteContents(kid);
-                    if (kidsDeleted) {
-                        if (!kid.delete()) {
-                            LOGGER.error("Failed to delete file " + kid);
-                            allOk = false;
-                        } else if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Deleted directory " + kid);
-                        }
-                    } else {
-                        allOk = false;
-                    }
-                }
+        for (Path file : files) {
+            try {
+                Files.setLastModifiedTime(file, FileTime.fromMillis(lastModified));
+            } catch (final IOException e) {
+                allOk = false;
             }
         }
         return allOk;
@@ -270,7 +235,57 @@ public final class FileSystemUtil {
      * WE ASSUME here that mkdir is ATOMIC .... which it is.
      * </p>
      */
-    public static boolean mkdirs(final File superDir, final File dir) {
-        return FileUtil.doMkdirs(superDir, dir, FileUtil.MKDIR_RETRY_COUNT);
+    public static boolean mkdirs(final Path superDir, final Path dir) {
+        return doMkdirs(superDir, dir, FileUtil.MKDIR_RETRY_COUNT);
+    }
+
+    public static void mkdirs(final Path dir) {
+        if (!Files.isDirectory(dir)) {
+            if (!doMkdirs(null, dir, MKDIR_RETRY_COUNT)) {
+                throw new FileUtilException("Unable to make directory: " + FileUtil.getCanonicalPath(dir));
+            }
+
+            if (!Files.isDirectory(dir)) {
+                throw new FileUtilException("Directory not found: " + FileUtil.getCanonicalPath(dir));
+            }
+        }
+    }
+
+    private static boolean doMkdirs(final Path superDir, final Path dir, int retry) {
+        // Make sure the parent exists first
+        final Path parentDir = dir.getParent();
+        if (parentDir != null && !Files.isDirectory(parentDir)) {
+            if (superDir != null && superDir.equals(parentDir)) {
+                // Unable to make parent as it is the super dir
+                return false;
+
+            }
+            if (!doMkdirs(superDir, parentDir, retry)) {
+                // Unable to make parent :(
+                return false;
+            }
+        }
+        // No Make us
+        if (!Files.isDirectory(dir)) {
+            // * CONCURRENT PROBLEM AREA *
+            try {
+                Files.createDirectory(dir);
+            } catch (final IOException e) {
+                LOGGER.debug("Failed to make dir " + e.getMessage());
+            }
+
+            // Someone could have made it in the * CONCURRENT PROBLEM AREA *
+            if (!Files.isDirectory(dir)) {
+                if (retry > 0) {
+                    retry = retry - 1;
+                    LOGGER.warn("doMkdirs() - Sleep and Retry due to unable to create " + FileUtil.getCanonicalPath(dir));
+                    ThreadUtil.sleep(MKDIR_RETRY_SLEEP_MS);
+                    return doMkdirs(superDir, dir, retry);
+                } else {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

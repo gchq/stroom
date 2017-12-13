@@ -18,31 +18,34 @@ package stroom.streamstore.server.fs;
 
 import stroom.io.StreamCloser;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 /**
  * @see BlockGZIPConstants
  */
 public class BlockGZIPInputFile extends BlockGZIPInput {
     // File being read
-    private final RandomAccessFile raFile;
+    private final FileChannel raFile;
 
     // File pointer
-    private final File file;
+    private final Path file;
 
     private final StreamCloser streamCloser = new StreamCloser();
 
     /**
      * Constructor to open a Block GZIP File.
      */
-    public BlockGZIPInputFile(final File bgz) throws IOException {
-        this.raFile = new RandomAccessFile(bgz, BlockGZIPConstants.READ_ONLY);
+    public BlockGZIPInputFile(final Path bgz) throws IOException {
+        this.raFile = FileChannel.open(bgz, StandardOpenOption.READ);
         this.file = bgz;
 
-        raFile.seek(0);
+        raFile.position(0);
         init();
 
         // Make sure the streams are closed.
@@ -52,12 +55,12 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     /**
      * Constructor to open a Block GZIP File with a internal buffer size.
      */
-    public BlockGZIPInputFile(final File bgz, final int rawBufferSize) throws IOException {
+    public BlockGZIPInputFile(final Path bgz, final int rawBufferSize) throws IOException {
         super(rawBufferSize);
-        this.raFile = new RandomAccessFile(bgz, BlockGZIPConstants.READ_ONLY);
+        this.raFile = FileChannel.open(bgz, StandardOpenOption.READ);
         this.file = bgz;
 
-        raFile.seek(0);
+        raFile.position(0);
         init();
 
         // Make sure the streams are closed.
@@ -65,7 +68,7 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     }
 
     public static void main(final String[] args) throws IOException {
-        final BlockGZIPInputFile is = new BlockGZIPInputFile(new File(args[0]));
+        final BlockGZIPInputFile is = new BlockGZIPInputFile(Paths.get(args[0]));
 
         final byte[] buffer = new byte[1024];
         int len = 0;
@@ -77,10 +80,6 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
         System.out.flush();
     }
 
-    RandomAccessFile getRaFile() {
-        return raFile;
-    }
-
     /**
      * Here we provide random access into a stream.
      */
@@ -89,15 +88,15 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
         // The first seek we do we check the index
         if (!checkedIndex) {
             // Record the current position in case we don't switch blocks
-            final long originalPos = raFile.getChannel().position();
+            final long originalPos = raFile.position();
             final BlockBufferedInputStream originalRawBuffer = currentRawStreamBuffer;
-            raFile.seek(idxStart);
+            raFile.position(idxStart);
             // Must create a new buffer as we switch back the old one
             currentRawStreamBuffer = createBufferedInputStream(false);
             readMagicMarker();
             checkedIndex = true;
             // Move Back
-            raFile.seek(originalPos);
+            raFile.position(originalPos);
             // Switch back the old one
             currentRawStreamBuffer = originalRawBuffer;
         }
@@ -121,10 +120,10 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
         // Moving block?
         if ((currentBlockNumber != newBlockNumber)) {
             // Read our index
-            raFile.seek((idxStart + BlockGZIPConstants.LONG_BYTES + (newBlockNumber * BlockGZIPConstants.LONG_BYTES)));
+            raFile.position(idxStart + BlockGZIPConstants.LONG_BYTES + (newBlockNumber * BlockGZIPConstants.LONG_BYTES));
             currentRawStreamBuffer = createBufferedInputStream(true);
             final long seekPos = readLong();
-            raFile.seek(seekPos);
+            raFile.position(seekPos);
             currentRawStreamBuffer = createBufferedInputStream(true);
             startGzipBlock();
             currentStream.skip(newBlockOffset);
@@ -202,10 +201,10 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
             final long blockOffset = newPosition % blockSize;
 
             // Read our index
-            raFile.seek((idxStart + BlockGZIPConstants.LONG_BYTES + (blockNumber * BlockGZIPConstants.LONG_BYTES)));
+            raFile.position(idxStart + BlockGZIPConstants.LONG_BYTES + (blockNumber * BlockGZIPConstants.LONG_BYTES));
             currentRawStreamBuffer = createBufferedInputStream(true);
             final long seekPos = readLong();
-            raFile.seek(seekPos);
+            raFile.position(seekPos);
             currentRawStreamBuffer = createBufferedInputStream(true);
             startGzipBlock();
             currentStream.skip(blockOffset);
@@ -224,27 +223,6 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
 
     @Override
     protected InputStream getRawStream() {
-        return new RAInputStreamBufferAdaptor();
+        return Channels.newInputStream(raFile);
     }
-
-    /**
-     * Class to interface a stream to a random access file.
-     */
-    class RAInputStreamBufferAdaptor extends InputStream {
-        @Override
-        public int read() throws IOException {
-            return getRaFile().read();
-        }
-
-        @Override
-        public int read(final byte[] b) throws IOException {
-            return getRaFile().read(b);
-        }
-
-        @Override
-        public int read(final byte[] b, final int off, final int len) throws IOException {
-            return getRaFile().read(b, off, len);
-        }
-    }
-
 }

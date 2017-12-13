@@ -18,7 +18,6 @@ package stroom.streamtask.shared;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.FolderIdSet;
 import stroom.pipeline.shared.PipelineEntity;
 
 /**
@@ -28,7 +27,6 @@ public class FindStreamProcessorCriteria extends BaseCriteria {
     private static final long serialVersionUID = 1L;
 
     private EntityIdSet<PipelineEntity> pipelineIdSet = null;
-    private FolderIdSet folderIdSet = null;
 
     public FindStreamProcessorCriteria() {
         // Default constructor necessary for GWT serialisation.
@@ -47,16 +45,5 @@ public class FindStreamProcessorCriteria extends BaseCriteria {
             pipelineIdSet = new EntityIdSet<>();
         }
         return pipelineIdSet;
-    }
-
-    public FolderIdSet getFolderIdSet() {
-        return folderIdSet;
-    }
-
-    public FolderIdSet obtainFolderIdSet() {
-        if (folderIdSet == null) {
-            folderIdSet = new FolderIdSet();
-        }
-        return folderIdSet;
     }
 }

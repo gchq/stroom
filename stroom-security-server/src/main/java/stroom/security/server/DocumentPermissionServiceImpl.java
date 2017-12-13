@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.security.server;
@@ -21,12 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocumentEntityService;
-import stroom.entity.shared.EntityService;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissions;
@@ -183,13 +180,13 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     protected final StroomEntityManager entityManager;
-    private final GenericEntityService genericEntityService;
+    private final DocumentTypePermissions documentTypePermissions;
 
     @Inject
     DocumentPermissionServiceImpl(final StroomEntityManager entityManager,
-                                  final GenericEntityService genericEntityService) {
+                                  final DocumentTypePermissions documentTypePermissions) {
         this.entityManager = entityManager;
-        this.genericEntityService = genericEntityService;
+        this.documentTypePermissions = documentTypePermissions;
     }
 
     @Override
@@ -207,7 +204,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 final byte status = (Byte) arr[3];
                 final String permission = (String) arr[4];
 
-                final UserRef userRef = new UserRef(User.ENTITY_TYPE, uuid, name, group, UserStatus.ENABLED.getPrimitiveValue() == status);
+                final UserRef userRef = new UserRef(User.ENTITY_TYPE, uuid, name, group,
+                    UserStatus.ENABLED.getPrimitiveValue() == status);
 
                 userPermissions.computeIfAbsent(userRef, k -> new HashSet<>()).add(permission);
             });
@@ -217,10 +215,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             throw e;
         }
 
-        final EntityService<BaseEntity> entityService = genericEntityService
-                .getEntityService(document.getType());
-        final DocumentEntityService<?> documentService = (DocumentEntityService<?>) entityService;
-        final String[] permissions = documentService.getPermissions();
+        final String[] permissions = documentTypePermissions.getPermissions(document.getType());
         return new DocumentPermissions(document, permissions, userPermissions);
     }
 

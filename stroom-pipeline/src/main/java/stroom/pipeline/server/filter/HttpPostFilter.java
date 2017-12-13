@@ -54,7 +54,8 @@ public class HttpPostFilter extends AbstractSamplingFilter {
     private String receivingApiUrl;
 
     @Inject
-    public HttpPostFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {
+    public HttpPostFilter(final ErrorReceiverProxy errorReceiverProxy,
+                          final LocationFactoryProxy locationFactory) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
     }

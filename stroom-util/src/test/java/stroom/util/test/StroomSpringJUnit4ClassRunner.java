@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,8 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.task.TaskScopeContextHolder;
-import stroom.util.thread.ThreadScopeContextHolder;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class StroomSpringJUnit4ClassRunner extends SpringJUnit4ClassRunner {
     private final boolean cacheSpringContext = true;
@@ -101,9 +100,9 @@ public class StroomSpringJUnit4ClassRunner extends SpringJUnit4ClassRunner {
 
     private void printTemp() {
         try {
-            final File dir = FileUtil.getTempDir();
+            final Path dir = FileUtil.getTempDir();
             if (dir != null) {
-                System.out.println("TEMP DIR = " + dir.getCanonicalPath());
+                System.out.println("TEMP DIR = " + FileUtil.getCanonicalPath(dir));
             } else {
                 System.out.println("TEMP DIR = NULL");
             }
@@ -115,7 +114,6 @@ public class StroomSpringJUnit4ClassRunner extends SpringJUnit4ClassRunner {
     protected void runChild(final FrameworkMethod method, final RunNotifier notifier) {
         try {
             try {
-                ThreadScopeContextHolder.createContext();
                 TaskScopeContextHolder.addContext();
 
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -129,7 +127,6 @@ public class StroomSpringJUnit4ClassRunner extends SpringJUnit4ClassRunner {
 
             } finally {
                 TaskScopeContextHolder.removeContext();
-                ThreadScopeContextHolder.destroyContext();
             }
 
             while (TaskScopeContextHolder.contextExists()) {

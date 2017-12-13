@@ -1,0 +1,14 @@
+dependencies {
+
+    compile project(':stroom-explorer-api')
+    compile project(':stroom-ruleset-shared')
+
+    compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-docstore-server')
+
+    compile libs.stroomQueryApi
+    compile libs.slf4j_api
+    compile libs.spring_context
+    compile libs.javax_inject
+}

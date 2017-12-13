@@ -26,18 +26,6 @@ import stroom.streamstore.client.presenter.DataPresenter;
 import stroom.streamstore.client.presenter.DataPresenter.DataView;
 import stroom.streamstore.client.presenter.EntityChoicePresenter;
 import stroom.streamstore.client.presenter.EntityChoicePresenter.EntityChoiceView;
-import stroom.streamstore.client.presenter.EntityIdSetPresenter;
-import stroom.streamstore.client.presenter.EntityIdSetPresenter.EntityIdSetView;
-import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetPopupPresenter;
-import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetPopupPresenter.IncludeExcludeEntityIdSetPopupView;
-import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetPresenter;
-import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetPresenter.IncludeExcludeEntityIdSetView;
-import stroom.streamstore.client.presenter.StreamAttributeListPresenter;
-import stroom.streamstore.client.presenter.StreamAttributeListPresenter.StreamAttributeListView;
-import stroom.streamstore.client.presenter.StreamAttributePresenter;
-import stroom.streamstore.client.presenter.StreamAttributePresenter.StreamAttributeView;
-import stroom.streamstore.client.presenter.StreamFilterPresenter;
-import stroom.streamstore.client.presenter.StreamFilterPresenter.StreamFilterView;
 import stroom.streamstore.client.presenter.StreamListPresenter;
 import stroom.streamstore.client.presenter.StreamPresenter;
 import stroom.streamstore.client.presenter.StreamPresenter.StreamView;
@@ -50,12 +38,6 @@ import stroom.streamstore.client.presenter.TextPresenter.TextView;
 import stroom.streamstore.client.view.ClassificationWrapperViewImpl;
 import stroom.streamstore.client.view.DataViewImpl;
 import stroom.streamstore.client.view.EntityChoiceViewImpl;
-import stroom.streamstore.client.view.EntityIdSetViewImpl;
-import stroom.streamstore.client.view.IncludeExcludeEntityIdSetPopupViewImpl;
-import stroom.streamstore.client.view.IncludeExcludeEntityIdSetViewImpl;
-import stroom.streamstore.client.view.StreamAttributeListViewImpl;
-import stroom.streamstore.client.view.StreamAttributeViewImpl;
-import stroom.streamstore.client.view.StreamFilterViewImpl;
 import stroom.streamstore.client.view.StreamTaskViewImpl;
 import stroom.streamstore.client.view.StreamViewImpl;
 import stroom.streamstore.client.view.TextViewImpl;
@@ -76,16 +58,7 @@ public class StreamStoreModule extends PluginModule {
         bindPresenterWidget(DataPresenter.class, DataView.class, DataViewImpl.class);
         bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
         bindPresenterWidget(StreamTaskPresenter.class, StreamTaskView.class, StreamTaskViewImpl.class);
-        bindPresenterWidget(EntityIdSetPresenter.class, EntityIdSetView.class, EntityIdSetViewImpl.class);
-        bindPresenterWidget(IncludeExcludeEntityIdSetPresenter.class, IncludeExcludeEntityIdSetView.class,
-                IncludeExcludeEntityIdSetViewImpl.class);
-        bindPresenterWidget(IncludeExcludeEntityIdSetPopupPresenter.class, IncludeExcludeEntityIdSetPopupView.class,
-                IncludeExcludeEntityIdSetPopupViewImpl.class);
         bindPresenterWidget(EntityChoicePresenter.class, EntityChoiceView.class, EntityChoiceViewImpl.class);
-        bindPresenterWidget(StreamFilterPresenter.class, StreamFilterView.class, StreamFilterViewImpl.class);
-        bindPresenterWidget(StreamAttributeListPresenter.class, StreamAttributeListView.class,
-                StreamAttributeListViewImpl.class);
-        bindPresenterWidget(StreamAttributePresenter.class, StreamAttributeView.class, StreamAttributeViewImpl.class);
         bind(StreamListPresenter.class);
 
         bind(StreamTaskListPresenter.class);

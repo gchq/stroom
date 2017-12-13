@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.svg.client;
@@ -31,6 +32,8 @@ public final class SvgPresets {
     public static final SvgPreset EDIT = new SvgPreset("images/edit.svg", "Edit", false);
     public static final SvgPreset ERROR = new SvgPreset("images/error.svg", "Error", true);
     public static final SvgPreset EXPLORER = new SvgPreset("images/explorer.svg", "Explorer", true);
+    public static final SvgPreset ANNOTATIONS = new SvgPreset("images/document/AnnotationsIndex.svg", "Annotations", true);
+    public static final SvgPreset ELASTIC_SEARCH = new SvgPreset("images/document/ElasticIndex.svg", "Elastic Search", true);
     public static final SvgPreset FATAL = new SvgPreset("images/fatal.svg", "Fatal", true);
     public static final SvgPreset FEED = new SvgPreset("images/feed.svg", "Feed", true);
     public static final SvgPreset FAVOURITES = new SvgPreset("images/favourites.svg", "Favourites", false);
@@ -52,8 +55,8 @@ public final class SvgPresets {
     public static final SvgPreset PROCESS = new SvgPreset("images/process.svg", "Process", false);
     public static final SvgPreset PROPERTIES = new SvgPreset("images/properties.svg", "Properties", true);
     public static final SvgPreset REMOVE = new SvgPreset("images/remove.svg", "Remove", false);
+    public static final SvgPreset RULESET = new SvgPreset("images/ruleset.svg", "Rule Set", true);
     public static final SvgPreset SAVE = new SvgPreset("images/save.svg", "Save", false);
-    public static final SvgPreset SAVE_AS = new SvgPreset("images/saveas.svg", "Save As", true);
     public static final SvgPreset SHARD_FLUSH = new SvgPreset("images/shard-flush.svg", "Flush Selected Shards", false);
     public static final SvgPreset SHARD_CLOSE = new SvgPreset("images/shard-close.svg", "Close Selected Shards", false);
     public static final SvgPreset SPINNER = new SvgPreset("images/spinner.svg", null, true);

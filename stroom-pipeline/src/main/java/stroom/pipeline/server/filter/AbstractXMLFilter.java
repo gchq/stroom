@@ -20,14 +20,11 @@ import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.errorhandler.TerminatedException;
 import stroom.pipeline.server.factory.AbstractElement;
 import stroom.pipeline.server.factory.HasTargets;
 import stroom.pipeline.server.factory.Processor;
 import stroom.pipeline.server.factory.Target;
-import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -35,9 +32,6 @@ import java.util.List;
  * provides a child filter that all SAX events will be forwarded to by default.
  */
 public abstract class AbstractXMLFilter extends AbstractElement implements XMLFilter, HasTargets {
-    @Resource
-    private TaskMonitor taskMonitor;
-
     private ContentHandler contentHandler = NullXMLFilter.INSTANCE;
     private XMLFilter filter = NullXMLFilter.INSTANCE;
 
@@ -299,10 +293,7 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        if (taskMonitor != null && taskMonitor.isTerminated()) {
-            throw new TerminatedException();
-        }
-
+        terminationCheck();
         contentHandler.startElement(uri, localName, qName, atts);
     }
 

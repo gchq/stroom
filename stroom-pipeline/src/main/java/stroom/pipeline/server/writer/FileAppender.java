@@ -16,33 +16,25 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
-import javax.annotation.Resource;
-import javax.inject.Inject;
-
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Joins text instances into a single text instance.
@@ -90,28 +82,30 @@ public class FileAppender extends AbstractAppender {
             path = pathCreator.replaceAll(path);
 
             // Make sure we can create this path.
-            final File file = new File(path);
-            final File dir = file.getParentFile();
-            if (!dir.isDirectory()) {
-                if (!dir.mkdirs()) {
-                    throw new ProcessException("Unable to create output dirs: " + dir.getAbsolutePath());
+            final Path file = Paths.get(path);
+            final Path dir = file.getParent();
+            if (!Files.isDirectory(dir)) {
+                try {
+                    Files.createDirectories(dir);
+                } catch (final IOException e) {
+                    throw new ProcessException("Unable to create output dirs: " + FileUtil.getCanonicalPath(dir));
                 }
             }
 
-            final File lockFile = new File(path + LOCK_EXTENSION);
-            final File outFile = file;
+            final Path lockFile = Paths.get(path + LOCK_EXTENSION);
+            final Path outFile = file;
 
             // Make sure we can create both output files without overwriting
             // another file.
-            if (lockFile.isFile()) {
-                throw new ProcessException("Output file \"" + lockFile.getAbsolutePath() + "\" already exists");
+            if (Files.exists(lockFile)) {
+                throw new ProcessException("Output file \"" + FileUtil.getCanonicalPath(lockFile) + "\" already exists");
             }
-            if (outFile.isFile()) {
-                throw new ProcessException("Output file \"" + outFile.getAbsolutePath() + "\" already exists");
+            if (Files.exists(outFile)) {
+                throw new ProcessException("Output file \"" + FileUtil.getCanonicalPath(outFile) + "\" already exists");
             }
 
             // Get a writer for the new lock file.
-            final OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(lockFile));
+            final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(lockFile));
             return new LockedOutputStream(outputStream, lockFile, outFile);
 
         } catch (final IOException e) {

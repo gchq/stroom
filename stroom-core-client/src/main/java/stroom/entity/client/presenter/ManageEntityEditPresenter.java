@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.client.presenter;
@@ -22,7 +23,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.EntityServiceLoadAction;
+import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.NamedEntity;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -80,8 +81,7 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
 
         if (entity.isPersistent()) {
             // Reload it so we always have the latest version
-            final EntityServiceLoadAction<E> action = new EntityServiceLoadAction<>(DocRefUtil.create(entity),
-                    getEntityFetchSet());
+            final DocumentServiceReadAction<E> action = new DocumentServiceReadAction<>(DocRefUtil.create(entity));
             dispatcher.exec(action).onSuccess(result -> {
                 setEntity(result);
                 read();
@@ -107,7 +107,7 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
 
     protected abstract String getEntityDisplayType();
 
-    protected Set<String> getEntityFetchSet() {
+    protected final Set<String> getEntityFetchSet() {
         return null;
     }
 

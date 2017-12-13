@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
-import stroom.pool.SecurityHelper;
+import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -53,7 +53,7 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
 
     @Override
     public DataSource getDataSource(final DocRef docRef) {
-        try (final SecurityHelper securityHelper = SecurityHelper.elev(securityContext)) {
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final StatisticStoreEntity entity = statisticStoreCache.getStatisticsDataSource(docRef);
             if (entity == null) {
                 return null;

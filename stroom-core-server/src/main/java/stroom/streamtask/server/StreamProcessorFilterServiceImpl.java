@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,18 @@ import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.UserManagerQueryUtil;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Secured;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
-import stroom.streamtask.shared.StreamProcessorService;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -54,10 +52,10 @@ public class StreamProcessorFilterServiceImpl
 
     @Inject
     public StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
-                                            final StreamProcessorService streamProcessorService, final StreamProcessorFilterMarshaller marshaller) {
+                                            final StreamProcessorService streamProcessorService) {
         super(entityManager);
         this.streamProcessorService = streamProcessorService;
-        this.marshaller = marshaller;
+        this.marshaller = new StreamProcessorFilterMarshaller();
     }
 
     @Override
@@ -66,17 +64,16 @@ public class StreamProcessorFilterServiceImpl
     }
 
     @Override
-    public void addFindStreamCriteria(final StreamProcessor streamProcessor, final int priority,
-                                      final FindStreamCriteria findStreamCriteria) {
-        // This is always NA as we filter by status on during task creation.
-        findStreamCriteria.setStatusSet(null);
+    public void addFindStreamCriteria(final StreamProcessor streamProcessor,
+                                      final int priority,
+                                      final QueryData queryData) {
 
         StreamProcessorFilter filter = new StreamProcessorFilter();
         // Blank tracker
         filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
         filter.setPriority(priority);
         filter.setStreamProcessor(streamProcessor);
-        filter.setFindStreamCriteria(findStreamCriteria);
+        filter.setQueryData(queryData);
         filter.setEnabled(true);
         filter = marshaller.marshal(filter);
         // Save initial tracker
@@ -87,9 +84,9 @@ public class StreamProcessorFilterServiceImpl
 
     @Override
     public StreamProcessorFilter createNewFilter(final PipelineEntity pipelineEntity,
-                                                 final FindStreamCriteria findStreamCriteria, final boolean enabled, final int priority) {
-        // This is always NA,
-        findStreamCriteria.setStatusSet(null);
+                                                 final QueryData queryData,
+                                                 final boolean enabled,
+                                                 final int priority) {
 
         // First see if we can find a stream processor for this pipeline.
         final FindStreamProcessorCriteria findStreamProcessorCriteria = new FindStreamProcessorCriteria(pipelineEntity);
@@ -110,7 +107,7 @@ public class StreamProcessorFilterServiceImpl
         filter.setPriority(priority);
         filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
         filter.setStreamProcessor(processor);
-        filter.setFindStreamCriteria(findStreamCriteria);
+        filter.setQueryData(queryData);
         filter = marshaller.marshal(filter);
         // Save initial tracker
         getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());
@@ -146,7 +143,6 @@ public class StreamProcessorFilterServiceImpl
         CriteriaLoggingUtil.appendRangeTerm(items, "lastPollPeriod", criteria.getLastPollPeriod());
         CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet", criteria.getStreamProcessorIdSet());
         CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", criteria.getPipelineIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "folderIdSet", criteria.getFolderIdSet());
         CriteriaLoggingUtil.appendBooleanTerm(items, "streamProcessorEnabled", criteria.getStreamProcessorEnabled());
         CriteriaLoggingUtil.appendBooleanTerm(items, "streamProcessorFilterEnabled",
                 criteria.getStreamProcessorFilterEnabled());
@@ -160,8 +156,11 @@ public class StreamProcessorFilterServiceImpl
     }
 
     private static class StreamProcessorFilterQueryAppender extends QueryAppender<StreamProcessorFilter, FindStreamProcessorFilterCriteria> {
-        public StreamProcessorFilterQueryAppender(StroomEntityManager entityManager) {
+        private final StreamProcessorFilterMarshaller marshaller;
+
+        StreamProcessorFilterQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
+            marshaller = new StreamProcessorFilterMarshaller();
         }
 
         @Override
@@ -194,12 +193,21 @@ public class StreamProcessorFilterServiceImpl
 
             sql.appendEntityIdSetQuery(alias + ".streamProcessor.pipeline", criteria.getPipelineIdSet());
 
-            UserManagerQueryUtil.appendFolderCriteria(criteria.getFolderIdSet(), alias + ".streamProcessor.pipeline.folder", sql,
-                    getEntityManager());
-
             sql.appendEntityIdSetQuery(alias + ".streamProcessor", criteria.getStreamProcessorIdSet());
 
             sql.appendValueQuery(alias + ".createUser", criteria.getCreateUser());
+        }
+
+        @Override
+        protected void preSave(final StreamProcessorFilter entity) {
+            super.preSave(entity);
+            marshaller.marshal(entity);
+        }
+
+        @Override
+        protected void postLoad(final StreamProcessorFilter entity) {
+            marshaller.unmarshal(entity);
+            super.postLoad(entity);
         }
     }
 }

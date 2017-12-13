@@ -20,6 +20,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.apiclients.AuthenticationServiceClients;
 import stroom.datasource.api.v2.DataSource;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
@@ -46,11 +47,14 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     private final SecurityContext securityContext;
     private final String url;
+    private AuthenticationServiceClients authenticationServiceClients;
 
     public RemoteDataSourceProvider(final SecurityContext securityContext,
-                                    final String url) {
+                                    final String url,
+                                    final AuthenticationServiceClients authenticationServiceClients) {
         this.securityContext = securityContext;
         this.url = url;
+        this.authenticationServiceClients = authenticationServiceClients;
         LOGGER.trace("Creating RemoteDataSourceProvider for url {}", url);
     }
 
@@ -79,16 +83,25 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
             WebTarget webTarget = client.target(url).path(path);
 
+            String requestingUser = securityContext.getUserId();
+            String usersApiToken = authenticationServiceClients.getUsersApiToken(requestingUser);
+
             Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-            invocationBuilder.header(HttpHeaders.AUTHORIZATION, securityContext.getToken());
+            invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiToken);
             Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
             if (HttpServletResponse.SC_OK == response.getStatus()) {
                 return response.readEntity(responseClass);
             }
+            else if(HttpServletResponse.SC_UNAUTHORIZED == response.getStatus()){
+                throw new RuntimeException("The user is not authorized to make this request! The user was " +
+                    requestingUser);
+            }
+            else {
+                throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
+                        response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
+            }
 
-            throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
-                    response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
         } catch (RuntimeException e) {
             throw new RuntimeException(String.format("Error sending request %s to %s", request, path), e);
         }
@@ -105,4 +118,5 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                 "url='" + url + '\'' +
                 '}';
     }
+
 }

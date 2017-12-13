@@ -18,9 +18,9 @@ package stroom.task.server;
 
 import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
+import stroom.security.UserTokenUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
-import stroom.util.task.ServerTask;
 
 import javax.inject.Inject;
 import java.util.concurrent.Executor;
@@ -53,7 +53,7 @@ class ExecutorProviderImpl implements ExecutorProvider {
             return parentTask.getUserToken();
         }
 
-        return ServerTask.INTERNAL_PROCESSING_USER_TOKEN;
+        return UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN;
     }
 
     private String getTaskName(final Task<?> parentTask, final String defaultName) {

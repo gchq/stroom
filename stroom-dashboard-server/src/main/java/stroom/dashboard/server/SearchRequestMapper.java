@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server;
@@ -54,8 +55,8 @@ import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.util.shared.OffsetRange;
+import stroom.visualisation.server.VisualisationService;
 import stroom.visualisation.shared.Visualisation;
-import stroom.visualisation.shared.VisualisationService;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -353,8 +354,7 @@ public class SearchRequestMapper {
 //        return tableSettings;
 //    }
 
-    private stroom.query.api.v2.Field.Builder convertField(final VisField visField,
-                                                           final Map<String, stroom.query.api.v2.Format> formatMap) {
+    private stroom.query.api.v2.Field.Builder convertField(final VisField visField, final Map<String, stroom.query.api.v2.Format> formatMap) {
         final stroom.query.api.v2.Field.Builder builder = new stroom.query.api.v2.Field.Builder();
 
         builder.format(Type.GENERAL);

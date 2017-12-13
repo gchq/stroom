@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.spring;
@@ -24,10 +25,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.dashboard.server.QueryServiceImpl;
-import stroom.dictionary.DictionaryServiceImpl;
+import stroom.dictionary.server.DictionaryStoreImpl;
+import stroom.elastic.server.ElasticIndexServiceImpl;
+import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.server.MockFeedService;
-import stroom.folder.server.FolderServiceImpl;
+import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.internalstatistics.MetaDataStatisticImpl;
 import stroom.jobsystem.server.ClusterLockServiceImpl;
 import stroom.jobsystem.server.JobManagerImpl;
@@ -38,13 +41,18 @@ import stroom.node.server.GlobalPropertyServiceImpl;
 import stroom.node.server.NodeConfigImpl;
 import stroom.node.server.NodeServiceImpl;
 import stroom.node.server.RecordCountServiceImpl;
-import stroom.pipeline.server.MockPipelineEntityService;
-import stroom.pipeline.server.PipelineEntityServiceImpl;
+import stroom.pipeline.server.MockPipelineService;
+import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.server.PipelineServiceImpl;
+import stroom.pipeline.server.TextConverterService;
 import stroom.pipeline.server.TextConverterServiceImpl;
+import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.XSLTServiceImpl;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.XSLT;
 import stroom.policy.server.DataRetentionExecutor;
 import stroom.resource.server.ResourceStoreImpl;
-import stroom.security.server.MockFolderService;
 import stroom.security.server.UserServiceImpl;
 import stroom.streamstore.server.MockStreamTypeService;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
@@ -60,7 +68,9 @@ import stroom.streamtask.server.StreamTaskCreatorImpl;
 import stroom.streamtask.server.StreamTaskServiceImpl;
 import stroom.test.DatabaseCommonTestControl;
 import stroom.volume.server.VolumeServiceImpl;
+import stroom.xmlschema.server.XMLSchemaService;
 import stroom.xmlschema.server.XMLSchemaServiceImpl;
+import stroom.xmlschema.shared.XMLSchema;
 
 /**
  * Configures the context for process integration tests.
@@ -77,6 +87,7 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
  */
 @Configuration
 @ComponentScan(basePackages = {
+        "stroom.apiclients",
         "stroom.cache",
         "stroom.cluster",
         "stroom.datafeed",
@@ -84,8 +95,8 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         "stroom.db",
         "stroom.dictionary",
         "stroom.dispatch",
+        "stroom.docstore.server",
         "stroom.entity",
-        "stroom.explorer",
         "stroom.feed",
         "stroom.folder",
         "stroom.importexport",
@@ -124,7 +135,8 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterLockServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DatabaseCommonTestControl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DictionaryServiceImpl.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DictionaryStoreImpl.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ElasticIndexServiceImpl.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // EntityPathResolverImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FeedServiceImpl.class),
@@ -148,7 +160,7 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MetaDataStatisticImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = NodeConfigImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = NodeServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = PipelineEntityServiceImpl.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = PipelineServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = QueryServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = RecordCountServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ResourceStoreImpl.class),
@@ -160,7 +172,6 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamTaskCreatorImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamTaskServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamTypeServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FolderServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = UserServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = TextConverterServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = VolumeServiceImpl.class),
@@ -169,13 +180,20 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
 public class ProcessTestServerComponentScanConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessTestServerComponentScanConfiguration.class);
 
-    public ProcessTestServerComponentScanConfiguration() {
-        LOGGER.info("ProcessConfiguration loading...");
-    }
-
-    @Bean(name = "cachedFolderService")
-    public MockFolderService getCachedFolderService(final MockFolderService folderService) {
-        return folderService;
+    public ProcessTestServerComponentScanConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                                                       final ImportExportActionHandlers importExportActionHandlers,
+                                                       final TextConverterService textConverterService,
+                                                       final XSLTService xsltService,
+                                                       final PipelineService pipelineService,
+                                                       final XMLSchemaService xmlSchemaService) {
+        explorerActionHandlers.add(4, TextConverter.ENTITY_TYPE, "Text Converter", textConverterService);
+        explorerActionHandlers.add(5, XSLT.ENTITY_TYPE, XSLT.ENTITY_TYPE, xsltService);
+        explorerActionHandlers.add(6, PipelineEntity.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE, pipelineService);
+        explorerActionHandlers.add(13, XMLSchema.ENTITY_TYPE, "XML Schema", xmlSchemaService);
+        importExportActionHandlers.add(TextConverter.ENTITY_TYPE, textConverterService);
+        importExportActionHandlers.add(XSLT.ENTITY_TYPE, xsltService);
+        importExportActionHandlers.add(PipelineEntity.ENTITY_TYPE, pipelineService);
+        importExportActionHandlers.add(XMLSchema.ENTITY_TYPE, xmlSchemaService);
     }
 
     @Bean(name = "cachedStreamTypeService")
@@ -188,9 +206,9 @@ public class ProcessTestServerComponentScanConfiguration {
         return feedService;
     }
 
-    @Bean(name = "cachedPipelineEntityService")
-    public MockPipelineEntityService getCachedPipelineEntityService(final MockPipelineEntityService pipelineEntityService) {
-        return pipelineEntityService;
+    @Bean(name = "cachedPipelineService")
+    public MockPipelineService getCachedPipelineService(final MockPipelineService pipelineService) {
+        return pipelineService;
     }
 
     @Bean(name = "cachedStreamProcessorService")

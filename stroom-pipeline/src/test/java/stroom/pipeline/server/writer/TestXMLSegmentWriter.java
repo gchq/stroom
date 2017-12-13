@@ -32,16 +32,16 @@ import stroom.streamstore.server.fs.UncompressedInputStream;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.SegmentInputStream;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -68,27 +68,27 @@ public class TestXMLSegmentWriter extends StroomUnitTest {
     }
 
     private void createOutput() throws Exception {
-        final File dir = getCurrentTestDir();
-        final File dataFile = new File(dir, "test.dat");
-        final File indexFile = new File(dir, "test.idx");
+        final Path dir = getCurrentTestDir();
+        final Path dataFile = dir.resolve("test.dat");
+        final Path indexFile = dir.resolve("test.idx");
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
         final OutputStream outputStream = new RASegmentOutputStream(new BlockGZIPOutputFile(dataFile),
-                new FileOutputStream(indexFile));
+                Files.newOutputStream(indexFile));
         final OutputStreamAppender appender = new OutputStreamAppender(errorReceiverProxy, outputStream);
         final XMLWriter segmentWriter = new XMLWriter(errorReceiverProxy, null);
         segmentWriter.setTarget(appender);
 
-        final InputStream inputStream = StroomProcessTestFileUtil.getInputStream(RESOURCE);
+        final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(RESOURCE);
 
         ProcessorUtil.processXml(inputStream, errorReceiverProxy, segmentWriter, new LocationFactoryProxy());
     }
 
     private void test(final boolean testInclude, final int bufferLength) throws Exception {
-        final File dir = getCurrentTestDir();
-        final File dataFile = new File(dir, "test.dat");
-        final File indexFile = new File(dir, "test.idx");
+        final Path dir = getCurrentTestDir();
+        final Path dataFile = dir.resolve("test.dat");
+        final Path indexFile = dir.resolve("test.idx");
         try (BlockGZIPInputFile data = new BlockGZIPInputFile(dataFile);
              final UncompressedInputStream index = new UncompressedInputStream(indexFile, true)) {
             try (SegmentInputStream inputStream = new RASegmentInputStream(data, index)) {
@@ -145,8 +145,7 @@ public class TestXMLSegmentWriter extends StroomUnitTest {
                 // is valid and that the number of records matches what we
                 // expect.
                 final RecordCount recordCount = new RecordCount();
-                final RecordCountFilter recordCountFilter = new RecordCountFilter();
-                recordCountFilter.setRecordCount(recordCount);
+                final RecordCountFilter recordCountFilter = new RecordCountFilter(null, recordCount);
 
                 ProcessorUtil.processXml(new ByteArrayInputStream(baos.toByteArray()),
                         new ErrorReceiverProxy(new FatalErrorReceiver()), recordCountFilter,

@@ -20,10 +20,11 @@ import stroom.io.SeekableOutputStream;
 import stroom.io.StreamCloser;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Output stream that writes a lock file with the data and then renames to the
@@ -33,39 +34,35 @@ import java.io.OutputStream;
  * (thus the file does not exist if no data was written).
  */
 public class LockingFileOutputStream extends OutputStream implements SeekableOutputStream {
-    private final File finalFile;
-    private final File lockFile;
-    private OutputStream fileOutputStream;
+    private final Path finalFile;
+    private final Path lockFile;
+    private OutputStream outputStream;
     private long bytesWritten = 0;
     private boolean closed = false;
 
     // Use to help track non-closed streams
     private StreamCloser streamCloser = new StreamCloser();
 
-    public LockingFileOutputStream(File file, boolean lazy) throws IOException {
+    public LockingFileOutputStream(Path file, boolean lazy) throws IOException {
         this.finalFile = file;
-        if (finalFile.isFile()) {
-            file.delete();
-        }
-        lockFile = new File(file.getAbsolutePath() + BlockGZIPConstants.LOCK_EXTENSION);
-        if (lockFile.isFile()) {
-            lockFile.delete();
-        }
+        Files.deleteIfExists(file);
+        lockFile = Paths.get(file.toAbsolutePath().normalize().toString() + BlockGZIPConstants.LOCK_EXTENSION);
+        Files.deleteIfExists(lockFile);
         if (!lazy) {
-            getFileOutputStream();
+            getOutputStream();
         }
     }
 
-    private OutputStream getFileOutputStream() throws IOException {
-        if (fileOutputStream == null) {
+    private OutputStream getOutputStream() throws IOException {
+        if (outputStream == null) {
             if (closed) {
                 throw new IOException("stream closed");
             }
-            fileOutputStream = new BufferedOutputStream(new FileOutputStream(lockFile),
+            outputStream = new BufferedOutputStream(Files.newOutputStream(lockFile),
                     FileSystemUtil.STREAM_BUFFER_SIZE);
-            streamCloser.add(fileOutputStream);
+            streamCloser.add(outputStream);
         }
-        return fileOutputStream;
+        return outputStream;
     }
 
     @Override
@@ -79,28 +76,28 @@ public class LockingFileOutputStream extends OutputStream implements SeekableOut
         } finally {
             super.close();
 
-            if (fileOutputStream != null) {
-                lockFile.renameTo(finalFile);
-                fileOutputStream = null;
+            if (outputStream != null) {
+                Files.move(lockFile, finalFile);
+                outputStream = null;
             }
         }
     }
 
     @Override
     public void write(int b) throws IOException {
-        getFileOutputStream().write(b);
+        getOutputStream().write(b);
         bytesWritten++;
     }
 
     @Override
     public void write(byte[] b) throws IOException {
-        getFileOutputStream().write(b);
+        getOutputStream().write(b);
         bytesWritten += b.length;
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        getFileOutputStream().write(b, off, len);
+        getOutputStream().write(b, off, len);
         bytesWritten += len;
     }
 

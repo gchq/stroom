@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.index.server;
@@ -20,10 +21,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
@@ -42,7 +43,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
         final IndexShard indexShard = new IndexShard();
         indexShard.setVolume(
-                Volume.create(ownerNode, FileUtil.getTempDir().getAbsolutePath(), VolumeType.PUBLIC));
+                Volume.create(ownerNode, FileUtil.getCanonicalPath(FileUtil.getTempDir()), VolumeType.PUBLIC));
         indexShard.setIndex(indexShardKey.getIndex());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
@@ -66,7 +67,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
 
             } else if (!criteria.getNodeIdSet().isMatch(indexShard.getNode())) {
                 include = false;
-            } else if (!criteria.getIndexIdSet().isMatch(indexShard.getIndex())) {
+            } else if (!criteria.getIndexSet().isMatch(DocRefUtil.create(indexShard.getIndex()))) {
                 include = false;
 
             } else if (!criteria.getIndexShardStatusSet().isMatch(indexShard.getStatus())) {

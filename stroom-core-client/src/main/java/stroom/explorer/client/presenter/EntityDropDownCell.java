@@ -12,14 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.explorer.client.presenter;
 
 import com.google.inject.Inject;
 import stroom.cell.dropdowntree.client.DropDownCell;
-import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRef;
 
 public class EntityDropDownCell extends DropDownCell<DocRef> {
@@ -66,11 +66,11 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
         explorerDropDownTreePresenter.show();
     }
 
-    private void changeSelection(final ExplorerData selection) {
-        if (selection == null || !(selection instanceof EntityData)) {
+    private void changeSelection(final ExplorerNode selection) {
+        if (selection == null) {
             setValue(null);
         } else {
-            setValue(((EntityData) selection).getDocRef());
+            setValue(selection.getDocRef());
         }
     }
 }
