@@ -23,6 +23,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
+    compile libs.stroomAuthApi
     compile libs.stroomQueryApi
     compile libs.stroomAuthApi
     compile libs.eventLogging
