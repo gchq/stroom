@@ -145,8 +145,10 @@ public class StreamAttributeMapServiceImpl
 
                     // Query the database for the attribute values
                     if (criteria.isUseCache()) {
+                        LOGGER.info("Loading attribute map from DB");
                         loadAttributeMapFromDatabase(criteria, streamMDList, streamList, ruleDecorator);
                     } else {
+                        LOGGER.info("Loading attribute map from filesystem");
                         loadAttributeMapFromFileSystem(criteria, streamMDList, streamList, ruleDecorator);
                     }
                 }

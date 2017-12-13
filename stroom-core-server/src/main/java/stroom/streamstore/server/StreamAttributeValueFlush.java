@@ -16,6 +16,7 @@
 
 package stroom.streamstore.server;
 
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Flushable;
 import stroom.streamstore.shared.Stream;
 import stroom.feed.MetaMap;

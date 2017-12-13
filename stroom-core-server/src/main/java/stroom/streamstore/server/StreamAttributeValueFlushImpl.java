@@ -90,6 +90,11 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
         queue.add(new AsyncFlush(stream, append, metaMap));
     }
 
+    @Override
+    public void clear() {
+        queue.clear();
+    }
+
     @StroomShutdown
     public void shutdown() {
         flush();
