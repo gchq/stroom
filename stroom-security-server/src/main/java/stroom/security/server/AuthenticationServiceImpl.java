@@ -25,10 +25,7 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.apiclients.AuthenticationServiceClients;
-import stroom.auth.service.ApiException;
-import stroom.dashboard.server.logging.AuthenticationEventLog;
 import stroom.entity.shared.EntityServiceException;
 import stroom.logging.AuthenticationEventLog;
 import stroom.node.server.StroomPropertyService;
@@ -49,8 +46,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.Optional;
 
 @Component
 @Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
@@ -378,7 +373,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Audit the successful login
         eventLog.logon(userId);
 
-        if(request != null) {
+        if (request != null) {
             final HttpSession session = request.getSession(true);
             session.setAttribute(USER_SESSION_KEY, user);
             session.setAttribute(USER_ID_SESSION_KEY, userId);

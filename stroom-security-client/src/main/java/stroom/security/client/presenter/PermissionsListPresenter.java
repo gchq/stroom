@@ -28,7 +28,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.security.shared.ChangeSet;
-import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserPermission;
 import stroom.security.shared.UserRef;

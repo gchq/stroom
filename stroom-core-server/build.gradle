@@ -12,10 +12,11 @@ dependencies {
     compile project(':stroom-connectors')
 
     compile libs.eventLogging
+    compile libs.stroomAuthApi
     compile libs.stroomQueryApi
     compile libs.stroomQueryCommon
     compile libs.stroomQueryAudit
-    compile urlDependencies.get(urlLibs.stroomStatsSchema)
+    compile libs.stroomStatsSchema
 
     compile libs.curator_client
     compile libs.curator_framework
@@ -37,7 +38,6 @@ dependencies {
     compile libs.validation_api
     compile libs.ws_rs_api
     compile libs.curator_x_discovery
-    compile libs.jackson_databind
     compile libs.jersey_client
     compile libs.jersey_common
     compile libs.hibernate_jpa_api

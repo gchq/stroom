@@ -29,11 +29,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
 import stroom.util.shared.UserTokenUtil;
-import stroom.util.task.ServerTask;
 
 import javax.inject.Inject;
 import java.util.regex.Pattern;
@@ -97,12 +97,12 @@ public class DBRealm extends AuthenticatingRealm {
             // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
             // some way of sensibly referencing the user and something to attach permissions to.
             // We need to elevate the user because no one is currently logged in.
-            securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-            userService.createUser(userId);
-            securityContext.popUser();
+            try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+                userService.createUser(userId);
+            }
         }
 
-        securityContext.pushUser(UserTokenUtil.create((String)token.getUserId(), null, token.getToken()));
+        securityContext.pushUser(UserTokenUtil.create((String) token.getUserId(), null, token.getToken()));
 
         if (user != null) {
             return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());
@@ -143,29 +143,30 @@ public class DBRealm extends AuthenticatingRealm {
      * @return a new admin user
      */
     public UserRef createOrRefreshAdmin() {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-        // Ensure all perms have been created
-        userAppPermissionService.init();
+        UserRef userRef;
 
-        UserRef userRef = userService.getUserByName(UserService.INITIAL_ADMIN_ACCOUNT);
-        if (userRef == null) {
-            User user = new User();
-            user.setName(UserService.INITIAL_ADMIN_ACCOUNT);
-            // Save the admin account.
-            user = userService.save(user);
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            // Ensure all perms have been created
+            userAppPermissionService.init();
 
-            final UserRef userGroup = createOrRefreshAdminUserGroup();
-            try {
-                userService.addUserToGroup(UserRefFactory.create(user), userGroup);
-            } catch (final RuntimeException e) {
-                // Expected.
-                LOGGER.debug(e.getMessage());
+            userRef = userService.getUserByName(UserService.INITIAL_ADMIN_ACCOUNT);
+            if (userRef == null) {
+                User user = new User();
+                user.setName(UserService.INITIAL_ADMIN_ACCOUNT);
+                // Save the admin account.
+                user = userService.save(user);
+
+                final UserRef userGroup = createOrRefreshAdminUserGroup();
+                try {
+                    userService.addUserToGroup(UserRefFactory.create(user), userGroup);
+                } catch (final RuntimeException e) {
+                    // Expected.
+                    LOGGER.debug(e.getMessage());
+                }
+
+                userRef = UserRefFactory.create(user);
             }
-
-            userRef = UserRefFactory.create(user);
         }
-
-        securityContext.popUser();
         return userRef;
     }
 
@@ -179,25 +180,24 @@ public class DBRealm extends AuthenticatingRealm {
     }
 
     private UserRef createOrRefreshAdminUserGroup(final String userGroupName) {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+        UserRef newUserGroup;
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
+            findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
 
-        final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
-        findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
+            final User userGroup = userService.find(findUserGroupCriteria).getFirst();
+            if (userGroup != null) {
+                return UserRefFactory.create(userGroup);
+            }
 
-        final User userGroup = userService.find(findUserGroupCriteria).getFirst();
-        if (userGroup != null) {
-            return UserRefFactory.create(userGroup);
+            newUserGroup = userService.createUserGroup(userGroupName);
+            try {
+                userAppPermissionService.addPermission(newUserGroup, PermissionNames.ADMINISTRATOR);
+            } catch (final RuntimeException e) {
+                // Expected.
+                LOGGER.debug(e.getMessage());
+            }
         }
-
-        final UserRef newUserGroup = userService.createUserGroup(userGroupName);
-        try {
-            userAppPermissionService.addPermission(newUserGroup, PermissionNames.ADMINISTRATOR);
-        } catch (final RuntimeException e) {
-            // Expected.
-            LOGGER.debug(e.getMessage());
-        }
-
-        securityContext.popUser();
         return newUserGroup;
     }
 }

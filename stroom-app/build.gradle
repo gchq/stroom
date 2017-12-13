@@ -62,7 +62,7 @@ dependencies {
     permitUnusedDeclared project(':stroom-entity-shared') //not clear why it thinks this is unused
     compile project(':stroom-index-shared')
     permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
-    compile project(':stroom-util')
+//    compile project(':stroom-util')
     compile project(':stroom-pipeline')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-statistics-server')

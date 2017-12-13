@@ -18,7 +18,6 @@ dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
-//    compile project(':stroom-explorer-server')
     compile project(':stroom-security-api')
     compile project(':stroom-security-shared')
     compile project(':stroom-util')

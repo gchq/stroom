@@ -107,16 +107,16 @@ public class App extends Application<Config> {
     }
 
     @Override
-    public void initialize(final Bootstrap<Configuration> bootstrap) {
+    public void initialize(final Bootstrap<Config> bootstrap) {
         // This allows us to use templating in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
-            bootstrap.getConfigurationSourceProvider(),
-            new EnvironmentVariableSubstitutor(false)));
+                bootstrap.getConfigurationSourceProvider(),
+                new EnvironmentVariableSubstitutor(false)));
         bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
     }
 
     @Override
-    public void run(final Config configuration, final Environment environment) throws Exception {
+    public void run(final Config configuration, final Environment environment) {
         // Add useful logging setup.
         registerLogConfiguration(environment);
         environment.healthChecks().register(LogLevelInspector.class.getName(), new LogLevelInspector());
@@ -140,7 +140,7 @@ public class App extends Application<Config> {
         }
     }
 
-    private void startProxy(final Config configuration, final Environment environment) throws Exception {
+    private void startProxy(final Config configuration, final Environment environment) {
         final ProxyModule proxyModule = new ProxyModule(configuration.getProxyConfig());
         final Injector injector = Guice.createInjector(proxyModule);
 
@@ -158,7 +158,7 @@ public class App extends Application<Config> {
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
     }
 
-    private void startApp(final Config configuration, final Environment environment) throws Exception {
+    private void startApp(final Config configuration, final Environment environment) {
         // Start the spring context.
         LOGGER.info("Loading Spring context");
         final ApplicationContext applicationContext = loadApplcationContext(configuration, environment);
@@ -237,7 +237,7 @@ public class App extends Application<Config> {
         return applicationContext;
     }
 
-    private static final void configureCors(io.dropwizard.setup.Environment environment) {
+    private static void configureCors(io.dropwizard.setup.Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, new String[]{"/*"});
         cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS");
