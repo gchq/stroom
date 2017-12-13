@@ -223,6 +223,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final ExpressionOperator expression = filterPresenter.write();
+                    queryData.setDataSource(StreamDataSource.STREAM_STORE_DOC_REF);
                     queryData.setExpression(expression);
 
                     if (filter != null) {
