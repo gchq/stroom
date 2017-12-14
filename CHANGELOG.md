@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+* Generate addtitional major and minor floating docker tags in travis build, e.g. v6-LATEST and v6.0-LATEST
+
+### Changed
+
 ## [v6.0-alpha.4]
 
 ### Added
