@@ -54,12 +54,13 @@ import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
 import stroom.util.CharBuffer;
 import stroom.util.logging.StroomLogger;
+import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.TransformerHandler;
 import java.util.ArrayList;
@@ -331,9 +332,10 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 super.startDocument();
             }
 
-        } catch (final TransformerConfigurationException e) {
-            errorReceiverProxy.log(Severity.FATAL_ERROR, locationFactory.create(e.getLocator()), getElementId(),
-                    e.toString(), e);
+        } catch (final Throwable throwable) {
+            final Throwable e = unwrapTransformerException(throwable);
+
+            errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(e), getElementId(), e.toString(), e);
             // If we aren't stepping then throw an exception to terminate early.
             if (!pipelineContext.isStepping()) {
                 throw new LoggedException(e.getMessage(), e);
@@ -351,25 +353,19 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         if (handler != null) {
             try {
                 handler.endDocument();
+            } catch (final Throwable throwable) {
+                final Throwable e = unwrapTransformerException(throwable);
 
-            } catch (final Exception e) {
-                try {
-                    final ProcessException processException = getNestedProcessException(e);
-                    if (processException != null) {
-                        throw processException;
-                    }
-
-                    if (e.getCause() != null) {
-                        throw getRuntimeException(e.getCause());
-                    }
-
-                    throw e;
-
-                } finally {
-                    // We don't want the whole pipeline to terminate processing
-                    // if there is a problem with the transform.
-                    super.endDocument();
+                errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(e), getElementId(), e.toString(), e);
+                // If we aren't stepping then throw an exception to terminate early.
+                if (!pipelineContext.isStepping()) {
+                    throw new LoggedException(e.getMessage(), e);
                 }
+
+            } finally {
+                // We don't want the whole pipeline to terminate processing
+                // if there is a problem with the transform.
+                super.endDocument();
             }
 
             handler = null;
@@ -380,25 +376,26 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         }
     }
 
-    private ProcessException getNestedProcessException(Throwable e) {
-        Throwable nested = e;
-        while (nested != null && nested != nested.getCause()) {
-            if (nested instanceof ProcessException) {
-                return (ProcessException) nested;
-            }
-
-            nested = nested.getCause();
+    private Location getLocation(final Throwable e) {
+        if (e instanceof TransformerException) {
+            return locationFactory.create(((TransformerException) e).getLocator());
         }
 
         return null;
     }
 
-    private RuntimeException getRuntimeException(Throwable e) {
-        if (e instanceof RuntimeException) {
-            return (RuntimeException) e;
+    private Throwable unwrapTransformerException(final Throwable e) {
+        Throwable cause = e;
+
+        while (cause != null) {
+            if (cause instanceof TransformerException) {
+                return cause;
+            }
+
+            cause = cause.getCause();
         }
 
-        return new RuntimeException(e.getMessage(), e);
+        return e;
     }
 
     /**
@@ -464,12 +461,10 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         if (handler != null) {
             elementCount++;
             if (elementCount > maxElementCount) {
-                final StringBuilder sb = new StringBuilder();
-                sb.append("Max element count of ");
-                sb.append(maxElementCount);
-                sb.append(
-                        " has been exceeded. Please ensure a split filter is present and is configured correctly for this pipeline.");
-                final String message = sb.toString();
+                final String message = "" +
+                        "Max element count of " +
+                        maxElementCount +
+                        " has been exceeded. Please ensure a split filter is present and is configured correctly for this pipeline.";
                 final ProcessException exception = new ProcessException(message);
                 if (pipelineContext.isStepping()) {
                     errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), exception.getMessage(),

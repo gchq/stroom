@@ -16,19 +16,10 @@
 
 package stroom.pipeline.server.parser;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
@@ -49,6 +40,15 @@ import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.server.filter.XMLFilterForkFactory;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
+
+import javax.xml.transform.TransformerException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class AbstractParser extends AbstractElement implements TakesInput, TakesReader, Target, HasTargets {
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -181,9 +181,7 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
             } catch (final ExitSteppingException e) {
                 // This is expected so do nothing.
 
-            } catch (final TerminatedException e) {
-                throw e;
-            } catch (final LoggedException e) {
+            } catch (final TerminatedException | LoggedException e) {
                 throw e;
             } catch (final Throwable e) {
                 Throwable exception = e;
@@ -198,17 +196,18 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
                     } else if (cause instanceof SAXException) {
                         exception = cause;
                         break;
+                    } else if (cause instanceof TransformerException) {
+                        exception = cause;
+                        break;
                     } else {
                         cause = cause.getCause();
                     }
                 }
 
-                if (exception != null) {
-                    final ProcessException processException = ProcessException.wrap(exception);
-                    fatal(exception);
+                final ProcessException processException = ProcessException.wrap(exception);
+                fatal(exception);
 
-                    throw processException;
-                }
+                throw processException;
             }
         }
     }
@@ -226,7 +225,7 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
             charsetName = inputSource.getEncoding();
         }
 
-        InputSource internalInputSource = inputSource;
+        InputSource internalInputSource;
 
         // If the input source is not raw bytes then assume that the user has
         // added the appropriate readers to the byte
