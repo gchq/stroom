@@ -16,9 +16,8 @@
 
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
+import stroom.util.logging.StroomLogger;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -46,7 +45,7 @@ public class StroomZipRepository {
     private final static String ERROR_EXTENSION = ".err";
     final static String BAD_EXTENSION = ".bad";
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(StroomZipRepository.class);
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomZipRepository.class);
 
     private static final String DEFAULT_REPOSITORY_FORMAT = "${pathId}/${id}";
     private static final String ID_VAR = "${id}";

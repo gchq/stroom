@@ -2,8 +2,7 @@ package stroom.proxy.repo;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.StroomLogger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -20,7 +19,7 @@ public class StroomZipFile implements Closeable {
     public final static StroomZipEntry SINGLE_META_ENTRY = new StroomZipEntry(null, SINGLE_ENTRY_ZIP_BASE_NAME,
             StroomZipFileType.Meta);
 
-    private static Logger LOGGER = LoggerFactory.getLogger(StroomZipFile.class);
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomZipFile.class);
 
     private final Path file;
     private ZipFile zipFile;

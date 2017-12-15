@@ -1,7 +1,6 @@
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.StroomLogger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,7 +12,7 @@ import java.util.Comparator;
 import java.util.stream.Stream;
 
 public final class TestUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestUtil.class);
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestUtil.class);
 
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
 
