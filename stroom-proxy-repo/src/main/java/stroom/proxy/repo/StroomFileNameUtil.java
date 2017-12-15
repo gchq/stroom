@@ -1,7 +1,8 @@
 package stroom.proxy.repo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
-import stroom.util.logging.StroomLogger;
 
 import java.io.File;
 import java.util.Arrays;
@@ -15,7 +16,7 @@ import java.util.Arrays;
 public final class StroomFileNameUtil {
     private final static int MAX_PART_LENGTH = 255;
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomFileNameUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomFileNameUtil.class);
 
     private static final String MISSING_VALUE = "_";
     private static final char TRUNCATED_VALUE = '_';

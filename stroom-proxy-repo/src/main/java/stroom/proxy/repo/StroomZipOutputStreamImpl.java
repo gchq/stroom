@@ -1,10 +1,11 @@
 package stroom.proxy.repo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.util.io.FilterOutputStreamProgressMonitor;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.WrappedOutputStream;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Monitor;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ import java.util.zip.ZipOutputStream;
 
 public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     private static final String LOCK_EXTENSION = ".lock";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomZipOutputStreamImpl.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(StroomZipOutputStreamImpl.class);
     private final Path file;
     private final Path lockFile;
     private final Monitor monitor;
