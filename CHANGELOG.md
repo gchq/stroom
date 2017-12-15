@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#501** : Improve the database teardown process in integration tests to speed up builds
 
+* Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
+
 ## [v5.1-beta.2] - 2017-12-12
 
 * Merged [v5.0-beta.69]
