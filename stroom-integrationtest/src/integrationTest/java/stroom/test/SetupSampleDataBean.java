@@ -155,7 +155,8 @@ public final class SetupSampleDataBean {
     public void run(final boolean shutdown) throws IOException {
         // Ensure admin user exists.
         LOGGER.info("Creating admin user");
-        dbRealm.createOrRefreshAdmin();
+        dbRealm.createOrRefreshAdminUser();
+        dbRealm.createOrRefreshStroomServiceUser();
 
 //        createRandomExplorerNode(null, "", 0, 2);
 

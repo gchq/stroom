@@ -314,7 +314,7 @@ public class UserServiceImpl implements UserService {
                 // Give the initial admin account admin as the password
                 // otherwise generate a random one. The UI will then try and
                 // reset this.
-                final String rawPassword = INITIAL_ADMIN_ACCOUNT.equals(user.getName()) ? TEMP_ADMIN_PASSWORD
+                final String rawPassword = ADMIN_USER_NAME.equals(user.getName()) ? TEMP_ADMIN_PASSWORD
                         : PasswordGenerator.generatePassword();
                 final String passwordHash = passwordEncoder.encode(rawPassword);
                 user.setPasswordHash(passwordHash);
