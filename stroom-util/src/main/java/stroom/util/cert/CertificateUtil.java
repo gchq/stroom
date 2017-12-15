@@ -16,13 +16,13 @@
 
 package stroom.util.cert;
 
-import stroom.feed.MetaMap;
 import stroom.util.logging.StroomLogger;
 
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.ServletRequest;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -110,7 +110,7 @@ public class CertificateUtil {
             return null;
         }
         final StringTokenizer attributes = new StringTokenizer(dn, ",");
-        final MetaMap map = new MetaMap();
+        final HashMap<String, String> map = new HashMap<>();
         while (attributes.hasMoreTokens()) {
             final String token = attributes.nextToken();
             if (token.contains("=")) {

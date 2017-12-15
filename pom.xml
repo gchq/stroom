@@ -69,7 +69,6 @@
     <hessian.version>4.0.38</hessian.version>
     <lucene.version>4.6.1</lucene.version>
     <event-logging.version>3.0.0</event-logging.version>
-    <stroom-proxy-repo.version>5.1-beta.8</stroom-proxy-repo.version>
 
     <!-- ***************************** -->
     <!-- LATEST CHECK 2015/02/27 START -->
@@ -943,12 +942,6 @@
         <version>${event-logging.version}</version>
       </dependency>
 
-      <!-- Stroom Proxy Repo -->
-      <dependency>
-        <groupId>stroom-proxy</groupId>
-        <artifactId>stroom-proxy-repo</artifactId>
-        <version>${stroom-proxy-repo.version}</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -986,6 +979,7 @@
     <module>stroom-query-common</module>
     <module>stroom-security</module>
     <module>stroom-index</module>
+    <module>stroom-proxy-repo</module>
 
     <module>stroom-statistics-shared</module>
     <module>stroom-statistics-server</module>

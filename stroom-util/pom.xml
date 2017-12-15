@@ -51,11 +51,6 @@
     </dependency>
 
     <dependency>
-      <groupId>stroom-proxy</groupId>
-      <artifactId>stroom-proxy-repo</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>aopalliance</groupId>
       <artifactId>aopalliance</artifactId>
     </dependency>

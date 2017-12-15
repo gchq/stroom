@@ -27,7 +27,6 @@
             <includes>
                 <include>stroom:stroom-app</include>
                 <include>stroom:stroom-util</include>
-                <include>stroom-proxy:stroom-proxy-repo</include>
                 <include>mysql:mysql-connector-java</include>
             </includes>
             <useStrictFiltering>true</useStrictFiltering>
