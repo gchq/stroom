@@ -77,9 +77,6 @@ public class ExtractionTaskProducer extends TaskProducer {
         this.errorReceiver = errorReceiver;
         this.handlerProvider = handlerProvider;
 
-        // Attach to the supplied executor.
-        attach();
-
         // Start mapping streams.
         final Executor executor = executorProvider.getExecutor(THREAD_POOL);
         streamEventMapperCompletableFuture = CompletableFuture.runAsync(() -> {
@@ -115,6 +112,12 @@ public class ExtractionTaskProducer extends TaskProducer {
                 error(t.getMessage(), t);
             }
         }, executor);
+
+        // Attach to the supplied executor.
+        attach();
+
+        // Tell the supplied executor that we are ready to deliver tasks.
+        signalAvailable();
     }
 
     @Override

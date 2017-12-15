@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.task.server.StroomThreadGroup;
 import stroom.util.spring.StroomShutdown;
-import stroom.util.spring.StroomStartup;
 import stroom.util.thread.CustomThreadFactory;
 
 import java.util.concurrent.CompletableFuture;
@@ -50,14 +49,14 @@ public class TaskExecutor {
     private final String name;
     private volatile ExecutorService executor;
     private volatile boolean running;
+    private volatile boolean shutdown;
 
     public TaskExecutor(final String name) {
         this.name = name;
     }
 
-    @StroomStartup
-    public synchronized void start() {
-        if (!running) {
+    private synchronized void start() {
+        if (!running && !shutdown) {
             running = true;
 
             final ThreadGroup poolThreadGroup = new ThreadGroup(StroomThreadGroup.instance(), name);
@@ -84,8 +83,7 @@ public class TaskExecutor {
         }
     }
 
-    @StroomShutdown
-    public synchronized void stop() {
+    private synchronized void stop() {
         if (running) {
             running = false;
             // Wake up any waiting threads.
@@ -94,7 +92,16 @@ public class TaskExecutor {
         }
     }
 
+    @StroomShutdown
+    public void shutdown() {
+        shutdown = true;
+        stop();
+    }
+
     final void addProducer(final TaskProducer producer) {
+        if (!running) {
+            start();
+        }
         producers.add(producer);
     }
 
