@@ -6,11 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-### Added
+* Issue **#501** : Improve the database teardown process in integration tests to speed up builds.
 
-### Changed
-
-* Issue **#501** : Improve the database teardown process in integration tests to speed up builds
+* Issue **#511** : Fix NPE thrown during pipeline stepping by downstream XSLT.
 
 ## [v5.0-beta.69] - 2017-12-12
 
