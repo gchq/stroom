@@ -354,23 +354,24 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             try {
                 handler.endDocument();
             } catch (final Throwable throwable) {
-                final Throwable e = unwrapTransformerException(throwable);
+                try {
+                    final Throwable e = unwrapTransformerException(throwable);
 
-                errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(e), getElementId(), e.toString(), e);
-                // If we aren't stepping then throw an exception to terminate early.
-                if (!pipelineContext.isStepping()) {
-                    throw new LoggedException(e.getMessage(), e);
+                    errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(e), getElementId(), e.toString(), e);
+                    // If we aren't stepping then throw an exception to terminate early.
+                    if (!pipelineContext.isStepping()) {
+                        throw new LoggedException(e.getMessage(), e);
+                    }
+
+                } finally {
+                    // We don't want the whole pipeline to terminate processing
+                    // if there is a problem with the transform.
+                    super.endDocument();
                 }
-
             } finally {
-                // We don't want the whole pipeline to terminate processing
-                // if there is a problem with the transform.
-                super.endDocument();
+                handler = null;
+                elementCount = 0;
             }
-
-            handler = null;
-            elementCount = 0;
-
         } else if (passThrough) {
             super.endDocument();
         }
