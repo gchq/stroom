@@ -69,6 +69,7 @@ public class TestTaskExecutor {
 
         final TaskExecutor taskExecutor = new TaskExecutor("Test Executor");
         taskExecutor.setMaxThreads(3);
+        taskExecutor.start();
 
         final TaskProducer taskProducer1 = new TestTaskProducer(taskExecutor, 3, executorService, "tp1");
         final TaskProducer taskProducer2 = new TestTaskProducer(taskExecutor, 3, executorService, "tp2");
@@ -78,6 +79,7 @@ public class TestTaskExecutor {
             ThreadUtil.sleep(10);
         }
 
+        taskExecutor.stop();
         executorService.shutdown();
     }
 }
