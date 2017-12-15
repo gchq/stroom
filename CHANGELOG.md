@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#511** : Fix NPE thrown during pipeline stepping by downstream XSLT.
 
+* Issue **#521** : Fix for the job list screen to use the help URL system property for displaying context sensitive help.
+
 ## [v5.0-beta.69] - 2017-12-12
 
 * Issue **#511** : Fix for XSLT functions to allow null return values where a value cannot be returned due to an error etc.
