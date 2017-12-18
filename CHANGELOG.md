@@ -6,11 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-### Added
+## [v5.0-beta.70] - 2017-12-15
 
-### Changed
+* Issue **#501** : Improve the database teardown process in integration tests to speed up builds.
 
-* Issue **#501** : Improve the database teardown process in integration tests to speed up builds
+* Issue **#511** : Fix NPE thrown during pipeline stepping by downstream XSLT.
+
+* Issue **#521** : Fix for the job list screen to use the help URL system property for displaying context sensitive help.
 
 * Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
 

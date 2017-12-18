@@ -16,16 +16,16 @@
 
 package stroom.pipeline.server.filter;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.ReceivingContentHandler;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.tree.tiny.TinyBuilder;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 
 /**
  * This filter is used to buffer SAX events in memory if required. Having
@@ -33,16 +33,19 @@ import net.sf.saxon.tree.tiny.TinyBuilder;
  */
 public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     private final Configuration configuration;
-    private Builder builder;
-    private final ReceivingContentHandler handler;
     private final PipelineConfiguration pipe;
+    private final ReceivingContentHandler receivingContentHandler;
+
     private NodeInfo root;
     private boolean startedDocument;
 
-    public TinyTreeBufferFilter() {
+    private ContentHandler handler = NullXMLFilter.INSTANCE;
+    private Builder builder;
+
+    TinyTreeBufferFilter() {
         configuration = Configuration.newConfiguration();
         pipe = configuration.makePipelineConfiguration();
-        handler = new ReceivingContentHandler();
+        receivingContentHandler = new ReceivingContentHandler();
     }
 
     public Configuration getConfiguration() {
@@ -52,30 +55,36 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     /**
      * Stops buffering SAX events and clears the buffer.
      */
-    public void clearBuffer() {
+    void clearBuffer() {
+        reset();
+    }
+
+    private void init() {
+        if (builder == null) {
+            builder = new TinyBuilder(pipe);
+
+            receivingContentHandler.reset();
+            receivingContentHandler.setPipelineConfiguration(pipe);
+            receivingContentHandler.setReceiver(builder);
+
+            handler = receivingContentHandler;
+        }
+    }
+
+    private void reset() {
         if (builder != null) {
             // Reset the builder, detaching it from the constructed document.
             builder.reset();
             builder = null;
+
+            handler = NullXMLFilter.INSTANCE;
         }
-
-        builder = new TinyBuilder(pipe);
-
-        handler.reset();
-        handler.setPipelineConfiguration(pipe);
-        handler.setReceiver(builder);
-        startedDocument = false;
     }
 
     @Override
     public void endProcessing() {
         try {
-            if (builder != null) {
-                // Reset the builder, detaching it from the constructed
-                // document.
-                builder.reset();
-                builder = null;
-            }
+            reset();
         } finally {
             super.endProcessing();
         }
@@ -84,10 +93,8 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     /**
      * Buffers a setDocumentLocator event if buffer is set to true.
      *
-     * @param locator
-     *            an object that can return the location of any SAX document
-     *            event
-     *
+     * @param locator an object that can return the location of any SAX document
+     *                event
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#setDocumentLocator(org.xml.sax.Locator)
      */
     @Override
@@ -104,9 +111,13 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     @Override
     public void startDocument() throws SAXException {
         if (!startedDocument) {
-            startedDocument = true;
-            handler.startDocument();
-            super.startDocument();
+            try {
+                init();
+                handler.startDocument();
+            } finally {
+                startedDocument = true;
+                super.startDocument();
+            }
         }
     }
 
@@ -117,32 +128,31 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
      */
     @Override
     public void endDocument() throws SAXException {
-        handler.endDocument();
+        if (startedDocument) {
+            try {
+                handler.endDocument();
 
-        if (builder != null) {
-            // Store the current root.
-            root = builder.getCurrentRoot();
+                if (builder != null) {
+                    // Store the current root.
+                    root = builder.getCurrentRoot();
+                }
 
-            // Reset the builder, detaching it from the constructed document.
-            builder.reset();
-            builder = null;
+                reset();
+            } finally {
+                startedDocument = false;
+                super.endDocument();
+            }
         }
-
-        super.endDocument();
-        startedDocument = false;
     }
 
     /**
      * Buffers a startPrefixMapping event if buffer is set to true.
      *
-     * @param prefix
-     *            the Namespace prefix being declared. An empty string is used
-     *            for the default element namespace, which has no prefix.
-     * @param uri
-     *            the Namespace URI the prefix is mapped to
-     *
+     * @param prefix the Namespace prefix being declared. An empty string is used
+     *               for the default element namespace, which has no prefix.
+     * @param uri    the Namespace URI the prefix is mapped to
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
-     *      java.lang.String)
+     * java.lang.String)
      */
     @Override
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
@@ -153,12 +163,9 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     /**
      * Buffers a endPrefixMapping event if buffer is set to true.
      *
-     * @param prefix
-     *            the prefix that was being mapped. This is the empty string
-     *            when a default mapping scope ends.
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param prefix the prefix that was being mapped. This is the empty string
+     *               when a default mapping scope ends.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
      */
     @Override
@@ -170,19 +177,13 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     /**
      * Buffers a startElement event if buffer is set to true.
      *
-     * @param uri
-     *            The element's Namespace URI, or the empty string.
-     * @param localName
-     *            The element's local name, or the empty string.
-     * @param qName
-     *            The element's qualified (prefixed) name, or the empty string.
-     * @param atts
-     *            The element's attributes.
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param uri       The element's Namespace URI, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
+     * @param atts      The element's attributes.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
-     *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
+     * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -194,21 +195,16 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     /**
      * Buffers a endElement event if buffer is set to true.
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
-     *      java.lang.String, java.lang.String)
+     * java.lang.String, java.lang.String)
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -219,17 +215,12 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     /**
      * Buffers a characters event if buffer is set to true.
      *
-     * @param ch
-     *            An array of characters.
-     * @param start
-     *            The starting position in the array.
-     * @param length
-     *            The number of characters to use from the array.
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param ch     An array of characters.
+     * @param start  The starting position in the array.
+     * @param length The number of characters to use from the array.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -240,17 +231,12 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     /**
      * Buffers a ignorableWhitespace event if buffer is set to true.
      *
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#ignorableWhitespace(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
@@ -261,17 +247,13 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     /**
      * Buffers a processingInstruction event if buffer is set to true.
      *
-     * @param target
-     *            the processing instruction target
-     * @param data
-     *            the processing instruction data, or null if none was supplied.
-     *            The data does not include any whitespace separating it from
-     *            the target
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param target the processing instruction target
+     * @param data   the processing instruction data, or null if none was supplied.
+     *               The data does not include any whitespace separating it from
+     *               the target
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#processingInstruction(java.lang.String,
-     *      java.lang.String)
+     * java.lang.String)
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
@@ -285,13 +267,10 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     /**
      * Buffers a skippedEntity event if buffer is set to true.
      *
-     * @param name
-     *            the name of the skipped entity. If it is a parameter entity,
-     *            the name will begin with '%', and if it is the external DTD
-     *            subset, it will be the string "[dtd]"
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param name the name of the skipped entity. If it is a parameter entity,
+     *             the name will begin with '%', and if it is the external DTD
+     *             subset, it will be the string "[dtd]"
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#skippedEntity(java.lang.String)
      */
     @Override

@@ -20,7 +20,6 @@ import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Window;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 
@@ -34,18 +33,15 @@ public abstract class InfoHelpLinkColumn<T> extends Column<T, SvgPreset> {
         return SvgPresets.HELP;
     }
 
-    protected abstract String getHelpLink(final T row);
-
-    public String formatAnchor(String name) {
+    protected String formatAnchor(String name) {
         return "#" + name.replace(" ", "_");
     }
 
     @Override
     public void onBrowserEvent(final Context context, final Element elem, final T row, final NativeEvent event) {
         super.onBrowserEvent(context, elem, row, event);
-        String url = getHelpLink(row);
-        if (url != null) {
-            Window.open(url, "_blank", "");
-        }
+        showHelp(row);
     }
+
+    protected abstract void showHelp(final T row);
 }

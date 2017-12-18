@@ -17,11 +17,12 @@
 package stroom.jobsystem.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import stroom.alert.client.event.AlertEvent;
 import stroom.cell.info.client.InfoHelpLinkColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -39,7 +40,8 @@ import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.ClientProperties;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
@@ -52,7 +54,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
     @Inject
     public JobListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-                            final TooltipPresenter tooltipPresenter) {
+                            final ClientPropertyCache clientPropertyCache) {
         super(eventBus, new DataGridViewImpl<Job>(true));
 
         jobSaver = new SaveQueue<Job>(dispatcher);
@@ -67,8 +69,18 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
             }
 
             @Override
-            protected String getHelpLink(final Job row) {
-                return GWT.getHostPageBaseURL() + "doc/user-guide/tasks/tasks.html" + formatAnchor(row.getName());
+            protected void showHelp(final Job row) {
+                clientPropertyCache.get()
+                        .onSuccess(result -> {
+                            final String helpUrl = result.get(ClientProperties.HELP_URL);
+                            if (helpUrl != null && helpUrl.trim().length() > 0) {
+                                String url = helpUrl + "/user-guide/tasks/tasks.html" + formatAnchor(row.getName());
+                                Window.open(url, "_blank", "");
+                            } else {
+                                AlertEvent.fireError(JobListPresenter.this, "Help is not configured!", null);
+                            }
+                        })
+                        .onFailure(caught -> AlertEvent.fireError(JobListPresenter.this, caught.getMessage(), null));
             }
 
         }, "<br/>", 20);

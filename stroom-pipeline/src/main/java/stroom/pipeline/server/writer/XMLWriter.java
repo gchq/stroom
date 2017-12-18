@@ -58,7 +58,7 @@ import java.io.IOException;
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.ROLE_WRITER,
                 PipelineElementType.ROLE_MUTATOR,
-                PipelineElementType.VISABILITY_STEPPING },
+                PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.XML)
 public class XMLWriter extends AbstractWriter implements XMLFilter {
 
@@ -123,10 +123,8 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     /**
-     * @param locator
-     *            an object that can return the location of any SAX document
-     *            event
-     *
+     * @param locator an object that can return the location of any SAX document
+     *                event
      * @see org.xml.sax.Locator
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#setDocumentLocator(org.xml.sax.Locator)
      */
@@ -166,24 +164,22 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         //    LOGGER.trace("endDocument called, buffer [%s]", truncateAndStripWhitespace(getBuffer()));
         //}
 
-        handler.endDocument();
-        super.endDocument();
-        startedDocument = false;
+        if (startedDocument) {
+            handler.endDocument();
+            super.endDocument();
+            startedDocument = false;
+        }
     }
 
     /**
-     * @param prefix
-     *            the Namespace prefix being declared. An empty string is used
-     *            for the default element namespace, which has no prefix.
-     * @param uri
-     *            the Namespace URI the prefix is mapped to
-     * @throws org.xml.sax.SAXException
-     *             the client may throw an exception during processing
-     *
+     * @param prefix the Namespace prefix being declared. An empty string is used
+     *               for the default element namespace, which has no prefix.
+     * @param uri    the Namespace URI the prefix is mapped to
+     * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #endPrefixMapping
      * @see #startElement
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
-     *      java.lang.String)
+     * java.lang.String)
      */
     @Override
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
@@ -192,12 +188,9 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     /**
-     * @param prefix
-     *            the prefix that was being mapped. This is the empty string
-     *            when a default mapping scope ends.
-     * @throws org.xml.sax.SAXException
-     *             the client may throw an exception during processing
-     *
+     * @param prefix the prefix that was being mapped. This is the empty string
+     *               when a default mapping scope ends.
+     * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #startPrefixMapping
      * @see #endElement
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
@@ -209,28 +202,22 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
-     *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
+     * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -300,21 +287,16 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
-     *      java.lang.String, java.lang.String)
+     * java.lang.String, java.lang.String)
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -375,19 +357,14 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #ignorableWhitespace
      * @see org.xml.sax.Locator
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -396,18 +373,13 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #characters
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#ignorableWhitespace(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
@@ -416,17 +388,13 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     /**
-     * @param target
-     *            the processing instruction target
-     * @param data
-     *            the processing instruction data, or null if none was supplied.
-     *            The data does not include any whitespace separating it from
-     *            the target
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param target the processing instruction target
+     * @param data   the processing instruction data, or null if none was supplied.
+     *               The data does not include any whitespace separating it from
+     *               the target
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#processingInstruction(java.lang.String,
-     *      java.lang.String)
+     * java.lang.String)
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
@@ -438,13 +406,10 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     /**
-     * @param name
-     *            the name of the skipped entity. If it is a parameter entity,
-     *            the name will begin with '%', and if it is the external DTD
-     *            subset, it will be the string "[dtd]"
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param name the name of the skipped entity. If it is a parameter entity,
+     *             the name will begin with '%', and if it is the external DTD
+     *             subset, it will be the string "[dtd]"
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#skippedEntity(java.lang.String)
      */
     @Override
@@ -469,7 +434,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         //remove any line breaks and white space, accepting that white space in element text or attributes will be lost
         //but is this is intended for debugging that is ok.
         String truncatedStr = str
-                .replaceAll("\\s+","")
+                .replaceAll("\\s+", "")
                 .replace("\n", "");
         if (truncatedStr != null) {
             int strLen = truncatedStr.length();
