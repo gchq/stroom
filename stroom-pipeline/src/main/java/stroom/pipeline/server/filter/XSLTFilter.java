@@ -56,6 +56,7 @@ import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
 import stroom.query.api.v2.DocRef;
 import stroom.util.CharBuffer;
+import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
@@ -601,7 +602,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     @PipelineProperty(description = "The XSLT to use.")
-    @PipelinePropertyDocRef(types=XSLT.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = XSLT.ENTITY_TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }
