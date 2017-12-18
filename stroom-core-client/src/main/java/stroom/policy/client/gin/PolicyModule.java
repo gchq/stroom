@@ -17,7 +17,6 @@
 package stroom.policy.client.gin;
 
 import stroom.app.client.gin.PluginModule;
-import stroom.policy.client.DataReceiptPolicyPlugin;
 import stroom.policy.client.DataRetentionPolicyPlugin;
 import stroom.policy.client.presenter.DataReceiptPolicySettingsPresenter;
 import stroom.policy.client.presenter.DataReceiptPolicySettingsPresenter.DataReceiptPolicySettingsView;
@@ -41,7 +40,6 @@ import stroom.policy.client.view.FieldEditViewImpl;
 public class PolicyModule extends PluginModule {
     @Override
     protected void configure() {
-        bindPlugin(DataReceiptPolicyPlugin.class);
         bindPlugin(DataRetentionPolicyPlugin.class);
         bindPresenterWidget(EditExpressionPresenter.class, EditExpressionView.class, EditExpressionViewImpl.class);
         bindPresenterWidget(DataReceiptRulePresenter.class, DataReceiptRuleView.class, DataReceiptRuleViewImpl.class);
