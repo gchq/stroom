@@ -7,8 +7,10 @@ DOCKER_REPO="gchq/stroom"
 GITHUB_REPO="gchq/stroom"
 GITHUB_API_URL="https://api.github.com/repos/gchq/stroom/releases"
 DOCKER_CONTEXT_ROOT="stroom-app/docker/."
-FLOATING_TAG=""
-SPECIFIC_TAG=""
+VERSION_FIXED_TAG=""
+SNAPSHOT_FLOATING_TAG=""
+MAJOR_VER_FLOATING_TAG=""
+MINOR_VER_FLOATING_TAG=""
 #This is a whitelist of branches to produce docker builds for
 BRANCH_WHITELIST_REGEX='(^dev$|^master$|^v[0-9].*$)'
 RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+\.[0-9].*$'
@@ -109,36 +111,55 @@ else
     extraBuildArgs=""
 
     if [ -n "$TRAVIS_TAG" ]; then
-        #This is a tagged commit, so create a docker image with that tag
-        SPECIFIC_TAG="--tag=${DOCKER_REPO}:${TRAVIS_TAG}"
         doDockerBuild=true
+
+        #This is a tagged commit, so create a docker image with that tag
+        VERSION_FIXED_TAG="--tag=${DOCKER_REPO}:${TRAVIS_TAG}"
+
+        #Extract the major version part for a floating tag
+        majorVer = $(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+")
+        if [ -n "${majorVer}" ]; then
+            MAJOR_VER_FLOATING_TAG="--tag=${DOCKER_REPO}:${majorVer}-LATEST"
+        fi
+
+        #Extract the minor version part for a floating tag
+        minorVer = $(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
+        if [ -n "${minorVer}" ]; then
+            MINOR_VER_FLOATING_TAG="--tag=${DOCKER_REPO}:${minorVer}-latest"
+        fi
 
         if [[ "$TRAVIS_BRANCH" =~ ${RELEASE_VERSION_REGEX} ]]; then
             echo "This is a release version so add gradle arg for publishing libs to Bintray"
             extraBuildArgs="bintrayUpload"
         fi
     elif [[ "$TRAVIS_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
-        #This is a branch we want to create a snapshot docker image for
-        FLOATING_TAG="--tag=${DOCKER_REPO}:${STROOM_VERSION}-SNAPSHOT"
+        #This is a branch we want to create a floating snapshot docker image for
+        SNAPSHOT_FLOATING_TAG="--tag=${DOCKER_REPO}:${STROOM_VERSION}-SNAPSHOT"
         doDockerBuild=true
     fi
+
+    echo -e "VERSION FIXED DOCKER TAG:      [${GREEN}${VERSION_FIXED_TAG}${NC}]"
+    echo -e "SNAPSHOT FLOATING DOCKER TAG:  [${GREEN}${SNAPSHOT_FLOATING_TAG}${NC}]"
+    echo -e "MAJOR VER FLOATING DOCKER TAG: [${GREEN}${MAJOR_VER_FLOATING_TAG}${NC}]"
+    echo -e "MINOR VER FLOATING DOCKER TAG: [${GREEN}${MINOR_VER_FLOATING_TAG}${NC}]"
+    echo -e "doDockerBuild:                 [${GREEN}${doDockerBuild}${NC}]"
+    echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs}${NC}]"
 
     #Do the gradle build
     # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
     ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build dist ${extraBuildArgs}
 
-    echo -e "SPECIFIC DOCKER TAG: [${GREEN}${SPECIFIC_TAG}${NC}]"
-    echo -e "FLOATING DOCKER TAG: [${GREEN}${FLOATING_TAG}${NC}]"
-    echo -e "doDockerBuild:       [${GREEN}${doDockerBuild}${NC}]"
-    echo -e "extraBuildArgs:      [${GREEN}${extraBuildArgs}${NC}]"
-
     #Don't do a docker build for pull requests
     if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
-        echo -e "Building a docker image with tags: ${GREEN}${SPECIFIC_TAG}${NC} ${GREEN}${FLOATING_TAG}${NC}"
+        #TODO - the major and minor floating tags assume that the release builds are all done in strict sequence
+        #If an old release build is re-run then it may result in a -LATEST tag pointing to a version that isn't the latest
+        #however this is unlikely to happen
+        allDockerTags="${VERSION_FIXED_TAG} ${SNAPSHOT_FLOATING_TAG} ${MAJOR_VER_FLOATING_TAG} ${MINOR_VER_FLOATING_TAG}"
+        echo -e "Building a docker image with tags: ${GREEN}${allDockerTags}${NC}"
 
         #The username and password are configured in the travis gui
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" >/dev/null 2>&1
-        docker build ${SPECIFIC_TAG} ${FLOATING_TAG} ${DOCKER_CONTEXT_ROOT} >/dev/null 2>&1
+        docker build ${allDockerTags} ${DOCKER_CONTEXT_ROOT} >/dev/null 2>&1
         docker push ${DOCKER_REPO} >/dev/null 2>&1
     fi
 

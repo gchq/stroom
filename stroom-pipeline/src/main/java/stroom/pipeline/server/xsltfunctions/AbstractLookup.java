@@ -86,8 +86,16 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                     ms = DateUtil.parseNormalDateTimeString(time);
                 } catch (final Throwable e) {
                     if (!ignoreWarnings) {
-                        final StringBuilder sb = new StringBuilder("Lookup failed to parse date: " + time);
-                        outputWarning(context, sb, e);
+                        if (time == null) {
+                            final StringBuilder sb = new StringBuilder();
+                            sb.append("Lookup failed to parse empty date");
+                            outputWarning(context, sb, null);
+                        } else {
+                            final StringBuilder sb = new StringBuilder();
+                            sb.append("Lookup failed to parse date: ");
+                            sb.append(time);
+                            outputWarning(context, sb, e);
+                        }
                     }
 
                     return result;

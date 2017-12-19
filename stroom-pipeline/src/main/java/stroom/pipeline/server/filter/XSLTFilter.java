@@ -56,12 +56,13 @@ import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
 import stroom.query.api.v2.DocRef;
 import stroom.util.CharBuffer;
+import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.TransformerHandler;
 import java.util.ArrayList;
@@ -324,9 +325,10 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 super.startDocument();
             }
 
-        } catch (final TransformerConfigurationException e) {
-            errorReceiverProxy.log(Severity.FATAL_ERROR, locationFactory.create(e.getLocator()), getElementId(),
-                    e.toString(), e);
+        } catch (final Throwable throwable) {
+            final Throwable e = unwrapTransformerException(throwable);
+
+            errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(e), getElementId(), e.toString(), e);
             // If we aren't stepping then throw an exception to terminate early.
             if (!pipelineContext.isStepping()) {
                 throw new LoggedException(e.getMessage(), e);
@@ -344,54 +346,50 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         if (handler != null) {
             try {
                 handler.endDocument();
-
-            } catch (final Exception e) {
+            } catch (final Throwable throwable) {
                 try {
-                    final ProcessException processException = getNestedProcessException(e);
-                    if (processException != null) {
-                        throw processException;
-                    }
+                    final Throwable e = unwrapTransformerException(throwable);
 
-                    if (e.getCause() != null) {
-                        throw getRuntimeException(e.getCause());
+                    errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(e), getElementId(), e.toString(), e);
+                    // If we aren't stepping then throw an exception to terminate early.
+                    if (!pipelineContext.isStepping()) {
+                        throw new LoggedException(e.getMessage(), e);
                     }
-
-                    throw e;
 
                 } finally {
                     // We don't want the whole pipeline to terminate processing
                     // if there is a problem with the transform.
                     super.endDocument();
                 }
+            } finally {
+                handler = null;
+                elementCount = 0;
             }
-
-            handler = null;
-            elementCount = 0;
-
         } else if (passThrough) {
             super.endDocument();
         }
     }
 
-    private ProcessException getNestedProcessException(Throwable e) {
-        Throwable nested = e;
-        while (nested != null && nested != nested.getCause()) {
-            if (nested instanceof ProcessException) {
-                return (ProcessException) nested;
-            }
-
-            nested = nested.getCause();
+    private Location getLocation(final Throwable e) {
+        if (e instanceof TransformerException) {
+            return locationFactory.create(((TransformerException) e).getLocator());
         }
 
         return null;
     }
 
-    private RuntimeException getRuntimeException(Throwable e) {
-        if (e instanceof RuntimeException) {
-            return (RuntimeException) e;
+    private Throwable unwrapTransformerException(final Throwable e) {
+        Throwable cause = e;
+
+        while (cause != null) {
+            if (cause instanceof TransformerException) {
+                return cause;
+            }
+
+            cause = cause.getCause();
         }
 
-        return new RuntimeException(e.getMessage(), e);
+        return e;
     }
 
     /**
@@ -604,7 +602,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     @PipelineProperty(description = "The XSLT to use.")
-    @PipelinePropertyDocRef(types=XSLT.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = XSLT.ENTITY_TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }
