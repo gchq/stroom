@@ -289,12 +289,11 @@ subprojects {
             exclude group: "log4j", module: "log4j"
             exclude module: 'xercesImpl'
 
-            resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-                if (details.requested.name == 'log4j') {
-                    details.useTarget "org.slf4j:log4j-over-slf4j:$versions.slf4j"
-                }
-            }
             resolutionStrategy {
+                dependencySubstitution {
+                    substitute module('log4j:log4j') with module("org.slf4j:log4j-over-slf4j:$versions.slf4j")
+                }
+
                 forcedModules = [
                     //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
                     //libs.guava
