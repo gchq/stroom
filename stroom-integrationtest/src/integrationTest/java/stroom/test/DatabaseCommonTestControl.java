@@ -95,6 +95,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             Dashboard.TABLE_NAME,
             "doc",
             DocumentPermission.TABLE_NAME,
+            "explorerTreeNode",
+            "explorerTreePath",
             Feed.TABLE_NAME,
             Index.TABLE_NAME,
             Index.TABLE_NAME_INDEX_VOLUME, //link table between IDX and VOL so no entity of its own
