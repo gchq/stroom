@@ -64,7 +64,8 @@ public class DBRealm extends AuthenticatingRealm {
         this.userAppPermissionService = userAppPermissionService;
         this.stroomPropertyService = stroomPropertyService;
         this.securityContext = securityContext;
-        createOrRefreshAdmin();
+        createOrRefreshAdminUser();
+        createOrRefreshStroomServiceUser();
     }
 
     @Override
@@ -123,8 +124,8 @@ public class DBRealm extends AuthenticatingRealm {
             UserRef userRef = userService.getUserByName(username);
             if (userRef == null) {
                 // The requested system user does not exist.
-                if (UserService.INITIAL_ADMIN_ACCOUNT.equals(username)) {
-                    userRef = createOrRefreshAdmin();
+                if (UserService.ADMIN_USER_NAME.equals(username)) {
+                    userRef = createOrRefreshAdminUser();
                 }
             }
 
@@ -142,18 +143,28 @@ public class DBRealm extends AuthenticatingRealm {
     /**
      * @return a new admin user
      */
-    public UserRef createOrRefreshAdmin() {
+    public UserRef createOrRefreshAdminUser() {
+        return createOrRefreshUser(UserService.ADMIN_USER_NAME);
+    }
+
+    /**
+     * @return a new stroom service user in the admin group
+     */
+    public UserRef createOrRefreshStroomServiceUser() {
+        return createOrRefreshUser(UserService.STROOM_SERVICE_USER_NAME);
+    }
+
+    private UserRef createOrRefreshUser(String name){
         UserRef userRef;
 
         try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
             // Ensure all perms have been created
             userAppPermissionService.init();
 
-            userRef = userService.getUserByName(UserService.INITIAL_ADMIN_ACCOUNT);
+            userRef = userService.getUserByName(name);
             if (userRef == null) {
                 User user = new User();
-                user.setName(UserService.INITIAL_ADMIN_ACCOUNT);
-                // Save the admin account.
+                user.setName(name);
                 user = userService.save(user);
 
                 final UserRef userGroup = createOrRefreshAdminUserGroup();

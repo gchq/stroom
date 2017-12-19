@@ -36,7 +36,7 @@ public class MockSecurityContext implements SecurityContext {
 
     @Override
     public String getUserId() {
-        return UserServiceImpl.INITIAL_ADMIN_ACCOUNT;
+        return UserServiceImpl.ADMIN_USER_NAME;
     }
 
     @Override
