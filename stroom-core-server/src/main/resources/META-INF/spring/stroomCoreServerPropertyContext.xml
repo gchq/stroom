@@ -298,64 +298,6 @@
                       value="Prevent new logins to the system. This is useful if the system is scheduled to have an outage."/>
             <property name="editable" value="true"/>
         </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.developmentMode"/>
-            <property name="value" value="false"/>
-            <property name="description" value=""/>
-            <property name="editable" value="false"/>
-        </bean>
-
-        <!-- SECURITY PROPERTIES -->
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name"
-                      value="stroom.security.allowCertificateAuthentication"/>
-            <property name="value" value="false"/>
-            <property name="description"
-                      value="Choose whether Stroom should allow UI access using certificates"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name"
-                      value="stroom.security.loginUrl"/>
-            <property name="value" value="http://localhost/login"/>
-            <property name="description"
-                      value="The location of the login app"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.security.certificateDNPattern"/>
-            <property name="value" value="CN=[^ ]+ [^ ]+ \(?([a-zA-Z0-9]+)\)?"/>
-            <property name="description"
-                      value="The regular expression to use to extract user names from a certificate DN"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.security.userNamePattern"/>
-            <property name="value" value="^[a-zA-Z0-9_-]{3,}$"/>
-            <property name="description" value="The regex pattern for user names"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.daysToAccountExpiry"/>
-            <property name="value" value="90"/>
-            <property name="description"
-                      value="Number of days before we disable an account"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.daysToUnusedAccountExpiry"/>
-            <property name="value" value="30"/>
-            <property name="description"
-                      value="Number of days before we disable an unused account"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.daysToPasswordExpiry"/>
-            <property name="value" value="90"/>
-            <property name="description"
-                      value="Number of days before passwords expire"/>
-            <property name="editable" value="true"/>
-        </bean>
 
         <!-- INDEX PROPERTIES -->
         <bean class="stroom.node.shared.GlobalProperty">
@@ -727,54 +669,6 @@
             <property name="editable" value="true"/>
         </bean>
 
-        <!-- EMAIL -->
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.mail.host"/>
-            <property name="value" value=""/>
-            <property name="description" value="Email service host name, e.g. smtp.gmail.com"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.mail.port"/>
-            <property name="value" value="587"/>
-            <property name="description" value="Email service port, e.g. 587"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.mail.protocol"/>
-            <property name="value" value="smtp"/>
-            <property name="description" value="Email service protocol, e.g. smtp"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.mail.userName"/>
-            <property name="value" value=""/>
-            <property name="description" value="Email service username, e.g. XXXXX@gmail.com"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.mail.password"/>
-            <property name="value" value=""/>
-            <property name="description" value="Email service password"/>
-            <property name="editable" value="true"/>
-            <property name="password" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.mail.propertiesFile"/>
-            <property name="value" value="~/.stroom/mail.properties"/>
-            <property name="description"
-                      value="Additional mail properties can be defined in a file at the specified path, e.g. ~/.stroom/mail.properties"/>
-            <property name="editable" value="true"/>
-        </bean>
-
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.mail.userDomain"/>
-            <property name="value" value=""/>
-            <property name="description"
-                      value="User Domain (to append to user names)"/>
-            <property name="editable" value="true"/>
-        </bean>
-
         <!-- UI -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.theme.background-attachment"/>
@@ -1011,7 +905,18 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
-
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.security.userNamePattern"/>
+            <property name="value" value="^[a-zA-Z0-9_-]{3,}$"/>
+            <property name="description" value="The regex pattern for user names"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.authentication.required"/>
+            <property name="value" value="true"/>
+            <property name="description" value="Choose whether Stroom requires authenticated access"/>
+            <property name="editable" value="false"/>
+        </bean>
 
         <!-- Authorisation -->
         <bean class="stroom.node.shared.GlobalProperty">

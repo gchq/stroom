@@ -50,10 +50,6 @@ dependencies {
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 
-    // Do not remove this as it is needed by Spring to send emails.
-    compile libs.javax_mail_api
-    permitUnusedDeclared libs.javax_mail_api
-
     runtime libs.shiro_aspectj
 
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

@@ -61,11 +61,6 @@ public class UserServiceImpl implements UserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String SQL_ADD_USER_TO_GROUP;
     private static final String SQL_REMOVE_USER_FROM_GROUP;
-    /**
-     * Password given out to default new users that has to be changed
-     * immediately
-     */
-    private static final String TEMP_ADMIN_PASSWORD = "admin";
 
     static {
         SQL_ADD_USER_TO_GROUP = ""
@@ -94,8 +89,6 @@ public class UserServiceImpl implements UserService {
     }
 
     private final StroomEntityManager entityManager;
-    private final PasswordEncoder passwordEncoder;
-    private final boolean neverExpire;
 
     private final EntityServiceHelper<User> entityServiceHelper;
     private final DocumentPermissionService documentPermissionService;
@@ -107,12 +100,9 @@ public class UserServiceImpl implements UserService {
 
     @Inject
     UserServiceImpl(final StroomEntityManager entityManager,
-                    final PasswordEncoder passwordEncoder,
-                    @Value("#{propertyConfigurer.getProperty('stroom.developmentMode')}") final boolean neverExpire,
+                    @Value("#{propertyConfigurer.getProperty('stroom.authentication.required')}") final boolean neverExpire,
                     final DocumentPermissionService documentPermissionService) {
         this.entityManager = entityManager;
-        this.passwordEncoder = passwordEncoder;
-        this.neverExpire = neverExpire;
         this.documentPermissionService = documentPermissionService;
 
         this.queryAppender = createQueryAppender(entityManager);
@@ -143,8 +133,6 @@ public class UserServiceImpl implements UserService {
         sql.appendValueQuery("user.name", criteria.getName());
 
         sql.appendValueQuery("user.group", criteria.getGroup());
-
-        sql.appendValueQuery("user.pstatus", criteria.getUserStatus());
 
         sql.appendRangeQuery("user.lastLoginMs", criteria.getLastLoginPeriod());
 
@@ -309,24 +297,6 @@ public class UserServiceImpl implements UserService {
         // If this is a new system user then create an initial password.
         if (!user.isPersistent()) {
             user.setUuid(UUID.randomUUID().toString());
-
-            if (user.getPasswordHash() == null) {
-                // Give the initial admin account admin as the password
-                // otherwise generate a random one. The UI will then try and
-                // reset this.
-                final String rawPassword = ADMIN_USER_NAME.equals(user.getName()) ? TEMP_ADMIN_PASSWORD
-                        : PasswordGenerator.generatePassword();
-                final String passwordHash = passwordEncoder.encode(rawPassword);
-                user.setPasswordHash(passwordHash);
-            }
-
-            if (user.getPasswordExpiryMs() == null) {
-                if (neverExpire) {
-                    user.setLoginExpiry(false);
-                } else {
-                    user.setPasswordExpiryMs(System.currentTimeMillis());
-                }
-            }
 
             return entityServiceHelper.save(user, queryAppender);
         } else {

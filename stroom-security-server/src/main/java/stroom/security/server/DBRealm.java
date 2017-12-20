@@ -46,23 +46,17 @@ public class DBRealm extends AuthenticatingRealm {
 
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;
-    private final StroomPropertyService stroomPropertyService;
     private final SecurityContext securityContext;
-
-    private String cachedRegex;
-    private Pattern cachedPattern;
 
     private volatile boolean doneCreateOrRefreshAdminRole = false;
 
     @Inject
     public DBRealm(final UserService userService, final UserAppPermissionService userAppPermissionService,
-                   final StroomPropertyService stroomPropertyService,
                    final CredentialsMatcher matcher,
                    final SecurityContext securityContext) {
         super(matcher);
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
-        this.stroomPropertyService = stroomPropertyService;
         this.securityContext = securityContext;
         createOrRefreshAdminUser();
         createOrRefreshStroomServiceUser();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.login.client.presenter;
+package stroom.security.client;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

@@ -17,7 +17,6 @@
 package stroom.security.server;
 
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserStatus;
 
 public final class UserRefFactory {
     private UserRefFactory() {

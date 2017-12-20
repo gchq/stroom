@@ -16,62 +16,11 @@
 
 package stroom.security.server;
 
-import stroom.security.shared.UserRef;
-
 public interface AuthenticationService {
-    /**
-     * Login with a Certificate or the session
-     *
-     * @return
-     * @throws RuntimeException
-     */
-    UserRef autoLogin() throws RuntimeException;
-
-    /**
-     * Login with user name / password
-     */
-    UserRef login(String userName, String password) throws RuntimeException;
-
     /**
      * Logs the current user out.
      *
      * @return The user name of the user that was logged out.
      */
     String logout() throws RuntimeException;
-
-    /**
-     * Returns the current user.
-     *
-     * @return current user
-     */
-    UserRef getCurrentUser() throws RuntimeException;
-
-    /**
-     * Updates an already authenticated users password.
-     *
-     * @param user        unique user name
-     * @param oldPassword old password
-     * @param newPassword new password
-     * @return System user containing modified password
-     */
-    UserRef changePassword(UserRef user, String oldPassword, String newPassword) throws RuntimeException;
-
-    /**
-     * Resets a users password.
-     *
-     * @param user     unique user name
-     * @param password password
-     * @return system user containing modified password
-     */
-    UserRef resetPassword(UserRef user, String password) throws RuntimeException;
-
-    boolean canEmailPasswordReset();
-
-    /**
-     * Resets a users password.
-     *
-     * @param userName unique user name
-     * @return system user containing modified password
-     */
-    Boolean emailPasswordReset(String userName) throws RuntimeException;
 }

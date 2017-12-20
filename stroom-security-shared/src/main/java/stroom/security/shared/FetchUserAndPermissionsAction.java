@@ -18,28 +18,14 @@ package stroom.security.shared;
 
 import stroom.entity.shared.Action;
 
-public class ResetPasswordAction extends Action<UserRef> {
+public class FetchUserAndPermissionsAction extends Action<UserAndPermissions> {
     private static final long serialVersionUID = -6740095230475597845L;
-    private UserRef user;
-    private String password;
 
-    public ResetPasswordAction() {
-    }
-    public ResetPasswordAction(final UserRef user, String password) {
-        this.user = user;
-        this.password = password;
-    }
-
-    public UserRef getUser() {
-        return user;
-    }
-
-    public String getPassword() {
-        return password;
+    public FetchUserAndPermissionsAction() {
     }
 
     @Override
     public String getTaskName() {
-        return "Reset Password";
+        return "Fetch User And Permissions";
     }
 }

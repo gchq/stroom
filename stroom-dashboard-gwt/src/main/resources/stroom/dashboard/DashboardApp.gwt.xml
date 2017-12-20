@@ -18,7 +18,6 @@
 
     <inherits name="stroom.core.Core"/>
     <inherits name="stroom.task.Task"/>
-    <inherits name="stroom.login.Login"/>
     <inherits name="stroom.main.Main"/>
     <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.security.Security"/>

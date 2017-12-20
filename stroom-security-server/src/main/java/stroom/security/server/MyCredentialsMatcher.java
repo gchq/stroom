@@ -19,24 +19,11 @@ package stroom.security.server;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
 
 //TODO We don't really need this any more but it's required by Shiro. Can we remove it somehow?
 @Component
 public class MyCredentialsMatcher implements CredentialsMatcher {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MyCredentialsMatcher.class);
-
-    private final PasswordEncoder passwordEncoder;
-
-    @Inject
-    public MyCredentialsMatcher(final PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
-    }
-
     @Override
     public boolean doCredentialsMatch(final AuthenticationToken token, final AuthenticationInfo info) {
         if (token == null) {
