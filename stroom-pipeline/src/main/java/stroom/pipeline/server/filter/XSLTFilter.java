@@ -333,7 +333,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             }
 
         } catch (final Throwable throwable) {
-            final Throwable e = unwrapTransformerException(throwable);
+            final Throwable e = unwrapException(throwable);
 
             errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(e), getElementId(), e.toString(), e);
             // If we aren't stepping then throw an exception to terminate early.
@@ -355,7 +355,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 handler.endDocument();
             } catch (final Throwable throwable) {
                 try {
-                    final Throwable e = unwrapTransformerException(throwable);
+                    final Throwable e = unwrapException(throwable);
 
                     errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(e), getElementId(), e.toString(), e);
                     // If we aren't stepping then throw an exception to terminate early.
@@ -385,18 +385,19 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         return null;
     }
 
-    private Throwable unwrapTransformerException(final Throwable e) {
+    private Throwable unwrapException(final Throwable e) {
         Throwable cause = e;
 
-        while (cause != null) {
-            if (cause instanceof TransformerException) {
+        while (cause != null && cause.getCause() != null && cause != cause.getCause()) {
+            // Return cause early if it is a TransformerException or ProcessException
+            if (cause instanceof TransformerException || cause instanceof ProcessException) {
                 return cause;
             }
 
             cause = cause.getCause();
         }
 
-        return e;
+        return cause;
     }
 
     /**

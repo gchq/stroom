@@ -53,9 +53,9 @@ public class StroomXSLTFunctionLibrary {
             register("lookup", Lookup.class, 2, 4, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN}, SequenceType.NODE_SEQUENCE);
             register("meta", Meta.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
             register("numeric-ip", NumericIP.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
-            register("random", Random.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_DOUBLE);
-            register("search-id", SearchId.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
-            register("stream-id", StreamId.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
+            register("random", Random.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_DOUBLE);
+            register("search-id", SearchId.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);
+            register("stream-id", StreamId.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);
             register("hex-to-dec", HexToDec.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
             register("hex-to-oct", HexToOct.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
             register("pipeline-name", PipelineName.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);

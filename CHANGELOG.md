@@ -30,6 +30,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.71] - 2017-12-20
+
+* Issue **#521** : Fix for the job list screen to correct the help URL.
+
+* Issue **#526** : Fix for XSLT functions that should return optional results but were being forced to return a single value.
+
+* Issue **#527** : Fix for XSLT error reporting. All downstream errors were being reported as XSLT module errors and were
+ hiding the underlying exception.
+
 ## [v5.0-beta.70] - 2017-12-15
 
 * Issue **#501** : Improve the database teardown process in integration tests to speed up builds.
@@ -757,6 +766,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.71]: https://github.com/gchq/stroom/compare/v5.0-beta.70...v5.0-beta.71
+[v5.0-beta.70]: https://github.com/gchq/stroom/compare/v5.0-beta.69...v5.0-beta.70
 [v5.0-beta.69]: https://github.com/gchq/stroom/compare/v5.0-beta.68...v5.0-beta.69
 [v5.0-beta.68]: https://github.com/gchq/stroom/compare/v5.0-beta.67...v5.0-beta.68
 [v5.0-beta.67]: https://github.com/gchq/stroom/compare/v5.0-beta.66...v5.0-beta.67
