@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#521** : Fix for the job list screen to correct the help URL.
 
+* Issue **#526** : Fix for XSLT functions that should return optional results but were being forced to return a single value.
+
 ## [v5.0-beta.70] - 2017-12-15
 
 * Issue **#501** : Improve the database teardown process in integration tests to speed up builds.
