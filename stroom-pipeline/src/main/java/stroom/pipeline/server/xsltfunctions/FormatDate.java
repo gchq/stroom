@@ -37,8 +37,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     private static final DateTimeZone EUROPE_LONDON_TIME_ZONE = DateTimeZone.forID("Europe/London");
 
     @Override
-    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
-            throws XPathException {
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         String result = null;
 
         try {
