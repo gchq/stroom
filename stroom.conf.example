@@ -2,8 +2,8 @@
 #various properties for running stroom in development
 #It is also used by travis for configuring stroom's integration tests
 
-#Prevents stroom from prompting for a new password on first login
-stroom.developmentMode=true
+#Choose whether Stroom requires authenticated access
+stroom.authentication.required=false
 
 stroom.htmlTitle=Development Stroom
 

@@ -46,43 +46,62 @@ public class TaskExecutor {
     private final ReentrantLock taskLock = new ReentrantLock();
     private final Condition condition = taskLock.newCondition();
 
-    private final ExecutorService executor;
-    private volatile boolean running = true;
+    private final String name;
+    private volatile ExecutorService executor;
+    private volatile boolean running;
+    private volatile boolean shutdown;
 
     public TaskExecutor(final String name) {
-        final ThreadGroup poolThreadGroup = new ThreadGroup(StroomThreadGroup.instance(), name);
-        final CustomThreadFactory threadFactory = new CustomThreadFactory(name, poolThreadGroup, 5);
-        executor = Executors.newSingleThreadExecutor(threadFactory);
+        this.name = name;
+    }
 
-        executor.execute(() -> {
-            while (running) {
-                taskLock.lock();
-                try {
-                    Runnable task = execNextTask();
-                    if (task == null) {
-                        condition.await();
+    private synchronized void start() {
+        if (!running && !shutdown) {
+            running = true;
+
+            final ThreadGroup poolThreadGroup = new ThreadGroup(StroomThreadGroup.instance(), name);
+            final CustomThreadFactory threadFactory = new CustomThreadFactory(name, poolThreadGroup, 5);
+            executor = Executors.newSingleThreadExecutor(threadFactory);
+            executor.execute(() -> {
+                while (running) {
+                    taskLock.lock();
+                    try {
+                        Runnable task = execNextTask();
+                        if (task == null) {
+                            condition.await();
+                        }
+                    } catch (final InterruptedException e) {
+                        // Clear the interrupt state.
+                        Thread.interrupted();
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    } finally {
+                        taskLock.unlock();
                     }
-                } catch (final InterruptedException e) {
-                    // Clear the interrupt state.
-                    Thread.interrupted();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                } finally {
-                    taskLock.unlock();
                 }
-            }
-        });
+            });
+        }
+    }
+
+    private synchronized void stop() {
+        if (running) {
+            running = false;
+            // Wake up any waiting threads.
+            signalAll();
+            executor.shutdown();
+        }
     }
 
     @StroomShutdown
-    public void stop() {
-        running = false;
-        // Wake up any waiting threads.
-        signalAll();
-        executor.shutdown();
+    public void shutdown() {
+        shutdown = true;
+        stop();
     }
 
     final void addProducer(final TaskProducer producer) {
+        if (!running) {
+            start();
+        }
         producers.add(producer);
     }
 

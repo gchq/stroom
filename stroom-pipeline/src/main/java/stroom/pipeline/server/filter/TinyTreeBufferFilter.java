@@ -23,6 +23,7 @@ import net.sf.saxon.event.ReceivingContentHandler;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
@@ -32,16 +33,19 @@ import org.xml.sax.SAXException;
  */
 public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     private final Configuration configuration;
-    private final ReceivingContentHandler handler;
     private final PipelineConfiguration pipe;
-    private Builder builder;
+    private final ReceivingContentHandler receivingContentHandler;
+
     private NodeInfo root;
     private boolean startedDocument;
 
-    public TinyTreeBufferFilter() {
+    private ContentHandler handler = NullXMLFilter.INSTANCE;
+    private Builder builder;
+
+    TinyTreeBufferFilter() {
         configuration = Configuration.newConfiguration();
         pipe = configuration.makePipelineConfiguration();
-        handler = new ReceivingContentHandler();
+        receivingContentHandler = new ReceivingContentHandler();
     }
 
     public Configuration getConfiguration() {
@@ -51,30 +55,36 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     /**
      * Stops buffering SAX events and clears the buffer.
      */
-    public void clearBuffer() {
+    void clearBuffer() {
+        reset();
+    }
+
+    private void init() {
+        if (builder == null) {
+            builder = new TinyBuilder(pipe);
+
+            receivingContentHandler.reset();
+            receivingContentHandler.setPipelineConfiguration(pipe);
+            receivingContentHandler.setReceiver(builder);
+
+            handler = receivingContentHandler;
+        }
+    }
+
+    private void reset() {
         if (builder != null) {
             // Reset the builder, detaching it from the constructed document.
             builder.reset();
             builder = null;
+
+            handler = NullXMLFilter.INSTANCE;
         }
-
-        builder = new TinyBuilder(pipe);
-
-        handler.reset();
-        handler.setPipelineConfiguration(pipe);
-        handler.setReceiver(builder);
-        startedDocument = false;
     }
 
     @Override
     public void endProcessing() {
         try {
-            if (builder != null) {
-                // Reset the builder, detaching it from the constructed
-                // document.
-                builder.reset();
-                builder = null;
-            }
+            reset();
         } finally {
             super.endProcessing();
         }
@@ -101,9 +111,13 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     @Override
     public void startDocument() throws SAXException {
         if (!startedDocument) {
-            startedDocument = true;
-            handler.startDocument();
-            super.startDocument();
+            try {
+                init();
+                handler.startDocument();
+            } finally {
+                startedDocument = true;
+                super.startDocument();
+            }
         }
     }
 
@@ -114,19 +128,21 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
      */
     @Override
     public void endDocument() throws SAXException {
-        handler.endDocument();
+        if (startedDocument) {
+            try {
+                handler.endDocument();
 
-        if (builder != null) {
-            // Store the current root.
-            root = builder.getCurrentRoot();
+                if (builder != null) {
+                    // Store the current root.
+                    root = builder.getCurrentRoot();
+                }
 
-            // Reset the builder, detaching it from the constructed document.
-            builder.reset();
-            builder = null;
+                reset();
+            } finally {
+                startedDocument = false;
+                super.endDocument();
+            }
         }
-
-        super.endDocument();
-        startedDocument = false;
     }
 
     /**

@@ -51,9 +51,16 @@ import java.io.IOException;
  */
 @Component
 @Scope("prototype")
-@ConfigurableElement(type = "XMLWriter", category = Category.WRITER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.XML)
+@ConfigurableElement(
+        type = "XMLWriter",
+        category = Category.WRITER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.ROLE_WRITER,
+                PipelineElementType.ROLE_MUTATOR,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.XML)
 public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(XMLWriter.class);
@@ -159,9 +166,11 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         //    LOGGER.trace("endDocument called, buffer [%s]", truncateAndStripWhitespace(getBuffer()));
         //}
 
-        handler.endDocument();
-        super.endDocument();
-        startedDocument = false;
+        if (startedDocument) {
+            handler.endDocument();
+            super.endDocument();
+            startedDocument = false;
+        }
     }
 
     /**

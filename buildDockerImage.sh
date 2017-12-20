@@ -21,4 +21,4 @@
 # Exclude tests because we want this to be fast. I guess you'd better test the build before releasing.
 ./gradlew downloadUrlDependencies clean build shadowJar -x test -x integrationTest
 
-docker build --tag gchq/stroom:dev-SNAPSHOT .
+docker build --tag gchq/stroom:dev-SNAPSHOT ./stroom-app/docker

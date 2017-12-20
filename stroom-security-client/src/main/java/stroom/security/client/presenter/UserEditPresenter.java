@@ -21,36 +21,21 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.alert.client.event.AlertEvent;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.security.client.event.ResetPasswordEvent;
-import stroom.security.shared.CanEmailPasswordResetAction;
-import stroom.security.shared.EmailPasswordResetForUserNameAction;
-import stroom.security.shared.LoadUserPropertiesAction;
-import stroom.security.shared.SaveUserPropertiesAction;
-import stroom.security.shared.UserProperties;
 import stroom.security.shared.UserRef;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
-import stroom.widget.tickbox.client.view.TickBox;
 
 public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserEditView>
         implements UserEditUiHandlers {
-    private final ClientDispatchAsync dispatcher;
     private final UserEditAddRemoveUsersPresenter userListAddRemovePresenter;
     private final AppPermissionsPresenter appPermissionsPresenter;
 
-    private UserRef userRef;
-
     @Inject
-    public UserEditPresenter(final EventBus eventBus, final UserEditView view,
-                             final ClientDispatchAsync dispatcher, final UserEditAddRemoveUsersPresenter userListAddRemovePresenter, final AppPermissionsPresenter appPermissionsPresenter) {
+    public UserEditPresenter(final EventBus eventBus, final UserEditView view, final UserEditAddRemoveUsersPresenter userListAddRemovePresenter, final AppPermissionsPresenter appPermissionsPresenter) {
         super(eventBus, view);
-        this.dispatcher = dispatcher;
         this.userListAddRemovePresenter = userListAddRemovePresenter;
         this.appPermissionsPresenter = appPermissionsPresenter;
         view.setUiHandlers(this);
@@ -86,12 +71,9 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserE
     }
 
     private void read(UserRef userRef) {
-        this.userRef = userRef;
-
         userListAddRemovePresenter.setUser(userRef);
         appPermissionsPresenter.setUser(userRef);
     }
-
 
     public interface UserEditView extends View, HasUiHandlers<UserEditUiHandlers> {
         void setUserGroupsView(View view);

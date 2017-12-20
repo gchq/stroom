@@ -6,12 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+* Generate addtitional major and minor floating docker tags in travis build, e.g. v6-LATEST and v6.0-LATEST
+
+### Changed
+
 ## [v6.0-alpha.4]
 
 ### Added
 
 * New authentication flow based around OpenId
+
 * New user management screens
+
 * The ability to issue API keys
 
 ### Changed
@@ -89,6 +97,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.1-alpha.1] - 2017-06-07
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
+
+## [v5.0-beta.70] - 2017-12-15
+
+* Issue **#501** : Improve the database teardown process in integration tests to speed up builds.
+
+* Issue **#511** : Fix NPE thrown during pipeline stepping by downstream XSLT.
+
+* Issue **#521** : Fix for the job list screen to use the help URL system property for displaying context sensitive help.
+
+* Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
 
 ## [v5.0-beta.69] - 2017-12-12
 
