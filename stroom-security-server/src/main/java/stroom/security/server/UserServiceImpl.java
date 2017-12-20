@@ -18,7 +18,6 @@ package stroom.security.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,14 +99,12 @@ public class UserServiceImpl implements UserService {
 
     @Inject
     UserServiceImpl(final StroomEntityManager entityManager,
-                    @Value("#{propertyConfigurer.getProperty('stroom.authentication.required')}") final boolean neverExpire,
                     final DocumentPermissionService documentPermissionService) {
         this.entityManager = entityManager;
         this.documentPermissionService = documentPermissionService;
 
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
-//        this.findServiceHelper = new FindServiceHelper<>(entityManager, getEntityClass(), queryAppender);
     }
 
     private QueryAppender<User, FindUserCriteria> createQueryAppender(final StroomEntityManager entityManager) {

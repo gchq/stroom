@@ -22,7 +22,10 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.ClientProperties;
 import stroom.security.client.event.LogoutEvent;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.LogoutAction;
@@ -31,15 +34,21 @@ public class LoginManager implements HasHandlers {
     private final EventBus eventBus;
     private final CurrentUser currentUser;
     private final ClientDispatchAsync dispatcher;
+    private final LocationManager locationManager;
+    private final ClientPropertyCache clientPropertyCache;
 
     @Inject
     public LoginManager(
             final EventBus eventBus,
             final CurrentUser currentUser,
-            final ClientDispatchAsync dispatcher) {
+            final ClientDispatchAsync dispatcher,
+            final LocationManager locationManager,
+            final ClientPropertyCache clientPropertyCache) {
         this.eventBus = eventBus;
         this.currentUser = currentUser;
         this.dispatcher = dispatcher;
+        this.locationManager = locationManager;
+        this.clientPropertyCache = clientPropertyCache;
 
         // Listen for logout events.
         eventBus.addHandler(LogoutEvent.getType(), event -> logout());
@@ -62,8 +71,15 @@ public class LoginManager implements HasHandlers {
         // Perform logout on the server
         dispatcher.exec(new LogoutAction(), null)
                 .onSuccess(r -> {
-                    // Reload the page.
-                    Window.Location.reload();
+//                    // Reload the page.
+//                    Window.Location.reload();
+
+                    clientPropertyCache.get()
+                            .onSuccess(result -> {
+                                final String authServiceUrl = result.get(ClientProperties.AUTH_SERVICE_URL);
+                                // Send the user's browser to the remote Authentication Service's logout endpoint.
+                                locationManager.replace(authServiceUrl + "/authentication/v1/logout");
+                            });
                 })
                 .onFailure(t -> AlertEvent.fireErrorFromException(LoginManager.this, t, null));
     }

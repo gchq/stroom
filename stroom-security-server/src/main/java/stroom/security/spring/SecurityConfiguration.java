@@ -60,13 +60,15 @@ public class SecurityConfiguration {
     public JWTAuthenticationFilter jwtAuthenticationFilter(
             @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}") final String authenticationServiceUrl,
             @Value("#{propertyConfigurer.getProperty('stroom.advertisedUrl')}") final String advertisedStroomUrl,
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String jwtIssuer,
             JWTService jwtService,
             NonceManager nonceManager,
             AuthenticationServiceClients authenticationServiceClients) {
         return new JWTAuthenticationFilter(
-                authenticationServiceUrl, advertisedStroomUrl, jwtIssuer,
-                jwtService, nonceManager, authenticationServiceClients);
+                authenticationServiceUrl,
+                advertisedStroomUrl,
+                jwtService,
+                nonceManager,
+                authenticationServiceClients);
     }
 
     @Bean(name = "shiroFilter")
@@ -81,7 +83,6 @@ public class SecurityConfiguration {
         filters.put("jwtFilter", jwtAuthenticationFilter);
         filters.put("anonymousFilter", new AnonymousFilter());
 
-        shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
         // Allow anonymous access to the getToken resource.
         shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/v*/getToken", "anonymousFilter");
         shiroFilter.getFilterChainDefinitionMap().put("/**", "jwtFilter");
