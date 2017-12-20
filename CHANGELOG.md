@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#526** : Fix for XSLT functions that should return optional results but were being forced to return a single value.
 
+* Issue **#527** : Fix for XSLT error reporting. All downstream errors were being reported as XSLT module errors and were
+ hiding the underlying exception.
+
 ## [v5.0-beta.70] - 2017-12-15
 
 * Issue **#501** : Improve the database teardown process in integration tests to speed up builds.
