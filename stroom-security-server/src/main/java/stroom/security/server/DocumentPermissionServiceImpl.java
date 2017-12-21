@@ -28,7 +28,6 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserStatus;
 
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;

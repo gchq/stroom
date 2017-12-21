@@ -24,7 +24,6 @@ import org.apache.shiro.web.util.WebUtils;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
-import org.jose4j.jwt.consumer.JwtConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.apiclients.AuthenticationServiceClients;
@@ -49,7 +48,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
     private final String authenticationServiceUrl;
     private final String advertisedStroomUrl;
-    private final String jwtIssuer;
     private final JWTService jwtService;
     private final NonceManager nonceManager;
     private final AuthenticationServiceClients authenticationServiceClients;
@@ -57,13 +55,11 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     public JWTAuthenticationFilter(
             final String authenticationServiceUrl,
             final String advertisedStroomUrl,
-            final String jwtIssuer,
             final JWTService jwtService,
             final NonceManager nonceManager,
             final AuthenticationServiceClients authenticationServiceClients) {
         this.authenticationServiceUrl = authenticationServiceUrl;
         this.advertisedStroomUrl = advertisedStroomUrl;
-        this.jwtIssuer = jwtIssuer;
         this.jwtService = jwtService;
         this.nonceManager = nonceManager;
         this.authenticationServiceClients = authenticationServiceClients;
@@ -92,7 +88,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
         // If we have an access code we can try and log in.
         String accessCode = request.getParameter("accessCode");
-        if(accessCode != null) {
+        if (accessCode != null) {
             LOGGER.debug("We have the following access code: {{}}", accessCode);
             loggedIn = executeLogin(request, response);
         }
@@ -105,12 +101,11 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             String servletPath = ((ShiroHttpServletRequest) request).getServletPath();
             boolean isApiRequest = servletPath.contains("/api");
 
-            if(isApiRequest) {
+            if (isApiRequest) {
                 LOGGER.debug("API request is unauthorised.");
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
                 httpResponse.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
-            }
-            else {
+            } else {
                 // We have a a new request so we're going to redirect with an AuthenticationRequest.
                 String authenticationRequestBaseUrl = authenticationServiceUrl + "/authentication/v1/authenticate";
                 String nonceHash = nonceManager.createNonce(sessionId);
@@ -144,19 +139,17 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     @Override
     protected JWTAuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException, InvalidJwtException, MalformedClaimException {
         // First we'll check if this is an API request. If it is we'll check the JWS and create a token.
-        String path = ((HttpServletRequest)request).getRequestURI();
-        if(path.contains("/api/")){
+        String path = ((HttpServletRequest) request).getRequestURI();
+        if (path.contains("/api/")) {
             Optional<String> optionalJws = jwtService.getJws(request);
-            if(optionalJws.isPresent()){
+            if (optionalJws.isPresent()) {
                 Optional<JwtClaims> jwtClaimsOptional = jwtService.verifyToken(optionalJws.get());
-                if(jwtClaimsOptional.isPresent()) {
+                if (jwtClaimsOptional.isPresent()) {
                     return new JWTAuthenticationToken(jwtClaimsOptional.get().getSubject(), optionalJws.get());
+                } else {
+                    return new JWTAuthenticationToken("", "");
                 }
-                else {
-                    return new JWTAuthenticationToken("","");
-                }
-            }
-            else{
+            } else {
                 LOGGER.error("Cannot get a JWS for an API request!");
                 return null;
             }
@@ -181,14 +174,14 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                     // accessCode doesn't exist any more, or has already been used. so we can't proceed.
                     // But we still need to return a token. We'll return an empty one and it'll end up being judged
                     // invalid and the authentication flow will begin again, leading to a fresh, correct token.
-                    return new JWTAuthenticationToken("","");
+                    return new JWTAuthenticationToken("", "");
                 }
             }
 
 
             Optional<JwtClaims> jwtClaimsOptional = jwtService.verifyToken(idToken);
-            if(!jwtClaimsOptional.isPresent()){
-                return new JWTAuthenticationToken("","");
+            if (!jwtClaimsOptional.isPresent()) {
+                return new JWTAuthenticationToken("", "");
             }
             String nonceHash = (String) jwtClaimsOptional.get().getClaimsMap().get("nonce");
             boolean doNoncesMatch = nonceManager.match(sessionId, nonceHash);
@@ -198,7 +191,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 // Maybe the request uses an out-of-date stroomSessionId?
                 // We still need to return a token. We'll return an empty one and it'll end up being judged
                 // invalid and the authentication flow will begin again, leading to a fresh, correct token.
-                return new JWTAuthenticationToken("","");
+                return new JWTAuthenticationToken("", "");
             }
 
             LOGGER.info("User is authenticated for sessionId " + sessionId);
@@ -209,7 +202,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             LOGGER.error("Attempted access without an access code!");
             // We still need to return a token. We'll return an empty one and it'll end up being judged
             // invalid and the authentication flow will begin again, leading to a fresh, correct token.
-            return new JWTAuthenticationToken("","");
+            return new JWTAuthenticationToken("", "");
         }
     }
 

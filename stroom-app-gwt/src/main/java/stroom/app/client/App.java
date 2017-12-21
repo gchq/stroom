@@ -38,7 +38,7 @@ public class App implements EntryPoint {
 
         // Start the login manager. This will attempt to auto login with PKI and
         // will therefore start the rest of the application.
-        ginjector.getLoginManager().autoLogin();
+        ginjector.getLoginManager().fetchUserAndPermissions();
 
         // Remember how places were used in case we want to use URLs and history
         // at some point.

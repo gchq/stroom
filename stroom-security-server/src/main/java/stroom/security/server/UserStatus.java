@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.shared;
+package stroom.security.server;
 
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;

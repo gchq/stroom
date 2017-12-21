@@ -9,7 +9,6 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.assertj.core.api.Assertions;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -21,7 +20,6 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import stroom.security.server.AuthorizationHelper;
 import stroom.servicediscovery.RegisteredService;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.startup.App;
@@ -85,11 +83,6 @@ public class TestStroomIndexQueryResource {
     private static String serialiseSearchRequest(SearchRequest searchRequest) throws JsonProcessingException {
         ObjectMapper objectMapper = getMapper(true);
         return objectMapper.writeValueAsString(searchRequest);
-    }
-
-    @Before
-    public void before() {
-        jwtToken = AuthorizationHelper.fetchJwtToken();
     }
 
     @Ignore

@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import stroom.node.server.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.security.shared.FindUserCriteria;
@@ -36,7 +35,6 @@ import stroom.security.shared.UserRef;
 import stroom.util.shared.UserTokenUtil;
 
 import javax.inject.Inject;
-import java.util.regex.Pattern;
 
 @Component
 public class DBRealm extends AuthenticatingRealm {
@@ -46,23 +44,17 @@ public class DBRealm extends AuthenticatingRealm {
 
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;
-    private final StroomPropertyService stroomPropertyService;
     private final SecurityContext securityContext;
-
-    private String cachedRegex;
-    private Pattern cachedPattern;
 
     private volatile boolean doneCreateOrRefreshAdminRole = false;
 
     @Inject
     public DBRealm(final UserService userService, final UserAppPermissionService userAppPermissionService,
-                   final StroomPropertyService stroomPropertyService,
                    final CredentialsMatcher matcher,
                    final SecurityContext securityContext) {
         super(matcher);
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
-        this.stroomPropertyService = stroomPropertyService;
         this.securityContext = securityContext;
         createOrRefreshAdminUser();
         createOrRefreshStroomServiceUser();
@@ -154,7 +146,7 @@ public class DBRealm extends AuthenticatingRealm {
         return createOrRefreshUser(UserService.STROOM_SERVICE_USER_NAME);
     }
 
-    private UserRef createOrRefreshUser(String name){
+    private UserRef createOrRefreshUser(String name) {
         UserRef userRef;
 
         try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {

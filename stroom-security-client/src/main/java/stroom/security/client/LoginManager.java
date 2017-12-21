@@ -14,30 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.login.client;
+package stroom.security.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.security.client.CurrentUser;
-import stroom.security.client.event.LoginEvent;
-import stroom.security.client.event.LoginFailedEvent;
 import stroom.security.client.event.LogoutEvent;
-import stroom.security.shared.AutoLoginAction;
+import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.LogoutAction;
 
 public class LoginManager implements HasHandlers {
     private final EventBus eventBus;
     private final CurrentUser currentUser;
     private final ClientDispatchAsync dispatcher;
-    private String authServiceUrl;
-    private LocationManager locationManager;
+    private final LocationManager locationManager;
+    private final ClientPropertyCache clientPropertyCache;
 
     @Inject
     public LoginManager(
@@ -50,39 +48,40 @@ public class LoginManager implements HasHandlers {
         this.currentUser = currentUser;
         this.dispatcher = dispatcher;
         this.locationManager = locationManager;
+        this.clientPropertyCache = clientPropertyCache;
 
         // Listen for logout events.
         eventBus.addHandler(LogoutEvent.getType(), event -> logout());
-
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    this.authServiceUrl = result.get(ClientProperties.AUTH_SERVICE_URL);
-                });
     }
 
-    public void autoLogin() {
+    public void fetchUserAndPermissions() {
         // When we start the application we will try and auto login using a client certificates.
-        dispatcher.exec(new AutoLoginAction(), "Logging on. Please wait...").onSuccess(userAndPermissions -> {
+        dispatcher.exec(new FetchUserAndPermissionsAction(), "Loading. Please wait...").onSuccess(userAndPermissions -> {
             if (userAndPermissions != null) {
                 currentUser.setUserAndPermissions(userAndPermissions);
-            } else if (!GWT.isProdMode()) {
-                // If we are in development mode and failed to login
-                // with a client certificates then try the default user name and
-                // password.
-                LoginEvent.fire(LoginManager.this, "admin", "admin");
             } else {
-                LoginFailedEvent.fire(LoginManager.this, null);
+                logout();
             }
-        }).onFailure(caught -> LoginFailedEvent.fire(LoginManager.this, caught.getMessage()));
+        }).onFailure(caught -> AlertEvent.fireErrorFromException(LoginManager.this, caught, null));
     }
 
     private void logout() {
         // Clear everything we know about the current user.
         currentUser.clear();
         // Perform logout on the server
-        dispatcher.exec(new LogoutAction(), null);
-        // Send the user's browser to the remote Authentication Service's logout endpoint.
-        locationManager.replace(authServiceUrl + "/authentication/v1/logout");
+        dispatcher.exec(new LogoutAction(), null)
+                .onSuccess(r -> {
+//                    // Reload the page.
+//                    Window.Location.reload();
+
+                    clientPropertyCache.get()
+                            .onSuccess(result -> {
+                                final String authServiceUrl = result.get(ClientProperties.AUTH_SERVICE_URL);
+                                // Send the user's browser to the remote Authentication Service's logout endpoint.
+                                locationManager.replace(authServiceUrl + "/authentication/v1/logout");
+                            });
+                })
+                .onFailure(t -> AlertEvent.fireErrorFromException(LoginManager.this, t, null));
     }
 
     @Override
