@@ -17,6 +17,8 @@
 package stroom.security.server;
 
 public interface AuthenticationService {
+    boolean login(AuthenticationToken authenticationToken);
+
     /**
      * Logs the current user out.
      *

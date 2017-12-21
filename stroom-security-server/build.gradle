@@ -36,9 +36,6 @@ dependencies {
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.javax_validation
-    compile libs.shiro_core
-    compile libs.shiro_spring
-    compile libs.shiro_web
     compile libs.slf4j_api
     compile libs.spring_beans
     compile libs.spring_context
@@ -49,8 +46,6 @@ dependencies {
     compile libs.ws_rs_api
     compile libs.swagger_annotations
     compile libs.ws_rs_api
-
-    runtime libs.shiro_aspectj
 
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

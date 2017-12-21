@@ -23,13 +23,13 @@ import stroom.dashboard.shared.Dashboard;
 import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.shared.BaseResultList;
-import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.feed.server.FeedService;
 import stroom.entity.shared.NamedEntity;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportSerializer;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
@@ -44,7 +44,7 @@ import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.server.DBRealm;
+import stroom.security.server.AuthenticationServiceImpl;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
@@ -54,7 +54,12 @@ import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.server.StreamAttributeKeyService;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.shared.*;
+import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
+import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.StreamAttributeConstants;
+import stroom.streamstore.shared.StreamAttributeKey;
+import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.util.io.FileUtil;
@@ -98,7 +103,7 @@ public final class SetupSampleDataBean {
     private static final int LOAD_CYCLES = 10;
 
     @Resource
-    private DBRealm dbRealm;
+    private AuthenticationServiceImpl authenticationService;
     @Resource
     private FeedService feedService;
     @Resource
@@ -155,8 +160,8 @@ public final class SetupSampleDataBean {
     public void run(final boolean shutdown) throws IOException {
         // Ensure admin user exists.
         LOGGER.info("Creating admin user");
-        dbRealm.createOrRefreshAdminUser();
-        dbRealm.createOrRefreshStroomServiceUser();
+        authenticationService.createOrRefreshAdminUser();
+        authenticationService.createOrRefreshStroomServiceUser();
 
 //        createRandomExplorerNode(null, "", 0, 2);
 
@@ -199,8 +204,8 @@ public final class SetupSampleDataBean {
                 final QueryData criteria = new QueryData.Builder()
                         .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
-                            .build())
+                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
+                                .build())
                         .build();
 
                 streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
@@ -252,12 +257,12 @@ public final class SetupSampleDataBean {
                 final QueryData criteria = new QueryData.Builder()
                         .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
-                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                                        .build())
                                 .build())
-                            .build())
                         .build();
                 streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
                 // final StreamProcessorFilter filter =
@@ -288,8 +293,9 @@ public final class SetupSampleDataBean {
     }
 
     private static void logEntities(BaseResultList<? extends NamedEntity> entities, String entityTypes) {
-        logEntities(entities.getValues(),entityTypes);
+        logEntities(entities.getValues(), entityTypes);
     }
+
     private static void logEntities(List<? extends NamedEntity> entities, String entityTypes) {
         LOGGER.info("Listing loaded {}:", entityTypes);
         entities.stream()

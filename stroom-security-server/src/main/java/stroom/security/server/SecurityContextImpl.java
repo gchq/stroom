@@ -17,10 +17,6 @@
 
 package stroom.security.server;
 
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.UnavailableSecurityManagerException;
-import org.apache.shiro.session.InvalidSessionException;
-import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -31,7 +27,7 @@ import org.springframework.transaction.TransactionException;
 import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
-import stroom.security.server.exception.AuthenticationServiceException;
+import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
@@ -87,7 +83,7 @@ class SecurityContextImpl implements SecurityContext {
             final String[] parts = token.split("\\|", -1);
             if (parts.length < 3) {
                 LOGGER.error("Unexpected token format '" + token + "'");
-                throw new AuthenticationServiceException("Unexpected token format '" + token + "'");
+                throw new AuthenticationException("Unexpected token format '" + token + "'");
             }
 
             final String type = parts[0];
@@ -99,7 +95,7 @@ class SecurityContextImpl implements SecurityContext {
                     userRef = INTERNAL_PROCESSING_USER;
                 } else {
                     LOGGER.error("Unexpected system user '" + name + "'");
-                    throw new AuthenticationServiceException("Unexpected system user '" + name + "'");
+                    throw new AuthenticationException("Unexpected system user '" + name + "'");
                 }
             } else if (USER.equals(type)) {
                 if (name.length() > 0) {
@@ -107,12 +103,12 @@ class SecurityContextImpl implements SecurityContext {
                     if (userRef == null) {
                         final String message = "Unable to push user '" + name + "' as user is unknown";
                         LOGGER.error(message);
-                        throw new AuthenticationServiceException(message);
+                        throw new AuthenticationException(message);
                     }
                 }
             } else {
                 LOGGER.error("Unexpected token type '" + type + "'");
-                throw new AuthenticationServiceException("Unexpected token type '" + type + "'");
+                throw new AuthenticationException("Unexpected token type '" + type + "'");
             }
         }
 
@@ -130,32 +126,8 @@ class SecurityContextImpl implements SecurityContext {
         return null;
     }
 
-    private Subject getSubject() {
-        try {
-            return SecurityUtils.getSubject();
-        } catch (final UnavailableSecurityManagerException e) {
-            // If the call is an internal one then there won't be a security manager.
-            LOGGER.debug(e.getMessage(), e);
-        }
-
-        return null;
-    }
-
     private UserRef getUserRef() {
-        UserRef userRef = CurrentUserState.currentUserRef();
-        try {
-            if (userRef == null) {
-                final Subject subject = getSubject();
-                if (subject != null && subject.isAuthenticated()) {
-                    userRef = (UserRef) subject.getPrincipal();
-                }
-            }
-        } catch (final InvalidSessionException e) {
-            // If the session has expired then the user will need to login again.
-            LOGGER.debug(e.getMessage(), e);
-        }
-
-        return userRef;
+        return CurrentUserState.currentUserRef();
     }
 
     @Override
@@ -204,7 +176,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // If there is no logged in user then throw an exception.
         if (userRef == null) {
-            throw new AuthenticationServiceException("No user is currently logged in");
+            throw new AuthenticationException("No user is currently logged in");
         }
 
         // If the user is the internal processing user then they automatically have permission.
@@ -268,7 +240,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // If there is no logged in user then throw an exception.
         if (userRef == null) {
-            throw new AuthenticationServiceException("No user is currently logged in");
+            throw new AuthenticationException("No user is currently logged in");
         }
 
         final DocRef docRef = new DocRef(documentType, documentId);

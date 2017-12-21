@@ -16,12 +16,12 @@
 
 package stroom.security.server;
 
-import org.apache.shiro.authc.AuthenticationException;
 import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.security.UserTokenUtil;
+import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.UserAndPermissions;
 import stroom.security.shared.UserRef;

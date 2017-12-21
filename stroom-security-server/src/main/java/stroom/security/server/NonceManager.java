@@ -23,8 +23,6 @@ import java.util.Map;
  */
 @Component
 public class NonceManager {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(NonceManager.class);
-
     /** Session ID to nonce */
     private Map<String, byte[]> nonces = new HashMap<>();
 

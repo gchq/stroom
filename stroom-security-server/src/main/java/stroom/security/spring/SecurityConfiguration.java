@@ -16,22 +16,16 @@
 
 package stroom.security.spring;
 
-import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
-import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import stroom.apiclients.AuthenticationServiceClients;
-import stroom.security.server.JWTAuthenticationFilter;
+import stroom.security.server.AuthenticationService;
 import stroom.security.server.JWTService;
 import stroom.security.server.NonceManager;
-
-import javax.annotation.Resource;
-import javax.servlet.Filter;
-import java.util.Map;
+import stroom.security.server.SecurityFilter;
 
 /**
  * The authentication providers are configured manually because the method
@@ -52,37 +46,20 @@ public class SecurityConfiguration {
     public static final String PROD_SECURITY = "PROD_SECURITY";
     public static final String MOCK_SECURITY = "MOCK_SECURITY";
 
-    @Resource
-    private SecurityManager securityManager;
-
-    @Bean(name = "jwtFilter")
-    public JWTAuthenticationFilter jwtAuthenticationFilter(
+    @Bean(name = "securityFilter")
+    public SecurityFilter securityFilter(
             @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}") final String authenticationServiceUrl,
             @Value("#{propertyConfigurer.getProperty('stroom.advertisedUrl')}") final String advertisedStroomUrl,
             JWTService jwtService,
             NonceManager nonceManager,
-            AuthenticationServiceClients authenticationServiceClients) {
-        return new JWTAuthenticationFilter(
+            AuthenticationServiceClients authenticationServiceClients,
+            AuthenticationService authenticationService) {
+        return new SecurityFilter(
                 authenticationServiceUrl,
                 advertisedStroomUrl,
                 jwtService,
                 nonceManager,
-                authenticationServiceClients);
-    }
-
-    @Bean(name = "shiroFilter")
-    public AbstractShiroFilter shiroFilter(final JWTAuthenticationFilter jwtAuthenticationFilter,
-                                           @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}") final String loginUrl) throws Exception {
-        final ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
-        shiroFilter.setSecurityManager(securityManager);
-        shiroFilter.setLoginUrl(loginUrl);
-        shiroFilter.setSuccessUrl("/stroom.jsp");
-
-        Map<String, Filter> filters = shiroFilter.getFilters();
-        filters.put("jwtFilter", jwtAuthenticationFilter);
-
-        shiroFilter.getFilterChainDefinitionMap().put("/**", "jwtFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/api/**", "jwtFilter");
-        return (AbstractShiroFilter) shiroFilter.getObject();
+                authenticationServiceClients,
+                authenticationService);
     }
 }

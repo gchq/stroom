@@ -16,15 +16,13 @@
 
 package stroom.security.server.exception;
 
-import org.apache.shiro.authc.AuthenticationException;
-
-public class AuthenticationServiceException extends AuthenticationException {
+public class AuthenticationException extends RuntimeException {
     private static final long serialVersionUID = 3847329065404536825L;
 
-    public AuthenticationServiceException() {
+    public AuthenticationException() {
     }
 
-    public AuthenticationServiceException(final String message) {
+    public AuthenticationException(final String message) {
         super(message);
     }
 }

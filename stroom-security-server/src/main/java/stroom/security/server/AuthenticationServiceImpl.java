@@ -16,30 +16,68 @@
 
 package stroom.security.server;
 
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 import stroom.logging.AuthenticationEventLog;
 import stroom.security.Insecure;
-import stroom.security.Secured;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.PermissionNames;
+import stroom.security.shared.UserRef;
 import stroom.servlet.HttpServletRequestHolder;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpSession;
 
 @Component
-@Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
 public class AuthenticationServiceImpl implements AuthenticationService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
+
+    private static final String ADMINISTRATORS = "Administrators";
+
+    private final UserService userService;
+    private final UserAppPermissionService userAppPermissionService;
+    private final SecurityContext securityContext;
     private final transient HttpServletRequestHolder httpServletRequestHolder;
     private final AuthenticationEventLog eventLog;
 
+    private volatile boolean doneCreateOrRefreshAdminRole = false;
 
     @Inject
     AuthenticationServiceImpl(
             final HttpServletRequestHolder httpServletRequestHolder,
-            final AuthenticationEventLog eventLog) {
+            final AuthenticationEventLog eventLog,
+            final UserService userService,
+            final UserAppPermissionService userAppPermissionService,
+            final SecurityContext securityContext) {
         this.httpServletRequestHolder = httpServletRequestHolder;
+        this.userService = userService;
+        this.userAppPermissionService = userAppPermissionService;
+        this.securityContext = securityContext;
         this.eventLog = eventLog;
+
+        createOrRefreshAdminUser();
+        createOrRefreshStroomServiceUser();
+    }
+
+    @Override
+    @Insecure
+    public boolean login(final AuthenticationToken authenticationToken) {
+        if (authenticationToken != null) {
+            final UserRef userRef = getUserRef(authenticationToken);
+            if (userRef != null) {
+                final HttpSession session = httpServletRequestHolder.get().getSession();
+                if (session != null) {
+                    new UserSession(session).setUserRef(userRef);
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     @Override
@@ -48,23 +86,138 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // We don't need to call the authentication service to log out - the login manager will
         // redirect the user's browser to the authentication service's logout endpoint.
 
-        String user = null;
-
-        // Remove the user authentication object
-        final Subject subject = SecurityUtils.getSubject();
-        if (subject != null && subject.getPrincipal() != null) {
-            user = subject.getPrincipal().toString();
-            subject.logout();
-        }
+        final HttpSession session = httpServletRequestHolder.get().getSession();
+        final UserRef userRef = new UserSession(session).getUserRef();
 
         // Invalidate the current user session
-        httpServletRequestHolder.get().getSession().invalidate();
+        session.invalidate();
+        // Clear any current user state.
+        CurrentUserState.clear();
 
-        if (user != null) {
+        if (userRef != null) {
             // Create an event for logout
-            eventLog.logoff(user);
+            eventLog.logoff(userRef.getName());
+            return userRef.getName();
         }
 
-        return user;
+        return null;
+    }
+
+
+    public UserRef getUserRef(final AuthenticationToken token) {
+        if (token == null || token.getUserId() == null || token.getUserId().trim().length() == 0) {
+            return null;
+        }
+
+        UserRef userRef = loadUserByUsername(token.getUserId());
+
+        if (userRef == null) {
+            // At this point the user has been authenticated using JWT.
+            // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
+            // some way of sensibly referencing the user and something to attach permissions to.
+            // We need to elevate the user because no one is currently logged in.
+            try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+                userRef = userService.createUser(token.getUserId());
+            }
+        }
+
+        return userRef;
+    }
+
+    private UserRef loadUserByUsername(final String username) throws DataAccessException {
+        UserRef userRef;
+
+        try {
+            if (!doneCreateOrRefreshAdminRole) {
+                doneCreateOrRefreshAdminRole = true;
+                createOrRefreshAdminUserGroup();
+            }
+
+            userRef = userService.getUserByName(username);
+            if (userRef == null) {
+                // The requested system user does not exist.
+                if (UserService.ADMIN_USER_NAME.equals(username)) {
+                    userRef = createOrRefreshAdminUser();
+                }
+            }
+
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
+        }
+
+        return userRef;
+    }
+
+    /**
+     * @return a new admin user
+     */
+    public UserRef createOrRefreshAdminUser() {
+        return createOrRefreshUser(UserService.ADMIN_USER_NAME);
+    }
+
+    /**
+     * @return a new stroom service user in the admin group
+     */
+    public UserRef createOrRefreshStroomServiceUser() {
+        return createOrRefreshUser(UserService.STROOM_SERVICE_USER_NAME);
+    }
+
+    private UserRef createOrRefreshUser(String name) {
+        UserRef userRef;
+
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            // Ensure all perms have been created
+            userAppPermissionService.init();
+
+            userRef = userService.getUserByName(name);
+            if (userRef == null) {
+                User user = new User();
+                user.setName(name);
+                user = userService.save(user);
+
+                final UserRef userGroup = createOrRefreshAdminUserGroup();
+                try {
+                    userService.addUserToGroup(UserRefFactory.create(user), userGroup);
+                } catch (final RuntimeException e) {
+                    // Expected.
+                    LOGGER.debug(e.getMessage());
+                }
+
+                userRef = UserRefFactory.create(user);
+            }
+        }
+        return userRef;
+    }
+
+    /**
+     * Enusure the admin user groups are created
+     *
+     * @return the full admin user group
+     */
+    private UserRef createOrRefreshAdminUserGroup() {
+        return createOrRefreshAdminUserGroup(ADMINISTRATORS);
+    }
+
+    private UserRef createOrRefreshAdminUserGroup(final String userGroupName) {
+        UserRef newUserGroup;
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
+            findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
+
+            final User userGroup = userService.find(findUserGroupCriteria).getFirst();
+            if (userGroup != null) {
+                return UserRefFactory.create(userGroup);
+            }
+
+            newUserGroup = userService.createUserGroup(userGroupName);
+            try {
+                userAppPermissionService.addPermission(newUserGroup, PermissionNames.ADMINISTRATOR);
+            } catch (final RuntimeException e) {
+                // Expected.
+                LOGGER.debug(e.getMessage());
+            }
+        }
+        return newUserGroup;
     }
 }

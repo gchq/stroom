@@ -1,7 +1,6 @@
 package stroom.security.server;
 
 import com.google.common.base.Strings;
-import org.apache.shiro.web.util.WebUtils;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
@@ -94,8 +93,8 @@ public class JWTService {
         try {
             if (checkTokenRevocation) {
                 LOGGER.info("Checking token revocation status in remote auth service...");
-                JWTAuthenticationToken jwtAuthenticationToken = checkToken(jws);
-                return jwtAuthenticationToken.getUserId() != null;
+                AuthenticationToken authenticationToken = checkToken(jws);
+                return authenticationToken.getUserId() != null;
             } else {
                 LOGGER.info("Verifying token...");
                 Optional<JwtClaims> jwtClaimsOptional = verifyToken(jws);
@@ -129,11 +128,11 @@ public class JWTService {
         return jws;
     }
 
-    public JWTAuthenticationToken checkToken(String token) {
+    public AuthenticationToken checkToken(String token) {
         try {
             LOGGER.info("Checking with the Authentication Service that a token is valid.");
             String usersEmail = authenticationServiceClients.newAuthenticationApi().verifyToken(token);
-            return new JWTAuthenticationToken(usersEmail, token);
+            return new AuthenticationToken(usersEmail, token);
         } catch (ApiException e) {
             throw new RuntimeException("Unable to verify token remotely!", e);
         }
@@ -155,7 +154,7 @@ public class JWTService {
     }
 
     public static Optional<String> getAuthHeader(ServletRequest request) {
-        HttpServletRequest httpServletRequest = WebUtils.toHttp(request);
+        HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         return (getAuthHeader(httpServletRequest));
     }
 
