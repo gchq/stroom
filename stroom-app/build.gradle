@@ -81,6 +81,7 @@ dependencies {
     compile libs.spring_core
     compile libs.spring_beans
     compile libs.spring_context
+    permitUnusedDeclared libs.spring_aspects
     compile libs.spring_aspects
 
     compile (libs.dropwizard_assets) {
