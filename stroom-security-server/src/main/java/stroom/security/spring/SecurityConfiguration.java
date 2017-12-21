@@ -18,7 +18,6 @@ package stroom.security.spring;
 
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
-import org.apache.shiro.web.filter.authc.AnonymousFilter;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -81,10 +80,7 @@ public class SecurityConfiguration {
 
         Map<String, Filter> filters = shiroFilter.getFilters();
         filters.put("jwtFilter", jwtAuthenticationFilter);
-        filters.put("anonymousFilter", new AnonymousFilter());
 
-        // Allow anonymous access to the getToken resource.
-        shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/v*/getToken", "anonymousFilter");
         shiroFilter.getFilterChainDefinitionMap().put("/**", "jwtFilter");
         shiroFilter.getFilterChainDefinitionMap().put("/api/**", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();

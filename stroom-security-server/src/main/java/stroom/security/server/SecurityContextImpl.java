@@ -62,7 +62,6 @@ class SecurityContextImpl implements SecurityContext {
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
     private final DocumentTypePermissions documentTypePermissions;
-    private final JWTService jwtService;
 
     @Inject
     SecurityContextImpl(
@@ -71,15 +70,13 @@ class SecurityContextImpl implements SecurityContext {
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserService userService,
             final DocumentPermissionService documentPermissionService,
-            final DocumentTypePermissions documentTypePermissions,
-            final JWTService jwtService) {
+            final DocumentTypePermissions documentTypePermissions) {
         this.documentPermissionsCache = documentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userService = userService;
         this.documentPermissionService = documentPermissionService;
         this.documentTypePermissions = documentTypePermissions;
-        this.jwtService = jwtService;
     }
 
     @Override
