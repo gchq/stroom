@@ -53,14 +53,14 @@ public class AuthenticationServiceClients {
     public AuthenticationServiceClients(
         @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}")
         final String ourApiToken,
-        @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}")
+        @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}")
         final String authServiceUrl) {
         if(Strings.isNullOrEmpty(ourApiToken)){
             throw new RuntimeException("Missing API key! Please configure using 'stroom.security.apiToken'");
         }
 
         if(Strings.isNullOrEmpty(authServiceUrl)){
-            throw new RuntimeException("Missing auth service URL! Please configure using 'stroom.auth.service.url'");
+            throw new RuntimeException("Missing auth service URL! Please configure using 'stroom.auth.services.url'");
         }
 
         authServiceClient = new ApiClient();

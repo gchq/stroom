@@ -45,8 +45,11 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
         addProperty(props, ClientProperties.STATISTIC_ENGINES);
         addProperty(props, ClientProperties.LABEL_COLOURS);
         addProperty(props, ClientProperties.HELP_URL);
-        addProperty(props, ClientProperties.AUTH_SERVICE_URL);
-        addProperty(props, ClientProperties.AUTH_UI_URL);
+        addProperty(props, ClientProperties.AUTHENTICATION_SERVICE_URL);
+        addProperty(props, ClientProperties.USERS_UI_URL);
+        addProperty(props, ClientProperties.API_KEYS_UI_URL);
+        addProperty(props, ClientProperties.CHANGE_PASSWORD_UI_URL);
+
 
         final String urlList = StroomProperties.getProperty(ClientProperties.URL_LIST);
         props.put(ClientProperties.URL_LIST, urlList);

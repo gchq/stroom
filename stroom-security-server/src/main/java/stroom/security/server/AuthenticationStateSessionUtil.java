@@ -1,49 +1,15 @@
 package stroom.security.server;
 
-import stroom.security.shared.UserRef;
-
 import javax.servlet.http.HttpSession;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class UserSession {
-    private static final String USER_SESSION = "USER_SESSION";
+public final class AuthenticationStateSessionUtil {
+    private static final String SESSION_AUTHENTICATION_STATE_MAP = "SESSION_AUTHENTICATION_STATE_MAP";
 
-    private volatile UserRef userRef;
-    private final Map<String, State> stateMap = new ConcurrentHashMap<>();
-
-    private UserSession() {
-    }
-
-    public static UserSession getOrCreate(final HttpSession session) {
-        UserSession userSession = get(session);
-        if (userSession == null) {
-            synchronized (USER_SESSION) {
-                userSession = get(session);
-                if (userSession == null) {
-                    userSession = new UserSession();
-                    session.setAttribute(USER_SESSION, userSession);
-                }
-            }
-        }
-        return userSession;
-    }
-
-    public static UserSession get(final HttpSession session) {
-        if (session == null) {
-            return null;
-        }
-        return (UserSession) session.getAttribute(USER_SESSION);
-    }
-
-    public UserRef getUserRef() {
-        return userRef;
-    }
-
-    public void setUserRef(final UserRef userRef) {
-        this.userRef = userRef;
+    private AuthenticationStateSessionUtil() {
     }
 
     /**
@@ -54,31 +20,48 @@ public final class UserSession {
      * that Stroom makes to the Authentication Service. When Stroom is subsequently called the state is provided in the
      * URL to allow verification that the return request was expected.
      */
-    public State createState(final String url) {
+    @SuppressWarnings("unchecked")
+    public static AuthenticationState create(final HttpSession session, final String url) {
+        Map<String, AuthenticationState> map = (Map) session.getAttribute(SESSION_AUTHENTICATION_STATE_MAP);
+        if (map == null) {
+            map = new ConcurrentHashMap<>();
+            session.setAttribute(SESSION_AUTHENTICATION_STATE_MAP, map);
+        }
+
         final String stateId = createRandomString(8);
         final String nonce = createRandomString(20);
-        final State state = new State(stateId, url, nonce);
-        stateMap.put(stateId, state);
+        final AuthenticationState state = new AuthenticationState(stateId, url, nonce);
+        map.put(stateId, state);
         return state;
     }
 
-    public State getState(final String stateId) {
-        return stateMap.remove(stateId);
+    @SuppressWarnings("unchecked")
+    public static AuthenticationState remove(final HttpSession session, final String stateId) {
+        if (session == null) {
+            return null;
+        }
+
+        final Map<String, AuthenticationState> map = (Map) session.getAttribute(SESSION_AUTHENTICATION_STATE_MAP);
+        if (map == null) {
+            return null;
+        }
+
+        return map.remove(stateId);
     }
 
-    private String createRandomString(final int length) {
+    private static String createRandomString(final int length) {
         final SecureRandom secureRandom = new SecureRandom();
         final byte[] bytes = new byte[length];
         secureRandom.nextBytes(bytes);
         return Base64.getUrlEncoder().encodeToString(bytes);
     }
 
-    public static class State {
+    public static class AuthenticationState {
         private final String id;
         private final String url;
         private final String nonce;
 
-        public State(final String id, final String url, final String nonce) {
+        AuthenticationState(final String id, final String url, final String nonce) {
             this.id = id;
             this.url = url;
             this.nonce = nonce;

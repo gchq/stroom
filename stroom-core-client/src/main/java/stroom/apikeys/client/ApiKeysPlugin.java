@@ -45,7 +45,7 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                 .onSuccess(result -> {
                     final IconMenuItem apiKeysMenuItem;
                     final SvgPreset icon = SvgPresets.PASSWORD;
-                    final String apiKeysUi = result.get(ClientProperties.AUTH_UI_URL) + "/tokens";
+                    final String apiKeysUi = result.get(ClientProperties.API_KEYS_UI_URL);
                     if (apiKeysUi != null && apiKeysUi.trim().length() > 0) {
                         apiKeysMenuItem = new IconMenuItem(5, icon, null, "API Keys", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()

@@ -45,20 +45,20 @@ public class SessionResource {
     @ApiOperation(
             value = "Logs the specified session out of Stroom",
             response = Response.class)
-    public Response logout(@PathParam("sessionId") String sessionId) {
-        LOGGER.info("Logging out session {}", sessionId);
-        final HttpSession session = SessionListListener.getSession(sessionId);
-        final UserSession userSession = UserSession.get(session);
-        if (userSession != null) {
-            final UserRef userRef = userSession.getUserRef();
+    public Response logout(@PathParam("sessionId") String authSessionId) {
+        LOGGER.info("Logging out session {}", authSessionId);
 
+        // TODO : We need to lookup the auth session in our user sessions
+
+        final HttpSession session = SessionListListener.getSession(authSessionId);
+        final UserRef userRef = UserRefSessionUtil.get(session);
+        if (session != null) {
             // Invalidate the current user session
             session.invalidate();
-
-            if (userRef != null) {
-                // Create an event for logout
-                eventLog.logoff(userRef.getName());
-            }
+        }
+        if (userRef != null) {
+            // Create an event for logout
+            eventLog.logoff(userRef.getName());
         }
 
         return Response.status(Response.Status.OK).entity("Logout successful").build();

@@ -34,8 +34,8 @@ stroom.security.apiToken=eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MzgyMDQyMDgsInN1YiI6Im
 #stroom.advertisedUrl=http://localhost:8080
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true
-stroom.auth.service.url=http://localhost:8099
-stroom.auth.ui.url=http://localhost:5000
+stroom.auth.services.url=http://auth-service:8099
+stroom.auth.authentication.service.url=http://auth-service:8099/authentication/v1
 
 stroom.users.ui.url=http://localhost:5000/userSearch
 stroom.apikeys.ui.url=http://localhost:5000/tokens

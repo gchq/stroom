@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.apiclients.AuthenticationServiceClients;
 import stroom.auth.service.ApiException;
-import stroom.security.server.UserSession.State;
+import stroom.security.server.AuthenticationStateSessionUtil.AuthenticationState;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
 import stroom.util.io.StreamUtil;
@@ -121,32 +121,43 @@ public class SecurityFilter implements Filter {
             final String servletPath = request.getServletPath();
             final boolean isApiRequest = servletPath.contains("/api");
 
-            UserRef userRef;
             if (isApiRequest) {
                 // Authenticate requests to the API.
-                userRef = loginAPI(request, response);
+                final UserRef userRef = loginAPI(request, response);
+                continueAsUser(request, response, chain, userRef);
 
             } else {
-                // Try and get an existing user ref from the session.
-                final UserSession userSession = getUserSession(request);
-                userRef = userSession.getUserRef();
+                // Authenticate requests from the UI.
 
-                // If the session doesn't have a user ref then attempt login.
-                if (userRef == null) {
-                    // Authenticate requests from the UI.
-                    loginUI(request, response, userSession);
+                // Try and get an existing user ref from the session.
+                final UserRef userRef = UserRefSessionUtil.get(request.getSession(false));
+                if (userRef != null) {
+                    continueAsUser(request, response, chain, userRef);
+
+                } else {
+                    // If the session doesn't have a user ref then attempt login.
+                    final boolean loggedIn = loginUI(request, response);
+
+                    // If we're not logged in we need to start an AuthenticationRequest flow.
+                    if (!loggedIn) {
+                        // We were unable to login so we're going to redirect with an AuthenticationRequest.
+                        redirectToAuthService(request, response);
+                    }
                 }
             }
+        }
+    }
 
-            if (userRef != null) {
-                // If the session already has a reference to a user then continue the chain as that user.
-                try {
-                    CurrentUserState.pushUserRef(userRef);
+    private void continueAsUser(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain, final UserRef userRef)
+            throws IOException, ServletException {
+        if (userRef != null) {
+            // If the session already has a reference to a user then continue the chain as that user.
+            try {
+                CurrentUserState.pushUserRef(userRef);
 
-                    chain.doFilter(request, response);
-                } finally {
-                    CurrentUserState.popUserRef();
-                }
+                chain.doFilter(request, response);
+            } finally {
+                CurrentUserState.popUserRef();
             }
         }
     }
@@ -155,16 +166,7 @@ public class SecurityFilter implements Filter {
         return pattern != null && pattern.matcher(uri).matches();
     }
 
-    private UserSession getUserSession(HttpServletRequest request) {
-        final HttpSession session = request.getSession(true);
-        if (session == null) {
-            throw new AuthenticationException("NULL SESSION");
-        }
-
-        return UserSession.getOrCreate(session);
-    }
-
-    private void loginUI(final HttpServletRequest request, final HttpServletResponse response, final UserSession userSession) throws IOException {
+    private boolean loginUI(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         boolean loggedIn = false;
 
         // If we have a state id then this should be a return from the auth service.
@@ -173,7 +175,7 @@ public class SecurityFilter implements Filter {
             LOGGER.debug("We have the following state: {{}}", stateId);
 
             // Check the state is one we requested.
-            final UserSession.State state = userSession.getState(stateId);
+            final AuthenticationState state = AuthenticationStateSessionUtil.remove(request.getSession(false), stateId);
             if (state == null) {
                 LOGGER.warn("Unexpected state: " + stateId);
 
@@ -184,7 +186,12 @@ public class SecurityFilter implements Filter {
                     LOGGER.debug("We have the following access code: {{}}", accessCode);
                     final AuthenticationToken token = createUIToken(request, state, accessCode);
                     final UserRef userRef = authenticationService.getUserRef(token);
-                    loggedIn = userRef != null;
+
+                    if (userRef != null) {
+                        // Set the user ref in the session.
+                        UserRefSessionUtil.set(request.getSession(true), userRef);
+                        loggedIn = true;
+                    }
 
                     // If we manage to login then redirect to the original URL held in the state.
                     if (loggedIn) {
@@ -195,22 +202,24 @@ public class SecurityFilter implements Filter {
             }
         }
 
-        // If we're not logged in we need to start an AuthenticationRequest flow.
-        if (!loggedIn) {
-            // We have a a new request so we're going to redirect with an AuthenticationRequest.
-            redirectToAuthService(request, response, userSession);
-        }
+        return loggedIn;
     }
 
-    private void redirectToAuthService(final HttpServletRequest request, final HttpServletResponse response, final UserSession userSession) throws IOException {
+    private void redirectToAuthService(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+        // Invalidate the current session.
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
         // We have a a new request so we're going to redirect with an AuthenticationRequest.
-        final String authenticationRequestBaseUrl = authenticationServiceUrl + "/authentication/v1/authenticate";
+        final String authenticationRequestBaseUrl = authenticationServiceUrl + "/authenticate";
 
         // Get the redirect URL for the auth service from the current request.
         String url = request.getRequestURL().toString();
 
-        // Create a state for this user session.
-        final State state = userSession.createState(url);
+        // Create a state for this authentication request.
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request.getSession(true), url);
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         if (advertisedStroomUrl != null && advertisedStroomUrl.trim().length() > 0) {
@@ -233,9 +242,9 @@ public class SecurityFilter implements Filter {
                 "&redirect_url=" +
                 url +
                 "&state=" +
-                state.getId() +
+                URLEncoder.encode(state.getId(), StreamUtil.DEFAULT_CHARSET_NAME) +
                 "&nonce=" +
-                state.getNonce();
+                URLEncoder.encode(state.getNonce(), StreamUtil.DEFAULT_CHARSET_NAME);
 
         final String authenticationRequestUrl = authenticationRequestBaseUrl + authenticationRequestParams;
         LOGGER.info("Redirecting with an AuthenticationRequest to: {}", authenticationRequestUrl);
@@ -247,7 +256,7 @@ public class SecurityFilter implements Filter {
      * This method must create the token.
      * It does this by enacting the OpenId exchange of accessCode for idToken.
      */
-    private AuthenticationToken createUIToken(final HttpServletRequest request, final UserSession.State state, final String accessCode) {
+    private AuthenticationToken createUIToken(final HttpServletRequest request, final AuthenticationState state, final String accessCode) {
         AuthenticationToken token = null;
 
         try {

@@ -48,7 +48,7 @@ public class ChangePasswordPlugin extends Plugin {
                 .onSuccess(result -> {
                     final IconMenuItem changePasswordMenuItem;
                     final SvgPreset icon = SvgPresets.PASSWORD;
-                    final String changePasswordUiUrl = result.get(ClientProperties.AUTH_UI_URL) + "/changepassword";
+                    final String changePasswordUiUrl = result.get(ClientProperties.CHANGE_PASSWORD_UI_URL);
                     if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
                         changePasswordMenuItem = new IconMenuItem(5, icon, null, "Change password", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
@@ -71,7 +71,5 @@ public class ChangePasswordPlugin extends Plugin {
                     event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);
                 })
                 .onFailure(caught -> AlertEvent.fireError(ChangePasswordPlugin.this, caught.getMessage(), null));
-
-
     }
 }

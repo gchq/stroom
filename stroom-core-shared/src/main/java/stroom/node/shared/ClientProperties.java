@@ -49,8 +49,13 @@ public class ClientProperties implements SharedObject {
     public static final String URL_ANNOTATIONS_QUERY_UI = URL_BASE + "annotations-query-ui";
     public static final String URL_ANNOTATIONS_SERVICE = URL_BASE + "annotations-service";
     public static final String URL_DASHBOARD = URL_BASE + "annotations-dashboard";
-    public static final String AUTH_SERVICE_URL = "stroom.auth.service.url";
-    public static final String AUTH_UI_URL = "stroom.auth.ui.url";
+    public static final String AUTHENTICATION_SERVICE_URL = "stroom.auth.authentication.service.url";
+
+    public static final String USERS_UI_URL = "stroom.users.ui.url";
+    public static final String API_KEYS_UI_URL = "stroom.apikeys.ui.url";
+    public static final String CHANGE_PASSWORD_UI_URL = "stroom.changepassword.url";
+
+
 
     private static final long serialVersionUID = 8717922468620533698L;
     private HashMap<String, String> map;

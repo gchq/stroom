@@ -16,8 +16,10 @@
 
 package stroom.security.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -66,19 +68,15 @@ public class LoginManager implements HasHandlers {
     }
 
     private void logout() {
-        // Clear everything we know about the current user.
-        currentUser.clear();
         // Perform logout on the server
         dispatcher.exec(new LogoutAction(), null)
                 .onSuccess(r -> {
-//                    // Reload the page.
-//                    Window.Location.reload();
-
+                    // Redirect the page to logout.
                     clientPropertyCache.get()
                             .onSuccess(result -> {
-                                final String authServiceUrl = result.get(ClientProperties.AUTH_SERVICE_URL);
+                                final String authServiceUrl = result.get(ClientProperties.AUTHENTICATION_SERVICE_URL);
                                 // Send the user's browser to the remote Authentication Service's logout endpoint.
-                                locationManager.replace(authServiceUrl + "/authentication/v1/logout");
+                                Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + URL.encode(GWT.getHostPageBaseURL()));
                             });
                 })
                 .onFailure(t -> AlertEvent.fireErrorFromException(LoginManager.this, t, null));

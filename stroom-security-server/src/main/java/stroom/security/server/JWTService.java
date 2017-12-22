@@ -38,7 +38,7 @@ public class JWTService {
 
     @Inject
     public JWTService(
-            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}") final String authenticationServiceUrl,
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authenticationServiceUrl,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String authJwtIssuer,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}") final boolean enableTokenRevocationCheck,
             final AuthenticationServiceClients authenticationServiceClients) {
