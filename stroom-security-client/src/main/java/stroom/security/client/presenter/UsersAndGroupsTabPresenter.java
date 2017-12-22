@@ -44,6 +44,7 @@ public class UsersAndGroupsTabPresenter extends
     private final Provider<GroupEditPresenter> groupEditPresenterProvider;
     private final ManageNewEntityPresenter newPresenter;
     private final ClientDispatchAsync dispatcher;
+    private final ButtonView newButton;
     private final ButtonView openButton;
     private final ButtonView deleteButton;
     private final FindUserCriteria criteria = new FindUserCriteria();
@@ -62,6 +63,7 @@ public class UsersAndGroupsTabPresenter extends
 
         setInSlot(LIST, listPresenter);
 
+        newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
         openButton = listPresenter.addButton(SvgPresets.OPEN);
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
@@ -70,6 +72,10 @@ public class UsersAndGroupsTabPresenter extends
         if (!updatePerm) {
             deleteButton.setVisible(false);
         }
+        if (!updatePerm) {
+            newButton.setVisible(false);
+        }
+
     }
 
     @Override
@@ -78,6 +84,11 @@ public class UsersAndGroupsTabPresenter extends
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onOpen();
+            }
+        }));
+        registerHandler(newButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                onNew();
             }
         }));
         registerHandler(openButton.addClickHandler(event -> {
@@ -97,6 +108,8 @@ public class UsersAndGroupsTabPresenter extends
     public void setGroup(final boolean group) {
         criteria.setGroup(group);
         listPresenter.setup(criteria);
+        newButton.setVisible(group);
+        newButton.setEnabled(group);
     }
 
     private void enableButtons() {
