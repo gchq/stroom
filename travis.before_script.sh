@@ -31,11 +31,11 @@ else
 
     echo "Clone our stroom-resources repo"
     git clone https://github.com/gchq/stroom-resources.git
-    pushd stroom-resources/dev-resources/compose
+    pushd stroom-resources/bin
     git checkout $STROOM_RESOURCES_BRANCH
 
     echo "Start all the services we need to run the integration tests in stroom"
-    docker-compose -f kafka-stroomDb-stroomStatsDb-zk.yml up -d
+    nohup ./bounceIt.sh up -e -y --build kafka stroom-db stroom-stats-db &
     popd
     popd
 
