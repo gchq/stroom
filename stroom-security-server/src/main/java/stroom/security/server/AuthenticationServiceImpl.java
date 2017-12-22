@@ -64,7 +64,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final SecurityContext securityContext;
-    private AuthenticationServiceClients authenticationServiceClients;
 
     @Inject
     AuthenticationServiceImpl(
@@ -74,8 +73,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             final Provider<AuthenticationServiceMailSender> mailSenderProvider,
             final UserService userService,
             final PasswordEncoder passwordEncoder,
-            final SecurityContext securityContext,
-            final AuthenticationServiceClients authenticationServiceClients) {
+            final SecurityContext securityContext) {
         this.stroomPropertyService = stroomPropertyService;
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.eventLog = eventLog;
@@ -83,7 +81,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.securityContext = securityContext;
-        this.authenticationServiceClients = authenticationServiceClients;
     }
 
     private void checkLoginAllowed(final UserRef userRef) {
