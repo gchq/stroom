@@ -54,6 +54,7 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                                     .target(HyperlinkTarget.STROOM_TAB)
                                     .build();
                             final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
+                            iFramePresenter.setIcon(icon);
                             iFramePresenter.setHyperlink(hyperlink);
                             contentManager.open(
                                     callback -> ConfirmEvent.fire(
