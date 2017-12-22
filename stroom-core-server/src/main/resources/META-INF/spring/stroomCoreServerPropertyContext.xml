@@ -859,7 +859,7 @@
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.advertisedUrl"/>
-            <property name="value" value="localhost:8080"/>
+            <property name="value" value=""/>
             <property name="description"
                       value="The URL of Stroom as provided to the browser" />
             <property name="editable" value="true"/>

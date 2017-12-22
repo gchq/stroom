@@ -3,8 +3,12 @@ package stroom.security.server;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.stereotype.Component;
+import stroom.logging.AuthenticationEventLog;
+import stroom.security.shared.UserRef;
+import stroom.servlet.SessionListListener;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpSession;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -19,18 +23,19 @@ import javax.ws.rs.core.Response;
  * happen.
  */
 @Api(
-    value = "session - /v1",
-    description = "Stroom Session API")
+        value = "session - /v1",
+        description = "Stroom Session API")
 @Path("/session/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Component
 public class SessionResource {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(SessionResource.class);
-    private AuthenticationService authenticationService;
+
+    private final AuthenticationEventLog eventLog;
 
     @Inject
-    public SessionResource(AuthenticationService authenticationService){
-        this.authenticationService = authenticationService;
+    SessionResource(final AuthenticationEventLog eventLog) {
+        this.eventLog = eventLog;
     }
 
     @GET
@@ -40,9 +45,22 @@ public class SessionResource {
     @ApiOperation(
             value = "Logs the specified session out of Stroom",
             response = Response.class)
-    public Response logout(@PathParam("sessionId") String sessionId){
+    public Response logout(@PathParam("sessionId") String sessionId) {
         LOGGER.info("Logging out session {}", sessionId);
-        authenticationService.logout();
+        final HttpSession session = SessionListListener.getSession(sessionId);
+        final UserSession userSession = UserSession.get(session);
+        if (userSession != null) {
+            final UserRef userRef = userSession.getUserRef();
+
+            // Invalidate the current user session
+            session.invalidate();
+
+            if (userRef != null) {
+                // Create an event for logout
+                eventLog.logoff(userRef.getName());
+            }
+        }
+
         return Response.status(Response.Status.OK).entity("Logout successful").build();
     }
 }

@@ -16,13 +16,8 @@
 
 package stroom.security.server;
 
-public interface AuthenticationService {
-    boolean login(AuthenticationToken authenticationToken);
+import stroom.security.shared.UserRef;
 
-    /**
-     * Logs the current user out.
-     *
-     * @return The user name of the user that was logged out.
-     */
-    String logout() throws RuntimeException;
+public interface AuthenticationService {
+    UserRef getUserRef(AuthenticationToken token);
 }

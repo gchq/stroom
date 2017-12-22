@@ -23,10 +23,6 @@ public final class CurrentUserState {
         }
     }
 
-    static void clear() {
-        THREAD_LOCAL.get().clear();
-    }
-
     static UserRef popUserRef() {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.pop();

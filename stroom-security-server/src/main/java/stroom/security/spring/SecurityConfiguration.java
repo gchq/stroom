@@ -24,7 +24,6 @@ import org.springframework.context.annotation.FilterType;
 import stroom.apiclients.AuthenticationServiceClients;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.JWTService;
-import stroom.security.server.NonceManager;
 import stroom.security.server.SecurityFilter;
 
 /**
@@ -51,14 +50,12 @@ public class SecurityConfiguration {
             @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}") final String authenticationServiceUrl,
             @Value("#{propertyConfigurer.getProperty('stroom.advertisedUrl')}") final String advertisedStroomUrl,
             JWTService jwtService,
-            NonceManager nonceManager,
             AuthenticationServiceClients authenticationServiceClients,
             AuthenticationService authenticationService) {
         return new SecurityFilter(
                 authenticationServiceUrl,
                 advertisedStroomUrl,
                 jwtService,
-                nonceManager,
                 authenticationServiceClients,
                 authenticationService);
     }

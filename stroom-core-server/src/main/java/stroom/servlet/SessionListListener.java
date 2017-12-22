@@ -65,6 +65,10 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
         }
     }
 
+    public static HttpSession getSession(final String sessionId) {
+        return sessionMap.get(sessionId);
+    }
+
     private Logger getLogger() {
         // Lazy load the logger.
         if (logger == null) {

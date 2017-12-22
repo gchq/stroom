@@ -20,17 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
-import stroom.logging.AuthenticationEventLog;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
-import stroom.servlet.HttpServletRequestHolder;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpSession;
 
 @Component
 public class AuthenticationServiceImpl implements AuthenticationService {
@@ -41,23 +38,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;
     private final SecurityContext securityContext;
-    private final transient HttpServletRequestHolder httpServletRequestHolder;
-    private final AuthenticationEventLog eventLog;
 
     private volatile boolean doneCreateOrRefreshAdminRole = false;
 
     @Inject
     AuthenticationServiceImpl(
-            final HttpServletRequestHolder httpServletRequestHolder,
-            final AuthenticationEventLog eventLog,
             final UserService userService,
             final UserAppPermissionService userAppPermissionService,
             final SecurityContext securityContext) {
-        this.httpServletRequestHolder = httpServletRequestHolder;
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
         this.securityContext = securityContext;
-        this.eventLog = eventLog;
 
         createOrRefreshAdminUser();
         createOrRefreshStroomServiceUser();
@@ -65,45 +56,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Insecure
-    public boolean login(final AuthenticationToken authenticationToken) {
-        if (authenticationToken != null) {
-            final UserRef userRef = getUserRef(authenticationToken);
-            if (userRef != null) {
-                final HttpSession session = httpServletRequestHolder.get().getSession();
-                if (session != null) {
-                    new UserSession(session).setUserRef(userRef);
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    @Insecure
-    public String logout() {
-        // We don't need to call the authentication service to log out - the login manager will
-        // redirect the user's browser to the authentication service's logout endpoint.
-
-        final HttpSession session = httpServletRequestHolder.get().getSession();
-        final UserRef userRef = new UserSession(session).getUserRef();
-
-        // Invalidate the current user session
-        session.invalidate();
-        // Clear any current user state.
-        CurrentUserState.clear();
-
-        if (userRef != null) {
-            // Create an event for logout
-            eventLog.logoff(userRef.getName());
-            return userRef.getName();
-        }
-
-        return null;
-    }
-
-
     public UserRef getUserRef(final AuthenticationToken token) {
         if (token == null || token.getUserId() == null || token.getUserId().trim().length() == 0) {
             return null;
