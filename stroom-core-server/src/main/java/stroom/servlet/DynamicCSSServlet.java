@@ -30,11 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 
-/**
- * <p>
- * SERVLET that reports status of Stroom for scripting purposes.
- * </p>
- */
 @Component
 public class DynamicCSSServlet extends HttpServlet {
     public static final String THEME_BACKGROUND_ATTACHMENT = "@THEME_BACKGROUND_ATTACHMENT@";
