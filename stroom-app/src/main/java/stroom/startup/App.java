@@ -16,7 +16,6 @@
 
 package stroom.startup;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -66,6 +65,7 @@ import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
+import stroom.servlet.CacheControlFilter;
 import stroom.servlet.DebugServlet;
 import stroom.servlet.DynamicCSSServlet;
 import stroom.servlet.EchoServlet;
@@ -89,6 +89,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import java.util.Collections;
 import java.util.EnumSet;
 
 public class App extends Application<Config> {
@@ -174,7 +175,8 @@ public class App extends Application<Config> {
 
         // Add filters
         SpringUtil.addFilter(servletContextHandler, applicationContext, HttpServletRequestFilter.class, "/*");
-        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter", ImmutableMap.<String, String>builder().put("rejectUri", "/").build());
+        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter", Collections.singletonMap("rejectUri", "/"));
+        FilterUtil.addFilter(servletContextHandler, CacheControlFilter.class, "cacheControlFilter", Collections.singletonMap("seconds", "600"));
         SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*");
 
         // Add servlets
