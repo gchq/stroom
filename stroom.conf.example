@@ -60,7 +60,7 @@ stroom.url.list=annotations-query-ui,elastic-query-ui,kibana-ui,dashboard
 stroom.url.annotations-query-ui=http://localhost:5001
 stroom.url.elastic-query-ui=http://localhost:5002
 stroom.url.kibana-ui=http://localhost:5601
-stroom.url.dashboard=http://localhost:8080/dashboard.jsp
+stroom.url.dashboard=http://localhost:8080/dashboard.html
 
 # Service URLs
 stroom.url.annotations-service=http://localhost:8199/annotations/v1

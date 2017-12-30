@@ -113,7 +113,7 @@ public class App extends Application<Config> {
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
-        bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
+        bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.html", "ui"));
     }
 
     @Override
@@ -136,7 +136,7 @@ public class App extends Application<Config> {
             startProxy(configuration, environment);
         } else {
             // Adding asset bundles this way is not normal but it is done so that proxy can serve it's own root page for now.
-            new AssetsBundle("/ui", "/", "stroom.jsp", "ui").run(environment);
+            new AssetsBundle("/ui", "/", "stroom.html", "ui").run(environment);
             startApp(configuration, environment);
         }
     }
