@@ -30,7 +30,6 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
     @Override
     public ClientProperties getProperties() {
         final ClientProperties props = new ClientProperties();
-        addProperty(props, ClientProperties.HTML_TITLE);
         addProperty(props, ClientProperties.LOGIN_HTML);
         addProperty(props, ClientProperties.WELCOME_HTML);
         addProperty(props, ClientProperties.ABOUT_HTML);
