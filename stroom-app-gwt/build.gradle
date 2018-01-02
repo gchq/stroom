@@ -59,7 +59,6 @@ gwtSourceDirs.addAll(sourceSets.main.compileClasspath)
     //println dir
 //}
 
-//task gwtCompile(dependsOn: [classes, addGwtDeps], type: JavaExec) {
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     def module = 'stroom.app.App'
 
@@ -87,7 +86,6 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
     }
 
     main = gwtCompilerProps.mainClass
-
 
     classpath {
         gwtSourceDirs
@@ -152,8 +150,8 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = '1G'//gwtCompilerProps.minHeap
-    maxHeapSize = '4G'//gwtCompilerProps.maxHeap
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
 }
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
