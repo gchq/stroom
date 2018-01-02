@@ -12,18 +12,19 @@ import stroom.node.shared.ClientProperties;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 
 public class ElasticIndexExternalPresenter
-        extends DocumentEditPresenter<IFramePresenter.IFrameView, ElasticIndex>
+        extends DocumentEditPresenter<IFrameContentView, ElasticIndex>
         implements DocumentTabData {
 
-    private final IFramePresenter settingsPresenter;
+    private final IFrameContentPresenter settingsPresenter;
     private String elasticQueryUiUrl;
 
     @Inject
     public ElasticIndexExternalPresenter(final EventBus eventBus,
-                                         final IFramePresenter iFramePresenter,
+                                         final IFrameContentPresenter iFramePresenter,
                                          final ClientSecurityContext securityContext,
                                          final ClientPropertyCache clientPropertyCache) {
         super(eventBus, iFramePresenter.getView(), securityContext);
@@ -46,6 +47,12 @@ public class ElasticIndexExternalPresenter
     @Override
     protected void onWrite(final ElasticIndex elasticIndex) {
 
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        settingsPresenter.close();
     }
 
     @Override

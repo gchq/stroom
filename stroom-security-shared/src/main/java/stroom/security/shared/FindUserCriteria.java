@@ -30,10 +30,6 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
      * Order by types.
      */
     private static final long serialVersionUID = -6584216681046824635L;
-    /**
-     * Find by status
-     */
-    private UserStatus userStatus;
 
     /**
      * Find by login valid period
@@ -66,14 +62,6 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
 
     public FindUserCriteria(final UserRef relatedUser) {
         this.relatedUser = relatedUser;
-    }
-
-    public UserStatus getUserStatus() {
-        return userStatus;
-    }
-
-    public void setUserStatus(final UserStatus userStatus) {
-        this.userStatus = userStatus;
     }
 
     public Period getLastLoginPeriod() {

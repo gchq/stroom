@@ -21,30 +21,20 @@ import stroom.changepassword.client.ChangePasswordPlugin;
 import stroom.core.client.gin.PluginModule;
 import stroom.entity.client.presenter.ManageEntityPresenter.ManageEntityView;
 import stroom.entity.client.view.ManageEntityViewImpl;
-import stroom.login.client.LoginManager;
-import stroom.login.client.presenter.LoginPresenter;
-import stroom.login.client.presenter.LogoutPlugin;
-import stroom.login.client.view.LoginViewImpl;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.client.CurrentUser;
+import stroom.security.client.LoginManager;
+import stroom.security.client.LogoutPlugin;
 import stroom.security.client.ManageUserPlugin;
-import stroom.security.client.presenter.ChangePasswordPresenter;
-import stroom.security.client.presenter.ChangePasswordPresenter.ChangePasswordProxy;
-import stroom.security.client.presenter.ChangePasswordPresenter.ChangePasswordView;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.client.presenter.DocumentPermissionsTabPresenter;
 import stroom.security.client.presenter.FolderPermissionsTabPresenter;
 import stroom.security.client.presenter.GroupEditPresenter;
-import stroom.security.client.presenter.ResetPasswordPresenter;
-import stroom.security.client.presenter.ResetPasswordPresenter.ResetPasswordProxy;
-import stroom.security.client.presenter.ResetPasswordPresenter.ResetPasswordView;
 import stroom.security.client.presenter.UserEditPresenter;
 import stroom.security.client.presenter.UserListView;
-import stroom.security.client.view.ChangePasswordViewImpl;
 import stroom.security.client.view.DocumentPermissionsTabViewImpl;
 import stroom.security.client.view.DocumentPermissionsViewImpl;
 import stroom.security.client.view.FolderPermissionsTabViewImpl;
-import stroom.security.client.view.ResetPasswordViewImpl;
 import stroom.security.client.view.UserEditViewImpl;
 import stroom.security.client.view.UserGroupEditViewImpl;
 import stroom.security.client.view.UserListViewImpl;
@@ -56,16 +46,8 @@ public class SecurityModule extends PluginModule {
 
         bind(LoginManager.class).in(Singleton.class);
 
-        bindPresenter(LoginPresenter.class, LoginPresenter.LoginView.class, LoginViewImpl.class,
-                LoginPresenter.LoginProxy.class);
-
         bindPlugin(LogoutPlugin.class);
         bindPlugin(ChangePasswordPlugin.class);
-
-        bindPresenter(ChangePasswordPresenter.class, ChangePasswordView.class, ChangePasswordViewImpl.class,
-                ChangePasswordProxy.class);
-        bindPresenter(ResetPasswordPresenter.class, ResetPasswordView.class, ResetPasswordViewImpl.class,
-                ResetPasswordProxy.class);
 
         bindSharedView(ManageEntityView.class, ManageEntityViewImpl.class);
 

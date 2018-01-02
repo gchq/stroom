@@ -14,18 +14,17 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class ElasticPlugin extends Plugin {
-
-    private final Provider<IFramePresenter> iFramePresenterProvider;
+    private final Provider<IFrameContentPresenter> iFramePresenterProvider;
     private final ContentManager contentManager;
     private final ClientPropertyCache clientPropertyCache;
 
     @Inject
     public ElasticPlugin(final EventBus eventBus,
-                         final Provider<IFramePresenter> iFramePresenterProvider,
+                         final Provider<IFrameContentPresenter> iFramePresenterProvider,
                          final ContentManager contentManager,
                          final ClientPropertyCache clientPropertyCache) {
         super(eventBus);
@@ -54,14 +53,15 @@ public class ElasticPlugin extends Plugin {
                                     .href(elasticUiUrl)
                                     .target(HyperlinkTarget.BROWSER_TAB)
                                     .build();
-                            final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
-                            iFramePresenter.setHyperlink(hyperlink);
-                            iFramePresenter.setIcon(SvgPresets.ELASTIC_SEARCH);
-                            contentManager.open(callback ->
-                                            ConfirmEvent.fire(ElasticPlugin.this,
-                                                    "Are you sure you want to close " + hyperlink.getTitle() + "?",
-                                                    callback::closeTab)
-                                    , iFramePresenter, iFramePresenter);
+                            final IFrameContentPresenter presenter = iFramePresenterProvider.get();
+                            presenter.setHyperlink(hyperlink);
+                            presenter.setIcon(SvgPresets.ELASTIC_SEARCH);
+                            contentManager.open(
+                                    callback -> {
+                                        callback.closeTab(true);
+                                        presenter.close();
+                                    },
+                                    presenter, presenter);
                         });
                     } else {
                         annotationsMenuItem = new IconMenuItem(5, SvgPresets.ELASTIC_SEARCH, SvgPresets.ELASTIC_SEARCH, "Elastic Search UI is not configured!", null, false, null);

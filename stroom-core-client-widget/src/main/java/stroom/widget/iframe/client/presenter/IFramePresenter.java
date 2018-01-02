@@ -21,48 +21,18 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.cell.clickable.client.Hyperlink;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.tab.client.presenter.TabData;
 
-public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView> implements TabData {
-
-    private Hyperlink hyperlink;
-
-    private Icon icon = SvgPresets.EXPLORER;
-
+public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView> {
     @Inject
     public IFramePresenter(final EventBus eventBus, final IFrameView view) {
         super(eventBus, view);
     }
 
     public void setHyperlink(final Hyperlink hyperlink) {
-        this.hyperlink = hyperlink;
-        getView().setHyperlink(hyperlink);
-    }
-
-
-
-    @Override
-    public Icon getIcon() {
-        return icon;
-    }
-
-    @Override
-    public String getLabel() {
-        return (null != hyperlink) ? hyperlink.getTitle() : null;
-    }
-
-    @Override
-    public boolean isCloseable() {
-        return true;
+        getView().setUrl(hyperlink.getHref());
     }
 
     public interface IFrameView extends View {
-        void setHyperlink(Hyperlink hyperlink);
-    }
-
-    public void setIcon(final Icon icon) {
-        this.icon = icon;
+        void setUrl(String url);
     }
 }

@@ -1,37 +1,30 @@
 package stroom.annotations.client.presenter;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.annotations.shared.AnnotationsIndex;
 import stroom.cell.clickable.client.Hyperlink;
 import stroom.document.client.DocumentTabData;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 
 public class AnnotationsIndexExternalPresenter
-        extends DocumentEditPresenter<IFramePresenter.IFrameView, AnnotationsIndex>
+        extends DocumentEditPresenter<IFrameContentView, AnnotationsIndex>
         implements DocumentTabData {
 
-    private static final TabData SETTINGS = new TabDataImpl("Annotations Index");
-
-    private final IFramePresenter settingsPresenter;
+    private final IFrameContentPresenter settingsPresenter;
     private String uiUrl;
 
     @Inject
     public AnnotationsIndexExternalPresenter(final EventBus eventBus,
-                                             final IFramePresenter iFramePresenter,
+                                             final IFrameContentPresenter iFramePresenter,
                                              final ClientSecurityContext securityContext,
                                              final ClientPropertyCache clientPropertyCache) {
         super(eventBus, iFramePresenter.getView(), securityContext);
@@ -54,6 +47,12 @@ public class AnnotationsIndexExternalPresenter
     @Override
     protected void onWrite(final AnnotationsIndex annotationsIndex) {
 
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        settingsPresenter.close();
     }
 
     @Override

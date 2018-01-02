@@ -25,16 +25,14 @@ public class UserAndPermissions implements SharedObject {
 
     private UserRef userRef;
     private Set<String> appPermissionSet;
-    private Integer daysToPasswordExpiry;
 
     public UserAndPermissions() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public UserAndPermissions(final UserRef userRef, final Set<String> appPermissionSet, final Integer daysToPasswordExpiry) {
+    public UserAndPermissions(final UserRef userRef, final Set<String> appPermissionSet) {
         this.userRef = userRef;
         this.appPermissionSet = appPermissionSet;
-        this.daysToPasswordExpiry = daysToPasswordExpiry;
     }
 
     public UserRef getUserRef() {
@@ -43,9 +41,5 @@ public class UserAndPermissions implements SharedObject {
 
     public Set<String> getAppPermissionSet() {
         return appPermissionSet;
-    }
-
-    public Integer getDaysToPasswordExpiry() {
-        return daysToPasswordExpiry;
     }
 }

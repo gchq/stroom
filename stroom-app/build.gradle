@@ -78,10 +78,11 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jetty_servlet
-    compile libs.shiro_web
     compile libs.spring_core
     compile libs.spring_beans
     compile libs.spring_context
+    permitUnusedDeclared libs.spring_aspects
+    compile libs.spring_aspects
 
     compile (libs.dropwizard_assets) {
         exclude ( group: "org.glassfish.web", module: "javax.el" )
@@ -107,7 +108,6 @@ dependencies {
     compile libs.slf4j_api
     compile libs.ws_rs_api
 
-    runtime libs.shiro_web
     runtime libs.javax_el
     runtime libs.javax_el_api
 }

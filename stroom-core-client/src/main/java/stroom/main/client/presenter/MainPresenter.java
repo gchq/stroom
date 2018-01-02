@@ -87,14 +87,6 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                 event -> getView().setBanner(event.getProperties().get(ClientProperties.MAINTENANCE_MESSAGE))
                 ));
 
-        registerHandler(clientPropertyCache.addPropertyChangeHandler(event -> {
-            final String customHtmlTitle = event.getProperties().get(ClientProperties.HTML_TITLE);
-
-            if ((Document.get() != null) && (customHtmlTitle != null)) {
-                Document.get().setTitle(customHtmlTitle);
-            }
-        }));
-
         registerHandler(view.getSpinner().addClickHandler(event -> {
             if (click) {
                 click = false;

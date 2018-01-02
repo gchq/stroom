@@ -19,7 +19,6 @@ package stroom.security.server;
 import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.security.shared.UserStatus;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

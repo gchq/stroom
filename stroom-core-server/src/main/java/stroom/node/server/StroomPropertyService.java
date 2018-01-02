@@ -30,6 +30,8 @@ public interface StroomPropertyService {
      */
     String getProperty(String name);
 
+    String getProperty(String name, String defaultValue);
+
     int getIntProperty(String propertyName, int defaultValue);
 
     long getLongProperty(String propertyName, long defaultValue);

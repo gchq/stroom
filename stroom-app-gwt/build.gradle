@@ -1,4 +1,6 @@
-def warDir = project(':stroom-app').file('src/main/resources/ui')
+def resourcesDir = project(':stroom-app').file('src/main/resources')
+def unitCacheDir = "${resourcesDir}/gwt-unitCache"
+def warDir = "${resourcesDir}/ui"
 def outputDir = "${warDir}/stroom"
 
 def gwtBuildDir = "${project.buildDir}/gwt"
@@ -57,7 +59,6 @@ gwtSourceDirs.addAll(sourceSets.main.compileClasspath)
     //println dir
 //}
 
-//task gwtCompile(dependsOn: [classes, addGwtDeps], type: JavaExec) {
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     def module = 'stroom.app.App'
 
@@ -85,7 +86,6 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
     }
 
     main = gwtCompilerProps.mainClass
-
 
     classpath {
         gwtSourceDirs
@@ -150,8 +150,8 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = '1G'//gwtCompilerProps.minHeap
-    maxHeapSize = '4G'//gwtCompilerProps.maxHeap
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
 }
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
@@ -201,6 +201,8 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 
 task gwtClean {
     doLast {
+        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
+        delete unitCacheDir
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
         println 'Deleting GWT build dir: ' + gwtBuildDir.toString()

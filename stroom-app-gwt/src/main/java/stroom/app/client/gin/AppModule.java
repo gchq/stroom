@@ -37,9 +37,7 @@ import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.LocationManager;
 import stroom.core.client.NameTokens;
 import stroom.core.client.gin.InactivePlaceManager;
-import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.view.InfoDocumentViewImpl;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
@@ -63,8 +61,11 @@ import stroom.menubar.client.presenter.MenubarPresenter;
 import stroom.menubar.client.presenter.MenubarPresenter.MenubarProxy;
 import stroom.menubar.client.presenter.MenubarPresenter.MenubarView;
 import stroom.menubar.client.view.MenubarViewImpl;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 import stroom.widget.iframe.client.presenter.IFramePresenter;
 import stroom.widget.iframe.client.presenter.IFramePresenter.IFrameView;
+import stroom.widget.iframe.client.view.IFrameContentViewImpl;
 import stroom.widget.iframe.client.view.IFrameViewImpl;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -109,7 +110,9 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(AboutPresenter.class, AboutView.class, AboutViewImpl.class, AboutProxy.class);
 
         bindPresenterWidget(TooltipPresenter.class, TooltipView.class, TooltipViewImpl.class);
+
         bindPresenterWidget(IFramePresenter.class, IFrameView.class, IFrameViewImpl.class);
+        bindPresenterWidget(IFrameContentPresenter.class, IFrameContentView.class, IFrameContentViewImpl.class);
 
         bindPresenterWidget(EntityTreePresenter.class, EntityTreeView.class, EntityTreeViewImpl.class);
         bindPresenterWidget(EntityCheckTreePresenter.class, EntityCheckTreeView.class, EntityCheckTreeViewImpl.class);

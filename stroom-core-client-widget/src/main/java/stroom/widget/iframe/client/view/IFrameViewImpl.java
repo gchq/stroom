@@ -16,45 +16,35 @@
 
 package stroom.widget.iframe.client.view;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.cell.clickable.client.Hyperlink;
 import stroom.widget.iframe.client.presenter.IFramePresenter.IFrameView;
 
 public class IFrameViewImpl extends ViewImpl implements IFrameView {
-    private static Resources resources;
-    private final Frame content;
+    private final Frame frame;
 
+    @Inject
     public IFrameViewImpl() {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
-        content = new Frame();
-        content.setStyleName(resources.style().iframe());
+        frame = new Frame();
+        final com.google.gwt.dom.client.Style style = frame.getElement().getStyle();
+        style.setWidth(100, Unit.PCT);
+        style.setHeight(100, Unit.PCT);
+        style.setBorderWidth(1, Unit.PX);
+        style.setBorderStyle(BorderStyle.SOLID);
+        style.setBorderColor("#C5CDE2");
     }
 
     @Override
     public Widget asWidget() {
-        return content;
+        return frame;
     }
 
     @Override
-    public void setHyperlink(final Hyperlink hyperlink) {
-        this.content.setUrl(hyperlink.getHref());
-    }
-
-    public interface Style extends CssResource {
-        String iframe();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("IFrame.css")
-        Style style();
+    public void setUrl(final String url) {
+        frame.setUrl(url);
     }
 }

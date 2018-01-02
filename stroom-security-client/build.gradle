@@ -14,8 +14,6 @@ dependencies {
     compile libs.javax_inject
     compile libs.gwtp_mvp_client
 
-    testCompile libs.junit
-
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j
     testRuntime libs.jul_to_slf4j

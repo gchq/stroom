@@ -63,6 +63,11 @@ public class StroomPropertyServiceImpl implements StroomPropertyService {
     }
 
     @Override
+    public String getProperty(final String name, final String defaultValue) {
+        return StroomProperties.getProperty(name, defaultValue);
+    }
+
+    @Override
     @Insecure
     public int getIntProperty(final String name, final int defaultValue) {
         return StroomProperties.getIntProperty(name, defaultValue);

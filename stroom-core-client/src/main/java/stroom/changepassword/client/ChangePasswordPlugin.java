@@ -15,22 +15,22 @@ import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class ChangePasswordPlugin extends Plugin {
 
-    private final Provider<IFramePresenter> iFramePresenterProvider;
+    private final Provider<IFrameContentPresenter> presenterProvider;
     private final ContentManager contentManager;
     private final ClientPropertyCache clientPropertyCache;
 
     @Inject
     public ChangePasswordPlugin(final EventBus eventBus,
-                                final Provider<IFramePresenter> iFramePresenterProvider,
+                                final Provider<IFrameContentPresenter> presenterProvider,
                                 final ContentManager contentManager,
                                 final ClientPropertyCache clientPropertyCache) {
         super(eventBus);
-        this.iFramePresenterProvider = iFramePresenterProvider;
+        this.presenterProvider = presenterProvider;
         this.contentManager = contentManager;
         this.clientPropertyCache = clientPropertyCache;
     }
@@ -48,7 +48,7 @@ public class ChangePasswordPlugin extends Plugin {
                 .onSuccess(result -> {
                     final IconMenuItem changePasswordMenuItem;
                     final SvgPreset icon = SvgPresets.PASSWORD;
-                    final String changePasswordUiUrl = result.get(ClientProperties.AUTH_UI_URL) + "/changepassword";
+                    final String changePasswordUiUrl = result.get(ClientProperties.CHANGE_PASSWORD_UI_URL);
                     if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
                         changePasswordMenuItem = new IconMenuItem(5, icon, null, "Change password", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
@@ -56,13 +56,15 @@ public class ChangePasswordPlugin extends Plugin {
                                     .href(changePasswordUiUrl)
                                     .target(HyperlinkTarget.STROOM_TAB)
                                     .build();
-                            final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
-                            iFramePresenter.setHyperlink(hyperlink);
-                            contentManager.open(callback ->
-                                            ConfirmEvent.fire(ChangePasswordPlugin.this,
-                                                    "Are you sure you want to close " + hyperlink.getTitle() + "?",
-                                                    callback::closeTab)
-                                    , iFramePresenter, iFramePresenter);
+                            final IFrameContentPresenter presenter = presenterProvider.get();
+                            presenter.setHyperlink(hyperlink);
+                            presenter.setIcon(icon);
+                            contentManager.open(
+                                    callback -> {
+                                        callback.closeTab(true);
+                                        presenter.close();
+                                    },
+                                    presenter, presenter);
                         });
                     } else {
                         changePasswordMenuItem = new IconMenuItem(5, icon, icon, "'Change Password' is not configured!", null, false, null);
@@ -71,7 +73,5 @@ public class ChangePasswordPlugin extends Plugin {
                     event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);
                 })
                 .onFailure(caught -> AlertEvent.fireError(ChangePasswordPlugin.this, caught.getMessage(), null));
-
-
     }
 }

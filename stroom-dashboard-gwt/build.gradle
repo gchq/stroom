@@ -1,4 +1,6 @@
-def warDir = project(':stroom-app').file('src/main/resources/ui')
+def resourcesDir = project(':stroom-app').file('src/main/resources')
+def unitCacheDir = "${resourcesDir}/gwt-unitCache"
+def warDir = "${resourcesDir}/ui"
 def outputDir = "${warDir}/dashboard"
 
 def gwtBuildDir = "${project.buildDir}/gwt"
@@ -61,12 +63,21 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
         delete gwtBuildDir
 
-        println 'Making GWT output directories'
+        println "Making directory gwtBuildDir $gwtBuildDir"
         file(gwtBuildDir).mkdirs()
+        println "Making directory tmpDir $tmpDir"
         file(tmpDir).mkdirs()
+        println "Making directory workDir $workDir"
         file(workDir).mkdirs()
+        println "Making directory deployDir $deployDir"
         file(deployDir).mkdirs()
+        println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
+
+        //println "Dumping gwtSourceDirs"
+        //gwtSourceDirs.each {
+            //println "${it.toString()}"
+        //}
     }
 
     main = gwtCompilerProps.mainClass
@@ -76,19 +87,19 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-XfragmentCount', '5',
-                    '-optimize', '9',
-                    '-failOnError',
-                    '-localWorkers', gwtCompilerProps.workers,
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    module                               // Your GWT module
-            ]
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-XfragmentCount', '5',
+            '-optimize', '9',
+            '-failOnError',
+            '-localWorkers', gwtCompilerProps.workers,
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            module                               // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = gwtCompilerProps.minHeap
@@ -117,21 +128,21 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-draftCompile',                        // Speeds up compile with 25%
-                    '-XfragmentCount', '0',
-                    '-optimize', '0',
-                    '-failOnError',
-                    '-localWorkers', '5',
-                    '-incremental',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    module                                  // Your GWT module
-            ]
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-draftCompile',                        // Speeds up compile with 25%
+            '-XfragmentCount', '0',
+            '-optimize', '0',
+            '-failOnError',
+            '-localWorkers', '5',
+            '-incremental',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            module                                  // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
@@ -147,11 +158,15 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 //    println dirs
 
     doFirst {
-        println 'Making GWT output directories'
+        println "Making directory gwtBuildDir $gwtBuildDir"
         file(gwtBuildDir).mkdirs()
+        println "Making directory tmpDir $tmpDir"
         file(tmpDir).mkdirs()
+        println "Making directory workDir $workDir"
         file(workDir).mkdirs()
+        println "Making directory deployDir $deployDir"
         file(deployDir).mkdirs()
+        println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
     }
 
@@ -162,17 +177,17 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-failOnError',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    '-noserver',
-                    module                                  // Your GWT module
-            ]
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-failOnError',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            '-noserver',
+            module                                  // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = gwtCompilerProps.minHeap
@@ -181,11 +196,15 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 
 task gwtClean {
     doLast {
+        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
+        delete unitCacheDir
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
         println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
         delete gwtBuildDir
+        println "Making directory gwtBuildDir $gwtBuildDir"
         file(gwtBuildDir).mkdirs()
+        println "Making directory tmpDir $tmpDir"
         file(tmpDir).mkdirs()
     }
 }

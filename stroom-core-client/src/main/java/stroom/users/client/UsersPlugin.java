@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.clickable.client.Hyperlink;
 import stroom.cell.clickable.client.HyperlinkTarget;
 import stroom.core.client.ContentManager;
@@ -17,23 +16,22 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class UsersPlugin extends NodeToolsPlugin {
-
-    private final Provider<IFramePresenter> iFramePresenterProvider;
+    private final Provider<IFrameContentPresenter> presenterProvider;
     private final ContentManager contentManager;
     private final ClientPropertyCache clientPropertyCache;
 
     @Inject
     public UsersPlugin(final EventBus eventBus,
                        final ClientSecurityContext securityContext,
-                       final Provider<IFramePresenter> iFramePresenterProvider,
+                       final Provider<IFrameContentPresenter> presenterProvider,
                        final ContentManager contentManager,
                        final ClientPropertyCache clientPropertyCache) {
         super(eventBus, securityContext);
-        this.iFramePresenterProvider = iFramePresenterProvider;
+        this.presenterProvider = presenterProvider;
         this.contentManager = contentManager;
         this.clientPropertyCache = clientPropertyCache;
     }
@@ -42,35 +40,35 @@ public class UsersPlugin extends NodeToolsPlugin {
     protected void addChildItems(BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(FindUserCriteria.MANAGE_USERS_PERMISSION)) {
             clientPropertyCache.get()
-                .onSuccess(result -> {
-                    final IconMenuItem usersMenuItem;
-                    final SvgPreset icon = SvgPresets.USER_GROUP;
-                    final String usersUiUrl = result.get(ClientProperties.AUTH_UI_URL) + "/userSearch";
-                    if (usersUiUrl != null && usersUiUrl.trim().length() > 0) {
-                        usersMenuItem = new IconMenuItem(5, icon, null, "Users", null, true, () -> {
-                            final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
-                                    .title("Users")
-                                    .href(usersUiUrl)
-                                    .target(HyperlinkTarget.STROOM_TAB)
-                                    .build();
-                            final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
-                            iFramePresenter.setIcon(icon);
-                            iFramePresenter.setHyperlink(hyperlink);
-                            contentManager.open(
-                                    callback -> ConfirmEvent.fire(
-                                            UsersPlugin.this,
-                                            "Are you sure you want to close " + hyperlink.getTitle() + "?",
-                                            callback::closeTab),
-                                    iFramePresenter, iFramePresenter);
-                        });
-                    } else {
-                        usersMenuItem = new IconMenuItem(5, icon, icon, "Users is not configured!", null, false, null);
-                    }
+                    .onSuccess(result -> {
+                        final IconMenuItem usersMenuItem;
+                        final SvgPreset icon = SvgPresets.USER_GROUP;
+                        final String usersUiUrl = result.get(ClientProperties.USERS_UI_URL);
+                        if (usersUiUrl != null && usersUiUrl.trim().length() > 0) {
+                            usersMenuItem = new IconMenuItem(5, icon, null, "Users", null, true, () -> {
+                                final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
+                                        .title("Users")
+                                        .href(usersUiUrl)
+                                        .target(HyperlinkTarget.STROOM_TAB)
+                                        .build();
+                                final IFrameContentPresenter presenter = presenterProvider.get();
+                                presenter.setHyperlink(hyperlink);
+                                presenter.setIcon(icon);
+                                contentManager.open(
+                                        callback -> {
+                                            callback.closeTab(true);
+                                            presenter.close();
+                                        },
+                                        presenter, presenter);
+                            });
+                        } else {
+                            usersMenuItem = new IconMenuItem(5, icon, icon, "Users is not configured!", null, false, null);
+                        }
 
-                    event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
+                        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
 
-                })
-                .onFailure(caught -> AlertEvent.fireError(UsersPlugin.this, caught.getMessage(), null));
+                    })
+                    .onFailure(caught -> AlertEvent.fireError(UsersPlugin.this, caught.getMessage(), null));
         }
     }
 }

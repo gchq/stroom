@@ -145,10 +145,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.apache.poi                            | poi                                          | 3.11             | APL 2.0       |         |               |
 | org.apache.poi                            | poi-ooxml                                    | 3.11             | APL 2.0       |         |               |
 | org.apache.poi                            | poi-ooxml-schemas                            | 3.11             | APL 2.0       |         |               |
-| org.apache.shiro                          | shiro-aspectj                                | 1.2.6            | APL 2.0       |         |               |
-| org.apache.shiro                          | shiro-core                                   | 1.2.6            | APL 2.0       |         |               |
-| org.apache.shiro                          | shiro-spring                                 | 1.2.6            | APL 2.0       |         |               |
-| org.apache.shiro                          | shiro-web                                    | 1.2.6            | APL 2.0       |         |               |
 | org.xerial.snappy                         | snappy-java                                  | 1.0.4.1          | APL 2.0       |         |               |
 | org.springframework                       | spring-aop                                   | 4.2.4.RELEASE    | APL 2.0       |         |               |
 | org.springframework                       | spring-beans                                 | 4.2.4.RELEASE    | APL 2.0       |         |               |

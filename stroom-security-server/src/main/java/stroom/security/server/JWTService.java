@@ -1,7 +1,6 @@
 package stroom.security.server;
 
 import com.google.common.base.Strings;
-import org.apache.shiro.web.util.WebUtils;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
@@ -32,7 +31,6 @@ public class JWTService {
     private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
-    private final String authenticationServiceUrl;
     private PublicJsonWebKey jwk;
     private final String authJwtIssuer;
     private AuthenticationServiceClients authenticationServiceClients;
@@ -40,14 +38,10 @@ public class JWTService {
 
     @Inject
     public JWTService(
-            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}")
-        final String authenticationServiceUrl,
-            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}")
-        final String authJwtIssuer,
-            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}")
-        final boolean enableTokenRevocationCheck,
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authenticationServiceUrl,
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String authJwtIssuer,
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}") final boolean enableTokenRevocationCheck,
             final AuthenticationServiceClients authenticationServiceClients) {
-        this.authenticationServiceUrl = authenticationServiceUrl;
         this.authJwtIssuer = authJwtIssuer;
         this.authenticationServiceClients = authenticationServiceClients;
         this.checkTokenRevocation = enableTokenRevocationCheck;
@@ -61,12 +55,12 @@ public class JWTService {
 
     /**
      * Check to see if the remote authentication service has published a public key.
-     *
+     * <p>
      * We need this key to verify id tokens.
-     *
+     * <p>
      * We need to do this if the remote public key changes and verification fails.
      */
-    public void fetchNewPublicKeys(){
+    public void fetchNewPublicKeys() {
         // We need to fetch the public key from the remote authentication service.
         ApiKeyApi apiKeyApi = authenticationServiceClients.newApiKeyApi();
 
@@ -84,25 +78,23 @@ public class JWTService {
         if (authHeader.isPresent()) {
             String bearerString = authHeader.get();
 
-            if(bearerString.startsWith(BEARER)){
+            if (bearerString.startsWith(BEARER)) {
                 // This chops out 'Bearer' so we get just the token.
                 jws = bearerString.substring(BEARER.length());
-            }
-            else{
+            } else {
                 jws = bearerString;
             }
             LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
-        }
-        else {
+        } else {
             // If there's no token then we've nothing to do.
             return false;
         }
 
         try {
-            if(checkTokenRevocation) {
+            if (checkTokenRevocation) {
                 LOGGER.info("Checking token revocation status in remote auth service...");
-                JWTAuthenticationToken jwtAuthenticationToken = checkToken(jws);
-                return jwtAuthenticationToken.getUserId() != null;
+                AuthenticationToken authenticationToken = checkToken(jws);
+                return authenticationToken.getUserId() != null;
             } else {
                 LOGGER.info("Verifying token...");
                 Optional<JwtClaims> jwtClaimsOptional = verifyToken(jws);
@@ -110,7 +102,7 @@ public class JWTService {
                 return jwtClaimsOptional.isPresent();
             }
 
-        } catch (Exception e){
+        } catch (Exception e) {
             LOGGER.error("Unable to verify token:", e.getMessage(), e);
             // If we get an exception verifying the token then we need to log the message
             // and continue as if the token wasn't provided.
@@ -120,16 +112,15 @@ public class JWTService {
 
     }
 
-    public Optional<String> getJws(ServletRequest request){
+    public Optional<String> getJws(ServletRequest request) {
         Optional<String> authHeader = getAuthHeader(request);
         Optional<String> jws = Optional.empty();
         if (authHeader.isPresent()) {
             String bearerString = authHeader.get();
-            if(bearerString.startsWith(BEARER)){
+            if (bearerString.startsWith(BEARER)) {
                 // This chops out 'Bearer' so we get just the token.
                 jws = Optional.of(bearerString.substring(BEARER.length()));
-            }
-            else{
+            } else {
                 jws = Optional.of(bearerString);
             }
             LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
@@ -137,17 +128,17 @@ public class JWTService {
         return jws;
     }
 
-    public JWTAuthenticationToken checkToken(String token) {
+    public AuthenticationToken checkToken(String token) {
         try {
             LOGGER.info("Checking with the Authentication Service that a token is valid.");
             String usersEmail = authenticationServiceClients.newAuthenticationApi().verifyToken(token);
-            return new JWTAuthenticationToken(usersEmail, token);
+            return new AuthenticationToken(usersEmail, token);
         } catch (ApiException e) {
             throw new RuntimeException("Unable to verify token remotely!", e);
         }
     }
 
-    public Optional<JwtClaims> verifyToken(String token){
+    public Optional<JwtClaims> verifyToken(String token) {
         try {
             return Optional.of(toClaims(token));
         } catch (InvalidJwtException e) {
@@ -163,11 +154,11 @@ public class JWTService {
     }
 
     public static Optional<String> getAuthHeader(ServletRequest request) {
-        HttpServletRequest httpServletRequest = WebUtils.toHttp(request);
-        return(getAuthHeader(httpServletRequest));
+        HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+        return (getAuthHeader(httpServletRequest));
     }
 
-    public static Optional<String> getAuthHeader(HttpServletRequest httpServletRequest){
+    public static Optional<String> getAuthHeader(HttpServletRequest httpServletRequest) {
         String authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
         return Strings.isNullOrEmpty(authHeader) ? Optional.empty() : Optional.of(authHeader);
     }
@@ -178,11 +169,11 @@ public class JWTService {
         return claims;
     }
 
-    private JwtConsumer newJwsConsumer(){
+    private JwtConsumer newJwsConsumer() {
         // If we don't have a JWK we can't create a consumer to verify anything.
         // Why might we not have one? If the remote authentication service was down when Stroom started
         // then we wouldn't. It might not be up now but we're going to try and fetch it.
-        if(jwk == null){
+        if (jwk == null) {
             fetchNewPublicKeys();
         }
 

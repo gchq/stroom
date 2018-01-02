@@ -38,7 +38,7 @@ public class HttpServletRequestFilter implements Filter {
     }
 
     @Override
-    public void init(final FilterConfig filterConfig) throws ServletException {
+    public void init(final FilterConfig filterConfig) {
     }
 
     @Override
@@ -50,14 +50,17 @@ public class HttpServletRequestFilter implements Filter {
                          final ServletResponse response,
                          final FilterChain chain) throws IOException, ServletException {
         if (request instanceof HttpServletRequest) {
-            httpServletRequestHolder.set((HttpServletRequest) request);
-        }
-
-        chain.doFilter(request, response);
-
-        if (request instanceof HttpServletRequest) {
-            // Clear the held request in case the thread holding the thread scoped holder is re-used for something else
-            httpServletRequestHolder.set(null);
+            try {
+                httpServletRequestHolder.set((HttpServletRequest) request);
+                // Continue the chain
+                chain.doFilter(request, response);
+            } finally {
+                // Clear the held request in case the thread holding the thread scoped holder is re-used for something else
+                httpServletRequestHolder.set(null);
+            }
+        } else {
+            // Continue the chain
+            chain.doFilter(request, response);
         }
     }
 }

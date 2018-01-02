@@ -16,7 +16,6 @@
 
 package stroom.startup;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -27,7 +26,6 @@ import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -61,11 +59,15 @@ import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.server.AuthorisationResource;
+import stroom.security.server.SecurityFilter;
 import stroom.security.server.SessionResource;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
+import stroom.servlet.AppServlet;
+import stroom.servlet.CacheControlFilter;
+import stroom.servlet.DashboardServlet;
 import stroom.servlet.DebugServlet;
 import stroom.servlet.DynamicCSSServlet;
 import stroom.servlet.EchoServlet;
@@ -77,6 +79,7 @@ import stroom.servlet.SessionListListener;
 import stroom.servlet.SessionListServlet;
 import stroom.servlet.SessionResourceStoreImpl;
 import stroom.servlet.StatusServlet;
+import stroom.servlet.StroomServlet;
 import stroom.spring.MetaDataStatisticConfiguration;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
@@ -89,6 +92,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import java.util.Collections;
 import java.util.EnumSet;
 
 public class App extends Application<Config> {
@@ -112,7 +116,7 @@ public class App extends Application<Config> {
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
-        bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
+        bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom", "ui"));
     }
 
     @Override
@@ -134,8 +138,8 @@ public class App extends Application<Config> {
         if ("proxy".equalsIgnoreCase(configuration.getMode())) {
             startProxy(configuration, environment);
         } else {
-            // Adding asset bundles this way is not normal but it is done so that proxy can serve it's own root page for now.
-            new AssetsBundle("/ui", "/", "stroom.jsp", "ui").run(environment);
+//            // Adding asset bundles this way is not normal but it is done so that proxy can serve it's own root page for now.
+//            new AssetsBundle("/ui", "/", "stroom", "ui").run(environment);
             startApp(configuration, environment);
         }
     }
@@ -150,7 +154,7 @@ public class App extends Application<Config> {
         servletContextHandler.addServlet(new ServletHolder(new ConfigServlet(configPath)), "/config");
         GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed");
         GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed/*");
-        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, "/");
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, "/stroom");
         GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, "/status");
         GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, "/debug");
 
@@ -174,10 +178,13 @@ public class App extends Application<Config> {
 
         // Add filters
         SpringUtil.addFilter(servletContextHandler, applicationContext, HttpServletRequestFilter.class, "/*");
-        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter", ImmutableMap.<String, String>builder().put("rejectUri", "/").build());
-        SpringUtil.addFilter(servletContextHandler, applicationContext, AbstractShiroFilter.class, "/*");
+        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter", Collections.singletonMap("rejectUri", "/"));
+        FilterUtil.addFilter(servletContextHandler, CacheControlFilter.class, "cacheControlFilter", Collections.singletonMap("seconds", "600"));
+        SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*");
 
         // Add servlets
+        SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, "/stroom");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DashboardServlet.class, "/dashboard");
         SpringUtil.addServlet(servletContextHandler, applicationContext, DynamicCSSServlet.class, "/dynamic.css");
         SpringUtil.addServlet(servletContextHandler, applicationContext, DispatchService.class, "/dispatch.rpc");
         SpringUtil.addServlet(servletContextHandler, applicationContext, ImportFileServlet.class, "/importfile.rpc");

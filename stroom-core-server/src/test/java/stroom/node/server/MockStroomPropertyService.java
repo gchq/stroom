@@ -41,6 +41,18 @@ public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
     }
 
     @Override
+    public String getProperty(final String propertyName, final String defaultValue) {
+        String value = defaultValue;
+
+        final String string = getProperty(propertyName);
+        if (string != null && string.length() > 0) {
+            value = string;
+        }
+
+        return value;
+    }
+
+    @Override
     public int getIntProperty(final String propertyName, final int defaultValue) {
         int value = defaultValue;
 
