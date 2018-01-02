@@ -77,6 +77,7 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.iframe.client.presenter.IFramePresenter;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -114,6 +115,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TimeZones timeZones;
     private final FieldsManager fieldsManager;
     private final DataGridView<Row> dataGrid;
+    private final Provider<IFrameContentPresenter> iFrameContentPresenterProvider;
     private final Provider<IFramePresenter> iFramePresenterProvider;
     private final ContentManager contentManager;
 
@@ -149,6 +151,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ClientPropertyCache clientPropertyCache,
                           final TimeZones timeZones,
                           final Provider<IFramePresenter> iFramePresenterProvider,
+                          final Provider<IFrameContentPresenter> iFrameContentPresenterProvider,
                           final ContentManager contentManager) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
@@ -157,6 +160,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.dispatcher = dispatcher;
         this.timeZones = timeZones;
         this.iFramePresenterProvider = iFramePresenterProvider;
+        this.iFrameContentPresenterProvider = iFrameContentPresenterProvider;
         this.dataGrid = new DataGridViewImpl<>(true);
         this.contentManager = contentManager;
 
@@ -498,10 +502,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         switch (hyperlink.getTarget()) {
             case DIALOG: {
                 final PopupSize popupSize = new PopupSize(800, 600);
-                final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
-                iFramePresenter.setHyperlink(hyperlink);
+                final IFramePresenter presenter = iFramePresenterProvider.get();
+                presenter.setHyperlink(hyperlink);
                 ShowPopupEvent.fire(TablePresenter.this,
-                        iFramePresenter,
+                        presenter,
                         PopupType.CLOSE_DIALOG,
                         null,
                         popupSize,
@@ -511,13 +515,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 break;
             }
             case STROOM_TAB: {
-                final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
-                iFramePresenter.setHyperlink(hyperlink);
+                final IFrameContentPresenter presenter = iFrameContentPresenterProvider.get();
+                presenter.setHyperlink(hyperlink);
                 contentManager.open(callback ->
-                    ConfirmEvent.fire(TablePresenter.this,
-                            "Are you sure you want to close " + hyperlink.getTitle() + "?",
-                            callback::closeTab)
-                , iFramePresenter, iFramePresenter);
+                                ConfirmEvent.fire(TablePresenter.this,
+                                        "Are you sure you want to close " + hyperlink.getTitle() + "?",
+                                        res -> {
+                                            if (res) {
+                                                presenter.close();
+                                            }
+                                            callback.closeTab(res);
+                                        })
+                        , presenter, presenter);
                 break;
             }
             case BROWSER_TAB:

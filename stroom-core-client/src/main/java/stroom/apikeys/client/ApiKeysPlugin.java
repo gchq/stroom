@@ -17,23 +17,23 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class ApiKeysPlugin extends NodeToolsPlugin {
 
-    private final Provider<IFramePresenter> iFramePresenterProvider;
+    private final Provider<IFrameContentPresenter> presenterProvider;
     private final ContentManager contentManager;
     private final ClientPropertyCache clientPropertyCache;
 
     @Inject
     public ApiKeysPlugin(final EventBus eventBus,
                          final ClientSecurityContext securityContext,
-                         final Provider<IFramePresenter> iFramePresenterProvider,
+                         final Provider<IFrameContentPresenter> presenterProvider,
                          final ContentManager contentManager,
                          final ClientPropertyCache clientPropertyCache) {
         super(eventBus, securityContext);
-        this.iFramePresenterProvider = iFramePresenterProvider;
+        this.presenterProvider = presenterProvider;
         this.contentManager = contentManager;
         this.clientPropertyCache = clientPropertyCache;
     }
@@ -53,14 +53,15 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                                     .href(apiKeysUi)
                                     .target(HyperlinkTarget.STROOM_TAB)
                                     .build();
-                            final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
-                            iFramePresenter.setHyperlink(hyperlink);
+                            final IFrameContentPresenter presenter = presenterProvider.get();
+                            presenter.setHyperlink(hyperlink);
+                            presenter.setIcon(icon);
                             contentManager.open(
-                                    callback -> ConfirmEvent.fire(
-                                            ApiKeysPlugin.this,
-                                            "Are you sure you want to close " + hyperlink.getTitle() + "?",
-                                            callback::closeTab),
-                                    iFramePresenter, iFramePresenter);
+                                    callback -> {
+                                        callback.closeTab(true);
+                                        presenter.close();
+                                    },
+                                    presenter, presenter);
                         });
                     } else {
                         apiKeysMenuItem = new IconMenuItem(5, icon, icon, "API Keys is not configured!", null, false, null);

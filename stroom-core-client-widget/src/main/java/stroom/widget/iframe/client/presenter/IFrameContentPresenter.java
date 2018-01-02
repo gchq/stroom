@@ -21,18 +21,51 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.cell.clickable.client.Hyperlink;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
+import stroom.widget.tab.client.presenter.TabData;
 
-public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView> {
+public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentView> implements TabData {
+    private Hyperlink hyperlink;
+    private Icon icon = SvgPresets.EXPLORER;
+
     @Inject
-    public IFramePresenter(final EventBus eventBus, final IFrameView view) {
+    public IFrameContentPresenter(final EventBus eventBus, final IFrameContentView view) {
         super(eventBus, view);
     }
 
+    public void close() {
+        getView().cleanup();
+    }
+
     public void setHyperlink(final Hyperlink hyperlink) {
+        this.hyperlink = hyperlink;
         getView().setUrl(hyperlink.getHref());
     }
 
-    public interface IFrameView extends View {
+    @Override
+    public Icon getIcon() {
+        return icon;
+    }
+
+    @Override
+    public String getLabel() {
+        return (null != hyperlink) ? hyperlink.getTitle() : null;
+    }
+
+    @Override
+    public boolean isCloseable() {
+        return true;
+    }
+
+    public interface IFrameContentView extends View {
         void setUrl(String url);
+
+        void cleanup();
+    }
+
+    public void setIcon(final Icon icon) {
+        this.icon = icon;
     }
 }
