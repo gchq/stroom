@@ -79,6 +79,7 @@ import stroom.servlet.SessionListListener;
 import stroom.servlet.SessionListServlet;
 import stroom.servlet.SessionResourceStoreImpl;
 import stroom.servlet.StatusServlet;
+import stroom.servlet.StroomServlet;
 import stroom.spring.MetaDataStatisticConfiguration;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
@@ -115,7 +116,7 @@ public class App extends Application<Config> {
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
-        bootstrap.addBundle(new AssetsBundle("/ui", "/", "index", "ui"));
+        bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom", "ui"));
     }
 
     @Override
@@ -138,7 +139,7 @@ public class App extends Application<Config> {
             startProxy(configuration, environment);
         } else {
 //            // Adding asset bundles this way is not normal but it is done so that proxy can serve it's own root page for now.
-//            new AssetsBundle("/ui", "/", "index", "ui").run(environment);
+//            new AssetsBundle("/ui", "/", "stroom", "ui").run(environment);
             startApp(configuration, environment);
         }
     }
@@ -153,7 +154,7 @@ public class App extends Application<Config> {
         servletContextHandler.addServlet(new ServletHolder(new ConfigServlet(configPath)), "/config");
         GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed");
         GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed/*");
-        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, "/index");
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, "/stroom");
         GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, "/status");
         GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, "/debug");
 
@@ -182,7 +183,7 @@ public class App extends Application<Config> {
         SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*");
 
         // Add servlets
-        SpringUtil.addServlet(servletContextHandler, applicationContext, AppServlet.class, "/index");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, "/stroom");
         SpringUtil.addServlet(servletContextHandler, applicationContext, DashboardServlet.class, "/dashboard");
         SpringUtil.addServlet(servletContextHandler, applicationContext, DynamicCSSServlet.class, "/dynamic.css");
         SpringUtil.addServlet(servletContextHandler, applicationContext, DispatchService.class, "/dispatch.rpc");

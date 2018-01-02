@@ -16,14 +16,10 @@
 
 package stroom.servlet;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.spring.StroomScope;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,9 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
-public class AppServlet extends HttpServlet {
+public abstract class AppServlet extends HttpServlet {
     private static final String TITLE = "@TITLE@";
     private static final String ON_CONTEXT_MENU = "@ON_CONTEXT_MENU@";
     private static final String SCRIPT = "@SCRIPT@";
@@ -42,12 +36,11 @@ public class AppServlet extends HttpServlet {
 
     private String template;
 
-    @Inject
-    public AppServlet(final StroomPropertyService stroomPropertyService) {
+    AppServlet(final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 
-    public String getHtmlTemplate() {
+    private String getHtmlTemplate() {
         if (template == null) {
             final InputStream is = getClass().getResourceAsStream("app.html");
             template = StreamUtil.streamToString(is);
@@ -71,7 +64,5 @@ public class AppServlet extends HttpServlet {
         pw.close();
     }
 
-    String getScript() {
-        return "stroom/stroom.nocache.js";
-    }
+    abstract String getScript();
 }
