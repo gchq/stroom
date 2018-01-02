@@ -1,4 +1,6 @@
-def warDir = project(':stroom-app').file('src/main/resources/ui')
+def resourcesDir = project(':stroom-app').file('src/main/resources')
+def unitCacheDir = "${resourcesDir}/gwt-unitCache"
+def warDir = "${resourcesDir}/ui"
 def outputDir = "${warDir}/stroom"
 
 def gwtBuildDir = "${project.buildDir}/gwt"
@@ -201,6 +203,8 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 
 task gwtClean {
     doLast {
+        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
+        delete unitCacheDir
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
         println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
