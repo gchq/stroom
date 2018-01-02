@@ -53,8 +53,7 @@ public class SecurityFilter implements Filter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
 
-    private final String authenticationServiceUrl;
-    private final String advertisedStroomUrl;
+    private final SecurityConfig config;
     private final JWTService jwtService;
     private final AuthenticationServiceClients authenticationServiceClients;
     private final AuthenticationService authenticationService;
@@ -62,13 +61,11 @@ public class SecurityFilter implements Filter {
     private Pattern pattern = null;
 
     public SecurityFilter(
-            final String authenticationServiceUrl,
-            final String advertisedStroomUrl,
+            final SecurityConfig config,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
             final AuthenticationService authenticationService) {
-        this.authenticationServiceUrl = authenticationServiceUrl;
-        this.advertisedStroomUrl = advertisedStroomUrl;
+        this.config = config;
         this.jwtService = jwtService;
         this.authenticationServiceClients = authenticationServiceClients;
         this.authenticationService = authenticationService;
@@ -134,6 +131,9 @@ public class SecurityFilter implements Filter {
                 if (userRef != null) {
                     continueAsUser(request, response, chain, userRef);
 
+                } else if (!config.isAuthenticationRequired()) {
+                    bypassAuthentication(request, response, chain);
+
                 } else {
                     // If the session doesn't have a user ref then attempt login.
                     final boolean loggedIn = loginUI(request, response);
@@ -145,6 +145,16 @@ public class SecurityFilter implements Filter {
                     }
                 }
             }
+        }
+    }
+
+    private void bypassAuthentication(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
+        final AuthenticationToken token = new AuthenticationToken("admin", null);
+        final UserRef userRef = authenticationService.getUserRef(token);
+        if (userRef != null) {
+            // Set the user ref in the session.
+            UserRefSessionUtil.set(request.getSession(true), userRef);
+            continueAsUser(request, response, chain, userRef);
         }
     }
 
@@ -213,7 +223,7 @@ public class SecurityFilter implements Filter {
         }
 
         // We have a a new request so we're going to redirect with an AuthenticationRequest.
-        final String authenticationRequestBaseUrl = authenticationServiceUrl + "/authenticate";
+        final String authenticationRequestBaseUrl = config.getAuthenticationServiceUrl() + "/authenticate";
 
         // Get the redirect URL for the auth service from the current request.
         String url = request.getRequestURL().toString();
@@ -222,8 +232,8 @@ public class SecurityFilter implements Filter {
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request.getSession(true), url);
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
-        if (advertisedStroomUrl != null && advertisedStroomUrl.trim().length() > 0) {
-            url = advertisedStroomUrl;
+        if (config.getAdvertisedStroomUrl() != null && config.getAdvertisedStroomUrl().trim().length() > 0) {
+            url = config.getAdvertisedStroomUrl();
         }
 
         // Trim off any trailing params or paths.

@@ -16,14 +16,15 @@
 
 package stroom.security.spring;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import stroom.apiclients.AuthenticationServiceClients;
+import stroom.node.server.StroomPropertyService;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.JWTService;
+import stroom.security.server.SecurityConfig;
 import stroom.security.server.SecurityFilter;
 
 /**
@@ -45,16 +46,23 @@ public class SecurityConfiguration {
     public static final String PROD_SECURITY = "PROD_SECURITY";
     public static final String MOCK_SECURITY = "MOCK_SECURITY";
 
+    @Bean(name = "securityConfig")
+    public SecurityConfig securityConfig(final StroomPropertyService stroomPropertyService) {
+        final SecurityConfig securityConfig = new SecurityConfig();
+        securityConfig.setAuthenticationServiceUrl(stroomPropertyService.getProperty("stroom.auth.authentication.service.url"));
+        securityConfig.setAdvertisedStroomUrl(stroomPropertyService.getProperty("stroom.advertisedUrl"));
+        securityConfig.setAuthenticationRequired(stroomPropertyService.getBooleanProperty("stroom.authentication.required", true));
+        return securityConfig;
+    }
+
     @Bean(name = "securityFilter")
     public SecurityFilter securityFilter(
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.authentication.service.url')}") final String authenticationServiceUrl,
-            @Value("#{propertyConfigurer.getProperty('stroom.advertisedUrl')}") final String advertisedStroomUrl,
+            SecurityConfig securityConfig,
             JWTService jwtService,
             AuthenticationServiceClients authenticationServiceClients,
             AuthenticationService authenticationService) {
         return new SecurityFilter(
-                authenticationServiceUrl,
-                advertisedStroomUrl,
+                securityConfig,
                 jwtService,
                 authenticationServiceClients,
                 authenticationService);
