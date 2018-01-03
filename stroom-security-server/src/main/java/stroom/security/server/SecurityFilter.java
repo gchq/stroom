@@ -16,6 +16,7 @@
 
 package stroom.security.server;
 
+import com.google.common.base.Strings;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.slf4j.Logger;
@@ -38,7 +39,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -236,11 +239,9 @@ public class SecurityFilter implements Filter {
             url = config.getAdvertisedStroomUrl();
         }
 
-        // Trim off any trailing params or paths.
-        final int index = url.lastIndexOf('/');
-        if (index != -1) {
-            url = url.substring(0, index);
-        }
+        // Trim off any trailing params or paths by running it through UriBuilder
+        URI parsedUrl = UriBuilder.fromUri(url).build();
+        url = parsedUrl.getScheme() +"://"+ parsedUrl.getHost() + ":" + parsedUrl.getPort();
 
         // Encode the URL.
         url = URLEncoder.encode(url, StreamUtil.DEFAULT_CHARSET_NAME);
