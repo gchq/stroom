@@ -16,6 +16,7 @@
 
 package stroom.security.server;
 
+import com.google.common.base.Strings;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.slf4j.Logger;
@@ -38,7 +39,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -238,26 +241,24 @@ public class SecurityFilter implements Filter {
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request.getSession(true), url);
 
+        // If we're using the request URL we want to trim off any trailing params
+        URI parsedRequestUrl = UriBuilder.fromUri(url).build();
+        String redirectUrl = parsedRequestUrl.getScheme() +"://"+ parsedRequestUrl.getHost() + ":" + parsedRequestUrl.getPort();
+        if(!Strings.isNullOrEmpty(parsedRequestUrl.getPath())) {
+            redirectUrl += "/" + parsedRequestUrl.getPath();
+        }
+
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         if (config.getAdvertisedStroomUrl() != null && config.getAdvertisedStroomUrl().trim().length() > 0) {
-            url = config.getAdvertisedStroomUrl();
+            redirectUrl = config.getAdvertisedStroomUrl();
         }
-
-        // Trim off any trailing params or paths.
-        final int index = url.lastIndexOf('/');
-        if (index != -1) {
-            url = url.substring(0, index);
-        }
-
-        // Encode the URL.
-        url = URLEncoder.encode(url, StreamUtil.DEFAULT_CHARSET_NAME);
 
         final String authenticationRequestParams = "" +
                 "?scope=openid" +
                 "&response_type=code" +
                 "&client_id=stroom" +
                 "&redirect_url=" +
-                url +
+                URLEncoder.encode(redirectUrl, StreamUtil.DEFAULT_CHARSET_NAME) +
                 "&state=" +
                 URLEncoder.encode(state.getId(), StreamUtil.DEFAULT_CHARSET_NAME) +
                 "&nonce=" +

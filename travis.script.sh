@@ -117,13 +117,13 @@ else
         VERSION_FIXED_TAG="--tag=${DOCKER_REPO}:${TRAVIS_TAG}"
 
         #Extract the major version part for a floating tag
-        majorVer = $(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+")
+        majorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+")
         if [ -n "${majorVer}" ]; then
             MAJOR_VER_FLOATING_TAG="--tag=${DOCKER_REPO}:${majorVer}-LATEST"
         fi
 
         #Extract the minor version part for a floating tag
-        minorVer = $(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
+        minorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
         if [ -n "${minorVer}" ]; then
             MINOR_VER_FLOATING_TAG="--tag=${DOCKER_REPO}:${minorVer}-latest"
         fi

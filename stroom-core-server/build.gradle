@@ -29,6 +29,7 @@ dependencies {
     compile libs.commons_exec
     compile libs.commons_lang
     compile libs.commons_compress
+    compile libs.commons_io
     compile libs.jackson_annotations
     compile libs.jackson_databind
     compile libs.javax_annotation_api

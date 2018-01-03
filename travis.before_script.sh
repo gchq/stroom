@@ -11,6 +11,10 @@ YELLOW='\033[1;33m'
 BLUE='\033[1;34m'
 NC='\033[0m' # No Colour 
 
+sudo bash -c "echo '127.0.0.1 kafka' >> /etc/hosts"
+sudo bash -c "echo '127.0.0.1 hbase' >> /etc/hosts"
+sudo bash -c "echo '127.0.0.1 auth-service' >> /etc/hosts"
+
 echo -e "TRAVIS_EVENT_TYPE:   [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
 
 if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
@@ -35,7 +39,7 @@ else
     git checkout $STROOM_RESOURCES_BRANCH
 
     echo "Start all the services we need to run the integration tests in stroom"
-    nohup ./bounceIt.sh up -e -y --build kafka stroom-db stroom-stats-db &
+    nohup ./bounceIt.sh up -e -y -x --build kafka stroom-db stroom-stats-db &
     popd
     popd
 
