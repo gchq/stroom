@@ -234,24 +234,24 @@ public class SecurityFilter implements Filter {
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request.getSession(true), url);
 
-        // In some cases we might need to use an external URL as the current incoming one might have been proxied.
-        if (config.getAdvertisedStroomUrl() != null && config.getAdvertisedStroomUrl().trim().length() > 0) {
-            url = config.getAdvertisedStroomUrl();
+        // If we're using the request URL we want to trim off any trailing params
+        URI parsedRequestUrl = UriBuilder.fromUri(url).build();
+        String redirectUrl = parsedRequestUrl.getScheme() +"://"+ parsedRequestUrl.getHost() + ":" + parsedRequestUrl.getPort();
+        if(!Strings.isNullOrEmpty(parsedRequestUrl.getPath())) {
+            redirectUrl += "/" + parsedRequestUrl.getPath();
         }
 
-        // Trim off any trailing params or paths by running it through UriBuilder
-        URI parsedUrl = UriBuilder.fromUri(url).build();
-        url = parsedUrl.getScheme() +"://"+ parsedUrl.getHost() + ":" + parsedUrl.getPort();
-
-        // Encode the URL.
-        url = URLEncoder.encode(url, StreamUtil.DEFAULT_CHARSET_NAME);
+        // In some cases we might need to use an external URL as the current incoming one might have been proxied.
+        if (config.getAdvertisedStroomUrl() != null && config.getAdvertisedStroomUrl().trim().length() > 0) {
+            redirectUrl = config.getAdvertisedStroomUrl();
+        }
 
         final String authenticationRequestParams = "" +
                 "?scope=openid" +
                 "&response_type=code" +
                 "&client_id=stroom" +
                 "&redirect_url=" +
-                url +
+                URLEncoder.encode(redirectUrl, StreamUtil.DEFAULT_CHARSET_NAME) +
                 "&state=" +
                 URLEncoder.encode(state.getId(), StreamUtil.DEFAULT_CHARSET_NAME) +
                 "&nonce=" +
