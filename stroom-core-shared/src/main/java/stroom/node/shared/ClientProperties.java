@@ -54,7 +54,7 @@ public class ClientProperties implements SharedObject {
     public static final String API_KEYS_UI_URL = "stroom.apikeys.ui.url";
     public static final String CHANGE_PASSWORD_UI_URL = "stroom.changepassword.url";
 
-
+    public static final String ADVERTISED_HOST_URL = "stroom.advertisedUrl";
 
     private static final long serialVersionUID = 8717922468620533698L;
     private HashMap<String, String> map;

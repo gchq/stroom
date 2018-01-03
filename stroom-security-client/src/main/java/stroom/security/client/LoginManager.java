@@ -76,7 +76,7 @@ public class LoginManager implements HasHandlers {
                             .onSuccess(result -> {
                                 final String authServiceUrl = result.get(ClientProperties.AUTHENTICATION_SERVICE_URL);
                                 // Send the user's browser to the remote Authentication Service's logout endpoint.
-                                Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + URL.encode(GWT.getHostPageBaseURL()));
+                                Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + URL.encode(result.get(ClientProperties.ADVERTISED_HOST_URL)));
                             });
                 })
                 .onFailure(t -> AlertEvent.fireErrorFromException(LoginManager.this, t, null));
