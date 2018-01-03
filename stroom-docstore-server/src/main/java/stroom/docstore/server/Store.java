@@ -45,7 +45,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -207,6 +209,15 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
     ////////////////////////////////////////////////////////////////////////
     // START OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+
+    @Override
+    public Set<DocRef> listDocuments() {
+        final List<DocRef> list = list();
+        return list.stream()
+                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT))
+                .collect(Collectors.toSet());
+    }
 
     @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {

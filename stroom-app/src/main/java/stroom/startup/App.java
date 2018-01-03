@@ -36,8 +36,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.annotations.spring.AnnotationsIndexConfiguration;
 import stroom.cluster.server.ClusterCallServiceRPC;
+import stroom.content.ContentSyncService;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServlet;
+import stroom.dictionary.server.DictionaryResource;
+import stroom.dictionary.server.DictionaryStore;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
 import stroom.elastic.spring.ElasticIndexConfiguration;
@@ -54,6 +57,8 @@ import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
+import stroom.ruleset.server.RuleSetResource;
+import stroom.ruleset.server.RuleSetService;
 import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
@@ -65,7 +70,6 @@ import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
-import stroom.servlet.AppServlet;
 import stroom.servlet.CacheControlFilter;
 import stroom.servlet.DashboardServlet;
 import stroom.servlet.DebugServlet;
@@ -158,8 +162,24 @@ public class App extends Application<Config> {
         GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, "/status");
         GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, "/debug");
 
+        // Add resources.
+        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
+
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
+
+        // Sync content for rule set.
+        if (configuration.getProxyConfig() != null && configuration.getProxyConfig().getRulesetContentSyncConfig() != null) {
+            final ContentSyncService contentSyncService = new ContentSyncService(configuration.getProxyConfig().getRulesetContentSyncConfig(), injector.getInstance(RuleSetService.class));
+            environment.lifecycle().manage(contentSyncService);
+        }
+
+        // Sync content for dictionaries.
+        if (configuration.getProxyConfig() != null && configuration.getProxyConfig().getDictionaryContentSyncConfig() != null) {
+            final ContentSyncService contentSyncService = new ContentSyncService(configuration.getProxyConfig().getDictionaryContentSyncConfig(), injector.getInstance(DictionaryStore.class));
+            environment.lifecycle().manage(contentSyncService);
+        }
     }
 
     private void startApp(final Config configuration, final Environment environment) {
@@ -205,6 +225,8 @@ public class App extends Application<Config> {
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
 
         // Add resources.
+        SpringUtil.addResource(environment.jersey(), applicationContext, DictionaryResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, RuleSetResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);

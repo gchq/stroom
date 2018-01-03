@@ -32,6 +32,7 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 @Singleton
@@ -39,7 +40,7 @@ public class RuleSetServiceImpl implements RuleSetService {
     private final Store<RuleSet> store;
 
     @Inject
-    public RuleSetServiceImpl(final Store<RuleSet> store) throws IOException {
+    public RuleSetServiceImpl(final Store<RuleSet> store) {
         this.store = store;
         store.setType(RuleSet.DOCUMENT_TYPE, RuleSet.class);
         store.setSerialiser(new JsonSerialiser<>());
@@ -104,6 +105,11 @@ public class RuleSetServiceImpl implements RuleSetService {
     ////////////////////////////////////////////////////////////////////////
     // START OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Set<DocRef> listDocuments() {
+        return store.listDocuments();
+    }
 
     @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {

@@ -550,6 +550,11 @@ public abstract class ExternalDocumentEntityServiceImpl
     }
 
     @Override
+    public Set<DocRef> listDocuments() {
+        return null;
+    }
+
+    @Override
     public DocRef importDocument(final DocRef docRef,
                                  final Map<String, String> dataMap,
                                  final ImportState importState,

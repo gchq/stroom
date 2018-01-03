@@ -125,6 +125,11 @@ public class DictionaryStoreImpl implements DictionaryStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public Set<DocRef> listDocuments() {
+        return store.listDocuments();
+    }
+
+    @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         if (!legacyImport(docRef, dataMap, importState, importMode)) {
             return store.importDocument(docRef, dataMap, importState, importMode);

@@ -33,6 +33,14 @@
 
         <!-- Stroom Proxy Repository and Aggregation -->
         <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.feed.receiptPolicyUuid"/>
+            <property name="value" value=""/>
+            <property name="description" value="The UUID of the data receipt policy to use"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.proxyDir"/>
             <property name="value" value="${stroom.temp}/proxy"/>
             <property name="description"
