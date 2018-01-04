@@ -129,7 +129,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
 
             if (streamList.size() > 0) {
                 // We need to decorate streams with retention rules as a processing user.
-                try (final SecurityHelper2 securityHelper2 = SecurityHelper.processingUser(securityContext)) {
+                try (final SecurityHelper sh = SecurityHelper.processingUser(securityContext)) {
                     // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
                     List<DataRetentionRule> rules = Collections.emptyList();
 

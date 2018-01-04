@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.entity.server;
@@ -86,8 +85,8 @@ class EntityReferenceFindHandler
             for (final BaseEntity baseEntity : resultList) {
                 list.add(SharedDocRef.create(DocRefUtil.create(baseEntity)));
             }
-            docRefs = new BaseResultList<>(list, Long.valueOf(resultList.getStart()),
-                    Long.valueOf(resultList.getSize()), (resultList.getStart() + list.size() < resultList.getSize()));
+            docRefs = new BaseResultList<>(list, (long) resultList.getStart(),
+                    (long) resultList.getSize(), resultList.isExact());
         }
 
         return docRefs;

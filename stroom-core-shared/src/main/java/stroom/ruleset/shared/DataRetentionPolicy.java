@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.ruleset.shared;
@@ -46,6 +45,10 @@ public class DataRetentionPolicy implements SharedObject {
 
     public List<DataRetentionRule> getRules() {
         return rules;
+    }
+
+    public void setRules(final List<DataRetentionRule> rules) {
+        this.rules = rules;
     }
 
     public int getVersion() {
