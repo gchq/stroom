@@ -63,8 +63,9 @@ public class FetchUserRefHandler
             if (action.getCriteria().getName() != null) {
                 list = list.stream().filter(user -> action.getCriteria().getName().isMatch(user.getName())).collect(Collectors.toList());
             }
-            return BaseResultList.createCriterialBasedList(list,
-                    findUserCriteria);
+
+            // Create a result list limited by the page request.
+            return BaseResultList.createPageLimitedList(list, findUserCriteria.getPageRequest());
         }
 
         final BaseResultList<User> users = userService.find(findUserCriteria);
