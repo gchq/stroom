@@ -1,4 +1,6 @@
 dependencies {
     compile libs.stroomQueryApi
     compile project(':stroom-docstore-shared')
+
+    compile libs.swagger_annotations
 }

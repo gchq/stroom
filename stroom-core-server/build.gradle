@@ -22,6 +22,9 @@ dependencies {
     compile libs.curator_x_discovery
     compile libs.dropwizard_lifecycle
     compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_metrics_annotation
+
+    compile libs.swagger_annotations
 
     compile libs.hessian
     compile libs.guava

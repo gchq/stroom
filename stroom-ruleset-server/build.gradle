@@ -11,4 +11,9 @@ dependencies {
     compile libs.slf4j_api
     compile libs.spring_context
     compile libs.javax_inject
+
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_metrics_annotation
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
 }

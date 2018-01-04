@@ -52,6 +52,7 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-pipeline')
     compile project(':stroom-proxy')
+    compile project(':stroom-explorer-api')
     compile project(':stroom-explorer-server')
     compile project(':stroom-security-server')
     permitUnusedDeclared project(':stroom-security-server') //not clear why it thinks this is unused
