@@ -143,7 +143,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                     }
                 }
 
-                return new BaseResultList<Job>(rtnList, 0L, (long) rtnList.size(), false);
+                return new BaseResultList<Job>(rtnList, 0L, (long) rtnList.size(), true);
 
             }
         };

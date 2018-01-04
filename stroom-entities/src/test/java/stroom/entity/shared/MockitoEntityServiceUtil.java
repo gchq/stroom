@@ -32,11 +32,11 @@ public class MockitoEntityServiceUtil {
             final E result) {
         final List<E> lst = new ArrayList<>();
         lst.add(result);
-        Mockito.when(findService.find(Matchers.any())).thenReturn(new BaseResultList<>(lst, 0L, 1L, false));
+        Mockito.when(findService.find(Matchers.any())).thenReturn(new BaseResultList<>(lst, 0L, 1L, true));
     }
 
     public static <E extends Entity, C extends BaseCriteria, T extends FindService<E, C>> void applyEmptyFind(final T findService) {
         final List<E> lst = new ArrayList<>();
-        Mockito.when(findService.find(Matchers.any())).thenReturn(new BaseResultList<>(lst, 0L, 0L, false));
+        Mockito.when(findService.find(Matchers.any())).thenReturn(new BaseResultList<>(lst, 0L, 0L, true));
     }
 }

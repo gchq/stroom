@@ -35,12 +35,12 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
     }
 
     /**
-     * @param more
-     *            more to follow
+     * @param exact
+     *            is the complete size exactly correct
      */
-    public BaseResultList(final List<T> list, final Long offset, final Long completeSize, final boolean more) {
+    public BaseResultList(final List<T> list, final Long offset, final Long completeSize, final boolean exact) {
         super(list);
-        pageResponse = new PageResponse(offset, size(), completeSize, more);
+        pageResponse = new PageResponse(offset, size(), completeSize, exact);
     }
 
     /**
@@ -71,11 +71,11 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
                     limited.add(fullList.get(i));
                 }
 
-                return new BaseResultList<>(limited, (long) offset, (long) fullList.size(), false);
+                return new BaseResultList<>(limited, (long) offset, (long) fullList.size(), true);
             }
         }
 
-        return new BaseResultList<>(fullList, 0L, (long) fullList.size(), false);
+        return new BaseResultList<>(fullList, 0L, (long) fullList.size(), true);
     }
 
     /**
@@ -83,9 +83,9 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
      */
     public static <T extends SharedObject> BaseResultList<T> createUnboundedList(final List<T> realList) {
         if (realList != null) {
-            return new BaseResultList<>(realList, 0L, (long) realList.size(), false);
+            return new BaseResultList<>(realList, 0L, (long) realList.size(), true);
         } else {
-            return new BaseResultList<>(new ArrayList<T>(), 0L, 0L, false);
+            return new BaseResultList<>(new ArrayList<T>(), 0L, 0L, true);
         }
     }
 
@@ -133,13 +133,13 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
             }
         }
 
-        final BaseResultList<T> results = new BaseResultList<>(realList, offset, calulatedTotalSize, moreToFollow);
+        final BaseResultList<T> results = new BaseResultList<>(realList, offset, calulatedTotalSize, !moreToFollow);
         if (moreToFollow) {
             // All our queries are + 1 to we need to remove the last element
             results.remove(results.size() - 1);
             results.pageResponse = new PageResponse(results.pageResponse.getOffset(),
                     results.pageResponse.getLength() - 1, results.pageResponse.getTotal(),
-                    results.pageResponse.isMore());
+                    results.pageResponse.isExact());
         }
         return results;
     }
@@ -182,6 +182,6 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
 
     @Override
     public boolean isExact() {
-        return !pageResponse.isMore();
+        return pageResponse.isExact();
     }
 }

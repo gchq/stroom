@@ -84,8 +84,8 @@ class EntityReferenceFindHandler
             for (final BaseEntity baseEntity : resultList) {
                 list.add(DocRef.create(baseEntity));
             }
-            docRefs = new BaseResultList<>(list, Long.valueOf(resultList.getStart()),
-                    Long.valueOf(resultList.getSize()), (resultList.getStart() + list.size() < resultList.getSize()));
+            docRefs = new BaseResultList<>(list, (long) resultList.getStart(),
+                    (long) resultList.getSize(), resultList.isExact());
         }
 
         return docRefs;
