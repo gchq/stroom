@@ -35,14 +35,13 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
 import stroom.entity.client.presenter.HasRead;
-import stroom.jobsystem.client.TaskTypeCell;
+import stroom.jobsystem.client.JobTypeCell;
 import stroom.jobsystem.shared.FetchJobDataAction;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.jobsystem.shared.JobNodeInfo;
 import stroom.jobsystem.shared.JobNodeRow;
-import stroom.jobsystem.shared.TaskType;
 import stroom.monitoring.client.presenter.SchedulePresenter;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
@@ -100,12 +99,30 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         };
         getView().addResizableColumn(nodeColumn, "Node", 200);
 
-        // Type.
-        final Column<JobNodeRow, TaskType> typeColumn = new Column<JobNodeRow, TaskType>(new TaskTypeCell()) {
+        // Schedule.
+        final Column<JobNodeRow, String> typeColumn = new Column<JobNodeRow, String>(new TextCell()) {
             @Override
-            public TaskType getValue(final JobNodeRow row) {
+            public String getValue(final JobNodeRow row) {
+                final JobNode jobNode = row.getEntity();
+                final JobType jobType = jobNode.getJobType();
+                if (JobType.CRON.equals(jobType)) {
+                    return "Cron " + jobNode.getSchedule();
+                } else if (JobType.FREQUENCY.equals(jobType)) {
+                    return "Frequency " + jobNode.getSchedule();
+                } else if (JobType.DISTRIBUTED.equals(jobType)) {
+                    return "Distributed";
+                }
+                return null;
+            }
+        };
+        getView().addResizableColumn(typeColumn, "Type", 250);
+
+        // Job Type.
+        final Column<JobNodeRow, JobType> typeEditColumn = new Column<JobNodeRow, JobType>(new JobTypeCell()) {
+            @Override
+            public JobType getValue(final JobNodeRow row) {
                 if (row.getEntity().isPersistent()) {
-                    return new TaskType(row.getEntity().getJobType(), row.getEntity().getSchedule());
+                    return row.getEntity().getJobType();
                 }
 
                 return null;
@@ -120,48 +137,45 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                 final Element target = event.getEventTarget().cast();
 
                 final String eventType = event.getType();
-                if ("click".equals(eventType)) {
+                if (row != null && "click".equals(eventType)) {
                     final String tagName = target.getTagName();
                     if ("img".equalsIgnoreCase(tagName)) {
-                        if (row instanceof JobNodeRow) {
-                            final JobNodeRow jobNodeRow = row;
-                            final JobNode jobNode = jobNodeRow.getEntity();
-                            JobNodeInfo jobNodeInfo = jobNodeRow.getJobNodeInfo();
-                            if (jobNodeInfo == null) {
-                                jobNodeInfo = new JobNodeInfo();
+                        final JobNode jobNode = row.getEntity();
+                        JobNodeInfo jobNodeInfo = row.getJobNodeInfo();
+                        if (jobNodeInfo == null) {
+                            jobNodeInfo = new JobNodeInfo();
+                        }
+
+                        schedulePresenter.setSchedule(jobNode.getJobType(),
+                                jobNodeInfo.getScheduleReferenceTime(),
+                                jobNodeInfo.getLastExecutedTime(),
+                                jobNode.getSchedule());
+
+                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                            @Override
+                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                schedulePresenter.hide(autoClose, ok);
                             }
 
-                            schedulePresenter.setSchedule(jobNode.getJobType(),
-                                    jobNodeInfo.getScheduleReferenceTime(),
-                                    jobNodeInfo.getLastExecutedTime(),
-                                    jobNode.getSchedule());
-
-                            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                                @Override
-                                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                    schedulePresenter.hide(autoClose, ok);
+                            @Override
+                            public void onHide(final boolean autoClose, final boolean ok) {
+                                if (ok) {
+                                    jobNodeSaver.save(new EntitySaveTask<JobNode>(row) {
+                                        @Override
+                                        protected void setValue(final JobNode entity) {
+                                            entity.setSchedule(schedulePresenter.getScheduleString());
+                                        }
+                                    });
                                 }
+                            }
+                        };
 
-                                @Override
-                                public void onHide(final boolean autoClose, final boolean ok) {
-                                    if (ok && jobNodeRow != null) {
-                                        jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
-                                            @Override
-                                            protected void setValue(final JobNode entity) {
-                                                entity.setSchedule(schedulePresenter.getScheduleString());
-                                            }
-                                        });
-                                    }
-                                }
-                            };
-
-                            schedulePresenter.show(popupUiHandlers);
-                        }
+                        schedulePresenter.show(popupUiHandlers);
                     }
                 }
             }
         };
-        getView().addColumn(typeColumn, "Type", 300);
+        getView().addColumn(typeEditColumn, "", 20);
 
         // Max.
         final Column<JobNodeRow, Number> maxColumn = new Column<JobNodeRow, Number>(new ValueSpinnerCell(1, 100)) {
