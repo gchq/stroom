@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
 
+* Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
+
 ## [v5.0.0] - 2018-01-10
 
 * Promoted v5.0-beta.71 to v5.0.0
