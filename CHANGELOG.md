@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#411** : When data retention rules are disabled they are now shown greyed out to indicate this.
 
+* Issue **#536** : Fix for missing visualisation icons.
+
 ## [v5.1-beta.4] - 2017-12-20
 
 * Merged [v5.0-beta.71]
