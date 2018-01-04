@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#536** : Fix for missing visualisation icons.
 
+* Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
+
 ## [v5.1-beta.4] - 2017-12-20
 
 * Merged [v5.0-beta.71]
