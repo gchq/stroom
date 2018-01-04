@@ -877,7 +877,7 @@
             <property name="name" value="stroom.statistics.sql.maxProcessingAge"/>
             <property name="value" value=""/>
             <property name="description"
-                      value="The maximum age of statistics to process, i.e. any statistics with an statistic event time older than the current time minus maxProcessingAge will be silently dropped.  Leave blank to process all data."/>
+                value="The maximum age (e.g. '90d') of statistics to process and retain, i.e. any statistics with an statistic event time older than the current time minus maxProcessingAge will be silently dropped.  Existing statistic data over this age will be purged during statistic aggregation. Leave blank to process/retain all data."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="false"/>
         </bean>

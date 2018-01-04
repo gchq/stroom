@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#540** : Improve description text for stroom.statistics.sql.maxProcessingAge property 
+
 ## [v5.1-beta.4] - 2017-12-20
 
 * Merged [v5.0-beta.70]
