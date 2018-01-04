@@ -44,11 +44,46 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
     }
 
     /**
+     * Creates a list limited to a result page from a full list of results.
+     * @param fullList The full list of results to create the result page from.
+     * @param pageRequest The page request to limit the result list by.
+     * @param <T> The type of list item.
+     * @return A list limited to a result page from a full list of results.
+     */
+    public static <T extends SharedObject> BaseResultList<T> createPageLimitedList(final List<T> fullList, final PageRequest pageRequest) {
+        if (pageRequest != null) {
+            int offset = 0;
+            if (pageRequest.getOffset() != null) {
+                offset = pageRequest.getOffset().intValue();
+            }
+
+            int length = fullList.size() - offset;
+            if (pageRequest.getLength() != null) {
+                length = Math.min(length, pageRequest.getLength());
+            }
+
+            // If the page request will lead to a limited number of results then apply that limit here.
+            if (offset != 0 || length < fullList.size()) {
+                // Ideally we'd use List.subList here but can't as GWT can't serialise the returned list type.
+//                final List<T> limited = fullList.subList(offset, offset + length);
+                final List<T> limited = new ArrayList<>(length);
+                for (int i = offset; i < offset + length; i++) {
+                    limited.add(fullList.get(i));
+                }
+
+                return new BaseResultList<>(limited, (long) offset, (long) fullList.size(), false);
+            }
+        }
+
+        return new BaseResultList<>(fullList, 0L, (long) fullList.size(), false);
+    }
+
+    /**
      * Used for full queries (not bounded).
      */
     public static <T extends SharedObject> BaseResultList<T> createUnboundedList(final List<T> realList) {
         if (realList != null) {
-            return new BaseResultList<>(realList, Long.valueOf(0), Long.valueOf(realList.size()), false);
+            return new BaseResultList<>(realList, 0L, (long) realList.size(), false);
         } else {
             return new BaseResultList<>(new ArrayList<T>(), 0L, 0L, false);
         }
@@ -73,7 +108,7 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
         Long calulatedTotalSize = totalSize;
         long offset = 0;
         if (baseCriteria.getPageRequest() != null && baseCriteria.getPageRequest().getOffset() != null) {
-            offset = baseCriteria.getPageRequest().getOffset().longValue();
+            offset = baseCriteria.getPageRequest().getOffset();
         }
         if (limited) {
             if (realList.size() > (baseCriteria.getPageRequest().getLength() + 1)) {
@@ -83,7 +118,7 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
                 // will be a coding error
                 // or not applying the limit.
                 throw new IllegalStateException(
-                        "For some reason we returned more rows that we were limited to.  Did you apply the restriction criteria?");
+                        "For some reason we returned more rows that we were limited to. Did you apply the restriction criteria?");
             }
         }
 
@@ -92,7 +127,7 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
         if (totalSize == null && limited) {
             // All our queries are + 1 on the limit so that we know there is
             // more to come
-            moreToFollow = realList.size() > baseCriteria.getPageRequest().getLength().intValue();
+            moreToFollow = realList.size() > baseCriteria.getPageRequest().getLength();
             if (!moreToFollow) {
                 calulatedTotalSize = baseCriteria.getPageRequest().getOffset() + realList.size();
             }
