@@ -29,13 +29,13 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.shared.ExpressionBuilder;
-import stroom.query.shared.ExpressionOperator.Op;
 import stroom.policy.shared.DataRetentionPolicy;
 import stroom.policy.shared.DataRetentionRule;
 import stroom.policy.shared.FetchDataRetentionPolicyAction;
 import stroom.policy.shared.SaveDataRetentionPolicyAction;
+import stroom.query.client.ExpressionTreePresenter;
+import stroom.query.shared.ExpressionBuilder;
+import stroom.query.shared.ExpressionOperator.Op;
 import stroom.streamstore.shared.TimeUnit;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
@@ -46,6 +46,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetentionPolicyPresenter.DataRetentionPolicyView> implements HasDirtyHandlers {
@@ -103,7 +104,13 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
         dispatcher.exec(new FetchDataRetentionPolicyAction()).onSuccess(result -> {
             policy = result;
+
+            if (policy.getRules() == null) {
+                policy.setRules(new ArrayList<>());
+            }
+
             this.rules = policy.getRules();
+
             update();
         });
     }
@@ -115,6 +122,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 policy = result;
                 this.rules = policy.getRules();
                 listPresenter.getSelectionModel().clear();
+
                 update();
                 setDirty(false);
             });
@@ -138,16 +146,18 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 if (selected != null) {
                     final DataRetentionRule newRule = new DataRetentionRule(selected.getRuleNumber(), System.currentTimeMillis(), selected.getName(), selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
 
-                    final int index = rules.indexOf(selected);
-
+                    int index = rules.indexOf(selected);
                     if (index < rules.size() - 1) {
                         rules.add(index + 1, newRule);
                     } else {
                         rules.add(newRule);
                     }
+                    index = rules.indexOf(newRule);
 
                     update();
-                    listPresenter.getSelectionModel().setSelected(newRule);
+                    setDirty(true);
+
+                    listPresenter.getSelectionModel().setSelected(rules.get(index));
                 }
             }
         }));
@@ -157,12 +167,15 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 if (selected != null) {
                     final DataRetentionRule newRule = new DataRetentionRule(selected.getRuleNumber(), selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
 
-                    final int index = rules.indexOf(selected);
+                    int index = rules.indexOf(selected);
                     rules.remove(index);
                     rules.add(index, newRule);
-                    listPresenter.getSelectionModel().setSelected(newRule);
+                    index = rules.indexOf(newRule);
+
                     update();
                     setDirty(true);
+
+                    listPresenter.getSelectionModel().setSelected(rules.get(index));
                 }
             }
         }));
@@ -171,10 +184,23 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
                     if (ok) {
                         final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
-                        rules.remove(rule);
-                        listPresenter.getSelectionModel().clear();
-                        update();
-                        setDirty(true);
+                        if (rule != null) {
+                            int index = rules.indexOf(rule);
+                            rules.remove(rule);
+
+                            update();
+                            setDirty(true);
+
+                            // Select the next rule.
+                            if (index > 0) {
+                                index--;
+                            }
+                            if (index < rules.size()) {
+                                listPresenter.getSelectionModel().setSelected(rules.get(index));
+                            } else {
+                                listPresenter.getSelectionModel().clear();
+                            }
+                        }
                     }
                 });
             }
@@ -185,10 +211,16 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 if (rule != null) {
                     int index = rules.indexOf(rule);
                     if (index > 0) {
+                        index--;
+
                         rules.remove(rule);
-                        rules.add(index - 1, rule);
+                        rules.add(index, rule);
+
                         update();
                         setDirty(true);
+
+                        // Re-select the rule.
+                        listPresenter.getSelectionModel().setSelected(rules.get(index));
                     }
                 }
             }
@@ -199,10 +231,16 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 if (rule != null) {
                     int index = rules.indexOf(rule);
                     if (index < rules.size() - 1) {
+                        index++;
+
                         rules.remove(rule);
-                        rules.add(index + 1, rule);
+                        rules.add(index, rule);
+
                         update();
                         setDirty(true);
+
+                        // Re-select the rule.
+                        listPresenter.getSelectionModel().setSelected(rules.get(index));
                     }
                 }
             }
@@ -235,9 +273,11 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 if (ok) {
                     final DataRetentionRule rule = editRulePresenter.write();
                     rules.add(0, rule);
+
                     update();
-                    listPresenter.getSelectionModel().setSelected(rule);
                     setDirty(true);
+
+                    listPresenter.getSelectionModel().setSelected(rules.get(0));
                 }
 
                 HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
@@ -265,12 +305,12 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                     rules.add(index, rule);
 
                     update();
-                    listPresenter.getSelectionModel().setSelected(rule);
-
                     // Only mark the policies as dirty if the rule was actually changed.
                     if (!existingRule.equals(rule)) {
                         setDirty(true);
                     }
+
+                    listPresenter.getSelectionModel().setSelected(rules.get(index));
                 }
 
                 HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);

@@ -47,6 +47,10 @@ public class DataRetentionPolicy implements SharedObject {
         return rules;
     }
 
+    public void setRules(final List<DataRetentionRule> rules) {
+        this.rules = rules;
+    }
+
     public int getVersion() {
         return version;
     }

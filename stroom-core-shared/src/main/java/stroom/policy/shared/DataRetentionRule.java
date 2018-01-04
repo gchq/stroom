@@ -54,17 +54,6 @@ public class DataRetentionRule implements SharedObject {
         // Default constructor for GWT serialisation.
     }
 
-//    public DataRetentionRule(
-//            final ExpressionOperator expression,
-//            final int age,
-//            final TimeUnit timeUnit,
-//            final boolean forever) {
-//        this.expression = expression;
-//        this.age = age;
-//        this.timeUnit = timeUnit;
-//        this.forever = forever;
-//    }
-
     public DataRetentionRule(final int ruleNumber,
                              final long creationTime,
                              final String name,
