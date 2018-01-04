@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#540** : Improve description text for stroom.statistics.sql.maxProcessingAge property
+
 * Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
 
 * Issue **#537** : Users without `Manage Policies` permission can now view streams.
