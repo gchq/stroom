@@ -74,9 +74,8 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         }
 
         // Return a base result list.
-        final int cacheCount = cacheManager.getCaches().size();
-        final boolean more = pageRequest.getOffset() + list.size() < cacheCount;
-        return new BaseResultList<>(list, pageRequest.getOffset(), Long.valueOf(cacheCount), more);
+        final long cacheCount = cacheManager.getCaches().size();
+        return new BaseResultList<>(list, pageRequest.getOffset(), cacheCount, pageRequest.getOffset() + list.size() == cacheCount);
     }
 
     private List<CacheInfo> findCaches(final FindCacheInfoCriteria criteria) {

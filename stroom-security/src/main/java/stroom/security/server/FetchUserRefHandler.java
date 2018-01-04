@@ -71,6 +71,6 @@ public class FetchUserRefHandler
         final BaseResultList<User> users = userService.find(findUserCriteria);
         final List<UserRef> userRefs = new ArrayList<>();
         users.stream().forEachOrdered(user -> userRefs.add(UserRefFactory.create(user)));
-        return new BaseResultList<>(userRefs, users.getPageResponse().getOffset(), users.getPageResponse().getTotal(), users.getPageResponse().isMore());
+        return new BaseResultList<>(userRefs, users.getPageResponse().getOffset(), users.getPageResponse().getTotal(), users.getPageResponse().isExact());
     }
 }

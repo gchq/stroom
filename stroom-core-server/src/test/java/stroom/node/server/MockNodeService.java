@@ -41,7 +41,7 @@ public class MockNodeService extends MockNamedEntityService<Node, FindNodeCriter
     public BaseResultList<Node> find(final FindNodeCriteria criteria) throws RuntimeException {
         final List<Node> nodeList = new ArrayList<>();
         nodeList.add(getDefaultNode());
-        return new BaseResultList<>(nodeList, 0L, (long) nodeList.size(), false);
+        return new BaseResultList<>(nodeList, 0L, (long) nodeList.size(), true);
     }
 
     @Override

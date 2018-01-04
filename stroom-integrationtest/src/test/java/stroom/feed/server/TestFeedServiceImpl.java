@@ -171,14 +171,17 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
 
         BaseResultList<Feed> list = feedService.find(criteria);
         Assert.assertEquals(TEST_PAGE, list.size());
-        Assert.assertTrue(list.getPageResponse().isMore());
+        Assert.assertEquals(0L, list.getPageResponse().getOffset().intValue());
+        Assert.assertEquals(TEST_PAGE, list.getPageResponse().getLength().intValue());
+        Assert.assertEquals(TEST_SIZE, list.getPageResponse().getTotal().intValue());
+        Assert.assertTrue(list.getPageResponse().isExact());
 
         criteria.getPageRequest()
                 .setOffset(criteria.getPageRequest().getOffset() + criteria.getPageRequest().getLength());
         list = feedService.find(criteria);
         Assert.assertEquals(TEST_PAGE, list.size());
         Assert.assertEquals(Long.valueOf(TEST_PAGE), list.getPageResponse().getOffset());
-        Assert.assertTrue(list.getPageResponse().isMore());
+        Assert.assertTrue(list.getPageResponse().isExact());
     }
 
     /**

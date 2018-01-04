@@ -162,7 +162,7 @@ public class StreamAttributeMapServiceImpl
             }
 
             result = new BaseResultList<>(streamMDList, streamList.getPageResponse().getOffset(),
-                    streamList.getPageResponse().getTotal(), streamList.getPageResponse().isMore());
+                    streamList.getPageResponse().getTotal(), streamList.getPageResponse().isExact());
         } finally {
             securityContext.restorePermissions();
         }

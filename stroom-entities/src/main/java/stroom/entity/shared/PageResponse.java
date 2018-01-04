@@ -27,17 +27,17 @@ public class PageResponse implements Serializable {
     private Long offset;
     private Integer length;
     private Long total;
-    private boolean more;
+    private boolean exact;
 
     public PageResponse() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public PageResponse(final Long offset, final Integer length, final Long total, final boolean more) {
+    public PageResponse(final Long offset, final Integer length, final Long total, final boolean exact) {
         this.offset = offset;
         this.length = length;
         this.total = total;
-        this.more = more;
+        this.exact = exact;
     }
 
     public Long getOffset() {
@@ -52,8 +52,8 @@ public class PageResponse implements Serializable {
         return total;
     }
 
-    public boolean isMore() {
-        return more;
+    public boolean isExact() {
+        return exact;
     }
 
     @Override
@@ -66,7 +66,7 @@ public class PageResponse implements Serializable {
         builder.append(this.offset, other.offset);
         builder.append(this.length, other.length);
         builder.append(this.total, other.total);
-        builder.append(this.more, other.more);
+        builder.append(this.exact, other.exact);
         return builder.isEquals();
     }
 
@@ -76,12 +76,12 @@ public class PageResponse implements Serializable {
         builder.append(this.offset);
         builder.append(this.length);
         builder.append(this.total);
-        builder.append(this.more);
+        builder.append(this.exact);
         return builder.toHashCode();
     }
 
     @Override
     public String toString() {
-        return offset + ".." + length + " of " + (total == null ? "?" : total) + " " + (more ? "more" : "");
+        return offset + ".." + length + " of " + (total == null ? "?" : total) + " " + (exact ? "exact" : "");
     }
 }
