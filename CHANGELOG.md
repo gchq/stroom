@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
+
 ## [v5.0.0] - 2018-01-10
 
 * Promoted v5.0-beta.71 to v5.0.0
@@ -739,8 +741,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0.0...HEAD
-[v5.0.0]: https://github.com/gchq/stroom/compare/v5.0-beta.71...v5.0.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-beta.4...HEAD
+[v5.1-beta.4]: https://github.com/gchq/stroom/compare/v5.1-beta.3...v5.1-beta.4
+[v5.1-beta.3]: https://github.com/gchq/stroom/compare/v5.1-beta.2...v5.1-beta.3
+[v5.1-beta.2]: https://github.com/gchq/stroom/compare/v5.1-beta.1...v5.1-beta.2
+[v5.1-beta.1]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...v5.1-beta.1
+[v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
+[v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
+
 [v5.0-beta.71]: https://github.com/gchq/stroom/compare/v5.0-beta.70...v5.0-beta.71
 [v5.0-beta.70]: https://github.com/gchq/stroom/compare/v5.0-beta.69...v5.0-beta.70
 [v5.0-beta.69]: https://github.com/gchq/stroom/compare/v5.0-beta.68...v5.0-beta.69
