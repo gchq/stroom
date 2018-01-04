@@ -73,7 +73,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                         .onSuccess(result -> {
                             final String helpUrl = result.get(ClientProperties.HELP_URL);
                             if (helpUrl != null && helpUrl.trim().length() > 0) {
-                                String url = helpUrl + "/user-guide/tasks/tasks.html" + formatAnchor(row.getName());
+                                String url = helpUrl + "/user-guide/tasks.html" + formatAnchor(row.getName());
                                 Window.open(url, "_blank", "");
                             } else {
                                 AlertEvent.fireError(JobListPresenter.this, "Help is not configured!", null);
@@ -142,8 +142,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                     }
                 }
 
-                return new BaseResultList<>(rtnList, 0L, (long) rtnList.size(), false);
-
+                return new BaseResultList<>(rtnList, 0L, (long) rtnList.size(), true);
             }
         };
         final FindJobCriteria findJobCriteria = new FindJobCriteria();

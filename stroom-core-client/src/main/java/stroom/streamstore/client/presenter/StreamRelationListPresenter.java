@@ -116,7 +116,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         }
 
         final ResultList<StreamAttributeMap> processed = new BaseResultList<>(newData,
-                Long.valueOf(data.getStart()), Long.valueOf(data.getSize()), !data.isExact());
+                (long) data.getStart(), (long) data.getSize(), data.isExact());
         return super.onProcessData(processed);
     }
 

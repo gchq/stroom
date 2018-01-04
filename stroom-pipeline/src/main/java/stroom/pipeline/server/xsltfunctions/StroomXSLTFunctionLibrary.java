@@ -222,7 +222,7 @@ public class StroomXSLTFunctionLibrary {
                 .functionName("random")
                 .library(this)
                 .delegateClass(Random.class)
-                .resultType(SequenceType.SINGLE_DOUBLE)
+                .resultType(SequenceType.OPTIONAL_DOUBLE)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()

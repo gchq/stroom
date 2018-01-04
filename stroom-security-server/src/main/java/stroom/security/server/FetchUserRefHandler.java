@@ -63,13 +63,14 @@ public class FetchUserRefHandler
             if (action.getCriteria().getName() != null) {
                 list = list.stream().filter(user -> action.getCriteria().getName().isMatch(user.getName())).collect(Collectors.toList());
             }
-            return BaseResultList.createCriterialBasedList(list,
-                    findUserCriteria);
+
+            // Create a result list limited by the page request.
+            return BaseResultList.createPageLimitedList(list, findUserCriteria.getPageRequest());
         }
 
         final BaseResultList<User> users = userService.find(findUserCriteria);
         final List<UserRef> userRefs = new ArrayList<>();
         users.stream().forEachOrdered(user -> userRefs.add(UserRefFactory.create(user)));
-        return new BaseResultList<>(userRefs, users.getPageResponse().getOffset(), users.getPageResponse().getTotal(), users.getPageResponse().isMore());
+        return new BaseResultList<>(userRefs, users.getPageResponse().getOffset(), users.getPageResponse().getTotal(), users.getPageResponse().isExact());
     }
 }

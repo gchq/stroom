@@ -6,15 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-### Added
+* Generate additional major and minor floating docker tags in travis build, e.g. v6-LATEST and v6.0-LATEST
 
-* Generate addtitional major and minor floating docker tags in travis build, e.g. v6-LATEST and v6.0-LATEST
-
-### Changed
+* Merged in [v5.1-beta.5]
 
 ## [v6.0-alpha.4]
-
-### Added
 
 * New authentication flow based around OpenId
 
@@ -22,33 +18,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * The ability to issue API keys
 
-### Changed
-
 * Issue **#501** : Improve the database teardown process in integration tests to speed up builds
-
-### Merged
 
 * Merged in [v5.1-beta.2]
 
 ## [v6.0-alpha.3] - 2017-12-05
 
-### Changed
-
 * Relax regex in build script to allow tags like v6.0-alpha.3 to be published to Bintray
 
 ## [v6.0-alpha.2] - 2017-12-05
 
-### Added
-
 * Add Bintray publish plugin to Gradle build
-
-### Merged
 
 * Merged in [v5.0-beta.64]
 
 ## [v6.0-alpha.1] - 2017-11-28
-
-### Added
 
 * Issue **#75** : Upgraded to Lucene 5.
 
@@ -62,8 +46,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Added an appender for the proxy store.
 
-### Changed
-
 * Issue **#412** : Fixed no-column table breakage
 
 * Issue **#380** : Fixed build details on welcome/about
@@ -74,11 +56,35 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **360** : Fix inability to sort sql stats results in the dashboard table
 
-### Merged
-
 * Merged in [v5.1-alpha.2]
 
 * Merged in [v5.0-beta.63]
+
+## [v5.1-beta.5] - 2018-01-04
+
+* Issue **#540** : Improve description text for stroom.statistics.sql.maxProcessingAge property
+
+* Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
+
+* Issue **#537** : Users without `Manage Policies` permission can now view streams.
+
+* Issue **#522** : Selection of data retention rules now remains when moving rules up or down.
+
+* Issue **#411** : When data retention rules are disabled they are now shown greyed out to indicate this.
+
+* Issue **#536** : Fix for missing visualisation icons.
+
+* Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
+
+## [v5.1-beta.4] - 2017-12-20
+
+* Merged [v5.0-beta.71]
+
+## [v5.1-beta.3] - 2017-12-18
+
+* Merged [v5.0-beta.70]
+
+* Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
 
 ## [v5.1-beta.2] - 2017-12-12
 
@@ -97,6 +103,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.1-alpha.1] - 2017-06-07
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
+
+## [v5.0-beta.71] - 2017-12-20
+
+* Issue **#521** : Fix for the job list screen to correct the help URL.
+
+* Issue **#526** : Fix for XSLT functions that should return optional results but were being forced to return a single value.
+
+* Issue **#527** : Fix for XSLT error reporting. All downstream errors were being reported as XSLT module errors and were
+ hiding the underlying exception.
 
 ## [v5.0-beta.70] - 2017-12-15
 
@@ -826,11 +841,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v6.0-alpha.2]: https://github.com/gchq/stroom/compare/v6.0-alpha.1...v6.0-alpha.2
 [v6.0-alpha.1]: https://github.com/gchq/stroom/releases/tag/v6.0-alpha.1
 
+[v5.1-beta.5]: https://github.com/gchq/stroom/compare/v5.1-beta.4...v5.1-beta.5
+[v5.1-beta.4]: https://github.com/gchq/stroom/compare/v5.1-beta.3...v5.1-beta.4
+[v5.1-beta.3]: https://github.com/gchq/stroom/compare/v5.1-beta.2...v5.1-beta.3
 [v5.1-beta.2]: https://github.com/gchq/stroom/compare/v5.1-beta.1...v5.1-beta.2
 [v5.1-beta.1]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...v5.1-beta.1
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.71]: https://github.com/gchq/stroom/compare/v5.0-beta.70...v5.0-beta.71
+[v5.0-beta.70]: https://github.com/gchq/stroom/compare/v5.0-beta.69...v5.0-beta.70
 [v5.0-beta.69]: https://github.com/gchq/stroom/compare/v5.0-beta.68...v5.0-beta.69
 [v5.0-beta.68]: https://github.com/gchq/stroom/compare/v5.0-beta.67...v5.0-beta.68
 [v5.0-beta.67]: https://github.com/gchq/stroom/compare/v5.0-beta.66...v5.0-beta.67

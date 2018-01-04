@@ -375,8 +375,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             throw new IllegalArgumentException("Unknown permission " + permission);
         }
 
-        BaseResultList<E> result = null;
-
         // Find documents using the supplied criteria.
         // We do not want to limit the results by offset or length at this point as we will filter out results later based on user permissions.
         // We will only limit the returned number of results once we have applied permission filtering.
@@ -388,33 +386,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         // Filter the results to only include documents that the current user has permission to see.
         final List<E> filtered = filterResults(list, permission);
 
-        if (pageRequest != null) {
-            int offset = 0;
-            int length = filtered.size();
-
-            if (pageRequest.getOffset() != null) {
-                offset = pageRequest.getOffset().intValue();
-            }
-
-            if (pageRequest.getLength() != null) {
-                length = Math.min(length, pageRequest.getLength());
-            }
-
-            // If the page request will lead to a limited number of results then apply that limit here.
-            if (offset != 0 || length < filtered.size()) {
-                final List<E> limited = new ArrayList<>(length);
-                for (int i = offset; i < offset + length; i++) {
-                    limited.add(filtered.get(i));
-                }
-                result = new BaseResultList<>(limited, (long) offset, (long) filtered.size(), offset + length < filtered.size());
-            }
-        }
-
-        if (result == null) {
-            result = new BaseResultList<>(filtered, (long) 0, (long) filtered.size(), false);
-        }
-
-        return result;
+        // Create a result list limited by the page request.
+        return BaseResultList.createPageLimitedList(filtered, pageRequest);
     }
 
     private List<E> filterResults(final List<E> list, final String permission) {
