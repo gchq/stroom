@@ -27,16 +27,17 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.Sort.Direction;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.node.shared.Volume;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.policy.server.DataRetentionService;
-import stroom.security.SecurityContext;
-import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
 import stroom.policy.shared.DataRetentionPolicy;
 import stroom.policy.shared.DataRetentionRule;
+import stroom.security.SecurityContext;
+import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -51,7 +52,7 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.logging.StroomLogger;
-import stroom.feed.MetaMap;
+import stroom.util.task.ServerTask;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -132,25 +133,31 @@ public class StreamAttributeMapServiceImpl
             final BaseResultList<Stream> streamList = streamStore.find(streamCriteria);
 
             if (streamList.size() > 0) {
-                // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
-                List<DataRetentionRule> rules = Collections.emptyList();
+                // We need to decorate streams with retention rules as a processing user.
+                securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+                try {
+                    // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
+                    List<DataRetentionRule> rules = Collections.emptyList();
 
-                final DataRetentionService dataRetentionService = dataRetentionServiceProvider.get();
-                if (dataRetentionService != null) {
-                    final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
-                    if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
-                        rules = dataRetentionPolicy.getRules();
-                    }
-                    final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(dictionaryService, rules);
+                    final DataRetentionService dataRetentionService = dataRetentionServiceProvider.get();
+                    if (dataRetentionService != null) {
+                        final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
+                        if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
+                            rules = dataRetentionPolicy.getRules();
+                        }
+                        final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(dictionaryService, rules);
 
-                    // Query the database for the attribute values
-                    if (criteria.isUseCache()) {
-                        LOGGER.info("Loading attribute map from DB");
-                        loadAttributeMapFromDatabase(criteria, streamMDList, streamList, ruleDecorator);
-                    } else {
-                        LOGGER.info("Loading attribute map from filesystem");
-                        loadAttributeMapFromFileSystem(criteria, streamMDList, streamList, ruleDecorator);
+                        // Query the database for the attribute values
+                        if (criteria.isUseCache()) {
+                            LOGGER.info("Loading attribute map from DB");
+                            loadAttributeMapFromDatabase(criteria, streamMDList, streamList, ruleDecorator);
+                        } else {
+                            LOGGER.info("Loading attribute map from filesystem");
+                            loadAttributeMapFromFileSystem(criteria, streamMDList, streamList, ruleDecorator);
+                        }
                     }
+                } finally {
+                    securityContext.popUser();
                 }
             }
 
