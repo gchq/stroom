@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
+
 ## [v5.1-beta.4] - 2017-12-20
 
 * Merged [v5.0-beta.71]
