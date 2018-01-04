@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v5.1-beta.4] - 2017-12-20
 
-* Merged [v5.0-beta.70]
+* Merged [v5.0-beta.71]
 
 ## [v5.1-beta.3] - 2017-12-18
 
