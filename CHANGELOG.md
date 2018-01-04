@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.1-beta.5] - 2018-01-04
+
 * Issue **#540** : Improve description text for stroom.statistics.sql.maxProcessingAge property
 
 * Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
@@ -777,7 +779,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-beta.5...HEAD
+[v5.1-beta.5]: https://github.com/gchq/stroom/compare/v5.1-beta.4...v5.1-beta.5
 [v5.1-beta.4]: https://github.com/gchq/stroom/compare/v5.1-beta.3...v5.1-beta.4
 [v5.1-beta.3]: https://github.com/gchq/stroom/compare/v5.1-beta.2...v5.1-beta.3
 [v5.1-beta.2]: https://github.com/gchq/stroom/compare/v5.1-beta.1...v5.1-beta.2
