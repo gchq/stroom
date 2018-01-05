@@ -148,18 +148,18 @@ else
         doDockerBuild=true
 
         #This is a tagged commit, so create a docker image with that tag
-        VERSION_FIXED_TAG="--tag=${DOCKER_REPO}:${TRAVIS_TAG}"
+        VERSION_FIXED_TAG="${TRAVIS_TAG}"
 
         #Extract the major version part for a floating tag
         majorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+")
         if [ -n "${majorVer}" ]; then
-            MAJOR_VER_FLOATING_TAG="--tag=${DOCKER_REPO}:${majorVer}${LATEST_SUFFIX}"
+            MAJOR_VER_FLOATING_TAG="${majorVer}${LATEST_SUFFIX}"
         fi
 
         #Extract the minor version part for a floating tag
         minorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
         if [ -n "${minorVer}" ]; then
-            MINOR_VER_FLOATING_TAG="--tag=${DOCKER_REPO}:${minorVer}${LATEST_SUFFIX}"
+            MINOR_VER_FLOATING_TAG="${minorVer}${LATEST_SUFFIX}"
         fi
 
         if [[ "$TRAVIS_BRANCH" =~ ${RELEASE_VERSION_REGEX} ]]; then
@@ -168,7 +168,7 @@ else
         fi
     elif [[ "$TRAVIS_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
         #This is a branch we want to create a floating snapshot docker image for
-        SNAPSHOT_FLOATING_TAG="--tag=${DOCKER_REPO}:${STROOM_VERSION}-SNAPSHOT"
+        SNAPSHOT_FLOATING_TAG="${STROOM_VERSION}-SNAPSHOT"
         doDockerBuild=true
     fi
 
