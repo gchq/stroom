@@ -76,6 +76,39 @@ isCronBuildRequired() {
     return
 }
 
+#args: dockerRepo contextRoot tag1VersionPart tag2VersionPart ... tagNVersionPart
+releaseToDockerHub() {
+    #echo "releaseToDockerHub called with args [$@]"
+
+    if [ $# -lt 3 ]; then
+        echo "Incorrect args, expecting at least 3"
+        exit 1
+    fi
+    dockerRepo="$1"
+    contextRoot="$2"
+    #shift the the args so we can loop round the open ended list of tags, $1 is now the first tag
+    shift 2
+
+    allTagArgs=""
+
+    for tagVersionPart in "$@"; do
+        if [ "x${tagVersionPart}" != "x" ]; then
+            #echo -e "Adding docker tag [${GREEN}${tagVersionPart}${NC}]"
+            allTagArgs="${allTagArgs} --tag=${dockerRepo}:${tagVersionPart}"
+        fi
+    done
+
+    echo -e "Building and releasing a docker image to ${GREEN}${dockerRepo}${NC} with tags: ${GREEN}${allTagArgs}${NC}"
+    echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
+    echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
+
+    #The username and password are configured in the travis gui
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" >/dev/null 2>&1
+
+    docker build ${allTagArgs} ${contextRoot} >/dev/null 2>&1
+    docker push ${dockerRepo} >/dev/null 2>&1
+}
+
 #establish what version of stroom we are building
 if [ -n "$TRAVIS_TAG" ]; then
     #Tagged commit so use that as our stroom version, e.g. v6.0.0
@@ -153,15 +186,12 @@ else
     #Don't do a docker build for pull requests
     if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
         #TODO - the major and minor floating tags assume that the release builds are all done in strict sequence
-        #If an old release build is re-run then it may result in a -LATEST tag pointing to a version that isn't the latest
-        #however this is unlikely to happen
+        #If say the build for v6.0.1 is re-run after the build for v6.0.2 has run then v6.0-LATEST will point to v6.0.1
+        #which is incorrect, hopefully this course of events is unlikely to happen
         allDockerTags="${VERSION_FIXED_TAG} ${SNAPSHOT_FLOATING_TAG} ${MAJOR_VER_FLOATING_TAG} ${MINOR_VER_FLOATING_TAG}"
-        echo -e "Building a docker image with tags: ${GREEN}${allDockerTags}${NC}"
 
-        #The username and password are configured in the travis gui
-        docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" >/dev/null 2>&1
-        docker build ${allDockerTags} ${DOCKER_CONTEXT_ROOT} >/dev/null 2>&1
-        docker push ${DOCKER_REPO} >/dev/null 2>&1
+        #build and release the stroom-stats image to dockerhub
+        releaseToDockerHub "${DOCKER_REPO}" "${DOCKER_CONTEXT_ROOT}" ${allDockerTags}
     fi
 
     #Deploy the generated swagger specs and swagger UI (obtained from github) to gh-pages
