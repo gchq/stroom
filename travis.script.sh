@@ -15,6 +15,7 @@ MINOR_VER_FLOATING_TAG=""
 BRANCH_WHITELIST_REGEX='(^dev$|^master$|^v[0-9].*$)'
 RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+\.[0-9].*$'
 CRON_TAG_SUFFIX="DAILY"
+LATEST_SUFFIX="-LATEST"
 doDockerBuild=false
 
 #Shell Colour constants for use in 'echo -e'
@@ -119,13 +120,13 @@ else
         #Extract the major version part for a floating tag
         majorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+")
         if [ -n "${majorVer}" ]; then
-            MAJOR_VER_FLOATING_TAG="--tag=${DOCKER_REPO}:${majorVer}-LATEST"
+            MAJOR_VER_FLOATING_TAG="--tag=${DOCKER_REPO}:${majorVer}${LATEST_SUFFIX}"
         fi
 
         #Extract the minor version part for a floating tag
         minorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
         if [ -n "${minorVer}" ]; then
-            MINOR_VER_FLOATING_TAG="--tag=${DOCKER_REPO}:${minorVer}-latest"
+            MINOR_VER_FLOATING_TAG="--tag=${DOCKER_REPO}:${minorVer}${LATEST_SUFFIX}"
         fi
 
         if [[ "$TRAVIS_BRANCH" =~ ${RELEASE_VERSION_REGEX} ]]; then
