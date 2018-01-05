@@ -38,24 +38,19 @@ import javax.inject.Inject;
 public class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPermissionsAction, UserAndPermissions> {
     private static final String PREVENT_LOGIN_PROPERTY = "stroom.maintenance.preventLogin";
 
-    private final UserService userService;
     private final SecurityContext securityContext;
     private final UserAndPermissionsHelper userAndPermissionsHelper;
 
     @Inject
-    FetchUserAndPermissionsHandler(final UserService userService,
-                                   final SecurityContext securityContext,
+    FetchUserAndPermissionsHandler(final SecurityContext securityContext,
                                    final UserAndPermissionsHelper userAndPermissionsHelper) {
-        this.userService = userService;
         this.securityContext = securityContext;
         this.userAndPermissionsHelper = userAndPermissionsHelper;
     }
 
     @Override
     public UserAndPermissions exec(final FetchUserAndPermissionsAction task) {
-
-        final User user = userService.loadByUuid(securityContext.getUserUuid());
-        final UserRef userRef = UserRefFactory.create(user);
+        final UserRef userRef = CurrentUserState.currentUserRef();
         if (userRef == null) {
             return null;
         }

@@ -16,7 +16,6 @@
 
 package stroom.datasource;
 
-import stroom.apiclients.AuthenticationServiceClients;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ExternalService;

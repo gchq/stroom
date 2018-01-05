@@ -14,9 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import stroom.apiclients.AuthenticationServiceClients;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
+import stroom.datasource.AuthenticationServiceClients;
 
 import javax.inject.Inject;
 import javax.servlet.ServletRequest;

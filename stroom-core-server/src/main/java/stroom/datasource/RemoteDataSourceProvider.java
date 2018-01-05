@@ -20,7 +20,6 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.apiclients.AuthenticationServiceClients;
 import stroom.datasource.api.v2.DataSource;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
@@ -92,12 +91,10 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
             if (HttpServletResponse.SC_OK == response.getStatus()) {
                 return response.readEntity(responseClass);
-            }
-            else if(HttpServletResponse.SC_UNAUTHORIZED == response.getStatus()){
+            } else if (HttpServletResponse.SC_UNAUTHORIZED == response.getStatus()) {
                 throw new RuntimeException("The user is not authorized to make this request! The user was " +
-                    requestingUser);
-            }
-            else {
+                        requestingUser);
+            } else {
                 throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
                         response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
             }

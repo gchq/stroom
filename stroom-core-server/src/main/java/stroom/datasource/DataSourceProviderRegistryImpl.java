@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.apiclients.AuthenticationServiceClients;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
@@ -31,10 +30,10 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
 
     @SuppressWarnings("unused")
     @Inject
-    public DataSourceProviderRegistryImpl (final SecurityContext securityContext,
-                                           final StroomPropertyService stroomPropertyService,
-                                           final StroomBeanStore stroomBeanStore,
-                                           final AuthenticationServiceClients authenticationServiceClients) {
+    public DataSourceProviderRegistryImpl(final SecurityContext securityContext,
+                                          final StroomPropertyService stroomPropertyService,
+                                          final StroomBeanStore stroomBeanStore,
+                                          final AuthenticationServiceClients authenticationServiceClients) {
         this.securityContext = securityContext;
         this.stroomPropertyService = stroomPropertyService;
         this.authenticationServiceClients = authenticationServiceClients;
@@ -53,8 +52,8 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
         } else {
             LOGGER.debug("Using local services");
             delegateDataSourceProviderRegistry = new SimpleDataSourceProviderRegistry(
-                securityContext,
-                stroomPropertyService,
+                    securityContext,
+                    stroomPropertyService,
                     authenticationServiceClients);
         }
     }

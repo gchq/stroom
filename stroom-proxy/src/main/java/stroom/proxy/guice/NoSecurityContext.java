@@ -35,11 +35,6 @@ public class NoSecurityContext implements SecurityContext {
     }
 
     @Override
-    public String getUserUuid() {
-        return null;
-    }
-
-    @Override
     public boolean isLoggedIn() {
         return true;
     }

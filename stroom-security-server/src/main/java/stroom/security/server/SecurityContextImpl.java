@@ -140,15 +140,6 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public String getUserUuid() {
-        final UserRef userRef = getUserRef();
-        if (userRef == null) {
-            return null;
-        }
-        return userRef.getUuid();
-    }
-
-    @Override
     public boolean isLoggedIn() {
         return getUserRef() != null;
     }
