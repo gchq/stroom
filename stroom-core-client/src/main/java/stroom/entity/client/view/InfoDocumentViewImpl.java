@@ -16,37 +16,23 @@
 
 package stroom.entity.client.view;
 
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.entity.client.presenter.InfoDocumentPresenter;
 
 public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresenter.InfoDocumentView {
-    private final Widget widget;
-
-    @UiField
-    Label docType;
-    @UiField
-    TextBox docUuid;
-    @UiField
-    Label docName;
-    @UiField
-    Label createdUser;
-    @UiField
-    Label createdTime;
-    @UiField
-    Label updatedUser;
-    @UiField
-    Label updatedTime;
+    private final TextArea widget;
 
     @Inject
-    public InfoDocumentViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    public InfoDocumentViewImpl(final Resources resources) {
+        resources.style().ensureInjected();
+        widget = new TextArea();
+        widget.setReadOnly(true);
+        widget.setStyleName(resources.style().layout());
     }
 
     @Override
@@ -55,41 +41,18 @@ public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresen
     }
 
     @Override
-    public HasText getDocType() {
-        return docType;
+    public void setInfo(final String string) {
+        widget.setText(string);
     }
 
-    @Override
-    public HasText getDocUuid() {
-        docUuid.setReadOnly(true);
-        return docUuid;
+    public interface Style extends CssResource {
+        String DEFAULT_STYLE = "Info.css";
+
+        String layout();
     }
 
-    @Override
-    public HasText getDocName() {
-        return docName;
-    }
-
-    @Override
-    public HasText getCreatedUser() {
-        return createdUser;
-    }
-
-    @Override
-    public HasText getCreatedTime() {
-        return createdTime;
-    }
-
-    @Override
-    public HasText getUpdatedUser() {
-        return updatedUser;
-    }
-
-    @Override
-    public HasText getUpdatedTime() {
-        return updatedTime;
-    }
-
-    public interface Binder extends UiBinder<Widget, InfoDocumentViewImpl> {
+    public interface Resources extends ClientBundle {
+        @Source(Style.DEFAULT_STYLE)
+        Style style();
     }
 }

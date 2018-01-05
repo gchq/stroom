@@ -4,6 +4,7 @@ import stroom.query.api.v2.DocRef;
 
 public class DocRefInfo {
     private DocRef docRef;
+    private Long id;
     private Long createTime;
     private Long updateTime;
     private String createUser;
@@ -19,6 +20,14 @@ public class DocRefInfo {
 
     public void setDocRef(DocRef docRef) {
         this.docRef = docRef;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(final Long id) {
+        this.id = id;
     }
 
     public Long getCreateTime() {
@@ -62,6 +71,11 @@ public class DocRefInfo {
 
         public Builder docRef(final DocRef value) {
             this.instance.docRef = value;
+            return this;
+        }
+
+        public Builder id(final Long value) {
+            this.instance.setId(value);
             return this;
         }
 

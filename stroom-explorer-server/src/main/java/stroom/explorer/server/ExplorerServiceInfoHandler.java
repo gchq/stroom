@@ -30,6 +30,7 @@ public class ExplorerServiceInfoHandler
                 .type(docRefInfo.getDocRef().getType())
                 .uuid(docRefInfo.getDocRef().getUuid())
                 .name(docRefInfo.getDocRef().getName())
+                .id(docRefInfo.getId())
                 .createTime(docRefInfo.getCreateTime())
                 .createUser(docRefInfo.getCreateUser())
                 .updateTime(docRefInfo.getUpdateTime())

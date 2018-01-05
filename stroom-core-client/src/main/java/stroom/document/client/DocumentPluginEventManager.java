@@ -19,9 +19,7 @@ package stroom.document.client;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.about.client.presenter.AboutPresenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.KeyboardInterceptor;
@@ -42,7 +40,6 @@ import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
@@ -590,11 +587,11 @@ public class DocumentPluginEventManager extends Plugin {
 
     private MenuItem createInfoMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
         final Command command = () ->
-            explorerNodeList.forEach(explorerNode ->
-                dispatcher.exec(new ExplorerServiceInfoAction(explorerNode.getDocRef()))
-                        .onSuccess(s ->  ShowInfoDocumentDialogEvent.fire(DocumentPluginEventManager.this, s))
-                        .onFailure(t -> AlertEvent.fireError(DocumentPluginEventManager.this, t.getMessage(), null))
-            );
+                explorerNodeList.forEach(explorerNode ->
+                        dispatcher.exec(new ExplorerServiceInfoAction(explorerNode.getDocRef()))
+                                .onSuccess(s -> ShowInfoDocumentDialogEvent.fire(DocumentPluginEventManager.this, s))
+                                .onFailure(t -> AlertEvent.fireError(DocumentPluginEventManager.this, t.getMessage(), null))
+                );
 
         return new IconMenuItem(priority, SvgPresets.INFO, SvgPresets.INFO, "Info", null,
                 enabled, command);

@@ -506,6 +506,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
                         .uuid(entity.getUuid())
                         .name(entity.getName())
                         .build())
+                .id(entity.getId())
                 .createUser(entity.getCreateUser())
                 .createTime(entity.getCreateTime())
                 .updateUser(entity.getUpdateUser())
