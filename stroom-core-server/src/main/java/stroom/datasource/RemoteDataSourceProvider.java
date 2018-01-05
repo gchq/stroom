@@ -46,14 +46,11 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     private final SecurityContext securityContext;
     private final String url;
-    private AuthenticationServiceClients authenticationServiceClients;
 
-    public RemoteDataSourceProvider(final SecurityContext securityContext,
-                                    final String url,
-                                    final AuthenticationServiceClients authenticationServiceClients) {
+    RemoteDataSourceProvider(final SecurityContext securityContext,
+                                    final String url) {
         this.securityContext = securityContext;
         this.url = url;
-        this.authenticationServiceClients = authenticationServiceClients;
         LOGGER.trace("Creating RemoteDataSourceProvider for url {}", url);
     }
 
@@ -82,18 +79,15 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
             WebTarget webTarget = client.target(url).path(path);
 
-            String requestingUser = securityContext.getUserId();
-            String usersApiToken = authenticationServiceClients.getUsersApiToken(requestingUser);
-
             Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-            invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiToken);
+            invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + securityContext.getApiToken());
             Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
             if (HttpServletResponse.SC_OK == response.getStatus()) {
                 return response.readEntity(responseClass);
             } else if (HttpServletResponse.SC_UNAUTHORIZED == response.getStatus()) {
                 throw new RuntimeException("The user is not authorized to make this request! The user was " +
-                        requestingUser);
+                        securityContext.getUserId());
             } else {
                 throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
                         response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));

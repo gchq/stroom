@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
-import stroom.datasource.AuthenticationServiceClients;
 
 import javax.inject.Inject;
 import javax.servlet.ServletRequest;
@@ -60,10 +59,9 @@ public class JWTService {
      * <p>
      * We need to do this if the remote public key changes and verification fails.
      */
-    public void fetchNewPublicKeys() {
+    private void fetchNewPublicKeys() {
         // We need to fetch the public key from the remote authentication service.
-        ApiKeyApi apiKeyApi = authenticationServiceClients.newApiKeyApi();
-
+        final ApiKeyApi apiKeyApi = authenticationServiceClients.newApiKeyApi();
         try {
             String jwkAsJson = apiKeyApi.getPublicKey();
             jwk = RsaJsonWebKey.Factory.newPublicJwk(jwkAsJson);
@@ -128,7 +126,7 @@ public class JWTService {
         return jws;
     }
 
-    public AuthenticationToken checkToken(String token) {
+    private AuthenticationToken checkToken(String token) {
         try {
             LOGGER.info("Checking with the Authentication Service that a token is valid.");
             String usersEmail = authenticationServiceClients.newAuthenticationApi().verifyToken(token);
@@ -153,20 +151,19 @@ public class JWTService {
         }
     }
 
-    public static Optional<String> getAuthHeader(ServletRequest request) {
+    private static Optional<String> getAuthHeader(ServletRequest request) {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         return (getAuthHeader(httpServletRequest));
     }
 
-    public static Optional<String> getAuthHeader(HttpServletRequest httpServletRequest) {
+    private static Optional<String> getAuthHeader(HttpServletRequest httpServletRequest) {
         String authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
         return Strings.isNullOrEmpty(authHeader) ? Optional.empty() : Optional.of(authHeader);
     }
 
     private JwtClaims toClaims(String token) throws InvalidJwtException {
-        JwtConsumer jwtConsumer = newJwsConsumer();
-        JwtClaims claims = jwtConsumer.processToClaims(token);
-        return claims;
+        final JwtConsumer jwtConsumer = newJwsConsumer();
+        return jwtConsumer.processToClaims(token);
     }
 
     private JwtConsumer newJwsConsumer() {

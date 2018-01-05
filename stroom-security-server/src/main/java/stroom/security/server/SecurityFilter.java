@@ -22,7 +22,6 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
-import stroom.datasource.AuthenticationServiceClients;
 import stroom.security.server.AuthenticationStateSessionUtil.AuthenticationState;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.UserRef;

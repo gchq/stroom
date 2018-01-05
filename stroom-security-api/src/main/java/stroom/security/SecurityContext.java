@@ -39,6 +39,13 @@ public interface SecurityContext {
     String getUserId();
 
     /**
+     * Gets an API token string for the current user.
+     *
+     * @return An API token string for the current user.
+     */
+    String getApiToken();
+
+    /**
      * Check if the user associated with this security context is logged in.
      *
      * @return True if the user is logged in.

@@ -33,20 +33,17 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDataSourceProviderRegistry.class);
 
-    public static final String PROP_KEY_BASE_PATH = "stroom.serviceDiscovery.simpleLookup.basePath";
-    public static final String PROP_KEY_ANNOTATIONS_PATH = "stroom.url.annotations-query";
-    public static final String PROP_KEY_ELASTIC_PATH = "stroom.url.elastic-query";
+    private static final String PROP_KEY_BASE_PATH = "stroom.serviceDiscovery.simpleLookup.basePath";
+    private static final String PROP_KEY_ANNOTATIONS_PATH = "stroom.url.annotations-query";
+    private static final String PROP_KEY_ELASTIC_PATH = "stroom.url.elastic-query";
 
     private final Map<String, String> urlMap;
 
     private final SecurityContext securityContext;
-    private final AuthenticationServiceClients authenticationServiceClients;
 
-    public SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
-                                            final StroomPropertyService stroomPropertyService,
-                                            AuthenticationServiceClients authenticationServiceClients) {
+    SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
+                                            final StroomPropertyService stroomPropertyService) {
         this.securityContext = securityContext;
-        this.authenticationServiceClients = authenticationServiceClients;
 
         final String basePath = stroomPropertyService.getProperty(PROP_KEY_BASE_PATH);
         final String annotationsPath = stroomPropertyService.getProperty(PROP_KEY_ANNOTATIONS_PATH);
@@ -90,7 +87,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
      */
     private Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
         return Optional.ofNullable(urlMap.get(docRefType))
-                .map(url -> new RemoteDataSourceProvider(securityContext, url, authenticationServiceClients));
+                .map(url -> new RemoteDataSourceProvider(securityContext, url));
     }
 
     /**

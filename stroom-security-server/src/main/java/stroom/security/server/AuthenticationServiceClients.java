@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.datasource;
+package stroom.security.server;
 
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -25,7 +25,6 @@ import stroom.auth.service.ApiClient;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
 import stroom.auth.service.api.AuthenticationApi;
-import stroom.auth.service.api.UserApi;
 import stroom.auth.service.api.model.CreateTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
 import stroom.auth.service.api.model.SearchResponse;
@@ -39,28 +38,32 @@ import java.util.Optional;
  * This class manages tokens for the RemoteDataSourceProvider. The RemoteDataSourceProvider
  * needs a user's API token so it can make HTTP requests on their behalf. These tokens live in
  * the TokenService. If one doesn't exist then this manager will create one.
- *
+ * <p>
  * TODO: add token caching
- *
+ * <p>
  * If a logged-in user's API token is ever needed elsewhere then this class should be refactored accordingly.
  */
 @Component
 public class AuthenticationServiceClients {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceClients.class);
     private final ApiClient authServiceClient;
+    private final boolean enableAuth;
 
     @Inject
     public AuthenticationServiceClients(
-        @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}")
-        final String ourApiToken,
-        @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}")
-        final String authServiceUrl) {
-        if(Strings.isNullOrEmpty(ourApiToken)){
-            throw new RuntimeException("Missing API key! Please configure using 'stroom.security.apiToken'");
-        }
+            @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}") final String ourApiToken,
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authServiceUrl,
+            @Value("#{propertyConfigurer.getProperty('stroom.authentication.required')}") final String authRequired) {
 
-        if(Strings.isNullOrEmpty(authServiceUrl)){
-            throw new RuntimeException("Missing auth service URL! Please configure using 'stroom.auth.services.url'");
+        enableAuth = !"false".equals(authRequired);
+        if (enableAuth) {
+            if (Strings.isNullOrEmpty(ourApiToken)) {
+                throw new RuntimeException("Missing API key! Please configure using 'stroom.security.apiToken'");
+            }
+
+            if (Strings.isNullOrEmpty(authServiceUrl)) {
+                throw new RuntimeException("Missing auth service URL! Please configure using 'stroom.auth.services.url'");
+            }
         }
 
         authServiceClient = new ApiClient();
@@ -68,19 +71,23 @@ public class AuthenticationServiceClients {
         authServiceClient.addDefaultHeader("Authorization", "Bearer " + ourApiToken);
     }
 
-    public AuthenticationApi newAuthenticationApi(){
+    AuthenticationApi newAuthenticationApi() {
         return new AuthenticationApi(authServiceClient);
     }
 
-    public ApiKeyApi newApiKeyApi(){
+    ApiKeyApi newApiKeyApi() {
         return new ApiKeyApi(authServiceClient);
     }
 
-    public UserApi newUserApi(){
-        return new UserApi(authServiceClient);
-    }
+//    UserApi newUserApi(){
+//        return new UserApi(authServiceClient);
+//    }
 
-    public String getUsersApiToken(String userId) {
+    String getUsersApiToken(String userId) {
+        if (!enableAuth) {
+            return null;
+        }
+
         //TODO check cache
         Optional<String> optionalToken = getTokenFromTokenService(userId);
 

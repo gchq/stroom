@@ -40,6 +40,11 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
+    public String getApiToken() {
+        return null;
+    }
+
+    @Override
     public boolean isLoggedIn() {
         return true;
     }

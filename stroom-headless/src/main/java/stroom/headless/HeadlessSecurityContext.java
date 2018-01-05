@@ -37,6 +37,11 @@ public class HeadlessSecurityContext implements SecurityContext {
     }
 
     @Override
+    public String getApiToken() {
+        return null;
+    }
+
+    @Override
     public boolean isLoggedIn() {
         return true;
     }
