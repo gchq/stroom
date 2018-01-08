@@ -1,3 +1,6 @@
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-security-api')
@@ -34,7 +37,7 @@ task writeBuildProperties {
     def props = new Properties()
 
     props.setProperty("buildVersion", versions.stroom)
-    props.setProperty("buildDate", new Date().toString())
+    props.setProperty("buildDate", ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT))
 
     props.store(propertyFile.newWriter(), null)
 }
