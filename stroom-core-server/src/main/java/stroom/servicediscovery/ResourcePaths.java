@@ -7,6 +7,7 @@ public interface ResourcePaths {
     String SQL_STATISTICS = "/sqlstatistics";
     String AUTHENTICATION = "/authentication";
     String AUTHORISATION = "/authorisation";
+    String RULE_SET = "/ruleset";
 
     String V1 = "/v1";
     String V2 = "/v2";

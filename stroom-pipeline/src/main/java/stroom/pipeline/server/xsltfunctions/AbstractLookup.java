@@ -51,8 +51,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     }
 
     @Override
-    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
-            throws XPathException {
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         Sequence result = EmptyAtomicSequence.getInstance();
 
         try {

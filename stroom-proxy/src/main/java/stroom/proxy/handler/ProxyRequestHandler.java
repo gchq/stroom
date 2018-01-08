@@ -36,11 +36,12 @@ public class ProxyRequestHandler implements RequestHandler {
     private final LogStream logStream;
 
     @Inject
-    public ProxyRequestHandler(final MasterStreamHandlerFactory streamHandlerFactory,
+    public ProxyRequestHandler(final ProxyRequestConfig proxyRequestConfig,
+                               final MasterStreamHandlerFactory streamHandlerFactory,
                                final MetaMapFilterFactory metaMapFilterFactory,
                                final LogStream logStream) {
         this.streamHandlerFactory = streamHandlerFactory;
-        this.metaMapFilter = metaMapFilterFactory.create("dataFeed");
+        this.metaMapFilter = metaMapFilterFactory.create(proxyRequestConfig.getReceiptPolicyUuid());
         this.logStream = logStream;
     }
 

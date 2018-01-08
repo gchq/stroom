@@ -44,7 +44,8 @@ import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.server.AuthenticationServiceImpl;
+import stroom.security.server.AuthenticationService;
+import stroom.security.server.AuthenticationToken;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
@@ -103,7 +104,7 @@ public final class SetupSampleDataBean {
     private static final int LOAD_CYCLES = 10;
 
     @Resource
-    private AuthenticationServiceImpl authenticationService;
+    private AuthenticationService authenticationService;
     @Resource
     private FeedService feedService;
     @Resource
@@ -160,8 +161,7 @@ public final class SetupSampleDataBean {
     public void run(final boolean shutdown) throws IOException {
         // Ensure admin user exists.
         LOGGER.info("Creating admin user");
-        authenticationService.createOrRefreshAdminUser();
-        authenticationService.createOrRefreshStroomServiceUser();
+        authenticationService.getUserRef(new AuthenticationToken("admin", null));
 
 //        createRandomExplorerNode(null, "", 0, 2);
 

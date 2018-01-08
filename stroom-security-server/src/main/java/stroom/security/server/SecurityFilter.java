@@ -21,7 +21,6 @@ import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.apiclients.AuthenticationServiceClients;
 import stroom.auth.service.ApiException;
 import stroom.security.server.AuthenticationStateSessionUtil.AuthenticationState;
 import stroom.security.server.exception.AuthenticationException;
@@ -122,9 +121,13 @@ public class SecurityFilter implements Filter {
             final boolean isApiRequest = servletPath.contains("/api");
 
             if (isApiRequest) {
-                // Authenticate requests to the API.
-                final UserRef userRef = loginAPI(request, response);
-                continueAsUser(request, response, chain, userRef);
+                if (!config.isAuthenticationRequired()) {
+                    bypassAuthentication(request, response, chain, false);
+                } else {
+                    // Authenticate requests to the API.
+                    final UserRef userRef = loginAPI(request, response);
+                    continueAsUser(request, response, chain, userRef);
+                }
 
             } else {
                 // Authenticate requests from the UI.
@@ -135,7 +138,7 @@ public class SecurityFilter implements Filter {
                     continueAsUser(request, response, chain, userRef);
 
                 } else if (!config.isAuthenticationRequired()) {
-                    bypassAuthentication(request, response, chain);
+                    bypassAuthentication(request, response, chain, true);
 
                 } else {
                     // If the session doesn't have a user ref then attempt login.
@@ -151,12 +154,15 @@ public class SecurityFilter implements Filter {
         }
     }
 
-    private void bypassAuthentication(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
+    private void bypassAuthentication(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain, final boolean useSession) throws IOException, ServletException {
         final AuthenticationToken token = new AuthenticationToken("admin", null);
         final UserRef userRef = authenticationService.getUserRef(token);
         if (userRef != null) {
-            // Set the user ref in the session.
-            UserRefSessionUtil.set(request.getSession(true), userRef);
+            if (useSession) {
+                // Set the user ref in the session.
+                UserRefSessionUtil.set(request.getSession(true), userRef);
+            }
+
             continueAsUser(request, response, chain, userRef);
         }
     }

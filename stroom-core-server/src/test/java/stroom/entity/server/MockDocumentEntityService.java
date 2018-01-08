@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 public abstract class MockDocumentEntityService<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, Clearable {
     private static final Set<String> BLANK_SET = Collections.emptySet();
@@ -355,6 +356,13 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //        return new String[0];
 //    }
 
+
+    @Override
+    public Set<DocRef> listDocuments() {
+        final List<E> list = find(createCriteria());
+        return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
+    }
+
     @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         if (importExportHelper == null) {
@@ -498,6 +506,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
                         .uuid(entity.getUuid())
                         .name(entity.getName())
                         .build())
+                .id(entity.getId())
                 .createUser(entity.getCreateUser())
                 .createTime(entity.getCreateTime())
                 .updateUser(entity.getUpdateUser())

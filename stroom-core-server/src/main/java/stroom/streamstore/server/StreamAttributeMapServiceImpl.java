@@ -128,30 +128,33 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
             final BaseResultList<Stream> streamList = streamStore.find(streamCriteria);
 
             if (streamList.size() > 0) {
-                // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
-                List<DataRetentionRule> rules = Collections.emptyList();
+                // We need to decorate streams with retention rules as a processing user.
+                try (final SecurityHelper sh = SecurityHelper.processingUser(securityContext)) {
+                    // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
+                    List<DataRetentionRule> rules = Collections.emptyList();
 
-                final DataRetentionService dataRetentionService = dataRetentionServiceProvider.get();
-                if (dataRetentionService != null) {
-                    final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
-                    if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
-                        rules = dataRetentionPolicy.getRules();
-                    }
-                    final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(dictionaryStore, rules);
+                    final DataRetentionService dataRetentionService = dataRetentionServiceProvider.get();
+                    if (dataRetentionService != null) {
+                        final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
+                        if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
+                            rules = dataRetentionPolicy.getRules();
+                        }
+                        final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(dictionaryStore, rules);
 
-                    // Query the database for the attribute values
-                    if (criteria.isUseCache()) {
-                        LOGGER.info("Loading attribute map from DB");
-                        loadAttributeMapFromDatabase(criteria, streamMDList, streamList, ruleDecorator);
-                    } else {
-                        LOGGER.info("Loading attribute map from filesystem");
-                        loadAttributeMapFromFileSystem(criteria, streamMDList, streamList, ruleDecorator);
+                        // Query the database for the attribute values
+                        if (criteria.isUseCache()) {
+                            LOGGER.info("Loading attribute map from DB");
+                            loadAttributeMapFromDatabase(criteria, streamMDList, streamList, ruleDecorator);
+                        } else {
+                            LOGGER.info("Loading attribute map from filesystem");
+                            loadAttributeMapFromFileSystem(criteria, streamMDList, streamList, ruleDecorator);
+                        }
                     }
                 }
             }
 
             result = new BaseResultList<>(streamMDList, streamList.getPageResponse().getOffset(),
-                    streamList.getPageResponse().getTotal(), streamList.getPageResponse().isMore());
+                    streamList.getPageResponse().getTotal(), streamList.getPageResponse().isExact());
         }
 
         return result;

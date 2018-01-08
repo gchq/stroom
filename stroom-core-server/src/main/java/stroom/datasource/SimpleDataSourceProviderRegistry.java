@@ -20,7 +20,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.apiclients.AuthenticationServiceClients;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
@@ -34,20 +33,17 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDataSourceProviderRegistry.class);
 
-    public static final String PROP_KEY_BASE_PATH = "stroom.serviceDiscovery.simpleLookup.basePath";
-    public static final String PROP_KEY_ANNOTATIONS_PATH = "stroom.url.annotations-query";
-    public static final String PROP_KEY_ELASTIC_PATH = "stroom.url.elastic-query";
+    private static final String PROP_KEY_BASE_PATH = "stroom.serviceDiscovery.simpleLookup.basePath";
+    private static final String PROP_KEY_ANNOTATIONS_PATH = "stroom.url.annotations-query";
+    private static final String PROP_KEY_ELASTIC_PATH = "stroom.url.elastic-query";
 
     private final Map<String, String> urlMap;
 
     private final SecurityContext securityContext;
-    private final AuthenticationServiceClients authenticationServiceClients;
 
-    public SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
-                                            final StroomPropertyService stroomPropertyService,
-                                            AuthenticationServiceClients authenticationServiceClients) {
+    SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
+                                            final StroomPropertyService stroomPropertyService) {
         this.securityContext = securityContext;
-        this.authenticationServiceClients = authenticationServiceClients;
 
         final String basePath = stroomPropertyService.getProperty(PROP_KEY_BASE_PATH);
         final String annotationsPath = stroomPropertyService.getProperty(PROP_KEY_ANNOTATIONS_PATH);
@@ -61,15 +57,15 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
             urlMap.put("StatisticStore", basePath + "/api/sqlstatistics/v2");
             urlMap.put("AnnotationsIndex", annotationsPath);
             urlMap.put("ElasticIndex", elasticPath);
-                    //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
-                    //you can run service discovery
+            //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
+            //you can run service discovery
             urlMap.put("authentication", basePath + "/api/authentication/v1");
             urlMap.put("authorisation", basePath + "/api/authorisation/v1");
 
             LOGGER.info("Using the following local URLs for services:\n" +
-                urlMap.entrySet().stream()
-                    .map(entry -> "    " + entry.getKey() + " - " + entry.getValue())
-                    .collect(Collectors.joining("\n"))
+                    urlMap.entrySet().stream()
+                            .map(entry -> "    " + entry.getKey() + " - " + entry.getValue())
+                            .collect(Collectors.joining("\n"))
             );
         } else {
             LOGGER.error("Property value for {} is null or empty, local service lookup will not function",
@@ -91,7 +87,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
      */
     private Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
         return Optional.ofNullable(urlMap.get(docRefType))
-                .map(url -> new RemoteDataSourceProvider(securityContext, url, authenticationServiceClients));
+                .map(url -> new RemoteDataSourceProvider(securityContext, url));
     }
 
     /**

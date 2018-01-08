@@ -3,14 +3,18 @@ package stroom.proxy.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import stroom.content.ContentSyncConfig;
 import stroom.datafeed.server.MetaMapFilterFactory;
 import stroom.datafeed.server.RequestHandler;
+import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.server.DictionaryStoreImpl;
 import stroom.docstore.server.Persistence;
 import stroom.docstore.server.Store;
 import stroom.docstore.server.fs.FSPersistence;
 import stroom.proxy.handler.ForwardStreamConfig;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.handler.LogStreamConfig;
+import stroom.proxy.handler.ProxyRequestConfig;
 import stroom.proxy.handler.ProxyRequestHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.proxy.repo.ProxyRepositoryConfig;
@@ -35,6 +39,7 @@ public class ProxyModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(ProxyRequestConfig.class).toProvider(proxyConfig::getProxyRequestConfig);
         bind(LogStreamConfig.class).toProvider(proxyConfig::getLogStreamConfig);
         bind(ForwardStreamConfig.class).toProvider(proxyConfig::getForwardStreamConfig);
         bind(ProxyRepositoryConfig.class).toProvider(proxyConfig::getProxyRepositoryConfig);
@@ -48,8 +53,8 @@ public class ProxyModule extends AbstractModule {
 
         bind(MetaMapFilterFactory.class).to(MetaMapFilterFactoryImpl.class);
         bind(RuleSetService.class).to(RuleSetServiceImpl.class).in(Singleton.class);
+        bind(DictionaryStore.class).to(DictionaryStoreImpl.class).in(Singleton.class);
         bind(SecurityContext.class).to(NoSecurityContext.class);
-
     }
 
     @Provides @Singleton

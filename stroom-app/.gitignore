@@ -3,6 +3,7 @@
 /gwt-DevMode/
 /gwt-SuperDevMode/
 **/gwt-unitCache/
+*.log
 /.project
 /.settings/
 /target/

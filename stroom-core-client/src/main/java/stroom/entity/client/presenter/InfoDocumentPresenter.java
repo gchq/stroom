@@ -17,7 +17,6 @@
 
 package stroom.entity.client.presenter;
 
-import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -25,31 +24,28 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.entity.shared.SharedDocRefInfo;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class InfoDocumentPresenter
         extends MyPresenter<InfoDocumentPresenter.InfoDocumentView, InfoDocumentPresenter.InfoDocumentProxy>
-        implements ShowInfoDocumentDialogEvent.Handler, PopupUiHandlers {
-    private final ClientDispatchAsync dispatcher;
+        implements ShowInfoDocumentDialogEvent.Handler {
 
     @Inject
     public InfoDocumentPresenter(final EventBus eventBus,
                                  final InfoDocumentView view,
-                                 final InfoDocumentProxy proxy,
-                                 final ClientDispatchAsync dispatcher) {
+                                 final InfoDocumentProxy proxy) {
         super(eventBus, view, proxy);
-        this.dispatcher = dispatcher;
     }
 
     @Override
     protected void revealInParent() {
-        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, "Info");
+        final PopupSize popupSize = new PopupSize(400, 250, 200, 200, true);
+        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, popupSize, "Info", null);
     }
 
     @ProxyEvent
@@ -57,45 +53,27 @@ public class InfoDocumentPresenter
     public void onCreate(final ShowInfoDocumentDialogEvent event) {
         final SharedDocRefInfo info = event.getInfo();
 
-        getView().getDocUuid().setText(info.getUuid());
-        getView().getDocType().setText("Type - " + info.getType());
-        getView().getDocName().setText("Name - " + info.getName());
+        String string = "";
+        if (info.getId() != null) {
+            string += "Id: " + String.valueOf(info.getId()) + "\n";
+        }
 
-        final String created = "Created by " + info.getCreateUser() + " at";
-        getView().getCreatedUser().setText(created);
-        getView().getCreatedTime().setText(ClientDateUtil.toISOString(info.getCreateTime()));
-        final String updated = "Updated by " + info.getUpdateUser() + " at";
-        getView().getUpdatedUser().setText(updated);
-        getView().getUpdatedTime().setText(ClientDateUtil.toISOString(info.getUpdateTime()));
+        string += "" +
+                "UUID: " + info.getUuid() +
+                "\nType: " + info.getType() +
+                "\nName: " + info.getName() +
+                "\nCreated By: " + info.getCreateUser() +
+                "\nCreated On: " + ClientDateUtil.toISOString(info.getCreateTime()) +
+                "\nUpdated By: " + info.getCreateUser() +
+                "\nUpdated On: " + ClientDateUtil.toISOString(info.getCreateTime());
+
+        getView().setInfo(string);
 
         forceReveal();
     }
 
-    @Override
-    public void onHideRequest(boolean autoClose, boolean ok) {
-
-    }
-
-    @Override
-    public void onHide(boolean autoClose, boolean ok) {
-
-    }
-
     public interface InfoDocumentView extends View {
-
-        HasText getDocType();
-
-        HasText getDocUuid();
-
-        HasText getDocName();
-
-        HasText getCreatedUser();
-
-        HasText getCreatedTime();
-
-        HasText getUpdatedUser();
-
-        HasText getUpdatedTime();
+        void setInfo(String info);
     }
 
     @ProxyCodeSplit

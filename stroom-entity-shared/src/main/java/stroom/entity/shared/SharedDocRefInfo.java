@@ -1,28 +1,37 @@
 package stroom.entity.shared;
 
 public class SharedDocRefInfo extends SharedDocRef {
-
+    private Long id;
     private Long createTime;
     private Long updateTime;
     private String createUser;
     private String updateUser;
 
     public SharedDocRefInfo() {
-
     }
 
     public SharedDocRefInfo(final String type,
                             final String uuid,
                             final String name,
+                            final Long id,
                             final Long createTime,
                             final String createUser,
                             final Long updateTime,
                             final String updateUser) {
         super(type, uuid, name);
+        this.id = id;
         this.createTime = createTime;
         this.createUser = createUser;
         this.updateTime = updateTime;
         this.updateUser = updateUser;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(final Long id) {
+        this.id = id;
     }
 
     public Long getCreateTime() {
@@ -58,12 +67,18 @@ public class SharedDocRefInfo extends SharedDocRef {
     }
 
     public static class Builder extends SharedDocRef.BaseBuilder<SharedDocRefInfo, Builder> {
+        private Long id;
         private Long createTime;
         private Long updateTime;
         private String createUser;
         private String updateUser;
 
         public Builder() {
+        }
+
+        public Builder id(final Long value) {
+            this.id = value;
+            return self();
         }
 
         public Builder createTime(final Long value) {
@@ -93,10 +108,10 @@ public class SharedDocRefInfo extends SharedDocRef {
 
         @Override
         public SharedDocRefInfo build() {
-
             return new SharedDocRefInfo(getType(),
                     getUuid(),
                     getName(),
+                    id,
                     createTime,
                     createUser,
                     updateTime,

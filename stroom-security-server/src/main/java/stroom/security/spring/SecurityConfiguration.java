@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import stroom.apiclients.AuthenticationServiceClients;
+import stroom.security.server.AuthenticationServiceClients;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.JWTService;

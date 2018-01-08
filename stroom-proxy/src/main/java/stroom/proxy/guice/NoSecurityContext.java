@@ -35,7 +35,7 @@ public class NoSecurityContext implements SecurityContext {
     }
 
     @Override
-    public String getUserUuid() {
+    public String getApiToken() {
         return null;
     }
 

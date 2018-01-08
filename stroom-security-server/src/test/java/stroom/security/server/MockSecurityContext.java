@@ -40,7 +40,7 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public String getUserUuid() {
+    public String getApiToken() {
         return null;
     }
 

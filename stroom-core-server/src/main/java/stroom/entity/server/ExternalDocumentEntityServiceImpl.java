@@ -550,6 +550,11 @@ public abstract class ExternalDocumentEntityServiceImpl
     }
 
     @Override
+    public Set<DocRef> listDocuments() {
+        return null;
+    }
+
+    @Override
     public DocRef importDocument(final DocRef docRef,
                                  final Map<String, String> dataMap,
                                  final ImportState importState,
@@ -697,6 +702,7 @@ public abstract class ExternalDocumentEntityServiceImpl
                         .uuid(entity.getUuid())
                         .name(entity.getName())
                         .build())
+                .id(entity.getId())
                 .createUser(entity.getCreateUser())
                 .createTime(entity.getCreateTime())
                 .updateUser(entity.getUpdateUser())

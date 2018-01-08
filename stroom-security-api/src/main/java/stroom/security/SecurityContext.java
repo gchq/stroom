@@ -39,11 +39,11 @@ public interface SecurityContext {
     String getUserId();
 
     /**
-     * Get the uuid of the user associated with this security context.
+     * Gets an API token string for the current user.
      *
-     * @return The uuid of the user associated with this security context.
+     * @return An API token string for the current user.
      */
-    String getUserUuid();
+    String getApiToken();
 
     /**
      * Check if the user associated with this security context is logged in.

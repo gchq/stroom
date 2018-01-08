@@ -23,7 +23,6 @@ import net.sf.saxon.event.ReceivingContentHandler;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -40,8 +39,7 @@ import java.io.StringReader;
 @Scope(StroomScope.PROTOTYPE)
 class JsonToXml extends StroomExtensionFunctionCall {
     @Override
-    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
-            throws XPathException {
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         Sequence result = EmptyAtomicSequence.getInstance();
 
         try {

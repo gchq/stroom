@@ -39,7 +39,7 @@ else
     git checkout $STROOM_RESOURCES_BRANCH
 
     echo "Start all the services we need to run the integration tests in stroom"
-    nohup ./bounceIt.sh up -e -y -x --build kafka stroom-db stroom-stats-db &
+    ./bounceIt.sh 'up -d --build' -e -y -x kafka stroom-db stroom-stats-db
     popd
     popd
 
