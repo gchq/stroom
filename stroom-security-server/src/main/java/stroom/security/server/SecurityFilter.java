@@ -16,7 +16,6 @@
 
 package stroom.security.server;
 
-import com.google.common.base.Strings;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.slf4j.Logger;
@@ -235,16 +234,16 @@ public class SecurityFilter implements Filter {
         final String authenticationRequestBaseUrl = config.getAuthenticationServiceUrl() + "/authenticate";
 
         // Get the redirect URL for the auth service from the current request.
-        String url = request.getRequestURL().toString();
+        final String url = request.getRequestURL().toString();
 
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request.getSession(true), url);
 
         // If we're using the request URL we want to trim off any trailing params
-        URI parsedRequestUrl = UriBuilder.fromUri(url).build();
-        String redirectUrl = parsedRequestUrl.getScheme() +"://"+ parsedRequestUrl.getHost() + ":" + parsedRequestUrl.getPort();
-        if(!Strings.isNullOrEmpty(parsedRequestUrl.getPath())) {
-            redirectUrl += "/" + parsedRequestUrl.getPath();
+        final URI parsedRequestUrl = UriBuilder.fromUri(url).build();
+        String redirectUrl = parsedRequestUrl.getScheme() + "://" + parsedRequestUrl.getHost() + ":" + parsedRequestUrl.getPort();
+        if (parsedRequestUrl.getPath() != null && parsedRequestUrl.getPath().length() > 0 && !parsedRequestUrl.getPath().equals("/")) {
+            redirectUrl += parsedRequestUrl.getPath();
         }
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
