@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#541** : Marked old stream retention job as deprecated in description.
 
+* Issue **#542** : Fix for lazy hibernate object initialisation when stepping cooked data.
+
 ## [v5.1-beta.5] - 2018-01-04
 
 * Issue **#540** : Improve description text for stroom.statistics.sql.maxProcessingAge property
