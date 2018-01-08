@@ -13,7 +13,7 @@ NC='\033[0m' # No Colour
 
 sudo bash -c "echo '127.0.0.1 kafka' >> /etc/hosts"
 sudo bash -c "echo '127.0.0.1 hbase' >> /etc/hosts"
-sudo bash -c "echo '127.0.0.1 auth-service' >> /etc/hosts"
+sudo bash -c "echo '127.0.0.1 stroom-auth-service' >> /etc/hosts"
 
 echo -e "TRAVIS_EVENT_TYPE:   [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
 
