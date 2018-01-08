@@ -154,7 +154,7 @@ public class UserSecurityMethodInterceptor {
                     annotation = targetMethod.getAnnotation(annotationClass);
                 }
 
-                // Method annotations override class level annotations so make a
+                // Method annotations override class level externaldoc so make a
                 // note that the annotation was found on a method.
                 if (annotation != null) {
                     annotationOnMethod = true;

@@ -1,7 +1,8 @@
 dependencies {
-    compile project(':stroom-annotations-shared')
     compile project(':stroom-core-client')
     compile project(':stroom-core-shared')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
     compile project(':stroom-core-client-widget')
     compile project(':stroom-security-client-api')
 

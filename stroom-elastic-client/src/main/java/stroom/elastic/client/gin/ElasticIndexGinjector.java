@@ -5,7 +5,7 @@ import stroom.elastic.client.ElasticIndexPlugin;
 import stroom.elastic.client.presenter.ElasticIndexExternalPresenter;
 
 public interface ElasticIndexGinjector {
-    AsyncProvider<ElasticIndexPlugin> getElasticIndexPluging();
+    AsyncProvider<ElasticIndexPlugin> getElasticIndexPlugin();
 
     AsyncProvider<ElasticIndexExternalPresenter> getElasticIndexExternalPresenter();
 }

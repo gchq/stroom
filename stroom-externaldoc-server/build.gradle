@@ -2,10 +2,8 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-api')
-    compile project(':stroom-annotations-shared')
 
     compile libs.spring_context
-    compile libs.spring_tx
 
     compile libs.javax_inject
 }

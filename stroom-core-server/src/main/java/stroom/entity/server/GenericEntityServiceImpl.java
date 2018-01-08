@@ -20,12 +20,10 @@ package stroom.entity.server;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.HasLoadById;
 import stroom.entity.shared.HasLoadByUuid;
-import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 import java.util.HashSet;
@@ -37,7 +35,7 @@ public class GenericEntityServiceImpl implements GenericEntityService {
     private final EntityServiceBeanRegistry entityServiceBeanRegistry;
 
     @Inject
-    public GenericEntityServiceImpl(EntityServiceBeanRegistry entityServiceBeanRegistry) {
+    public GenericEntityServiceImpl(final EntityServiceBeanRegistry entityServiceBeanRegistry) {
         this.entityServiceBeanRegistry = entityServiceBeanRegistry;
     }
 
@@ -229,7 +227,12 @@ public class GenericEntityServiceImpl implements GenericEntityService {
     @Override
     public <E extends Entity> EntityService<E> getEntityService(
             final String entityType) {
-        final Object entityService = entityServiceBeanRegistry.getEntityService(entityType);
+        Object entityService = entityServiceBeanRegistry.getEntityService(entityType);
+
+        //if (entityService == null || !(entityService instanceof EntityService)) {
+        //    entityService = externalDocRefServices.get(entityType);
+        //}
+
         if (entityService == null || !(entityService instanceof EntityService)) {
             throw new EntityServiceException("Cannot find entity service for " + entityType, null, false);
         }

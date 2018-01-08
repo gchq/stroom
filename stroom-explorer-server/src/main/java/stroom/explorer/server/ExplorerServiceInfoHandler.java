@@ -3,9 +3,9 @@ package stroom.explorer.server;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.SharedDocRefInfo;
 import stroom.explorer.shared.ExplorerServiceInfoAction;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.shared.DocRefInfo;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;

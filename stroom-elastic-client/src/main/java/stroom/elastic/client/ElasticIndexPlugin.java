@@ -5,13 +5,15 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.elastic.client.presenter.ElasticIndexExternalPresenter;
-import stroom.elastic.shared.ElasticIndex;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.shared.ExternalDocRefConstants;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.v2.DocRef;
 
-public class ElasticIndexPlugin extends EntityPlugin<ElasticIndex> {
+public class ElasticIndexPlugin extends DocumentPlugin<SharedDocRef> {
     private final Provider<ElasticIndexExternalPresenter> editorProvider;
 
     @Inject
@@ -30,7 +32,16 @@ public class ElasticIndexPlugin extends EntityPlugin<ElasticIndex> {
     }
 
     @Override
+    protected DocRef getDocRef(final SharedDocRef document) {
+        return new DocRef.Builder()
+                .type(document.getType())
+                .uuid(document.getUuid())
+                .name(document.getName())
+                .build();
+    }
+
+    @Override
     public String getType() {
-        return ElasticIndex.ENTITY_TYPE;
+        return ExternalDocRefConstants.ELASTIC_INDEX;
     }
 }

@@ -28,7 +28,15 @@ import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.ExternalDocRefConstants;
+import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.importexport.server.ImportExportActionHandlers;
+import stroom.importexport.server.ImportExportHelper;
+import stroom.logging.DocumentEventLog;
+import stroom.node.server.StroomPropertyService;
+import stroom.security.SecurityContext;
 
+import javax.inject.Inject;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -38,6 +46,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static stroom.entity.shared.ExternalDocRefConstants.EXTERNAL_TYPES;
 
 @Component
 public class EntityServiceBeanRegistry implements ApplicationContextAware {
@@ -49,14 +61,30 @@ public class EntityServiceBeanRegistry implements ApplicationContextAware {
     private ApplicationContext applicationContext;
     private volatile boolean init;
 
+    private final Map<String, Object> externalDocRefServices = new HashMap<>();
+
+    /**
+     * Used to register services that are instantiations of a generic class. These are services that cannot
+     * be found using Spring Bean reflection.
+     * @param type The doc ref type this service will manage
+     * @param service An instance of the service to use.
+     */
+    public void addExternal(final String type, final Object service) {
+        this.externalDocRefServices.put(type, service);
+    }
+
     public Object getEntityService(final Class<?> clazz) {
         final String beanName = getEntityServiceName(clazz, clazz);
         return applicationContext.getBean(beanName);
     }
 
     public Object getEntityService(final String entityType) {
-        final String beanName = getEntityServiceName(entityType);
-        return applicationContext.getBean(beanName);
+        if (externalDocRefServices.containsKey(entityType)) {
+            return externalDocRefServices.get(entityType);
+        } else {
+            final String beanName = getEntityServiceName(entityType);
+            return applicationContext.getBean(beanName);
+        }
     }
 
     public Object invoke(final String methodName, final Object... args) {

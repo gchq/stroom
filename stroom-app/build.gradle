@@ -66,7 +66,7 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-statistics-server')
-    compile project(':stroom-annotations-server')
+    compile project(':stroom-externaldoc-server')
     compile project(':stroom-elastic-server')
     compile project(':stroom-ruleset-server')
 

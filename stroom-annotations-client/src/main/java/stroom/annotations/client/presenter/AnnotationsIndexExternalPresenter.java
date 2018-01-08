@@ -1,30 +1,24 @@
 package stroom.annotations.client.presenter;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.annotations.shared.AnnotationsIndex;
 import stroom.cell.clickable.client.Hyperlink;
 import stroom.document.client.DocumentTabData;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.shared.ExternalDocRefConstants;
+import stroom.entity.shared.SharedDocRef;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.iframe.client.presenter.IFramePresenter;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
 
 public class AnnotationsIndexExternalPresenter
-        extends DocumentEditPresenter<IFramePresenter.IFrameView, AnnotationsIndex>
+        extends DocumentEditPresenter<IFramePresenter.IFrameView, SharedDocRef>
         implements DocumentTabData {
-
-    private static final TabData SETTINGS = new TabDataImpl("Annotations Index");
 
     private final IFramePresenter settingsPresenter;
     private String uiUrl;
@@ -44,7 +38,7 @@ public class AnnotationsIndexExternalPresenter
     }
 
     @Override
-    protected void onRead(final AnnotationsIndex document) {
+    protected void onRead(final SharedDocRef document) {
         final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                 .href(this.uiUrl + "/" + document.getUuid())
                 .build();
@@ -52,13 +46,13 @@ public class AnnotationsIndexExternalPresenter
     }
 
     @Override
-    protected void onWrite(final AnnotationsIndex annotationsIndex) {
+    protected void onWrite(final SharedDocRef annotationsIndex) {
 
     }
 
     @Override
     public String getType() {
-        return AnnotationsIndex.ENTITY_TYPE;
+        return ExternalDocRefConstants.ANNOTATIONS_INDEX;
     }
 
     @Override
