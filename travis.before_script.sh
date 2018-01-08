@@ -13,7 +13,7 @@ NC='\033[0m' # No Colour
 
 sudo bash -c "echo '127.0.0.1 kafka' >> /etc/hosts"
 sudo bash -c "echo '127.0.0.1 hbase' >> /etc/hosts"
-sudo bash -c "echo '127.0.0.1 auth-service' >> /etc/hosts"
+sudo bash -c "echo '127.0.0.1 stroom-auth-service' >> /etc/hosts"
 
 echo -e "TRAVIS_EVENT_TYPE:   [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
 
@@ -39,7 +39,7 @@ else
     git checkout $STROOM_RESOURCES_BRANCH
 
     echo "Start all the services we need to run the integration tests in stroom"
-    nohup ./bounceIt.sh up -e -y -x --build kafka stroom-db stroom-stats-db &
+    ./bounceIt.sh 'up -d --build' -e -y -x kafka stroom-db stroom-stats-db
     popd
     popd
 

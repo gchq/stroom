@@ -249,6 +249,7 @@ public class SecurityFilter implements Filter {
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         if (config.getAdvertisedStroomUrl() != null && config.getAdvertisedStroomUrl().trim().length() > 0) {
+            LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
             redirectUrl = config.getAdvertisedStroomUrl();
         }
 
@@ -298,6 +299,9 @@ public class SecurityFilter implements Filter {
                 // If we can't exchange the accessCode for an idToken then this probably means the
                 // accessCode doesn't exist any more, or has already been used. so we can't proceed.
                 LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?", e);
+            }
+            else {
+                LOGGER.error("Unable to retrieve idToken!", e);
             }
         } catch (final MalformedClaimException e) {
             LOGGER.error(e.getMessage(), e);
