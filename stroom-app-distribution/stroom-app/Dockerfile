@@ -48,4 +48,4 @@ VOLUME /usr/stroom-app/volumes/
 EXPOSE 8080
 
 # start Stroom and tail the log file
-CMD ./bin/start.sh && mkdir -p ./instance/logs && touch ./instance/logs/stroom.log && tail -f ./instance/logs/stroom.log
+CMD ./bin/start.sh && mkdir -p ./instance/logs && touch ./instance/logs/stroom.log && tail -F ./instance/logs/stroom.log
