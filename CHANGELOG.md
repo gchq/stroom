@@ -60,6 +60,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Merged in [v5.0-beta.63]
 
+## [v5.1-beta.6] - 2018-01-08
+
+* Issue **#541** : Marked old stream retention job as deprecated in description.
+
+* Issue **#542** : Fix for lazy hibernate object initialisation when stepping cooked data.
+
 ## [v5.1-beta.5] - 2018-01-04
 
 * Issue **#540** : Improve description text for stroom.statistics.sql.maxProcessingAge property
@@ -841,6 +847,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v6.0-alpha.2]: https://github.com/gchq/stroom/compare/v6.0-alpha.1...v6.0-alpha.2
 [v6.0-alpha.1]: https://github.com/gchq/stroom/releases/tag/v6.0-alpha.1
 
+[v5.1-beta.6]: https://github.com/gchq/stroom/compare/v5.1-beta.5...v5.1-beta.6
 [v5.1-beta.5]: https://github.com/gchq/stroom/compare/v5.1-beta.4...v5.1-beta.5
 [v5.1-beta.4]: https://github.com/gchq/stroom/compare/v5.1-beta.3...v5.1-beta.4
 [v5.1-beta.3]: https://github.com/gchq/stroom/compare/v5.1-beta.2...v5.1-beta.3
