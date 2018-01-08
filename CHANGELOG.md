@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#541** : Marked old stream retention job as deprecated in description.
+
 ## [v5.1-beta.5] - 2018-01-04
 
 * Issue **#540** : Improve description text for stroom.statistics.sql.maxProcessingAge property
