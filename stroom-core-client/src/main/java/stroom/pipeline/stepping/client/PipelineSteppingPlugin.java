@@ -37,6 +37,7 @@ import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.shared.StreamProcessor;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<EntityChooser> pipelineSelection;
@@ -84,6 +85,9 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
                 streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(streamId);
                 streamAttributeMapCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
+                streamAttributeMapCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
+                streamAttributeMapCriteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+                streamAttributeMapCriteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
 
                 dispatcher.exec(new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(streamAttributeMapCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {
