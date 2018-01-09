@@ -14,7 +14,7 @@
 # limitations under the License.
 #**********************************************************************
 
-FROM openjdk:8-alpine
+FROM openjdk:8u151-jre-alpine
 
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
 ENV IN_DOCKER="true"
