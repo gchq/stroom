@@ -13,20 +13,21 @@ import stroom.node.shared.ClientProperties;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.iframe.client.presenter.IFramePresenter;
 
 import java.util.Map;
 
 public class ExternalDocRefPresenter
-        extends DocumentEditPresenter<IFramePresenter.IFrameView, SharedDocRef>
+        extends DocumentEditPresenter<IFrameContentPresenter.IFrameContentView, SharedDocRef>
         implements DocumentTabData {
 
-    private final IFramePresenter settingsPresenter;
+    private final IFrameContentPresenter settingsPresenter;
     private Map<String, String> uiUrls;
 
     @Inject
     public ExternalDocRefPresenter(final EventBus eventBus,
-                                   final IFramePresenter iFramePresenter,
+                                   final IFrameContentPresenter iFramePresenter,
                                    final ClientSecurityContext securityContext,
                                    final ClientPropertyCache clientPropertyCache) {
         super(eventBus, iFramePresenter.getView(), securityContext);
@@ -42,6 +43,7 @@ public class ExternalDocRefPresenter
         final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                 .href(this.uiUrls.get(document.getType()) + "/" + document.getUuid())
                 .build();
+        this.settingsPresenter.setIcon(getIcon());
         this.settingsPresenter.setHyperlink(hyperlink);
     }
 

@@ -51,6 +51,14 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
         addProperty(props, ClientProperties.API_KEYS_UI_URL);
         addProperty(props, ClientProperties.CHANGE_PASSWORD_UI_URL);
 
+        final String urlList = StroomProperties.getProperty(ClientProperties.URL_LIST);
+        props.put(ClientProperties.URL_LIST, urlList);
+        if (null != urlList) {
+            final String[] namedUrls = urlList.split(",");
+            for (final String namedUrl : namedUrls) {
+                addProperty(props, ClientProperties.URL_BASE + namedUrl);
+            }
+        }
 
         final String externalTypesList = StroomProperties.getProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES);
         props.put(ClientProperties.EXTERNAL_DOC_REF_TYPES, externalTypesList);
