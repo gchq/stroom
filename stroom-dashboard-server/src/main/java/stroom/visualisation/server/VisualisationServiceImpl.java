@@ -17,6 +17,8 @@
 
 package stroom.visualisation.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,18 +29,28 @@ import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
+import stroom.script.server.ScriptServiceImpl;
+import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 
 import javax.inject.Inject;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Profile(StroomSpringProfiles.PROD)
 @Component("visualisationService")
 @Transactional
 public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualisation, FindVisualisationCriteria>
         implements VisualisationService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(VisualisationServiceImpl.class);
+
     @Inject
     VisualisationServiceImpl(final StroomEntityManager entityManager,
                              final ImportExportHelper importExportHelper,
@@ -59,6 +71,25 @@ public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualis
     @Override
     protected QueryAppender<Visualisation, FindVisualisationCriteria> createQueryAppender(StroomEntityManager entityManager) {
         return new VisualisationQueryAppender(entityManager);
+    }
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final Set<DocRef> docs = super.listDocuments();
+        return docs.stream().collect(Collectors.toMap(Function.identity(), this::getDependencies));
+    }
+
+    private Set<DocRef> getDependencies(final DocRef docRef) {
+        try {
+            final Visualisation visualisation = loadByUuid(docRef.getUuid());
+            if (visualisation.getScriptRef() != null) {
+                return Collections.singleton(visualisation.getScriptRef());
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return Collections.emptySet();
     }
 
     private static class VisualisationQueryAppender extends QueryAppender<Visualisation, FindVisualisationCriteria> {

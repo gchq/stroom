@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -66,7 +67,7 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
     private Class<D> clazz;
 
     @Inject
-    public Store(final Persistence persistence, final SecurityContext securityContext) throws IOException {
+    public Store(final Persistence persistence, final SecurityContext securityContext) {
         this.persistence = persistence;
         this.securityContext = securityContext;
     }
@@ -217,6 +218,14 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         return list.stream()
                 .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT))
                 .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final List<DocRef> list = list();
+        return list.stream()
+                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT))
+                .collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
     @Override

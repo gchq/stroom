@@ -555,6 +555,11 @@ public abstract class ExternalDocumentEntityServiceImpl
     }
 
     @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        return null;
+    }
+
+    @Override
     public DocRef importDocument(final DocRef docRef,
                                  final Map<String, String> dataMap,
                                  final ImportState importState,
