@@ -40,21 +40,22 @@ public class ClientProperties implements SharedObject {
     public static final String NAME_PATTERN = "stroom.namePattern";
     public static final String LABEL_COLOURS = "stroom.theme.labelColours";
     public static final String HELP_URL = "stroom.helpUrl";
-    public static final String URL_LIST = "stroom.url.list";
-    public static final String URL_BASE = "stroom.url.";
-    public static final String URL_KIBANA_UI = URL_BASE + "kibana-ui";
-    public static final String URL_ELASTIC_EXPLORER = URL_BASE + "elastic-explorer";
-    public static final String URL_ELASTIC_QUERY_UI = URL_BASE + "elastic-query-ui";
-    public static final String URL_ANNOTATIONS_QUERY_UI = URL_BASE + "annotations-query-ui";
-    public static final String URL_ANNOTATIONS_SERVICE = URL_BASE + "annotations-service";
-    public static final String URL_DASHBOARD = URL_BASE + "annotations-dashboard";
     public static final String AUTHENTICATION_SERVICE_URL = "stroom.auth.authentication.service.url";
-
     public static final String USERS_UI_URL = "stroom.users.ui.url";
     public static final String API_KEYS_UI_URL = "stroom.apikeys.ui.url";
     public static final String CHANGE_PASSWORD_UI_URL = "stroom.changepassword.url";
-
     public static final String ADVERTISED_HOST_URL = "stroom.advertisedUrl";
+
+    public static final String URL_KIBANA_UI = "stroom.url.kibana-ui";
+    public static final String AUTH_SERVICE_URL = "stroom.auth.service.url";
+    public static final String AUTH_UI_URL = "stroom.auth.ui.url";
+
+    public static final String URL_LIST = "stroom.url.list";
+    public static final String URL_BASE = "stroom.url.";
+
+    public static final String EXTERNAL_DOC_REF_TYPES = "stroom.doc-ref.types";
+    public static final String URL_DOC_REF_UI_BASE = "stroom.url.doc-ref.ui.";
+    public static final String URL_DOC_REF_SERVICE_BASE = "stroom.url.doc-ref.service.";
 
     private static final long serialVersionUID = 8717922468620533698L;
     private HashMap<String, String> map;

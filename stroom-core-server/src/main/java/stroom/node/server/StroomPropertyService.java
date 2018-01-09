@@ -16,8 +16,12 @@
 
 package stroom.node.server;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * A service that can be injected with spring that caches and delegates property
@@ -38,17 +42,25 @@ public interface StroomPropertyService {
 
     boolean getBooleanProperty(String propertyName, boolean defaultValue);
 
-    default Map<String, String> getLookupTable(final String listProp, final String base) {
-        final Map<String, String> result = new HashMap<>();
+    default List<String> getCsvProperty(final String listProp) {
+        final List<String> values = new ArrayList<>();
 
         final String keyList = getProperty(listProp);
         if (null != keyList) {
             final String[] keys = keyList.split(",");
-            for (final String key : keys) {
-                final String value = getProperty(base + key);
-                result.put(key, value);
-            }
+            values.addAll(Arrays.asList(keys));
         }
+
+        return values;
+    }
+
+    default Map<String, String> getLookupTable(final String listProp, final String base) {
+        final Map<String, String> result = new HashMap<>();
+
+        getCsvProperty(listProp).forEach(key -> {
+            final String value = getProperty(base + key);
+            result.put(key, value);
+        });
 
         return result;
     }

@@ -9,7 +9,7 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.connectors.elastic.StroomElasticProducer;
 import stroom.connectors.elastic.StroomElasticProducerFactoryService;
-import stroom.elastic.shared.ElasticIndex;
+import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -81,7 +81,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(description = "The elastic index to send records to.")
-    @PipelinePropertyDocRef(types = ElasticIndex.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = ExternalDocRefConstants.ELASTIC_INDEX)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }
