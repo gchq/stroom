@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Generate additional major and minor floating docker tags in travis build, e.g. v6-LATEST and v6.0-LATEST
 
+* Added a feature to list dependencies for all document entities and indicate where dependencies are missing.
+
 * Merged in [v5.1-beta.5]
 
 ## [v6.0-alpha.4]
