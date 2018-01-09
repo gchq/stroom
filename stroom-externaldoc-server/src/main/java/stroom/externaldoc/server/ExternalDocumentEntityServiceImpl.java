@@ -175,6 +175,11 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     }
 
     @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        return null;
+    }
+
+    @Override
     public DocRef renameDocument(final String uuid, final String name) {
         try {
             final Response response = docRefHttpClient.documentRenamed(uuid, name);
