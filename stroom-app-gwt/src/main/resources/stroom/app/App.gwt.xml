@@ -56,9 +56,9 @@
 
     <!-- Import functional areas -->
     <!--  Minimal -->
-    <inherits name="stroom.annotations.AnnotationsIndex" />
-    <inherits name="stroom.elastic.ElasticIndex" />
+    <inherits name="stroom.externaldoc.ExternalDocRef" />
     <inherits name="stroom.about.About" />
+    <inherits name="stroom.elastic.Elastic" />
     <inherits name="stroom.alert.Alert" />
     <inherits name="stroom.apikeys.ApiKeys" />
     <inherits name="stroom.content.Content" />

@@ -8,6 +8,7 @@ import org.apache.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.ClientProperties;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.query.api.v2.DocRef;
 import stroom.query.audit.DocRefResourceHttpClient;
@@ -16,8 +17,6 @@ import stroom.util.cache.CacheManager;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.util.concurrent.TimeUnit;
-
-import static stroom.entity.server.ExternalDocumentEntityServiceImpl.BASE_URL_PROPERTY;
 
 @Component
 public class ElasticIndexCacheImpl implements ElasticIndexCache {
@@ -31,7 +30,7 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
     @Inject
     ElasticIndexCacheImpl(final CacheManager cacheManager,
                           final StroomPropertyService propertyService) {
-        final String urlPropKey = String.format(BASE_URL_PROPERTY, ExternalDocRefConstants.ELASTIC_INDEX);
+        final String urlPropKey = ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX;
         docRefHttpClient = new DocRefResourceHttpClient(propertyService.getProperty(urlPropKey));
 
         final CacheLoader<DocRef, ElasticIndexConfig> cacheLoader = CacheLoader.from(k -> {

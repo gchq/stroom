@@ -46,8 +46,7 @@ include 'stroom-security-client'
 include 'stroom-index-client'
 include 'stroom-statistics-client'
 include 'stroom-dashboard-client'
-include 'stroom-annotations-client'
-include 'stroom-elastic-client'
+include 'stroom-externaldoc-client'
 
 // GWT compilation projects.
 include 'stroom-dashboard-gwt'

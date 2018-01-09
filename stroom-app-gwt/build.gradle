@@ -9,8 +9,7 @@ def extraDir = "${gwtBuildDir}/extra"
 
 dependencies {
     compile project(':stroom-index-client')
-    compile project(':stroom-annotations-client')
-    compile project(':stroom-elastic-client')
+    compile project(':stroom-externaldoc-client')
     compile project(':stroom-statistics-client')
     compile project(':stroom-dashboard-client')
     compile project(':stroom-security-shared')
@@ -189,7 +188,6 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
             '-war', warDir,
             '-deploy', deployDir,
             '-extra', extraDir,
-            '-bindAddress', '192.168.1.14',
             '-strict',
             '-noserver',
             module                                  // Your GWT module

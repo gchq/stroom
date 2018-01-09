@@ -1,4 +1,4 @@
-package stroom.elastic.client.presenter;
+package stroom.externaldoc.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -15,48 +15,59 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.iframe.client.presenter.IFramePresenter;
 
-public class ElasticIndexExternalPresenter
+import java.util.Map;
+
+public class ExternalDocRefPresenter
         extends DocumentEditPresenter<IFramePresenter.IFrameView, SharedDocRef>
         implements DocumentTabData {
 
     private final IFramePresenter settingsPresenter;
-    private String elasticQueryUiUrl;
+    private Map<String, String> uiUrls;
 
     @Inject
-    public ElasticIndexExternalPresenter(final EventBus eventBus,
-                                         final IFramePresenter iFramePresenter,
-                                         final ClientSecurityContext securityContext,
-                                         final ClientPropertyCache clientPropertyCache) {
+    public ExternalDocRefPresenter(final EventBus eventBus,
+                                   final IFramePresenter iFramePresenter,
+                                   final ClientSecurityContext securityContext,
+                                   final ClientPropertyCache clientPropertyCache) {
         super(eventBus, iFramePresenter.getView(), securityContext);
         this.settingsPresenter = iFramePresenter;
         this.settingsPresenter.setIcon(getIcon());
 
         clientPropertyCache.get()
-                .onSuccess(result -> this.elasticQueryUiUrl = result.get(ClientProperties.URL_ELASTIC_QUERY_UI))
-                .onFailure(caught -> AlertEvent.fireError(ElasticIndexExternalPresenter.this, caught.getMessage(), null));
+                .onSuccess(result -> this.uiUrls = result.getLookupTable(ClientProperties.EXTERNAL_DOC_REF_TYPES, ClientProperties.URL_DOC_REF_UI_BASE))
+                .onFailure(caught -> AlertEvent.fireError(ExternalDocRefPresenter.this, caught.getMessage(), null));
     }
 
     @Override
-    protected void onRead(final SharedDocRef elasticIndex) {
+    protected void onRead(final SharedDocRef document) {
         final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
-                .href(this.elasticQueryUiUrl + "/" + elasticIndex.getUuid())
+                .href(this.uiUrls.get(document.getType()) + "/" + document.getUuid())
                 .build();
         this.settingsPresenter.setHyperlink(hyperlink);
     }
 
     @Override
-    protected void onWrite(final SharedDocRef elasticIndex) {
+    protected void onWrite(final SharedDocRef annotationsIndex) {
 
     }
 
     @Override
     public String getType() {
-        return ExternalDocRefConstants.ELASTIC_INDEX;
+        return getDocRef().getType();
     }
 
     @Override
     public Icon getIcon() {
-        return SvgPresets.ELASTIC_SEARCH;
+        if (null != getDocRef()) {
+            switch (getDocRef().getType()) {
+                case ExternalDocRefConstants.ANNOTATIONS_INDEX:
+                    return SvgPresets.ANNOTATIONS;
+                case ExternalDocRefConstants.ELASTIC_INDEX:
+                    return SvgPresets.ELASTIC_SEARCH;
+            }
+        }
+
+        return null;
     }
 
     @Override

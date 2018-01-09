@@ -25,6 +25,7 @@ import stroom.importexport.server.ImportExportHelper;
 import stroom.importexport.shared.ImportState;
 import stroom.logging.DocumentEventLog;
 import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.ClientProperties;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.query.audit.DocRefResourceHttpClient;
@@ -41,7 +42,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntityService {
-    public static final String BASE_URL_PROPERTY = "stroom.url.doc-ref.%s";
 
     private final String type;
     private final ImportExportHelper importExportHelper;
@@ -60,7 +60,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         this.securityContext = securityContext;
         this.documentEventLog = documentEventLog;
 
-        final String urlPropKey = String.format(BASE_URL_PROPERTY, type);
+        final String urlPropKey = ClientProperties.URL_DOC_REF_SERVICE_BASE + type;
         this.docRefHttpClient = new DocRefResourceHttpClient(propertyService.getProperty(urlPropKey));
     }
 
