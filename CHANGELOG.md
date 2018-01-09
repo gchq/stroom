@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Change docker image to use openjdk:8u151-jre-alpine as a base
 
+* Issue **#539** : Fix issue of statistic search failing after it is imported
+
 ## [v5.1-beta.6] - 2018-01-08
 
 * Issue **#541** : Marked old stream retention job as deprecated in description.
