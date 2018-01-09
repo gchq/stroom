@@ -17,6 +17,7 @@
 package stroom.node.server;
 
 import org.springframework.stereotype.Component;
+import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.util.BuildInfoUtil;
@@ -51,12 +52,12 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
         addProperty(props, ClientProperties.CHANGE_PASSWORD_UI_URL);
 
 
-        final String urlList = StroomProperties.getProperty(ClientProperties.URL_LIST);
-        props.put(ClientProperties.URL_LIST, urlList);
-        if (null != urlList) {
-            final String[] namedUrls = urlList.split(",");
-            for (final String namedUrl : namedUrls) {
-                addProperty(props, ClientProperties.URL_BASE + namedUrl);
+        final String externalTypesList = StroomProperties.getProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES);
+        props.put(ClientProperties.EXTERNAL_DOC_REF_TYPES, externalTypesList);
+        if (null != externalTypesList) {
+            final String[] externalTypes = externalTypesList.split(",");
+            for (final String externalType : externalTypes) {
+                addProperty(props, ClientProperties.URL_DOC_REF_UI_BASE + externalType);
             }
         }
 

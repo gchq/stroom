@@ -23,8 +23,8 @@ import stroom.docstore.server.Store;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.ruleset.shared.RuleSet;
-import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.Message;
 
 import javax.inject.Inject;

@@ -46,6 +46,7 @@ include 'stroom-security-client'
 include 'stroom-index-client'
 include 'stroom-statistics-client'
 include 'stroom-dashboard-client'
+include 'stroom-externaldoc-client'
 
 // GWT compilation projects.
 include 'stroom-dashboard-gwt'
@@ -68,7 +69,10 @@ include 'stroom-statistics-server'
 include 'stroom-dashboard-server'
 include 'stroom-ruleset-server'
 include 'stroom-connectors'
+include 'stroom-externaldoc-server'
+include 'stroom-elastic-server'
 include 'stroom-kafka-client-impl_0_10_0_1'
+include 'stroom-elastic-client-impl_5_6_4'
 
 // Package it all together.
 include 'stroom-app'
@@ -78,10 +82,3 @@ include 'stroom-headless'
 
 // Integration tests.
 include 'stroom-integrationtest'
-include 'stroom-annotations-server'
-include 'stroom-elastic-server'
-include 'stroom-elastic-client'
-include 'stroom-elastic-shared'
-include 'stroom-elastic-client-impl_5_6_4'
-include 'stroom-annotations-shared'
-include 'stroom-annotations-client'

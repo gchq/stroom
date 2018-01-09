@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.annotations.spring.AnnotationsIndexConfiguration;
+import stroom.externaldoc.spring.ExternalDocRefConfiguration;
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.content.ContentSyncService;
 import stroom.dashboard.spring.DashboardConfiguration;
@@ -258,7 +258,7 @@ public class App extends Application<Config> {
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
                 SecurityConfiguration.class,
-                AnnotationsIndexConfiguration.class,
+                ExternalDocRefConfiguration.class,
                 ElasticIndexConfiguration.class,
                 RuleSetConfiguration.class
         );
