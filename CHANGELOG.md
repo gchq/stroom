@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Change docker image to be based on openjdk:8u151-jre-alpine
 
+* Added a feature to list dependencies for all document entities and indicate where dependencies are missing.
+
 * Merged in [v5.1-beta.5]
 
 ## [v6.0-alpha.4]

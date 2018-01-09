@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class MockDocumentEntityService<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, Clearable {
@@ -361,6 +362,12 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     public Set<DocRef> listDocuments() {
         final List<E> list = find(createCriteria());
         return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final List<E> list = find(createCriteria());
+        return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
     @Override

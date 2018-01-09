@@ -17,6 +17,7 @@
 package stroom.importexport.client.gin;
 
 import stroom.core.client.gin.PluginModule;
+import stroom.importexport.client.DependenciesPlugin;
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
 import stroom.importexport.client.presenter.ExportConfigPresenter;
@@ -44,5 +45,8 @@ public class ImportExportConfigModule extends PluginModule {
         bindPlugin(ExportConfigPlugin.class);
         bind(ExportConfigPresenter.ExportProxy.class).asEagerSingleton();
         bindPresenterWidget(ExportConfigPresenter.class, ExportConfigView.class, ExportConfigViewImpl.class);
+
+        // Dependencies.
+        bindPlugin(DependenciesPlugin.class);
     }
 }

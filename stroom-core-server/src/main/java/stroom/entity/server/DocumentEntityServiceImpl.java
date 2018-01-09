@@ -45,12 +45,12 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -398,6 +398,12 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     public Set<DocRef> listDocuments() {
         final List<E> list = find(createCriteria());
         return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final List<E> list = find(createCriteria());
+        return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
     @Override

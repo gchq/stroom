@@ -33,4 +33,8 @@ class ImportExportActionHandlersImpl implements ImportExportActionHandlers {
     ImportExportActionHandler getHandler(final String type) {
         return allHandlers.get(type);
     }
+
+    Map<String, ImportExportActionHandler> getAllHandlers() {
+        return allHandlers;
+    }
 }

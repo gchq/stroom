@@ -17,6 +17,8 @@
 
 package stroom.script.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.logging.DocumentEventLog;
@@ -34,12 +36,18 @@ import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component("scriptService")
 @Transactional
 public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScriptCriteria> implements ScriptService {
     public static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScriptServiceImpl.class);
 
     @Inject
     ScriptServiceImpl(final StroomEntityManager entityManager,
@@ -83,6 +91,24 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
 //    public Object read(final DocRef docRef) {
 //        return loadByUuid(docRef.getUuid(), FETCH_SET);
 //    }
+
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final Set<DocRef> docs = super.listDocuments();
+        return docs.stream().collect(Collectors.toMap(Function.identity(), this::getDependencies));
+    }
+
+    private Set<DocRef> getDependencies(final DocRef docRef) {
+        try {
+            final Script script = loadByUuid(docRef.getUuid());
+            return new HashSet<>(script.getDependencies().getDoc());
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return Collections.emptySet();
+    }
 
     @Override
     protected QueryAppender<Script, FindScriptCriteria> createQueryAppender(final StroomEntityManager entityManager) {
