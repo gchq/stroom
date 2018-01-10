@@ -64,6 +64,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0.1] - 2018-01-10
+
+* Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
+
+* Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
+
 ## [v5.0.0] - 2018-01-10
 
 * Promoted v5.0-beta.71 to v5.0.0
@@ -808,6 +814,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0.1]: https://github.com/gchq/stroom/compare/v5.0.1...v5.0.1
 [v5.0.0]: https://github.com/gchq/stroom/compare/v5.0-beta.71...v5.0.0
 [v5.0-beta.71]: https://github.com/gchq/stroom/compare/v5.0-beta.70...v5.0-beta.71
 [v5.0-beta.70]: https://github.com/gchq/stroom/compare/v5.0-beta.69...v5.0-beta.70
