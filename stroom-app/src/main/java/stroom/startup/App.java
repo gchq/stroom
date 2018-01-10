@@ -120,7 +120,7 @@ public class App extends Application<Config> {
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
-        bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom", "ui"));
+        bootstrap.addBundle(new AssetsBundle("/ui", "/", "index.html", "ui"));
     }
 
     @Override

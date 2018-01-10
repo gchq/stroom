@@ -170,11 +170,6 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     }
 
     @Override
-    public Set<DocRef> listDocuments() {
-        return null;
-    }
-
-    @Override
     public DocRef renameDocument(final String uuid, final String name) {
         try {
             final Response response = docRefHttpClient.documentRenamed(uuid, name);
@@ -258,6 +253,16 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         } catch (final QueryApiException | IOException e) {
             throw new EntityServiceException("Could not import entity: " + e.getLocalizedMessage());
         }
+    }
+
+    @Override
+    public Set<DocRef> listDocuments() {
+        return null;
+    }
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////
