@@ -530,7 +530,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                         .uuid(entity.getUuid())
                         .name(entity.getName())
                         .build())
-                //.id(entity.getId())
+                .otherInfo("DB ID: " + entity.getId())
                 .createUser(entity.getCreateUser())
                 .createTime(entity.getCreateTime())
                 .updateUser(entity.getUpdateUser())
