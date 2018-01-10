@@ -25,6 +25,10 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import stroom.jobsystem.shared.JobNode.JobType;
 
 public class JobTypeCell extends AbstractInputCell<JobType, JobType> {
+    public interface Resources extends ClientBundle {
+        ImageResource schedule();
+    }
+
     private String button = null;
 
     /**
@@ -33,7 +37,8 @@ public class JobTypeCell extends AbstractInputCell<JobType, JobType> {
     public JobTypeCell() {
         super("change", "click");
         if (button == null) {
-            button = "<img style=\"width:16px;height:16px;cursor:pointer\" src=\"images/history.svg\"/>";
+            final Resources res = GWT.create(Resources.class);
+            button = AbstractImagePrototype.create(res.schedule()).getHTML();
         }
     }
 
