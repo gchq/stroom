@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#547** : Data retention processing is now performed in batches (size determined by `stroom.stream.deleteBatchSize`). This change should reduce the memory required to process the data retention job.
+
 ## [v5.1-beta.6] - 2018-01-08
 
 * Issue **#541** : Marked old stream retention job as deprecated in description.
