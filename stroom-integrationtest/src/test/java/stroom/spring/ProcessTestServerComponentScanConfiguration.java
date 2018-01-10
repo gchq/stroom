@@ -50,7 +50,7 @@ import stroom.streamstore.server.MockStreamTypeService;
 import stroom.policy.server.DataRetentionExecutor;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
 import stroom.streamstore.server.StreamTypeServiceImpl;
-import stroom.streamstore.server.fs.DataRetentionTransactionHelper;
+import stroom.policy.server.DataRetentionTransactionHelper;
 import stroom.streamstore.server.fs.FileSystemStreamStore;
 import stroom.streamtask.server.MockStreamProcessorFilterService;
 import stroom.streamtask.server.MockStreamProcessorService;

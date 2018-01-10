@@ -113,7 +113,6 @@ public abstract class CoreSqlBuilder {
         args.add(arg);
         checkStringAppend("?");
         sql.append("?");
-        sql.append(args.size());
 
         return this;
     }
@@ -193,7 +192,7 @@ public abstract class CoreSqlBuilder {
                         final char c2 = string.charAt(0);
 
                         if (c2 == ',' || c2 == '.') {
-                            if (c1 != '\'' && c1 != ')' && !Character.isDigit(c1) && !Character.isLetter(c1)) {
+                            if (c1 != '\'' && c1 != ')' && c1 != '?' && !Character.isDigit(c1) && !Character.isLetter(c1)) {
                                 throw new MalformedSqlException(
                                         "Previous character should be alphanumeric - " + info("v" + string));
                             }
