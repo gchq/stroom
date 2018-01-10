@@ -746,7 +746,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Initial open source release
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v5.0.1...HEAD
-[v5.0.1]: https://github.com/gchq/stroom/compare/v5.0.1...v5.0.1
+[v5.0.1]: https://github.com/gchq/stroom/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/gchq/stroom/compare/v5.0-beta.71...v5.0.0
 [v5.0-beta.71]: https://github.com/gchq/stroom/compare/v5.0-beta.70...v5.0-beta.71
 [v5.0-beta.70]: https://github.com/gchq/stroom/compare/v5.0-beta.69...v5.0-beta.70
