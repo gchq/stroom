@@ -18,27 +18,28 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.policy.server.DataRetentionTransactionHelper;
-import stroom.streamstore.server.StreamFields;
 import stroom.streamstore.server.StreamMaintenanceService;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestDataRetentionTransactionHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionTransactionHelper.class);
 
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
@@ -75,7 +76,7 @@ public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationT
 
         // run the stream retention task which should 'delete' one stream
         final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
-        final long count = dataRetentionTransactionHelper.getRowCount(ageRange, Collections.singleton(StreamFields.STREAM_ID));
+        final long count = dataRetentionTransactionHelper.getRowCount(ageRange, Collections.singleton(StreamDataSource.STREAM_ID));
         Assert.assertEquals(1, count);
     }
 

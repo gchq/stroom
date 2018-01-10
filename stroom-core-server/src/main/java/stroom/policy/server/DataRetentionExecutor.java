@@ -26,13 +26,13 @@ import stroom.entity.shared.Range;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.StroomPropertyService;
-import stroom.policy.shared.DataRetentionPolicy;
-import stroom.policy.shared.DataRetentionRule;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.ruleset.shared.DataRetentionPolicy;
+import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.server.DataRetentionAgeUtil;
-import stroom.streamstore.server.StreamFields;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomScope;
@@ -232,8 +232,8 @@ public class DataRetentionExecutor {
             final List<DataRetentionRule> activeRules = new ArrayList<>();
 
             // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
-            fieldSet.add(StreamFields.STREAM_ID);
-            fieldSet.add(StreamFields.CREATED_ON);
+            fieldSet.add(StreamDataSource.STREAM_ID);
+            fieldSet.add(StreamDataSource.CREATE_TIME);
 
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             rules.forEach(rule -> {
