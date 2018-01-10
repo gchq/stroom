@@ -22,12 +22,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.Period;
+import stroom.entity.shared.Range;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.ruleset.shared.DataRetentionPolicy;
-import stroom.ruleset.shared.DataRetentionRule;
+import stroom.node.server.StroomPropertyService;
+import stroom.policy.shared.DataRetentionPolicy;
+import stroom.policy.shared.DataRetentionRule;
+import stroom.query.shared.ExpressionItem;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.ExpressionTerm;
 import stroom.streamstore.server.DataRetentionAgeUtil;
-import stroom.streamstore.server.fs.DataRetentionTransactionHelper;
+import stroom.streamstore.server.StreamFields;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
@@ -36,6 +42,9 @@ import stroom.util.task.TaskMonitor;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,22 +62,24 @@ public class DataRetentionExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionExecutor.class);
 
     private static final String LOCK_NAME = "DataRetentionExecutor";
+    private static final String STREAM_DELETE_BATCH_SIZE_PROPERTY = "stroom.stream.deleteBatchSize";
 
     private final TaskMonitor taskMonitor;
     private final ClusterLockService clusterLockService;
     private final DataRetentionService dataRetentionService;
     private final DataRetentionTransactionHelper dataRetentionTransactionHelper;
+    private final StroomPropertyService propertyService;
     private final AtomicBoolean running = new AtomicBoolean();
 
-    private volatile DataRetentionPolicy lastPolicy;
-    private volatile Long lastRun;
+    private volatile Tracker tracker;
 
     @Inject
-    DataRetentionExecutor(final TaskMonitor taskMonitor, final ClusterLockService clusterLockService, final DataRetentionService dataRetentionService, final DataRetentionTransactionHelper dataRetentionTransactionHelper) {
+    DataRetentionExecutor(final TaskMonitor taskMonitor, final ClusterLockService clusterLockService, final DataRetentionService dataRetentionService, final DataRetentionTransactionHelper dataRetentionTransactionHelper, final StroomPropertyService propertyService) {
         this.taskMonitor = taskMonitor;
         this.clusterLockService = clusterLockService;
         this.dataRetentionService = dataRetentionService;
         this.dataRetentionTransactionHelper = dataRetentionTransactionHelper;
+        this.propertyService = propertyService;
     }
 
     @StroomSimpleCronSchedule(cron = "0 0 *")
@@ -101,6 +112,9 @@ public class DataRetentionExecutor {
         if (dataRetentionPolicy != null) {
             final List<DataRetentionRule> rules = dataRetentionPolicy.getRules();
             if (rules != null && rules.size() > 0) {
+                // Figure out what the batch size will be for deletion.
+                final long batchSize = propertyService.getLongProperty(STREAM_DELETE_BATCH_SIZE_PROPERTY, 1000);
+
                 // Calculate the data retention ages for all enabled rules.
                 final LocalDateTime now = LocalDateTime.now();
                 final Map<DataRetentionRule, Optional<Long>> ageMap = rules.stream()
@@ -109,19 +123,18 @@ public class DataRetentionExecutor {
 
                 // If the data retention policy has changed then we need to assume it has never been run before,
                 // i.e. all data must be considered for retention checking.
-                if (!dataRetentionPolicy.equals(lastPolicy)) {
-                    this.lastPolicy = dataRetentionPolicy;
-                    this.lastRun = null;
+                if (tracker == null || !tracker.policyEquals(dataRetentionPolicy)) {
+                    tracker = new Tracker(null, dataRetentionPolicy);
                 }
 
                 // Calculate how long it has been since we last ran this process if we have run it before.
                 final long nowMs = now.toInstant(ZoneOffset.UTC).toEpochMilli();
                 Long timeElapsed = null;
-                if (this.lastRun != null) {
-                    timeElapsed = nowMs - this.lastRun;
+                if (tracker.lastRun != null) {
+                    timeElapsed = nowMs - tracker.lastRun;
                 }
                 final Long timeElapsedSinceLastRun = timeElapsed;
-                this.lastRun = nowMs;
+                tracker = new Tracker(nowMs, dataRetentionPolicy);
 
                 // Now figure out what unique ages we have.
                 final Set<Long> ages = ageMap.values().stream()
@@ -140,9 +153,42 @@ public class DataRetentionExecutor {
 
                     final Period ageRange = new Period(minAge, maxAge);
 
-                    info("Considering stream retention for period: " + ageRange);
+                    final StringBuilder message = new StringBuilder();
+                    message.append("Considering stream retention for streams created ");
+                    if (minAge != null) {
+                        message.append("between ");
+                        message.append(DateUtil.createNormalDateTimeString(minAge));
+                        message.append(" and ");
+                        message.append(DateUtil.createNormalDateTimeString(maxAge));
+                    } else {
+                        message.append("before ");
+                        message.append(DateUtil.createNormalDateTimeString(maxAge));
+                    }
+                    info(message.toString());
 
-                    dataRetentionTransactionHelper.deleteMatching(ageRange, rules, ageMap, taskMonitor);
+                    // Figure out which rules are active and get all used fields.
+                    final ActiveRules activeRules = new ActiveRules(rules);
+
+                    // Ignore rules if none are active.
+                    if (activeRules.getActiveRules().size() > 0) {
+                        // Find out how many rows we are likely to examine.
+                        final long rowCount = dataRetentionTransactionHelper.getRowCount(ageRange, activeRules.getFieldSet());
+
+                        // If we aren't likely to be touching any rows then ignore.
+                        if (rowCount > 0) {
+                            boolean more = true;
+                            final Progress progress = new Progress(rowCount);
+                            while (more) {
+                                Range<Long> streamIdRange = null;
+                                if (progress.getStreamId() != null) {
+                                    // Process from the next stream id onwards.
+                                    streamIdRange = new Range<>(progress.getStreamId() + 1, null);
+                                }
+
+                                more = dataRetentionTransactionHelper.deleteMatching(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskMonitor, progress);
+                            }
+                        }
+                    }
                 });
             }
         }
@@ -155,5 +201,104 @@ public class DataRetentionExecutor {
     private void info(final String info) {
         LOGGER.info("Starting data retention process");
         taskMonitor.info(info);
+    }
+
+    private static class Tracker {
+        private final Long lastRun;
+
+        private final DataRetentionPolicy dataRetentionPolicy;
+        private final int policyVersion;
+        private final int policyHash;
+
+        Tracker(final Long lastRun, final DataRetentionPolicy dataRetentionPolicy) {
+            this.lastRun = lastRun;
+
+            this.dataRetentionPolicy = dataRetentionPolicy;
+            this.policyVersion = dataRetentionPolicy.getVersion();
+            this.policyHash = dataRetentionPolicy.hashCode();
+        }
+
+        boolean policyEquals(final DataRetentionPolicy dataRetentionPolicy) {
+            return policyVersion == dataRetentionPolicy.getVersion() && policyHash == dataRetentionPolicy.hashCode() && this.dataRetentionPolicy.equals(dataRetentionPolicy);
+        }
+    }
+
+    public static class ActiveRules {
+        private final Set<String> fieldSet;
+        private final List<DataRetentionRule> activeRules;
+
+        ActiveRules(final List<DataRetentionRule> rules) {
+            final Set<String> fieldSet = new HashSet<>();
+            final List<DataRetentionRule> activeRules = new ArrayList<>();
+
+            // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
+            fieldSet.add(StreamFields.STREAM_ID);
+            fieldSet.add(StreamFields.CREATED_ON);
+
+            // Also make sure we create a list of rules that are enabled and have at least one enabled term.
+            rules.forEach(rule -> {
+                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
+                    final Set<String> fields = new HashSet<>();
+                    addToFieldSet(rule, fields);
+                    if (fields.size() > 0) {
+                        fieldSet.addAll(fields);
+                        activeRules.add(rule);
+                    }
+                }
+            });
+
+            this.fieldSet = Collections.unmodifiableSet(fieldSet);
+            this.activeRules = Collections.unmodifiableList(activeRules);
+        }
+
+        private void addToFieldSet(final DataRetentionRule rule, final Set<String> fieldSet) {
+            if (rule.isEnabled() && rule.getExpression() != null) {
+                addChildren(rule.getExpression(), fieldSet);
+            }
+        }
+
+        private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
+            if (item.enabled()) {
+                if (item instanceof ExpressionOperator) {
+                    final ExpressionOperator operator = (ExpressionOperator) item;
+                    operator.getChildren().forEach(i -> addChildren(i, fieldSet));
+                } else if (item instanceof ExpressionTerm) {
+                    final ExpressionTerm term = (ExpressionTerm) item;
+                    fieldSet.add(term.getField());
+                }
+            }
+        }
+
+        public List<DataRetentionRule> getActiveRules() {
+            return activeRules;
+        }
+
+        public Set<String> getFieldSet() {
+            return fieldSet;
+        }
+    }
+
+    static class Progress {
+        private long rowNum;
+        private long rowCount;
+        private Long streamId;
+
+        Progress(final long rowCount) {
+            this.rowCount = rowCount;
+        }
+
+        public void nextStream(final long streamId) {
+            this.streamId = streamId;
+            rowNum++;
+            rowCount = Math.max(rowCount, rowNum);
+        }
+
+        public Long getStreamId() {
+            return streamId;
+        }
+
+        public String toString() {
+            return "stream " + rowNum + " of " + rowCount + " (stream id=" + streamId + ")";
+        }
     }
 }

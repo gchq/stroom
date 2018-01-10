@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamstore.server.fs;
+package stroom.policy.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,14 +27,16 @@ import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
+import stroom.entity.shared.Range;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.ruleset.shared.DataRetentionRule;
+import stroom.policy.server.DataRetentionExecutor.ActiveRules;
+import stroom.policy.server.DataRetentionExecutor.Progress;
+import stroom.policy.shared.DataRetentionRule;
+import stroom.query.shared.IndexField;
 import stroom.streamstore.server.ExpressionMatcher;
-import stroom.streamstore.shared.ExpressionUtil;
+import stroom.streamstore.server.StreamFields;
+import stroom.streamstore.server.fs.FileSystemStreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
@@ -47,9 +49,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,49 +72,47 @@ public class DataRetentionTransactionHelper {
     }
 
     @Transactional(propagation = Propagation.NEVER, readOnly = true)
-    public void deleteMatching(final Period ageRange, final List<DataRetentionRule> rules, final Map<DataRetentionRule, Optional<Long>> ageMap, final TaskMonitor taskMonitor) {
-        // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
-        final Set<String> fieldSet = new HashSet<>();
-        fieldSet.add(StreamDataSource.STREAM_ID);
-        fieldSet.add(StreamDataSource.CREATE_TIME);
-
-        // Also make sure we create a list of rules that are enabled and have at least one enabled term.
-        final List<DataRetentionRule> activeRules = new ArrayList<>();
-        rules.forEach(rule -> {
-            if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
-                final Set<String> fields = new HashSet<>();
-                addToFieldSet(rule, fields);
-                if (fields.size() > 0) {
-                    fieldSet.addAll(fields);
-                    activeRules.add(rule);
-                }
-            }
-        });
-
-        // If there are no active rules then we aren't going to process anything.
-        if (activeRules.size() == 0) {
-            return;
-        }
-
-        final long rowCount = getRowCount(ageRange, fieldSet);
-        long rowNum = 1;
-
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), dictionaryStore);
-
-        final SqlBuilder sql = getSql(ageRange, fieldSet, false);
+    public long getRowCount(final Period ageRange, final Set<String> fieldSet) {
+        long rowCount = 0;
+        final SqlBuilder sql = getSql(ageRange, null, fieldSet, true, null);
         try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql.toString())) {
                 PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
-                        final Map<String, Object> attributeMap = createAttributeMap(resultSet, fieldSet);
+                        rowCount = resultSet.getLong(1);
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return rowCount;
+    }
+
+    @Transactional(propagation = Propagation.NEVER, readOnly = true)
+    public boolean deleteMatching(final Period ageRange, final Range<Long> streamIdRange, final long batchSize, final ActiveRules activeRules, final Map<DataRetentionRule, Optional<Long>> ageMap, final TaskMonitor taskMonitor, final Progress progress) {
+        boolean more = false;
+
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), dictionaryStore);
+
+        final SqlBuilder sql = getSql(ageRange, streamIdRange, activeRules.getFieldSet(), false, batchSize);
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql.toString())) {
+                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        final Map<String, Object> attributeMap = createAttributeMap(resultSet, activeRules.getFieldSet());
                         final Long streamId = (Long) attributeMap.get(StreamDataSource.STREAM_ID);
                         try {
-                            final String streamInfo = "stream " + rowNum++ + " of " + rowCount + " (stream id=" + streamId + ")";
+                            more = true;
+                            progress.nextStream(streamId);
+                            final String streamInfo = progress.toString();
                             info(taskMonitor, "Examining " + streamInfo);
 
-                            final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules);
+                            final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules.getActiveRules());
                             if (matchingRule != null) {
                                 ageMap.get(matchingRule).ifPresent(age -> {
                                     final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATE_TIME);
@@ -133,6 +131,8 @@ public class DataRetentionTransactionHelper {
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
         }
+
+        return more;
     }
 
     private void info(final TaskMonitor taskMonitor, final String message) {
@@ -140,26 +140,7 @@ public class DataRetentionTransactionHelper {
         taskMonitor.info(message);
     }
 
-    private long getRowCount(final Period ageRange, final Set<String> fieldSet) {
-        long rowCount = 0;
-        final SqlBuilder sql = getSql(ageRange, fieldSet, true);
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql.toString())) {
-                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
-
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        rowCount = resultSet.getLong(1);
-                    }
-                }
-            }
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-        return rowCount;
-    }
-
-    private SqlBuilder getSql(final Period ageRange, final Set<String> fieldSet, final boolean count) {
+    private SqlBuilder getSql(final Period ageRange, final Range<Long> streamIdRange, final Set<String> fieldSet, final boolean count, final Long limit) {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT");
 
@@ -193,6 +174,11 @@ public class DataRetentionTransactionHelper {
 
         sql.append(" WHERE 1=1");
         sql.appendRangeQuery("S." + Stream.CREATE_MS, ageRange);
+        sql.appendRangeQuery("S." + Stream.ID, streamIdRange);
+        sql.append(" ORDER BY S." + Stream.ID);
+        if (limit != null) {
+            sql.append(" LIMIT " + limit);
+        }
 
         return sql;
     }
@@ -247,11 +233,5 @@ public class DataRetentionTransactionHelper {
         });
 
         return used.get();
-    }
-
-    private void addToFieldSet(final DataRetentionRule rule, final Set<String> fieldSet) {
-        if (rule.isEnabled()) {
-            fieldSet.addAll(ExpressionUtil.fields(rule.getExpression()));
-        }
     }
 }
