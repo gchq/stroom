@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.connectors.ConnectorProperties;
 import stroom.connectors.ExternalLibService;
 import stroom.connectors.StroomAbstractConnectorFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducer;
@@ -43,12 +42,6 @@ public class StroomElasticProducerFactoryService
                 PROP_PREFIX,
                 StroomElasticProducer.class,
                 StroomElasticProducerFactory.class);
-    }
-
-    @Override
-    protected String setupPropertyDefaults(final ConnectorProperties connectorProperties) {
-        // There should be no old configs that predate this system
-        return null;
     }
 
     @StroomShutdown

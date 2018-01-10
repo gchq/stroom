@@ -17,9 +17,11 @@ import stroom.util.shared.Severity;
 public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter {
 
     private boolean flushOnSend;
-    private final StroomKafkaProducer stroomKafkaProducer;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
+    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
+
+    private StroomKafkaProducer stroomKafkaProducer;
 
     private Locator locator;
 
@@ -30,14 +32,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
-        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer(exception ->
-                errorReceiverProxy.log(
-                        Severity.ERROR,
-                        null,
-                        null,
-                        "Called function on Fake Kafka proxy!",
-                        exception)
-        );
+        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
         this.flushOnSend = true;
     }
 
@@ -56,12 +51,27 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
     @Override
     public void startProcessing() {
         if (Strings.isNullOrEmpty(getTopic())) {
-            log(Severity.FATAL_ERROR, "A Kafka topic has not been set", null);
-            throw new LoggedException("A Kafka topic has not been set");
+            String msg = "A Kafka topic has not been set";
+            log(Severity.FATAL_ERROR, msg, null);
+            throw new LoggedException(msg);
         }
         if (Strings.isNullOrEmpty(getRecordKey())) {
-            log(Severity.FATAL_ERROR, "A Kafka record key has not been set", null);
-            throw new LoggedException("A Kafka record key has not been set");
+            String msg = "A Kafka record key has not been set";
+            log(Severity.FATAL_ERROR, msg, null);
+            throw new LoggedException(msg);
+        }
+        try {
+            this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer().orElse(null);
+        } catch (Exception e) {
+            String msg = "Error initialising kafka producer - " + e.getMessage();
+            log(Severity.FATAL_ERROR, msg, e);
+            throw new LoggedException(msg);
+        }
+
+        if (stroomKafkaProducer == null) {
+            String msg = "No Kafka producer connector is available, check Stroom's configuration";
+            log(Severity.FATAL_ERROR, msg, null);
+            throw new LoggedException(msg);
         }
     }
 
