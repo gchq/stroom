@@ -39,7 +39,12 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Component("statisticsDataSourceCache")
-@EntityEventHandler(type = StatisticStoreEntity.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
+@EntityEventHandler(
+        type = StatisticStoreEntity.ENTITY_TYPE,
+        action = {
+                EntityAction.CREATE,
+                EntityAction.UPDATE,
+                EntityAction.DELETE})
 class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceCacheImpl.class);
 
@@ -129,23 +134,34 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
             final Cache<NameEngineCacheKey, Optional<StatisticStoreEntity>> cacheByEngineName = getCacheByEngineName();
             final Cache<DocRef, Optional<StatisticStoreEntity>> cacheByRef = getCacheByRef();
 
-            if (EntityAction.UPDATE.equals(event.getAction()) || EntityAction.DELETE.equals(event.getAction())) {
-                final Optional<StatisticStoreEntity> optional = cacheByRef.getIfPresent(event.getDocRef());
+            DocRef docRef = event.getDocRef();
+            EntityAction entityAction = event.getAction();
+
+            if (EntityAction.UPDATE.equals(entityAction) ||
+                    EntityAction.DELETE.equals(entityAction) ||
+                    EntityAction.CREATE.equals(entityAction)) {
+
+                //Handling a create handles the case where we have content that has an orphaned doc ref
+                //and then the entity for that docref is imported
+
+                final Optional<StatisticStoreEntity> optional = cacheByRef.getIfPresent(docRef);
+
+                LOGGER.debug("Removing docRef {} from the caches because of entity event {}", docRef, entityAction);
+                //remove the entity from the docRef cache whether it exists or not
+                cacheByRef.invalidate(event.getDocRef());
 
                 if (optional != null && optional.isPresent()) {
-                    // found it in one cache so remove from both
-                    final NameEngineCacheKey nameEngineKey = buildNameEngineKey(optional.get());
 
-                    cacheByRef.invalidate(event.getDocRef());
+                    //the docRef mapped to an entity in the docRef cache so determine the
+                    //engine/name to remove from the other cache
+                    final NameEngineCacheKey nameEngineKey = buildNameEngineKey(optional.get());
                     cacheByEngineName.invalidate(nameEngineKey);
                 } else {
+                    LOGGER.debug("Couldn't find docRef {} in the docRef cache", docRef);
                     // fall back option, as it couldn't be found in the ref cache so
-                    // try again in the nameEngine cache
-
-                    // not very efficient but we shouldn't have that many entities
-                    // in the cache and deletes will not happen
-                    // very
-                    // often.
+                    // try again in the nameEngine cache.
+                    // Not very efficient but we shouldn't have that many entities
+                    // in the cache and deletes will not happen very often.
                     cacheByEngineName.asMap().forEach((k, v) -> {
                         try {
                             if (v.isPresent()) {

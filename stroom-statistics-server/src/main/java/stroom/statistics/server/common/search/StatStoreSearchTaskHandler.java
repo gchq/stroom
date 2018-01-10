@@ -16,6 +16,7 @@
 
 package stroom.statistics.server.common.search;
 
+import com.google.common.base.Preconditions;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.mapreduce.BlockingPairQueue;
@@ -34,6 +35,7 @@ import stroom.query.shared.TableSettings;
 import stroom.security.SecurityContext;
 import stroom.statistics.common.StatisticDataPoint;
 import stroom.statistics.common.StatisticDataSet;
+import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.server.common.AbstractStatistics;
 import stroom.statistics.shared.EventStoreTimeIntervalEnum;
@@ -77,12 +79,23 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
                 final StatisticStoreEntity entity = task.getEntity();
 
+                Preconditions.checkNotNull(entity);
+
                 // Get the statistic store service class based on the engine of the
                 // datasource being searched
-                final AbstractStatistics statisticEventStore = (AbstractStatistics) statisticsFactory
-                        .instance(entity.getEngineName());
-                final StatisticDataSet statisticDataSet = statisticEventStore.searchStatisticsData(task.getSearch(),
-                        entity);
+                final Statistics statisticEventStore;
+                statisticEventStore =  statisticsFactory.instance(entity.getEngineName());
+
+                final StatisticDataSet statisticDataSet;
+                if (statisticEventStore instanceof AbstractStatistics) {
+                    statisticDataSet = ((AbstractStatistics)statisticEventStore)
+                            .searchStatisticsData(task.getSearch(), entity);
+                } else {
+                    throw new RuntimeException(String.format("Unable to cast %s to %s for engineName %s",
+                            statisticEventStore.getClass().getName(),
+                            AbstractStatistics.class.getName(),
+                            entity.getEngineName()));
+                }
 
                 // Produce payloads for each coprocessor.
                 Map<Integer, Payload> payloadMap = null;

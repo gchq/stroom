@@ -16,6 +16,21 @@
 
 package stroom.statistics.server.common;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import stroom.node.server.StroomPropertyService;
+import stroom.statistics.common.CommonStatisticConstants;
+import stroom.statistics.common.StatisticEvent;
+import stroom.statistics.common.Statistics;
+import stroom.statistics.common.StatisticsFactory;
+import stroom.statistics.shared.StatisticStore;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.spring.StroomBeanStore;
+import stroom.util.spring.StroomStartup;
+
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,23 +38,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Resource;
-
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-
-import stroom.node.server.StroomPropertyService;
-import stroom.statistics.common.CommonStatisticConstants;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsFactory;
-import stroom.statistics.shared.StatisticStore;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomStartup;
-
 @Component
 public class StatisticEventStoreFactoryImpl implements StatisticsFactory, InitializingBean {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StatisticEventStoreFactoryImpl.class);
     private final Map<String, String> statisticEventStoreEngineMap = new HashMap<>();
 
     private final String NOT_SUPPORTED_ERROR_TEXT = "This method is not supported for multiple statistics engines";
@@ -160,6 +161,7 @@ public class StatisticEventStoreFactoryImpl implements StatisticsFactory, Initia
             }
         }
 
+        LOGGER.debug(() -> String.format("Returning a storeInstance of type %s", storeInstance.getClass().getName()));
         return storeInstance;
     }
 

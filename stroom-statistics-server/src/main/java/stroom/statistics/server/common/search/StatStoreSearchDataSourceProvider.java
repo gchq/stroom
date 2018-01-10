@@ -16,10 +16,7 @@
 
 package stroom.statistics.server.common.search;
 
-import javax.inject.Inject;
-
 import org.springframework.stereotype.Component;
-
 import stroom.query.CoprocessorMap;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
@@ -30,6 +27,8 @@ import stroom.query.shared.SearchRequest;
 import stroom.statistics.common.StatisticStoreCache;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.task.server.TaskManager;
+
+import javax.inject.Inject;
 
 @Component
 public class StatStoreSearchDataSourceProvider implements SearchDataSourceProvider {
@@ -53,7 +52,8 @@ public class StatStoreSearchDataSourceProvider implements SearchDataSourceProvid
 
         if (entity == null) {
             throw new RuntimeException(
-                    String.format("Could not retrieve a datasource entity from the database %s",
+                    String.format("Could not retrieve datasource entity %s from the cache, " +
+                                    "try clearing the StatisticsDataSourceCaches",
                             search.getDataSourceRef()));
         }
 
