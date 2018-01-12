@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -225,6 +226,19 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         final List<DocRef> list = list();
         return list.stream()
                 .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT))
+                .map(d -> {
+                    // We need to read the document to get the name.
+                    DocRef docRef = null;
+                    try {
+                        final D doc = readDocument(d);
+                        docRef = new DocRef(doc.getType(), doc.getUuid(), doc.getName());
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    }
+                    return Optional.ofNullable(docRef);
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 

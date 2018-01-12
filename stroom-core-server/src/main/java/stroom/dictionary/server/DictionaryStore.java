@@ -33,5 +33,5 @@ public interface DictionaryStore extends DocumentStore<DictionaryDoc> {
 
     List<DocRef> list();
 
-    Set<String> getWords(DocRef docRef);
+    String getCombinedData(DocRef docRef);
 }

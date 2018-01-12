@@ -75,12 +75,10 @@ class Dictionary extends StroomExtensionFunctionCall {
                         }
 
                         final DocRef docRef = list.get(0);
-                        final DictionaryDoc doc = dictionaryStore.read(docRef.getUuid());
+                        result = dictionaryStore.getCombinedData(docRef);
 
-                        if (doc == null) {
+                        if (result == null) {
                             log(context, Severity.INFO, "Unable to find dictionary " + docRef, null);
-                        } else {
-                            result = doc.getData();
                         }
                     }
                 } catch (final Exception e) {
