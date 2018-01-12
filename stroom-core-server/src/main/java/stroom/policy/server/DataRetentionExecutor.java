@@ -265,7 +265,7 @@ public class DataRetentionExecutor {
 
         static Tracker load() {
             try {
-                final Path path = FileUtil.getTempDir().toPath().resolve(FILE_NAME);
+                final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
                 if (Files.isRegularFile(path)) {
                     final String data = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
                     return XMLMarshallerUtil.unmarshal(getContext(), Tracker.class, data);
@@ -279,7 +279,7 @@ public class DataRetentionExecutor {
         void save() {
             try {
                 final String data = XMLMarshallerUtil.marshal(getContext(), this);
-                final Path path = FileUtil.getTempDir().toPath().resolve(FILE_NAME);
+                final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
                 Files.write(path, data.getBytes(StreamUtil.DEFAULT_CHARSET));
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);

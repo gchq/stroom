@@ -18,28 +18,28 @@ package stroom.policy.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Period;
 import stroom.policy.server.DataRetentionExecutor.Progress;
 import stroom.policy.server.DataRetentionExecutor.Tracker;
-import stroom.policy.shared.DataRetentionPolicy;
-import stroom.policy.shared.DataRetentionRule;
-import stroom.query.shared.ExpressionBuilder;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.ruleset.shared.DataRetentionPolicy;
+import stroom.ruleset.shared.DataRetentionRule;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 
 import java.util.Collections;
 
 public class TestDataRetentionExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestDataRetentionExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionExecutor.class);
 
     @Test
     public void testTracker() {
-        final ExpressionBuilder builder = new ExpressionBuilder(true, Op.AND);
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
         builder.addTerm("Feed", Condition.EQUALS, "TEST_FEED");
-        final DataRetentionRule rule = createRule(1, builder.build(),1, stroom.streamstore.shared.TimeUnit.DAYS);
+        final DataRetentionRule rule = createRule(1, builder.build(), 1, stroom.streamstore.shared.TimeUnit.DAYS);
         final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
         Tracker tracker = new Tracker(100L, dataRetentionPolicy);
 

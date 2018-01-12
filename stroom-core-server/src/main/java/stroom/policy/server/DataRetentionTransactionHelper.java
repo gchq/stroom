@@ -104,7 +104,7 @@ public class DataRetentionTransactionHelper {
                     while (resultSet.next() && !taskMonitor.isTerminated()) {
                         final Map<String, Object> attributeMap = createAttributeMap(resultSet, activeRules.getFieldSet());
                         final Long streamId = (Long) attributeMap.get(StreamDataSource.STREAM_ID);
-                        final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATED_ON);
+                        final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATE_TIME);
                         try {
                             more = true;
                             progress.nextStream(streamId, createMs);
