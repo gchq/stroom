@@ -64,6 +64,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Merged in [v5.0-beta.63]
 
+## [v5.1-beta.8] - 2018-01-12
+
+* Issue **#550** : Fix for info message output for data retention.
+
+* Issue **#551** : Improved server task detail for data retention job.
+
+* Issue **#541** : Changed stream retention job descriptions.
+
+* Issue **#553** : The data retention job now terminates if requested to do so and also tracks progress in a local temp file so a nodes progress will survive application restarts.
+
 ## [v5.1-beta.7] - 2018-01-10
 
 * Change docker image to use openjdk:8u151-jre-alpine as a base
@@ -869,6 +879,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v6.0-alpha.2]: https://github.com/gchq/stroom/compare/v6.0-alpha.1...v6.0-alpha.2
 [v6.0-alpha.1]: https://github.com/gchq/stroom/releases/tag/v6.0-alpha.1
 
+[v5.1-beta.8]: https://github.com/gchq/stroom/compare/v5.1-beta.7...v5.1-beta.8
 [v5.1-beta.7]: https://github.com/gchq/stroom/compare/v5.1-beta.6...v5.1-beta.7
 [v5.1-beta.6]: https://github.com/gchq/stroom/compare/v5.1-beta.5...v5.1-beta.6
 [v5.1-beta.5]: https://github.com/gchq/stroom/compare/v5.1-beta.4...v5.1-beta.5

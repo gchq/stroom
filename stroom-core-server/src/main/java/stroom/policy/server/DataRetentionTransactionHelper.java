@@ -101,21 +101,21 @@ public class DataRetentionTransactionHelper {
                 PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
+                    while (resultSet.next() && !taskMonitor.isTerminated()) {
                         final Map<String, Object> attributeMap = createAttributeMap(resultSet, activeRules.getFieldSet());
                         final Long streamId = (Long) attributeMap.get(StreamDataSource.STREAM_ID);
+                        final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATED_ON);
                         try {
                             more = true;
-                            progress.nextStream(streamId);
+                            progress.nextStream(streamId, createMs);
                             final String streamInfo = progress.toString();
-                            info(taskMonitor, "Examining " + streamInfo);
+                            info(taskMonitor, "Examining stream " + streamInfo);
 
                             final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules.getActiveRules());
                             if (matchingRule != null) {
                                 ageMap.get(matchingRule).ifPresent(age -> {
-                                    final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATE_TIME);
                                     if (createMs < age) {
-                                        info(taskMonitor, "Deleting " + streamInfo);
+                                        info(taskMonitor, "Deleting stream " + streamInfo);
                                         fileSystemStreamStore.deleteStream(Stream.createStub(streamId));
                                     }
                                 });
