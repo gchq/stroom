@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.jobsystem.server.ClusterLockService;
@@ -33,12 +34,24 @@ import stroom.query.shared.ExpressionTerm;
 import stroom.streamstore.server.DataRetentionAgeUtil;
 import stroom.streamstore.server.StreamFields;
 import stroom.util.date.DateUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -69,8 +82,6 @@ public class DataRetentionExecutor {
     private final DataRetentionTransactionHelper dataRetentionTransactionHelper;
     private final StroomPropertyService propertyService;
     private final AtomicBoolean running = new AtomicBoolean();
-
-    private volatile Tracker tracker;
 
     @Inject
     DataRetentionExecutor(final TaskMonitor taskMonitor, final ClusterLockService clusterLockService, final DataRetentionService dataRetentionService, final DataRetentionTransactionHelper dataRetentionTransactionHelper, final StroomPropertyService propertyService) {
@@ -120,6 +131,9 @@ public class DataRetentionExecutor {
                         .filter(DataRetentionRule::isEnabled)
                         .collect(Collectors.toMap(Function.identity(), rule -> getAge(now, rule)));
 
+                // Load the last tracker used.
+                Tracker tracker = Tracker.load();
+
                 // If the data retention policy has changed then we need to assume it has never been run before,
                 // i.e. all data must be considered for retention checking.
                 if (tracker == null || !tracker.policyEquals(dataRetentionPolicy)) {
@@ -143,52 +157,60 @@ public class DataRetentionExecutor {
 
                 // Process the different data ages separately as they can consider different sets of streams.
                 ages.forEach(age -> {
-                    Long minAge = null;
-                    Long maxAge = age;
+                    // Skip if we have terminated processing.
+                    if (!taskMonitor.isTerminated()) {
+                        Long minAge = null;
+                        Long maxAge = age;
 
-                    if (timeElapsedSinceLastRun != null) {
-                        minAge = maxAge - timeElapsedSinceLastRun;
-                    }
+                        if (timeElapsedSinceLastRun != null) {
+                            minAge = maxAge - timeElapsedSinceLastRun;
+                        }
 
-                    final Period ageRange = new Period(minAge, maxAge);
+                        final Period ageRange = new Period(minAge, maxAge);
 
-                    final StringBuilder message = new StringBuilder();
-                    message.append("Considering stream retention for streams created ");
-                    if (minAge != null) {
-                        message.append("between ");
-                        message.append(DateUtil.createNormalDateTimeString(minAge));
-                        message.append(" and ");
-                        message.append(DateUtil.createNormalDateTimeString(maxAge));
-                    } else {
-                        message.append("before ");
-                        message.append(DateUtil.createNormalDateTimeString(maxAge));
-                    }
-                    info(message.toString());
+                        final StringBuilder message = new StringBuilder();
+                        message.append("Considering stream retention for streams created ");
+                        if (minAge != null) {
+                            message.append("between ");
+                            message.append(DateUtil.createNormalDateTimeString(minAge));
+                            message.append(" and ");
+                            message.append(DateUtil.createNormalDateTimeString(maxAge));
+                        } else {
+                            message.append("before ");
+                            message.append(DateUtil.createNormalDateTimeString(maxAge));
+                        }
+                        info(message.toString());
 
-                    // Figure out which rules are active and get all used fields.
-                    final ActiveRules activeRules = new ActiveRules(rules);
+                        // Figure out which rules are active and get all used fields.
+                        final ActiveRules activeRules = new ActiveRules(rules);
 
-                    // Ignore rules if none are active.
-                    if (activeRules.getActiveRules().size() > 0) {
-                        // Find out how many rows we are likely to examine.
-                        final long rowCount = dataRetentionTransactionHelper.getRowCount(ageRange, activeRules.getFieldSet());
+                        // Ignore rules if none are active.
+                        if (activeRules.getActiveRules().size() > 0) {
+                            // Find out how many rows we are likely to examine.
+                            final long rowCount = dataRetentionTransactionHelper.getRowCount(ageRange, activeRules.getFieldSet());
 
-                        // If we aren't likely to be touching any rows then ignore.
-                        if (rowCount > 0) {
-                            boolean more = true;
-                            final Progress progress = new Progress(ageRange, rowCount);
-                            while (more) {
-                                Range<Long> streamIdRange = null;
-                                if (progress.getStreamId() != null) {
-                                    // Process from the next stream id onwards.
-                                    streamIdRange = new Range<>(progress.getStreamId() + 1, null);
+                            // If we aren't likely to be touching any rows then ignore.
+                            if (rowCount > 0) {
+                                boolean more = true;
+                                final Progress progress = new Progress(ageRange, rowCount);
+                                while (more && !taskMonitor.isTerminated()) {
+                                    Range<Long> streamIdRange = null;
+                                    if (progress.getStreamId() != null) {
+                                        // Process from the next stream id onwards.
+                                        streamIdRange = new Range<>(progress.getStreamId() + 1, null);
+                                    }
+
+                                    more = dataRetentionTransactionHelper.deleteMatching(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskMonitor, progress);
                                 }
-
-                                more = dataRetentionTransactionHelper.deleteMatching(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskMonitor, progress);
                             }
                         }
                     }
                 });
+
+                // If we finished running then save the tracker for use next time.
+                if (!taskMonitor.isTerminated()) {
+                    tracker.save();
+                }
             }
         }
     }
@@ -202,12 +224,27 @@ public class DataRetentionExecutor {
         taskMonitor.info(info);
     }
 
-    private static class Tracker {
-        private final Long lastRun;
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @XmlType(name = "Tracker", propOrder = {"lastRun", "dataRetentionPolicy", "policyVersion", "policyHash"})
+    @XmlRootElement(name = "tracker")
+    static class Tracker {
+        private static final String FILE_NAME = "dataRetentionTracker.json";
 
-        private final DataRetentionPolicy dataRetentionPolicy;
-        private final int policyVersion;
-        private final int policyHash;
+        @XmlElement(name = "lastRun")
+        private Long lastRun;
+
+        @XmlElement(name = "dataRetentionPolicy")
+        private DataRetentionPolicy dataRetentionPolicy;
+        @XmlElement(name = "policyVersion")
+        private int policyVersion;
+        @XmlElement(name = "policyHash")
+        private int policyHash;
+
+        @XmlTransient
+        private static JAXBContext jaxbContext;
+
+        Tracker() {
+        }
 
         Tracker(final Long lastRun, final DataRetentionPolicy dataRetentionPolicy) {
             this.lastRun = lastRun;
@@ -219,6 +256,46 @@ public class DataRetentionExecutor {
 
         boolean policyEquals(final DataRetentionPolicy dataRetentionPolicy) {
             return policyVersion == dataRetentionPolicy.getVersion() && policyHash == dataRetentionPolicy.hashCode() && this.dataRetentionPolicy.equals(dataRetentionPolicy);
+        }
+
+        public DataRetentionPolicy getDataRetentionPolicy() {
+            return dataRetentionPolicy;
+        }
+
+        static Tracker load() {
+            try {
+                final Path path = FileUtil.getTempDir().toPath().resolve(FILE_NAME);
+                if (Files.isRegularFile(path)) {
+                    final String data = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
+                    return XMLMarshallerUtil.unmarshal(getContext(), Tracker.class, data);
+                }
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+            return null;
+        }
+
+        void save() {
+            try {
+                final String data = XMLMarshallerUtil.marshal(getContext(), this);
+                final Path path = FileUtil.getTempDir().toPath().resolve(FILE_NAME);
+                Files.write(path, data.getBytes(StreamUtil.DEFAULT_CHARSET));
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+
+        private static JAXBContext getContext() {
+            if (jaxbContext == null) {
+                try {
+                    jaxbContext = JAXBContext.newInstance(Tracker.class);
+                } catch (final JAXBException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    throw new RuntimeException(e.getMessage());
+                }
+            }
+
+            return jaxbContext;
         }
     }
 
@@ -333,8 +410,8 @@ public class DataRetentionExecutor {
 //        }
 
         private String getPercentComplete() {
-                final int pct = (int) ((100D / rowCount) * rowNum);
-                return ", " + pct + "% complete";
+            final int pct = (int) ((100D / rowCount) * rowNum);
+            return ", " + pct + "% complete";
         }
 
 //        private String getStreamInfo() {

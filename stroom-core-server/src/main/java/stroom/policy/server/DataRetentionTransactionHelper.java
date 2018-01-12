@@ -100,7 +100,7 @@ public class DataRetentionTransactionHelper {
                 PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
+                    while (resultSet.next() && !taskMonitor.isTerminated()) {
                         final Map<String, Object> attributeMap = createAttributeMap(resultSet, activeRules.getFieldSet());
                         final Long streamId = (Long) attributeMap.get(StreamFields.STREAM_ID);
                         final Long createMs = (Long) attributeMap.get(StreamFields.CREATED_ON);
