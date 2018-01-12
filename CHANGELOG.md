@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#541** : Changed stream retention job descriptions.
 
+* Issue **#553** : The data retention job now terminates if requested to do so and also tracks progress in a local temp file so a nodes progress will survive application restarts.
+
 ## [v5.1-beta.7] - 2018-01-10
 
 * Change docker image to use openjdk:8u151-jre-alpine as a base
