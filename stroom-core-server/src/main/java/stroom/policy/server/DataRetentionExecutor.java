@@ -91,14 +91,14 @@ public class DataRetentionExecutor {
                 if (clusterLockService.tryLock(LOCK_NAME)) {
                     try {
                         process();
-                        info("Finished data retention process in {}", logExecutionTime);
+                        info("Finished data retention process in " + logExecutionTime);
                     } catch (final Throwable t) {
                         LOGGER.error(t.getMessage(), t);
                     } finally {
                         clusterLockService.releaseLock(LOCK_NAME);
                     }
                 } else {
-                    info("Stream Retention Executor - Skipped as did not get lock in {}", logExecutionTime);
+                    info("Stream Retention Executor - Skipped as did not get lock in " + logExecutionTime);
                 }
             } finally {
                 running.set(false);
