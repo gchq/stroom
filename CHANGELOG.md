@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Merged in [v5.1-beta.5]
 
+* Issue **#507** : Added dictionary inheritance via import references.
+
 ## [v6.0-alpha.4]
 
 * New authentication flow based around OpenId
