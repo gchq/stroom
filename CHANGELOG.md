@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#550** : Fix for info message output for data retention.
 
+* Issue **#551** : Improved server task detail for data retention job.
+
 ## [v5.1-beta.7] - 2018-01-10
 
 * Change docker image to use openjdk:8u151-jre-alpine as a base
