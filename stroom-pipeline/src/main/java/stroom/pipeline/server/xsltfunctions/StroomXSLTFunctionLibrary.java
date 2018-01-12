@@ -219,6 +219,18 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("parseUri")
+                .library(this)
+                .delegateClass(ParseUri.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.NODE_SEQUENCE)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("random")
                 .library(this)
                 .delegateClass(Random.class)
