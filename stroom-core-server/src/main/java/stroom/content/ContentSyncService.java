@@ -21,6 +21,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -29,20 +30,20 @@ public class ContentSyncService implements Managed {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentSyncService.class);
 
     private final ContentSyncConfig contentSyncConfig;
-    private final ImportExportActionHandler importExportActionHandler;
+    private final Map<String, ImportExportActionHandler> importExportActionHandlers;
 
     private volatile ScheduledExecutorService scheduledExecutorService;
 
-    public ContentSyncService(final ContentSyncConfig contentSyncConfig, final ImportExportActionHandler importExportActionHandler) {
+    public ContentSyncService(final ContentSyncConfig contentSyncConfig, final Map<String, ImportExportActionHandler> importExportActionHandlers) {
         this.contentSyncConfig = contentSyncConfig;
-        this.importExportActionHandler = importExportActionHandler;
+        this.importExportActionHandlers = importExportActionHandlers;
     }
 
     @Override
     public synchronized void start() {
         if (scheduledExecutorService == null) {
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            scheduledExecutorService.scheduleAtFixedRate(this::sync, 0, contentSyncConfig.getSyncFrequency(), TimeUnit.MILLISECONDS);
+            scheduledExecutorService.scheduleWithFixedDelay(this::sync, 0, contentSyncConfig.getSyncFrequency(), TimeUnit.MILLISECONDS);
         }
     }
 
@@ -55,19 +56,28 @@ public class ContentSyncService implements Managed {
     }
 
     public void sync() {
-        LOGGER.info("Synching content from '" + contentSyncConfig.getUpstreamUrl() + "'");
-        final Response response = createClient("/list").get();
-        if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
-            LOGGER.error(response.getStatusInfo().getReasonPhrase());
-        } else {
-            final DocRefs docRefs = response.readEntity(DocRefs.class);
-            docRefs.getSet().forEach(this::fetchDocument);
-        }
+        importExportActionHandlers.forEach((type, importExportActionHandler) -> {
+            try {
+                final String url = contentSyncConfig.getUpstreamUrl().get(type);
+                if (url != null) {
+                    LOGGER.info("Synching content from '" + url + "'");
+                    final Response response = createClient(url, "/list").get();
+                    if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
+                        LOGGER.error(response.getStatusInfo().getReasonPhrase());
+                    } else {
+                        final DocRefs docRefs = response.readEntity(DocRefs.class);
+                        docRefs.getSet().forEach(docRef -> importDocument(url, docRef, importExportActionHandler));
+                    }
+                }
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage());
+            }
+        });
     }
 
-    private void fetchDocument(final DocRef docRef) {
+    private void importDocument(final String url, final DocRef docRef, final ImportExportActionHandler importExportActionHandler) {
         LOGGER.info("Fetching " + docRef.getType() + " " + docRef.getUuid());
-        final Response response = createClient("/export").post(Entity.json(docRef));
+        final Response response = createClient(url, "/export").post(Entity.json(docRef));
         if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
             LOGGER.error(response.getStatusInfo().getReasonPhrase());
         } else {
@@ -77,9 +87,9 @@ public class ContentSyncService implements Managed {
         }
     }
 
-    private Invocation.Builder createClient(final String path) {
+    private Invocation.Builder createClient(final String url, final String path) {
         final Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
-        final WebTarget webTarget = client.target(contentSyncConfig.getUpstreamUrl()).path(path);
+        final WebTarget webTarget = client.target(url).path(path);
         final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + contentSyncConfig.getApiKey());
         return invocationBuilder;

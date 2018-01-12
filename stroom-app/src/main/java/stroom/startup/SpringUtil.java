@@ -27,6 +27,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpSessionListener;
 import java.io.IOException;
 import java.util.EnumSet;
+import java.util.Map;
 
 public class SpringUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringUtil.class);
@@ -39,66 +40,64 @@ public class SpringUtil {
         healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
     }
 
-    public static void addFilter(final ServletContextHandler servletContextHandler, final ApplicationContext applicationContext, final Class<? extends Filter> clazz, final String url) {
+    public static FilterHolder addFilter(final ServletContextHandler servletContextHandler, final ApplicationContext applicationContext, final Class<? extends Filter> clazz, final String url) {
         final Filter filter = applicationContext.getBean(clazz);
+
         final FilterHolder filterHolder = new FilterHolder(filter);
         filterHolder.setName(clazz.getSimpleName());
 
-//        // Set params
-//        if (initParams != null) {
-//            for (Map.Entry<String, String> entry : initParams.entrySet()) {
-//                filterHolder.setInitParameter(entry.getKey(), entry.getValue());
+        servletContextHandler.addFilter(filterHolder, url, EnumSet.of(DispatcherType.REQUEST));
+
+        return filterHolder;
+    }
+
+//    public static void addFilterViaProxy(final ServletContextHandler servletContextHandler, final ApplicationContext applicationContext, final Class<?> clazz, final String url) {
+//        // Check that we can create a bean and it is if the right type.
+//        try {
+//            final Object bean = applicationContext.getBean(clazz);
+//            if (!(bean instanceof Filter)) {
+//                throw new IllegalArgumentException("Expected filter for bean " + clazz.getName());
 //            }
+//        } catch (final RuntimeException e) {
+//            LOGGER.error(e.getMessage(), e);
+//            throw e;
 //        }
+//
+//        final Provider<Filter> provider = () -> (Filter) applicationContext.getBean(clazz);
+//        final FilterProxy filterProxy = new FilterProxy(provider);
+//        final FilterHolder filterHolder = new FilterHolder(filterProxy);
+//        filterHolder.setName(clazz.getSimpleName());
+//        servletContextHandler.addFilter(filterHolder, url, EnumSet.of(DispatcherType.REQUEST));
+//    }
 
-        servletContextHandler.addFilter(filterHolder, url, EnumSet.of(DispatcherType.REQUEST));
-    }
-
-    public static void addFilterViaProxy(final ServletContextHandler servletContextHandler, final ApplicationContext applicationContext, final Class<?> clazz, final String url) {
-        // Check that we can create a bean and it is if the right type.
-        try {
-            final Object bean = applicationContext.getBean(clazz);
-            if (!(bean instanceof Filter)) {
-                throw new IllegalArgumentException("Expected filter for bean " + clazz.getName());
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw e;
-        }
-
-        final Provider<Filter> provider = () -> (Filter) applicationContext.getBean(clazz);
-        final FilterProxy filterProxy = new FilterProxy(provider);
-        final FilterHolder filterHolder = new FilterHolder(filterProxy);
-        filterHolder.setName(clazz.getSimpleName());
-        servletContextHandler.addFilter(filterHolder, url, EnumSet.of(DispatcherType.REQUEST));
-    }
-
-    public static void addServlet(final ServletContextHandler servletContextHandler, final ApplicationContext applicationContext, final Class<?> clazz, final String url) {
+    public static ServletHolder addServlet(final ServletContextHandler servletContextHandler, final ApplicationContext applicationContext, final Class<?> clazz, final String url) {
         final Object bean = applicationContext.getBean(clazz);
         if (!(bean instanceof Servlet)) {
             throw new IllegalArgumentException("Expected servlet for bean " + clazz.getName());
         }
         final ServletHolder servletHolder = new ServletHolder(clazz.getSimpleName(), (Servlet) bean);
         servletContextHandler.addServlet(servletHolder, url);
+        return servletHolder;
     }
 
-    public static void addServletViaProxy(final ServletContextHandler servletContextHandler, final ApplicationContext applicationContext, final Class<?> clazz, final String url) {
-        // Check that we can create a bean and it is if the right type.
-        try {
-            final Object bean = applicationContext.getBean(clazz);
-            if (!(bean instanceof Servlet)) {
-                throw new IllegalArgumentException("Expected servlet for bean " + clazz.getName());
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw e;
-        }
-
-        final Provider<Servlet> provider = () -> (Servlet) applicationContext.getBean(clazz);
-        final ServletProxy servletProxy = new ServletProxy(provider);
-        final ServletHolder servletHolder = new ServletHolder(clazz.getSimpleName(), servletProxy);
-        servletContextHandler.addServlet(servletHolder, url);
-    }
+//    public static ServletHolder addServletViaProxy(final ServletContextHandler servletContextHandler, final ApplicationContext applicationContext, final Class<?> clazz, final String url) {
+//        // Check that we can create a bean and it is if the right type.
+//        try {
+//            final Object bean = applicationContext.getBean(clazz);
+//            if (!(bean instanceof Servlet)) {
+//                throw new IllegalArgumentException("Expected servlet for bean " + clazz.getName());
+//            }
+//        } catch (final RuntimeException e) {
+//            LOGGER.error(e.getMessage(), e);
+//            throw e;
+//        }
+//
+//        final Provider<Servlet> provider = () -> (Servlet) applicationContext.getBean(clazz);
+//        final ServletProxy servletProxy = new ServletProxy(provider);
+//        final ServletHolder servletHolder = new ServletHolder(clazz.getSimpleName(), servletProxy);
+//        servletContextHandler.addServlet(servletHolder, url);
+//        return servletHolder;
+//    }
 
     public static void addServletListener(final ServletEnvironment servletEnvironment, final ApplicationContext applicationContext, final Class<? extends HttpSessionListener> clazz) {
         final HttpSessionListener httpSessionListener = applicationContext.getBean(clazz);
@@ -115,59 +114,59 @@ public class SpringUtil {
         lifecycleEnvironment.manage(managed);
     }
 
-    private static class FilterProxy implements Filter {
-        private final Provider<Filter> provider;
-
-        public FilterProxy(final Provider<Filter> provider) {
-            this.provider = provider;
-        }
-
-        @Override
-        public void init(final FilterConfig filterConfig) throws ServletException {
-            provider.get().init(filterConfig);
-        }
-
-        @Override
-        public void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse, final FilterChain filterChain) throws IOException, ServletException {
-            provider.get().doFilter(servletRequest, servletResponse, filterChain);
-        }
-
-        @Override
-        public void destroy() {
-            provider.get().destroy();
-        }
-    }
-
-    private static class ServletProxy implements Servlet {
-        private final Provider<Servlet> provider;
-
-        public ServletProxy(final Provider<Servlet> provider) {
-            this.provider = provider;
-        }
-
-        @Override
-        public void init(final ServletConfig servletConfig) throws ServletException {
-            provider.get().init(servletConfig);
-        }
-
-        @Override
-        public ServletConfig getServletConfig() {
-            return provider.get().getServletConfig();
-        }
-
-        @Override
-        public void service(final ServletRequest servletRequest, final ServletResponse servletResponse) throws ServletException, IOException {
-            provider.get().service(servletRequest, servletResponse);
-        }
-
-        @Override
-        public String getServletInfo() {
-            return provider.get().getServletInfo();
-        }
-
-        @Override
-        public void destroy() {
-            provider.get().destroy();
-        }
-    }
+//    private static class FilterProxy implements Filter {
+//        private final Provider<Filter> provider;
+//
+//        public FilterProxy(final Provider<Filter> provider) {
+//            this.provider = provider;
+//        }
+//
+//        @Override
+//        public void init(final FilterConfig filterConfig) throws ServletException {
+//            provider.get().init(filterConfig);
+//        }
+//
+//        @Override
+//        public void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse, final FilterChain filterChain) throws IOException, ServletException {
+//            provider.get().doFilter(servletRequest, servletResponse, filterChain);
+//        }
+//
+//        @Override
+//        public void destroy() {
+//            provider.get().destroy();
+//        }
+//    }
+//
+//    private static class ServletProxy implements Servlet {
+//        private final Provider<Servlet> provider;
+//
+//        public ServletProxy(final Provider<Servlet> provider) {
+//            this.provider = provider;
+//        }
+//
+//        @Override
+//        public void init(final ServletConfig servletConfig) throws ServletException {
+//            provider.get().init(servletConfig);
+//        }
+//
+//        @Override
+//        public ServletConfig getServletConfig() {
+//            return provider.get().getServletConfig();
+//        }
+//
+//        @Override
+//        public void service(final ServletRequest servletRequest, final ServletResponse servletResponse) throws ServletException, IOException {
+//            provider.get().service(servletRequest, servletResponse);
+//        }
+//
+//        @Override
+//        public String getServletInfo() {
+//            return provider.get().getServletInfo();
+//        }
+//
+//        @Override
+//        public void destroy() {
+//            provider.get().destroy();
+//        }
+//    }
 }

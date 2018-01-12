@@ -55,11 +55,9 @@ proxyConfig:
     readCron: "* * *"
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress"
-  rulesetContentSyncConfig:
-    upstreamUrl: "http://localhost:9090/api/ruleset/v1"
+  contentSyncConfig:
+    upstreamUrl:
+      RuleSet: "http://localhost:9090/api/ruleset/v1"
+      Dictionary: "http://localhost:9090/api/dictionary/v1"
     syncFrequency: 10000
-    apiKey: "test"
-  dictionaryContentSyncConfig:
-    upstreamUrl: "http://localhost:9090/api/dictionary/v1"
-    syncFrequency: 10000
-    apiKey: "test"
+    apiKey: "eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDcyOTk3MDQsInN1YiI6InByb3h5IiwiaXNzIjoic3Ryb29tIiwic2lkIjpudWxsfQ.3FYcPEH2K14o-qpKtlCsKxxYZwRGnCZ7ARoMPJrIG88h7uINuEPneMBAcdYys1_eD8-CoHXm8EsxPUeL6z0I8ERmXpk6BjnUsaiqI1cxB_rnxeRSFANKA1jSG5ewprHcJhWgy1HK3B2K9lrmhib35dFMx3ehrUUWaZdUrJGKSt1PKWGsFz6D2-QfYMPCdjYWkmFRoXVhCGV0BRoeJOAqAP0PDliqF7IZ7ZjCAF-NUAehrU9MEi0KTGMvCGZCzznYWahaep01GaMihYrX-okVPdq6rjIzAB3Argm0xi0SojteFhe1TomZA_HvV8otQYBO-2gvxYJ3qE26rIk7fitgmw"
