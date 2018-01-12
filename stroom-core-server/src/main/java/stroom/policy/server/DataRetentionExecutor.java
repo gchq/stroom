@@ -82,7 +82,7 @@ public class DataRetentionExecutor {
     }
 
     @StroomSimpleCronSchedule(cron = "0 0 *")
-    @JobTrackedSchedule(jobName = "Data Retention", description = "Job to delete data that has past it's retention period")
+    @JobTrackedSchedule(jobName = "Data Retention", description = "Delete data that exceeds the retention period specified by data retention policy")
     public void exec() {
         if (running.compareAndSet(false, true)) {
             try {

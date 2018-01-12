@@ -65,7 +65,7 @@ public class StreamRetentionExecutor {
      * @return A task.
      */
     @StroomSimpleCronSchedule(cron = "0 0 *")
-    @JobTrackedSchedule(jobName = "Stream Retention", description = "Job to delete data that has past it's retention period (deprecated - see Data Retention)")
+    @JobTrackedSchedule(jobName = "Stream Retention", description = "Delete data that exceeds the retention period specified by feed")
     public void exec() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("Stream Retention Executor - start");

@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#551** : Improved server task detail for data retention job.
 
+* Issue **#541** : Changed stream retention job descriptions.
+
 ## [v5.1-beta.7] - 2018-01-10
 
 * Change docker image to use openjdk:8u151-jre-alpine as a base
