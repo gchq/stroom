@@ -176,7 +176,7 @@ public class DataRetentionExecutor {
                         // If we aren't likely to be touching any rows then ignore.
                         if (rowCount > 0) {
                             boolean more = true;
-                            final Progress progress = new Progress(rowCount);
+                            final Progress progress = new Progress(ageRange, rowCount);
                             while (more) {
                                 Range<Long> streamIdRange = null;
                                 if (progress.getStreamId() != null) {
@@ -278,16 +278,20 @@ public class DataRetentionExecutor {
     }
 
     static class Progress {
-        private long rowNum;
+        private final Period ageRange;
         private long rowCount;
+        private long rowNum;
         private Long streamId;
+        private Long createMs;
 
-        Progress(final long rowCount) {
+        Progress(final Period ageRange, final long rowCount) {
+            this.ageRange = ageRange;
             this.rowCount = rowCount;
         }
 
-        public void nextStream(final long streamId) {
+        public void nextStream(final Long streamId, final Long createMs) {
             this.streamId = streamId;
+            this.createMs = createMs;
             rowNum++;
             rowCount = Math.max(rowCount, rowNum);
         }
@@ -296,8 +300,68 @@ public class DataRetentionExecutor {
             return streamId;
         }
 
+        private String getPeriodString() {
+            if (ageRange.getFromMs() != null && ageRange.getToMs() != null) {
+                return "age between " + DateUtil.createNormalDateTimeString(ageRange.getFromMs()) + " and " + DateUtil.createNormalDateTimeString(ageRange.getToMs());
+            }
+            if (ageRange.getFromMs() != null) {
+                return "age after " + DateUtil.createNormalDateTimeString(ageRange.getFromMs());
+            }
+            if (ageRange.getToMs() != null) {
+                return "age before " + DateUtil.createNormalDateTimeString(ageRange.getToMs());
+            }
+            return "";
+        }
+
+        private String getCounts() {
+            return " (" +
+                    rowNum +
+                    " of " +
+                    rowCount +
+                    ")";
+        }
+
+        // Time based completion
+//        private String getPercentComplete() {
+//            if (createMs != null && ageRange.getFromMs() != null && ageRange.getToMs() != null) {
+//                long diff = ageRange.getToMs() - ageRange.getFromMs();
+//                long pos = createMs - ageRange.getFromMs();
+//                int pct = (int) ((100D / diff) * pos);
+//                return ", " + pct + "% complete";
+//            }
+//            return "";
+//        }
+
+        private String getPercentComplete() {
+                final int pct = (int) ((100D / rowCount) * rowNum);
+                return ", " + pct + "% complete";
+        }
+
+//        private String getStreamInfo() {
+//            if (streamId != null && createMs != null) {
+//                return ", current stream id=" +
+//                        streamId +
+//                        ", create time=" +
+//                        DateUtil.createNormalDateTimeString(createMs);
+//            }
+//
+//            return "";
+//        }
+
+        private String getStreamInfo() {
+            if (streamId != null && createMs != null) {
+                return ", current stream id=" +
+                        streamId;
+            }
+
+            return "";
+        }
+
         public String toString() {
-            return "stream " + rowNum + " of " + rowCount + " (stream id=" + streamId + ")";
+            return getPeriodString() +
+                    getCounts() +
+                    getPercentComplete() +
+                    getStreamInfo();
         }
     }
 }

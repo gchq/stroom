@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.server;
+package stroom.policy.server;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,16 +23,14 @@ import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
+import stroom.policy.shared.DataRetentionPolicy;
+import stroom.policy.shared.DataRetentionRule;
 import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.query.shared.ExpressionTerm.Condition;
-import stroom.policy.server.DataRetentionExecutor;
-import stroom.policy.server.DataRetentionService;
 import stroom.streamstore.server.StreamMaintenanceService;
 import stroom.streamstore.server.StreamStore;
-import stroom.policy.shared.DataRetentionPolicy;
-import stroom.policy.shared.DataRetentionRule;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
