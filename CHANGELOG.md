@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#554** : Added a `parseUri` XSLT function.
+
 ## [v5.1-beta.8] - 2018-01-12
 
 * Issue **#550** : Fix for info message output for data retention.
@@ -100,6 +102,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#511** : Fix NPE thrown during pipeline stepping by downstream XSLT.
 
 * Issue **#521** : Fix for the job list screen to use the help URL system property for displaying context sensitive help.
+
+* Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
 
 ## [v5.0-beta.69] - 2017-12-12
 
