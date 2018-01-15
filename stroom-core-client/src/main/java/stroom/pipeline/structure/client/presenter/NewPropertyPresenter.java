@@ -28,8 +28,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.feed.shared.Feed;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -154,10 +152,10 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             final String value = listBox.getItemText(listBox.getSelectedIndex());
             property.setValue(new PipelinePropertyValue(Boolean.valueOf(value)));
         } else if ("int".equals(propertyType.getType())) {
-            final Integer value = Integer.valueOf(valueSpinner.getValue());
+            final Integer value = valueSpinner.getValue();
             property.setValue(new PipelinePropertyValue(value));
         } else if ("long".equals(propertyType.getType())) {
-            final Long value = Long.valueOf(valueSpinner.getValue());
+            final Long value = (long) valueSpinner.getValue();
             property.setValue(new PipelinePropertyValue(value));
         } else if ("String".equals(propertyType.getType())) {
             property.setValue(new PipelinePropertyValue(textBox.getText()));
