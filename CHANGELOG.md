@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#554** : Added a `parseUri` XSLT function.
 
+* Issue **#557** : Added functions to parse and output URI parts.
+
 ## [v5.0.1] - 2018-01-10
 
 * Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
