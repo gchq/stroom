@@ -76,17 +76,9 @@ public class ParseUri extends StroomExtensionFunctionCall {
     private void startDocument() throws SAXException {
         contentHandler.startDocument();
         contentHandler.startPrefixMapping(EMPTY_STRING, NAMESPACE);
-
-//        if (addRoot) {
-//            startElement(XML_ELEMENT_MAP, null);
-//        }
     }
 
     private void endDocument() throws SAXException {
-//        if (addRoot) {
-//            endElement(XML_ELEMENT_MAP);
-//        }
-
         contentHandler.endPrefixMapping(EMPTY_STRING);
         contentHandler.endDocument();
     }
