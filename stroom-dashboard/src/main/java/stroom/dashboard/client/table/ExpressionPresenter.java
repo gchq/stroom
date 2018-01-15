@@ -203,14 +203,14 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private Item createUriSubMenuItems(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
-        children.add(createFunction(item++,  "extractAuthorityFromUri($)",  "extractAuthorityFromUri("));
-        children.add(createFunction(item++,  "extractFragmentFromUri($)",  "extractFragmentFromUri("));
-        children.add(createFunction(item++,  "extractHostFromUri($)",  "extractHostFromUri("));
-        children.add(createFunction(item++,  "extractPathFromUri($)",  "extractPathFromUri("));
-        children.add(createFunction(item++,  "extractPortFromUri($)",  "extractPortFromUri("));
-        children.add(createFunction(item++,  "extractSchemeFromUri($)",  "extractSchemeFromUri("));
-        children.add(createFunction(item++,  "extractSchemeSpecificPortFromUri($)",  "extractSchemeSpecificPortFromUri("));
-        children.add(createFunction(item++,  "extractUserInfoFromUri($)",  "extractUserInfoFromUri("));
+        children.add(createFunction(item++, "extractAuthorityFromUri($)", "extractAuthorityFromUri("));
+        children.add(createFunction(item++, "extractFragmentFromUri($)", "extractFragmentFromUri("));
+        children.add(createFunction(item++, "extractHostFromUri($)", "extractHostFromUri("));
+        children.add(createFunction(item++, "extractPathFromUri($)", "extractPathFromUri("));
+        children.add(createFunction(item++, "extractPortFromUri($)", "extractPortFromUri("));
+        children.add(createFunction(item++, "extractSchemeFromUri($)", "extractSchemeFromUri("));
+        children.add(createFunction(item++, "extractSchemeSpecificPortFromUri($)", "extractSchemeSpecificPortFromUri("));
+        children.add(createFunction(item++, "extractUserInfoFromUri($)", "extractUserInfoFromUri("));
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
