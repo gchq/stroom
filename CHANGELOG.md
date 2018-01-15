@@ -78,6 +78,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+* Issue **#552** : Fix for NPE caused by bad XSLT during search data extraction.
+
 ## [v5.0.1] - 2018-01-10
 
 * Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
