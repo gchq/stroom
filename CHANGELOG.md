@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#557** : Added dashboard functions to parse and output URI parts.
 
+* Issue **#552** : Fix for NPE caused by bad XSLT during search data extraction.
+
 ## [v6.0-alpha.4]
 
 * New authentication flow based around OpenId
