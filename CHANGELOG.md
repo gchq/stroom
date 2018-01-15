@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#554** : Added a `parseUri` XSLT function.
 
+* Issue **#557** : Added dashboard functions to parse and output URI parts.
+
 ## [v6.0-alpha.4]
 
 * New authentication flow based around OpenId
