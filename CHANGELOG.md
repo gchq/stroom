@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#557** : Added dashboard functions to parse and output URI parts.
 
+* Issue **#552** : Fix for NPE caused by bad XSLT during search data extraction.
+
 ## [v5.1-beta.8] - 2018-01-12
 
 * Issue **#550** : Fix for info message output for data retention.
@@ -77,8 +79,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.1-alpha.1] - 2017-06-07
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
-
-* Issue **#552** : Fix for NPE caused by bad XSLT during search data extraction.
 
 ## [v5.0.1] - 2018-01-10
 
