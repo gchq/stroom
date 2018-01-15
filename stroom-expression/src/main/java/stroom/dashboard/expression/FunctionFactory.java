@@ -46,6 +46,15 @@ public class FunctionFactory {
         add(CeilingMinute.class, CeilingMinute.NAME);
         add(CeilingSecond.class, CeilingSecond.NAME);
 
+        add(ExtractAuthorityFromUri.class, ExtractAuthorityFromUri.NAME);
+        add(ExtractFragmentFromUri.class, ExtractFragmentFromUri.NAME);
+        add(ExtractHostFromUri.class, ExtractHostFromUri.NAME);
+        add(ExtractPathFromUri.class, ExtractPathFromUri.NAME);
+        add(ExtractPortFromUri.class, ExtractPortFromUri.NAME);
+        add(ExtractSchemeFromUri.class, ExtractSchemeFromUri.NAME);
+        add(ExtractSchemeSpecificPortFromUri.class, ExtractSchemeSpecificPortFromUri.NAME);
+        add(ExtractUserInfoFromUri.class, ExtractUserInfoFromUri.NAME);
+
         add(Floor.class, Floor.NAME);
         add(FloorYear.class, FloorYear.NAME);
         add(FloorMonth.class, FloorMonth.NAME);
