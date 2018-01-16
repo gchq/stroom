@@ -6,12 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#554** : Added a `parseUri` XSLT function.
-
-* Issue **#557** : Added dashboard functions to parse and output URI parts.
-
-* Issue **#552** : Fix for NPE caused by bad XSLT during search data extraction.
-
 ## [v5.1-beta.8] - 2018-01-12
 
 * Issue **#550** : Fix for info message output for data retention.
@@ -79,6 +73,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.1-alpha.1] - 2017-06-07
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
+
+## [v5.0.2] - 2018-01-16
+
+* Issue **#554** : Added a `parseUri` XSLT function.
+
+* Issue **#557** : Added dashboard functions to parse and output URI parts.
+
+* Issue **#552** : Fix for NPE caused by bad XSLT during search data extraction.
+
+* Issue **#560** : Replaced instances of `Files.walk()` with `Files.walkFileTree()`. `Files.walk()` throws errors if any files are deleted or are not accessible during the walk operation. This is a major issue with the Java design for walking files using Java 8 streams. To avoid this issue `Files.walkFileTree()` has now been used in place of `Files.walk()`.
 
 ## [v5.0.1] - 2018-01-10
 
@@ -833,6 +837,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0.2]: https://github.com/gchq/stroom/compare/v5.0.1...v5.0.2
 [v5.0.1]: https://github.com/gchq/stroom/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/gchq/stroom/compare/v5.0-beta.71...v5.0.0
 [v5.0-beta.71]: https://github.com/gchq/stroom/compare/v5.0-beta.70...v5.0-beta.71

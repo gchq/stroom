@@ -24,13 +24,14 @@ import stroom.util.logging.StroomLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 /**
  * Utility class to open a File based on it's meta data.
@@ -224,17 +225,41 @@ public final class FileSystemUtil {
 
         try {
             if (Files.isDirectory(path)) {
-                try (final Stream<Path> stream = Files.walk(path)) {
-                    stream.sorted(Comparator.reverseOrder()).forEach(p -> {
+                Files.walkFileTree(path, new FileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                         try {
-                            Files.delete(p);
-                            LOGGER.debug("Deleted file " + p);
+                            Files.delete(file);
+                            LOGGER.debug("Deleted file " + file);
                         } catch (final IOException e) {
-                            LOGGER.error("Failed to delete file " + p);
+                            LOGGER.error("Failed to delete file " + file);
                             success.set(false);
                         }
-                    });
-                }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(final Path file, final IOException exc) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
+                        try {
+                            Files.delete(dir);
+                            LOGGER.debug("Deleted dir " + dir);
+                        } catch (final IOException e) {
+                            LOGGER.error("Failed to delete dir " + dir);
+                            success.set(false);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
             }
         } catch (final IOException e) {
             LOGGER.error("Failed to delete file " + path);
