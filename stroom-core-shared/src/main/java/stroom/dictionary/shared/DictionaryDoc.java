@@ -18,17 +18,21 @@ package stroom.dictionary.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
+import stroom.query.api.v2.DocRef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.List;
+import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "includes"})
 @XmlRootElement(name = "dictionary")
-@XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data"})
+@XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
 public class DictionaryDoc extends Doc {
     public static final String ENTITY_TYPE = "Dictionary";
 
@@ -38,6 +42,9 @@ public class DictionaryDoc extends Doc {
     private String description;
     @XmlElement(name = "data")
     private String data;
+    @XmlElementWrapper(name="imports")
+    @XmlElement(name = "docRef")
+    private List<DocRef> imports;
 
     public DictionaryDoc() {
         // Default constructor for GWT serialisation.
@@ -59,23 +66,27 @@ public class DictionaryDoc extends Doc {
         this.data = data;
     }
 
+    public List<DocRef> getImports() {
+        return imports;
+    }
+
+    public void setImports(final List<DocRef> imports) {
+        this.imports = imports;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
-
         final DictionaryDoc that = (DictionaryDoc) o;
-
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        return data != null ? data.equals(that.data) : that.data == null;
+        return Objects.equals(description, that.description) &&
+                Objects.equals(data, that.data) &&
+                Objects.equals(imports, that.imports);
     }
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (description != null ? description.hashCode() : 0);
-        result = 31 * result + (data != null ? data.hashCode() : 0);
-        return result;
+        return Objects.hash(super.hashCode(), description, data, imports);
     }
 }

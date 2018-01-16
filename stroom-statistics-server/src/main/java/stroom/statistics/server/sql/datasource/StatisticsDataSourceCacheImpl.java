@@ -37,7 +37,12 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Component("statisticsDataSourceCache")
-@EntityEventHandler(type = StatisticStoreEntity.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
+@EntityEventHandler(
+        type = StatisticStoreEntity.ENTITY_TYPE,
+        action = {
+                EntityAction.CREATE,
+                EntityAction.UPDATE,
+                EntityAction.DELETE})
 class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceCacheImpl.class);
 
@@ -122,7 +127,11 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
             final Cache<String, Optional<StatisticStoreEntity>> cacheByEngineName = getCacheByName();
             final Cache<DocRef, Optional<StatisticStoreEntity>> cacheByRef = getCacheByRef();
 
-            if (EntityAction.UPDATE.equals(event.getAction()) || EntityAction.DELETE.equals(event.getAction())) {
+            final EntityAction entityAction = event.getAction();
+
+            if (EntityAction.UPDATE.equals(entityAction) ||
+                    EntityAction.DELETE.equals(entityAction) ||
+                    EntityAction.CREATE.equals(entityAction)) {
                 final Optional<StatisticStoreEntity> optional = cacheByRef.getIfPresent(event.getDocRef());
 
                 if (optional != null && optional.isPresent()) {

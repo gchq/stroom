@@ -30,7 +30,6 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
     private String description;
     private String defaultValue;
     private boolean pipelineReference;
-    private boolean dataEntity;
     private String[] docRefTypes;
 
     public PipelinePropertyType() {
@@ -60,10 +59,6 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
 
     public boolean isPipelineReference() {
         return pipelineReference;
-    }
-
-    public boolean isDataEntity() {
-        return dataEntity;
     }
 
     public String[] getDocRefTypes() {
@@ -139,11 +134,6 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
 
         public Builder pipelineReference(final boolean value) {
             this.instance.pipelineReference = value;
-            return this;
-        }
-
-        public Builder dataEntity(final boolean value) {
-            this.instance.dataEntity = value;
             return this;
         }
 

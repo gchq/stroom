@@ -3,18 +3,20 @@ package stroom.content;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.servicediscovery.ResourcePaths;
 
+import java.util.Map;
+
 public class ContentSyncConfig {
-    private String upstreamUrl;
+    private Map<String, String> upstreamUrl;
     private long syncFrequency;
     private String apiKey;
 
     @JsonProperty
-    public String getUpstreamUrl() {
+    public Map<String, String> getUpstreamUrl() {
         return upstreamUrl;
     }
 
     @JsonProperty
-    public void setUpstreamUrl(final String upstreamUrl) {
+    public void setUpstreamUrl(final Map<String, String> upstreamUrl) {
         this.upstreamUrl = upstreamUrl;
     }
 

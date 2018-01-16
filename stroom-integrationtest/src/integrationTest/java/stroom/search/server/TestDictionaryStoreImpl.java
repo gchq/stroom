@@ -25,6 +25,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 
 public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     @Resource
@@ -42,5 +43,34 @@ public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
         final DictionaryDoc loaded = dictionaryStore.read(dictionary.getUuid());
         Assert.assertNotNull(loaded);
         Assert.assertEquals(dictionary.getData(), loaded.getData());
+        Assert.assertEquals(dictionary.getData(), dictionaryStore.getCombinedData(docRef));
+    }
+
+    @Test
+    public void testImport() {
+        // Create a dictionary and save it.
+        final DocRef docRef1 = dictionaryStore.createDocument("TEST", null);
+        final DictionaryDoc dictionary1 = dictionaryStore.read(docRef1.getUuid());
+        dictionary1.setData("dic1");
+        dictionaryStore.update(dictionary1);
+
+        // Create a dictionary and save it.
+        final DocRef docRef2 = dictionaryStore.createDocument("TEST", null);
+        final DictionaryDoc dictionary2 = dictionaryStore.read(docRef2.getUuid());
+        dictionary2.setData("dic2");
+        dictionary2.setImports(Collections.singletonList(docRef1));
+        dictionaryStore.update(dictionary2);
+
+        // Create a dictionary and save it.
+        final DocRef docRef3 = dictionaryStore.createDocument("TEST", null);
+        final DictionaryDoc dictionary3 = dictionaryStore.read(docRef3.getUuid());
+        dictionary3.setData("dic3");
+        dictionary3.setImports(Collections.singletonList(docRef2));
+        dictionaryStore.update(dictionary3);
+
+        // Make sure we can get it back.
+        Assert.assertEquals("dic1", dictionaryStore.getCombinedData(docRef1));
+        Assert.assertEquals("dic1\ndic2", dictionaryStore.getCombinedData(docRef2));
+        Assert.assertEquals("dic1\ndic2\ndic3", dictionaryStore.getCombinedData(docRef3));
     }
 }

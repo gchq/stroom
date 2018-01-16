@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Merged in [v5.1-beta.5]
 
+* Issue **#507** : Added dictionary inheritance via import references.
+
+* Issue **#554** : Added a `parseUri` XSLT function.
+
+* Issue **#557** : Added dashboard functions to parse and output URI parts.
+
+* Issue **#552** : Fix for NPE caused by bad XSLT during search data extraction.
+
 ## [v6.0-alpha.4]
 
 * New authentication flow based around OpenId
@@ -64,6 +72,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Merged in [v5.0-beta.63]
 
+## [v5.1-beta.8] - 2018-01-12
+
+* Issue **#550** : Fix for info message output for data retention.
+
+* Issue **#551** : Improved server task detail for data retention job.
+
+* Issue **#541** : Changed stream retention job descriptions.
+
+* Issue **#553** : The data retention job now terminates if requested to do so and also tracks progress in a local temp file so a nodes progress will survive application restarts.
+
+## [v5.1-beta.7] - 2018-01-10
+
+* Change docker image to use openjdk:8u151-jre-alpine as a base
+
+* Issue **#539** : Fix issue of statistic search failing after it is imported
+
+* Issue **#547** : Data retention processing is now performed in batches (size determined by `stroom.stream.deleteBatchSize`). This change should reduce the memory required to process the data retention job.
+
 ## [v5.1-beta.6] - 2018-01-08
 
 * Issue **#541** : Marked old stream retention job as deprecated in description.
@@ -113,6 +139,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.1-alpha.1] - 2017-06-07
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
+
+## [v5.0.1] - 2018-01-10
+
+* Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
+
+* Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
+
+## [v5.0.0] - 2018-01-10
+
+* Promoted v5.0-beta.71 to v5.0.0
 
 ## [v5.0-beta.71] - 2017-12-20
 
@@ -851,6 +887,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v6.0-alpha.2]: https://github.com/gchq/stroom/compare/v6.0-alpha.1...v6.0-alpha.2
 [v6.0-alpha.1]: https://github.com/gchq/stroom/releases/tag/v6.0-alpha.1
 
+[v5.1-beta.8]: https://github.com/gchq/stroom/compare/v5.1-beta.7...v5.1-beta.8
+[v5.1-beta.7]: https://github.com/gchq/stroom/compare/v5.1-beta.6...v5.1-beta.7
 [v5.1-beta.6]: https://github.com/gchq/stroom/compare/v5.1-beta.5...v5.1-beta.6
 [v5.1-beta.5]: https://github.com/gchq/stroom/compare/v5.1-beta.4...v5.1-beta.5
 [v5.1-beta.4]: https://github.com/gchq/stroom/compare/v5.1-beta.3...v5.1-beta.4
@@ -860,6 +898,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0.1]: https://github.com/gchq/stroom/compare/v5.0.0...v5.0.1
+[v5.0.0]: https://github.com/gchq/stroom/compare/v5.0-beta.71...v5.0.0
 [v5.0-beta.71]: https://github.com/gchq/stroom/compare/v5.0-beta.70...v5.0-beta.71
 [v5.0-beta.70]: https://github.com/gchq/stroom/compare/v5.0-beta.69...v5.0-beta.70
 [v5.0-beta.69]: https://github.com/gchq/stroom/compare/v5.0-beta.68...v5.0-beta.69

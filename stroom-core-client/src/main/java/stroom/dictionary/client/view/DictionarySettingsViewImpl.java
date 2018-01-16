@@ -21,14 +21,18 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.dictionary.client.presenter.DictionarySettingsPresenter.DictionarySettingsView;
 import stroom.util.shared.HasReadOnly;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySettingsView, HasReadOnly {
     private final Widget widget;
     @UiField
     TextArea description;
+    @UiField
+    ResizeSimplePanel imports;
 
     @Inject
     public DictionarySettingsViewImpl(final Binder binder) {
@@ -53,6 +57,11 @@ public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySe
     @Override
     public void setReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
+    }
+
+    @Override
+    public void setImportList(final View view) {
+        imports.setWidget(view.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, DictionarySettingsViewImpl> {

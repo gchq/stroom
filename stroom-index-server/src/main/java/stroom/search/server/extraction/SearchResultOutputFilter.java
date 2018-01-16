@@ -46,7 +46,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        if (DATA.equals(localName)) {
+        if (DATA.equals(localName) && values != null) {
             String name = atts.getValue(NAME);
             String value = atts.getValue(VALUE);
             if (name != null && value != null) {
@@ -71,6 +71,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
             resultReceiver.receive(values);
+            values = null;
         }
 
         super.endElement(uri, localName, qName);

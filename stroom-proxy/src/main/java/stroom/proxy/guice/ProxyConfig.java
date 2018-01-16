@@ -14,8 +14,7 @@ public class ProxyConfig {
     private ProxyRepositoryConfigImpl proxyRepositoryConfig;
     private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
     private LogStreamConfig logStreamConfig;
-    private ContentSyncConfig rulesetContentSyncConfig;
-    private ContentSyncConfig dictionaryContentSyncConfig;
+    private ContentSyncConfig contentSyncConfig;
 
     @JsonProperty
     public ProxyRequestConfig getProxyRequestConfig() {
@@ -68,22 +67,12 @@ public class ProxyConfig {
     }
 
     @JsonProperty
-    public ContentSyncConfig getRulesetContentSyncConfig() {
-        return rulesetContentSyncConfig;
+    public ContentSyncConfig getContentSyncConfig() {
+        return contentSyncConfig;
     }
 
     @JsonProperty
-    public void setRulesetContentSyncConfig(final ContentSyncConfig rulesetContentSyncConfig) {
-        this.rulesetContentSyncConfig = rulesetContentSyncConfig;
-    }
-
-    @JsonProperty
-    public ContentSyncConfig getDictionaryContentSyncConfig() {
-        return dictionaryContentSyncConfig;
-    }
-
-    @JsonProperty
-    public void setDictionaryContentSyncConfig(final ContentSyncConfig dictionaryContentSyncConfig) {
-        this.dictionaryContentSyncConfig = dictionaryContentSyncConfig;
+    public void setContentSyncConfig(final ContentSyncConfig contentSyncConfig) {
+        this.contentSyncConfig = contentSyncConfig;
     }
 }

@@ -22,7 +22,6 @@ import event.logging.BaseAdvancedQueryOperator;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -83,12 +82,9 @@ public class QueryDataLogUtil {
                             }
 
                             if (docRef != null) {
-                                final DictionaryDoc dictionary = dictionaryStore.read(docRef.getUuid());
-                                if (dictionary != null) {
-                                    final String words = dictionary.getData();
-                                    if (words != null) {
-                                        value += " (" + words + ")";
-                                    }
+                                final String words = dictionaryStore.getCombinedData(docRef);
+                                if (words != null) {
+                                    value += " (" + words + ")";
                                 }
 
                                 appendTerm(items, field, TermCondition.CONTAINS, value);

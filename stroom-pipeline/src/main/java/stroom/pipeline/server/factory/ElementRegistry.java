@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server.factory;
 
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -36,7 +34,7 @@ public class ElementRegistry {
     private final Map<String, PipelineElementType> elementTypes = new HashMap<>();
 
     @SuppressWarnings("unchecked")
-    public ElementRegistry(final Collection<Class<?>> elementClasses) {
+    ElementRegistry(final Collection<Class<?>> elementClasses) {
         for (final Class<?> elementClass : elementClasses) {
             final ConfigurableElement element = elementClass.getAnnotation(ConfigurableElement.class);
             if (element == null) {
@@ -69,67 +67,65 @@ public class ElementRegistry {
 
         // Remember this element and associated properties for UI purposes.
         final PipelineElementType elementType = createElementType(element);
-        if (elementType != null) {
-            final Map<String, PipelinePropertyType> properties = new HashMap<>();
+        final Map<String, PipelinePropertyType> properties = new HashMap<>();
 
-            // Register available properties.
-            final Method[] methods = elementClass.getMethods();
-            for (final Method method : methods) {
-                final PipelineProperty property = method.getAnnotation(PipelineProperty.class);
-                final PipelinePropertyDocRef docRefProperty = method.getAnnotation(PipelinePropertyDocRef.class);
-                if (property != null) {
-                    String name = method.getName();
-                    if (!name.startsWith("set") || name.length() <= 3) {
-                        throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                                + "\" must start with 'set'");
-                    }
-
-                    // Convert the setter to a camel case property name.
-                    name = makePropertyName(name);
-
-                    final Class<?>[] parameters = method.getParameterTypes();
-
-                    if (parameters.length != 1) {
-                        throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                                + "\" must have only 1 parameter");
-                    }
-
-                    final Map<String, Method> map = propertyMap.computeIfAbsent(elementTypeName, k -> new HashMap<>());
-
-                    final Class<?> clazz = parameters[0];
-                    // Make sure the class type is one we know how to deal with.
-
-                    if (!String.class.isAssignableFrom(clazz) &&
-                            !boolean.class.equals(clazz) &&
-                            !int.class.equals(clazz) &&
-                            !long.class.equals(clazz) &&
-                            !DocRef.class.isAssignableFrom(clazz) &&
-                            !PipelineReference.class.isAssignableFrom(clazz)) {
-                        throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                                + "\" has an unexpected type of \"" + clazz.getName() + "\"");
-                    }
-
-                    if (DocRef.class.isAssignableFrom(clazz)) {
-                        if (null == docRefProperty) {
-                            throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                                    + "\" is a DocRef, so also needs \"" + PipelinePropertyDocRef.class.getName() + "\"");
-                        }
-                    }
-
-                    final Method existing = map.put(name, method);
-                    if (existing != null) {
-                        throw new PipelineFactoryException(
-                                "PipelineProperty \"" + name + "\" on \"" + elementTypeName + "\" already exists");
-                    }
-
-                    // Remember this element and associated properties for UI
-                    // purposes.
-                    final PipelinePropertyType propertyType = createPropertyType(elementType,
-                            method,
-                            property,
-                            docRefProperty);
-                    properties.put(propertyType.getName(), propertyType);
+        // Register available properties.
+        final Method[] methods = elementClass.getMethods();
+        for (final Method method : methods) {
+            final PipelineProperty property = method.getAnnotation(PipelineProperty.class);
+            final PipelinePropertyDocRef docRefProperty = method.getAnnotation(PipelinePropertyDocRef.class);
+            if (property != null) {
+                String name = method.getName();
+                if (!name.startsWith("set") || name.length() <= 3) {
+                    throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
+                            + "\" must start with 'set'");
                 }
+
+                // Convert the setter to a camel case property name.
+                name = makePropertyName(name);
+
+                final Class<?>[] parameters = method.getParameterTypes();
+
+                if (parameters.length != 1) {
+                    throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
+                            + "\" must have only 1 parameter");
+                }
+
+                final Map<String, Method> map = propertyMap.computeIfAbsent(elementTypeName, k -> new HashMap<>());
+
+                final Class<?> clazz = parameters[0];
+                // Make sure the class type is one we know how to deal with.
+
+                if (!String.class.isAssignableFrom(clazz) &&
+                        !boolean.class.equals(clazz) &&
+                        !int.class.equals(clazz) &&
+                        !long.class.equals(clazz) &&
+                        !DocRef.class.isAssignableFrom(clazz) &&
+                        !PipelineReference.class.isAssignableFrom(clazz)) {
+                    throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
+                            + "\" has an unexpected type of \"" + clazz.getName() + "\"");
+                }
+
+                if (DocRef.class.isAssignableFrom(clazz)) {
+                    if (null == docRefProperty) {
+                        throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
+                                + "\" is a DocRef, so also needs \"" + PipelinePropertyDocRef.class.getName() + "\"");
+                    }
+                }
+
+                final Method existing = map.put(name, method);
+                if (existing != null) {
+                    throw new PipelineFactoryException(
+                            "PipelineProperty \"" + name + "\" on \"" + elementTypeName + "\" already exists");
+                }
+
+                // Remember this element and associated properties for UI
+                // purposes.
+                final PipelinePropertyType propertyType = createPropertyType(elementType,
+                        method,
+                        property,
+                        docRefProperty);
+                properties.put(propertyType.getName(), propertyType);
             }
 
             elementTypes.put(elementTypeName, elementType);
@@ -165,7 +161,6 @@ public class ElementRegistry {
                 .description(property.description())
                 .defaultValue(property.defaultValue())
                 .pipelineReference(paramType.equals(PipelineReference.class))
-                .dataEntity(paramType.equals(XSLT.class) || paramType.equals(TextConverter.class))
                 .docRefTypes((docRefProperty != null) ? docRefProperty.types() : null)
                 .build();
     }
