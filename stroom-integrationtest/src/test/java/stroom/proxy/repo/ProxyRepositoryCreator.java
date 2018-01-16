@@ -16,14 +16,6 @@
 
 package stroom.proxy.repo;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-
 import org.apache.commons.lang.StringUtils;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.MetaMap;
@@ -31,6 +23,7 @@ import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
+import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.zip.StroomHeaderArguments;
@@ -39,9 +32,10 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
+import java.nio.file.attribute.BasicFileAttributes;
 
 public class ProxyRepositoryCreator {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(ProxyRepositoryCreator.class);
@@ -61,21 +55,25 @@ public class ProxyRepositoryCreator {
         readDir(dir, mandateEffectiveDate, effectiveMs);
     }
 
-    private void readDir(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
-        try (final Stream<Path> stream = Files.walk(dir)) {
-            stream.forEach(p -> {
-                if (!p.getFileName().toString().startsWith(".")) {
-                    if (Files.isRegularFile(p)) {
-                        final String fileName = p.getFileName().toString().toLowerCase();
-                        if (fileName.endsWith(INPUT_EXTENSION)) {
-                            loadInput(p, mandateEffectiveDate, effectiveMs);
+    private void readDir(final Path path, final boolean mandateEffectiveDate, final Long effectiveMs) {
+        try {
+            if (path != null && Files.isDirectory(path)) {
+                Files.walkFileTree(path, new AbstractFileVisitor() {
+                    @Override
+                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                        if (file != null) {
+                            final String fileName = file.getFileName().toString().toLowerCase();
+                            if (fileName.endsWith(INPUT_EXTENSION)) {
+                                loadInput(file, mandateEffectiveDate, effectiveMs);
 
-                        } else if (fileName.endsWith(ZIP_EXTENSION)) {
-                            loadZip(p, mandateEffectiveDate, effectiveMs);
+                            } else if (fileName.endsWith(ZIP_EXTENSION)) {
+                                loadZip(file, mandateEffectiveDate, effectiveMs);
+                            }
                         }
+                        return super.visitFile(file, attrs);
                     }
-                }
-            });
+                });
+            }
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

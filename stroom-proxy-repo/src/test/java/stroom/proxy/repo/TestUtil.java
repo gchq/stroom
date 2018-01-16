@@ -2,15 +2,16 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.io.AbstractFileVisitor;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.stream.Stream;
 
 public final class TestUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUtil.class);
@@ -18,17 +19,35 @@ public final class TestUtil {
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
 
     static void clearTestDir() throws IOException {
-        final Path dir = getCurrentTestPath();
-        try (final Stream<Path> stream = Files.walk(dir).filter(p -> !p.equals(dir)).sorted(Comparator.reverseOrder())) {
-            stream.forEach(TestUtil::delete);
+        final Path path = getCurrentTestPath();
+        try {
+            if (path != null && Files.isDirectory(path)) {
+                Files.walkFileTree(path, new AbstractFileVisitor() {
+                    @Override
+                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                        delete(file);
+                        return super.visitFile(file, attrs);
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
+                        if (!path.equals(dir)) {
+                            delete(dir);
+                        }
+                        return super.postVisitDirectory(dir, exc);
+                    }
+                });
+            }
         } catch (IOException e) {
-            throw new RuntimeException("Unable to clear directory " + dir, e);
+            throw new RuntimeException("Unable to clear directory " + path, e);
         }
     }
 
     private static void delete(final Path path) {
         try {
-            Files.delete(path);
+            if (path != null) {
+                Files.delete(path);
+            }
         } catch (IOException e) {
             LOGGER.trace(e.getMessage(), e);
         }

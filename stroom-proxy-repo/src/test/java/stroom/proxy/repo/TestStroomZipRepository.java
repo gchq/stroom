@@ -4,14 +4,16 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import stroom.feed.MetaMap;
+import stroom.util.io.ExtensionFileVisitor;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.HashSet;
-import java.util.stream.Stream;
 
 public class TestStroomZipRepository {
     @Before
@@ -48,13 +50,28 @@ public class TestStroomZipRepository {
         });
 
         final HashSet<Path> allZips = new HashSet<>();
-        try (final Stream<Path> stream = reopenStroomZipRepository.walkZipFiles()) {
-            stream.forEach(allZips::add);
+
+        final Path path = reopenStroomZipRepository.getRootDir();
+        if (path != null && Files.isDirectory(path)) {
+            Files.walkFileTree(path, new ExtensionFileVisitor(StroomZipRepository.ZIP_EXTENSION) {
+                @Override
+                protected FileVisitResult matchingFile(final Path file, final BasicFileAttributes attrs) {
+                    allZips.add(file);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
         }
 
         Assert.assertEquals(2, allZips.size());
-        try (final Stream<Path> stream = reopenStroomZipRepository.walkZipFiles()) {
-            stream.forEach(p -> reopenStroomZipRepository.delete(new StroomZipFile(p)));
+
+        if (path != null && Files.isDirectory(path)) {
+            Files.walkFileTree(path, new ExtensionFileVisitor(StroomZipRepository.ZIP_EXTENSION) {
+                @Override
+                protected FileVisitResult matchingFile(final Path file, final BasicFileAttributes attrs) {
+                    reopenStroomZipRepository.delete(new StroomZipFile(file));
+                    return FileVisitResult.CONTINUE;
+                }
+            });
         }
 
         Assert.assertTrue(reopenStroomZipRepository.deleteIfEmpty());

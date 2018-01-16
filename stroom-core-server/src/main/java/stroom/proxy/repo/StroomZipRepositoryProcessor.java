@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.task.server.TaskContext;
 import stroom.util.io.CloseableUtil;
+import stroom.util.io.ExtensionFileVisitor;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
@@ -28,7 +29,10 @@ import stroom.util.zip.StroomHeaderArguments;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -102,8 +106,22 @@ public abstract class StroomZipRepositoryProcessor {
             LOGGER.debug("process() - Scanning " + stroomZipRepository.getRootDir());
         }
         // Scan all of the zip files in the repository so that we can map zip files to feeds.
-        try (final Stream<Path> zipFiles = stroomZipRepository.walkZipFiles()) {
-            final List<Path> filesBatch = zipFiles.limit(maxFileScan).collect(Collectors.toList());
+        try {
+            final List<Path> filesBatch = new ArrayList<>();
+            final Path path = stroomZipRepository.getRootDir();
+            if (path != null && Files.isDirectory(path)) {
+                Files.walkFileTree(path, new ExtensionFileVisitor(StroomZipRepository.ZIP_EXTENSION) {
+                    @Override
+                    protected FileVisitResult matchingFile(final Path file, final BasicFileAttributes attrs) {
+                        filesBatch.add(file);
+                        if (filesBatch.size() == maxFileScan) {
+                            return FileVisitResult.TERMINATE;
+                        }
+
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            }
 
             // Quit once we have hit the max
             if (filesBatch.size() >= maxFileScan) {
