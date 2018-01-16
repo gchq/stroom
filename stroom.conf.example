@@ -31,11 +31,12 @@ stroom.statistics.sql.jdbcDriverUsername=stroomuser
 stroom.statistics.sql.jdbcDriverPassword=stroompassword1
 
 stroom.security.apiToken=eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MzgyMDQyMDgsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.H6P2BjLMKKsuSsjG3Yb6yax_KiJI-pJMipneXV-7czo
-#stroom.advertisedUrl=http://localhost:8080
+stroom.advertisedUrl=http://stroom:8080
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true
 stroom.auth.services.url=http://auth-service:8099
 stroom.auth.authentication.service.url=http://auth-service:8099/authentication/v1
+stroom.auth.ui.url=http://stroom-auth-ui:5000
 
 stroom.users.ui.url=http://stroom-auth-ui:5000/userSearch
 stroom.apikeys.ui.url=http://stroom-auth-ui:5000/tokens
@@ -57,16 +58,16 @@ stroom.connectors.elastic.default.connector.version=5.6.4
 
 # UI URLs
 stroom.url.list=annotations-ui,elastic-ui,annotations-service,elastic-service,kibana-ui,dashboard
-stroom.url.annotations-ui=http://localhost:5001
-stroom.url.annotations-service=http://localhost:8199
-stroom.url.elastic-ui=http://localhost:5002
-stroom.url.elastic-service=http://localhost:8299
-stroom.url.kibana-ui=http://localhost:5601
-stroom.url.dashboard=http://localhost:8080/dashboard
+stroom.url.annotations-ui=http://stroom-annotations-ui:5001
+stroom.url.annotations-service=http://stroom-annotations-service:8199
+stroom.url.elastic-ui=http://stroom-query-elastic-ui:5002
+stroom.url.elastic-service=http://stroom-query-elastic-service:8299
+stroom.url.kibana-ui=http://192.168.1.14:5601
+stroom.url.dashboard=http://192.168.1.14:8080/dashboard.jsp
 
 # External Doc Ref
 stroom.doc-ref.types=AnnotationsIndex,ElasticIndex
-stroom.url.doc-ref.service.AnnotationsIndex=http://localhost:8199
-stroom.url.doc-ref.service.ElasticIndex=http://localhost:8299
-stroom.url.doc-ref.ui.AnnotationsIndex=http://localhost:5001
-stroom.url.doc-ref.ui.ElasticIndex=http://localhost:5002
+stroom.url.doc-ref.service.AnnotationsIndex=http://stroom-annotations-service:8199
+stroom.url.doc-ref.service.ElasticIndex=http://stroom-query-elastic-service:8299
+stroom.url.doc-ref.ui.AnnotationsIndex=http://stroom-annotations-ui:5001
+stroom.url.doc-ref.ui.ElasticIndex=http://stroom-query-elastic-ui:5002
