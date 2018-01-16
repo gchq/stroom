@@ -29,18 +29,19 @@ import stroom.util.zip.StroomZipOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * Class that represents a repository on the file system. By default files are
@@ -413,28 +414,50 @@ public class StroomZipRepository {
 
         try {
             if (Files.isDirectory(path)) {
-                try (final Stream<Path> stream = Files.walk(path)) {
-                    stream.sorted(Comparator.reverseOrder()).forEach(p -> {
+                Files.walkFileTree(path, new FileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                         try {
-                            if (p.toString().endsWith(".zip.lock")) {
+                            if (file.toString().endsWith(".zip.lock")) {
                                 final long oldestTimeMs = System.currentTimeMillis() - lockDeleteAgeMs;
-                                final long lastModMs = Files.getLastModifiedTime(p).toMillis();
+                                final long lastModMs = attrs.lastModifiedTime().toMillis();
                                 if (lastModMs < oldestTimeMs) {
                                     try {
-                                        Files.delete(p);
-                                        LOGGER.info("clean() - Removed old lock file due to age " + p.toString() + " " + DateUtil.createNormalDateTimeString());
+                                        Files.delete(file);
+                                        LOGGER.info("clean() - Removed old lock file due to age " + file.toString() + " " + DateUtil.createNormalDateTimeString());
                                     } catch (final IOException e) {
-                                        LOGGER.error("clean() - Unable to remove old lock file due to age " + p.toString());
+                                        LOGGER.error("clean() - Unable to remove old lock file due to age " + file.toString());
                                     }
                                 }
-                            } else if (p.getFileName().toString().length() == 3 && Files.isDirectory(p)) {
-                                deleteDirIfNotActive(p.toFile());
                             }
                         } catch (final Exception e) {
                             LOGGER.error(e.getMessage(), e);
                         }
-                    });
-                }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(final Path file, final IOException exc) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
+                        try {
+                            if (dir.getFileName().toString().length() == 3) {
+                                deleteDirIfNotActive(dir.toFile());
+                            }
+                        } catch (final Exception e) {
+                            LOGGER.error(e.getMessage(), e);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
             }
         } catch (final IOException e) {
             LOGGER.error("Failed to clean repo " + path);
