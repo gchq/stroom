@@ -37,20 +37,20 @@ import stroom.importexport.server.ImportExportHelper;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
-import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -401,6 +401,12 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final List<E> list = find(createCriteria());
+        return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
+    }
+
+    @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         E entity = null;
 
@@ -524,7 +530,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                         .uuid(entity.getUuid())
                         .name(entity.getName())
                         .build())
-                .id(entity.getId())
+                .otherInfo("DB ID: " + entity.getId())
                 .createUser(entity.getCreateUser())
                 .createTime(entity.getCreateTime())
                 .updateUser(entity.getUpdateUser())

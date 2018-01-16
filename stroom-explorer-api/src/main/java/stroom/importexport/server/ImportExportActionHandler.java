@@ -15,4 +15,6 @@ public interface ImportExportActionHandler {
     Map<String, String> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
 
     Set<DocRef> listDocuments();
+
+    Map<DocRef, Set<DocRef>> getDependencies();
 }

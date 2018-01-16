@@ -54,8 +54,8 @@ public class InfoDocumentPresenter
         final SharedDocRefInfo info = event.getInfo();
 
         String string = "";
-        if (info.getId() != null) {
-            string += "Id: " + String.valueOf(info.getId()) + "\n";
+        if (info.getOtherInfo() != null) {
+            string += info.getOtherInfo() + "\n";
         }
 
         string += "" +

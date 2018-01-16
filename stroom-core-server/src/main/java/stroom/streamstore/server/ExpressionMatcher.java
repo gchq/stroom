@@ -20,7 +20,6 @@ package stroom.streamstore.server;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -314,12 +313,9 @@ public class ExpressionMatcher {
 
     private String[] loadWords(final DocRef docRef) {
         return wordMap.computeIfAbsent(docRef, k -> {
-            final DictionaryDoc dictionary = dictionaryStore.read(docRef.getUuid());
-            if (dictionary != null) {
-                final String words = dictionary.getData();
-                if (words != null) {
-                    return words.trim().split("\n");
-                }
+            final String words = dictionaryStore.getCombinedData(docRef);
+            if (words != null) {
+                return words.trim().split("\n");
             }
 
             return null;

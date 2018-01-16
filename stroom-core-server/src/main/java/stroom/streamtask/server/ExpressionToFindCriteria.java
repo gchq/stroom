@@ -2,6 +2,7 @@ package stroom.streamtask.server;
 
 import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
@@ -10,6 +11,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Period;
 import stroom.feed.server.FeedService;
 import stroom.pipeline.server.PipelineService;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -30,6 +32,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -330,7 +334,7 @@ public class ExpressionToFindCriteria {
                     }
                     break;
                 case IN_DICTIONARY:
-                    final Set<String> words = dictionaryStore.getWords(term.getDictionary());
+                    final Set<String> words = getDictionaryWords(term.getDictionary());
                     values.addAll(words);
                     break;
                 default:
@@ -339,6 +343,15 @@ public class ExpressionToFindCriteria {
             }
         }
         return values;
+    }
+
+    private Set<String> getDictionaryWords(final DocRef docRef) {
+        Set<String> words = Collections.emptySet();
+        final String data = dictionaryStore.getCombinedData(docRef);
+        if (data != null) {
+            words = new HashSet<>(Arrays.asList(data.split("\n")));
+        }
+        return words;
     }
 
     private <T> CriteriaSet<T> convertCriteriaSetValues(final CriteriaSet<T> existing, final String field, final List<String> values, final Function<String, T> mapping) {

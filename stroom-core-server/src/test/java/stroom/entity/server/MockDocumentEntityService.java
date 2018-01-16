@@ -28,7 +28,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.query.api.v2.DocRef;
-import stroom.util.shared.DocRefInfo;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class MockDocumentEntityService<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, Clearable {
@@ -364,6 +365,12 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final List<E> list = find(createCriteria());
+        return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
+    }
+
+    @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         if (importExportHelper == null) {
             throw new RuntimeException("Import not supported for this test");
@@ -506,7 +513,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
                         .uuid(entity.getUuid())
                         .name(entity.getName())
                         .build())
-                .id(entity.getId())
+                .otherInfo("DB ID: " + entity.getId())
                 .createUser(entity.getCreateUser())
                 .createTime(entity.getCreateTime())
                 .updateUser(entity.getUpdateUser())

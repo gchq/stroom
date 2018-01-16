@@ -17,6 +17,8 @@
 
 package stroom.dictionary.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.server.JsonSerialiser;
@@ -28,9 +30,9 @@ import stroom.entity.shared.PermissionException;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -38,11 +40,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -50,6 +52,8 @@ import java.util.stream.Collectors;
 @Component
 @Singleton
 public class DictionaryStoreImpl implements DictionaryStore {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryStoreImpl.class);
+
     private final Store<DictionaryDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
@@ -127,6 +131,36 @@ public class DictionaryStoreImpl implements DictionaryStore {
     @Override
     public Set<DocRef> listDocuments() {
         return store.listDocuments();
+    }
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final List<DocRef> list = list();
+        return list.stream()
+                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT))
+                .map(d -> {
+                    // We need to read the document to get the name and imports.
+                    DictionaryDoc doc = null;
+                    try {
+                        doc = readDocument(d);
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    }
+                    return Optional.ofNullable(doc);
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toMap(doc -> new DocRef(doc.getType(), doc.getUuid(), doc.getName()), doc -> {
+                    try {
+                        if (doc.getImports() != null && doc.getImports() != null) {
+                            return Collections.unmodifiableSet(new HashSet<>(doc.getImports()));
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    }
+
+                    return Collections.emptySet();
+                }));
     }
 
     @Override
@@ -221,12 +255,36 @@ public class DictionaryStoreImpl implements DictionaryStore {
     }
 
     @Override
-    public Set<String> getWords(final DocRef docRef) {
-        Set<String> words = Collections.emptySet();
+    public String getCombinedData(final DocRef docRef) {
+        return doGetCombinedData(docRef, new HashSet<>());
+    }
+
+    private String doGetCombinedData(final DocRef docRef, final Set<DocRef> visited) {
         final DictionaryDoc doc = readDocument(docRef);
-        if (doc != null && doc.getData() != null) {
-            words = new HashSet<>(Arrays.asList(doc.getData().split("\n")));
+        if (doc != null && !visited.contains(docRef)) {
+            // Prevent circular dependencies.
+            visited.add(docRef);
+
+            final StringBuilder sb = new StringBuilder();
+            if (doc.getImports() != null) {
+                for (final DocRef ref : doc.getImports()) {
+                    final String data = doGetCombinedData(ref, visited);
+                    if (data != null && data.length() > 0) {
+                        if (sb.length() > 0) {
+                            sb.append("\n");
+                        }
+                        sb.append(data);
+                    }
+                }
+            }
+            if (doc.getData() != null) {
+                if (sb.length() > 0) {
+                    sb.append("\n");
+                }
+                sb.append(doc.getData());
+            }
+            return sb.toString();
         }
-        return words;
+        return null;
     }
 }

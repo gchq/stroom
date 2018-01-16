@@ -43,7 +43,6 @@ import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.query.api.v2.DocRef;
@@ -169,8 +168,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             if (properties != null && properties.size() > 0) {
                 for (final PipelineProperty property : properties) {
                     if (property.getValue() != null) {
-                        final PipelinePropertyType propertyType = property.getPropertyType();
-                        if (propertyType.isDataEntity() && property.getValue().getEntity() != null) {
+                        if (property.getValue().getEntity() != null) {
                             docRef = property.getValue().getEntity();
                         } else if (property.getName().toLowerCase().contains("pattern") && stream != null) {
                             String value = property.getValue().getString();
@@ -428,9 +426,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     /**
      * Ensures we don't set a null string into a field by returning an empty
      * string instead of null.
-     *
-     * @param str
-     * @return
      */
     private String notNull(final String str) {
         if (str == null) {

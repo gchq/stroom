@@ -31,7 +31,6 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.Version;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.index.server.analyzer.AnalyzerFactory;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
@@ -421,17 +420,12 @@ public class SearchExpressionQueryBuilder {
     }
 
     private String[] loadWords(final DocRef docRef) {
-        final DictionaryDoc dictionary = dictionaryStore.read(docRef.getUuid());
-        if (dictionary == null) {
+        final String words = dictionaryStore.getCombinedData(docRef);
+        if (words == null) {
             throw new SearchException("Dictionary \"" + docRef + "\" not found");
         }
 
-        final String words = dictionary.getData();
-        if (words != null) {
-            return words.trim().split("\n");
-        }
-
-        return null;
+        return words.trim().split("\n");
     }
 
     private Occur getOccur(final ExpressionOperator operator) {

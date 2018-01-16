@@ -23,7 +23,7 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.query.api.v2.DocRef;
-import stroom.util.shared.DocRefInfo;
+import stroom.query.api.v2.DocRefInfo;
 
 import java.util.List;
 

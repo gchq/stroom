@@ -26,8 +26,8 @@ import org.springframework.context.annotation.FilterType;
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.dashboard.server.QueryServiceImpl;
 import stroom.dictionary.server.DictionaryStoreImpl;
-import stroom.elastic.server.ElasticIndexServiceImpl;
 import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.externaldoc.server.ExternalDocumentEntityServiceImpl;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.server.MockFeedService;
 import stroom.importexport.server.ImportExportActionHandlers;
@@ -52,12 +52,12 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
 import stroom.policy.server.DataRetentionExecutor;
+import stroom.policy.server.DataRetentionTransactionHelper;
 import stroom.resource.server.ResourceStoreImpl;
 import stroom.security.server.UserServiceImpl;
 import stroom.streamstore.server.MockStreamTypeService;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
 import stroom.streamstore.server.StreamTypeServiceImpl;
-import stroom.streamstore.server.fs.DataRetentionTransactionHelper;
 import stroom.streamstore.server.fs.FileSystemStreamStore;
 import stroom.streamtask.server.MockStreamProcessorFilterService;
 import stroom.streamtask.server.MockStreamProcessorService;
@@ -136,7 +136,7 @@ import stroom.xmlschema.shared.XMLSchema;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DatabaseCommonTestControl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DictionaryStoreImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ElasticIndexServiceImpl.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ExternalDocumentEntityServiceImpl.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // EntityPathResolverImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FeedServiceImpl.class),

@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.AutoMarshal;
@@ -24,20 +26,29 @@ import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.logging.DocumentEventLog;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component("pipelineService")
 @Transactional
 @AutoMarshal
 public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntity, FindPipelineEntityCriteria>
         implements PipelineService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineServiceImpl.class);
+
     @Inject
     PipelineServiceImpl(final StroomEntityManager entityManager,
                         final ImportExportHelper importExportHelper,
@@ -64,6 +75,56 @@ public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntit
     @Override
     public PipelineEntity loadByUuidWithoutUnmarshal(final String uuid) {
         return loadByUuid(uuid, Collections.emptySet(), null);
+    }
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final Set<DocRef> docs = super.listDocuments();
+        return docs.stream().collect(Collectors.toMap(Function.identity(), this::getDependencies));
+    }
+
+    private Set<DocRef> getDependencies(final DocRef docRef) {
+        final Set<DocRef> docRefs = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+        try {
+            final PipelineEntity pipelineEntity = loadByUuid(docRef.getUuid());
+
+            if (pipelineEntity.getParentPipeline() != null) {
+                docRefs.add(pipelineEntity.getParentPipeline());
+            }
+
+            if (pipelineEntity.getPipelineData() != null) {
+                if (pipelineEntity.getPipelineData().getProperties() != null &&
+                        pipelineEntity.getPipelineData().getProperties().getAdd() != null) {
+                    final List<PipelineProperty> pipelineProperties = pipelineEntity.getPipelineData().getProperties().getAdd();
+                    pipelineProperties.forEach(prop -> {
+                        if (prop.getValue() != null && prop.getValue().getEntity() != null) {
+                            docRefs.add(prop.getValue().getEntity());
+                        }
+                    });
+                }
+
+                if (pipelineEntity.getPipelineData().getPipelineReferences() != null &&
+                        pipelineEntity.getPipelineData().getPipelineReferences().getAdd() != null) {
+                    final List<PipelineReference> pipelineReferences = pipelineEntity.getPipelineData().getPipelineReferences().getAdd();
+                    pipelineReferences.forEach(ref -> {
+                        if (ref.getFeed() != null) {
+                            docRefs.add(ref.getFeed());
+                        }
+
+                        if (ref.getPipeline() != null) {
+                            docRefs.add(ref.getPipeline());
+                        }
+                    });
+                }
+            }
+
+
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return docRefs;
     }
 
     @Override

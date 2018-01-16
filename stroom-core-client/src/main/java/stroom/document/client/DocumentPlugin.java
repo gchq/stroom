@@ -46,8 +46,8 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
     private final Map<DocRef, DocumentTabData> documentToTabDataMap = new HashMap<>();
     private final Map<DocumentTabData, DocRef> tabDataToDocumentMap = new HashMap<>();
     private final ContentManager contentManager;
+    private final DocumentPluginEventManager documentPluginEventManager;
 
-    @Inject
     public DocumentPlugin(final EventBus eventBus,
                           final ClientDispatchAsync dispatcher,
                           final ContentManager contentManager,
@@ -57,8 +57,17 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
 
         this.dispatcher = dispatcher;
 
+        this.documentPluginEventManager = documentPluginEventManager;
+
         // Register this plugin.
-        documentPluginEventManager.registerPlugin(getType(), this);
+        final String type = getType();
+        if (null != type) {
+            documentPluginEventManager.registerPlugin(type, this);
+        }
+    }
+
+    protected void registerAsPluginForType(final String type) {
+        this.documentPluginEventManager.registerPlugin(type, this);
     }
 
 //    /**

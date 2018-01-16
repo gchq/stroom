@@ -21,6 +21,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TextComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings;
+import stroom.entity.shared.DocRefs;
 import stroom.logging.DocumentEventLog;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindDashboardCriteria;
@@ -33,10 +39,22 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRefUtil;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @Transactional
@@ -65,6 +83,73 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     @Override
     public FindDashboardCriteria createCriteria() {
         return new FindDashboardCriteria();
+    }
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final Set<DocRef> docs = super.listDocuments();
+        return docs.stream().collect(Collectors.toMap(Function.identity(), this::getDependencies));
+    }
+
+    private Set<DocRef> getDependencies(final DocRef docRef) {
+        final Set<DocRef> docRefs = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+        try {
+            final Dashboard dashboard = loadByUuid(docRef.getUuid());
+
+            if (dashboard.getDashboardData() != null && dashboard.getDashboardData().getComponents() != null) {
+                dashboard.getDashboardData().getComponents().forEach(component -> {
+                    final ComponentSettings componentSettings = component.getSettings();
+                    if (componentSettings != null) {
+                        if (componentSettings instanceof QueryComponentSettings) {
+                            final QueryComponentSettings queryComponentSettings = (QueryComponentSettings) componentSettings;
+                            if (queryComponentSettings.getDataSource() != null) {
+                                docRefs.add(queryComponentSettings.getDataSource());
+                            }
+
+                            if (queryComponentSettings.getExpression() != null) {
+                                addExpressionRefs(docRefs, queryComponentSettings.getExpression());
+                            }
+                        } else if (componentSettings instanceof TableComponentSettings) {
+                            final TableComponentSettings tableComponentSettings = (TableComponentSettings) componentSettings;
+                            if (tableComponentSettings.getExtractionPipeline() != null) {
+                                docRefs.add(tableComponentSettings.getExtractionPipeline());
+                            }
+
+                        } else if (componentSettings instanceof VisComponentSettings) {
+                            final VisComponentSettings visComponentSettings = (VisComponentSettings) componentSettings;
+                            if (visComponentSettings.getVisualisation() != null) {
+                                docRefs.add(visComponentSettings.getVisualisation());
+                            }
+
+                        } else if (componentSettings instanceof TextComponentSettings) {
+                            final TextComponentSettings textComponentSettings = (TextComponentSettings) componentSettings;
+                            if (textComponentSettings.getPipeline() != null) {
+                                docRefs.add(textComponentSettings.getPipeline());
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return docRefs;
+    }
+
+    private void addExpressionRefs(final Set<DocRef> docRefs, final ExpressionItem expressionItem) {
+        if (expressionItem instanceof ExpressionOperator) {
+            final ExpressionOperator expressionOperator = (ExpressionOperator) expressionItem;
+            if (expressionOperator.getChildren() != null) {
+                expressionOperator.getChildren().forEach(item -> addExpressionRefs(docRefs, item));
+            }
+        } else if (expressionItem instanceof ExpressionTerm) {
+            final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
+            if (expressionTerm.getDictionary() != null) {
+                docRefs.add(expressionTerm.getDictionary());
+            }
+        }
     }
 
 //    @Override

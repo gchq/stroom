@@ -34,19 +34,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.annotations.spring.AnnotationsIndexConfiguration;
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.content.ContentSyncService;
+import stroom.content.ProxySecurityFilter;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServlet;
 import stroom.dictionary.server.DictionaryResource;
 import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
 import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.explorer.server.ExplorerConfiguration;
+import stroom.externaldoc.spring.ExternalDocRefConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
+import stroom.importexport.server.ImportExportActionHandler;
 import stroom.index.server.StroomIndexQueryResource;
 import stroom.index.spring.IndexConfiguration;
 import stroom.lifecycle.LifecycleService;
@@ -59,6 +62,7 @@ import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
 import stroom.ruleset.server.RuleSetResource;
 import stroom.ruleset.server.RuleSetService;
+import stroom.ruleset.shared.RuleSet;
 import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
@@ -96,8 +100,9 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
-import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
@@ -120,7 +125,7 @@ public class App extends Application<Config> {
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
-        bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom", "ui"));
+        bootstrap.addBundle(new AssetsBundle("/ui", "/", "index.html", "ui"));
     }
 
     @Override
@@ -154,6 +159,13 @@ public class App extends Application<Config> {
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
+        // Add health checks
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
+
+        // Add filters
+        GuiceUtil.addFilter(servletContextHandler, injector, ProxySecurityFilter.class, "/*");
+
         // Add servlets
         servletContextHandler.addServlet(new ServletHolder(new ConfigServlet(configPath)), "/config");
         GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed");
@@ -169,15 +181,14 @@ public class App extends Application<Config> {
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
 
-        // Sync content for rule set.
-        if (configuration.getProxyConfig() != null && configuration.getProxyConfig().getRulesetContentSyncConfig() != null) {
-            final ContentSyncService contentSyncService = new ContentSyncService(configuration.getProxyConfig().getRulesetContentSyncConfig(), injector.getInstance(RuleSetService.class));
-            environment.lifecycle().manage(contentSyncService);
-        }
+        // Sync content.
+        if (configuration.getProxyConfig() != null && configuration.getProxyConfig().getContentSyncConfig() != null) {
+            // Create a map of import handlers.
+            final Map<String, ImportExportActionHandler> importExportActionHandlers = new HashMap<>();
+            importExportActionHandlers.put(RuleSet.DOCUMENT_TYPE, injector.getInstance(RuleSetService.class));
+            importExportActionHandlers.put(DictionaryDoc.ENTITY_TYPE, injector.getInstance(DictionaryStore.class));
 
-        // Sync content for dictionaries.
-        if (configuration.getProxyConfig() != null && configuration.getProxyConfig().getDictionaryContentSyncConfig() != null) {
-            final ContentSyncService contentSyncService = new ContentSyncService(configuration.getProxyConfig().getDictionaryContentSyncConfig(), injector.getInstance(DictionaryStore.class));
+            final ContentSyncService contentSyncService = new ContentSyncService(configuration.getProxyConfig().getContentSyncConfig(), importExportActionHandlers);
             environment.lifecycle().manage(contentSyncService);
         }
     }
@@ -187,7 +198,6 @@ public class App extends Application<Config> {
         LOGGER.info("Loading Spring context");
         final ApplicationContext applicationContext = loadApplcationContext(configuration, environment);
 
-
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add health checks
@@ -195,11 +205,13 @@ public class App extends Application<Config> {
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscovererImpl.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, DictionaryResource.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, RuleSetResource.class);
 
         // Add filters
         SpringUtil.addFilter(servletContextHandler, applicationContext, HttpServletRequestFilter.class, "/*");
-        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter", Collections.singletonMap("rejectUri", "/"));
-        FilterUtil.addFilter(servletContextHandler, CacheControlFilter.class, "cacheControlFilter", Collections.singletonMap("seconds", "600"));
+        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter").setInitParameter("rejectUri", "/");
+        FilterUtil.addFilter(servletContextHandler, CacheControlFilter.class, "cacheControlFilter").setInitParameter("seconds", "600");
         SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*");
 
         // Add servlets
@@ -258,7 +270,7 @@ public class App extends Application<Config> {
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
                 SecurityConfiguration.class,
-                AnnotationsIndexConfiguration.class,
+                ExternalDocRefConfiguration.class,
                 ElasticIndexConfiguration.class,
                 RuleSetConfiguration.class
         );
@@ -268,7 +280,7 @@ public class App extends Application<Config> {
 
     private static void configureCors(io.dropwizard.setup.Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
-        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, new String[]{"/*"});
+        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS");
         cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
         cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "*");

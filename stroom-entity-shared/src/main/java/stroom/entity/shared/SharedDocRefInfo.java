@@ -1,7 +1,7 @@
 package stroom.entity.shared;
 
 public class SharedDocRefInfo extends SharedDocRef {
-    private Long id;
+    private String otherInfo;
     private Long createTime;
     private Long updateTime;
     private String createUser;
@@ -13,25 +13,25 @@ public class SharedDocRefInfo extends SharedDocRef {
     public SharedDocRefInfo(final String type,
                             final String uuid,
                             final String name,
-                            final Long id,
+                            final String otherInfo,
                             final Long createTime,
                             final String createUser,
                             final Long updateTime,
                             final String updateUser) {
         super(type, uuid, name);
-        this.id = id;
+        this.otherInfo = otherInfo;
         this.createTime = createTime;
         this.createUser = createUser;
         this.updateTime = updateTime;
         this.updateUser = updateUser;
     }
 
-    public Long getId() {
-        return id;
+    public String getOtherInfo() {
+        return otherInfo;
     }
 
-    public void setId(final Long id) {
-        this.id = id;
+    public void setOtherInfo(final String otherInfo) {
+        this.otherInfo = otherInfo;
     }
 
     public Long getCreateTime() {
@@ -67,7 +67,7 @@ public class SharedDocRefInfo extends SharedDocRef {
     }
 
     public static class Builder extends SharedDocRef.BaseBuilder<SharedDocRefInfo, Builder> {
-        private Long id;
+        private String otherInfo;
         private Long createTime;
         private Long updateTime;
         private String createUser;
@@ -76,8 +76,8 @@ public class SharedDocRefInfo extends SharedDocRef {
         public Builder() {
         }
 
-        public Builder id(final Long value) {
-            this.id = value;
+        public Builder otherInfo(final String value) {
+            this.otherInfo = value;
             return self();
         }
 
@@ -111,7 +111,7 @@ public class SharedDocRefInfo extends SharedDocRef {
             return new SharedDocRefInfo(getType(),
                     getUuid(),
                     getName(),
-                    id,
+                    otherInfo,
                     createTime,
                     createUser,
                     updateTime,

@@ -19,7 +19,6 @@ package stroom.explorer.server;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.SharedDocRefInfo;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
@@ -29,9 +28,9 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.HasNodeState;
 import stroom.util.spring.StroomScope;
 
@@ -122,10 +121,12 @@ class ExplorerServiceImpl implements ExplorerService {
 
     private void forceMinDepthOpen(final TreeModel masterTreeModel, final Set<ExplorerNode> forcedOpen, final ExplorerNode parent, final int minDepth, final int depth) {
         final List<ExplorerNode> children = masterTreeModel.getChildMap().get(parent);
-        for (final ExplorerNode child : children) {
-            forcedOpen.add(child);
-            if (minDepth > depth) {
-                forceMinDepthOpen(masterTreeModel, forcedOpen, child, minDepth, depth + 1);
+        if (children != null) {
+            for (final ExplorerNode child : children) {
+                forcedOpen.add(child);
+                if (minDepth > depth) {
+                    forceMinDepthOpen(masterTreeModel, forcedOpen, child, minDepth, depth + 1);
+                }
             }
         }
     }
@@ -308,7 +309,7 @@ class ExplorerServiceImpl implements ExplorerService {
             result = handler.createDocument(name, getUUID(folderRef));
             explorerEventLog.create(type, name, result.getUuid(), folderRef, permissionInheritance, null);
         } catch (final RuntimeException e) {
-            explorerEventLog.create(type, name,null, folderRef, permissionInheritance, e);
+            explorerEventLog.create(type, name, null, folderRef, permissionInheritance, e);
             throw e;
         }
 

@@ -29,9 +29,9 @@ import stroom.importexport.server.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -45,8 +45,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -66,7 +68,7 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
     private Class<D> clazz;
 
     @Inject
-    public Store(final Persistence persistence, final SecurityContext securityContext) throws IOException {
+    public Store(final Persistence persistence, final SecurityContext securityContext) {
         this.persistence = persistence;
         this.securityContext = securityContext;
     }
@@ -217,6 +219,27 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         return list.stream()
                 .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT))
                 .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final List<DocRef> list = list();
+        return list.stream()
+                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT))
+                .map(d -> {
+                    // We need to read the document to get the name.
+                    DocRef docRef = null;
+                    try {
+                        final D doc = readDocument(d);
+                        docRef = new DocRef(doc.getType(), doc.getUuid(), doc.getName());
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    }
+                    return Optional.ofNullable(docRef);
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
     @Override

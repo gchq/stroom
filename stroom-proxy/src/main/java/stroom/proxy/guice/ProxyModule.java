@@ -44,6 +44,7 @@ public class ProxyModule extends AbstractModule {
         bind(ForwardStreamConfig.class).toProvider(proxyConfig::getForwardStreamConfig);
         bind(ProxyRepositoryConfig.class).toProvider(proxyConfig::getProxyRepositoryConfig);
         bind(ProxyRepositoryReaderConfig.class).toProvider(proxyConfig::getProxyRepositoryReaderConfig);
+        bind(ContentSyncConfig.class).toProvider(proxyConfig::getContentSyncConfig);
 
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(Monitor.class).to(MonitorImpl.class);

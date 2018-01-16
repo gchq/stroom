@@ -26,6 +26,7 @@ public final class SvgPresets {
     public static final SvgPreset COPY = new SvgPreset("images/copy.svg", "Copy", false);
     public static final SvgPreset DATABASE = new SvgPreset("images/database.svg", "Database", true);
     public static final SvgPreset DELETE = new SvgPreset("images/delete.svg", "Delete", false);
+    public static final SvgPreset DEPENDENCIES = new SvgPreset("images/dependencies.svg", "Dependencies", true);
     public static final SvgPreset DISABLE = new SvgPreset("images/disable.svg", "Disable", false);
     public static final SvgPreset DOWN = new SvgPreset("images/down.svg", "Down", false);
     public static final SvgPreset DOWNLOAD = new SvgPreset("images/download.svg", "Download", false);

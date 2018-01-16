@@ -30,10 +30,13 @@ import stroom.pipeline.shared.XSLT;
 import stroom.security.client.ClientSecurityContext;
 
 public class DictionarySettingsPresenter extends DocumentSettingsPresenter<DictionarySettingsPresenter.DictionarySettingsView, DictionaryDoc> {
+    private final DictionaryListPresenter dictionaryListPresenter;
+
     @Inject
-    public DictionarySettingsPresenter(final EventBus eventBus, final DictionarySettingsView view,
-                                       final ClientSecurityContext securityContext) {
+    public DictionarySettingsPresenter(final EventBus eventBus, final DictionarySettingsView view, final DictionaryListPresenter dictionaryListPresenter, final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
+        this.dictionaryListPresenter = dictionaryListPresenter;
+        getView().setImportList(dictionaryListPresenter.getView());
 
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
@@ -44,7 +47,12 @@ public class DictionarySettingsPresenter extends DocumentSettingsPresenter<Dicti
         };
 
         registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
+    }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(dictionaryListPresenter.addDirtyHandler(event -> setDirty(true)));
     }
 
     @Override
@@ -55,14 +63,18 @@ public class DictionarySettingsPresenter extends DocumentSettingsPresenter<Dicti
     @Override
     protected void onRead(final DictionaryDoc doc) {
         getView().getDescription().setText(doc.getDescription());
+        dictionaryListPresenter.read(doc);
     }
 
     @Override
     protected void onWrite(final DictionaryDoc doc) {
         doc.setDescription(getView().getDescription().getText().trim());
+        dictionaryListPresenter.write(doc);
     }
 
     public interface DictionarySettingsView extends View {
         TextArea getDescription();
+
+        void setImportList(View view);
     }
 }
