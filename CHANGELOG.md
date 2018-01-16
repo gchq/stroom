@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.0.2] - 2018-01-16
+
 * Issue **#554** : Added a `parseUri` XSLT function.
 
 * Issue **#557** : Added functions to parse and output URI parts.
@@ -755,7 +757,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0.2...HEAD
+[v5.0.2]: https://github.com/gchq/stroom/compare/v5.0.1...v5.0.2
 [v5.0.1]: https://github.com/gchq/stroom/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/gchq/stroom/compare/v5.0-beta.71...v5.0.0
 [v5.0-beta.71]: https://github.com/gchq/stroom/compare/v5.0-beta.70...v5.0-beta.71
