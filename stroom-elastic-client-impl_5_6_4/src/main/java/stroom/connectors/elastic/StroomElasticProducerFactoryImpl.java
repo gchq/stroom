@@ -6,7 +6,7 @@ public class StroomElasticProducerFactoryImpl implements StroomElasticProducerFa
     private static final String VERSION = "5.6.4";
 
     @Override
-    public StroomElasticProducer getConnector(String version, ConnectorProperties properties) {
+    public StroomElasticProducer createConnector(String version, ConnectorProperties properties) {
         if (VERSION.equals(version)) {
             return new StroomElasticProducerImpl(properties);
         }

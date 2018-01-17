@@ -28,9 +28,11 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TimeZone;
 
 @SuppressWarnings("unused")
@@ -51,10 +53,10 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private final DatatypeFactory datatypeFactory;
 
     // If we move to a 'named' kafka config later, change the java.util.function.Supplier to a java.util.function.Function
-    StroomStatsInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer,
+    StroomStatsInternalStatisticsService(final Optional<StroomKafkaProducer> stroomKafkaProducer,
                                          final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
-        this.stroomKafkaProducer = stroomKafkaProducer;
+        this.stroomKafkaProducer = stroomKafkaProducer.orElse(null);
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
 
         try {
@@ -74,8 +76,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     @Inject
     StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactory,
                                          final StroomPropertyService stroomPropertyService) {
-        this(stroomKafkaProducerFactory.getProducer(exception -> LOGGER.error("Unable to call function on Kafka producer!", exception))
-                , stroomPropertyService);
+        this(stroomKafkaProducerFactory.getConnector(), stroomPropertyService);
     }
 
     @Override
@@ -83,35 +84,29 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 
         Preconditions.checkNotNull(eventsMap);
 
-        try {
-            //We work on the basis that a stat may or may not have a valid datasource (StatisticConfiguration) but we
-            //will let stroom-stats worry about that and just fire what we have at kafka
-            eventsMap.entrySet().stream()
-                    .filter(entry ->
-                            !entry.getValue().isEmpty())
-                    .forEach(entry -> {
-                        DocRef docRef = entry.getKey();
-                        List<InternalStatisticEvent> events = entry.getValue();
-                        String statName = docRef.getName();
-                        //all have same name so have same type
-                        String topic = getTopic(events.get(0).getType());
-                        byte[] message = buildMessage(docRef, events);
-                        StroomKafkaProducerRecord<String, byte[]> producerRecord =
-                                new StroomKafkaProducerRecord.Builder<String, byte[]>()
-                                        .topic(topic)
-                                        .key(docRef.getUuid())
-                                        .value(message)
-                                        .build();
-                        stroomKafkaProducer.send(producerRecord, false, exception -> {
-                            throw new RuntimeException(String.format(
-                                    "Error sending %s internal stats with name %s to kafka on topic %s, due to (%s)",
-                                    events.size(), statName, topic, exception.getMessage()), exception);
-                        });
-                    });
-        } finally {
-            //any problems with the send will call the exceptionhandler above to be triggered at this point
-            stroomKafkaProducer.flush();
-        }
+        //We work on the basis that a stat may or may not have a valid datasource (StatisticConfiguration) but we
+        //will let stroom-stats worry about that and just fire what we have at kafka
+        eventsMap.entrySet().stream()
+                .filter(entry ->
+                        !entry.getValue().isEmpty())
+                .forEach(entry -> {
+                    DocRef docRef = entry.getKey();
+                    List<InternalStatisticEvent> events = entry.getValue();
+                    String statName = docRef.getName();
+                    //all have same name so have same type
+                    String topic = getTopic(events.get(0).getType());
+                    byte[] message = buildMessage(docRef, events);
+                    String key = docRef.getUuid();
+                    StroomKafkaProducerRecord<String, byte[]> producerRecord =
+                            new StroomKafkaProducerRecord.Builder<String, byte[]>()
+                                    .topic(topic)
+                                    .key(key)
+                                    .value(message)
+                                    .build();
+                    stroomKafkaProducer.sendAsync(
+                            Collections.singletonList(producerRecord),
+                            StroomKafkaProducer.createLogOnlyExceptionHandler(LOGGER, topic, key));
+                });
     }
 
     private byte[] buildMessage(final DocRef docRef, final List<InternalStatisticEvent> events) {

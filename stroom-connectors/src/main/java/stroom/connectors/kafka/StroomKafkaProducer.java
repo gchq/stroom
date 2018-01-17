@@ -1,7 +1,10 @@
 package stroom.connectors.kafka;
 
+import org.slf4j.Logger;
 import stroom.connectors.StroomConnector;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
@@ -16,19 +19,45 @@ public interface StroomKafkaProducer extends StroomConnector {
     String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
 
     /**
-     * Given a Record, sends to the Kafka broker.
-     * @param stroomRecord The record, contains the data and partition information.
-     * @param flushOnSend Flush the producer on send
+     * Given a list of Records, sends to the Kafka broker asynchronously. The record will be sent at some point and tis method will
+     * return as soon as the record is received by the producer. The exceptionHandler will be called in the event
+     * of an exception sending the message to the broker. An exception may be thrown by this method in the event of
+     * a problem handing the records over to the broker.
+     *
+     * @param stroomRecords    The record, contains the data and partition information.
      * @param exceptionHandler A handler function if the exceptions are thrown. Allows custom exceptions (Runtime only)
+     * @return A list of CompletableFuture for the record metadata that will be complete when the broker has acknowledged the
+     * records
      */
-    void send(StroomKafkaProducerRecord<String, byte[]> stroomRecord,
-              boolean flushOnSend,
-              Consumer<Exception> exceptionHandler);
+    List<CompletableFuture<StroomKafkaRecordMetaData>> sendAsync(final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords,
+                                                                 final Consumer<Exception> exceptionHandler);
+
+    /**
+     * Given a list of Records, sends to the Kafka broker synchronously. This method will block until all the records
+     * have been acknowledged by the broker or an exception is thrown.
+     *
+     * @param stroomRecords The record, contains the data and partition information.
+     * @return A list of record metadata objects
+     */
+    List<StroomKafkaRecordMetaData> sendSync(final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords);
 
     /**
      * Allow manual flushing of the producer by the client. Be aware that the producer
      * is typically shared by many threads so a flush may involve waiting for the messages
-     * of other threads to be acknowledged by the broker.
+     * of other threads to be acknowledged by the broker. Use with caution!
      */
     void flush();
+
+    static Consumer<Exception> createLogOnlyExceptionHandler(final Logger logger,
+                                                             final String topic,
+                                                             final String key) {
+        return e -> {
+            logger.debug("Unable to send record to Kafka with topic/key %s/%s", e);
+            logger.error(String.format(
+                    "Unable to send record to Kafka with topic/key %s/%s, due to: %s (enable DEBUG for full stacktrace)",
+                    topic,
+                    key,
+                    e.getMessage()));
+        };
+    }
 }

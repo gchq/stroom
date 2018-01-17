@@ -2,6 +2,7 @@ package stroom.pipeline.server.writer;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingKafkaDestination;
@@ -11,7 +12,6 @@ import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
@@ -66,13 +66,15 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
 
     @Override
     public RollingDestination createDestination() throws IOException {
-        return new RollingKafkaDestination(key,
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector()
+                .orElseThrow(() -> new RuntimeException("No kafka producer available to use"));
+
+        return new RollingKafkaDestination(
+                key,
                 getFrequency(),
                 getMaxSize(),
                 System.currentTimeMillis(),
-                stroomKafkaProducerFactoryService.getProducer(exception ->
-                        errorReceiverProxy.log(Severity.ERROR, null, null, "Called function on Fake Kafka proxy", exception)
-                ),
+                stroomKafkaProducer,
                 recordKey,
                 topic,
                 flushOnSend);

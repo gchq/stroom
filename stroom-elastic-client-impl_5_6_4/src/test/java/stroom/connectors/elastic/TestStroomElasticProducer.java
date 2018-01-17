@@ -28,7 +28,7 @@ public class TestStroomElasticProducer {
         elasticProps.put(StroomElasticProducer.ELASTIC_HTTP_URL, "http://localhost:9200");
         elasticProps.put(StroomElasticProducer.TRANSPORT_HOSTS, "localhost:9300");
         elasticProps.put(StroomElasticProducer.CLUSTER_NAME, "docker-cluster");
-        StroomElasticProducer stroomElasticProducer = stroomElasticProducerFactory.getConnector(ELASTIC_VERSION, elasticProps);
+        StroomElasticProducer stroomElasticProducer = stroomElasticProducerFactory.createConnector(ELASTIC_VERSION, elasticProps);
 
         final String STAT_NAME = "stat-name";
         final String STAT_TYPE = "stat-type";

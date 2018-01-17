@@ -8,6 +8,7 @@ import stroom.node.server.StroomPropertyService;
 import stroom.node.server.StroomPropertyServiceImpl;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.fail;
@@ -30,7 +31,7 @@ public class TestKafkaExternalLoader {
 
         final Consumer<Exception> exceptionConsumer = (Consumer<Exception>) Mockito.mock(Consumer.class);
 
-        final StroomKafkaProducer stroomKafkaProducer = kafkaProducerFactoryService.getProducer(exceptionConsumer);
+        final StroomKafkaProducer stroomKafkaProducer = kafkaProducerFactoryService.getConnector().get();
 
         final StroomKafkaProducerRecord<String, byte[]> record =
                 new StroomKafkaProducerRecord.Builder<String, byte[]>()
@@ -39,7 +40,7 @@ public class TestKafkaExternalLoader {
                         .value(TEST_MESSAGE.getBytes(StandardCharsets.UTF_8))
                         .build();
 
-        stroomKafkaProducer.send(record, true, e -> fail(e.getLocalizedMessage()));
+        stroomKafkaProducer.sendSync(Collections.singletonList(record));
 
         Mockito.verify(exceptionConsumer, Mockito.times(0));
     }
@@ -58,7 +59,7 @@ public class TestKafkaExternalLoader {
                 new StroomKafkaProducerFactoryService(propertyService, externalLibService);
 
         final Consumer<Exception> exceptionConsumer = (Consumer<Exception>) Mockito.mock(Consumer.class);
-        final StroomKafkaProducer stroomKafkaProducer = kafkaProducerFactoryService.getProducer(exceptionConsumer);
+        final StroomKafkaProducer stroomKafkaProducer = kafkaProducerFactoryService.getConnector().get();
 
         final StroomKafkaProducerRecord<String, byte[]> record =
                 new StroomKafkaProducerRecord.Builder<String, byte[]>()
@@ -67,7 +68,7 @@ public class TestKafkaExternalLoader {
                         .value(TEST_MESSAGE.getBytes(StandardCharsets.UTF_8))
                         .build();
 
-        stroomKafkaProducer.send(record, true, e -> fail(e.getLocalizedMessage()));
+        stroomKafkaProducer.sendAsync(record, true, e -> fail(e.getLocalizedMessage()));
 
         Mockito.verify(exceptionConsumer, Mockito.times(1)).accept(Matchers.any(Exception.class));
     }
