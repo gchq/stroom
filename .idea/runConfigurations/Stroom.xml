@@ -12,8 +12,6 @@
     <option name="PASS_PARENT_ENVS" value="true" />
     <module name="stroom-app_main" />
     <envs />
-    <method>
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="stroom.conf.sh" run_configuration_type="BashConfigurationType" />
-    </method>
+    <method />
   </configuration>
 </component>
