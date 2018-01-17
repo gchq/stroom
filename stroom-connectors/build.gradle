@@ -1,2 +1,3 @@
 dependencies {
+    compile libs.slf4j_api
 }

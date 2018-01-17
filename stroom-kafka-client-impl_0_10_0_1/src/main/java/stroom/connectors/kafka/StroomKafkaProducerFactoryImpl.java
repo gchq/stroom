@@ -6,7 +6,7 @@ public class StroomKafkaProducerFactoryImpl implements StroomKafkaProducerFactor
     private static final String VERSION = "0.10.0.1";
 
     @Override
-    public StroomKafkaProducer getConnector(final String version, final ConnectorProperties properties) {
+    public StroomKafkaProducer createConnector(final String version, final ConnectorProperties properties) {
 
         if (VERSION.equals(version)) {
             return new StroomKafkaProducerImpl(properties);

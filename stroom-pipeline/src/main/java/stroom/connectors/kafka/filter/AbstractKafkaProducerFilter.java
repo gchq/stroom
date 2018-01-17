@@ -1,6 +1,8 @@
 package stroom.connectors.kafka.filter;
 
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.connectors.kafka.StroomKafkaProducer;
@@ -14,7 +16,11 @@ import stroom.pipeline.server.filter.AbstractSamplingFilter;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
+import java.util.Collections;
+
 public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKafkaProducerFilter.class);
 
     private boolean flushOnSend;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -61,7 +67,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
             throw new LoggedException(msg);
         }
         try {
-            this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer().orElse(null);
+            this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector().orElse(null);
         } catch (Exception e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
@@ -75,7 +81,9 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         }
     }
 
-    @PipelineProperty(description = "Flush the producer each time a message is sent")
+    @PipelineProperty(
+            description = "Wait for acknowledgement from the Kafka borker for each message sent. This is slower but catches errors sooner",
+            defaultValue = "false")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
     }
@@ -91,7 +99,14 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
                         .value(getOutput().getBytes(StreamUtil.DEFAULT_CHARSET))
                         .build();
         try {
-            stroomKafkaProducer.send(newRecord, flushOnSend, this::error);
+            if (flushOnSend) {
+                stroomKafkaProducer.sendSync(Collections.singletonList(newRecord));
+            } else {
+                //TODO need a better approach to handling failed async messages
+                stroomKafkaProducer.sendAsync(
+                        Collections.singletonList(newRecord),
+                        StroomKafkaProducer.createLogOnlyExceptionHandler(LOGGER, topic, recordKey));
+            }
         } catch (RuntimeException e) {
             error(e);
         }

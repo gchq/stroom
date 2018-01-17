@@ -1,7 +1,6 @@
 package stroom.connectors.kafka;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -9,6 +8,7 @@ import stroom.connectors.ConnectorProperties;
 import stroom.connectors.ConnectorPropertiesEmptyImpl;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -21,13 +21,13 @@ public class TestStroomKafkaProducer {
     };
 
     @Test
-    @Ignore("You may use this to test the local instance of Kafka.")
+//    @Ignore("You may use this to test the local instance of Kafka.")
     public void testManualSend() {
         // Given
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
         ConnectorProperties kafkaProps = new ConnectorPropertiesEmptyImpl();
         kafkaProps.put(StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getConnector(KAFKA_VERSION, kafkaProps);
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.createConnector(KAFKA_VERSION, kafkaProps);
         StroomKafkaProducerRecord<String, byte[]> record =
                 new StroomKafkaProducerRecord.Builder<String, byte[]>()
                         .topic("statistics")
@@ -36,7 +36,7 @@ public class TestStroomKafkaProducer {
                         .build();
 
         // When
-        stroomKafkaProducer.send(record, true, DEFAULT_CALLBACK);
+        stroomKafkaProducer.sendSync(Collections.singletonList(record));
 
         // Then: manually check your Kafka instances 'statistics' topic for 'some record data'
     }
@@ -46,7 +46,7 @@ public class TestStroomKafkaProducer {
         // Given
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
         ConnectorProperties properties = new ConnectorPropertiesEmptyImpl();
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getConnector(KAFKA_VERSION, properties);
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.createConnector(KAFKA_VERSION, properties);
         StroomKafkaProducerRecord<String, byte[]> record =
                 new StroomKafkaProducerRecord.Builder<String, byte[]>()
                         .topic("statistics")
@@ -57,7 +57,7 @@ public class TestStroomKafkaProducer {
         AtomicBoolean hasSendFailed = new AtomicBoolean(false);
 
         // When
-        stroomKafkaProducer.send(record, true, ex -> hasSendFailed.set(true));
+        stroomKafkaProducer.sendSync(Collections.singletonList(record));
 
         // Then
         Assert.assertTrue(hasSendFailed.get());

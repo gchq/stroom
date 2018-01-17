@@ -17,11 +17,14 @@
 package stroom.pipeline.server.writer;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.util.shared.ModelStringUtil;
@@ -30,11 +33,15 @@ import stroom.util.shared.Severity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collections;
 
 public abstract class AbstractKafkaAppender extends AbstractDestinationProvider implements Destination {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKafkaAppender.class);
+
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final StroomKafkaProducer stroomKafkaProducer;
+    private StroomKafkaProducer stroomKafkaProducer;
+    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
 
     private final ByteArrayOutputStream byteArrayOutputStream;
 
@@ -47,15 +54,26 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     protected AbstractKafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
                                     final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
         this.errorReceiverProxy = errorReceiverProxy;
-        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer(exception ->
-                errorReceiverProxy.log(
-                        Severity.ERROR,
-                        null,
-                        null,
-                        "Called function on Fake Kafka proxy!",
-                        exception)
-        );
+        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
         this.byteArrayOutputStream = new ByteArrayOutputStream();
+    }
+
+    @Override
+    public void startProcessing() {
+        try {
+            this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector().orElse(null);
+        } catch (Exception e) {
+            String msg = "Error initialising kafka producer - " + e.getMessage();
+            log(Severity.FATAL_ERROR, msg, e);
+            throw new LoggedException(msg);
+        }
+
+        if (stroomKafkaProducer == null) {
+            String msg = "No Kafka producer connector is available, check Stroom's configuration";
+            log(Severity.FATAL_ERROR, msg, null);
+            throw new LoggedException(msg);
+        }
+        super.startProcessing();
     }
 
     @Override
@@ -147,7 +165,13 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
                         .value(messageValue)
                         .build();
         try {
-            stroomKafkaProducer.send(newRecord, flushOnSend, this::error);
+            if (flushOnSend) {
+                stroomKafkaProducer.sendSync(Collections.singletonList(newRecord));
+            } else {
+                stroomKafkaProducer.sendAsync(
+                        Collections.singletonList(newRecord),
+                        StroomKafkaProducer.createLogOnlyExceptionHandler(LOGGER, topic, recordKey));
+            }
         } catch (Exception e) {
             error(e);
         }
@@ -155,8 +179,8 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
 
     @SuppressWarnings("unused")
     @PipelineProperty(
-            description = "Flush the producer each time a message is sent. " +
-                    "Flushing on each message is slower but catches errors sooner.",
+            description = "Wait for acknowledgement from the Kafka borker for each message sent. " +
+                    "This is slower but catches errors sooner",
             defaultValue = "false")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;

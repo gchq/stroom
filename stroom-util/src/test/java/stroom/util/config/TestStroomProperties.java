@@ -16,6 +16,7 @@
 
 package stroom.util.config;
 
+import com.google.common.base.CaseFormat;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -36,5 +37,12 @@ public class TestStroomProperties {
         StroomProperties.removeOverrides();
 
         Assert.assertEquals(oldValue, StroomProperties.getProperty(key));
+    }
+
+    @Test
+    public void test() {
+        String propertyName = "stroom.advertisedUrl";
+        String environmentVariableName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, propertyName.replace('.', '_'));
+        Assert.assertEquals("STROOM_ADVERTISED_URL", environmentVariableName);
     }
 }
