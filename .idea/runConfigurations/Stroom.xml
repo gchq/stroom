@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Stroom (Dropwizard)" type="Application" factoryName="Application">
+  <configuration default="false" name="Stroom" type="Application" factoryName="Application">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="stroom.startup.App" />
     <option name="VM_PARAMETERS" value="" />
@@ -12,6 +12,8 @@
     <option name="PASS_PARENT_ENVS" value="true" />
     <module name="stroom-app_main" />
     <envs />
-    <method />
+    <method>
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="stroom.conf.sh" run_configuration_type="BashConfigurationType" />
+    </method>
   </configuration>
 </component>

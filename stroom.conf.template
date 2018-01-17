@@ -3,7 +3,7 @@
 #It is also used by travis for configuring stroom's integration tests
 
 #Choose whether Stroom requires authenticated access
-stroom.authentication.required=false
+stroom.authentication.required=true
 
 stroom.htmlTitle=Development Stroom
 
@@ -20,28 +20,29 @@ stroom.jpaDialect=org.hibernate.dialect.MySQLInnoDBDialect
 
 #Stroom database properties
 stroom.jdbcDriverClassName=com.mysql.jdbc.Driver
-stroom.jdbcDriverUrl=jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
+stroom.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
 stroom.jdbcDriverUsername=stroomuser
 stroom.jdbcDriverPassword=stroompassword1
 
 #SQL Statistics database properties
 stroom.statistics.sql.jdbcDriverClassName=com.mysql.jdbc.Driver
-stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://localhost:3308/statistics?useUnicode=yes&characterEncoding=UTF-8
+stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3308/statistics?useUnicode=yes&characterEncoding=UTF-8
 stroom.statistics.sql.jdbcDriverUsername=stroomuser
 stroom.statistics.sql.jdbcDriverPassword=stroompassword1
 
 stroom.security.apiToken=eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDQ4NjMwNDMsInN1YiI6InN0cm9vbVNlcnZpY2VVc2VyIiwiaXNzIjoic3Ryb29tIn0.gHJkpxeW5CjU_hBzuLhQd8Ot8XkLvhu45_-Ql4gOX96iNbl0AnKEwKu2QmMY3uVerGjYBHDczgKJlLVF_RQtFiwFLorT2P_Mv-9ShcCL0Ml-Tq-1i-_UnHMYHP5Nv-rP3ajUz-vTHwIYqi_WU-IEpIF56MCYBqeDkgQfe-I03VyfsLkWt-3f8L3AKESZirmqjPUB_SPi4vWGpyN28FuJe1KyqdCPo5QVKnrM_dpguE_aIj1Dy1sovmgO5WxFm3-hE7asW3WrnokSopNXQ1bJ3W77v4k1CnMpYDw5schQAKqUffPVGxNE6UxNunZTlRQJQqYihKkhpeiTiZMo9XCHGg
-stroom.advertisedUrl=http://stroom:8080
+
+stroom.advertisedUrl=http://IP_ADDRESS:8080
 
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true
-stroom.auth.services.url=http://auth-service:8099
-stroom.auth.authentication.service.url=http://auth-service:8099/authentication/v1
-stroom.auth.ui.url=http://stroom-auth-ui:5000
+stroom.auth.services.url=http://IP_ADDRESS:8099
+stroom.auth.authentication.service.url=http://IP_ADDRESS:8099/authentication/v1
+stroom.auth.ui.url=http://IP_ADDRESS:5000
 
-stroom.users.ui.url=http://stroom-auth-ui:5000/userSearch
-stroom.apikeys.ui.url=http://stroom-auth-ui:5000/tokens
-stroom.changepassword.url=http://stroom-auth-ui:5000/changepassword
+stroom.users.ui.url=http://IP_ADDRESS:5000/userSearch
+stroom.apikeys.ui.url=http://IP_ADDRESS:5000/tokens
+stroom.changepassword.url=http://IP_ADDRESS:5000/changepassword
 
 #Service discovery
 #Set this to false to local service lookup when you do not have Zookeeper
@@ -49,26 +50,26 @@ stroom.serviceDiscovery.enabled=false
 
 #Kafka
 #Set this to blank to prevent stroom from trying to establish a connection
-stroom.connectors.kafka.default.bootstrap.servers=localhost:9092
+stroom.connectors.kafka.default.bootstrap.servers=IP_ADDRESS:9092
 stroom.connectors.kafka.default.connector.version=0.10.0.1
 
 # Elastic
-stroom.connectors.elastic.default.transport.hosts=localhost:9300
+stroom.connectors.elastic.default.transport.hosts=IP_ADDRESS:9300
 stroom.connectors.elastic.default.cluster.name=docker-cluster
 stroom.connectors.elastic.default.connector.version=5.6.4
 
 # UI URLs
 stroom.url.list=annotations-ui,elastic-ui,annotations-service,elastic-service,kibana-ui,dashboard
-stroom.url.annotations-ui=http://stroom-annotations-ui:5001
-stroom.url.annotations-service=http://stroom-annotations-service:8199
-stroom.url.elastic-ui=http://stroom-query-elastic-ui:5002
-stroom.url.elastic-service=http://stroom-query-elastic-service:8299
-stroom.url.kibana-ui=http://192.168.1.14:5601
-stroom.url.dashboard=http://192.168.1.14:8080/dashboard.jsp
+stroom.url.annotations-ui=http://IP_ADDRESS:5001
+stroom.url.annotations-service=http://IP_ADDRESS:8199
+stroom.url.elastic-ui=http://IP_ADDRESS:5002
+stroom.url.elastic-service=http://IP_ADDRESS:8299
+stroom.url.kibana-ui=http://IP_ADDRESS:5601
+stroom.url.dashboard=http://IP_ADDRESS:8080/dashboard.jsp
 
 # External Doc Ref
 stroom.doc-ref.types=AnnotationsIndex,ElasticIndex
-stroom.url.doc-ref.service.AnnotationsIndex=http://stroom-annotations-service:8199
-stroom.url.doc-ref.service.ElasticIndex=http://stroom-query-elastic-service:8299
-stroom.url.doc-ref.ui.AnnotationsIndex=http://stroom-annotations-ui:5001
-stroom.url.doc-ref.ui.ElasticIndex=http://stroom-query-elastic-ui:5002
+stroom.url.doc-ref.service.AnnotationsIndex=http://IP_ADDRESS:8199
+stroom.url.doc-ref.service.ElasticIndex=http://IP_ADDRESS:8299
+stroom.url.doc-ref.ui.AnnotationsIndex=http://IP_ADDRESS:5001
+stroom.url.doc-ref.ui.ElasticIndex=http://IP_ADDRESS:5002
