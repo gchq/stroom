@@ -4,6 +4,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-pipeline')
     compile project(':stroom-connectors')
+    compile project(':stroom-security-api')
     compile project(':stroom-util')
 
     compile libs.stroomQueryApi
