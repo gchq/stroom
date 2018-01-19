@@ -90,47 +90,14 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
             LOGGER.trace("Record sent to Kafka");
         };
 
-//        send(stroomRecords, false, exceptionHandler);
         List<CompletableFuture<StroomKafkaRecordMetaData>> futures = send(stroomRecords, exceptionHandler);
-//                stroomRecords.stream()
-//                .map(this::mapStroomRecord)
-//                .map(producerRecord -> {
-//                    CompletableFuture<StroomKafkaRecordMetaData> future = new CompletableFuture<>();
-//                    producer.send(producerRecord, (recordMetadata, exception) -> {
-//                        if (exception != null) {
-//                            future.completeExceptionally(exception);
-//                            exceptionHandler.accept(exception);
-//                        } else {
-//                            future.complete(WrappedRecordMetaData.wrap(recordMetadata));
-//                        }
-//                        LOGGER.trace("Record sent to Kafka");
-//                    });
-//                    return future;
-//                })
-//                .collect(Collectors.toList());
         return futures;
     }
 
     @Override
     public List<StroomKafkaRecordMetaData> sendSync(final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords) {
 
-//        send(stroomRecords, true, null);
         List<CompletableFuture<StroomKafkaRecordMetaData>> futures = send(stroomRecords, null);
-//                stroomRecords.stream()
-//                .map(this::mapStroomRecord)
-//                .map(producerRecord -> {
-//                    CompletableFuture<StroomKafkaRecordMetaData> future = new CompletableFuture<>();
-//                    producer.send(producerRecord, (recordMetadata, exception) -> {
-//                        if (exception != null) {
-//                            future.completeExceptionally(exception);
-//                        } else {
-//                            future.complete(WrappedRecordMetaData.wrap(recordMetadata));
-//                        }
-//                        LOGGER.trace("Record sent to Kafka");
-//                    });
-//                    return future;
-//                })
-//                .collect(Collectors.toList());
 
         List<StroomKafkaRecordMetaData> metaDataList = new ArrayList<>();
         //Now wait for them all to complete

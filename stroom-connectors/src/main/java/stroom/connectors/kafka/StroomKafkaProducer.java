@@ -3,6 +3,7 @@ package stroom.connectors.kafka;
 import org.slf4j.Logger;
 import stroom.connectors.StroomConnector;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -32,6 +33,17 @@ public interface StroomKafkaProducer extends StroomConnector {
     List<CompletableFuture<StroomKafkaRecordMetaData>> sendAsync(final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords,
                                                                  final Consumer<Exception> exceptionHandler);
 
+    default CompletableFuture<StroomKafkaRecordMetaData> sendAsync(final StroomKafkaProducerRecord<String, byte[]> stroomRecords,
+                                                                 final Consumer<Exception> exceptionHandler) {
+        List<CompletableFuture<StroomKafkaRecordMetaData>> futures = sendAsync(Collections.singletonList(stroomRecords), exceptionHandler);
+
+        if (futures == null || futures.isEmpty()) {
+            return null;
+        } else {
+            return futures.get(0);
+        }
+    }
+
     /**
      * Given a list of Records, sends to the Kafka broker synchronously. This method will block until all the records
      * have been acknowledged by the broker or an exception is thrown.
@@ -40,6 +52,16 @@ public interface StroomKafkaProducer extends StroomConnector {
      * @return A list of record metadata objects
      */
     List<StroomKafkaRecordMetaData> sendSync(final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords);
+
+    default StroomKafkaRecordMetaData sendSync(final StroomKafkaProducerRecord<String, byte[]> stroomRecords) {
+        List<StroomKafkaRecordMetaData> metaDataList = sendSync(Collections.singletonList(stroomRecords));
+
+        if (metaDataList == null || metaDataList.isEmpty()) {
+            return null;
+        } else {
+            return metaDataList.get(0);
+        }
+    }
 
     /**
      * Allow manual flushing of the producer by the client. Be aware that the producer

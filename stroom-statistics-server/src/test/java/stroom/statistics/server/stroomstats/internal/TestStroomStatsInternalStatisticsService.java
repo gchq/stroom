@@ -75,7 +75,6 @@ public class TestStroomStatsInternalStatisticsService {
                         InternalStatisticEvent.Type.COUNT.toString().toLowerCase(),
                 "MyTopic");
 
-
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
                 Optional.of(mockStroomKafkaProducer),
                 mockStroomPropertyService

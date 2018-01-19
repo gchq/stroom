@@ -68,7 +68,7 @@ public class TestKafkaExternalLoader {
                         .value(TEST_MESSAGE.getBytes(StandardCharsets.UTF_8))
                         .build();
 
-        stroomKafkaProducer.sendAsync(record, true, e -> fail(e.getLocalizedMessage()));
+        stroomKafkaProducer.sendAsync(record,e -> fail(e.getLocalizedMessage()));
 
         Mockito.verify(exceptionConsumer, Mockito.times(1)).accept(Matchers.any(Exception.class));
     }
