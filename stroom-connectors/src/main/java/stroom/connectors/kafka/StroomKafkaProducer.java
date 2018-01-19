@@ -44,20 +44,29 @@ public interface StroomKafkaProducer extends StroomConnector {
     /**
      * Allow manual flushing of the producer by the client. Be aware that the producer
      * is typically shared by many threads so a flush may involve waiting for the messages
-     * of other threads to be acknowledged by the broker. Use with caution!
+     * of other threads to be acknowledged by the broker. USE WITH CAUTION!
      */
     void flush();
 
+    /**
+     * Create an exception handler that will just log the error and not raise it. The error message will be logged
+     * at ERROR and the full stacktrace at DEBUG
+     * @param logger The Logger instance to log with
+     * @param topic The name of the topic involved
+     * @param key The name of the key involved
+     * @return An exception handler
+     */
     static Consumer<Exception> createLogOnlyExceptionHandler(final Logger logger,
                                                              final String topic,
                                                              final String key) {
+        final String baseMsg = "Unable to send record to Kafka with topic/key: {}/{}";
         return e -> {
-            logger.debug("Unable to send record to Kafka with topic/key %s/%s", e);
-            logger.error(String.format(
-                    "Unable to send record to Kafka with topic/key %s/%s, due to: %s (enable DEBUG for full stacktrace)",
+            logger.error(
+                    baseMsg + ", due to: {} (enable DEBUG for full stacktrace)",
                     topic,
                     key,
-                    e.getMessage()));
+                    e.getMessage());
+            logger.debug(baseMsg, e);
         };
     }
 }
