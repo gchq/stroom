@@ -28,12 +28,12 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TimeZone;
+import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 @Component
@@ -103,9 +103,9 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                                     .key(key)
                                     .value(message)
                                     .build();
-                    stroomKafkaProducer.sendAsync(
-                            Collections.singletonList(producerRecord),
-                            StroomKafkaProducer.createLogOnlyExceptionHandler(LOGGER, topic, key));
+                    Consumer<Throwable> exceptionHandler = StroomKafkaProducer
+                            .createLogOnlyExceptionHandler(LOGGER, topic, key);
+                    stroomKafkaProducer.sendAsync(producerRecord, exceptionHandler);
                 });
     }
 

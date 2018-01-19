@@ -21,6 +21,7 @@ public class RollingKafkaDestination extends RollingDestination {
     private final boolean flushOnSend;
 
     private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    private final Consumer<Throwable> logOnlyExceptionHandler;
 
     public RollingKafkaDestination(final String key,
                                    final long frequency,
@@ -35,6 +36,10 @@ public class RollingKafkaDestination extends RollingDestination {
         this.recordKey = recordKey;
         this.topic = topic;
         this.flushOnSend = flushOnSend;
+        this.logOnlyExceptionHandler = StroomKafkaProducer.createLogOnlyExceptionHandler(
+                LOGGER,
+                topic,
+                key);
 
         setOutputStream(new ByteCountOutputStream(new OutputStream() {
             @Override
@@ -58,15 +63,7 @@ public class RollingKafkaDestination extends RollingDestination {
             if (flushOnSend) {
                 stroomKafkaProducer.sendSync(Collections.singletonList(newRecord));
             } else {
-                stroomKafkaProducer.sendAsync(
-                        Collections.singletonList(newRecord), e -> {
-                            LOGGER.debug("Unable to send record to Kafka!", e);
-                            LOGGER.error(String.format(
-                                    "Unable to send record to Kafka with topic/key %s/%s, due to: %s (enable DEBUG for full stacktrace)",
-                                    topic,
-                                    recordKey,
-                                    e.getMessage()));
-                        });
+                stroomKafkaProducer.sendAsync(newRecord, logOnlyExceptionHandler);
             }
         } catch (RuntimeException e) {
             exceptionConsumer.accept(wrapRollException(e));
@@ -74,6 +71,7 @@ public class RollingKafkaDestination extends RollingDestination {
     }
 
     private Throwable wrapRollException(final Throwable e) {
+        logOnlyExceptionHandler.accept(e);
         LOGGER.debug("Unable to send record to Kafka with topic/key %s/%s", topic, recordKey, e);
         String msg = String.format(
                 "Unable to send record to Kafka with topic/key %s/%s, due to: %s (enable DEBUG for full stacktrace)",

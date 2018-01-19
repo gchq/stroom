@@ -66,6 +66,12 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
             // instead of the current thread content class loader.
             // https://issues.apache.org/jira/browse/KAFKA-3218
             Thread.currentThread().setContextClassLoader(null);
+
+            //TODO https://community.hortonworks.com/articles/80813/kafka-best-practices-1.html suggests that
+            //having 1 producer per topic yields better performance. We could keep a map of producers keyed
+            //on topic, though we would need to kill off producers that were unused to cope with users mistyping
+            //topic names.  This could probably only be done once StroomKafkaProducer is separated from the
+            //Connector interface
             this.producer = new KafkaProducer<>(props);
         } catch (Exception e) {
             throw new RuntimeException(String.format("Error initialising kafka producer for %s, due to %s",
@@ -81,7 +87,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
     @Override
     public List<CompletableFuture<StroomKafkaRecordMetaData>> sendAsync(
             final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords,
-            final Consumer<Exception> exceptionHandler) {
+            final Consumer<Throwable> exceptionHandler) {
 
         Callback callback = (recordMetadata, exception) -> {
             if (exception != null) {
@@ -118,7 +124,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
 
     private List<CompletableFuture<StroomKafkaRecordMetaData>> send(
             final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords,
-            final Consumer<Exception> exceptionHandler) {
+            final Consumer<Throwable> exceptionHandler) {
 
         List<CompletableFuture<StroomKafkaRecordMetaData>> futures = stroomRecords.stream()
                 .map(this::mapStroomRecord)

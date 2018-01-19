@@ -31,10 +31,10 @@ public interface StroomKafkaProducer extends StroomConnector {
      * records
      */
     List<CompletableFuture<StroomKafkaRecordMetaData>> sendAsync(final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords,
-                                                                 final Consumer<Exception> exceptionHandler);
+                                                                 final Consumer<Throwable> exceptionHandler);
 
     default CompletableFuture<StroomKafkaRecordMetaData> sendAsync(final StroomKafkaProducerRecord<String, byte[]> stroomRecords,
-                                                                 final Consumer<Exception> exceptionHandler) {
+                                                                 final Consumer<Throwable> exceptionHandler) {
         List<CompletableFuture<StroomKafkaRecordMetaData>> futures = sendAsync(Collections.singletonList(stroomRecords), exceptionHandler);
 
         if (futures == null || futures.isEmpty()) {
@@ -78,7 +78,7 @@ public interface StroomKafkaProducer extends StroomConnector {
      * @param key The name of the key involved
      * @return An exception handler
      */
-    static Consumer<Exception> createLogOnlyExceptionHandler(final Logger logger,
+    static Consumer<Throwable> createLogOnlyExceptionHandler(final Logger logger,
                                                              final String topic,
                                                              final String key) {
         final String baseMsg = "Unable to send record to Kafka with topic/key: {}/{}";

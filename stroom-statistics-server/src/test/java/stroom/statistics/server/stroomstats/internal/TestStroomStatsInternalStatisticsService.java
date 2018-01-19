@@ -11,6 +11,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
@@ -31,7 +32,7 @@ public class TestStroomStatsInternalStatisticsService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomStatsInternalStatisticsService.class);
     private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
     @Captor
-    ArgumentCaptor<Consumer<Exception>> exceptionHandlerCaptor;
+    ArgumentCaptor<Consumer<Throwable>> exceptionHandlerCaptor;
     @Mock
     private StroomKafkaProducer mockStroomKafkaProducer;
 
@@ -63,7 +64,7 @@ public class TestStroomStatsInternalStatisticsService {
 
         //two different doc refs so two calls to producer
         Mockito.verify(mockStroomKafkaProducer, Mockito.times(2))
-                .sendAsync(Mockito.any(), Mockito.any());
+                .sendAsync(Mockito.any(StroomKafkaProducerRecord.class), Mockito.any());
     }
 
     @Test
@@ -90,7 +91,7 @@ public class TestStroomStatsInternalStatisticsService {
 
         //ensure sendAsync is called
         Mockito.verify(mockStroomKafkaProducer)
-                .sendAsync(Mockito.any(), exceptionHandlerCaptor.capture());
+                .sendAsync(Mockito.any(StroomKafkaProducerRecord.class), exceptionHandlerCaptor.capture());
 
         //create an exception in the handler
         exceptionHandlerCaptor.getValue()

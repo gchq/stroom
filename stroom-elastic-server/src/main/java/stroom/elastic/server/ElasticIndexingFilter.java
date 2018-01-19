@@ -115,8 +115,11 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
                 throw new LoggedException("Unable to load index");
             }
 
-            elasticProducer = elasticProducerFactoryService.getConnector(e ->
-                    errorReceiverProxy.log(Severity.ERROR, null, null, "Called function on Fake Elastic proxy", e));
+            elasticProducer = elasticProducerFactoryService.getConnector().orElseThrow(() -> {
+                String msg = "No Elastic Search connector is available to use";
+                log(Severity.FATAL_ERROR, msg, null);
+                return new LoggedException(msg);
+            });
 
         } finally {
             super.startProcessing();

@@ -22,9 +22,11 @@ import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.connectors.kafka.StroomKafkaRecordMetaData;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
+import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.util.shared.ModelStringUtil;
@@ -33,7 +35,10 @@ import stroom.util.shared.Severity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractKafkaAppender extends AbstractDestinationProvider implements Destination {
 
@@ -44,6 +49,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
 
     private final ByteArrayOutputStream byteArrayOutputStream;
+    private final List<CompletableFuture<StroomKafkaRecordMetaData>> kafkaMetaFutures;
 
     private boolean flushOnSend = false;
     private long maxRecordCount;
@@ -56,6 +62,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
         this.byteArrayOutputStream = new ByteArrayOutputStream();
+        this.kafkaMetaFutures = new ArrayList<>();
     }
 
     @Override
@@ -79,14 +86,19 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     @Override
     public void endProcessing() {
         closeAndResetStream();
-        try {
-            //TODO this producer is shared by many threads so a flush here will flush all unsent messages from
-            //all threads so we may have to wait longer than needed.
-            //A better approach would be for the StroomKafkaProducer to expose the Future or an abstraction
-            //of it so we can call get on all the futures at the end of processing.
-            stroomKafkaProducer.flush();
-        } catch (Exception e) {
-            error(e);
+
+        if (!kafkaMetaFutures.isEmpty()) {
+            kafkaMetaFutures.forEach(future -> {
+                try {
+                    future.get();
+                } catch (InterruptedException e) {
+                    //reset interrupt status
+                    Thread.currentThread().interrupt();
+                    throw new ProcessException("Thread interrupted");
+                } catch (ExecutionException e) {
+                    error(e);
+                }
+            });
         }
         super.endProcessing();
     }
@@ -165,12 +177,12 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
                         .value(messageValue)
                         .build();
         try {
+            final CompletableFuture<StroomKafkaRecordMetaData> future = stroomKafkaProducer.sendAsync(
+                    newRecord,
+                    StroomKafkaProducer.createLogOnlyExceptionHandler(LOGGER, topic, recordKey));
             if (flushOnSend) {
-                stroomKafkaProducer.sendSync(Collections.singletonList(newRecord));
-            } else {
-                stroomKafkaProducer.sendAsync(
-                        Collections.singletonList(newRecord),
-                        StroomKafkaProducer.createLogOnlyExceptionHandler(LOGGER, topic, recordKey));
+                //keep hold of the future so we can wait for it at the end of processing
+                kafkaMetaFutures.add(future);
             }
         } catch (Exception e) {
             error(e);
@@ -179,8 +191,8 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
 
     @SuppressWarnings("unused")
     @PipelineProperty(
-            description = "Wait for acknowledgement from the Kafka borker for each message sent. " +
-                    "This is slower but catches errors sooner",
+            description = "Wait for acknowledgement from the Kafka broker for all of the messages sent." +
+                    "This is slower but catches errors in the pipeline process",
             defaultValue = "false")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;

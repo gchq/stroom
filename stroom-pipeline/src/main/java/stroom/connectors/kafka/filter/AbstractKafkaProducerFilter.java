@@ -104,7 +104,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
             } else {
                 //TODO need a better approach to handling failed async messages
                 stroomKafkaProducer.sendAsync(
-                        Collections.singletonList(newRecord),
+                        newRecord,
                         StroomKafkaProducer.createLogOnlyExceptionHandler(LOGGER, topic, recordKey));
             }
         } catch (RuntimeException e) {

@@ -34,6 +34,7 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.STROOM_STATS)
 public class StroomStatsFilter extends AbstractKafkaProducerFilter {
+
     private final TopicNameFactory topicNameFactory;
     private final StroomStatsStoreEntityService stroomStatsStoreEntityService;
 
@@ -48,9 +49,11 @@ public class StroomStatsFilter extends AbstractKafkaProducerFilter {
                              final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
                              final TopicNameFactory topicNameFactory,
                              final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
+
         super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
         this.topicNameFactory = topicNameFactory;
         this.stroomStatsStoreEntityService = stroomStatsStoreEntityService;
+
     }
 
     @Override
