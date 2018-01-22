@@ -32,17 +32,6 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * Class that reads a nested directory tree of stroom zip files.
- * <p>
- * <p>
- * TODO - This class is extended in ProxyAggregationExecutor in Stroom
- * so changes to the way files are stored in the zip repository
- * may have an impact on Stroom while it is using stroom.util.zip as opposed
- * to stroom-proxy-zip.  Need to pull all the zip repository stuff out
- * into its own repo with its own lifecycle and a clearly defined API,
- * then both stroom-proxy and stroom can use it.
- */
 public final class ProxyFileHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileHandler.class);
 
