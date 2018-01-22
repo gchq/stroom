@@ -43,7 +43,7 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
 
     @Test
     public void testSimple() throws IOException {
-        // commonTestControl.deleteAll();
+        // commonTestControl.deleteDir();
 
         final Feed eventFeed = commonTestScenarioCreator.createSimpleFeed();
 

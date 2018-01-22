@@ -19,7 +19,6 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
-import stroom.feed.StroomHeaderArguments;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
@@ -31,7 +30,6 @@ import stroom.util.thread.BufferFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,10 +43,10 @@ import java.util.List;
  * into its own repo with its own lifecycle and a clearly defined API,
  * then both stroom-proxy and stroom can use it.
  */
-public final class FeedFileProcessorHelper {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FeedFileProcessorHelper.class);
+public final class ProxyFileHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileHandler.class);
 
-     Long processFeedFile(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
+     public Long processFeedFile(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
                                 final StroomZipRepository stroomZipRepository, final Path file,
                                 final StreamProgressMonitor streamProgress,
                                 final long startSequence) throws IOException {

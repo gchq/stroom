@@ -60,7 +60,7 @@ public class TestFileUtil extends StroomUnitTest {
 
         Assert.assertEquals(false, exception.get());
 
-        FileUtil.deleteAll(Paths.get(rootDir));
+        FileUtil.deleteDir(Paths.get(rootDir));
     }
 
     private String buildDir(final String rootDir) {

@@ -14,30 +14,34 @@
  * limitations under the License.
  */
 
-package stroom.proxy.repo;
+package stroom.streamtask.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.proxy.handler.StreamHandler;
-import stroom.proxy.handler.StreamHandlerFactory;
-import stroom.util.io.CloseableUtil;
-import stroom.util.io.FileUtil;
-import stroom.util.io.InitialByteArrayOutputStream;
-import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
+import stroom.feed.server.FeedService;
+import stroom.feed.shared.Feed;
+import stroom.internalstatistics.MetaDataStatistic;
+import stroom.proxy.repo.ProxyFileHandler;
+import stroom.proxy.repo.ProxyFileProcessor;
+import stroom.proxy.repo.StroomZipRepository;
+import stroom.streamstore.server.StreamStore;
+import stroom.util.config.PropertyUtil;
 import stroom.util.io.StreamProgressMonitor;
+import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.thread.BufferFactory;
+import stroom.util.spring.StroomScope;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
@@ -50,128 +54,184 @@ import java.util.concurrent.atomic.AtomicLong;
  * into its own repo with its own lifecycle and a clearly defined API,
  * then both stroom-proxy and stroom can use it.
  */
-public final class FeedFileProcessorImpl implements FeedFileProcessor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FeedFileProcessorImpl.class);
+@Component
+@Scope(StroomScope.PROTOTYPE)
+public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileProcessorImpl.class);
 
-    private static final String PROXY_FORWARD_ID = "ProxyForwardId";
+    private final ProxyFileHandler feedFileProcessorHelper = new ProxyFileHandler();
 
-    private final AtomicLong proxyForwardId = new AtomicLong(0);
+    private final static int DEFAULT_MAX_AGGREGATION = 10000;
+    final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
-    private final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
-    private final StreamHandlerFactory handlerFactory;
-    private final AtomicBoolean finish;
-    private final FeedFileProcessorHelper feedFileProcessorHelper = new FeedFileProcessorHelper();
+    private final StreamStore streamStore;
+    private final FeedService feedService;
+    private final MetaDataStatistic metaDataStatistic;
+    private final int maxAggregation;
+    private final long maxStreamSize;
+    private final boolean aggregate = true;
+    private final ProxyFileHandler proxyFileHandler = new ProxyFileHandler();
+    private volatile boolean stop = false;
 
-    private volatile String hostName = null;
+    @Inject
+    public ProxyFileProcessorImpl(final StreamStore streamStore,
+                                  @Named("cachedFeedService") final FeedService feedService,
+                                  final MetaDataStatistic metaDataStatistic,
+                                  @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
+                                  @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
+        this(
+                streamStore,
+                feedService,
+                metaDataStatistic,
+                PropertyUtil.toInt(maxAggregation, DEFAULT_MAX_AGGREGATION),
+                getByteSize(maxStreamSize, DEFAULT_MAX_STREAM_SIZE)
+        );
+    }
 
-    public FeedFileProcessorImpl(final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
-                                 final StreamHandlerFactory handlerFactory,
-                                 final AtomicBoolean finish) {
-        this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
-        this.handlerFactory = handlerFactory;
-        this.finish = finish;
+    ProxyFileProcessorImpl(final StreamStore streamStore,
+                           final FeedService feedService,
+                           final MetaDataStatistic metaDataStatistic,
+                           final int maxAggregation,
+                           final long maxStreamSize) {
+        this.streamStore = streamStore;
+        this.feedService = feedService;
+        this.metaDataStatistic = metaDataStatistic;
+        this.maxAggregation = maxAggregation;
+        this.maxStreamSize = maxStreamSize;
+    }
+
+    @Override
+    public void processFeedFiles(final StroomZipRepository stroomZipRepository, final String feedName, final List<Path> fileList) {
+        final Feed feed = feedService.loadByName(feedName);
+
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileList.size());
+
+        if (feed == null) {
+            LOGGER.error("processFeedFiles() - " + feedName + " Failed to find feed");
+            return;
+        }
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("processFeedFiles() - " + feedName + " " + fileList);
+        }
+
+        // We don't want to aggregate reference feeds.
+        final boolean oneByOne = feed.isReference() || !aggregate;
+
+        List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feed);
+        List<Path> deleteFileList = new ArrayList<>();
+
+        long sequence = 1;
+        long maxAggregation = this.maxAggregation;
+        if (oneByOne) {
+            maxAggregation = 1;
+        }
+
+        Long nextBatchBreak = this.maxStreamSize;
+
+        final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
+
+        for (final Path file : fileList) {
+            if (stop) {
+                break;
+            }
+            try {
+                if (sequence > maxAggregation
+                        || (streamProgressMonitor.getTotalBytes() > nextBatchBreak)) {
+                    LOGGER.info("processFeedFiles() - Breaking Batch {} as limit is ({} > {}) or ({} > {})",
+                            feedName,
+                            sequence,
+                            maxAggregation,
+                            streamProgressMonitor.getTotalBytes(),
+                            nextBatchBreak
+                    );
+
+                    // Recalculate the next batch break
+                    nextBatchBreak = streamProgressMonitor.getTotalBytes() + maxStreamSize;
+
+                    // Close off this unit
+                    handlers = closeStreamHandlers(handlers);
+
+                    // Delete the done files
+                    proxyFileHandler.deleteFiles(stroomZipRepository, deleteFileList);
+
+                    // Start new batch
+                    deleteFileList = new ArrayList<>();
+                    handlers = openStreamHandlers(feed);
+                    sequence = 1;
+                }
+                sequence = feedFileProcessorHelper.processFeedFile(handlers, stroomZipRepository, file, streamProgressMonitor, sequence);
+                deleteFileList.add(file);
+
+            } catch (final Throwable t) {
+                handlers = closeDeleteStreamHandlers(handlers);
+            }
+        }
+        closeStreamHandlers(handlers);
+        proxyFileHandler.deleteFiles(stroomZipRepository, deleteFileList);
+        LOGGER.info("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime);
+    }
+
+    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final Feed feed) {
+        // We don't want to aggregate reference feeds.
+        final boolean oneByOne = feed.isReference() || !aggregate;
+
+        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
+                feedService, metaDataStatistic, feed, feed.getStreamType());
+
+        streamTargetStroomStreamHandler.setOneByOne(oneByOne);
+
+        final MetaMap globalMetaMap = new MetaMap();
+        globalMetaMap.put(StroomHeaderArguments.FEED, feed.getName());
+
+        try {
+            streamTargetStroomStreamHandler.handleHeader(globalMetaMap);
+        } catch (final IOException ioEx) {
+            streamTargetStroomStreamHandler.close();
+            throw new RuntimeException(ioEx);
+        }
+
+        final List<StreamTargetStroomStreamHandler> list = new ArrayList<>();
+        list.add(streamTargetStroomStreamHandler);
+
+        return list;
+    }
+
+    private List<StreamTargetStroomStreamHandler> closeStreamHandlers(final List<StreamTargetStroomStreamHandler> handlers) {
+        if (handlers != null) {
+            handlers.forEach(StreamTargetStroomStreamHandler::close);
+        }
+        return null;
+    }
+
+    private List<StreamTargetStroomStreamHandler> closeDeleteStreamHandlers(
+            final List<StreamTargetStroomStreamHandler> handlers) {
+        if (handlers != null) {
+            handlers.forEach(StreamTargetStroomStreamHandler::closeDelete);
+        }
+        return null;
+    }
+
+    static long getByteSize(final String propertyValue, final long defaultValue) {
+        Long value = null;
+        try {
+            value = ModelStringUtil.parseIECByteSizeString(propertyValue);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        if (value == null) {
+            value = defaultValue;
+        }
+
+        return value;
     }
 
     /**
-     * Send a load of files for the same feed
+     * Stops the task as soon as possible.
      */
-    @Override
-    public void processFeedFiles(final StroomZipRepository stroomZipRepository, final String feed,
-                                 final List<Path> fileList) {
-        final long thisPostId = proxyForwardId.incrementAndGet();
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("processFeedFiles() - proxyForwardId " + thisPostId + " " + feed + " file count "
-                    + fileList.size());
-        }
-
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put(StroomHeaderArguments.FEED, feed);
-        metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
-        metaMap.put(StroomHeaderArguments.RECEIVED_PATH, getHostName());
-        if (LOGGER.isDebugEnabled()) {
-            metaMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
-        }
-
-        final List<StreamHandler> handlers = handlerFactory.addSendHandlers(new ArrayList<>());
-
-        try {
-            // Start the post
-            for (final StreamHandler streamHandler : handlers) {
-                streamHandler.setMetaMap(metaMap);
-                streamHandler.handleHeader();
-            }
-
-            long sequenceId = 1;
-            long batch = 1;
-
-            final StreamProgressMonitor streamProgress = new StreamProgressMonitor("ProxyRepositoryReader " + feed);
-            final List<Path> deleteList = new ArrayList<>();
-
-            Long nextBatchBreak = proxyRepositoryReaderConfig.getMaxStreamSize();
-
-            for (final Path file : fileList) {
-                // Send no more if told to finish
-                if (finish.get()) {
-                    LOGGER.info("processFeedFiles() - Quitting early as we have been told to stop");
-                    break;
-                }
-                if (sequenceId > proxyRepositoryReaderConfig.getMaxAggregation()
-                        || (streamProgress.getTotalBytes() > nextBatchBreak)) {
-                    batch++;
-                    LOGGER.info("processFeedFiles() - Starting new batch {} as sequence {} > {} or size {} > {}", batch,
-                            sequenceId, proxyRepositoryReaderConfig.getMaxAggregation(), streamProgress.getTotalBytes(), nextBatchBreak);
-
-                    sequenceId = 1;
-                    nextBatchBreak = streamProgress.getTotalBytes() + proxyRepositoryReaderConfig.getMaxStreamSize();
-
-                    // Start a new batch
-                    for (final StreamHandler streamHandler : handlers) {
-                        streamHandler.handleFooter();
-                    }
-                    feedFileProcessorHelper.deleteFiles(stroomZipRepository, deleteList);
-                    deleteList.clear();
-
-                    // Start the post
-                    for (final StreamHandler streamHandler : handlers) {
-                        streamHandler.setMetaMap(metaMap);
-                        streamHandler.handleHeader();
-                    }
-                }
-
-                sequenceId = feedFileProcessorHelper.processFeedFile(handlers, stroomZipRepository, file, streamProgress, sequenceId);
-
-                deleteList.add(file);
-
-            }
-            for (final StreamHandler streamHandler : handlers) {
-                streamHandler.handleFooter();
-            }
-
-            feedFileProcessorHelper.deleteFiles(stroomZipRepository, deleteList);
-
-        } catch (final IOException ex) {
-            LOGGER.warn("processFeedFiles() - Failed to send to feed " + feed + " ( " + String.valueOf(ex) + ")");
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("processFeedFiles() - Debug trace " + feed, ex);
-            }
-            for (final StreamHandler streamHandler : handlers) {
-                try {
-                    streamHandler.handleError();
-                } catch (final IOException ioEx) {
-                    LOGGER.error("fileSend()", ioEx);
-                }
-            }
-        }
-    }
-
-    private String getHostName() {
-        if (hostName == null) {
-            try {
-                hostName = InetAddress.getLocalHost().getHostName();
-            } catch (final Exception ex) {
-                hostName = "Unknown";
-            }
-        }
-        return hostName;
+    public void stop() {
+        stop = true;
     }
 }

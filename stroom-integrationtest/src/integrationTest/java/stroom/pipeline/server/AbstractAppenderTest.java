@@ -40,13 +40,15 @@ import stroom.util.shared.Severity;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     @Resource
@@ -139,16 +141,13 @@ public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTes
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
         Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
 
-        List<Path> inputFiles;
-        try (final Stream<Path> stream = Files.list(inputDir)) {
-            inputFiles = stream
-                    .filter(p -> {
-                        final String fn = p.getFileName().toString();
-                        return fn.startsWith(name) && fn.endsWith(".in");
-                    })
-                    .sorted(Comparator.naturalOrder())
-                    .collect(Collectors.toList());
+        final List<Path> inputFiles = new ArrayList<>();
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, name + "*.in")) {
+            stream.forEach(inputFiles::add);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
+        inputFiles.sort(Comparator.naturalOrder());
 
         Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
 

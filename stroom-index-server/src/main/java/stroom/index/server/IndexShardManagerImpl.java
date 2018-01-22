@@ -26,9 +26,9 @@ import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Insecure;
 import stroom.security.Secured;
-import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -153,7 +153,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
             final Path dir = IndexShardUtil.getIndexPath(shard);
 
             // See if there are any files in the directory.
-            if (!Files.isDirectory(dir) || FileSystemUtil.deleteDirectory(dir)) {
+            if (!Files.isDirectory(dir) || FileUtil.deleteDir(dir)) {
                 // The directory either doesn't exist or we have
                 // successfully deleted it so delete this index
                 // shard from the database.

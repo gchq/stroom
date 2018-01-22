@@ -37,6 +37,7 @@ import javax.inject.Inject;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -135,8 +136,8 @@ public class HDFSFileAppender extends AbstractAppender {
             });
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-        } catch (final IOException ioe) {
-            throw new RuntimeException(ioe);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

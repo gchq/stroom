@@ -71,7 +71,7 @@ public class TestState {
         public void destroy() {
             try {
                 if (testDir != null) {
-                    FileUtil.deleteAll(testDir);
+                    FileUtil.deleteDir(testDir);
                     FileUtil.forgetTempDir();
                     StroomProperties.removeOverrides();
                 }

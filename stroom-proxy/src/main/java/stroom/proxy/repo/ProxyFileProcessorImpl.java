@@ -22,16 +22,9 @@ import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
-import stroom.util.io.CloseableUtil;
-import stroom.util.io.FileUtil;
-import stroom.util.io.InitialByteArrayOutputStream;
-import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.thread.BufferFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -50,8 +43,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * into its own repo with its own lifecycle and a clearly defined API,
  * then both stroom-proxy and stroom can use it.
  */
-public final class FeedFileProcessorImpl implements FeedFileProcessor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FeedFileProcessorImpl.class);
+public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileProcessorImpl.class);
 
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
 
@@ -60,13 +53,13 @@ public final class FeedFileProcessorImpl implements FeedFileProcessor {
     private final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
     private final StreamHandlerFactory handlerFactory;
     private final AtomicBoolean finish;
-    private final FeedFileProcessorHelper feedFileProcessorHelper = new FeedFileProcessorHelper();
+    private final ProxyFileHandler proxyFileHandler = new ProxyFileHandler();
 
     private volatile String hostName = null;
 
-    public FeedFileProcessorImpl(final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
-                                 final StreamHandlerFactory handlerFactory,
-                                 final AtomicBoolean finish) {
+    public ProxyFileProcessorImpl(final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
+                                  final StreamHandlerFactory handlerFactory,
+                                  final AtomicBoolean finish) {
         this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
         this.handlerFactory = handlerFactory;
         this.finish = finish;
@@ -128,7 +121,7 @@ public final class FeedFileProcessorImpl implements FeedFileProcessor {
                     for (final StreamHandler streamHandler : handlers) {
                         streamHandler.handleFooter();
                     }
-                    feedFileProcessorHelper.deleteFiles(stroomZipRepository, deleteList);
+                    proxyFileHandler.deleteFiles(stroomZipRepository, deleteList);
                     deleteList.clear();
 
                     // Start the post
@@ -138,7 +131,7 @@ public final class FeedFileProcessorImpl implements FeedFileProcessor {
                     }
                 }
 
-                sequenceId = feedFileProcessorHelper.processFeedFile(handlers, stroomZipRepository, file, streamProgress, sequenceId);
+                sequenceId = proxyFileHandler.processFeedFile(handlers, stroomZipRepository, file, streamProgress, sequenceId);
 
                 deleteList.add(file);
 
@@ -147,7 +140,7 @@ public final class FeedFileProcessorImpl implements FeedFileProcessor {
                 streamHandler.handleFooter();
             }
 
-            feedFileProcessorHelper.deleteFiles(stroomZipRepository, deleteList);
+            proxyFileHandler.deleteFiles(stroomZipRepository, deleteList);
 
         } catch (final IOException ex) {
             LOGGER.warn("processFeedFiles() - Failed to send to feed " + feed + " ( " + String.valueOf(ex) + ")");

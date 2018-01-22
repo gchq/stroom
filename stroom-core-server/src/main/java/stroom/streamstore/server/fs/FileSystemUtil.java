@@ -31,9 +31,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 /**
  * Utility class to open a File based on it's meta data.
@@ -146,7 +143,7 @@ public final class FileSystemUtil {
                 }
             } else {
                 if (Files.isDirectory(file)) {
-                    ok &= deleteDirectory(file);
+                    ok &= FileUtil.deleteDir(file);
                 }
             }
         }
@@ -181,48 +178,48 @@ public final class FileSystemUtil {
         return allOk;
     }
 
-    public static boolean deleteDirectory(final Path path) {
-        if (deleteContents(path)) {
-            try {
-                Files.deleteIfExists(path);
-                LOGGER.debug("Deleted file " + path);
-                return true;
-            } catch (final IOException e) {
-                LOGGER.error("Failed to delete file " + path);
-                return false;
-            }
-        } else {
-            LOGGER.error("Failed to delete file " + path);
-        }
-        return false;
-    }
-
-    public static boolean deleteContents(final Path path) {
-        final AtomicBoolean success = new AtomicBoolean(true);
-
-        try {
-            if (Files.isDirectory(path)) {
-                try (final Stream<Path> stream = Files.walk(path)) {
-                    stream.sorted(Comparator.reverseOrder()).forEach(p -> {
-                        if (!p.equals(path)) {
-                            try {
-                                Files.delete(p);
-                                LOGGER.debug("Deleted file " + p);
-                            } catch (final IOException e) {
-                                LOGGER.error("Failed to delete file " + p);
-                                success.set(false);
-                            }
-                        }
-                    });
-                }
-            }
-        } catch (final IOException e) {
-            LOGGER.error("Failed to delete file " + path);
-            success.set(false);
-        }
-
-        return success.get();
-    }
+//    public static boolean deleteDirectory(final Path path) {
+//        if (deleteContents(path)) {
+//            try {
+//                Files.deleteIfExists(path);
+//                LOGGER.debug("Deleted file " + path);
+//                return true;
+//            } catch (final IOException e) {
+//                LOGGER.error("Failed to delete file " + path);
+//                return false;
+//            }
+//        } else {
+//            LOGGER.error("Failed to delete file " + path);
+//        }
+//        return false;
+//    }
+//
+//    public static boolean deleteContents(final Path path) {
+//        final AtomicBoolean success = new AtomicBoolean(true);
+//
+//        try {
+//            if (Files.isDirectory(path)) {
+//                try (final Stream<Path> stream = Files.xwalk(path)) {
+//                    stream.sorted(Comparator.reverseOrder()).forEach(p -> {
+//                        if (!p.equals(path)) {
+//                            try {
+//                                Files.delete(p);
+//                                LOGGER.debug("Deleted file " + p);
+//                            } catch (final IOException e) {
+//                                LOGGER.error("Failed to delete file " + p);
+//                                success.set(false);
+//                            }
+//                        }
+//                    });
+//                }
+//            }
+//        } catch (final IOException e) {
+//            LOGGER.error("Failed to delete file " + path);
+//            success.set(false);
+//        }
+//
+//        return success.get();
+//    }
 
     /**
      * <p>

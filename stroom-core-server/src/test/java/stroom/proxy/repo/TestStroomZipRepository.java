@@ -2,6 +2,8 @@ package stroom.proxy.repo;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.util.io.FileUtil;
 
@@ -10,10 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class TestStroomZipRepository {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomZipRepository.class);
+
     @Test
     public void testScan() throws IOException {
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo1"));
@@ -42,13 +46,9 @@ public class TestStroomZipRepository {
             Assert.assertTrue(10000000001L == max);
         });
 
-        final HashSet<Path> allZips = new HashSet<>();
-        try (final Stream<Path> stream = reopenStroomZipRepository.walkZipFiles()) {
-            stream.forEach(allZips::add);
-        }
-
+        final List<Path> allZips = reopenStroomZipRepository.listAllZipFiles();
         Assert.assertEquals(2, allZips.size());
-        try (final Stream<Path> stream = reopenStroomZipRepository.walkZipFiles()) {
+        try (final Stream<Path> stream = allZips.stream()) {
             stream.forEach(p -> reopenStroomZipRepository.delete(new StroomZipFile(p)));
         }
 

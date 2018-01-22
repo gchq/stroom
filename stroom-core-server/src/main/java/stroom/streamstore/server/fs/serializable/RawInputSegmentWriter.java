@@ -22,6 +22,7 @@ import stroom.util.xml.SAXParserFactoryFactory;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 
 /**
  * This class takes an input stream for raw data and ensures it is written to
@@ -89,7 +90,7 @@ public class RawInputSegmentWriter {
             }
             return bytesWritten;
         } catch (final IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 }

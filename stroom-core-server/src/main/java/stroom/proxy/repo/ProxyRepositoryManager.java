@@ -15,6 +15,8 @@ import stroom.util.thread.ThreadUtil;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,7 +25,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 /**
  * Manager class that handles rolling the repository if required. Also tracks
@@ -93,7 +94,7 @@ public class ProxyRepositoryManager {
             try {
                 Files.createDirectories(rootRepoDir);
             } catch (final IOException e) {
-                throw new RuntimeException(e.getMessage(), e);
+                throw new UncheckedIOException(e);
             }
         }
 
@@ -127,47 +128,51 @@ public class ProxyRepositoryManager {
     }
 
     private void scanForOldRepositories() {
-        try (final Stream<Path> stream = Files.list(rootRepoDir)) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(rootRepoDir)) {
             stream.forEach(file -> {
-                if (Files.isDirectory(file)) {
-                    final String fileName = file.getFileName().toString();
-                    final String baseName = FileNameUtil.getBaseName(fileName);
+                try {
+                    if (Files.isDirectory(file)) {
+                        final String fileName = file.getFileName().toString();
+                        final String baseName = FileNameUtil.getBaseName(fileName);
 
-                    // Rolled repositories start with a date and we are only rolling repositories if somebody has set
-                    // the rollCron property which creates a scheduler.
-                    if (this.scheduler != null) {
-                        // Looks like a date
-                        if (baseName.length() == DateUtil.DATE_LENGTH) {
-                            long millis = -1;
-                            try {
-                                // Is this directory name an ISO 8601 compliant date?
-                                millis = DateUtil.parseNormalDateTimeString(baseName);
-                            } catch (final Exception e) {
-                                LOGGER.warn("Failed to parse directory that looked like it should be rolled repository: " + file);
-                            }
+                        // Rolled repositories start with a date and we are only rolling repositories if somebody has set
+                        // the rollCron property which creates a scheduler.
+                        if (this.scheduler != null) {
+                            // Looks like a date
+                            if (baseName.length() == DateUtil.DATE_LENGTH) {
+                                long millis = -1;
+                                try {
+                                    // Is this directory name an ISO 8601 compliant date?
+                                    millis = DateUtil.parseNormalDateTimeString(baseName);
+                                } catch (final Exception e) {
+                                    LOGGER.warn("Failed to parse directory that looked like it should be rolled repository: " + file);
+                                }
 
-                            // Only proceed if we managed to parse the dir name as a ISO 8601 date.
-                            if (millis > 0) {
-                                // YES looking like a repository
-                                final Path expectedDir = rootRepoDir.resolve(baseName);
+                                // Only proceed if we managed to parse the dir name as a ISO 8601 date.
+                                if (millis > 0) {
+                                    // YES looking like a repository
+                                    final Path expectedDir = rootRepoDir.resolve(baseName);
 
-                                if (fileName.endsWith(StroomZipRepository.LOCK_EXTENSION)) {
-                                    try {
-                                        Files.move(file, expectedDir);
-                                        LOGGER.info("Unlocking old locked repository: " + expectedDir);
-                                        rolledRepository.add(new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir), repositoryFormat, false,
-                                                lockDeleteAgeMs));
-                                    } catch (final IOException e) {
-                                        LOGGER.warn("Failed to rename locked repository: " + file);
+                                    if (fileName.endsWith(StroomZipRepository.LOCK_EXTENSION)) {
+                                        try {
+                                            Files.move(file, expectedDir);
+                                            LOGGER.info("Unlocking old locked repository: " + expectedDir);
+                                            rolledRepository.add(new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir), repositoryFormat, false,
+                                                    lockDeleteAgeMs));
+                                        } catch (final IOException e) {
+                                            LOGGER.warn("Failed to rename locked repository: " + file);
+                                        }
+                                    } else {
+                                        LOGGER.info("Picking up old rolled repository: " + expectedDir);
+                                        rolledRepository.add(
+                                                new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir), repositoryFormat, false, lockDeleteAgeMs));
                                     }
-                                } else {
-                                    LOGGER.info("Picking up old rolled repository: " + expectedDir);
-                                    rolledRepository.add(
-                                            new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir), repositoryFormat, false, lockDeleteAgeMs));
                                 }
                             }
                         }
                     }
+                } catch (final Exception e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
             });
         } catch (final IOException e) {

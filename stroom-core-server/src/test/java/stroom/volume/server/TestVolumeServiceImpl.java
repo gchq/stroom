@@ -194,9 +194,9 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     }
 
     private void deleteDefaultVolumesDir() throws IOException {
-        FileUtil.deleteAll(DEFAULT_INDEX_VOLUME_PATH);
-        FileUtil.deleteAll(DEFAULT_STREAM_VOLUME_PATH);
-        FileUtil.deleteAll(DEFAULT_VOLUMES_PATH);
+        FileUtil.deleteDir(DEFAULT_INDEX_VOLUME_PATH);
+        FileUtil.deleteDir(DEFAULT_STREAM_VOLUME_PATH);
+        FileUtil.deleteDir(DEFAULT_VOLUMES_PATH);
     }
 
     private static class MockVolumeService extends VolumeServiceImpl {

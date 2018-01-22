@@ -21,18 +21,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRefs;
-import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.importexport.shared.ImportState.State;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.server.ExplorerNodeService;
 import stroom.explorer.server.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.State;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
@@ -44,16 +45,20 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 class ImportExportSerializerImpl implements ImportExportSerializer {
@@ -99,13 +104,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final Map<DocRef, ImportState> confirmMap = importStateList.stream().collect(Collectors.toMap(ImportState::getDocRef, Function.identity()));
 
         // Find all of the paths to import.
-        try (final Stream<Path> stream = Files.walk(dir)) {
-            stream
-                    .filter(path -> path.getFileName().toString().endsWith(".node"))
-                    .forEach(path -> performImport(path, confirmMap, importMode));
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+        processDir(dir, confirmMap, importMode);
 
         // Rebuild the list
         importStateList.clear();
@@ -114,6 +113,26 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         // Rebuild the tree,
         if (!ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
             explorerService.rebuildTree();
+        }
+    }
+
+    private void processDir(final Path dir, final Map<DocRef, ImportState> confirmMap, final ImportMode importMode) {
+        try {
+            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    try {
+                        if (file.getFileName().toString().endsWith(".node")) {
+                            performImport(file, confirmMap, importMode);
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                    return super.visitFile(file, attrs);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
@@ -145,19 +164,19 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 final Map<String, String> dataMap = new HashMap<>();
                 final String filePrefix = ImportExportFileNameUtil.createFilePrefix(docRef);
                 final Path dir = nodeFile.getParent();
-                try (final Stream<Path> stream = Files.list(dir)) {
-                    stream
-                            .filter(p -> p.getFileName().toString().startsWith(filePrefix) && !p.equals(nodeFile))
-                            .forEach(p -> {
-                                try {
-                                    final String key = p.getFileName().toString().substring(filePrefix.length() + 1);
-                                    final byte[] bytes = Files.readAllBytes(p);
-                                    final String string = new String(bytes, CHARSET);
-                                    dataMap.put(key, string);
-                                } catch (final IOException e) {
-                                    LOGGER.error(e.getMessage(), e);
-                                }
-                            });
+                try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, filePrefix + "*")) {
+                    stream.forEach(file -> {
+                        try {
+                            if (!file.equals(nodeFile)) {
+                                final String key = file.getFileName().toString().substring(filePrefix.length() + 1);
+                                final byte[] bytes = Files.readAllBytes(file);
+                                final String string = new String(bytes, CHARSET);
+                                dataMap.put(key, string);
+                            }
+                        } catch (final IOException e) {
+                            LOGGER.error(e.getMessage(), e);
+                        }
+                    });
                 }
 
                 // See if we have an existing node for this item.

@@ -25,6 +25,7 @@ import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,7 +49,7 @@ public class ResourceStoreImpl implements ResourceStore {
             try {
                 Files.createDirectories(tempDir);
             } catch (final IOException e) {
-                throw new RuntimeException(e.getMessage(), e);
+                throw new UncheckedIOException(e);
             }
         }
         return tempDir;
@@ -56,7 +57,7 @@ public class ResourceStoreImpl implements ResourceStore {
 
     @StroomStartup
     public void startup() {
-        FileSystemUtil.deleteContents(getTempFile());
+        FileUtil.deleteContents(getTempFile());
     }
 
     @Override
@@ -80,7 +81,7 @@ public class ResourceStoreImpl implements ResourceStore {
         try {
             Files.deleteIfExists(file);
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -95,7 +96,7 @@ public class ResourceStoreImpl implements ResourceStore {
 
     @StroomShutdown
     public void shutdown() {
-        FileSystemUtil.deleteContents(getTempFile());
+        FileUtil.deleteContents(getTempFile());
     }
 
     @StroomFrequencySchedule("1h")

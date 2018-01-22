@@ -25,6 +25,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import stroom.entity.server.util.XMLUtil;
 import stroom.test.StroomPipelineTestFileUtil;
+import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
@@ -36,9 +37,12 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 
 public class TestXMLWriter extends StroomUnitTest {
     public static final SAXParserFactory PARSER_FACTORY;
@@ -69,16 +73,18 @@ public class TestXMLWriter extends StroomUnitTest {
     }
 
     private void processDir(final Path inputDir, final Path outputDir) {
-        try (final Stream<Path> stream = Files.list(inputDir)) {
-            stream.forEach(p -> {
-                if (Files.isDirectory(p)) {
-                    final Path newOutputDir = outputDir.resolve(p.getFileName().toString());
-                    processDir(p, newOutputDir);
-                } else if (p.getFileName().toString().endsWith(".xml")) {
-                    processXML(p, outputDir);
+        try {
+            Files.walkFileTree(inputDir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    if (file.getFileName().toString().endsWith(".xml")) {
+                        processXML(file, outputDir);
+                    }
+                    return super.visitFile(file, attrs);
                 }
             });
         } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
     }

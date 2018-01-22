@@ -27,6 +27,7 @@ import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 
 @RunWith(StroomJUnit4ClassRunner.class)
@@ -98,12 +99,12 @@ public class TestStreamUtil extends StroomUnitTest {
             try {
                 bomRemovalIS.close();
             } catch (final IOException e) {
-                throw new RuntimeException(e);
+                throw new UncheckedIOException(e);
             } finally {
                 try {
                     inputStream.close();
                 } catch (final IOException e) {
-                    throw new RuntimeException(e);
+                    throw new UncheckedIOException(e);
                 }
             }
         }
