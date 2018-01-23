@@ -25,6 +25,11 @@ stroomDir=~/.stroom
 confFile=${stroomDir}/stroom.conf
 templateFile=stroom.conf.template
 
+#Ensure various dirs exist
+mkdir -p ${stroomDir}
+mkdir -p ${stroomDir}/plugins
+mkdir -p /tmp/stroom
+
 if [ -f $confFile ]; then
     backupFile="${stroomDir}/stroom.conf.$(date +"%Y%m%dT%H%M")"
     echo -e "Backing up ${GREEN}~/stroom.conf${NC} to ${GREEN}${backupFile}${NC}"
