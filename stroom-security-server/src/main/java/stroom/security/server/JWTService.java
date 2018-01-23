@@ -90,11 +90,11 @@ public class JWTService {
 
         try {
             if (checkTokenRevocation) {
-                LOGGER.info("Checking token revocation status in remote auth service...");
+                LOGGER.debug("Checking token revocation status in remote auth service...");
                 AuthenticationToken authenticationToken = checkToken(jws);
                 return authenticationToken.getUserId() != null;
             } else {
-                LOGGER.info("Verifying token...");
+                LOGGER.debug("Verifying token...");
                 Optional<JwtClaims> jwtClaimsOptional = verifyToken(jws);
                 // If we have claims then we successfully verified the token.
                 return jwtClaimsOptional.isPresent();
@@ -128,7 +128,7 @@ public class JWTService {
 
     private AuthenticationToken checkToken(String token) {
         try {
-            LOGGER.info("Checking with the Authentication Service that a token is valid.");
+            LOGGER.debug("Checking with the Authentication Service that a token is valid.");
             String usersEmail = authenticationServiceClients.newAuthenticationApi().verifyToken(token);
             return new AuthenticationToken(usersEmail, token);
         } catch (ApiException e) {
