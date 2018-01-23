@@ -33,7 +33,8 @@ if [ -f $confFile ]; then
 fi
 
 echo -e "Overwriting ${GREEN}${confFile}${NC} with a version templated from ${GREEN}${templateFile}${NC}"
-sed "s/IP_ADDRESS/$ip/g" ${templateFile} > ${confFile}
+#Use '#' delimiter in HOME_DIR sed script as HOME contains '\'
+cat ${templateFile} | sed "s/IP_ADDRESS/${ip}/g" | sed "s#HOME_DIR#${HOME}#g" > ${confFile}
 
 if [[ "x${backupFile}" != "x" ]]; then
     echo
