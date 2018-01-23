@@ -39,7 +39,12 @@ public class ExternalLibService {
     // A separate class loader will be created for each JAR file found.
     private final Collection<ClassLoader> classLoaders;
 
-    ExternalLibService(final String connectorsLibDirName) {
+    @Inject
+    public ExternalLibService(final StroomPropertyService propertyService) {
+        this(propertyService.getProperty(CONNECTORS_LIB_DIR_PROP_KEY));
+    }
+
+    private ExternalLibService(final String connectorsLibDirName) {
         // Default to using the current class loader for loading services.
         final List<ClassLoader> classLoaders = new ArrayList<>();
 
@@ -67,10 +72,6 @@ public class ExternalLibService {
         this.classLoaders = classLoaders;
     }
 
-    @Inject
-    public ExternalLibService(final StroomPropertyService propertyService) {
-        this(propertyService.getProperty(CONNECTORS_LIB_DIR_PROP_KEY));
-    }
 
     /**
      * Wraps the call to URL, catches and prints the exception.

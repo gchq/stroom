@@ -7,7 +7,6 @@ import org.mockito.Mockito;
 import stroom.connectors.ExternalLibService;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.server.StroomPropertyService;
-import stroom.node.server.StroomPropertyServiceImpl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -24,6 +23,7 @@ public class TestKafkaExternalLoader {
     public void setup(){
         mockPropertyService.setProperty("stroom.connectors.kafka.default.connector.version","0.10.0.1");
         mockPropertyService.setProperty("stroom.connectors.kafka.default.bootstrap.servers","localhost:9092");
+        mockPropertyService.setProperty("stroom.plugins.lib.dir", DEV_EXTERNAL_LIB_DIR);
     }
 
     @Test
@@ -32,7 +32,7 @@ public class TestKafkaExternalLoader {
         final String KAFKA_RECORD_KEY = "0";
         final String TEST_MESSAGE = "The dynamic loading of kafka is working under integration test";
 
-        final ExternalLibService externalLibService = new ExternalLibService(DEV_EXTERNAL_LIB_DIR);
+        final ExternalLibService externalLibService = new ExternalLibService(mockPropertyService);
 
         final StroomKafkaProducerFactoryService kafkaProducerFactoryService =
                 new StroomKafkaProducerFactoryService(mockPropertyService, externalLibService);
@@ -58,7 +58,7 @@ public class TestKafkaExternalLoader {
         final String KAFKA_RECORD_KEY = "0";
         final String TEST_MESSAGE = "The dynamic loading of kafka is working under integration test";
 
-        final ExternalLibService externalLibService = new ExternalLibService(DEV_EXTERNAL_LIB_DIR);
+        final ExternalLibService externalLibService = new ExternalLibService(mockPropertyService);
 
         final StroomKafkaProducerFactoryService kafkaProducerFactoryService =
                 new StroomKafkaProducerFactoryService(mockPropertyService, externalLibService);
@@ -87,17 +87,15 @@ public class TestKafkaExternalLoader {
 
     @Test
     public void testKafkaProduceMisconfigured() {
-        final String KAFKA_TOPIC = "filteredStroom";
-        final String KAFKA_RECORD_KEY = "0";
-        final String TEST_MESSAGE = "The dynamic loading of kafka is working under integration test";
-
-        final ExternalLibService externalLibService = new ExternalLibService(".");
 
         //Empty prop service, so not kafka props to use
-        final StroomPropertyService propertyService = new StroomPropertyServiceImpl();
+        final StroomPropertyService emptyPropertyService = new MockStroomPropertyService();
+
+        final ExternalLibService externalLibService = new ExternalLibService(emptyPropertyService);
+
 
         final StroomKafkaProducerFactoryService kafkaProducerFactoryService =
-                new StroomKafkaProducerFactoryService(propertyService, externalLibService);
+                new StroomKafkaProducerFactoryService(emptyPropertyService, externalLibService);
 
         final Consumer<Exception> exceptionConsumer = (Consumer<Exception>) Mockito.mock(Consumer.class);
         final Optional<StroomKafkaProducer> stroomKafkaProducer = kafkaProducerFactoryService.getConnector();
