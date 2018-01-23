@@ -109,6 +109,8 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                                     .build();
                     Consumer<Throwable> exceptionHandler = StroomKafkaProducer
                             .createLogOnlyExceptionHandler(LOGGER, topic, key);
+
+                    //These are only internal stats so just send them async for performance
                     stroomKafkaProducer.sendAsync(producerRecord, exceptionHandler);
                 });
     }
