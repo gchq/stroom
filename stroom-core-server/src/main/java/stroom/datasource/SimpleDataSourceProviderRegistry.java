@@ -52,21 +52,25 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
         if (!Strings.isNullOrEmpty(basePath)) {
             //TODO the path strings are defined in ResourcePaths but this is not accessible from here
             //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
-            urlMap = new HashMap<String, String>();
+            urlMap = new HashMap<>();
             urlMap.put("Index", basePath + "/api/stroom-index/v2");
             urlMap.put("StatisticStore", basePath + "/api/sqlstatistics/v2");
             urlMap.put("AnnotationsIndex", annotationsPath);
             urlMap.put("ElasticIndex", elasticPath);
             //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
             //you can run service discovery
-            urlMap.put("authentication", basePath + "/api/authentication/v1");
-            urlMap.put("authorisation", basePath + "/api/authorisation/v1");
+
+            //No idea why these two are here, neither are data source providers
+//            urlMap.put("authentication", basePath + "/api/authentication/v1");
+//            urlMap.put("authorisation", basePath + "/api/authorisation/v1");
 
             LOGGER.info("Using the following local URLs for services:\n" +
                     urlMap.entrySet().stream()
                             .map(entry -> "    " + entry.getKey() + " - " + entry.getValue())
+                            .sorted()
                             .collect(Collectors.joining("\n"))
             );
+            LOGGER.info("Stroom-stats is not available when servcie discovery is disabled");
         } else {
             LOGGER.error("Property value for {} is null or empty, local service lookup will not function",
                     PROP_KEY_BASE_PATH);
