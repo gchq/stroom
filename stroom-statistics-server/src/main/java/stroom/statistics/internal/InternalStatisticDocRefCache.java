@@ -59,7 +59,8 @@ public class InternalStatisticDocRefCache {
             } else {
                 List<DocRef> docRefs = splitString(docRefsStr);
                 docRefs.forEach(docRef ->
-                        LOGGER.info("Associating internal statistic [{}] with docRef {}", internalStatisticKey, docRef));
+                        LOGGER.info("Associating internal statistic [{}] with docRef [{} {} {}]",
+                                internalStatisticKey, docRef.getType(), docRef.getUuid(), docRef.getName()));
 
                 LOGGER.trace("Returning {}", docRefs);
                 return docRefs;
