@@ -18,5 +18,22 @@ fi
 echo
 echo -e "Using IP ${GREEN}${ip}${NC} as the IP, as determined from the operating system"
 
-echo -e "Overwriting ${GREEN}~/.stroom.conf${NC} with a version templated from ${GREEN}./stroom.conf.template${NC}"
-sed "s/IP_ADDRESS/$ip/g" stroom.conf.template > ~/.stroom/stroom.conf
+stroomDir=~/.stroom
+confFile=${stroomDir}/stroom.conf
+templateFile=stroom.conf.template
+
+if [ -f $confFile ]; then
+    backupFile="${stroomDir}/stroom.conf.$(date +"%Y%m%dT%H%M")"
+    echo -e "Backing up ${GREEN}~/stroom.conf${NC} to ${GREEN}${backupFile}${NC}"
+    cp ${confFile} ${backupFile}
+    echo
+fi
+
+echo -e "Overwriting ${GREEN}${confFile}${NC} with a version templated from ${GREEN}${templateFile}${NC}"
+sed "s/IP_ADDRESS/$ip/g" ${templateFile} > ${confFile}
+
+if [[ "x${backupFile}" != "x" ]]; then
+    echo
+    echo -e "Run the following to see the changes made to your stroom.conf"
+    echo -e "${GREEN}diff ${backupFile} ${confFile}${NC}"
+fi
