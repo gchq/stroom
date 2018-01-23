@@ -48,6 +48,9 @@ stroom.changepassword.url=http://IP_ADDRESS:5000/changepassword
 #Set this to false to local service lookup when you do not have Zookeeper
 stroom.serviceDiscovery.enabled=false
 
+#Plugins
+stroom.plugins.lib.dir=HOME_DIR/.stroom/plugins
+
 #Kafka
 #Set this to blank to prevent stroom from trying to establish a connection
 stroom.connectors.kafka.default.bootstrap.servers=IP_ADDRESS:9092
