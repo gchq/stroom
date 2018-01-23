@@ -57,7 +57,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     public void testExport() {
-        // commonTestControl.deleteAll();
+        // commonTestControl.deleteDir();
 
         final DocRef system = explorerNodeService.getRoot().getDocRef();
         Assert.assertEquals(1, explorerNodeService.getDescendants(system).size());

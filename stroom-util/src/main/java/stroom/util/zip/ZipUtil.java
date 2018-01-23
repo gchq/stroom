@@ -18,8 +18,8 @@ package stroom.util.zip;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
-import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
 import java.io.BufferedInputStream;
@@ -27,14 +27,17 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -60,32 +63,34 @@ public final class ZipUtil {
                            final Pattern excludePattern) throws IOException {
         final ZipOutputStream zipStream = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)));
 
-        zip(dir, "", zipStream, includePattern, excludePattern);
+        zip(dir, zipStream, includePattern, excludePattern);
 
         zipStream.flush();
         zipStream.close();
     }
 
-    private static void zip(final Path parent, final String path, final ZipOutputStream zip,
-                            final Pattern includePattern, final Pattern excludePattern) throws IOException {
-        try (final Stream<Path> stream = Files.list(parent)) {
-            stream
-                    .sorted(Comparator.naturalOrder())
-                    .forEach(p -> {
-                        try {
-                            final String fullPath = path + p.getFileName();
-                            if (Files.isDirectory(p)) {
-                                zip(p, fullPath + "/", zip, includePattern, excludePattern);
-                            } else {
-                                if ((includePattern == null || includePattern.matcher(fullPath).matches()) &&
-                                        (excludePattern == null || !excludePattern.matcher(fullPath).matches())) {
-                                    putEntry(zip, p, fullPath);
-                                }
-                            }
-                        } catch (final IOException e) {
-                            throw new RuntimeException(e.getMessage(), e);
+    private static void zip(final Path parent, final ZipOutputStream zip,
+                            final Pattern includePattern, final Pattern excludePattern) {
+        try {
+            Files.walkFileTree(parent, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    try {
+                        final String fullPath = parent.relativize(file).toString();
+                        if ((includePattern == null || includePattern.matcher(fullPath).matches()) &&
+                                (excludePattern == null || !excludePattern.matcher(fullPath).matches())) {
+                            putEntry(zip, file, fullPath);
                         }
-                    });
+                    } catch (final IOException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                    return super.visitFile(file, attrs);
+                }
+            });
+        } catch (final NotDirectoryException e) {
+            // Ignore.
+        } catch (final IOException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
     }
 

@@ -41,6 +41,7 @@ import stroom.util.spring.StroomSpringProfiles;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -108,7 +109,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             try {
                 Files.createDirectories(dir);
             } catch (final IOException e) {
-                throw new RuntimeException("Unable to create output directory '" + outputDir + "'");
+                throw new UncheckedIOException(e);
             }
         }
 

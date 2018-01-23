@@ -15,13 +15,18 @@
  */
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class GWTModuleCreator {
     private static final String MODULE_EXTENSION = ".gwt.xml";
@@ -55,19 +60,27 @@ public class GWTModuleCreator {
     }
 
     private void processDir(final Path dir, final String rootPath, final List<String> modules) {
-        try (final Stream<Path> stream = Files.walk(dir)) {
-            stream
-                    .filter(p -> p.getFileName().toString().endsWith(MODULE_EXTENSION))
-                    .forEach(p -> {
-                        String module = p.toAbsolutePath().normalize().toString();
-                        module = module.substring(rootPath.length() + 1);
-                        module = module.substring(0, module.length() - MODULE_EXTENSION.length());
-                        module = module.replaceAll("/", ".");
-                        modules.add(module);
-                    });
+        try {
+            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+                    if (file.getFileName().toString().endsWith(MODULE_EXTENSION)) {
+                        try {
+                            String module = file.toAbsolutePath().normalize().toString();
+                            module = module.substring(rootPath.length() + 1);
+                            module = module.substring(0, module.length() - MODULE_EXTENSION.length());
+                            module = module.replaceAll("/", ".");
+                            modules.add(module);
+                        } catch (final Exception e) {
+                            // Ignore.
+                        }
+                    }
 
+                    return super.visitFile(file, attrs);
+                }
+            });
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 }

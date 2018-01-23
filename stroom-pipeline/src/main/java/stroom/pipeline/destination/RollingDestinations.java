@@ -29,6 +29,7 @@ import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -84,7 +85,7 @@ public class RollingDestinations {
                 return destinationFactory.createDestination();
 
             } catch (final IOException e) {
-                throw new RuntimeException(e.getMessage(), e);
+                throw new UncheckedIOException(e);
             }
         });
 

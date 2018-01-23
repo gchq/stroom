@@ -16,6 +16,8 @@
 
 package stroom.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -24,6 +26,7 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,9 +34,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
-import java.util.stream.Stream;
 
 public class BackupConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BackupConfig.class);
+
     public static void main(final String[] args) throws IOException {
         Integer backUpDays = null;
         if (args.length > 0) {
@@ -66,17 +70,24 @@ public class BackupConfig {
                     if (backUpPaths.size() > 0 && source.endsWith("/store/")) {
                         final Path sourceDir = Paths.get(source);
                         final Path targetDir = Paths.get(target);
-                        try (final Stream<Path> stream = Files.list(sourceDir)) {
-                            stream.forEach(p -> {
-                                for (final String backupPath : backUpPaths) {
-                                    final Path sourcePath = p.resolve(backupPath);
-                                    final Path targetPath = targetDir.resolve(backupPath);
-                                    if (Files.isDirectory(sourcePath)) {
-                                        printWriter.println(
-                                                FileUtil.getCanonicalPath(sourcePath) + "/\t" + FileUtil.getCanonicalPath(targetPath) + "/");
+
+                        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(sourceDir)) {
+                            stream.forEach(file -> {
+                                try {
+                                    for (final String backupPath : backUpPaths) {
+                                        final Path sourcePath = file.resolve(backupPath);
+                                        if (Files.isDirectory(sourcePath)) {
+                                            final Path targetPath = targetDir.resolve(backupPath);
+                                            printWriter.println(
+                                                    FileUtil.getCanonicalPath(sourcePath) + "/\t" + FileUtil.getCanonicalPath(targetPath) + "/");
+                                        }
                                     }
+                                } catch (final Exception e) {
+                                    LOGGER.error(e.getMessage(), e);
                                 }
                             });
+                        } catch (final IOException e) {
+                            LOGGER.error(e.getMessage(), e);
                         }
                     } else {
                         printWriter.println(source + "./\t" + target);

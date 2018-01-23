@@ -69,7 +69,7 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
 
     @Override
     public void run() {
-        FileSystemUtil.deleteContents(FileUtil.getTempDir());
+        FileUtil.deleteContents(FileUtil.getTempDir());
 
         @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
         appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,

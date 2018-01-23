@@ -18,18 +18,23 @@ package stroom.importexport.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ContentMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentMigration.class);
@@ -39,68 +44,81 @@ public class ContentMigration {
 
     public void migrate(final Path path) {
         // Migrate node files.
-        boolean hasNodes = false;
-        try (final Stream<Path> stream = Files.walk(path)) {
-            final List<Path> list = stream
-                    .filter(p -> {
-                        final String fileName = p.getFileName().toString();
-                        return fileName.endsWith(".node");
-                    })
-                    .collect(Collectors.toList());
-            if (list.size() > 0) {
-                hasNodes = true;
-            }
+        final boolean hasNodes = migrateNodeFiles(path);
 
-            list.forEach(p -> {
-                try {
-                    final String fileName = p.getFileName().toString();
-                    final String fileStem = fileName.substring(0, fileName.lastIndexOf("."));
-                    final Properties properties = PropertiesSerialiser.read(Files.newInputStream(p));
-                    final String newFileStem = createFilePrefix(properties.getProperty("name"), properties.getProperty("type"), properties.getProperty("uuid"));
+        if (!hasNodes) {
+            // If we don't have node files then this is legacy content.
+            processLegacyContent(path);
+        }
+    }
 
-                    if (!fileStem.equals(newFileStem)) {
-                        renameFiles(p.getParent(), fileStem, newFileStem);
+    private boolean migrateNodeFiles(final Path path) {
+        final AtomicBoolean hasNodes = new AtomicBoolean();
+        migrateNodeFiles(path, hasNodes);
+        return hasNodes.get();
+    }
+
+    private void migrateNodeFiles(final Path dir, final AtomicBoolean hasNodes) {
+        try {
+            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    try {
+                        final String fileName = file.getFileName().toString();
+                        if (fileName.endsWith(".node")) {
+                            hasNodes.set(true);
+                            final String fileStem = fileName.substring(0, fileName.lastIndexOf("."));
+                            final Properties properties = PropertiesSerialiser.read(Files.newInputStream(file));
+                            final String newFileStem = createFilePrefix(properties.getProperty("name"), properties.getProperty("type"), properties.getProperty("uuid"));
+
+                            if (!fileStem.equals(newFileStem)) {
+                                renameFiles(file.getParent(), fileStem, newFileStem);
+                            }
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
                     }
-
-                } catch (final IOException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    return super.visitFile(file, attrs);
                 }
             });
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
 
-        if (!hasNodes) {
-            try (final Stream<Path> stream = Files.walk(path)) {
-                final List<Path> list = stream
-                        .filter(p -> {
-                            final String fileName = p.getFileName().toString();
-                            return fileName.matches("([^.]*\\.){2,}xml") &&
-                                    fileName.matches(".*\\.[A-Z][A-Za-z]+\\.xml$");
-                        })
-                        .collect(Collectors.toList());
-                list.forEach(p -> process(path, p));
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
+    private void processLegacyContent(final Path dir) {
+        // If we don't have node files then this is legacy content.
+        try {
+            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    try {
+                        final String fileName = file.getFileName().toString();
+                        if (fileName.matches("([^.]*\\.){2,}xml") && fileName.matches(".*\\.[A-Z][A-Za-z]+\\.xml$")) {
+                            process(dir, file);
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                    return super.visitFile(file, attrs);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
-    private void renameFiles(final Path path, final String fileStem, final String newFileStem) {
-        try (final Stream<Path> stream = Files.list(path)) {
-            final List<Path> list = stream
-                    .filter(p -> {
-                        final String fileName = p.getFileName().toString();
-                        return fileName.startsWith(fileStem + ".");
-                    })
-                    .collect(Collectors.toList());
-
-            for (final Path p : list) {
-                final String newFileName = p.getFileName().toString().replaceAll(fileStem + ".", newFileStem + ".");
-                LOGGER.info("Renaming file: '" + p.getFileName().toString() + "' to '" + newFileName);
-                Files.move(p, p.getParent().resolve(newFileName));
-            }
-
+    private void renameFiles(final Path dir, final String fileStem, final String newFileStem) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, fileStem + ".*")) {
+            stream.forEach(file -> {
+                try {
+                    final String newFileName = file.getFileName().toString().replaceAll(fileStem + ".", newFileStem + ".");
+                    LOGGER.info("Renaming file: '" + file.getFileName().toString() + "' to '" + newFileName);
+                    Files.move(file, file.getParent().resolve(newFileName));
+                } catch (final IOException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            });
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -140,19 +158,24 @@ public class ContentMigration {
             PropertiesSerialiser.write(properties, outputStream);
 
             // Rename related files.
-            try (final Stream<Path> stream = Files.list(path.getParent())) {
-                stream
-                        .filter(p -> p.getFileName().toString().startsWith(fileStem + ".") &&
-                                !p.getFileName().toString().startsWith(newFileStem))
-                        .forEach(p -> {
-                            try {
-                                final String extension = p.getFileName().toString().substring(fileStem.length());
+            try {
+                Files.walkFileTree(path.getParent(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                    @Override
+                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                        try {
+                            final String fileName = file.getFileName().toString();
+                            if (fileName.startsWith(fileStem + ".") && !fileName.startsWith(newFileStem)) {
+                                final String extension = fileName.substring(fileStem.length());
                                 final String newFileName = newFileStem + extension;
-                                Files.move(p, p.getParent().resolve(newFileName));
-                            } catch (final IOException e) {
-                                LOGGER.error(e.getMessage(), e);
+                                Files.move(file, file.getParent().resolve(newFileName));
                             }
-                        });
+                        } catch (final Exception e) {
+                            LOGGER.error(e.getMessage(), e);
+                        }
+
+                        return super.visitFile(file, attrs);
+                    }
+                });
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }

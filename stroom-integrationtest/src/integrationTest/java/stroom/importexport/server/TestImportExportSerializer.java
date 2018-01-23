@@ -22,23 +22,23 @@ import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.importexport.shared.ImportState.State;
 import stroom.explorer.server.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.State;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreServerTestFileUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.xmlschema.server.XMLSchemaService;
@@ -89,7 +89,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
-        FileSystemUtil.deleteDirectory(testDataDir);
+        FileUtil.deleteDir(testDataDir);
         Files.createDirectories(testDataDir);
 
         importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
@@ -161,7 +161,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
-        FileSystemUtil.deleteDirectory(testDataDir);
+        FileUtil.deleteDir(testDataDir);
         Files.createDirectories(testDataDir);
 
         importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
@@ -189,7 +189,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config");
         final Path outDir = StroomCoreServerTestFileUtil.getTestOutputDir().resolve("samples/config");
 
-        FileSystemUtil.deleteDirectory(outDir);
+        FileUtil.deleteDir(outDir);
         Files.createDirectories(outDir);
 
         // Read input.
@@ -202,6 +202,6 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         ComparisonHelper.compareDirs(inDir, outDir);
 
         // If the comparison was ok then delete the output.
-        FileSystemUtil.deleteDirectory(outDir);
+        FileUtil.deleteDir(outDir);
     }
 }

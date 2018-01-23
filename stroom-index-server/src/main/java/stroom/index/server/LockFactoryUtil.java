@@ -22,9 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
 
 public final class LockFactoryUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(LockFactoryUtil.class);
@@ -51,19 +51,14 @@ public final class LockFactoryUtil {
     public static void clean(final Path dir) {
         // Delete any lingering lock files from previous uses of the index shard.
         if (Files.isDirectory(dir)) {
-            try (final Stream<Path> stream = Files.list(dir)) {
-                stream
-                        .filter(p -> {
-                            final String name = p.getFileName().toString();
-                            return name.endsWith(".lock");
-                        })
-                        .forEach(p -> {
-                            try {
-                                Files.deleteIfExists(p);
-                            } catch (final IOException e) {
-                                LOGGER.error(e.getMessage(), e);
-                            }
-                        });
+            try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.lock")) {
+                stream.forEach(file -> {
+                    try {
+                        Files.deleteIfExists(file);
+                    } catch (final IOException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                });
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }

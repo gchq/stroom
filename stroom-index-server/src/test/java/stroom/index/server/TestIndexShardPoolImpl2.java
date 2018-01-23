@@ -47,7 +47,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
 
     @Before
     public void before() {
-        FileSystemUtil.deleteContents(getCurrentTestDir().resolve( "index"));
+        FileUtil.deleteContents(getCurrentTestDir().resolve( "index"));
     }
 
     @Test
@@ -79,7 +79,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
                 indexShard.setVolume(
                         Volume.create(defaultNode, FileUtil.getCanonicalPath(getCurrentTestDir()), VolumeType.PUBLIC));
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
-                FileSystemUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
+                FileUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
                 return indexShard;
             }
         };

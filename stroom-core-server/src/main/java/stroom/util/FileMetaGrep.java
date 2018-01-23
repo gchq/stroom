@@ -16,19 +16,26 @@
 
 package stroom.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.streamstore.server.fs.BlockGZIPInputFile;
 import stroom.streamstore.server.fs.UncompressedInputStream;
 import stroom.streamstore.server.fs.serializable.RANestedInputStream;
+import stroom.util.io.AbstractFileVisitor;
 
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class FileMetaGrep extends AbstractCommandLineTool {
+    private Logger LOGGER = LoggerFactory.getLogger(FileMetaGrep.class);
     Map<String, String> matchMap;
     private String[] repoPathParts = null;
     private String feedId;
@@ -68,17 +75,23 @@ public class FileMetaGrep extends AbstractCommandLineTool {
         scanDir(Paths.get(path.toString()));
     }
 
-    private void scanDir(Path root) {
-        try (final Stream<Path> stream = Files.walk(root)) {
-            stream.forEach(p -> {
-                if (matches(p.toAbsolutePath().normalize().toString())) {
-                    if (Files.isRegularFile(p)) {
-                        scanFile(p);
+    private void scanDir(Path path) {
+        try {
+            Files.walkFileTree(path, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    try {
+                        if (matches(file.toAbsolutePath().normalize().toString())) {
+                            scanFile(file);
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
                     }
+                    return super.visitFile(file, attrs);
                 }
             });
         } catch (final IOException e) {
-            // Ignore.
+            LOGGER.debug(e.getMessage(), e);
         }
     }
 

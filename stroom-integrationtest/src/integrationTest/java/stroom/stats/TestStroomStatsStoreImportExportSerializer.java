@@ -76,14 +76,14 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
-        FileSystemUtil.deleteDirectory(testDataDir);
+        FileUtil.deleteDir(testDataDir);
         FileSystemUtil.mkdirs(null, testDataDir);
 
         final DocRefs docRefs = new DocRefs();
         docRefs.add(docRef);
         importExportSerializer.write(testDataDir, docRefs, true, null);
 
-        Assert.assertEquals(3, FileUtil.list(testDataDir).size());
+        Assert.assertEquals(3, FileUtil.count(testDataDir));
 
         // now clear out the java entities and import from file
         clean(true);

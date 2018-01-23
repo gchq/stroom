@@ -37,7 +37,6 @@ import stroom.proxy.repo.StroomZipRepository;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerConfiguration;
-import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
 import stroom.util.AbstractCommandLineTool;
@@ -61,6 +60,8 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -144,7 +145,7 @@ public class Headless extends AbstractCommandLineTool {
         // Make sure tmp dir exists and is empty.
         FileUtil.mkdirs(tmpDir);
         FileUtil.deleteFile(outputFile);
-        FileSystemUtil.deleteContents(tmpDir);
+        FileUtil.deleteContents(tmpDir);
     }
 
     @Override
@@ -238,7 +239,9 @@ public class Headless extends AbstractCommandLineTool {
 
             // Loop over all of the data files in the repository.
             final StroomZipRepository repo = new StroomZipRepository(FileUtil.getCanonicalPath(inputDir));
-            try (final Stream<Path> stream = repo.walkZipFiles()) {
+            final List<Path> zipFiles = repo.listAllZipFiles();
+            zipFiles.sort(Comparator.naturalOrder());
+            try (final Stream<Path> stream = zipFiles.stream()) {
                 stream.forEach(p -> {
                     try {
                         LOGGER.info("Processing: " + FileUtil.getCanonicalPath(p));

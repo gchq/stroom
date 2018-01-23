@@ -27,13 +27,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UncheckedIOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Provides methods that are used by multiple tests.
@@ -147,11 +147,21 @@ public final class ComparisonHelper {
     }
 
     private static List<Path> list(final Path path) {
-        try (final Stream<Path> stream = Files.list(path)) {
-            return stream.filter(p -> !p.getFileName().startsWith(".")).collect(Collectors.toList());
+        final List<Path> list = new ArrayList<>();
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+            stream.forEach(file -> {
+                try {
+                    if (!Files.isHidden(file)) {
+                        list.add(file);
+                    }
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
+        return list;
     }
 
     public static void compareFiles(final Path expectedFile, final Path actualFile) {

@@ -19,24 +19,23 @@ package stroom.headless;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService.ContentPack;
 import stroom.test.ContentPackDownloader;
-import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 import stroom.util.zip.ZipUtil;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class TestHeadless {
     private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);
@@ -56,7 +55,7 @@ public class TestHeadless {
             final Path base = StroomHeadlessTestFileUtil.getTestResourcesDir();
             final Path testPath = base.resolve("TestHeadless");
             final Path tmpPath = testPath.resolve("tmp");
-            FileSystemUtil.deleteDirectory(tmpPath);
+            FileUtil.deleteDir(tmpPath);
             Files.createDirectories(tmpPath);
 
             final Path inputDirPath = tmpPath.resolve("input");
@@ -88,14 +87,16 @@ public class TestHeadless {
             FileUtils.copyDirectory(configUnzippedDirPath.toFile(), rawConfigPath.toFile());
 
             // Unzip the downloaded content packs into the temp dir.
-            try (final Stream<Path> files = Files.list(contentPacks)) {
-                files.forEach(f -> {
+            try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPacks)) {
+                stream.forEach(file -> {
                     try {
-                        ZipUtil.unzip(f, rawConfigPath);
+                        ZipUtil.unzip(file, rawConfigPath);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 });
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
             }
 
             // Build the config zip file.

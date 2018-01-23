@@ -14,7 +14,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Added a feature to list dependencies for all document entities and indicate where dependencies are missing.
 
-* Merged in [v5.1-beta.5]
+* Issue **#540** : Improve description text for stroom.statistics.sql.maxProcessingAge property
+
+* Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
+
+* Issue **#537** : Users without `Manage Policies` permission can now view streams.
+
+* Issue **#522** : Selection of data retention rules now remains when moving rules up or down.
+
+* Issue **#411** : When data retention rules are disabled they are now shown greyed out to indicate this.
+
+* Issue **#536** : Fix for missing visualisation icons.
+
+* Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
 
 * Issue **#507** : Added dictionary inheritance via import references.
 
@@ -23,6 +35,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#557** : Added dashboard functions to parse and output URI parts.
 
 * Issue **#552** : Fix for NPE caused by bad XSLT during search data extraction.
+
+* Issue **#560** : Replaced instances of `Files.walk()` with `Files.walkFileTree()`. `Files.walk()` throws errors if any files are deleted or are not accessible during the walk operation. This is a major issue with the Java design for walking files using Java 8 streams. To avoid this issue `Files.walkFileTree()` has now been used in place of `Files.walk()`.
 
 ## [v6.0-alpha.4]
 
@@ -97,22 +111,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#541** : Marked old stream retention job as deprecated in description.
 
 * Issue **#542** : Fix for lazy hibernate object initialisation when stepping cooked data.
-
-## [v5.1-beta.5] - 2018-01-04
-
-* Issue **#540** : Improve description text for stroom.statistics.sql.maxProcessingAge property
-
-* Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
-
-* Issue **#537** : Users without `Manage Policies` permission can now view streams.
-
-* Issue **#522** : Selection of data retention rules now remains when moving rules up or down.
-
-* Issue **#411** : When data retention rules are disabled they are now shown greyed out to indicate this.
-
-* Issue **#536** : Fix for missing visualisation icons.
-
-* Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
 
 ## [v5.1-beta.4] - 2017-12-20
 
@@ -517,7 +515,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v5.0-beta.23] - 2017-05-06
 
-* Issue **#281** : Made further changes to cope with Files.list() and Files.walk() returning streams that should be closed with 'try with resources' construct.
+* Issue **#281** : Made further changes to cope with Files.xlist() and Files.walk() returning streams that should be closed with 'try with resources' construct.
 
 * Issue **#224** : Removing an element from the pipeline structure now removes all child elements too.
 
@@ -889,6 +887,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v6.0-alpha.2]: https://github.com/gchq/stroom/compare/v6.0-alpha.1...v6.0-alpha.2
 [v6.0-alpha.1]: https://github.com/gchq/stroom/releases/tag/v6.0-alpha.1
 
+[v5.1-beta.9]: https://github.com/gchq/stroom/compare/v5.1-beta.8...v5.1-beta.9
 [v5.1-beta.8]: https://github.com/gchq/stroom/compare/v5.1-beta.7...v5.1-beta.8
 [v5.1-beta.7]: https://github.com/gchq/stroom/compare/v5.1-beta.6...v5.1-beta.7
 [v5.1-beta.6]: https://github.com/gchq/stroom/compare/v5.1-beta.5...v5.1-beta.6
@@ -900,6 +899,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0.2]: https://github.com/gchq/stroom/compare/v5.0.1...v5.0.2
 [v5.0.1]: https://github.com/gchq/stroom/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/gchq/stroom/compare/v5.0-beta.71...v5.0.0
 [v5.0-beta.71]: https://github.com/gchq/stroom/compare/v5.0-beta.70...v5.0-beta.71

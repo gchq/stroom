@@ -60,6 +60,7 @@ import stroom.visualisation.shared.Visualisation;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -457,7 +458,7 @@ public class SearchRequestMapper {
             }
 
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
 
         return tableSettings;
@@ -693,7 +694,7 @@ public class SearchRequestMapper {
                     }
                 }
             } catch (final IOException e) {
-                throw new RuntimeException(e.getMessage(), e);
+                throw new UncheckedIOException(e);
             }
 
             return map;

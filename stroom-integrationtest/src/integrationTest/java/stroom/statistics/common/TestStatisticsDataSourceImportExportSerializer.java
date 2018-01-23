@@ -79,12 +79,12 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
-        FileSystemUtil.deleteDirectory(testDataDir);
+        FileUtil.deleteDir(testDataDir);
         FileSystemUtil.mkdirs(null, testDataDir);
 
         importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, null);
 
-        Assert.assertEquals(3, FileUtil.list(testDataDir).size());
+        Assert.assertEquals(3, FileUtil.count(testDataDir));
 
         // now clear out the java entities and import from file
         clean(true);
