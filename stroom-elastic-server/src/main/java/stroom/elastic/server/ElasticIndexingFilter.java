@@ -151,6 +151,12 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
+            if (elasticProducer == null) {
+                //shouldn't get here as we should have had a FATAL on start processing, but just in case
+                String msg = "No Elastic Search connector is available to use";
+                log(Severity.FATAL_ERROR, msg, null);
+                throw new LoggedException(msg);
+            }
             elasticProducer.send(idFieldName,
                     indexConfig.getIndexName(),
                     indexConfig.getIndexedType(),
@@ -164,7 +170,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
 
     @Override
     public void endProcessing() {
-        if (null != elasticProducer) {
+        if (elasticProducer != null) {
             elasticProducer.shutdown();
             elasticProducer = null;
         }
