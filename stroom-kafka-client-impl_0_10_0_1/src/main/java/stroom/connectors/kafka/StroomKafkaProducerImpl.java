@@ -81,8 +81,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
         } finally {
             Thread.currentThread().setContextClassLoader(classLoader);
         }
-        LOGGER.info("Kafka Producer successfully created");
-        LOGGER.info(String.format("With Properties: %s", props));
+        LOGGER.info("Kafka Producer successfully created (this doesn't guarantee Kafka is available)");
     }
 
 
