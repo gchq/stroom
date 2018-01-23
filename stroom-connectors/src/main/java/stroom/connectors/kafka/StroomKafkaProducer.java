@@ -33,9 +33,9 @@ public interface StroomKafkaProducer extends StroomConnector {
     List<CompletableFuture<StroomKafkaRecordMetaData>> sendAsync(final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords,
                                                                  final Consumer<Throwable> exceptionHandler);
 
-    default CompletableFuture<StroomKafkaRecordMetaData> sendAsync(final StroomKafkaProducerRecord<String, byte[]> stroomRecords,
+    default CompletableFuture<StroomKafkaRecordMetaData> sendAsync(final StroomKafkaProducerRecord<String, byte[]> stroomRecord,
                                                                  final Consumer<Throwable> exceptionHandler) {
-        List<CompletableFuture<StroomKafkaRecordMetaData>> futures = sendAsync(Collections.singletonList(stroomRecords), exceptionHandler);
+        List<CompletableFuture<StroomKafkaRecordMetaData>> futures = sendAsync(Collections.singletonList(stroomRecord), exceptionHandler);
 
         if (futures == null || futures.isEmpty()) {
             return null;
@@ -53,8 +53,8 @@ public interface StroomKafkaProducer extends StroomConnector {
      */
     List<StroomKafkaRecordMetaData> sendSync(final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords);
 
-    default StroomKafkaRecordMetaData sendSync(final StroomKafkaProducerRecord<String, byte[]> stroomRecords) {
-        List<StroomKafkaRecordMetaData> metaDataList = sendSync(Collections.singletonList(stroomRecords));
+    default StroomKafkaRecordMetaData sendSync(final StroomKafkaProducerRecord<String, byte[]> stroomRecord) {
+        List<StroomKafkaRecordMetaData> metaDataList = sendSync(Collections.singletonList(stroomRecord));
 
         if (metaDataList == null || metaDataList.isEmpty()) {
             return null;

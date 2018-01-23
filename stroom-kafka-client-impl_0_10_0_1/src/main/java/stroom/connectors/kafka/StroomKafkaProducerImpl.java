@@ -1,7 +1,6 @@
 package stroom.connectors.kafka;
 
 import com.google.common.base.Strings;
-import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -72,6 +71,9 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
             //on topic, though we would need to kill off producers that were unused to cope with users mistyping
             //topic names.  This could probably only be done once StroomKafkaProducer is separated from the
             //Connector interface
+
+            //Even if kafka is down the producer will still create successfully. Any calls to send will however
+            //block until it comes up or throw an exception on timeout
             this.producer = new KafkaProducer<>(props);
         } catch (Exception e) {
             throw new RuntimeException(String.format("Error initialising kafka producer for %s, due to %s",
@@ -89,15 +91,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
             final List<StroomKafkaProducerRecord<String, byte[]>> stroomRecords,
             final Consumer<Throwable> exceptionHandler) {
 
-        Callback callback = (recordMetadata, exception) -> {
-            if (exception != null) {
-                exceptionHandler.accept(exception);
-            }
-            LOGGER.trace("Record sent to Kafka");
-        };
-
-        List<CompletableFuture<StroomKafkaRecordMetaData>> futures = send(stroomRecords, exceptionHandler);
-        return futures;
+        return send(stroomRecords, exceptionHandler);
     }
 
     @Override
