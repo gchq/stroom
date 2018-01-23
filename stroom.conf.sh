@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+#Exit script on first error
+set -e 
+
 # Exports config environment variables, overriding stroom.conf. This allows us to specify IP addresses more easily
 
 #Shell Colour constants for use in 'echo -e'
