@@ -1,7 +1,6 @@
 package stroom.statistics.internal;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import io.vavr.Tuple3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,19 +60,16 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
                         statisticEvents.size(),
                         serviceToEventsMapMap.size());
             }
-            serviceToEventsMapMap.entrySet().forEach(entry -> {
-                //TODO as it stands if we get a failure to send with one service, we won't send to any other services
-                //it may be better to record the exception without letting it propagate and then throw an exception at
-                //the end if any failed
-                putEvents(entry.getKey(), entry.getValue());
-            });
+            //An exception with one service will be logged and swallowed
+            serviceToEventsMapMap.forEach(this::putEvents);
+
         } catch (Exception e) {
-            Throwable rootCause = Throwables.getRootCause(e);
-            LOGGER.warn("Error sending internal stats to all services [{}]", rootCause.getMessage());
+            LOGGER.error("Error sending internal stats", e);
         }
     }
 
-    private void putEvents(final InternalStatisticsService service, Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
+    private void putEvents(final InternalStatisticsService service,
+                           final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
         try {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("Putting events for docRef(s) [{}] to {}",
@@ -85,7 +81,13 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
 
             service.putEvents(eventsMap);
         } catch (Exception e) {
-            throw new RuntimeException("Error sending internal statistics to service of type " + service.getDocRefType(), e);
+            final String baseMsg = "Error sending internal statistics to {}";
+            final String serviceClassName = service.getClass().getSimpleName();
+            LOGGER.error(
+                    baseMsg + ", due to: {} (enable DEBUG for full stacktrace)",
+                    serviceClassName,
+                    e.getMessage());
+            LOGGER.debug(baseMsg, serviceClassName, e);
         }
     }
 }

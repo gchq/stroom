@@ -82,6 +82,10 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     @Override
     public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
 
+        if (stroomKafkaProducer == null) {
+            throw new RuntimeException("The Kafka producer isn't initialised, unable to send any events");
+        }
+
         Preconditions.checkNotNull(eventsMap);
 
         //We work on the basis that a stat may or may not have a valid datasource (StatisticConfiguration) but we
