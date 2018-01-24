@@ -31,7 +31,6 @@ import java.time.ZoneOffset;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TimeZone;
 import java.util.function.Consumer;
 
@@ -46,17 +45,17 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
-    private final StroomKafkaProducer stroomKafkaProducer;
+    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactory;
     private final StroomPropertyService stroomPropertyService;
     private final String docRefType;
     private final JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
 
-    // If we move to a 'named' kafka config later, change the java.util.function.Supplier to a java.util.function.Function
-    StroomStatsInternalStatisticsService(final Optional<StroomKafkaProducer> stroomKafkaProducer,
+    @Inject
+    StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactory,
                                          final StroomPropertyService stroomPropertyService) {
+        this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.stroomPropertyService = stroomPropertyService;
-        this.stroomKafkaProducer = stroomKafkaProducer.orElse(null);
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
 
         try {
@@ -73,15 +72,10 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         }
     }
 
-    @Inject
-    StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactory,
-                                         final StroomPropertyService stroomPropertyService) {
-        this(stroomKafkaProducerFactory.getConnector(), stroomPropertyService);
-    }
-
     @Override
     public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
 
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getConnector().orElse(null);
         if (stroomKafkaProducer == null) {
             throw new RuntimeException("The Kafka producer isn't initialised, unable to send any events");
         }

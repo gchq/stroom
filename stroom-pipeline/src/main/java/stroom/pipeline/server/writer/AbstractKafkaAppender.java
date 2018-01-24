@@ -35,8 +35,8 @@ import stroom.util.shared.Severity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -49,7 +49,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
 
     private final ByteArrayOutputStream byteArrayOutputStream;
-    private final List<CompletableFuture<StroomKafkaRecordMetaData>> kafkaMetaFutures;
+    private final Queue<CompletableFuture<StroomKafkaRecordMetaData>> kafkaMetaFutures;
 
     private boolean flushOnSend = false;
     private long maxRecordCount;
@@ -62,7 +62,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
         this.byteArrayOutputStream = new ByteArrayOutputStream();
-        this.kafkaMetaFutures = new ArrayList<>();
+        this.kafkaMetaFutures = new ArrayDeque<>();
     }
 
     @Override
@@ -87,18 +87,19 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     public void endProcessing() {
         closeAndResetStream();
 
-        if (!kafkaMetaFutures.isEmpty()) {
-            kafkaMetaFutures.forEach(future -> {
-                try {
-                    future.get();
-                } catch (InterruptedException e) {
-                    //reset interrupt status
-                    Thread.currentThread().interrupt();
-                    throw new ProcessException("Thread interrupted");
-                } catch (ExecutionException e) {
-                    error(e);
-                }
-            });
+        //If flushOnSend was set we will have futures in the queue
+        //so call get on each one
+        CompletableFuture<StroomKafkaRecordMetaData> future;
+        while ((future = kafkaMetaFutures.poll()) != null) {
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                //reset interrupt status
+                Thread.currentThread().interrupt();
+                throw new ProcessException("Thread interrupted");
+            } catch (ExecutionException e) {
+                error(e);
+            }
         }
         super.endProcessing();
     }

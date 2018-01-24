@@ -83,11 +83,13 @@ public interface StroomKafkaProducer extends StroomConnector {
                                                              final String key) {
         final String baseMsg = "Unable to send record to Kafka with topic/key: {}/{}";
         return e -> {
+            final Throwable cause = e.getCause();
             logger.error(
-                    baseMsg + ", due to: {} (enable DEBUG for full stacktrace)",
+                    baseMsg + ", due to: [{}], caused by: [{}] (enable DEBUG for full stacktrace)",
                     topic,
                     key,
-                    e.getMessage());
+                    e.getMessage(),
+                    cause != null ? cause.getMessage() : "unknown");
             logger.debug(baseMsg, e);
         };
     }

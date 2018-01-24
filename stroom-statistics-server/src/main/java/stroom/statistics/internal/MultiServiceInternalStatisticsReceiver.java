@@ -83,10 +83,12 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
         } catch (Exception e) {
             final String baseMsg = "Error sending internal statistics to {}";
             final String serviceClassName = service.getClass().getSimpleName();
+            final Throwable cause = e.getCause();
             LOGGER.error(
-                    baseMsg + ", due to: {} (enable DEBUG for full stacktrace)",
+                    baseMsg + ", due to: [{}] caused by: [{}] (enable DEBUG for full stacktrace)",
                     serviceClassName,
-                    e.getMessage());
+                    e.getMessage(),
+                    cause != null ? cause.getMessage() : "unknown");
             LOGGER.debug(baseMsg, serviceClassName, e);
         }
     }

@@ -25,6 +25,7 @@ else
     # Increase the size of the heap
     export JAVA_OPTS=-Xmx1024m
 
+    #Currently needed for the hadoop-command and hadoop-hdfs shaded libs
     echo "Clone build and publish our urlDependencies plugin"
     mkdir -p ../git_work
     pushd ../git_work

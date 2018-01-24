@@ -113,6 +113,7 @@ public abstract class StroomAbstractConnectorFactoryService<
 
         //only try to init every TIME_BETWEEN_INIT_ATTEMPS_MS
         if (isOkToInitNow()) {
+            timeOfLastFailedInitAttempt = Instant.now();
 
             // Create a properties shim for the named producer.
             final ConnectorProperties connectorProperties = new ConnectorPropertiesPrefixImpl(
@@ -122,14 +123,14 @@ public abstract class StroomAbstractConnectorFactoryService<
             // Retrieve the settings for this named kafka
             String connectorVersion = connectorProperties.getProperty(PROP_CONNECTOR_VERSION);
 
-            LOGGER.info("Attempting to initialise connector with version {} using factory {}",
+            LOGGER.info("Attempting to initialise connector with version [{}] using factory [{}]",
                     connectorVersion,
                     factoryClass.getName());
 
             if (connectorVersion == null) {
                 //no point going to the factory as we have no version to look up
                 LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
-                        "ConnectorVersion is null for factoryClass {} and name {}",
+                        "ConnectorVersion is null for factoryClass [{}] and name [{}]",
                         factoryClass.getName(),
                         name));
                 return null;
@@ -152,21 +153,21 @@ public abstract class StroomAbstractConnectorFactoryService<
                 }
 
                 if (connector == null) {
-                    LOGGER.warn("Unable to find connector with version {} using factory {}, is the implementation " +
+                    LOGGER.warn("Unable to find connector with version [{}] using factory [{}], is the implementation " +
                                     "jar correctly installed", connectorVersion, factoryClass.getName());
                 }
             } catch (Exception e) {
                 String factoryClassName = factoryClass.getName();
-                LOGGER.error("Unable to initialise connector {} {} due to {}, (enable DEBUG for full stack)",
+                LOGGER.error("Unable to initialise connector [{}] [{}] due to [{}], (enable DEBUG for full stack)",
                         factoryClassName,
                         connectorVersion,
                         e.getMessage());
-                LOGGER.debug("Unable to initialise connector {} {}", factoryClassName, connectorVersion, e);
+                LOGGER.debug("Unable to initialise connector [{}] [{}]", factoryClassName, connectorVersion, e);
                 //don't throw exception, callers can just handling having a null connector
             }
             return connector;
         } else {
-            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Won't try to init {} now, time since last failed attempt is {}",
+            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Won't try to init [{}] now, time since last failed attempt is [{}]",
                     factoryClass.getName(),
                     Duration.between(timeOfLastFailedInitAttempt, Instant.now()).toString()));
             return null;
