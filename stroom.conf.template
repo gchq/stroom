@@ -86,3 +86,17 @@ stroom.url.doc-ref.service.AnnotationsIndex=http://IP_ADDRESS:8199
 stroom.url.doc-ref.service.ElasticIndex=http://IP_ADDRESS:8299
 stroom.url.doc-ref.ui.AnnotationsIndex=http://IP_ADDRESS:5001
 stroom.url.doc-ref.ui.ElasticIndex=http://IP_ADDRESS:5002
+
+# Internal statistic definitions
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#By default stroom will configure each internal stat key to point to two docRefs, one for sqlstats and one of stroom-stats
+#If you just want it to use sql stats then uncomment these lines
+#stroom.internalstatistics.benchmarkCluster.docRefs=docRef(StatisticStore,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test)
+#stroom.internalstatistics.pipelineStreamProcessor.docRefs=docRef(StatisticStore,946a80fc-a59a-11e6-bdc4-0242ac110002,PipelineStreamProcessor)
+#stroom.internalstatistics.metaDataStreamSize.docRefs=docRef(StatisticStore,946a8814-a59a-11e6-bdc4-0242ac110002,Meta Data-Stream Size)
+#stroom.internalstatistics.eventsPerSecond.docRefs=docRef(StatisticStore,a9936548-2572-448b-9d5b-8543052c4d92,EPS)
+#stroom.internalstatistics.cpu.docRefs=docRef(StatisticStore,af08c4a7-ee7c-44e4-8f5e-e9c6be280434,CPU)
+#stroom.internalstatistics.metaDataStreamsReceived.docRefs=docRef(StatisticStore,946a87bc-a59a-11e6-bdc4-0242ac110002,Meta Data-Streams Received)
+#stroom.internalstatistics.streamTaskQueueSize.docRefs=docRef(StatisticStore,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size)
+#stroom.internalstatistics.volumes.docRefs=docRef(StatisticStore,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes)
+#stroom.internalstatistics.memory.docRefs=docRef(StatisticStore,77c09ccb-e251-4ca5-bca0-56a842654397,Memory)
