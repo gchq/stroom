@@ -1,6 +1,7 @@
 package stroom.connectors.kafka;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -21,7 +22,7 @@ public class TestStroomKafkaProducer {
     };
 
     @Test
-//    @Ignore("You may use this to test the local instance of Kafka.")
+    @Ignore("You may use this to test the local instance of Kafka.")
     public void testManualSend() {
         // Given
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();

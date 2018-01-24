@@ -32,11 +32,9 @@ import stroom.query.audit.client.DocRefResourceHttpClient;
 import stroom.query.audit.security.ServiceUser;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
-import stroom.util.shared.QueryApiException;
 import stroom.util.shared.Severity;
 
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +47,6 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     private final SecurityContext securityContext;
     private final DocumentEventLog documentEventLog;
     private final DocRefResourceHttpClient docRefHttpClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ExternalDocumentEntityServiceImpl(final String type,
                                              final ImportExportHelper importExportHelper,
@@ -123,10 +120,10 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     public final DocRef createDocument(final String name, final String parentFolderUUID) {
         try {
             final String uuid = UUID.randomUUID().toString();
-            final Response response = docRefHttpClient.createDocument(serviceUser(), uuid, name);
+            final Response response = docRefHttpClient.createDocument(serviceUser(), uuid, name, parentFolderUUID);
 
             if (response.getStatus() != HttpStatus.OK_200) {
-                throw new QueryApiException(new Exception("Invalid HTTP status returned from create: " + response.getStatus()));
+                throw new Exception("Invalid HTTP status returned from create: " + response.getStatus());
             }
 
             return new DocRef.Builder()
@@ -134,7 +131,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
                     .name(name)
                     .type(type)
                     .build();
-        } catch (final QueryApiException e) {
+        } catch (final Exception e) {
             throw new EntityServiceException("Could not create entity: " + e.getLocalizedMessage());
         }
 
@@ -144,17 +141,17 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     public DocRef copyDocument(final String uuid, final String parentFolderUUID) {
         try {
             final String copyUuid = UUID.randomUUID().toString();
-            final Response response = docRefHttpClient.copyDocument(serviceUser(), uuid, copyUuid);
+            final Response response = docRefHttpClient.copyDocument(serviceUser(), uuid, copyUuid, parentFolderUUID);
 
             if (response.getStatus() != HttpStatus.OK_200) {
-                throw new QueryApiException(new Exception("Invalid HTTP status returned from copy: " + response.getStatus()));
+                throw new Exception("Invalid HTTP status returned from copy: " + response.getStatus());
             }
 
             return new DocRef.Builder()
                     .uuid(uuid)
                     .type(this.type)
                     .build();
-        } catch (final QueryApiException e) {
+        } catch (final Exception e) {
             throw new EntityServiceException("Could not create entity: " + e.getLocalizedMessage());
         }
     }
@@ -162,17 +159,17 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     @Override
     public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
         try {
-            final Response response = docRefHttpClient.documentMoved(serviceUser(), uuid);
+            final Response response = docRefHttpClient.moveDocument(serviceUser(), uuid, parentFolderUUID);
 
             if (response.getStatus() != HttpStatus.OK_200) {
-                throw new QueryApiException(new Exception("Invalid HTTP status returned from move: " + response.getStatus()));
+                throw new Exception("Invalid HTTP status returned from move: " + response.getStatus());
             }
 
             return new DocRef.Builder()
                     .uuid(uuid)
                     .type(this.type)
                     .build();
-        } catch (final QueryApiException e) {
+        } catch (final Exception e) {
             throw new EntityServiceException("Could not create entity: " + e.getLocalizedMessage());
         }
     }
@@ -180,10 +177,10 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     @Override
     public DocRef renameDocument(final String uuid, final String name) {
         try {
-            final Response response = docRefHttpClient.documentRenamed(serviceUser(), uuid, name);
+            final Response response = docRefHttpClient.renameDocument(serviceUser(), uuid, name);
 
             if (response.getStatus() != HttpStatus.OK_200) {
-                throw new QueryApiException(new Exception("Invalid HTTP status returned from rename: " + response.getStatus()));
+                throw new Exception("Invalid HTTP status returned from rename: " + response.getStatus());
             }
 
             return new DocRef.Builder()
@@ -191,7 +188,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
                     .name(name)
                     .type(this.type)
                     .build();
-        } catch (final QueryApiException e) {
+        } catch (final Exception e) {
             throw new EntityServiceException("Could not create entity: " + e.getLocalizedMessage());
         }
     }
@@ -201,10 +198,10 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         try {
             final Response response = docRefHttpClient.deleteDocument(serviceUser(), uuid);
 
-            if (response.getStatus() != HttpStatus.NO_CONTENT_204) {
-                throw new QueryApiException(new Exception("Invalid HTTP status returned from delete: " + response.getStatus()));
+            if (response.getStatus() != HttpStatus.OK_200) {
+                throw new Exception("Invalid HTTP status returned from delete: " + response.getStatus());
             }
-        } catch (final QueryApiException e) {
+        } catch (final Exception e) {
             throw new EntityServiceException("Could not create entity: " + e.getLocalizedMessage());
         }
     }
@@ -215,11 +212,11 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
             final Response response = docRefHttpClient.getInfo(serviceUser(), uuid);
 
             if (response.getStatus() != HttpStatus.OK_200) {
-                throw new QueryApiException(new Exception("Invalid HTTP status returned from getInfo: " + response.getStatus()));
+                throw new Exception("Invalid HTTP status returned from getInfo: " + response.getStatus());
             }
 
-            return objectMapper.readValue(response.getEntity().toString(), DocRefInfo.class);
-        } catch (final QueryApiException | IOException e) {
+            return response.readEntity(DocRefInfo.class);
+        } catch (final Exception e) {
             throw new EntityServiceException("Could not create entity: " + e.getLocalizedMessage());
         }
     }
@@ -245,7 +242,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
                     dataMap);
 
             return docRef;
-        } catch (final QueryApiException e) {
+        } catch (final Exception e) {
             throw new EntityServiceException("Could not import entity: " + e.getLocalizedMessage());
         }
     }
@@ -255,14 +252,14 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         try {
             final Response response = docRefHttpClient.exportDocument(serviceUser(), docRef.getUuid());
 
-            final ExportDTO exportDTO = objectMapper.readValue(response.getEntity().toString(), ExportDTO.class);
+            final ExportDTO exportDTO = response.readEntity(ExportDTO.class);
 
             exportDTO.getMessages().stream()
                     .map(m -> new Message(Severity.INFO, m))
                     .forEach(messageList::add);
 
             return exportDTO.getValues();
-        } catch (final QueryApiException | IOException e) {
+        } catch (final Exception e) {
             throw new EntityServiceException("Could not import entity: " + e.getLocalizedMessage());
         }
     }
@@ -272,7 +269,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         try {
             final Response response = docRefHttpClient.getAll(serviceUser());
 
-        } catch (final QueryApiException e) {
+        } catch (final Exception e) {
             throw new EntityServiceException("Could not import entity: " + e.getLocalizedMessage());
         }
 

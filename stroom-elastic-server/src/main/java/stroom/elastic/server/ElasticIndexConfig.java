@@ -4,9 +4,16 @@ package stroom.elastic.server;
  * As loaded in from remote service
  */
 public class ElasticIndexConfig {
+    // This is the UUID of the DocRef within Stroom
     private String uuid;
 
-    private String stroomName;
+    // This is the name of the DocRef within Stroom
+    private String name;
+
+    private Long createTime;
+    private Long updateTime;
+    private String createUser;
+    private String updateUser;
 
     private String indexName;
 
@@ -18,16 +25,48 @@ public class ElasticIndexConfig {
         return uuid;
     }
 
-    public void setUuid(String uuid) {
+    public void setUuid(final String uuid) {
         this.uuid = uuid;
     }
 
-    public String getStroomName() {
-        return stroomName;
+    public String getName() {
+        return name;
     }
 
-    public void setStroomName(String stroomName) {
-        this.stroomName = stroomName;
+    public void setName(final String name) {
+        this.name = name;
+    }
+
+    public Long getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Long createTime) {
+        this.createTime = createTime;
+    }
+
+    public Long getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Long updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    public String getCreateUser() {
+        return createUser;
+    }
+
+    public void setCreateUser(String createUser) {
+        this.createUser = createUser;
+    }
+
+    public String getUpdateUser() {
+        return updateUser;
+    }
+
+    public void setUpdateUser(String updateUser) {
+        this.updateUser = updateUser;
     }
 
     public String getIndexName() {
@@ -58,7 +97,11 @@ public class ElasticIndexConfig {
     public String toString() {
         final StringBuilder sb = new StringBuilder("ElasticIndexConfig{");
         sb.append("uuid='").append(uuid).append('\'');
-        sb.append(", stroomName='").append(stroomName).append('\'');
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", createTime=").append(createTime);
+        sb.append(", updateTime=").append(updateTime);
+        sb.append(", createUser='").append(createUser).append('\'');
+        sb.append(", updateUser='").append(updateUser).append('\'');
         sb.append(", indexName='").append(indexName).append('\'');
         sb.append(", indexedType='").append(indexedType).append('\'');
         sb.append(", mappingsJson='").append(mappingsJson).append('\'');
