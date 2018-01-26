@@ -2,6 +2,7 @@ package stroom.pipeline.server.writer;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingKafkaDestination;
@@ -11,10 +12,9 @@ import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 
 @Component
@@ -29,20 +29,24 @@ import java.io.IOException;
         icon = ElementIcons.KAFKA)
 public class RollingKafkaAppender extends AbstractRollingAppender {
 
-    @Resource
-    private StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
-
-    @Resource
-    private PathCreator pathCreator;
-
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
+    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
+    private final PathCreator pathCreator;
+    private final ErrorReceiverProxy errorReceiverProxy;
 
     private String topic;
     private String recordKey;
     private boolean flushOnSend = true;
 
     private String key;
+
+    @Inject
+    public RollingKafkaAppender(final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+                                final PathCreator pathCreator,
+                                final ErrorReceiverProxy errorReceiverProxy) {
+        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
+        this.pathCreator = pathCreator;
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
 
     @Override
     void validateSpecificSettings() {
@@ -58,27 +62,30 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     @Override
     Object getKey() throws IOException {
         if (key == null) {
-            key = String.format("%s:%s", this.topic, this.recordKey);
+            //this allows us to have two destinations for the same key and topic but with different
+            //flush semantics
+            key = String.format("%s:%s:%s", this.topic, this.recordKey, Boolean.toString(flushOnSend));
         }
-
         return key;
     }
 
     @Override
     public RollingDestination createDestination() throws IOException {
-        return new RollingKafkaDestination(key,
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector()
+                .orElseThrow(() -> new ProcessException("No kafka producer available to use"));
+
+        return new RollingKafkaDestination(
+                key,
                 getFrequency(),
                 getMaxSize(),
                 System.currentTimeMillis(),
-                stroomKafkaProducerFactoryService.getProducer(exception ->
-                        errorReceiverProxy.log(Severity.ERROR, null, null, "Called function on Fake Kafka proxy", exception)
-                ),
+                stroomKafkaProducer,
                 recordKey,
                 topic,
                 flushOnSend);
     }
 
-    @PipelineProperty(description = "The record key to apply to records, used to select patition. Replacement variables can be used in path strings such as ${feed}.")
+    @PipelineProperty(description = "The record key to apply to records, used to select partition. Replacement variables can be used in path strings such as ${feed}.")
     public void setRecordKey(final String recordKey) {
         this.recordKey = pathCreator.replaceAll(recordKey);
     }
@@ -88,7 +95,10 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
         this.topic = pathCreator.replaceAll(topic);
     }
 
-    @PipelineProperty(description = "Flush the producer each time a message is sent")
+    @PipelineProperty(
+            description = "Wait for acknowledgement from the Kafka broker when the appender is rolled" +
+                    "This is slower but catches errors in the pipeline process",
+            defaultValue = "false")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
     }

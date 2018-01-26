@@ -29,12 +29,6 @@ import java.util.*;
 public class StroomKafkaProducerFactoryService
         extends StroomAbstractConnectorFactoryService<StroomKafkaProducer, StroomKafkaProducerFactory> {
 
-    // Old configs may not have named server/version properties, so use this property name
-    private static final String OLD_PROP_BOOTSTRAP_SERVERS = "stroom.kafka.bootstrap.servers";
-
-    // Default kafka client version for old configs
-    private static final String KAFKA_CLIENT_VERSION_DEFAULT = "0.10.0.1";
-
     // Can register server/version pairs for specific roles within the system
     private static final String PROP_PREFIX = "stroom.connectors.kafka.%s.";
 
@@ -50,12 +44,6 @@ public class StroomKafkaProducerFactoryService
                 StroomKafkaProducerFactory.class);
     }
 
-    @Override
-    protected String setupPropertyDefaults(final ConnectorProperties connectorProperties) {
-        connectorProperties.put(StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG,
-                getPropertyService().getProperty(OLD_PROP_BOOTSTRAP_SERVERS));
-        return KAFKA_CLIENT_VERSION_DEFAULT;
-    }
 
     @StroomShutdown
     public void shutdown() {

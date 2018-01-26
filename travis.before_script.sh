@@ -25,6 +25,7 @@ else
     # Increase the size of the heap
     export JAVA_OPTS=-Xmx1024m
 
+    #Currently needed for the hadoop-command and hadoop-hdfs shaded libs
     echo "Clone build and publish our urlDependencies plugin"
     mkdir -p ../git_work
     pushd ../git_work
@@ -39,7 +40,7 @@ else
     git checkout $STROOM_RESOURCES_BRANCH
 
     echo "Start all the services we need to run the integration tests in stroom"
-    ./bounceIt.sh 'up -d --build' -e -y -x kafka stroom-db stroom-stats-db
+    ./bounceIt.sh 'up -d --build' -e -y -x kafka stroom-db stroom-stats-db zookeeper
     popd
     popd
 

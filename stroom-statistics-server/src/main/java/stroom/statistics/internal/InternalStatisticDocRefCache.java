@@ -26,6 +26,7 @@ public class InternalStatisticDocRefCache {
     private static final Pattern DOC_REF_WHOLE_PATTERN = Pattern.compile("(" + DOC_REF_PART_PATTERN.pattern() + ",?)+");
 
     private final StroomPropertyService stroomPropertyService;
+    //map of internal stat key to the list of datasource docrefs available for that stat
     private final ConcurrentMap<String, List<DocRef>> map = new ConcurrentHashMap<>();
 
     @Inject
@@ -57,6 +58,10 @@ public class InternalStatisticDocRefCache {
                 throw new RuntimeException(String.format("Property value for key %s does not contain valid docRefs [%s]", internalStatisticKey, docRefsStr));
             } else {
                 List<DocRef> docRefs = splitString(docRefsStr);
+                docRefs.forEach(docRef ->
+                        LOGGER.info("Associating internal statistic [{}] with docRef [{} {} {}]",
+                                internalStatisticKey, docRef.getType(), docRef.getUuid(), docRef.getName()));
+
                 LOGGER.trace("Returning {}", docRefs);
                 return docRefs;
             }

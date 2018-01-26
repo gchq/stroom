@@ -15,16 +15,19 @@ stroom.temp=/tmp/stroom/
 #stroom.ui.oncontextmenu=
 
 #Hibernate properties
+#~~~~~~~~~~~~~~~~~~~~
 stroom.jpaHbm2DdlAuto=validate
 stroom.jpaDialect=org.hibernate.dialect.MySQLInnoDBDialect
 
 #Stroom database properties
+#~~~~~~~~~~~~~~~~~~~~~~~~~~
 stroom.jdbcDriverClassName=com.mysql.jdbc.Driver
 stroom.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
 stroom.jdbcDriverUsername=stroomuser
 stroom.jdbcDriverPassword=stroompassword1
 
 #SQL Statistics database properties
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 stroom.statistics.sql.jdbcDriverClassName=com.mysql.jdbc.Driver
 stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3308/statistics?useUnicode=yes&characterEncoding=UTF-8
 stroom.statistics.sql.jdbcDriverUsername=stroomuser
@@ -45,20 +48,29 @@ stroom.apikeys.ui.url=http://IP_ADDRESS:5000/tokens
 stroom.changepassword.url=http://IP_ADDRESS:5000/changepassword
 
 #Service discovery
+#~~~~~~~~~~~~~~~~~
 #Set this to false to local service lookup when you do not have Zookeeper
 stroom.serviceDiscovery.enabled=false
+#If simple serviceDiscovery is in use, this sets the host/port to use use for all simple lookups
+stroom.serviceDiscovery.simpleLookup.basePath=http://IP_ADDRESS:8080
+
+#Plugins
+stroom.plugins.lib.dir=HOME_DIR/.stroom/plugins
 
 #Kafka
+#~~~~~
 #Set this to blank to prevent stroom from trying to establish a connection
 stroom.connectors.kafka.default.bootstrap.servers=IP_ADDRESS:9092
 stroom.connectors.kafka.default.connector.version=0.10.0.1
 
 # Elastic
+#~~~~~~~~
 stroom.connectors.elastic.default.transport.hosts=IP_ADDRESS:9300
 stroom.connectors.elastic.default.cluster.name=docker-cluster
 stroom.connectors.elastic.default.connector.version=5.6.4
 
 # UI URLs
+#~~~~~~~~
 stroom.url.list=annotations-ui,elastic-ui,annotations-service,elastic-service,kibana-ui,dashboard
 stroom.url.annotations-ui=http://IP_ADDRESS:5001
 stroom.url.annotations-service=http://IP_ADDRESS:8199
@@ -68,8 +80,23 @@ stroom.url.kibana-ui=http://IP_ADDRESS:5601
 stroom.url.dashboard=http://IP_ADDRESS:8080/dashboard.jsp
 
 # External Doc Ref
+#~~~~~~~~~~~~~~~~~
 stroom.doc-ref.types=AnnotationsIndex,ElasticIndex
 stroom.url.doc-ref.service.AnnotationsIndex=http://IP_ADDRESS:8199
 stroom.url.doc-ref.service.ElasticIndex=http://IP_ADDRESS:8299
 stroom.url.doc-ref.ui.AnnotationsIndex=http://IP_ADDRESS:5001
 stroom.url.doc-ref.ui.ElasticIndex=http://IP_ADDRESS:5002
+
+# Internal statistic definitions
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#By default stroom will configure each internal stat key to point to two docRefs, one for sqlstats and one of stroom-stats
+#If you just want it to use sql stats then uncomment these lines
+#stroom.internalstatistics.benchmarkCluster.docRefs=docRef(StatisticStore,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test)
+#stroom.internalstatistics.pipelineStreamProcessor.docRefs=docRef(StatisticStore,946a80fc-a59a-11e6-bdc4-0242ac110002,PipelineStreamProcessor)
+#stroom.internalstatistics.metaDataStreamSize.docRefs=docRef(StatisticStore,946a8814-a59a-11e6-bdc4-0242ac110002,Meta Data-Stream Size)
+#stroom.internalstatistics.eventsPerSecond.docRefs=docRef(StatisticStore,a9936548-2572-448b-9d5b-8543052c4d92,EPS)
+#stroom.internalstatistics.cpu.docRefs=docRef(StatisticStore,af08c4a7-ee7c-44e4-8f5e-e9c6be280434,CPU)
+#stroom.internalstatistics.metaDataStreamsReceived.docRefs=docRef(StatisticStore,946a87bc-a59a-11e6-bdc4-0242ac110002,Meta Data-Streams Received)
+#stroom.internalstatistics.streamTaskQueueSize.docRefs=docRef(StatisticStore,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size)
+#stroom.internalstatistics.volumes.docRefs=docRef(StatisticStore,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes)
+#stroom.internalstatistics.memory.docRefs=docRef(StatisticStore,77c09ccb-e251-4ca5-bca0-56a842654397,Memory)

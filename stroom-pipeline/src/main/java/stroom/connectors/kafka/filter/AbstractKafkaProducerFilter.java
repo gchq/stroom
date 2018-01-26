@@ -1,6 +1,8 @@
 package stroom.connectors.kafka.filter;
 
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.connectors.kafka.StroomKafkaProducer;
@@ -14,12 +16,18 @@ import stroom.pipeline.server.filter.AbstractSamplingFilter;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
+import java.util.Collections;
+
 public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKafkaProducerFilter.class);
+
     private boolean flushOnSend;
-    private final StroomKafkaProducer stroomKafkaProducer;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
+    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
+
+    private StroomKafkaProducer stroomKafkaProducer;
 
     private Locator locator;
 
@@ -30,14 +38,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
-        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer(exception ->
-                errorReceiverProxy.log(
-                        Severity.ERROR,
-                        null,
-                        null,
-                        "Called function on Fake Kafka proxy!",
-                        exception)
-        );
+        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
         this.flushOnSend = true;
     }
 
@@ -56,16 +57,33 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
     @Override
     public void startProcessing() {
         if (Strings.isNullOrEmpty(getTopic())) {
-            log(Severity.FATAL_ERROR, "A Kafka topic has not been set", null);
-            throw new LoggedException("A Kafka topic has not been set");
+            String msg = "A Kafka topic has not been set";
+            log(Severity.FATAL_ERROR, msg, null);
+            throw new LoggedException(msg);
         }
         if (Strings.isNullOrEmpty(getRecordKey())) {
-            log(Severity.FATAL_ERROR, "A Kafka record key has not been set", null);
-            throw new LoggedException("A Kafka record key has not been set");
+            String msg = "A Kafka record key has not been set";
+            log(Severity.FATAL_ERROR, msg, null);
+            throw new LoggedException(msg);
+        }
+        try {
+            this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector().orElse(null);
+        } catch (Exception e) {
+            String msg = "Error initialising kafka producer - " + e.getMessage();
+            log(Severity.FATAL_ERROR, msg, e);
+            throw new LoggedException(msg);
+        }
+
+        if (stroomKafkaProducer == null) {
+            String msg = "No Kafka producer connector is available, check Stroom's configuration";
+            log(Severity.FATAL_ERROR, msg, null);
+            throw new LoggedException(msg);
         }
     }
 
-    @PipelineProperty(description = "Flush the producer each time a message is sent")
+    @PipelineProperty(
+            description = "Wait for acknowledgement from the Kafka borker for each message sent. This is slower but catches errors sooner",
+            defaultValue = "false")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
     }
@@ -81,7 +99,14 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
                         .value(getOutput().getBytes(StreamUtil.DEFAULT_CHARSET))
                         .build();
         try {
-            stroomKafkaProducer.send(newRecord, flushOnSend, this::error);
+            if (flushOnSend) {
+                stroomKafkaProducer.sendSync(Collections.singletonList(newRecord));
+            } else {
+                //TODO need a better approach to handling failed async messages
+                stroomKafkaProducer.sendAsync(
+                        newRecord,
+                        StroomKafkaProducer.createLogOnlyExceptionHandler(LOGGER, topic, recordKey));
+            }
         } catch (RuntimeException e) {
             error(e);
         }

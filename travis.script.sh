@@ -181,7 +181,7 @@ else
 
     #Do the gradle build
     # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
-    ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build dist ${extraBuildArgs}
+    ./gradlew -PdumpFailedTestXml=true -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build dist ${extraBuildArgs}
 
     #Don't do a docker build for pull requests
     if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then

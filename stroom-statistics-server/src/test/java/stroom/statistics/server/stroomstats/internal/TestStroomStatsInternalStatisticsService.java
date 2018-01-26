@@ -11,6 +11,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
+import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
@@ -19,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -29,10 +32,13 @@ public class TestStroomStatsInternalStatisticsService {
     public static final String DOC_REF_TYPE_2 = "myDocRefType2";
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomStatsInternalStatisticsService.class);
     private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+
     @Captor
-    ArgumentCaptor<Consumer<Exception>> exceptionHandlerCaptor;
+    ArgumentCaptor<Consumer<Throwable>> exceptionHandlerCaptor;
     @Mock
-    private StroomKafkaProducer stroomKafkaProducer;
+    private StroomKafkaProducer mockStroomKafkaProducer;
+    @Mock
+    private StroomKafkaProducerFactoryService mockStroomKafkaProducerFactoryService;
 
     @Test
     public void putEvents_multipleEvents() {
@@ -43,8 +49,9 @@ public class TestStroomStatsInternalStatisticsService {
                         InternalStatisticEvent.Type.COUNT.toString().toLowerCase(),
                 "MyTopic");
 
+        Mockito.when(mockStroomKafkaProducerFactoryService.getConnector()).thenReturn(Optional.of(mockStroomKafkaProducer));
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                stroomKafkaProducer,
+                mockStroomKafkaProducerFactoryService,
                 mockStroomPropertyService
         );
 
@@ -61,11 +68,11 @@ public class TestStroomStatsInternalStatisticsService {
         stroomStatsInternalStatisticsService.putEvents(map);
 
         //two different doc refs so two calls to producer
-        Mockito.verify(stroomKafkaProducer, Mockito.times(2))
-                .send(Mockito.any(), Mockito.anyBoolean(), Mockito.any());
+        Mockito.verify(mockStroomKafkaProducer, Mockito.times(2))
+                .sendAsync(Mockito.any(StroomKafkaProducerRecord.class), Mockito.any());
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void putEvents_exception() {
 
         mockStroomPropertyService.setProperty(StroomStatsInternalStatisticsService.PROP_KEY_DOC_REF_TYPE, DOC_REF_TYPE_1);
@@ -74,18 +81,9 @@ public class TestStroomStatsInternalStatisticsService {
                         InternalStatisticEvent.Type.COUNT.toString().toLowerCase(),
                 "MyTopic");
 
-        //when flush is called on the producer capture the exceptionhandler passed to the send method and give an exception
-        //to the handler to simulate a failure on the send that will only manifest itself on the flush
-        Mockito.doAnswer(invocation -> {
-            Mockito.verify(stroomKafkaProducer)
-                    .send(Mockito.any(), Mockito.anyBoolean(), exceptionHandlerCaptor.capture());
-            exceptionHandlerCaptor.getValue()
-                    .accept(new RuntimeException("Exception inside StroomKafkaProducer"));
-            return null;
-        }).when(stroomKafkaProducer).flush();
-
+        Mockito.when(mockStroomKafkaProducerFactoryService.getConnector()).thenReturn(Optional.of(mockStroomKafkaProducer));
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                stroomKafkaProducer,
+                mockStroomKafkaProducerFactoryService,
                 mockStroomPropertyService
         );
 
@@ -95,11 +93,16 @@ public class TestStroomStatsInternalStatisticsService {
         Map<DocRef, List<InternalStatisticEvent>> map = ImmutableMap.of(docRef, Collections.singletonList(event));
 
         //exercise the service
-        try {
-            stroomStatsInternalStatisticsService.putEvents(map);
-        } catch (Exception e) {
-            LOGGER.info("Caught expected exception: {} ", e.getMessage(), e);
-            throw e;
-        }
+        stroomStatsInternalStatisticsService.putEvents(map);
+
+        //ensure sendAsync is called
+        Mockito.verify(mockStroomKafkaProducer)
+                .sendAsync(Mockito.any(StroomKafkaProducerRecord.class), exceptionHandlerCaptor.capture());
+
+        //create an exception in the handler
+        exceptionHandlerCaptor.getValue()
+                .accept(new RuntimeException("Test Exception inside mockStroomKafkaProducer"));
+
+        //the exception handler should just  log so nothing needs to be asserted
     }
 }

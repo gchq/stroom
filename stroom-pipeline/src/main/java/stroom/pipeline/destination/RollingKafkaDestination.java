@@ -8,6 +8,7 @@ import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 public class RollingKafkaDestination extends RollingDestination {
@@ -20,6 +21,7 @@ public class RollingKafkaDestination extends RollingDestination {
     private final boolean flushOnSend;
 
     private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    private final Consumer<Throwable> logOnlyExceptionHandler;
 
     public RollingKafkaDestination(final String key,
                                    final long frequency,
@@ -34,6 +36,10 @@ public class RollingKafkaDestination extends RollingDestination {
         this.recordKey = recordKey;
         this.topic = topic;
         this.flushOnSend = flushOnSend;
+        this.logOnlyExceptionHandler = StroomKafkaProducer.createLogOnlyExceptionHandler(
+                LOGGER,
+                topic,
+                key);
 
         setOutputStream(new ByteCountOutputStream(new OutputStream() {
             @Override
@@ -54,23 +60,25 @@ public class RollingKafkaDestination extends RollingDestination {
                         .value(msgValue)
                         .build();
         try {
-            stroomKafkaProducer.send(newRecord, flushOnSend, e ->
-                LOGGER.error("Unable to send record to Kafka!", e)
-            );
+            if (flushOnSend) {
+                stroomKafkaProducer.sendSync(Collections.singletonList(newRecord));
+            } else {
+                stroomKafkaProducer.sendAsync(newRecord, logOnlyExceptionHandler);
+            }
         } catch (RuntimeException e) {
             exceptionConsumer.accept(wrapRollException(e));
         }
     }
 
     private Throwable wrapRollException(final Throwable e) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("Unable to send record to Kafka '");
-        sb.append(topic);
-        sb.append("' - ");
-        sb.append(e.getMessage());
-
-        LOGGER.error(sb.toString(), e);
-
-        return new IOException(sb.toString(), e);
+        logOnlyExceptionHandler.accept(e);
+        LOGGER.debug("Unable to send record to Kafka with topic/key %s/%s", topic, recordKey, e);
+        String msg = String.format(
+                "Unable to send record to Kafka with topic/key %s/%s, due to: %s (enable DEBUG for full stacktrace)",
+                topic,
+                recordKey,
+                e.getMessage());
+        LOGGER.error(msg);
+        return new IOException(msg);
     }
 }

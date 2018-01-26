@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#549** : Change to not try to connect to kafka when kafka is not configured and improve failure handling
+
 * Generate additional major and minor floating docker tags in travis build, e.g. v6-LATEST and v6.0-LATEST
 
 * Change docker image to be based on openjdk:8u151-jre-alpine
