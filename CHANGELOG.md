@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#567** : Changed `parseUri` to be `parse-uri` to keep it consistently named with respect to other XSLT functions. The old name `parseUri` still works but is deprecated and will be removed in a later version.
 
+* Issue **#567** : The XSLT function `parse-uri` now correctly returns a `schemeSpecificPart` element rather than the incorrectly named `schemeSpecificPort`.
+
+* Issue **#567** : The dashboard expression function `extractSchemeSpecificPortFromUri` has now been corrected to be called `extractSchemeSpecificPartFromUri`.
+
+* Issue **#567** : The missing dashboard expression function `extractQueryFromUri` has been added.
+
 ## [v5.0.2] - 2018-01-16
 
 * Issue **#554** : Added a `parseUri` XSLT function.
