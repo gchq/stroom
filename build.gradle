@@ -572,12 +572,12 @@ gradle.buildFinished {
             def reportFile = pair.second
 
             if (reportFile.exists()) {
-                println "-----Failed test class ${info} ${reportFile.toPath().getFileName()} ------------------"
+                println "-----Failed test class ${info} ------------------"
                 def lines = reportFile.readLines()
                 lines.each { String line -> 
                     println "${line}"
                 }
-                println "-----End of test class ${info} ${reportFile.toPath().getFileName()} ------------------"
+                println "-----End of test class ${info} ------------------"
             } else {
                 println "File ${reportFile.toString()}"
             }
