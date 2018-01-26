@@ -53,7 +53,7 @@ public class ParseUri extends StroomExtensionFunctionCall {
                 dataElement("port", String.valueOf(uri.getPort()));
                 dataElement("query", uri.getQuery());
                 dataElement("scheme", uri.getScheme());
-                dataElement("schemeSpecificPort", uri.getSchemeSpecificPart());
+                dataElement("schemeSpecificPart", uri.getSchemeSpecificPart());
                 dataElement("userInfo", uri.getUserInfo());
                 endDocument();
 

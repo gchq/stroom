@@ -219,7 +219,7 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("parseUri")
+                .functionName("parse-uri")
                 .library(this)
                 .delegateClass(ParseUri.class)
                 .minArgs(1)
