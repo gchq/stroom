@@ -209,7 +209,8 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "extractPathFromUri($)", "extractPathFromUri("));
         children.add(createFunction(item++, "extractPortFromUri($)", "extractPortFromUri("));
         children.add(createFunction(item++, "extractSchemeFromUri($)", "extractSchemeFromUri("));
-        children.add(createFunction(item++, "extractSchemeSpecificPortFromUri($)", "extractSchemeSpecificPortFromUri("));
+        children.add(createFunction(item++, "extractSchemeSpecificPartFromUri($)", "extractSchemeSpecificPartFromUri("));
+        children.add(createFunction(item++, "extractQueryFromUri($)", "extractQueryFromUri("));
         children.add(createFunction(item++, "extractUserInfoFromUri($)", "extractUserInfoFromUri("));
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }

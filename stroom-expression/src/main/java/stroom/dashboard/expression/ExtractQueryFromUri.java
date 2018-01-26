@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 
-public class ExtractSchemeSpecificPortFromUri extends ExtractionFunction {
+public class ExtractQueryFromUri extends ExtractionFunction {
     public static class ExtractorImpl implements Extractor {
         private static final long serialVersionUID = -5893918049538006730L;
 
@@ -31,7 +31,7 @@ public class ExtractSchemeSpecificPortFromUri extends ExtractionFunction {
         public String extract(final String value) {
             try {
                 final URI uri = new URI(value);
-                return uri.getSchemeSpecificPart();
+                return uri.getQuery();
             } catch (final Exception e) {
                 LOGGER.debug(e.getMessage(), e);
             }
@@ -39,10 +39,10 @@ public class ExtractSchemeSpecificPortFromUri extends ExtractionFunction {
         }
     }
 
-    public static final String NAME = "extractSchemeSpecificPortFromUri";
+    public static final String NAME = "extractQueryFromUri";
     private static final Extractor EXTRACTOR = new ExtractorImpl();
 
-    public ExtractSchemeSpecificPortFromUri(final String name) {
+    public ExtractQueryFromUri(final String name) {
         super(name);
     }
 

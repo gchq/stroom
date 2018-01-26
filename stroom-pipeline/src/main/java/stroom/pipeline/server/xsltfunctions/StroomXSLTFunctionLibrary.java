@@ -58,7 +58,11 @@ public class StroomXSLTFunctionLibrary {
             register("stream-id", StreamId.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);
             register("hex-to-dec", HexToDec.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
             register("hex-to-oct", HexToOct.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
+
+            // TODO : Deprecate
             register("parseUri", ParseUri.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.NODE_SEQUENCE);
+
+            register("parse-uri", ParseUri.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.NODE_SEQUENCE);
             register("pipeline-name", PipelineName.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);
             register("put", Put.class, 2, 2, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING}, SequenceType.EMPTY_SEQUENCE);
 
