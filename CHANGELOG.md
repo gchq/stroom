@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#567** : Changed `parseUri` to be `parse-uri` to keep it consistently named with respect to other XSLT functions. The old name `parseUri` still works but is deprecated and will be removed in a later version.
+
 ## [v5.0.2] - 2018-01-16
 
 * Issue **#554** : Added a `parseUri` XSLT function.
