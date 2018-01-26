@@ -18,9 +18,6 @@ package stroom.policy.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
@@ -34,14 +31,12 @@ import stroom.policy.shared.DataRetentionRule;
 import stroom.query.shared.IndexField;
 import stroom.streamstore.server.ExpressionMatcher;
 import stroom.streamstore.server.StreamFields;
-import stroom.streamstore.server.fs.FileSystemStreamStore;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.task.TaskMonitor;
 
-import javax.inject.Inject;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -49,84 +44,94 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Component
-public class DataRetentionTransactionHelper {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionTransactionHelper.class);
+public class DataRetentionStreamFinder implements AutoCloseable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionStreamFinder.class);
 
-    private final DataSource dataSource;
-    private final FileSystemStreamStore fileSystemStreamStore;
+    private final Connection connection;
     private final DictionaryService dictionaryService;
 
-    @Inject
-    public DataRetentionTransactionHelper(final DataSource dataSource, final FileSystemStreamStore fileSystemStreamStore, final DictionaryService dictionaryService) {
-        this.dataSource = dataSource;
-        this.fileSystemStreamStore = fileSystemStreamStore;
+    private PreparedStatement preparedStatement;
+
+    public DataRetentionStreamFinder(final Connection connection, final DictionaryService dictionaryService) {
+        Objects.requireNonNull(connection, "No connection");
+        this.connection = connection;
         this.dictionaryService = dictionaryService;
     }
 
-    @Transactional(propagation = Propagation.NEVER, readOnly = true)
-    public long getRowCount(final Period ageRange, final Set<String> fieldSet) {
+    public long getRowCount(final Period ageRange, final Set<String> fieldSet) throws SQLException {
         long rowCount = 0;
-        final SqlBuilder sql = getSql(ageRange, null, fieldSet, true, null);
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql.toString())) {
-                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
+        final SqlBuilder sql = getSelectSql(ageRange, null, fieldSet, true, null);
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql.toString(),
+                ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_READ_ONLY,
+                ResultSet.CLOSE_CURSORS_AT_COMMIT)) {
+            PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
 
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        rowCount = resultSet.getLong(1);
-                    }
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Executing SQL '" + sql.toString() + "'\n\twith arguments " + sql.getArgs().toString());
+            }
+
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    rowCount = resultSet.getLong(1);
                 }
             }
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
         }
         return rowCount;
     }
 
-    @Transactional(propagation = Propagation.NEVER, readOnly = true)
-    public boolean deleteMatching(final Period ageRange, final Range<Long> streamIdRange, final long batchSize, final ActiveRules activeRules, final Map<DataRetentionRule, Optional<Long>> ageMap, final TaskMonitor taskMonitor, final Progress progress) {
+    public boolean findMatches(final Period ageRange, final Range<Long> streamIdRange, final long batchSize, final ActiveRules activeRules, final Map<DataRetentionRule, Optional<Long>> ageMap, final TaskMonitor taskMonitor, final Progress progress, final List<Long> matches) throws SQLException {
         boolean more = false;
 
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryService);
 
-        final SqlBuilder sql = getSql(ageRange, streamIdRange, activeRules.getFieldSet(), false, batchSize);
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql.toString())) {
-                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
+        final SqlBuilder sqlBuilder = getSelectSql(ageRange, streamIdRange, activeRules.getFieldSet(), false, batchSize);
+        final String sql = sqlBuilder.toString();
 
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next() && !taskMonitor.isTerminated()) {
-                        final Map<String, Object> attributeMap = createAttributeMap(resultSet, activeRules.getFieldSet());
-                        final Long streamId = (Long) attributeMap.get(StreamFields.STREAM_ID);
-                        final Long createMs = (Long) attributeMap.get(StreamFields.CREATED_ON);
-                        try {
-                            more = true;
-                            progress.nextStream(streamId, createMs);
-                            final String streamInfo = progress.toString();
-                            info(taskMonitor, "Examining stream " + streamInfo);
+        // Reuse this prepared statement as the SQL will not change between calls.
+        if (preparedStatement == null) {
+            preparedStatement = connection.prepareStatement(sql,
+                    ResultSet.TYPE_FORWARD_ONLY,
+                    ResultSet.CONCUR_READ_ONLY,
+                    ResultSet.CLOSE_CURSORS_AT_COMMIT);
+        }
 
-                            final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules.getActiveRules());
-                            if (matchingRule != null) {
-                                ageMap.get(matchingRule).ifPresent(age -> {
-                                    if (createMs < age) {
-                                        info(taskMonitor, "Deleting stream " + streamInfo);
-                                        fileSystemStreamStore.deleteStream(Stream.createStub(streamId));
-                                    }
-                                });
+        preparedStatement.clearParameters();
+        PreparedStatementUtil.setArguments(preparedStatement, sqlBuilder.getArgs());
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Executing SQL '" + sql + "'\n\twith arguments " + sqlBuilder.getArgs().toString());
+        }
+
+        try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next() && !taskMonitor.isTerminated()) {
+                final Map<String, Object> attributeMap = createAttributeMap(resultSet, activeRules.getFieldSet());
+                final Long streamId = (Long) attributeMap.get(StreamFields.STREAM_ID);
+                final Long createMs = (Long) attributeMap.get(StreamFields.CREATED_ON);
+                try {
+                    more = true;
+                    progress.nextStream(streamId, createMs);
+                    final String streamInfo = progress.toString();
+                    info(taskMonitor, "Examining stream " + streamInfo);
+
+                    final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules.getActiveRules());
+                    if (matchingRule != null) {
+                        ageMap.get(matchingRule).ifPresent(age -> {
+                            if (createMs < age) {
+                                LOGGER.debug("Adding match " + streamId);
+                                matches.add(streamId);
                             }
-                        } catch (final Exception e) {
-                            LOGGER.error("An error occurred processing stream " + streamId, e);
-                        }
+                        });
                     }
+                } catch (final Exception e) {
+                    LOGGER.error("An error occurred processing stream " + streamId, e);
                 }
             }
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
         }
 
         return more;
@@ -137,7 +142,7 @@ public class DataRetentionTransactionHelper {
         taskMonitor.info(message);
     }
 
-    private SqlBuilder getSql(final Period ageRange, final Range<Long> streamIdRange, final Set<String> fieldSet, final boolean count, final Long limit) {
+    private SqlBuilder getSelectSql(final Period ageRange, final Range<Long> streamIdRange, final Set<String> fieldSet, final boolean count, final Long limit) {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT");
 
@@ -172,9 +177,11 @@ public class DataRetentionTransactionHelper {
         sql.append(" WHERE 1=1");
         sql.appendRangeQuery("S." + Stream.CREATE_MS, ageRange);
         sql.appendRangeQuery("S." + Stream.ID, streamIdRange);
+        sql.appendValueQuery("S." + Stream.STATUS, StreamStatus.UNLOCKED.getPrimitiveValue());
         sql.append(" ORDER BY S." + Stream.ID);
         if (limit != null) {
-            sql.append(" LIMIT " + limit);
+            sql.append(" LIMIT ");
+            sql.arg(limit);
         }
 
         return sql;
@@ -232,5 +239,19 @@ public class DataRetentionTransactionHelper {
         return used.get();
     }
 
+    private void closePreparedStatement() {
+        if (preparedStatement != null) {
+            try {
+                preparedStatement.close();
+            } catch (SQLException e) {
+                LOGGER.error("Error closing preparedStatement", e);
+            }
+            preparedStatement = null;
+        }
+    }
 
+    @Override
+    public void close() {
+        closePreparedStatement();
+    }
 }
