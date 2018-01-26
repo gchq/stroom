@@ -244,6 +244,9 @@ def projectsWithSharedTestJars = subprojects.findAll { project ->
     ]
 }
 
+//list to hold details of any failed test classes
+def failedTestReportFiles = []
+
 //Configuration applicable to all projects
 allprojects {
     // Make doclint be quiet - we don't care about JavaDoc warnings.
@@ -313,6 +316,22 @@ subprojects {
     tasks.withType(Test) {
         reports.html.destination = file("${reporting.baseDir}/${name}")
 
+        //afterTest { desc, result -> 
+            //println "Executed test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+        //}
+
+        afterSuite { desc, result -> 
+            if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
+
+                //test class failed so add its project info and test report file to a global list for
+                //processing at the end of the build
+                def reportFileName = "${project.name}/build/test-results/test/TEST-${desc.className}.xml"
+                def reportFile = file(reportFileName)
+                def pair = new Tuple2("${project.name} ${desc.name}", reportFile)
+                failedTestReportFiles.add(pair)
+            }
+        }
+
         //Use full logging for test exceptions so we can see where the failure occurred 
         testLogging {
             events "failed"
@@ -329,6 +348,18 @@ subprojects {
         // Integration tests are quite slow so output progress for each test to keep travis alive
         afterTest { desc, result -> 
             println "Executed test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+        }
+        
+        afterSuite { desc, result -> 
+            if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
+                //test class failed so add its project info and test report file to a global list for
+                //processing at the end of the build
+
+                def reportFileName = "${project.name}/build/test-results/integrationTest/TEST-${desc.className}.xml"
+                def reportFile = file(reportFileName)
+                def pair = new Tuple2("${project.name} ${desc.name}", reportFile)
+                failedTestReportFiles.add(pair)
+            }
         }
 
         //Use full logging for test exceptions so we can see where the failure occurred 
@@ -535,4 +566,23 @@ urlDependencies {
             "https://github.com/gchq/hadoop-common-shaded/releases/download/$versions.hadoopCommonShaded/${urlLibs.hadoopCommonShaded}.jar")
 }
 
+gradle.buildFinished {
+    //if any of the tests failed dump the junit xml to the console
+    if (getPropertyOrDefault('dumpFailedTestXml', 'false') == 'true' && failedTestReportFiles.size > 0) {
+        println "Build has ${failedTestReportFiles.size} failed test classes, dumping JUnit xml output"
+        failedTestReportFiles.each { pair -> 
+            def info = pair.first
+            def reportFile = pair.second
+
+            println "Failed test file: ${reportFile.toString()}"
+            assert reportFile.exists()
+            println "-----Failed test class ${info} ${reportFile.toPath().getFileName()} ------------------"
+            def lines = reportFile.readLines()
+            lines.each { String line -> 
+                println "${line}"
+            }
+            println "-----End of test class ${info} ${reportFile.toPath().getFileName()} ------------------"
+        }
+    }
+}
 
