@@ -1,6 +1,5 @@
 package stroom.elastic.server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -14,6 +13,8 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.audit.client.DocRefResourceHttpClient;
 import stroom.query.audit.security.ServiceUser;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.UserTokenUtil;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
@@ -26,14 +27,13 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
 
     private final LoadingCache<DocRef, ElasticIndexConfig> cache;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final DocRefResourceHttpClient docRefHttpClient;
     private final SecurityContext securityContext;
 
     @Inject
-    ElasticIndexCacheImpl(final CacheManager cacheManager,
-                          final SecurityContext securityContext,
-                          final StroomPropertyService propertyService) {
+    public ElasticIndexCacheImpl(final CacheManager cacheManager,
+                                 final SecurityContext securityContext,
+                                 final StroomPropertyService propertyService) {
         final String urlPropKey = ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX;
         docRefHttpClient = new DocRefResourceHttpClient(propertyService.getProperty(urlPropKey));
 
@@ -41,16 +41,18 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
 
         final CacheLoader<DocRef, ElasticIndexConfig> cacheLoader = CacheLoader.from(k -> {
             try {
-                final Response response = docRefHttpClient.get(serviceUser(), k.getUuid());
+                try (final SecurityHelper sh = SecurityHelper.asUser(securityContext, UserTokenUtil.create("admin", null))) {
+                    final Response response = docRefHttpClient.get(serviceUser(), k.getUuid());
 
-                if (response.getStatus() != HttpStatus.SC_OK) {
-                    final String msg = String.format("Invalid status returned by Elastic Explorer Service: %d - %s ",
-                            response.getStatus(),
-                            response.getEntity());
-                    throw new RuntimeException(msg);
+                    if (response.getStatus() != HttpStatus.SC_OK) {
+                        final String msg = String.format("Invalid status returned by Elastic Explorer Service: %d - %s ",
+                                response.getStatus(),
+                                response.getEntity());
+                        throw new RuntimeException(msg);
+                    }
+
+                    return response.readEntity(ElasticIndexConfig.class);
                 }
-
-                return objectMapper.readValue(response.getEntity().toString(), ElasticIndexConfig.class);
             } catch (Throwable e) {
                 throw new LoggedException(String.format("Failed to retrieve elastic index config for %s", k.getUuid()), e);
             }
