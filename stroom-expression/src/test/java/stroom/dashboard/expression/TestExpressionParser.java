@@ -1057,13 +1057,23 @@ public class TestExpressionParser extends StroomUnitTest {
     }
 
     @Test
-    public void testExtractSchemeSpecificPortFromUri() throws ParseException {
-        final Expression exp = createExpression("extractSchemeSpecificPortFromUri(${val})");
+    public void testExtractSchemeSpecificPartFromUri() throws ParseException {
+        final Expression exp = createExpression("extractSchemeSpecificPartFromUri(${val})");
         final Generator generator = exp.createGenerator();
 
         generator.set(getVal("http://www.somecompany.com:1234/this/is/a/path"));
         Object out = generator.eval();
         Assert.assertEquals("//www.somecompany.com:1234/this/is/a/path", out);
+    }
+
+    @Test
+    public void testExtractQueryFromUri() throws ParseException {
+        final Expression exp = createExpression("extractQueryFromUri(${val})");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("http://www.somecompany.com:1234/this/is/a/path?this=that&foo=bar"));
+        Object out = generator.eval();
+        Assert.assertEquals("this=that&foo=bar", out);
     }
 
     @Test

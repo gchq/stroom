@@ -51,8 +51,9 @@ public class FunctionFactory {
         add(ExtractHostFromUri.class, ExtractHostFromUri.NAME);
         add(ExtractPathFromUri.class, ExtractPathFromUri.NAME);
         add(ExtractPortFromUri.class, ExtractPortFromUri.NAME);
+        add(ExtractQueryFromUri.class, ExtractQueryFromUri.NAME);
         add(ExtractSchemeFromUri.class, ExtractSchemeFromUri.NAME);
-        add(ExtractSchemeSpecificPortFromUri.class, ExtractSchemeSpecificPortFromUri.NAME);
+        add(ExtractSchemeSpecificPartFromUri.class, ExtractSchemeSpecificPartFromUri.NAME);
         add(ExtractUserInfoFromUri.class, ExtractUserInfoFromUri.NAME);
 
         add(Floor.class, Floor.NAME);
