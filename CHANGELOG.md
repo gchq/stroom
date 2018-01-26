@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.0.3] - 2018-01-26
+
 * Issue **#567** : Changed `parseUri` to be `parse-uri` to keep it consistently named with respect to other XSLT functions. The old name `parseUri` still works but is deprecated and will be removed in a later version.
 
 ## [v5.0.2] - 2018-01-16
@@ -759,7 +761,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0.3...HEAD
+[v5.0.3]: https://github.com/gchq/stroom/compare/v5.0.2...v5.0.3
 [v5.0.2]: https://github.com/gchq/stroom/compare/v5.0.1...v5.0.2
 [v5.0.1]: https://github.com/gchq/stroom/compare/v5.0.0...v5.0.1
 [v5.0.0]: https://github.com/gchq/stroom/compare/v5.0-beta.71...v5.0.0
