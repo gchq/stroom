@@ -93,6 +93,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
     private final Provider<EntityChooser> pipelineSelection;
+    private final Provider<SearchInfoPresenter> searchInfoPresenterProvider;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -115,13 +116,17 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private long defaultProcessorRecordLimit = DEFAULT_RECORD_LIMIT;
     private boolean initialised;
     private Timer autoRefreshTimer;
+    private boolean searchInfoEnabled;
 
     @Inject
-    public QueryPresenter(final EventBus eventBus, final QueryView view, final SearchBus searchBus,
+    public QueryPresenter(final EventBus eventBus,
+                          final QueryView view,
+                          final SearchBus searchBus,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreePresenter expressionPresenter, final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<EntityChooser> pipelineSelection,
+                          final Provider<SearchInfoPresenter> searchInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher,
                           final ClientSecurityContext securityContext, final ClientPropertyCache clientPropertyCache,
@@ -131,6 +136,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.historyPresenter = historyPresenter;
         this.favouritesPresenter = favouritesPresenter;
         this.pipelineSelection = pipelineSelection;
+        this.searchInfoPresenterProvider = searchInfoPresenterProvider;
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
         this.dispatcher = dispatcher;
@@ -173,6 +179,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     defaultProcessorTimeLimit = result.getLong(ClientProperties.PROCESS_TIME_LIMIT, DEFAULT_TIME_LIMIT);
                     defaultProcessorRecordLimit = result.getLong(ClientProperties.PROCESS_RECORD_LIMIT,
                             DEFAULT_RECORD_LIMIT);
+                    searchInfoEnabled = result.getBoolean(ClientProperties.SEARCH_INFO_ENABLED, true); // default to true?
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
     }
@@ -395,7 +402,26 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     @Override
     public void start() {
-        run(true, true);
+        if (searchInfoEnabled) {
+            final SearchInfoPresenter searchInfoPresenter = searchInfoPresenterProvider.get();
+            final PopupSize popupSize = new PopupSize(321, 102, false);
+            ShowPopupEvent.fire(this, searchInfoPresenter, PopupType.OK_CANCEL_DIALOG, popupSize,
+                    "Search Information", new PopupUiHandlers() {
+                        @Override
+                        public void onHideRequest(final boolean autoClose, final boolean ok) {
+                            if (ok) {
+                                run(true, true);
+                            }
+                            HidePopupEvent.fire(QueryPresenter.this, processorLimitsPresenter);
+                        }
+
+                        @Override
+                        public void onHide(final boolean autoClose, final boolean ok) {
+                        }
+                    });
+        } else {
+            run(true, true);
+        }
     }
 
     @Override
