@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#567** : The missing dashboard expression function `extractQueryFromUri` has been added.
 
+* Issue **#571** : Streams are now updated to have a status of deleted in batches using native SQL and prepared statements rather than using the stream store.
+
 ## [v5.1-beta.9] - 2018-01-16
 
 * Issue **#560** : Replaced instances of `Files.walk()` with `Files.walkFileTree()`. `Files.walk()` throws errors if any files are deleted or are not accessible during the walk operation. This is a major issue with the Java design for walking files using Java 8 streams. To avoid this issue `Files.walkFileTree()` has now been used in place of `Files.walk()`.
