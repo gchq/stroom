@@ -17,12 +17,11 @@
 package stroom.dictionary.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DownloadDictionaryAction;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
-import stroom.logging.EntityEventLog;
+import stroom.logging.DocumentEventLog;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -40,22 +39,22 @@ import java.util.ArrayList;
 @Scope(StroomScope.PROTOTYPE)
 public class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAction, ResourceGeneration> {
     private final SessionResourceStore sessionResourceStore;
-    private final EntityEventLog entityEventLog;
-    private final DictionaryService dictionaryService;
+    private final DocumentEventLog documentEventLog;
+    private final DictionaryStore dictionaryStore;
 
     @Inject
     public DownloadDictionaryHandler(final SessionResourceStore sessionResourceStore,
-                                     final EntityEventLog entityEventLog,
-                                     final DictionaryService dictionaryService) {
+                                     final DocumentEventLog documentEventLog,
+                                     final DictionaryStore dictionaryStore) {
         this.sessionResourceStore = sessionResourceStore;
-        this.entityEventLog = entityEventLog;
-        this.dictionaryService = dictionaryService;
+        this.documentEventLog = documentEventLog;
+        this.dictionaryStore = dictionaryStore;
     }
 
     @Override
     public ResourceGeneration exec(final DownloadDictionaryAction action) {
         // Get dictionary.
-        final Dictionary dictionary = dictionaryService.loadByUuid(action.getDocRef().getUuid());
+        final DictionaryDoc dictionary = dictionaryStore.read(action.getUuid());
         if (dictionary == null) {
             throw new EntityServiceException("Unable to find dictionary");
         }
@@ -64,11 +63,11 @@ public class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDicti
             final ResourceKey resourceKey = sessionResourceStore.createTempFile("dictionary.txt");
             final Path file = sessionResourceStore.getTempFile(resourceKey);
             Files.write(file, dictionary.getData().getBytes(StreamUtil.DEFAULT_CHARSET));
-            entityEventLog.download(dictionary, null);
+            documentEventLog.download(dictionary, null);
             return new ResourceGeneration(resourceKey, new ArrayList<>());
 
         } catch (final Exception e) {
-            entityEventLog.download(dictionary, null);
+            documentEventLog.download(dictionary, null);
             throw EntityServiceExceptionUtil.create(e);
         }
     }

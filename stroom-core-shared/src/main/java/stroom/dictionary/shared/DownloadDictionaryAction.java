@@ -16,25 +16,23 @@
 
 package stroom.dictionary.shared;
 
-import stroom.dispatch.shared.Action;
-import stroom.entity.shared.DocRef;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.entity.shared.Action;
 import stroom.util.shared.ResourceGeneration;
 
 public class DownloadDictionaryAction extends Action<ResourceGeneration> {
     private static final long serialVersionUID = -3560107233301674555L;
 
-    private DocRef docRef;
+    private String uuid;
 
     public DownloadDictionaryAction() {
     }
 
-    public DownloadDictionaryAction(final DocRef docRef) {
-        this.docRef = docRef;
+    public DownloadDictionaryAction(final String uuid) {
+        this.uuid = uuid;
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public String getUuid() {
+        return uuid;
     }
 
     @Override

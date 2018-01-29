@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.server.logging;
@@ -22,6 +21,7 @@ import event.logging.Criteria.DataSources;
 import event.logging.Event;
 import event.logging.Export;
 import event.logging.MultiObject;
+import event.logging.Purpose;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import event.logging.Search;
@@ -52,40 +52,56 @@ public class SearchEventLogImpl implements SearchEventLog {
     private DictionaryStore dictionaryStore;
 
     @Override
-    public void search(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        search("Search", dataSourceRef, expression, null);
+    public void search(final DocRef dataSourceRef,
+                       final ExpressionOperator expression,
+                       final String searchPurpose) {
+        search("Search", dataSourceRef, expression, searchPurpose, null);
     }
 
     @Override
-    public void search(final DocRef dataSourceRef, final ExpressionOperator expression, final Exception ex) {
-        search("Search", dataSourceRef, expression, ex);
+    public void search(final DocRef dataSourceRef,
+                       final ExpressionOperator expression,
+                       final String searchPurpose,
+                       final Exception ex) {
+        search("Search", dataSourceRef, expression, searchPurpose, ex);
     }
 
     @Override
-    public void batchSearch(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        search("Batch search", dataSourceRef, expression, null);
+    public void batchSearch(final DocRef dataSourceRef,
+                            final ExpressionOperator expression,
+                            final String searchPurpose) {
+        search("Batch search", dataSourceRef, expression, searchPurpose, null);
     }
 
     @Override
-    public void batchSearch(final DocRef dataSourceRef, final ExpressionOperator expression,
+    public void batchSearch(final DocRef dataSourceRef,
+                            final ExpressionOperator expression,
+                            final String searchPurpose,
                             final Exception ex) {
-        search("Batch search", dataSourceRef, expression, ex);
+        search("Batch search", dataSourceRef, expression, searchPurpose, ex);
     }
 
     @Override
-    public void downloadResults(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        downloadResults("Batch search", dataSourceRef, expression, null);
+    public void downloadResults(final DocRef dataSourceRef,
+                                final ExpressionOperator expression,
+                                final String searchPurpose) {
+        downloadResults("Batch search", dataSourceRef, expression, searchPurpose, null);
     }
 
     @Override
-    public void downloadResults(final DocRef dataSourceRef, final ExpressionOperator expression,
+    public void downloadResults(final DocRef dataSourceRef,
+                                final ExpressionOperator expression,
+                                final String searchPurpose,
                                 final Exception ex) {
-        downloadResults("Download search results", dataSourceRef, expression, ex);
+        downloadResults("Download search results", dataSourceRef, expression, searchPurpose, ex);
     }
 
     @Override
-    public void downloadResults(final String type, final DocRef dataSourceRef,
-                                final ExpressionOperator expression, final Exception ex) {
+    public void downloadResults(final String type,
+                                final DocRef dataSourceRef,
+                                final ExpressionOperator expression,
+                                final String searchPurpose,
+                                final Exception ex) {
         try {
             final String dataSourceName = getDataSourceName(dataSourceRef);
 
@@ -106,15 +122,19 @@ public class SearchEventLogImpl implements SearchEventLog {
             final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
 
             event.getEventDetail().setExport(exp);
+            event.getEventDetail().setPurpose(getPurpose(searchPurpose));
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error("Unable to download results!", e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
     @Override
-    public void search(final String type, final DocRef dataSourceRef, final ExpressionOperator expression,
+    public void search(final String type,
+                       final DocRef dataSourceRef,
+                       final ExpressionOperator expression,
+                       final String searchPurpose,
                        final Exception ex) {
         try {
             String dataSourceName = getDataSourceName(dataSourceRef);
@@ -132,6 +152,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
             final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
             event.getEventDetail().setSearch(search);
+            event.getEventDetail().setPurpose(getPurpose(searchPurpose));
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
@@ -150,6 +171,16 @@ public class SearchEventLogImpl implements SearchEventLog {
 //        }
 
         return docRef.getName();
+    }
+
+    private Purpose getPurpose(final String searchPurpose) {
+        if (null != searchPurpose) {
+            final Purpose purpose = new Purpose();
+            purpose.setJustification(searchPurpose);
+            return purpose;
+        } else {
+            return null;
+        }
     }
 
     private Query getQuery(final ExpressionOperator expression) {

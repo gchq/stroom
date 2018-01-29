@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental", "storeHistory"})
+@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental", "storeHistory", "searchPurpose"})
 public class Search implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
@@ -42,7 +42,7 @@ public class Search implements Serializable {
     private Map<String, ComponentSettings> componentSettingsMap;
 
     @XmlElement
-    private Map<String, String> paramMap;
+    private Map<String, String> paramMap = Collections.emptyMap();
 
     @XmlElement
     private boolean incremental;
@@ -50,31 +50,11 @@ public class Search implements Serializable {
     @XmlElement
     private boolean storeHistory;
 
+    @XmlElement
+    private String searchPurpose;
+
     public Search() {
         // Default constructor necessary for GWT serialisation.
-    }
-
-    public Search(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        this(dataSourceRef, expression, null, Collections.emptyMap(), true, false);
-    }
-
-    public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
-                  final Map<String, ComponentSettings> componentSettingsMap) {
-        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), true, false);
-    }
-
-    public Search(final DocRef dataSourceRef,
-                  final ExpressionOperator expression,
-                  final Map<String, ComponentSettings> componentSettingsMap,
-                  final Map<String, String> paramMap,
-                  final boolean incremental,
-                  final boolean storeHistory) {
-        this.dataSourceRef = dataSourceRef;
-        this.expression = expression;
-        this.componentSettingsMap = componentSettingsMap;
-        this.paramMap = paramMap;
-        this.incremental = incremental;
-        this.storeHistory = storeHistory;
     }
 
     public DocRef getDataSourceRef() {
@@ -99,6 +79,10 @@ public class Search implements Serializable {
 
     public boolean isStoreHistory() {
         return storeHistory;
+    }
+
+    public String getSearchPurpose() {
+        return searchPurpose;
     }
 
     @Override
@@ -127,5 +111,52 @@ public class Search implements Serializable {
         result = 31 * result + (incremental ? 1 : 0);
         result = 31 * result + (storeHistory ? 1 : 0);
         return result;
+    }
+
+    public static class Builder {
+        private final Search instance;
+
+        public Builder() {
+            this.instance = new Search();
+        }
+
+        public Builder dataSourceRef(final DocRef dataSourceRef) {
+            this.instance.dataSourceRef = dataSourceRef;
+            return this;
+        }
+
+        public Builder expression(final ExpressionOperator expression) {
+            this.instance.expression = expression;
+            return this;
+        }
+
+        public Builder componentSettingsMap(final Map<String, ComponentSettings> componentSettingsMap) {
+            this.instance.componentSettingsMap = componentSettingsMap;
+            return this;
+        }
+
+        public Builder paramMap(final Map<String, String> paramMap) {
+            this.instance.paramMap = paramMap;
+            return this;
+        }
+
+        public Builder incremental(final boolean incremental) {
+            this.instance.incremental = incremental;
+            return this;
+        }
+
+        public Builder storeHistory(final boolean storeHistory) {
+            this.instance.storeHistory = storeHistory;
+            return this;
+        }
+
+        public Builder searchPurpose(final String searchPurpose) {
+            this.instance.searchPurpose = searchPurpose;
+            return this;
+        }
+
+        public Search build() {
+            return this.instance;
+        }
     }
 }

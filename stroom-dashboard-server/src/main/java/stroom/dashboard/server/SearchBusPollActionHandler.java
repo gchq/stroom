@@ -166,14 +166,14 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
             if (newSearch) {
                 // Log this search action for the current user.
-                searchEventLog.search(search.getDataSourceRef(), search.getExpression());
+                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getSearchPurpose());
             }
 
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
 
             if (newSearch) {
-                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), e);
+                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getSearchPurpose(), e);
             }
 
             result = new SearchResponse();

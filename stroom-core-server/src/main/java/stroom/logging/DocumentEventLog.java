@@ -19,6 +19,7 @@ package stroom.logging;
 
 import event.logging.Query;
 import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 
 public interface DocumentEventLog {
@@ -41,6 +42,8 @@ public interface DocumentEventLog {
     void delete(BaseCriteria criteria, Query query, Long size);
 
     void delete(BaseCriteria criteria, Query query, Throwable ex);
+
+    void download(Object entity, Throwable ex);
 
     void search(BaseCriteria criteria, Query query, BaseResultList<?> results);
 

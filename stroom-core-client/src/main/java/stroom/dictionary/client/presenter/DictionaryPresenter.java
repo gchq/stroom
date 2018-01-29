@@ -20,12 +20,13 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.LocationManager;
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.dictionary.shared.DownloadDictionaryAction;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.shared.DocRefUtil;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -42,7 +43,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     private final ClientDispatchAsync dispatcher;
     private final LocationManager locationManager;
 
-    private DictionaryDoc dictionary;
+    private DictionaryDoc doc;
 
     private final DictionarySettingsPresenter settingsPresenter;
     private final Provider<EditorPresenter> editorPresenterProvider;
@@ -79,9 +80,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     @java.lang.Override
     protected void onBind() {
         super.onBind();
-        registerHandler(downloadButton.addClickHandler(clickEvent -> {
-            dispatcher.exec(new DownloadDictionaryAction(DocRefUtil.create(dictionary))).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
-        }));
+        registerHandler(downloadButton.addClickHandler(clickEvent -> dispatcher.exec(new DownloadDictionaryAction(doc.getUuid())).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))));
     }
 
     @Override
@@ -97,7 +96,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
 
     @Override
     public void onRead(final DictionaryDoc doc) {
-        this.dictionary = dictionary;
+        this.doc = doc;
         downloadButton.setEnabled(true);
         settingsPresenter.read(getDocRef(), doc);
 

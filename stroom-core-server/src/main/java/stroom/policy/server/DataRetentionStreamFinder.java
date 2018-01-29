@@ -33,6 +33,7 @@ import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.server.ExpressionMatcher;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.task.TaskMonitor;

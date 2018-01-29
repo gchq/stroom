@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
@@ -86,7 +86,7 @@ public class DataRetentionExecutor {
     private final ClusterLockService clusterLockService;
     private final DataRetentionService dataRetentionService;
     private final StroomPropertyService propertyService;
-    private final DictionaryService dictionaryService;
+    private final DictionaryStore dictionaryStore;
     private final DataSource dataSource;
     private final AtomicBoolean running = new AtomicBoolean();
 
@@ -95,13 +95,13 @@ public class DataRetentionExecutor {
                           final ClusterLockService clusterLockService,
                           final DataRetentionService dataRetentionService,
                           final StroomPropertyService propertyService,
-                          final DictionaryService dictionaryService,
+                          final DictionaryStore dictionaryStore,
                           final DataSource dataSource) {
         this.taskMonitor = taskMonitor;
         this.clusterLockService = clusterLockService;
         this.dataRetentionService = dataRetentionService;
         this.propertyService = propertyService;
-        this.dictionaryService = dictionaryService;
+        this.dictionaryStore = dictionaryStore;
         this.dataSource = dataSource;
     }
 
@@ -227,7 +227,7 @@ public class DataRetentionExecutor {
         // Ignore rules if none are active.
         if (activeRules.getActiveRules().size() > 0) {
             // Create an object that can find streams with prepared statements and see if they match rules.
-            try (final DataRetentionStreamFinder streamFinder = new DataRetentionStreamFinder(connection, dictionaryService)) {
+            try (final DataRetentionStreamFinder streamFinder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
 
                 // Find out how many rows we are likely to examine.
                 final long rowCount = streamFinder.getRowCount(ageRange, activeRules.getFieldSet());
