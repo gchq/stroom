@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#573** : Fixed viewing folders with no permitted underlying feeds. It now correctly shows blank data screen, rather than System/Data.
+
+* Issue **#150** : Added a feature to optionally require specification of search purpose.
+
 * Issue **#572** : Added a feature to allow easy download of dictionary contents as a text file.
 
 * Issue **#559** : Changed CSS to allow table text selection in newer browsers.
