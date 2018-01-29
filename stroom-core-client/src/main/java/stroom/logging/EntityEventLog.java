@@ -50,6 +50,8 @@ public interface EntityEventLog {
 
     void delete(BaseCriteria criteria, Query query, Exception ex);
 
+    void download(BaseEntity entity, Exception ex);
+
     void search(BaseCriteria criteria, Query query, BaseResultList<?> results);
 
     void search(BaseCriteria criteria, Query query, Exception ex);

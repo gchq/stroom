@@ -17,9 +17,9 @@
 package stroom.dispatch.client;
 
 import com.google.gwt.core.client.GWT;
+import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.app.client.LocationManager;
-import stroom.importexport.client.presenter.ExportConfigPresenter;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -30,7 +30,7 @@ public final class ExportFileCompleteUtil {
         // Utility.
     }
 
-    public static void onSuccess(final LocationManager locationManager, final ExportConfigPresenter parent, final ResourceGeneration result) {
+    public static void onSuccess(final LocationManager locationManager, final PresenterWidget<?> parent, final ResourceGeneration result) {
         if (parent != null) {
             HidePopupEvent.fire(parent, parent, false, false);
         }
@@ -48,7 +48,7 @@ public final class ExportFileCompleteUtil {
         }
     }
 
-    public static void onFailure(final ExportConfigPresenter parent) {
+    public static void onFailure(final PresenterWidget<?> parent) {
         if (parent != null) {
             EnablePopupEvent.fire(parent, parent);
         }
