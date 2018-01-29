@@ -93,6 +93,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
     private final Provider<EntityChooser> pipelineSelection;
+    private final Provider<SearchPurposePresenter> searchInfoPresenterProvider;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -115,13 +116,18 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private long defaultProcessorRecordLimit = DEFAULT_RECORD_LIMIT;
     private boolean initialised;
     private Timer autoRefreshTimer;
+    private boolean searchPurposeRequired;
+    private String lastUsedSearchPurpose;
 
     @Inject
-    public QueryPresenter(final EventBus eventBus, final QueryView view, final SearchBus searchBus,
+    public QueryPresenter(final EventBus eventBus,
+                          final QueryView view,
+                          final SearchBus searchBus,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreePresenter expressionPresenter, final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<EntityChooser> pipelineSelection,
+                          final Provider<SearchPurposePresenter> searchInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher,
                           final ClientSecurityContext securityContext, final ClientPropertyCache clientPropertyCache,
@@ -131,6 +137,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.historyPresenter = historyPresenter;
         this.favouritesPresenter = favouritesPresenter;
         this.pipelineSelection = pipelineSelection;
+        this.searchInfoPresenterProvider = searchInfoPresenterProvider;
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
         this.dispatcher = dispatcher;
@@ -173,6 +180,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     defaultProcessorTimeLimit = result.getLong(ClientProperties.PROCESS_TIME_LIMIT, DEFAULT_TIME_LIMIT);
                     defaultProcessorRecordLimit = result.getLong(ClientProperties.PROCESS_RECORD_LIMIT,
                             DEFAULT_RECORD_LIMIT);
+                    searchPurposeRequired = result.getBoolean(ClientProperties.SEARCH_PURPOSE_REQUIRED, false); // default to false?
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
     }
@@ -407,7 +415,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         searchModel.destroy();
     }
 
-    private void run(final boolean incremental, final boolean storeHistory) {
+    private void run(final boolean incremental,
+                     final boolean storeHistory) {
         final DocRef dataSourceRef = queryData.getDataSource();
 
         if (dataSourceRef == null) {
@@ -421,7 +430,33 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
 
-            searchModel.search(root, params, incremental, storeHistory);
+            if (searchPurposeRequired && SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
+                final SearchPurposePresenter searchPurposePresenter = searchInfoPresenterProvider.get();
+                searchPurposePresenter.setSearchPurpose(lastUsedSearchPurpose);
+                final PopupSize popupSize = new PopupSize(640, 480, true);
+                ShowPopupEvent.fire(this,
+                        searchPurposePresenter,
+                        PopupType.OK_CANCEL_DIALOG,
+                        popupSize,
+                        "Please Provide a Justification for the Search",
+                        new PopupUiHandlers() {
+                            @Override
+                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                if (ok) {
+                                    lastUsedSearchPurpose = searchPurposePresenter.getSearchPurpose();
+                                    searchModel.search(root, params, incremental, storeHistory, lastUsedSearchPurpose);
+                                }
+                                HidePopupEvent.fire(QueryPresenter.this, searchPurposePresenter);
+                            }
+
+                            @Override
+                            public void onHide(final boolean autoClose, final boolean ok) {
+                            }
+                        });
+            } else {
+                searchModel.search(root, params, incremental, storeHistory, null);
+            }
+
         }
     }
 

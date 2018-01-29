@@ -30,22 +30,23 @@ public class Search implements SharedObject {
     private DocRef dataSourceRef;
     private ExpressionOperator expression;
     private Map<String, ComponentSettings> componentSettingsMap;
-    private Map<String, String> paramMap;
-    private String dateTimeLocale;
-    private boolean incremental;
-    private boolean storeHistory;
+    private Map<String, String> paramMap = Collections.emptyMap();
+    private String dateTimeLocale = "UTC";
+    private boolean incremental = true;
+    private boolean storeHistory = false;
+    private String searchPurpose;
 
     public Search() {
         // Default constructor necessary for GWT serialisation.
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        this(dataSourceRef, expression, null, Collections.emptyMap(), "UTC", true, false);
+        this(dataSourceRef, expression, null, Collections.emptyMap(), "UTC", true, false, null);
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
                   final Map<String, ComponentSettings> componentSettingsMap) {
-        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), "UTC", true, false);
+        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), "UTC", true, false, null);
     }
 
     public Search(final DocRef dataSourceRef,
@@ -54,7 +55,8 @@ public class Search implements SharedObject {
                   final Map<String, String> paramMap,
                   final String dateTimeLocale,
                   final boolean incremental,
-                  final boolean storeHistory) {
+                  final boolean storeHistory,
+                  final String searchPurpose) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
@@ -62,6 +64,7 @@ public class Search implements SharedObject {
         this.dateTimeLocale = dateTimeLocale;
         this.incremental = incremental;
         this.storeHistory = storeHistory;
+        this.searchPurpose = searchPurpose;
     }
 
     public DocRef getDataSourceRef() {
@@ -90,5 +93,55 @@ public class Search implements SharedObject {
 
     public boolean isStoreHistory() {
         return storeHistory;
+    }
+
+    public String getSearchPurpose() {
+        return searchPurpose;
+    }
+
+    public static class Builder {
+        private final Search instance;
+
+        public Builder() {
+            this.instance = new Search();
+        }
+
+        public Builder dataSourceRef(final DocRef dataSourceRef) {
+            this.instance.dataSourceRef = dataSourceRef;
+            return this;
+        }
+        public Builder expression(final ExpressionOperator expression) {
+            this.instance.expression = expression;
+            return this;
+        }
+        public Builder componentSettingsMap(final Map<String, ComponentSettings> componentSettingsMap) {
+            this.instance.componentSettingsMap = componentSettingsMap;
+            return this;
+        }
+        public Builder paramMap(final Map<String, String> paramMap) {
+            this.instance.paramMap = paramMap;
+            return this;
+        }
+        public Builder dateTimeLocale(final String dateTimeLocale) {
+            this.instance.dateTimeLocale = dateTimeLocale;
+            return this;
+        }
+        public Builder incremental(final boolean incremental) {
+            this.instance.incremental = incremental;
+            return this;
+        }
+        public Builder storeHistory(final boolean storeHistory) {
+            this.instance.storeHistory = storeHistory;
+            return this;
+        }
+
+        public Builder searchPurpose(final String searchPurpose) {
+            this.instance.searchPurpose = searchPurpose;
+            return this;
+        }
+
+        public Search build() {
+            return this.instance;
+        }
     }
 }

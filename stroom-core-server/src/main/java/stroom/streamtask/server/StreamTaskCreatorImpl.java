@@ -745,7 +745,12 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             }
         }
 
-        final Search search = new Search(queryData.getDataSource(), queryData.getExpression(), null, Collections.emptyMap(), null, false, false);
+        final Search search = new Search.Builder()
+                .dataSourceRef(queryData.getDataSource())
+                .expression(queryData.getExpression())
+                .incremental(false)
+                .storeHistory(false)
+                .build();
 
         // Update the tracker status message.
         tracker.setStatus("Searching...");
