@@ -16,21 +16,21 @@
 
 package stroom.streamstore.shared;
 
+import stroom.util.shared.SharedObject;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import stroom.util.shared.SharedObject;
 
 public class StreamAttributeMap implements SharedObject {
     private static final long serialVersionUID = -8198186456924478908L;
 
     private Stream stream;
     private List<String> fileNameList;
-    private Map<StreamAttributeKey, String> attributeMap = new HashMap();
-    private Map<String, String> nameValueMap = new HashMap();
-    private Map<String, StreamAttributeKey> nameKeyMap = new HashMap();
+    private Map<StreamAttributeKey, String> attributeMap = new HashMap<>();
+    private Map<String, String> nameValueMap = new HashMap<>();
+    private Map<String, StreamAttributeKey> nameKeyMap = new HashMap<>();
 
     public StreamAttributeMap() {
         // Default constructor necessary for GWT serialisation.
