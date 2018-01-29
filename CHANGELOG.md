@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#574** : Fixed SQL UNION code that was resulting in missing streams in the data browser when paging.
 
+* Issue **#590** : Improved data browser performance by using a local cache to remember feeds, stream types, processors, pipelines etc while decorating streams.
+
 ## [v5.1-beta.10] - 2018-01-26
 
 * Issue **#567** : Changed `parseUri` to be `parse-uri` to keep it consistently named with respect to other XSLT functions. The old name `parseUri` still works but is deprecated and will be removed in a later version.
