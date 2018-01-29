@@ -733,10 +733,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         queryCriteria.copyFrom(originalCriteria);
 
         // Turn all folders in the criteria into feeds.
-        convertFoldersToFeeds(queryCriteria, DocumentPermissionNames.READ);
-
         // Ensure that included feeds are restricted to ones the user can read.
-        restrictCriteriaByFeedPermissions(queryCriteria, DocumentPermissionNames.READ);
+        convertFoldersToPermittedFeeds(queryCriteria, DocumentPermissionNames.READ);
 
         // If the current user is not an admin and no feeds are readable that have been requested then return an empty array.
         if (!securityContext.isAdmin() && queryCriteria.obtainFeeds().obtainInclude().size() == 0) {
@@ -823,39 +821,15 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
     }
 
-    private void restrictCriteriaByFeedPermissions(final FindStreamCriteria findStreamCriteria, final String requiredPermission) {
-        // We only need to restrict data by feed for non admins.
-        if (!securityContext.isAdmin()) {
-            // If the user is filtering by feed then make sure they can read all of the feeds that they are filtering by.
-            final EntityIdSet<Feed> feeds = findStreamCriteria.obtainFeeds().obtainInclude();
+    private void convertFoldersToPermittedFeeds(final FindStreamCriteria findStreamCriteria,
+                                                final String requiredPermission) {
+        boolean constrainedByFolder = false;
 
-            // Ensure a user cannot match all feeds.
-            feeds.setMatchAll(Boolean.FALSE);
-            final List<Feed> restrictedFeeds = getRestrictedFeeds(requiredPermission);
-
-            if (feeds.size() > 0) {
-                final Set<Long> restrictedFeedIds = restrictedFeeds.stream().map(Feed::getId).collect(Collectors.toSet());
-
-                // Retain only the feeds that the user has the required permission on.
-                feeds.getSet().retainAll(restrictedFeedIds);
-
-            } else {
-                feeds.addAllEntities(restrictedFeeds);
-            }
-        }
-    }
-
-    private List<Feed> getRestrictedFeeds(final String requiredPermission) {
-        final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
-        findFeedCriteria.setRequiredPermission(requiredPermission);
-        findFeedCriteria.setPageRequest(null);
-        return feedService.find(findFeedCriteria);
-    }
-
-    private void convertFoldersToFeeds(final FindStreamCriteria findStreamCriteria, final String requiredPermission) {
         final FolderIdSet folderIdSet = findStreamCriteria.getFolderIdSet();
         if (folderIdSet != null) {
-            if (folderIdSet.isConstrained()) {
+            constrainedByFolder = folderIdSet.isConstrained();
+
+            if (constrainedByFolder) {
                 final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
                 findFeedCriteria.setRequiredPermission(requiredPermission);
                 findFeedCriteria.setPageRequest(null);
@@ -872,6 +846,33 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
             findStreamCriteria.setFolderIdSet(null);
         }
+
+        // We only need to restrict data by feed for non admins.
+        if (!securityContext.isAdmin()) {
+            // If the user is filtering by feed then make sure they can read all of the feeds that they are filtering by.
+            final EntityIdSet<Feed> feeds = findStreamCriteria.obtainFeeds().obtainInclude();
+
+            // Ensure a user cannot match all feeds.
+            feeds.setMatchAll(Boolean.FALSE);
+            final List<Feed> restrictedFeeds = getRestrictedFeeds(requiredPermission);
+
+            if (feeds.size() > 0) {
+                final Set<Long> restrictedFeedIds = restrictedFeeds.stream().map(Feed::getId).collect(Collectors.toSet());
+
+                // Retain only the feeds that the user has the required permission on.
+                feeds.getSet().retainAll(restrictedFeedIds);
+
+            } else if (!constrainedByFolder) {
+                feeds.addAllEntities(restrictedFeeds);
+            }
+        }
+    }
+
+    private List<Feed> getRestrictedFeeds(final String requiredPermission) {
+        final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
+        findFeedCriteria.setRequiredPermission(requiredPermission);
+        findFeedCriteria.setPageRequest(null);
+        return feedService.find(findFeedCriteria);
     }
 
     private void buildRawSelectSQL(final FindStreamCriteria queryCriteria, final SqlBuilder sql) {
@@ -1355,10 +1356,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
     public Long findDelete(final FindStreamCriteria criteria) {
         // Turn all folders in the criteria into feeds.
-        convertFoldersToFeeds(criteria, DocumentPermissionNames.READ);
-
         // Ensure that included feeds are restricted to ones the user can delete.
-        restrictCriteriaByFeedPermissions(criteria, DocumentPermissionNames.DELETE);
+        convertFoldersToPermittedFeeds(criteria, DocumentPermissionNames.DELETE);
 
         // If the current user is not an admin and no feeds are readable that have been requested then return an empty array.
         if (!securityContext.isAdmin() && criteria.obtainFeeds().obtainInclude().size() == 0) {
