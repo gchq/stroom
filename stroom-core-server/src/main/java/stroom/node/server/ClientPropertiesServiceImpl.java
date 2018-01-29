@@ -44,6 +44,7 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
         addProperty(props, ClientProperties.STATISTIC_ENGINES);
         addProperty(props, ClientProperties.LABEL_COLOURS);
         addProperty(props, ClientProperties.HELP_URL);
+        addProperty(props, ClientProperties.SEARCH_PURPOSE_REQUIRED);
 
         return props;
     }

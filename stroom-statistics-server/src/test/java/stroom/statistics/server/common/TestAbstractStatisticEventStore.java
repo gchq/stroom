@@ -293,7 +293,9 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
     public void testBuildCriteria_noDate() throws Exception {
         final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
 
-        final Search search = new Search(null, rootOperator.build());
+        final Search search = new Search.Builder()
+                .expression(rootOperator.build())
+                .build();
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -311,7 +313,9 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME,
                 Condition.IN_DICTIONARY, dateTerm);
 
-        final Search search = new Search(null, rootOperator.build());
+        final Search search = new Search.Builder()
+                .expression(rootOperator.build())
+                .build();
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -333,7 +337,9 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-        final Search search = new Search(null, rootOperator.build());
+        final Search search = new Search.Builder()
+                .expression(rootOperator.build())
+                .build();
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -360,7 +366,9 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-        final Search search = new Search(null, rootOperator.build());
+        final Search search = new Search.Builder()
+                .expression(rootOperator.build())
+                .build();
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -382,7 +390,9 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
         rootOperator.addTerm(null, Condition.EQUALS, "xxx");
 
-        final Search search = new Search(null, rootOperator.build());
+        final Search search = new Search.Builder()
+                .expression(rootOperator.build())
+                .build();
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -404,7 +414,9 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
         rootOperator.addTerm("MyField", Condition.EQUALS, "");
 
-        final Search search = new Search(null, rootOperator.build());
+        final Search search = new Search.Builder()
+                .expression(rootOperator.build())
+                .build();
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -430,7 +442,9 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         rootOperator.addTerm("MyField", Condition.EQUALS, "xxx");
 
-        final Search search = new Search(null, rootOperator.build());
+        final Search search = new Search.Builder()
+                .expression(rootOperator.build())
+                .build();
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");

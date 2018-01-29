@@ -20,19 +20,19 @@ import stroom.entity.shared.DocRef;
 import stroom.query.shared.ExpressionOperator;
 
 public interface SearchEventLog {
-    void search(DocRef dataSourceRef, ExpressionOperator expression);
+    void search(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose);
 
-    void search(DocRef dataSourceRef, ExpressionOperator expression, Exception ex);
+    void search(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose, Exception ex);
 
-    void batchSearch(DocRef dataSourceRef, ExpressionOperator expression);
+    void batchSearch(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose);
 
-    void batchSearch(DocRef dataSourceRef, ExpressionOperator expression, Exception ex);
+    void batchSearch(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose, Exception ex);
 
-    void downloadResults(DocRef dataSourceRef, ExpressionOperator expression);
+    void downloadResults(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose);
 
-    void downloadResults(DocRef dataSourceRef, ExpressionOperator expression, Exception ex);
+    void downloadResults(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose, Exception ex);
 
-    void downloadResults(String type, DocRef dataSourceRef, ExpressionOperator expression, Exception ex);
+    void downloadResults(String type, DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose, Exception ex);
 
-    void search(String type, DocRef dataSourceRef, ExpressionOperator expression, Exception ex);
+    void search(String type, DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose, Exception ex);
 }
