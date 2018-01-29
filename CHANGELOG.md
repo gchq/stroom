@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#573** : Viewing folders with no permitted underlying feeds shows blank data screen, rather than System/Data.
+* Issue **#573** : Fixed viewing folders with no permitted underlying feeds. It now correctly shows blank data screen, rather than System/Data.
 
 * Issue **#150** : Added a feature to optionally require specification of search purpose.
 
