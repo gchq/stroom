@@ -361,7 +361,7 @@ public class ConnectionUtil {
          * This method inserts multiple rows into a table, with many rows per statement as controlled
          * by a batch size property. This is to avoid using a hibernate native sql approach that will
          * cache a query plan for each unique query. An insert with two rows is considered different to
-         * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
+         * an insert with three rows so the cache quickly fills up with huge insert queries, each with
          * MANY param objects.
          *
          * @param argsList    A List of args (in columnName order), one list of args for each row, will
@@ -375,7 +375,7 @@ public class ConnectionUtil {
          * This method inserts multiple rows into a table, with many rows per statement as controlled
          * by a batch size property. This is to avoid using a hibernate native sql approach that will
          * cache a query plan for each unique query. An insert with two rows is considered different to
-         * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
+         * an insert with three rows so the cache quickly fills up with huge insert queries, each with
          * MANY param objects.
          *
          * @param argsList    A List of args (in columnName order), one list of args for each row, will

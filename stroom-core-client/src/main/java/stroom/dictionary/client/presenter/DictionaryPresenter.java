@@ -12,19 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dictionary.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.core.client.LocationManager;
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.shared.DocRefUtil;
 import stroom.security.client.ClientSecurityContext;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -33,6 +37,12 @@ import javax.inject.Provider;
 public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelView, DictionaryDoc> {
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData WORDS_TAB = new TabDataImpl("Words");
+
+    private final ButtonView downloadButton;
+    private final ClientDispatchAsync dispatcher;
+    private final LocationManager locationManager;
+
+    private DictionaryDoc dictionary;
 
     private final DictionarySettingsPresenter settingsPresenter;
     private final Provider<EditorPresenter> editorPresenterProvider;
@@ -44,10 +54,14 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
                                final LinkTabPanelView view,
                                final DictionarySettingsPresenter settingsPresenter,
                                final Provider<EditorPresenter> editorPresenterProvider,
-                               final ClientSecurityContext securityContext) {
+                               final ClientSecurityContext securityContext,
+                               final ClientDispatchAsync dispatcher,
+                               final LocationManager locationManager) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
+        this.dispatcher = dispatcher;
+        this.locationManager = locationManager;
 
         settingsPresenter.addDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -55,9 +69,19 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
             }
         });
 
+        downloadButton = addButtonLeft(SvgPresets.DOWNLOAD);
+
         addTab(SETTINGS_TAB);
         addTab(WORDS_TAB);
         selectTab(SETTINGS_TAB);
+    }
+
+    @java.lang.Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(downloadButton.addClickHandler(clickEvent -> {
+            dispatcher.exec(new DownloadDictionaryAction(DocRefUtil.create(dictionary))).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
+        }));
     }
 
     @Override
@@ -73,6 +97,8 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
 
     @Override
     public void onRead(final DictionaryDoc doc) {
+        this.dictionary = dictionary;
+        downloadButton.setEnabled(true);
         settingsPresenter.read(getDocRef(), doc);
 
         if (codePresenter != null) {

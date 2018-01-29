@@ -20,7 +20,9 @@ package stroom.policy.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
+import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
@@ -43,6 +45,7 @@ import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
+import javax.sql.DataSource;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -53,6 +56,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -80,17 +85,24 @@ public class DataRetentionExecutor {
     private final TaskMonitor taskMonitor;
     private final ClusterLockService clusterLockService;
     private final DataRetentionService dataRetentionService;
-    private final DataRetentionTransactionHelper dataRetentionTransactionHelper;
     private final StroomPropertyService propertyService;
+    private final DictionaryService dictionaryService;
+    private final DataSource dataSource;
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
-    DataRetentionExecutor(final TaskMonitor taskMonitor, final ClusterLockService clusterLockService, final DataRetentionService dataRetentionService, final DataRetentionTransactionHelper dataRetentionTransactionHelper, final StroomPropertyService propertyService) {
+    DataRetentionExecutor(final TaskMonitor taskMonitor,
+                          final ClusterLockService clusterLockService,
+                          final DataRetentionService dataRetentionService,
+                          final StroomPropertyService propertyService,
+                          final DictionaryService dictionaryService,
+                          final DataSource dataSource) {
         this.taskMonitor = taskMonitor;
         this.clusterLockService = clusterLockService;
         this.dataRetentionService = dataRetentionService;
-        this.dataRetentionTransactionHelper = dataRetentionTransactionHelper;
         this.propertyService = propertyService;
+        this.dictionaryService = dictionaryService;
+        this.dataSource = dataSource;
     }
 
     @StroomSimpleCronSchedule(cron = "0 0 *")
@@ -124,7 +136,7 @@ public class DataRetentionExecutor {
             final List<DataRetentionRule> rules = dataRetentionPolicy.getRules();
             if (rules != null && rules.size() > 0) {
                 // Figure out what the batch size will be for deletion.
-                final long batchSize = propertyService.getLongProperty(STREAM_DELETE_BATCH_SIZE_PROPERTY, 1000);
+                final int batchSize = propertyService.getIntProperty(STREAM_DELETE_BATCH_SIZE_PROPERTY, 1000);
 
                 // Calculate the data retention ages for all enabled rules.
                 final LocalDateTime now = LocalDateTime.now();
@@ -156,64 +168,113 @@ public class DataRetentionExecutor {
                         .map(Optional::get)
                         .collect(Collectors.toSet());
 
-                // Process the different data ages separately as they can consider different sets of streams.
-                ages.forEach(age -> {
-                    // Skip if we have terminated processing.
-                    if (!taskMonitor.isTerminated()) {
-                        Long minAge = null;
-                        Long maxAge = age;
+                // Get a database connection.
+                final Connection connection = DataSourceUtils.getConnection(dataSource);
+                try {
+                    final AtomicBoolean allSuccesful = new AtomicBoolean(true);
 
-                        if (timeElapsedSinceLastRun != null) {
-                            minAge = maxAge - timeElapsedSinceLastRun;
-                        }
-
-                        final Period ageRange = new Period(minAge, maxAge);
-
-                        final StringBuilder message = new StringBuilder();
-                        message.append("Considering stream retention for streams created ");
-                        if (minAge != null) {
-                            message.append("between ");
-                            message.append(DateUtil.createNormalDateTimeString(minAge));
-                            message.append(" and ");
-                            message.append(DateUtil.createNormalDateTimeString(maxAge));
-                        } else {
-                            message.append("before ");
-                            message.append(DateUtil.createNormalDateTimeString(maxAge));
-                        }
-                        info(message.toString());
-
-                        // Figure out which rules are active and get all used fields.
-                        final ActiveRules activeRules = new ActiveRules(rules);
-
-                        // Ignore rules if none are active.
-                        if (activeRules.getActiveRules().size() > 0) {
-                            // Find out how many rows we are likely to examine.
-                            final long rowCount = dataRetentionTransactionHelper.getRowCount(ageRange, activeRules.getFieldSet());
-
-                            // If we aren't likely to be touching any rows then ignore.
-                            if (rowCount > 0) {
-                                boolean more = true;
-                                final Progress progress = new Progress(ageRange, rowCount);
-                                while (more && !taskMonitor.isTerminated()) {
-                                    Range<Long> streamIdRange = null;
-                                    if (progress.getStreamId() != null) {
-                                        // Process from the next stream id onwards.
-                                        streamIdRange = new Range<>(progress.getStreamId() + 1, null);
-                                    }
-
-                                    more = dataRetentionTransactionHelper.deleteMatching(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskMonitor, progress);
-                                }
+                    // Process the different data ages separately as they can consider different sets of streams.
+                    ages.forEach(age -> {
+                        // Skip if we have terminated processing.
+                        if (!taskMonitor.isTerminated()) {
+                            final boolean success = processAge(connection, age, timeElapsedSinceLastRun, rules, batchSize, ageMap);
+                            if (!success) {
+                                allSuccesful.set(false);
                             }
                         }
-                    }
-                });
+                    });
 
-                // If we finished running then save the tracker for use next time.
-                if (!taskMonitor.isTerminated()) {
-                    tracker.save();
+                    // If we finished running then save the tracker for use next time.
+                    if (!taskMonitor.isTerminated() && allSuccesful.get()) {
+                        tracker.save();
+                    }
+                } finally {
+                    // Release the database connection.
+                    DataSourceUtils.releaseConnection(connection, dataSource);
                 }
             }
         }
+    }
+
+    private boolean processAge(final Connection connection, final long age, final Long timeElapsedSinceLastRun, final List<DataRetentionRule> rules, final int batchSize, final Map<DataRetentionRule, Optional<Long>> ageMap) {
+        boolean success = true;
+
+        Long minAge = null;
+        Long maxAge = age;
+
+        if (timeElapsedSinceLastRun != null) {
+            minAge = maxAge - timeElapsedSinceLastRun;
+        }
+
+        final Period ageRange = new Period(minAge, maxAge);
+
+        final StringBuilder message = new StringBuilder();
+        message.append("Considering stream retention for streams created ");
+        if (minAge != null) {
+            message.append("between ");
+            message.append(DateUtil.createNormalDateTimeString(minAge));
+            message.append(" and ");
+            message.append(DateUtil.createNormalDateTimeString(maxAge));
+        } else {
+            message.append("before ");
+            message.append(DateUtil.createNormalDateTimeString(maxAge));
+        }
+        info(message.toString());
+
+        // Figure out which rules are active and get all used fields.
+        final ActiveRules activeRules = new ActiveRules(rules);
+
+        // Ignore rules if none are active.
+        if (activeRules.getActiveRules().size() > 0) {
+            // Create an object that can find streams with prepared statements and see if they match rules.
+            try (final DataRetentionStreamFinder streamFinder = new DataRetentionStreamFinder(connection, dictionaryService)) {
+
+                // Find out how many rows we are likely to examine.
+                final long rowCount = streamFinder.getRowCount(ageRange, activeRules.getFieldSet());
+
+                // If we aren't likely to be touching any rows then ignore.
+                if (rowCount > 0) {
+
+                    // Create an object that can delete streams with prepared statements.
+                    try (final DataRetentionStreamDeleter dataRetentionDeletionHelper = new DataRetentionStreamDeleter(connection)) {
+                        List<Long> streamIdDeleteList = new ArrayList<>();
+
+                        boolean more = true;
+                        final Progress progress = new Progress(ageRange, rowCount);
+                        Range<Long> streamIdRange = new Range<>(0L, null);
+                        while (more && !taskMonitor.isTerminated()) {
+                            if (progress.getStreamId() != null) {
+                                // Process from the next stream id onwards.
+                                streamIdRange = new Range<>(progress.getStreamId() + 1, null);
+                            }
+
+                            more = streamFinder.findMatches(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskMonitor, progress, streamIdDeleteList);
+
+                            // Delete a batch of streams.
+                            while (streamIdDeleteList.size() > batchSize) {
+                                final List<Long> batch = streamIdDeleteList.subList(0, batchSize - 1);
+                                streamIdDeleteList = streamIdDeleteList.subList(batchSize, streamIdDeleteList.size() - 1);
+                                dataRetentionDeletionHelper.deleteStreams(batch);
+                            }
+                        }
+
+                        // Delete any remaining streams in the list.
+                        if (streamIdDeleteList.size() > 0) {
+                            dataRetentionDeletionHelper.deleteStreams(streamIdDeleteList);
+                        }
+
+                    } catch (final SQLException e) {
+                        success = false;
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                }
+            } catch (final SQLException e) {
+                success = false;
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+
+        return success;
     }
 
     private Optional<Long> getAge(final LocalDateTime now, final DataRetentionRule rule) {
