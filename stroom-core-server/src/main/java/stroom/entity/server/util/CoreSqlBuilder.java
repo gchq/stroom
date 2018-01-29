@@ -126,13 +126,12 @@ public abstract class CoreSqlBuilder {
     }
 
     String toTraceString() {
-        final StringBuilder trace = new StringBuilder();
+        final StringBuilder trace = new StringBuilder(sql.length());
         int pos = 0;
         for (int i = 0; i < sql.length(); i++) {
             final char c = sql.charAt(i);
             if (c == '?') {
                 trace.append(args.get(pos++));
-                i++;
             } else {
                 trace.append(c);
             }
