@@ -17,6 +17,7 @@
 
 package stroom.streamstore.server.fs;
 
+import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -74,7 +75,6 @@ import stroom.streamtask.server.ExpressionToFindCriteria;
 import stroom.streamtask.server.ExpressionToFindCriteria.Context;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
