@@ -50,7 +50,7 @@ import stroom.streamstore.server.MockStreamTypeService;
 import stroom.policy.server.DataRetentionExecutor;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
 import stroom.streamstore.server.StreamTypeServiceImpl;
-import stroom.policy.server.DataRetentionTransactionHelper;
+import stroom.policy.server.DataRetentionStreamFinder;
 import stroom.streamstore.server.fs.FileSystemStreamStore;
 import stroom.streamtask.server.MockStreamProcessorFilterService;
 import stroom.streamtask.server.MockStreamProcessorService;
@@ -89,7 +89,6 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         // EntityPathResolverImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FeedServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FileSystemStreamStore.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DataRetentionTransactionHelper.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DataRetentionExecutor.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = GlobalPropertyServiceImpl.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =

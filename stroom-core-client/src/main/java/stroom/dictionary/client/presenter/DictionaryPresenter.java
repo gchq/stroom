@@ -19,12 +19,19 @@ package stroom.dictionary.client.presenter;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.app.client.LocationManager;
 import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.dictionary.shared.Dictionary;
+import stroom.dictionary.shared.DownloadDictionaryAction;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.shared.DocRefUtil;
 import stroom.security.client.ClientSecurityContext;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -32,12 +39,23 @@ public class DictionaryPresenter extends EntityEditTabPresenter<LinkTabPanelView
     private static final TabData WORDS = new TabDataImpl("Words");
 
     private final TextAreaPresenter textAreaPresenter;
+    private final ButtonView downloadButton;
+    private final ClientDispatchAsync dispatcher;
+    private final LocationManager locationManager;
+
+    private Dictionary dictionary;
 
     @Inject
-    public DictionaryPresenter(final EventBus eventBus, final LinkTabPanelView view, final TextAreaPresenter textAreaPresenter,
-                               final ClientSecurityContext securityContext) {
+    public DictionaryPresenter(final EventBus eventBus,
+                               final LinkTabPanelView view,
+                               final TextAreaPresenter textAreaPresenter,
+                               final ClientSecurityContext securityContext,
+                               final ClientDispatchAsync dispatcher,
+                               final LocationManager locationManager) {
         super(eventBus, view, securityContext);
         this.textAreaPresenter = textAreaPresenter;
+        this.dispatcher = dispatcher;
+        this.locationManager = locationManager;
 
         registerHandler(textAreaPresenter.addKeyDownHandler(new DirtyKeyDownHander() {
             @Override
@@ -46,8 +64,18 @@ public class DictionaryPresenter extends EntityEditTabPresenter<LinkTabPanelView
             }
         }));
 
+        downloadButton = addButtonLeft(SvgPresets.DOWNLOAD);
+
         addTab(WORDS);
         selectTab(WORDS);
+    }
+
+    @java.lang.Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(downloadButton.addClickHandler(clickEvent -> {
+            dispatcher.exec(new DownloadDictionaryAction(DocRefUtil.create(dictionary))).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
+        }));
     }
 
     @Override
@@ -61,6 +89,8 @@ public class DictionaryPresenter extends EntityEditTabPresenter<LinkTabPanelView
 
     @Override
     protected void onRead(final Dictionary dictionary) {
+        this.dictionary = dictionary;
+        downloadButton.setEnabled(true);
         textAreaPresenter.setText(dictionary.getData());
     }
 

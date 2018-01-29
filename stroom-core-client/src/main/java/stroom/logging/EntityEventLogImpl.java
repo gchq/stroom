@@ -23,6 +23,7 @@ import event.logging.Criteria;
 import event.logging.Criteria.ResultPage;
 import event.logging.Event;
 import event.logging.Event.EventDetail.Update;
+import event.logging.Export;
 import event.logging.MultiObject;
 import event.logging.Object;
 import event.logging.ObjectOutcome;
@@ -272,6 +273,26 @@ public class EntityEventLogImpl implements EntityEventLog {
     }
 
     @Override
+    public void download(final BaseEntity entity, final Exception ex) {
+        try {
+            final Event event = eventLoggingService.createAction("Download", "Downloading " + entity.getType());
+
+            final MultiObject multiObject = new MultiObject();
+            multiObject.getObjects().add(createBaseObject(entity));
+
+            final Export exp = new Export();
+            exp.setSource(multiObject);
+            exp.setOutcome(EventLoggingUtil.createOutcome(ex));
+
+            event.getEventDetail().setExport(exp);
+
+            eventLoggingService.log(event);
+        } catch (final Exception e) {
+            LOGGER.error(e, e);
+        }
+    }
+
+    @Override
     public void search(final BaseCriteria criteria, final Query query, final BaseResultList<?> results) {
         doSearch(criteria, query, results, null);
     }
@@ -282,7 +303,7 @@ public class EntityEventLogImpl implements EntityEventLog {
     }
 
     private void doSearch(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
-            final Exception ex) {
+                          final Exception ex) {
         try {
             final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
                     null);
@@ -317,7 +338,7 @@ public class EntityEventLogImpl implements EntityEventLog {
     }
 
     private void doSearchSummary(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
-            final Exception ex) {
+                                 final Exception ex) {
         try {
             final Event event = createAction(criteria.getClass().getSimpleName(),
                     "Finding Summary " + getObjectType(criteria), null);
@@ -374,7 +395,7 @@ public class EntityEventLogImpl implements EntityEventLog {
     }
 
     private Event createAction(final String typeId, final String description, final String entityType,
-            final String entityName) {
+                               final String entityName) {
         final String desc = description + " " + entityType + " \"" + entityName;
         return eventLoggingService.createAction(typeId, desc);
     }
