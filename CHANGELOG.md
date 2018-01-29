@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#572** : Added a feature to allow easy download of dictionary contents as a text file.
 
+* Issue **#559** : Changed CSS to allow table text selection in newer browsers.
+
 ## [v5.1-beta.10] - 2018-01-26
 
 * Issue **#567** : Changed `parseUri` to be `parse-uri` to keep it consistently named with respect to other XSLT functions. The old name `parseUri` still works but is deprecated and will be removed in a later version.
@@ -70,54 +72,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v5.1-beta.4] - 2017-12-20
 
-* Merged [v5.0-beta.71]
-
-## [v5.1-beta.3] - 2017-12-18
-
-* Merged [v5.0-beta.70]
-
-* Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
-
-## [v5.1-beta.2] - 2017-12-12
-
-* Merged [v5.0-beta.69]
-
-## [v5.1-beta.1] - 2017-12-11
-
-* Issue **#348** : Fixed new menu icons.
-
-* Merged [v5.0-beta.68]
-
-## [v5.1-alpha.2] - 2017-06-22
-
-* Issue **#203** : Initial release of the new data receipt policy functionality.
-
-## [v5.1-alpha.1] - 2017-06-07
-
-* Issue **#202** : Initial release of the new data retention policy functionality.
-
-## [v5.0.2] - 2018-01-16
-
-* Issue **#554** : Added a `parseUri` XSLT function.
-
-* Issue **#557** : Added dashboard functions to parse and output URI parts.
-
-* Issue **#552** : Fix for NPE caused by bad XSLT during search data extraction.
-
-* Issue **#560** : Replaced instances of `Files.walk()` with `Files.walkFileTree()`. `Files.walk()` throws errors if any files are deleted or are not accessible during the walk operation. This is a major issue with the Java design for walking files using Java 8 streams. To avoid this issue `Files.walkFileTree()` has now been used in place of `Files.walk()`.
-
-## [v5.0.1] - 2018-01-10
-
-* Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
-
-* Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
-
-## [v5.0.0] - 2018-01-10
-
-* Promoted v5.0-beta.71 to v5.0.0
-
-## [v5.0-beta.71] - 2017-12-20
-
 * Issue **#521** : Fix for the job list screen to correct the help URL.
 
 * Issue **#526** : Fix for XSLT functions that should return optional results but were being forced to return a single value.
@@ -125,7 +79,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#527** : Fix for XSLT error reporting. All downstream errors were being reported as XSLT module errors and were
  hiding the underlying exception.
 
-## [v5.0-beta.70] - 2017-12-15
+## [v5.1-beta.3] - 2017-12-18
 
 * Issue **#501** : Improve the database teardown process in integration tests to speed up builds.
 
@@ -135,37 +89,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
 
-## [v5.0-beta.69] - 2017-12-12
+## [v5.1-beta.2] - 2017-12-12
 
 * Issue **#511** : Fix for XSLT functions to allow null return values where a value cannot be returned due to an error etc.
 
-## [v5.0-beta.68] - 2017-12-11
-
-* Issue **#515** : Fix handling of errors that occur before search starts sending.
-
-* Issue **#506** : In v5 dashboard table filters were enhanced to allow parameters to be used in include/exclude filters. The implementation included the use of `\` to escape `$` characters that were not to be considered part of a parameter reference. This change resulted in regular expressions requiring `\` being escaped with additional `\` characters. This escaping has now been removed and instead only `$` chars before `{` chars need escaping when necessary with double `$$` chars, e.g. use `$${something` if you actually want `${something` not to be replaced with a parameter.
-
-* Issue **#505** : Fix the property UI so all edited value whitespace is trimmed
-
-* Issue **#513** : Now only actively executing tasks are visible as server tasks
-
-* Issue **#483** : When running stream retention jobs the transactions are now set to REQUIRE_NEW to hopefully ensure that the job is done in small batches rather than a larger transaction spanning multiple changes.
-
-## [v5.0-beta.67] - 2017-12-05
+## [v5.1-beta.1] - 2017-12-11
 
 * Issue **#508** : Fix directory creation for index shards.
 
-## [v5.0-beta.66] - 2017-11-30
-
 * Issue **#492** : Task producers were still not being marked as complete on termination which meant that the parent cluster task was not completing. This has now been fixed.
-
-## [v5.0-beta.65] - 2017-11-29
 
 * Issue **#497** : DB connections obtained from the data source are now released back to the pool after use.
 
 * Issue **#492** : Task producers were not being marked as complete on termination which meant that the parent cluster task was not completing. This has now been fixed.
-
-## [v5.0-beta.64] - 2017-11-27
 
 * Issue **#497** : Change stream task creation to use straight JDBC rather than hibernate for inserts and use a configurable batch size (stroom.databaseMultiInsertMaxBatchSize) for the inserts.
 
@@ -173,21 +109,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#476** : Stepping with dynamic XSLT or text converter properties now correctly falls back to the specified entity if a match cannot be found by name.
 
-## [v5.0-beta.63] - 2017-11-20
-
 * Issue **#498** : The UI was adding more than one link between 'Source' and 'Parser' elements, this is now fixed.
 
 * Issue **#492** : Search tasks were waiting for part of the data extraction task to run which was not checking for termination. The code for this has been changed and should now terminate when required.
 
-## [v5.0-beta.62] - 2017-11-16
-
 * Issue **#494** : Fix problem of proxy aggregation never stopping if more files exist
 
-## [v5.0-beta.61] - 2017-11-15
-
 * Issue **#490** : Fix errors in proxy aggregation due to a bounded thread pool size
-
-## [v5.0-beta.60] - 2017-11-14
 
 * Issue **#484** : Remove custom finalize() methods to reduce memory overhead
 
@@ -213,29 +141,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Removed Ehcache and switched to Guava cache.
 
-## [v5.0-beta.59] - 2017-11-10
-
 * Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
 
-## [v5.0-beta.58] - 2017-11-09
-
 * Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
-
-## [v5.0-beta.57] - 2017-11-08
 
 * Issue **#477** : Search sub tasks are now correctly linked to their parent task and can therefore be terminated by terminating parent tasks.
-
-## [v5.0-beta.56] - 2017-11-06
 
 * Issue **#425** : Changed string replacement in pipeline migration code to use a literal match
 
 * Issue **#469** : Add Heap Histogram internal statistics for memory use monitoring
 
-## [v5.0-beta.55] - 2017-10-26
-
 * Issue **#463** : Made further improvements to the index shard writer cache to improve performance.
-
-## [v5.0-beta.54] - 2017-10-25
 
 * Issue **#448** : Some search related tasks never seem to complete, presumably because an error is thrown at some point and so their callbacks do not get called normally. This fix changes the way task completion is recorded so that it isn't dependant on the callbacks being called correctly.
 
@@ -244,8 +160,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#462** : Permission exceptions now carry details of the user that the exception applies to. This change allows error logging to record the user id in the message where appropriate.
 
 * Issue **#463** : Many index shards are being corrupted which may be caused by insufficient locking of the shard writers and readers. This fix changes the locking mechanism to use the file system.
-
-## [v5.0-beta.53] - 2017-10-18
 
 * Issue **#451** : Data paging was allowing the user to jump beyond the end of a stream whereby just the XML root elements were displayed. This is now fixed by adding a constraint to the page offset so that the user cannot jump beyond the last record. Because data paging assumes that segmented streams have a header and footer, text streams now include segments after a header and before a footer, even if neither are added, so that paging always works correctly regardless of the presence of a header or footer.
 
@@ -256,8 +170,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#442** : Remove 'Old Internal Statistics' folder, improve import exception handling
 
 * Issue **#457** : Add check to import to prevent duplicate root level entities
-
-## [v5.0-beta.52] - 2017-10-17
 
 * Issue **#444** : Fix for segment markers when writing text to StreamAppender.
 
@@ -275,17 +187,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#437** : The event log now includes source in move events.
 
-## [v5.0-beta.51] - 2017-10-13
-
 * Issue **#419** : Fix multiple xml processing instructions appearing in output.
 
 * Issue **#446** : Fix for deadlock on rolling appenders.
 
-## [v5.0-beta.50] - 2017-10-13
-
 * Issue **#444** : Fix segment markers on RollingStreamAppender.
-
-## [v5.0-beta.49] - 2017-10-11
 
 * Issue **#426** : Fix for incorrect processor filters. Old processor filters reference `systemGroupIdSet` rather than `folderIdSet`. The new migration updates them accordingly.
 
@@ -297,11 +203,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#441** : Fix to ensure correct names are shown in pipeline properties.
 
-## [v5.0-beta.48] - 2017-10-05
-
 * Issue **#433** : Fixed slow stream queries caused by feed permission restrictions.
-
-## [v5.0-beta.47] - 2017-09-11
 
 * Issue **#385** : Individual index shards can now be deleted without deleting all shards.
 
@@ -319,29 +221,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#369** : Translation stepping wasn't showing any errors during stepping if a schema had an error in it.
 
-## [v5.0-beta.46] - 2017-08-15
-
 * Issue **#364** : Switched index writer lock factory to a SingleInstanceLockFactory as index shards are accessed by a single process.
 
 * Issue **#363** : IndexShardWriterCacheImpl now closes and flushes writers using an executor provided by the TaskManager. Writers are now also closed in LRU order when sweeping up writers that exceed TTL and TTI constraints.
 
 * Issue **#361** : Information has been added to threads executing index writer and index searcher maintenance tasks.
 
-## [v5.0-beta.45] - 2017-08-08
-
 * Issue **#356** : Changed the way index shard writers are cached to improve indexing performance and reduce blocking.
-
-## [v5.0-beta.44] - 2017-07-28
 
 * Issue **#353** : Reduced expected error logging to debug.
 
 * Issue **#354** : Changed the way search index shard readers get references to open writers so that any attempt to get an open writer will not cause, or have to wait for, a writer to close.
 
-## [v5.0-beta.43] - 2017-07-25
-
 * Issue **#351** : Fixed ehcache item eviction issue caused by ehcache internally using a deprecated API.
-
-## [v5.0-beta.42] - 2017-07-24
 
 * Issue **#347** : Added a 'Source' node to pipelines to establish a proper root for a pipeline rather than an assumed one based on elements with no parent.
 
@@ -349,33 +241,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#349** : Improved index searcher cache to ensure searchers are not affected by writers closing.
 
-## [v5.0-beta.41] - 2017-07-20
-
 * Issue **#342** : Changed the way indexing is performed to ensure index readers reference open writers correctly.
 
 * Issue **#346** : Improved multi depth config content import.
 
 * Issue **#328** : You can now delete corrupt shards from the UI.
 
-## [v5.0-beta.40] - 2017-07-14
-
 * Issue **#343** : Fixed login expiry issue.
 
 * Issue **#345** : Allowed for multi depth config content import.
 
-## [v5.0-beta.39] - 2017-07-09
-
 * Issue **#341** : Fixed arg in SQL.
-
-## [v5.0-beta.38] - 2017-07-07
 
 * Issue **#340** : Fixed headless and corresponding test.
 
-## [v5.0-beta.37] - 2017-07-07
-
 * Issue **#333** : Fixed event-logging version in build.
-
-## [v5.0-beta.36] - 2017-07-06
 
 * Issue **#334** : Improved entity sorting SQL and separated generation of SQL and HQL to help avoid future issues.
 
@@ -387,11 +267,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#332** : The index shard searcher cache now makes sure to get the current writer needed for the current searcher on open.
 
-## [v5.0-beta.35] - 2017-06-26
-
 * Issue **#322** : The index cache and other caching beans should now throw exceptions on `get` that were generated during the creation of cached items.
 
-## [v5.0-beta.34] - 2017-06-22
+* Issue **#348** : Fixed new menu icons.
+
+* Issue **#515** : Fix handling of errors that occur before search starts sending.
+
+* Issue **#506** : In v5 dashboard table filters were enhanced to allow parameters to be used in include/exclude filters. The implementation included the use of `\` to escape `$` characters that were not to be considered part of a parameter reference. This change resulted in regular expressions requiring `\` being escaped with additional `\` characters. This escaping has now been removed and instead only `$` chars before `{` chars need escaping when necessary with double `$$` chars, e.g. use `$${something` if you actually want `${something` not to be replaced with a parameter.
+
+* Issue **#505** : Fix the property UI so all edited value whitespace is trimmed
+
+* Issue **#513** : Now only actively executing tasks are visible as server tasks
+
+* Issue **#483** : When running stream retention jobs the transactions are now set to REQUIRE_NEW to hopefully ensure that the job is done in small batches rather than a larger transaction spanning multiple changes.
+
+## [v5.1-alpha.2] - 2017-06-22
 
 * Issue **#325** : Query history is now cleaned with a separate job. Also query history is only recorded for manual querying, i.e. not when query is automated (on open or auto refresh). Queries are now recorded on a dashboard + query component basis and do not apply across multiple query components in a dashboard.
 
@@ -399,15 +289,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#322** : Index should now provide a more helpful message when an attempt is made to index data and no volumes have been assigned to an index.
 
-## [v5.0-beta.33] - 2017-06-19
-
 * Issue **#316** : Search history is now only stored on initial query when using automated queries or when a user runs a query manually. Search history is also automatically purged to keep either a specified number of items defined by `stroom.query.history.itemsRetention` (default 100) or for a number of days specified by `stroom.query.history.daysRetention` (default 365).
 
 * Issue **#317** : Users now need update permission on an index plus 'Manage Index Shards' permission to flush or close index shards. In addition to this a user needs delete permission to delete index shards.
 
 * Issue **#319** : SaveAs now fetches the parent folder correctly so that users can copy items if they have permission to do so.
-
-## [v5.0-beta.32] - 2017-06-13
 
 * Issue **#311** : Fixed request for `Pipeline` in `meta` XSLT function. Errors are now dealt with correctly so that the XSLT will not fail due to missing meta data.
 
@@ -415,7 +301,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#314** : Improved description of `tags` property in `BadTextXMLFilterReader`.
 
-## [v5.0-beta.31] - 2017-06-07
+* Issue **#203** : Initial release of the new data receipt policy functionality.
+
+## [v5.1-alpha.1] - 2017-06-07
 
 * Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
 
@@ -423,17 +311,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#303** : The stream delete job now uses cron in preference to a frequency.
 
-## [v5.0-beta.30] - 2017-06-06
-
 * Issue **#152** : Changed the way indexing is performed so that a single indexer object is now responsible for indexing documents and adding them to the appropriate shard.
-
-## [v5.0-beta.29] - 2017-05-26
 
 * Issue **#179** : Updated Saxon-HE to version 9.7.0-18 and added XSLTFilter option to `usePool` to see if caching might be responsible for issue.
 
 * Issue **#288** : Made further changes to ensure that the IndexShardWriterCache doesn't try to reuse an index shard that has failed when adding any documents.
-
-## [v5.0-beta.28] - 2017-05-19
 
 * Issue **#295** : Made the help URL absolute and not relative.
 
@@ -445,8 +327,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#292** : Data that we expect to be unavailable, e.g. locked and deleted streams, will no longer log exceptions when a user tries to view it and will instead return an appropriate message to the user in place of the data.
 
-## [v5.0-beta.27] - 2017-05-18
-
 * Issue **#288** : The error condition 'Expected a new writer but got the same one back!!!' should no longer be encountered as the root cause should now be fixed. The original check has been reinstated so that processing will terminate if we do encounter this problem.
 
 * Issue **#295** : Fixed the help property so that it can now be configured.
@@ -456,8 +336,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#279** : Fixed NPE thrown during proxy aggregation.
 
 * Issue **#294** : Changing stream task status now tries multiple times to attempt to avoid a hibernate LockAcquisitionException.
-
-## [v5.0-beta.26] - 2017-05-12
 
 * Issue **#287** : XSLT not found warnings property description now defaults to false.
 
@@ -469,17 +347,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#288** : Changed 'Expected a new writer...' fatal error to warning as the condition in question might be acceptable.
 
-## [v5.0-beta.25] - 2017-05-10
-
 * Issue **#285** : Attempted fix for GWT RPC serialisation issue.
-
-## [v5.0-beta.24] - 2017-05-09
 
 * Issue **#283** : Statistics for the stream task queue are now captured even if the size is zero.
 
 * Issue **#226** : Fixed issue where querying an index failed with "User does not have the required permission (Manage Users)" message.
-
-## [v5.0-beta.23] - 2017-05-06
 
 * Issue **#281** : Made further changes to cope with Files.list() and Files.walk() returning streams that should be closed with 'try with resources' construct.
 
@@ -489,15 +361,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#199** : The explorer now scrolls selected items into view.
 
-## [v5.0-beta.22] - 2017-05-04
-
 * Issue **#280** : Fixed 'No user is currently authenticated' issue when viewing jobs and nodes.
 
 * Issue **#278** : The date picker now hides once you select a date.
 
 * Issue **#281** : Directory streams etc are now auto closed to prevent systems running out of file handles.
-
-## [v5.0-beta.21] - 2017-05-03
 
 * Issue **#263** : The explorer tree now allows you to collapse the root 'System' node after it is first displayed.
 
@@ -532,8 +400,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#264** : Added created by/on and updated by/on info to pipeline stream processor info tooltips.
 
 * Issue **#222** : Explorer items now auto expand when a quick filter is used.
-
-## [v5.0-beta.20] - 2017-04-26
 
 * Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
 
@@ -573,8 +439,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#230** : The maintenance message can now be set with the property 'stroom.maintenance.message' and the message now appears as a banner at the top of the screen rather than an annoying popup. Non admin users can also be prevented from logging on to the system by setting the 'stroom.maintenance.preventLogin' property to 'true'.
 
-## [v5.0-beta.19] - 2017-04-21
-
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
 
 * Issue **#188** : All of the writers in a pipeline now display IO in the UI when stepping.
@@ -603,8 +467,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#231** : Changed the way internal statistics are created so that multiple facets of a statistic, e.g. Free & Used Memory, are combined into a single statistic to allow combined visualisation.
 
-## [v5.0-beta.18] - 2017-04-13
-
 * Issue **#172** : Further improvement to dashboard L&F.
 
 * Issue **#194** : Fixed missing Roboto fonts.
@@ -620,8 +482,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#154** : Active tasks are now sortable by processor filter priority.
 
 * Issue **#204** : Pipeline processor statistics now include 'Node' as a tag.
-
-## [v5.0-beta.17] - 2017-04-05
 
 * Issue **#170** : Changed import/export to delegate import/export responsibility to individual services. Import/export now only works with items that have valid UUIDs specified.
 
@@ -647,17 +507,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#191** : Mebibytes (multiples of 1024) etc are now used as standard throughout the application for both memory and disk sizes and have single letter suffixes (B, K, M, G, T).
 
-## [v5.0-beta.16] - 2017-03-31
-
 * Issue **#173** : Fixed the way XML formatter deals with spaces in attribute values.
-
-## [v5.0-beta.15] - 2017-03-27
 
 * Issue **#151** : Fixed meta data statistics. 'metaDataStatistics' bean was declared as an interface and not a class.
 
 * Issue **#158** : Added a new global property 'stroom.proxy.zipFilenameDelimiter' to enable Stroom proxy repositories to be processed that have a custom file name pattern.
-
-## [v5.0-beta.14] - 2017-03-22
 
 * Issue **#153** : Clicking tick boxes and other cell components in tables no longer requires the row to be selected first.
 
@@ -679,8 +533,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#163** : Imported the Roboto Mono font to ensure consistency of the editor across platforms.
 
-## [v5.0-beta.13] - 2017-03-20
-
 * Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
 
 * Issue **#140** : Replaced code editor to improve UI performance and add additional code formatting & styling options.
@@ -693,11 +545,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#156** : Attempts to open items that that user does not have permission to open no longer show an error and spin the progress indicator forever, instead the item will just not open.
 
-## [v5.0-beta.12] - 2017-03-13
-
 * Issue **#141** : Improved log output during entity reference migration and fixed statistic data source reference migration.
-
-## [v5.0-beta.11] - 2017-02-23
 
 * Issue **#127** : Entity reference replacement should now work with references to 'StatisticsDataSource'.
 
@@ -722,8 +570,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#119** : User permissions dialog now clears permissions when a user or group is deleted.
 
 * Issue **#115** : User permissions on documents can now be inherited from parent folders on create, copy and move.
-
-## [v5.0-beta.10] - 2017-02-07
 
 * Issue **#109** : Added packetSize="65536" property to AJP connector in server.xml template.
 
@@ -753,7 +599,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#49** : Dynamic XSLT selection now works with pipeline stepping.
 
-## [v5.0-beta.9] - 2017-02-01
 * Issue **#63** : Entity selection control now shows current entity name even if it has changed since referencing entity was last saved.
 
 * Issue **#70** : You can now select multiple explorer rows with ctrl and shift key modifiers and perform bulk actions such as copy, move, rename and delete.
@@ -788,14 +633,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#92** : Error summaries of multiple types no longer overlap each other at the top of the error markers list.
 
-## [v5.0-beta.8] - 2016-12-21
 * Issue **#64** : Fixed Hessian serialisation of 'now' which was specified as a ZonedDateTime which cannot be serialised. This field is now a long representing millseconds since epoch.
 
 * Issue **#62** : Task termination button is now enabled.
 
 * Issue **#60** : Fixed validation of stream attributes prior to data upload to prevent null pointer exception.
 
-## [v5.0-beta.7] - 2016-12-14
 * Issue **#9** : Created a new implementation of the expression parser that improved expression tokenisation and deals with BODMAS rules properly.
 
 * Issue **#36** : Fixed and vastly improved the configuration of email so that more options can be set allowing for the use of other email services requiring more complex configuration such as gmail.
@@ -806,7 +649,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#40** : Auto import of content packs on Stroom startup and added default content packs into the docker build for Stroom.
 
-## [v5.0-beta.6] - 2016-11-22
 * Issue **#30** : Entering stepping mode was prompting for the pipeline to step with but also auto selecting a pipeline at the same time and entering stepping immediately.
 
 * Dashboard auto refresh is now limited to a minimum interval of 10 seconds.
@@ -815,7 +657,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#27** : Stroom now listens to window closing events and asks the user if they really want to leave the page. This replaces the previous crude attempts to block keys that affected the history or forced a browser refresh.
 
-## [v5.0-beta.5] - 2016-11-17
 * Issue **#2** : The order of fields in the query editor is now alphabetical.
 
 * Issue **#3** : When a filter is active on a dashboard table column, a filter icon now appears to indicate this.
@@ -844,8 +685,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-## [v5.0-beta.4] - 2016-10-03
-* Initial open source release
+* Issue **#202** : Initial release of the new data retention policy functionality.
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v5.1-beta.10...HEAD
 [v5.1-beta.10]: https://github.com/gchq/stroom/compare/v5.1-beta.9...v5.1-beta.10
@@ -860,76 +700,3 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-beta.1]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...v5.1-beta.1
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
-
-[v5.0.3]: https://github.com/gchq/stroom/compare/v5.0.2...v5.0.3
-[v5.0.2]: https://github.com/gchq/stroom/compare/v5.0.1...v5.0.2
-[v5.0.1]: https://github.com/gchq/stroom/compare/v5.0.0...v5.0.1
-[v5.0.0]: https://github.com/gchq/stroom/compare/v5.0-beta.71...v5.0.0
-[v5.0-beta.71]: https://github.com/gchq/stroom/compare/v5.0-beta.70...v5.0-beta.71
-[v5.0-beta.70]: https://github.com/gchq/stroom/compare/v5.0-beta.69...v5.0-beta.70
-[v5.0-beta.69]: https://github.com/gchq/stroom/compare/v5.0-beta.68...v5.0-beta.69
-[v5.0-beta.68]: https://github.com/gchq/stroom/compare/v5.0-beta.67...v5.0-beta.68
-[v5.0-beta.67]: https://github.com/gchq/stroom/compare/v5.0-beta.66...v5.0-beta.67
-[v5.0-beta.66]: https://github.com/gchq/stroom/compare/v5.0-beta.65...v5.0-beta.66
-[v5.0-beta.65]: https://github.com/gchq/stroom/compare/v5.0-beta.64...v5.0-beta.65
-[v5.0-beta.64]: https://github.com/gchq/stroom/compare/v5.0-beta.63...v5.0-beta.64
-[v5.0-beta.63]: https://github.com/gchq/stroom/compare/v5.0-beta.62...v5.0-beta.63
-[v5.0-beta.62]: https://github.com/gchq/stroom/compare/v5.0-beta.61...v5.0-beta.62
-[v5.0-beta.61]: https://github.com/gchq/stroom/compare/v5.0-beta.60...v5.0-beta.61
-[v5.0-beta.60]: https://github.com/gchq/stroom/compare/v5.0-beta.59...v5.0-beta.60
-[v5.0-beta.59]: https://github.com/gchq/stroom/compare/v5.0-beta.58...v5.0-beta.59
-[v5.0-beta.58]: https://github.com/gchq/stroom/compare/v5.0-beta.57...v5.0-beta.58
-[v5.0-beta.57]: https://github.com/gchq/stroom/compare/v5.0-beta.56...v5.0-beta.57
-[v5.0-beta.56]: https://github.com/gchq/stroom/compare/v5.0-beta.55...v5.0-beta.56
-[v5.0-beta.55]: https://github.com/gchq/stroom/compare/v5.0-beta.54...v5.0-beta.55
-[v5.0-beta.54]: https://github.com/gchq/stroom/compare/v5.0-beta.53...v5.0-beta.54
-[v5.0-beta.53]: https://github.com/gchq/stroom/compare/v5.0-beta.52...v5.0-beta.53
-[v5.0-beta.52]: https://github.com/gchq/stroom/compare/v5.0-beta.51...v5.0-beta.52
-[v5.0-beta.51]: https://github.com/gchq/stroom/compare/v5.0-beta.50...v5.0-beta.51
-[v5.0-beta.50]: https://github.com/gchq/stroom/compare/v5.0-beta.49...v5.0-beta.50
-[v5.0-beta.49]: https://github.com/gchq/stroom/compare/v5.0-beta.48...v5.0-beta.49
-[v5.0-beta.48]: https://github.com/gchq/stroom/compare/v5.0-beta.47...v5.0-beta.48
-[v5.0-beta.47]: https://github.com/gchq/stroom/compare/v5.0-beta.46...v5.0-beta.47
-[v5.0-beta.46]: https://github.com/gchq/stroom/compare/v5.0-beta.45...v5.0-beta.46
-[v5.0-beta.45]: https://github.com/gchq/stroom/compare/v5.0-beta.44...v5.0-beta.45
-[v5.0-beta.44]: https://github.com/gchq/stroom/compare/v5.0-beta.43...v5.0-beta.44
-[v5.0-beta.43]: https://github.com/gchq/stroom/compare/v5.0-beta.42...v5.0-beta.43
-[v5.0-beta.42]: https://github.com/gchq/stroom/compare/v5.0-beta.41...v5.0-beta.42
-[v5.0-beta.41]: https://github.com/gchq/stroom/compare/v5.0-beta.40...v5.0-beta.41
-[v5.0-beta.40]: https://github.com/gchq/stroom/compare/v5.0-beta.39...v5.0-beta.40
-[v5.0-beta.39]: https://github.com/gchq/stroom/compare/v5.0-beta.38...v5.0-beta.39
-[v5.0-beta.38]: https://github.com/gchq/stroom/compare/v5.0-beta.37...v5.0-beta.38
-[v5.0-beta.37]: https://github.com/gchq/stroom/compare/v5.0-beta.36...v5.0-beta.37
-[v5.0-beta.36]: https://github.com/gchq/stroom/compare/v5.0-beta.35...v5.0-beta.36
-[v5.0-beta.35]: https://github.com/gchq/stroom/compare/v5.0-beta.34...v5.0-beta.35
-[v5.0-beta.34]: https://github.com/gchq/stroom/compare/v5.0-beta.33...v5.0-beta.34
-[v5.0-beta.33]: https://github.com/gchq/stroom/compare/v5.0-beta.32...v5.0-beta.33
-[v5.0-beta.32]: https://github.com/gchq/stroom/compare/v5.0-beta.31...v5.0-beta.32
-[v5.0-beta.31]: https://github.com/gchq/stroom/compare/v5.0-beta.30...v5.0-beta.31
-[v5.0-beta.30]: https://github.com/gchq/stroom/compare/v5.0-beta.29...v5.0-beta.30
-[v5.0-beta.29]: https://github.com/gchq/stroom/compare/v5.0-beta.28...v5.0-beta.29
-[v5.0-beta.28]: https://github.com/gchq/stroom/compare/v5.0-beta.27...v5.0-beta.28
-[v5.0-beta.27]: https://github.com/gchq/stroom/compare/v5.0-beta.26...v5.0-beta.27
-[v5.0-beta.26]: https://github.com/gchq/stroom/compare/v5.0-beta.25...v5.0-beta.26
-[v5.0-beta.25]: https://github.com/gchq/stroom/compare/v5.0-beta.24...v5.0-beta.25
-[v5.0-beta.24]: https://github.com/gchq/stroom/compare/v5.0-beta.23...v5.0-beta.24
-[v5.0-beta.23]: https://github.com/gchq/stroom/compare/v5.0-beta.22...v5.0-beta.23
-[v5.0-beta.22]: https://github.com/gchq/stroom/compare/v5.0-beta.21...v5.0-beta.22
-[v5.0-beta.21]: https://github.com/gchq/stroom/compare/v5.0-beta.20...v5.0-beta.21
-[v5.0-beta.20]: https://github.com/gchq/stroom/compare/v5.0-beta.19...v5.0-beta.20
-[v5.0-beta.19]: https://github.com/gchq/stroom/compare/v5.0-beta.18...v5.0-beta.19
-[v5.0-beta.18]: https://github.com/gchq/stroom/compare/v5.0-beta.17...v5.0-beta.18
-[v5.0-beta.17]: https://github.com/gchq/stroom/compare/v5.0-beta.16...v5.0-beta.17
-[v5.0-beta.16]: https://github.com/gchq/stroom/compare/v5.0-beta.15...v5.0-beta.16
-[v5.0-beta.15]: https://github.com/gchq/stroom/compare/v5.0-beta.14...v5.0-beta.15
-[v5.0-beta.14]: https://github.com/gchq/stroom/compare/v5.0-beta.13...v5.0-beta.14
-[v5.0-beta.13]: https://github.com/gchq/stroom/compare/v5.0-beta.12...v5.0-beta.13
-[v5.0-beta.12]: https://github.com/gchq/stroom/compare/v5.0-beta.11...v5.0-beta.12
-[v5.0-beta.11]: https://github.com/gchq/stroom/compare/v5.0-beta.10...v5.0-beta.11
-[v5.0-beta.10]: https://github.com/gchq/stroom/compare/v5.0-beta.9...v5.0-beta.10
-[v5.0-beta.9]: https://github.com/gchq/stroom/compare/v5.0-beta.8...v5.0-beta.9
-[v5.0-beta.8]: https://github.com/gchq/stroom/compare/v5.0-beta.7...v5.0-beta.8
-[v5.0-beta.7]: https://github.com/gchq/stroom/compare/v5.0-beta.6...v5.0-beta.7
-[v5.0-beta.6]: https://github.com/gchq/stroom/compare/v5.0-beta.5...v5.0-beta.6
-[v5.0-beta.5]: https://github.com/gchq/stroom/compare/v5.0-beta.4...v5.0-beta.5
-[v5.0-beta.4]: https://github.com/gchq/stroom/releases/tag/v5.0-beta.4
