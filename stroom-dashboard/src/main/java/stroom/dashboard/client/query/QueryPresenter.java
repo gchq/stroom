@@ -93,7 +93,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
     private final Provider<EntityChooser> pipelineSelection;
-    private final Provider<SearchInfoPresenter> searchInfoPresenterProvider;
+    private final Provider<SearchPurposePresenter> searchInfoPresenterProvider;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -116,7 +116,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private long defaultProcessorRecordLimit = DEFAULT_RECORD_LIMIT;
     private boolean initialised;
     private Timer autoRefreshTimer;
-    private boolean searchInfoEnabled;
+    private boolean searchPurposeRequired;
+    private String lastUsedSearchPurpose;
 
     @Inject
     public QueryPresenter(final EventBus eventBus,
@@ -126,7 +127,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final ExpressionTreePresenter expressionPresenter, final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<EntityChooser> pipelineSelection,
-                          final Provider<SearchInfoPresenter> searchInfoPresenterProvider,
+                          final Provider<SearchPurposePresenter> searchInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher,
                           final ClientSecurityContext securityContext, final ClientPropertyCache clientPropertyCache,
@@ -179,7 +180,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     defaultProcessorTimeLimit = result.getLong(ClientProperties.PROCESS_TIME_LIMIT, DEFAULT_TIME_LIMIT);
                     defaultProcessorRecordLimit = result.getLong(ClientProperties.PROCESS_RECORD_LIMIT,
                             DEFAULT_RECORD_LIMIT);
-                    searchInfoEnabled = result.getBoolean(ClientProperties.SEARCH_INFO_ENABLED, true); // default to true?
+                    searchPurposeRequired = result.getBoolean(ClientProperties.SEARCH_PURPOSE_REQUIRED, false); // default to false?
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
     }
@@ -402,26 +403,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     @Override
     public void start() {
-        if (searchInfoEnabled) {
-            final SearchInfoPresenter searchInfoPresenter = searchInfoPresenterProvider.get();
-            final PopupSize popupSize = new PopupSize(321, 102, false);
-            ShowPopupEvent.fire(this, searchInfoPresenter, PopupType.OK_CANCEL_DIALOG, popupSize,
-                    "Search Information", new PopupUiHandlers() {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            if (ok) {
-                                run(true, true);
-                            }
-                            HidePopupEvent.fire(QueryPresenter.this, processorLimitsPresenter);
-                        }
-
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
-                        }
-                    });
-        } else {
-            run(true, true);
-        }
+        run(true, true);
     }
 
     @Override
@@ -433,7 +415,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         searchModel.destroy();
     }
 
-    private void run(final boolean incremental, final boolean storeHistory) {
+    private void run(final boolean incremental,
+                     final boolean storeHistory) {
         final DocRef dataSourceRef = queryData.getDataSource();
 
         if (dataSourceRef == null) {
@@ -447,7 +430,33 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
 
-            searchModel.search(root, params, incremental, storeHistory);
+            if (searchPurposeRequired && SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
+                final SearchPurposePresenter searchPurposePresenter = searchInfoPresenterProvider.get();
+                searchPurposePresenter.setSearchPurpose(lastUsedSearchPurpose);
+                final PopupSize popupSize = new PopupSize(640, 480, true);
+                ShowPopupEvent.fire(this,
+                        searchPurposePresenter,
+                        PopupType.OK_CANCEL_DIALOG,
+                        popupSize,
+                        "Please Provide a Justification for the Search",
+                        new PopupUiHandlers() {
+                            @Override
+                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                if (ok) {
+                                    lastUsedSearchPurpose = searchPurposePresenter.getSearchPurpose();
+                                    searchModel.search(root, params, incremental, storeHistory, lastUsedSearchPurpose);
+                                }
+                                HidePopupEvent.fire(QueryPresenter.this, searchPurposePresenter);
+                            }
+
+                            @Override
+                            public void onHide(final boolean autoClose, final boolean ok) {
+                            }
+                        });
+            } else {
+                searchModel.search(root, params, incremental, storeHistory, null);
+            }
+
         }
     }
 

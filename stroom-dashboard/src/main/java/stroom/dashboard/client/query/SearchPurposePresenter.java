@@ -23,26 +23,26 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
-public class SearchInfoPresenter extends MyPresenterWidget<SearchInfoPresenter.SearchInfoView> {
+public class SearchPurposePresenter extends MyPresenterWidget<SearchPurposePresenter.SearchInfoView> {
     public interface SearchInfoView extends View, HasUiHandlers<PopupUiHandlers> {
-        String getSearchInfo();
+        String getSearchPurpose();
 
-        void setSearchInfo(String searchInfo);
+        void setSearchPurpose(String searchInfo);
 
         void focus();
     }
 
     @Inject
-    public SearchInfoPresenter(final EventBus eventBus, final SearchInfoView view) {
+    public SearchPurposePresenter(final EventBus eventBus, final SearchInfoView view) {
         super(eventBus, view);
     }
 
-    public String getSearchInfo() {
-        return getView().getSearchInfo();
+    public String getSearchPurpose() {
+        return getView().getSearchPurpose();
     }
 
-    public void setSearchInfo(final String searchInfo) {
-        getView().setSearchInfo(searchInfo);
+    public void setSearchPurpose(final String searchInfo) {
+        getView().setSearchPurpose(searchInfo);
     }
 
     public void setUihandlers(final PopupUiHandlers uiHandlers) {

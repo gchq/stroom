@@ -39,7 +39,7 @@ public class ClientProperties implements SharedObject {
     public static final String NAME_PATTERN = "stroom.namePattern";
     public static final String LABEL_COLOURS = "stroom.theme.labelColours";
     public static final String HELP_URL = "stroom.helpUrl";
-    public static final String SEARCH_INFO_ENABLED = "stroom.search.info.enabled";
+    public static final String SEARCH_PURPOSE_REQUIRED = "stroom.search.purpose.required";
 
     private HashMap<String, String> map;
 

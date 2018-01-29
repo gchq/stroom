@@ -21,31 +21,32 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.dashboard.client.query.SearchInfoPresenter.SearchInfoView;
+import stroom.dashboard.client.query.SearchPurposePresenter.SearchInfoView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
-public class SearchInfoViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements SearchInfoView {
-    public interface Binder extends UiBinder<Widget, SearchInfoViewImpl> {
+public class SearchPurposeViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements SearchInfoView {
+    public interface Binder extends UiBinder<Widget, SearchPurposeViewImpl> {
     }
 
     @UiField
-    TextBox searchInfo;
+    TextArea searchPurpose;
 
     private final Widget widget;
 
     @Inject
-    public SearchInfoViewImpl(final Binder binder) {
+    public SearchPurposeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         widget.addAttachHandler(event -> focus());
     }
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(() -> searchInfo.setFocus(true));
+        Scheduler.get().scheduleDeferred(() -> searchPurpose.setFocus(true));
     }
 
     @Override
@@ -54,16 +55,16 @@ public class SearchInfoViewImpl extends ViewWithUiHandlers<PopupUiHandlers> impl
     }
 
     @Override
-    public String getSearchInfo() {
-        return searchInfo.getText();
+    public String getSearchPurpose() {
+        return searchPurpose.getText();
     }
 
     @Override
-    public void setSearchInfo(final String searchInfo) {
-        this.searchInfo.setText(searchInfo);
+    public void setSearchPurpose(final String searchInfo) {
+        this.searchPurpose.setText(searchInfo);
     }
 
-    @UiHandler("searchInfo")
+    @UiHandler("searchPurpose")
     void onKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
             getUiHandlers().onHideRequest(false, true);

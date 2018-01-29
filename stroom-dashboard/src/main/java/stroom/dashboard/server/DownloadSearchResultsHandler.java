@@ -96,9 +96,9 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
             download(activeQuery, action.getComponentId(), file, action.getFileType(), action.isSample(),
                     action.getPercent(), action.getDateTimeLocale());
 
-            searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression());
+            searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getSearchPurpose());
         } catch (final Exception ex) {
-            searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), ex);
+            searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getSearchPurpose(), ex);
 
             throw EntityServiceExceptionUtil.create(ex);
         }
