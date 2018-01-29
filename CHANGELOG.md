@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#559** : Changed CSS to allow table text selection in newer browsers.
 
+* Issue **#574** : Fixed SQL debug trace output.
+
 ## [v5.1-beta.10] - 2018-01-26
 
 * Issue **#567** : Changed `parseUri` to be `parse-uri` to keep it consistently named with respect to other XSLT functions. The old name `parseUri` still works but is deprecated and will be removed in a later version.
