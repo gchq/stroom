@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-alpha.7]
+
 * Issue **#549** : Change to not try to connect to kafka when kafka is not configured and improve failure handling
 
 * Issue **#573** : Fixed viewing folders with no permitted underlying feeds. It now correctly shows blank data screen, rather than System/Data.
@@ -52,17 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#567** : The missing dashboard expression function `extractQueryFromUri` has been added.
 
-* Issue **#567** : Changed `parseUri` to be `parse-uri` to keep it consistently named with respect to other XSLT functions. The old name `parseUri` still works but is deprecated and will be removed in a later version.
-
-* Issue **#567** : The XSLT function `parse-uri` now correctly returns a `schemeSpecificPart` element rather than the incorrectly named `schemeSpecificPort`.
-
-* Issue **#567** : The dashboard expression function `extractSchemeSpecificPortFromUri` has now been corrected to be called `extractSchemeSpecificPartFromUri`.
-
-* Issue **#567** : The missing dashboard expression function `extractQueryFromUri` has been added.
-
 * Issue **#571** : Streams are now updated to have a status of deleted in batches using native SQL and prepared statements rather than using the stream store.
-
-* Issue **#572** : Added a feature to allow easy download of dictionary contents as a text file.
 
 * Issue **#559** : Changed CSS to allow table text selection in newer browsers.
 
@@ -128,39 +120,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#542** : Fix for lazy hibernate object initialisation when stepping cooked data.
 
-* Issue **#540** : Improve description text for stroom.statistics.sql.maxProcessingAge property
-
-* Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
-
-* Issue **#537** : Users without `Manage Policies` permission can now view streams.
-
-* Issue **#522** : Selection of data retention rules now remains when moving rules up or down.
-
-* Issue **#411** : When data retention rules are disabled they are now shown greyed out to indicate this.
-
-* Issue **#536** : Fix for missing visualisation icons.
-
-* Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
-
 * Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
-
-* Issue **#348** : Fixed new menu icons.
 
 * Issue **#203** : Initial release of the new data receipt policy functionality.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
-
-* Issue **#554** : Added a `parseUri` XSLT function.
-
-* Issue **#557** : Added dashboard functions to parse and output URI parts.
-
-* Issue **#552** : Fix for NPE caused by bad XSLT during search data extraction.
-
-* Issue **#560** : Replaced instances of `Files.walk()` with `Files.walkFileTree()`. `Files.walk()` throws errors if any files are deleted or are not accessible during the walk operation. This is a major issue with the Java design for walking files using Java 8 streams. To avoid this issue `Files.walkFileTree()` has now been used in place of `Files.walk()`.
-
-* Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
-
-* Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
 
 * Issue **#521** : Fix for the job list screen to correct the help URL.
 
@@ -175,21 +139,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#521** : Fix for the job list screen to use the help URL system property for displaying context sensitive help.
 
-* Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
-
 * Issue **#511** : Fix for XSLT functions to allow null return values where a value cannot be returned due to an error etc.
 
 * Issue **#515** : Fix handling of errors that occur before search starts sending.
 
-* Issue **#506** : In v5 dashboard table filters were enhanced to allow parameters to be used in include/exclude filters. The implementation included the use of `\` to escape `$` characters that were not to be considered part of a parameter reference. This change resulted in regular expressions requiring `\` being escaped with additional `\` characters. This escaping has now been removed and instead only `$` chars before `{` chars need escaping when necessary with double `$$` chars, e.g. use `$${something` if you actually want `${something` not to be replaced with a parameter.
+* Issue **#506** : In v5 dashboard table filters were enhanced to allow parameters to be used in include/exclude filters. The implementation included the use of ` \ ` to escape `$` characters that were not to be considered part of a parameter reference. This change resulted in regular expressions requiring ` \ ` being escaped with additional ` \ ` characters. This escaping has now been removed and instead only `$` chars before `{` chars need escaping when necessary with double `$$` chars, e.g. use `$${something` if you actually want `${something` not to be replaced with a parameter.
 
 * Issue **#505** : Fix the property UI so all edited value whitespace is trimmed
 
 * Issue **#513** : Now only actively executing tasks are visible as server tasks
 
 * Issue **#483** : When running stream retention jobs the transactions are now set to REQUIRE_NEW to hopefully ensure that the job is done in small batches rather than a larger transaction spanning multiple changes.
-
-* Issue **#511** : Fix for XSLT functions to allow null return values where a value cannot be returned due to an error etc.
 
 * Issue **#508** : Fix directory creation for index shards.
 
@@ -236,8 +196,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Reduced the number of active queries to 100.
 
 * Removed Ehcache and switched to Guava cache.
-
-* Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
 
 * Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
 
@@ -365,18 +323,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#322** : The index cache and other caching beans should now throw exceptions on `get` that were generated during the creation of cached items.
 
-* Issue **#348** : Fixed new menu icons.
-
-* Issue **#515** : Fix handling of errors that occur before search starts sending.
-
-* Issue **#506** : In v5 dashboard table filters were enhanced to allow parameters to be used in include/exclude filters. The implementation included the use of `\` to escape `$` characters that were not to be considered part of a parameter reference. This change resulted in regular expressions requiring `\` being escaped with additional `\` characters. This escaping has now been removed and instead only `$` chars before `{` chars need escaping when necessary with double `$$` chars, e.g. use `$${something` if you actually want `${something` not to be replaced with a parameter.
-
-* Issue **#505** : Fix the property UI so all edited value whitespace is trimmed
-
-* Issue **#513** : Now only actively executing tasks are visible as server tasks
-
-* Issue **#483** : When running stream retention jobs the transactions are now set to REQUIRE_NEW to hopefully ensure that the job is done in small batches rather than a larger transaction spanning multiple changes.
-
 * Issue **#325** : Query history is now cleaned with a separate job. Also query history is only recorded for manual querying, i.e. not when query is automated (on open or auto refresh). Queries are now recorded on a dashboard + query component basis and do not apply across multiple query components in a dashboard.
 
 * Issue **#323** : Fixed an issue where parser elements were not being returned as 'processors' correctly when downstream of a reader.
@@ -394,8 +340,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#313** : Fixed case of `xmlVersion` property on `InvalidXMLCharFilterReader`.
 
 * Issue **#314** : Improved description of `tags` property in `BadTextXMLFilterReader`.
-
-* Issue **#203** : Initial release of the new data receipt policy functionality.
 
 * Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
 
@@ -544,8 +488,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#168** : Code and IO is now loaded lazily into the element presenter panes during stepping which prevents the scrollbar in the editors being in the wrong position.
 
 * Issue **#219** : Changed async dispatch code to work with new lambda classes rather than callbacks.
-
-* Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
 
 * Issue **#221** : Fixed issue where `*.zip.bad` files were being picked up for proxy aggregation.
 
@@ -777,7 +719,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-* Issue **#202** : Initial release of the new data retention policy functionality.
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...HEAD
+[v6.0-alpha.7]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...v6.0-alpha.7
+[v6.0-alpha.4]: https://github.com/gchq/stroom/commits/v6.0-alpha.4
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...HEAD
-[v6.0-alpha.4]: https://github.com/gchq/stroom/compare/v6.0-alpha.3...v6.0-alpha.4ithub.com/gchq/stroom/releases/tag/v5.1-alpha.1
