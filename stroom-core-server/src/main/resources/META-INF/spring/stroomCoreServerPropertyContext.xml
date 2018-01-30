@@ -755,6 +755,13 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.purpose.required"/>
+            <property name="value" value="false"/>
+            <property name="description" value="If you would like users to provide some purpose info when performing a search set this property to true."/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
 
         <!-- SQL statistics store properties -->
         <bean class="stroom.node.shared.GlobalProperty">

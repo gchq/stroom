@@ -66,6 +66,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#559** : Changed CSS to allow table text selection in newer browsers.
 
+* Issue **#574** : Fixed SQL debug trace output.
+
+* Issue **#574** : Fixed SQL UNION code that was resulting in missing streams in the data browser when paging.
+
+* Issue **#590** : Improved data browser performance by using a local cache to remember feeds, stream types, processors, pipelines etc while decorating streams.
+
+* Issue **#150** : Added a property to optionally require specification of search purpose.
+
 ## [v6.0-alpha.4]
 
 * New authentication flow based around OpenId
@@ -134,7 +142,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
 
-<<<<<<< HEAD
 * Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
 
 * Issue **#348** : Fixed new menu icons.
@@ -154,9 +161,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#368** : Fixed hidden job type button on job node list screen when a long cron pattern is used.
 
 * Issue **#538** : Lists of items such as users or user groups were sometimes not being converted into result pages correctly, this is now fixed.
-=======
-## [v5.1-beta.4] - 2017-12-20
->>>>>>> ed653648f8222da8485d96fec781709d56400a83
 
 * Issue **#521** : Fix for the job list screen to correct the help URL.
 
@@ -165,11 +169,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#527** : Fix for XSLT error reporting. All downstream errors were being reported as XSLT module errors and were
  hiding the underlying exception.
 
-<<<<<<< HEAD
-=======
-## [v5.1-beta.3] - 2017-12-18
-
->>>>>>> ed653648f8222da8485d96fec781709d56400a83
 * Issue **#501** : Improve the database teardown process in integration tests to speed up builds.
 
 * Issue **#511** : Fix NPE thrown during pipeline stepping by downstream XSLT.
@@ -178,7 +177,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#524** : Remove dependency on stroom-proxy:stroom-proxy-repo and replaced with duplicated code from stroom-proxy-repo (commit b981e1e)
 
-<<<<<<< HEAD
 * Issue **#511** : Fix for XSLT functions to allow null return values where a value cannot be returned due to an error etc.
 
 * Issue **#515** : Fix handling of errors that occur before search starts sending.
@@ -190,13 +188,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#513** : Now only actively executing tasks are visible as server tasks
 
 * Issue **#483** : When running stream retention jobs the transactions are now set to REQUIRE_NEW to hopefully ensure that the job is done in small batches rather than a larger transaction spanning multiple changes.
-=======
-## [v5.1-beta.2] - 2017-12-12
 
 * Issue **#511** : Fix for XSLT functions to allow null return values where a value cannot be returned due to an error etc.
-
-## [v5.1-beta.1] - 2017-12-11
->>>>>>> ed653648f8222da8485d96fec781709d56400a83
 
 * Issue **#508** : Fix directory creation for index shards.
 
@@ -372,8 +365,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#322** : The index cache and other caching beans should now throw exceptions on `get` that were generated during the creation of cached items.
 
-<<<<<<< HEAD
-=======
 * Issue **#348** : Fixed new menu icons.
 
 * Issue **#515** : Fix handling of errors that occur before search starts sending.
@@ -386,9 +377,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#483** : When running stream retention jobs the transactions are now set to REQUIRE_NEW to hopefully ensure that the job is done in small batches rather than a larger transaction spanning multiple changes.
 
-## [v5.1-alpha.2] - 2017-06-22
-
->>>>>>> ed653648f8222da8485d96fec781709d56400a83
 * Issue **#325** : Query history is now cleaned with a separate job. Also query history is only recorded for manual querying, i.e. not when query is automated (on open or auto refresh). Queries are now recorded on a dashboard + query component basis and do not apply across multiple query components in a dashboard.
 
 * Issue **#323** : Fixed an issue where parser elements were not being returned as 'processors' correctly when downstream of a reader.
@@ -407,13 +395,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#314** : Improved description of `tags` property in `BadTextXMLFilterReader`.
 
-<<<<<<< HEAD
-=======
 * Issue **#203** : Initial release of the new data receipt policy functionality.
 
-## [v5.1-alpha.1] - 2017-06-07
-
->>>>>>> ed653648f8222da8485d96fec781709d56400a83
 * Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
 
 * Issue **#306** : Added a stroom `meta` XSLT function. The XSLT function now exposes `Feed`, `StreamType`, `CreatedTime`, `EffectiveTime` and `Pipeline` meta attributes from the currently processing stream in addition to any other meta data that might apply. To access these meta data attributes of the current stream use `stroom:meta('StreamType')` etc. The `feed-attribute` function is now an alias for the `meta` function and should be considered to be deprecated.
@@ -794,25 +777,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-<<<<<<< HEAD
-* Initial open source release
-
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...HEAD
-[v6.0-alpha.4]: https://github.com/gchq/stroom/compare/v6.0-alpha.3...v6.0-alpha.4
-=======
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-beta.10...HEAD
-[v5.1-beta.10]: https://github.com/gchq/stroom/compare/v5.1-beta.9...v5.1-beta.10
-[v5.1-beta.9]: https://github.com/gchq/stroom/compare/v5.1-beta.8...v5.1-beta.9
-[v5.1-beta.8]: https://github.com/gchq/stroom/compare/v5.1-beta.7...v5.1-beta.8
-[v5.1-beta.7]: https://github.com/gchq/stroom/compare/v5.1-beta.6...v5.1-beta.7
-[v5.1-beta.6]: https://github.com/gchq/stroom/compare/v5.1-beta.5...v5.1-beta.6
-[v5.1-beta.5]: https://github.com/gchq/stroom/compare/v5.1-beta.4...v5.1-beta.5
-[v5.1-beta.4]: https://github.com/gchq/stroom/compare/v5.1-beta.3...v5.1-beta.4
-[v5.1-beta.3]: https://github.com/gchq/stroom/compare/v5.1-beta.2...v5.1-beta.3
-[v5.1-beta.2]: https://github.com/gchq/stroom/compare/v5.1-beta.1...v5.1-beta.2
-[v5.1-beta.1]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...v5.1-beta.1
-[v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
-[v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
->>>>>>> ed653648f8222da8485d96fec781709d56400a83
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...HEAD
+[v6.0-alpha.4]: https://github.com/gchq/stroom/compare/v6.0-alpha.3...v6.0-alpha.4ithub.com/gchq/stroom/releases/tag/v5.1-alpha.1
