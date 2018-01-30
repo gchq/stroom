@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,41 +25,45 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.DashboardUUID;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchBus;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.TimeZones;
+import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.QueryKeyImpl;
+import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.DataSourceFieldsMap;
+import stroom.dashboard.shared.DownloadQueryAction;
+import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.SearchRequest;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.entity.shared.DocRef;
+import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.CreateProcessorEvent;
-import stroom.pipeline.processor.shared.CreateProcessorAction;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.process.shared.CreateProcessorAction;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
-import stroom.query.shared.Automate;
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.ExpressionBuilder;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldsMap;
-import stroom.query.shared.Limits;
-import stroom.query.shared.QueryData;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.Limits;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
@@ -78,6 +82,7 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
@@ -97,6 +102,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
+    private final LocationManager locationManager;
 
     private final IndexLoader indexLoader;
     private final SearchModel searchModel;
@@ -106,10 +112,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ButtonView deleteItemButton;
     private final ButtonView historyButton;
     private final ButtonView favouriteButton;
+    private final ButtonView downloadQueryButton;
     private final ButtonView warningsButton;
 
     private String params;
-    private QueryData queryData;
+    private QueryComponentSettings queryComponentSettings;
     private String currentWarnings;
     private ButtonView processButton;
     private long defaultProcessorTimeLimit = DEFAULT_TIME_LIMIT;
@@ -123,13 +130,17 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final QueryView view,
                           final SearchBus searchBus,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
-                          final ExpressionTreePresenter expressionPresenter, final QueryHistoryPresenter historyPresenter,
+                          final ExpressionTreePresenter expressionPresenter,
+                          final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<EntityChooser> pipelineSelection,
                           final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
-                          final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher,
-                          final ClientSecurityContext securityContext, final ClientPropertyCache clientPropertyCache,
+                          final MenuListPresenter menuListPresenter,
+                          final ClientDispatchAsync dispatcher,
+                          final ClientSecurityContext securityContext,
+                          final ClientPropertyCache clientPropertyCache,
+                          final LocationManager locationManager,
                           final TimeZones timeZones) {
         super(eventBus, view, settingsPresenterProvider);
         this.expressionPresenter = expressionPresenter;
@@ -140,6 +151,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
         this.dispatcher = dispatcher;
+        this.locationManager = locationManager;
 
         view.setExpressionView(expressionPresenter.getView());
         view.setUiHandlers(this);
@@ -163,6 +175,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         deleteItemButton = view.addButton(SvgPresets.DELETE);
         historyButton = view.addButton(SvgPresets.HISTORY.enabled(true));
         favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
+        downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD);
 
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
             processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
@@ -223,8 +236,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         registerHandler(favouriteButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 final ExpressionOperator root = expressionPresenter.write();
-                favouritesPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId(),
-                        getSettings().getDataSource(), root);
+                favouritesPresenter.show(
+                        QueryPresenter.this,
+                        getComponents().getDashboard().getId(),
+                        getSettings().getDataSource(),
+                        root);
+
             }
         }));
         if (processButton != null) {
@@ -239,7 +256,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 showWarnings();
             }
         }));
-        registerHandler(indexLoader.addChangeDataHandler(event -> loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getIndexFieldsMap())));
+        registerHandler(indexLoader.addChangeDataHandler(event ->
+                loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getDataSourceFieldsMap())));
+
+        registerHandler(downloadQueryButton.addClickHandler(event -> downloadQuery()));
     }
 
     public void setErrors(final String errors) {
@@ -265,37 +285,49 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             deleteItemButton.setEnabled(true);
             deleteItemButton.setTitle("Delete");
         }
+
+        final DocRef dataSourceRef = queryComponentSettings.getDataSource();
+
+        if (dataSourceRef == null) {
+            downloadQueryButton.setEnabled(false);
+            downloadQueryButton.setTitle("");
+        } else {
+            downloadQueryButton.setEnabled(true);
+            downloadQueryButton.setTitle("Download Query");
+        }
     }
 
     private void loadDataSource(final DocRef dataSourceRef) {
         searchModel.getIndexLoader().loadDataSource(dataSourceRef);
+        setButtonsEnabled();
     }
 
-    private void loadedDataSource(final DocRef dataSourceRef, final IndexFieldsMap indexFieldsMap) {
+    private void loadedDataSource(final DocRef dataSourceRef, final DataSourceFieldsMap dataSourceFieldsMap) {
         // Create a list of index fields.
-        final List<IndexField> indexedFields = new ArrayList<>();
-        if (indexFieldsMap != null) {
-            for (final IndexField indexField : indexFieldsMap.values()) {
-                if (indexField.isIndexed()) {
-                    indexedFields.add(indexField);
+        final List<DataSourceField> fields = new ArrayList<>();
+        if (dataSourceFieldsMap != null) {
+            for (final DataSourceField field : dataSourceFieldsMap.values()) {
+                if (field.getQueryable()) {
+                    fields.add(field);
                 }
             }
         }
-        Collections.sort(indexedFields);
-        expressionPresenter.init(dispatcher, dataSourceRef, indexedFields);
+        Collections.sort(fields, Comparator.comparing(DataSourceField::getName));
+        expressionPresenter.init(dispatcher, dataSourceRef, fields);
 
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(queryData.getDataSource(), dataSourceRef);
+        builder.append(queryComponentSettings.getDataSource(), dataSourceRef);
 
         if (!builder.isEquals()) {
-            queryData.setDataSource(dataSourceRef);
+            queryComponentSettings.setDataSource(dataSourceRef);
             setDirty(true);
         }
 
         // Only allow searching if we have a data source and have loaded fields from it successfully.
-        getView().setEnabled(dataSourceRef != null && indexedFields.size() > 0);
+        getView().setEnabled(dataSourceRef != null && fields.size() > 0);
 
         init();
+        setButtonsEnabled();
     }
 
     private void addOperator() {
@@ -303,7 +335,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void addTerm() {
-        final DocRef dataSourceRef = queryData.getDataSource();
+        final DocRef dataSourceRef = queryComponentSettings.getDataSource();
 
         if (dataSourceRef == null) {
             warnNoDataSource();
@@ -331,7 +363,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final ExpressionOperator root = expressionPresenter.write();
 
         final QueryData queryData = new QueryData();
-        queryData.setDataSource(this.queryData.getDataSource());
+        queryData.setDataSource(queryComponentSettings.getDataSource());
         queryData.setExpression(root);
 
         final EntityChooser chooser = pipelineSelection.get();
@@ -378,9 +410,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {
         // Now create the processor filter using the find stream criteria.
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.setQueryData(queryData);
-        dispatcher.exec(new CreateProcessorAction(pipeline, findStreamCriteria, true, 1)).onSuccess(streamProcessorFilter -> CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter));
+        dispatcher.exec(new CreateProcessorAction(pipeline, queryData, true, 1)).onSuccess(streamProcessorFilter -> CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter));
     }
 
     private void showWarnings() {
@@ -425,7 +455,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void run(final boolean incremental,
                      final boolean storeHistory) {
-        final DocRef dataSourceRef = queryData.getDataSource();
+        final DocRef dataSourceRef = queryComponentSettings.getDataSource();
 
         if (dataSourceRef == null) {
             warnNoDataSource();
@@ -446,21 +476,20 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Override
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
-        queryData = getSettings();
+        queryComponentSettings = getSettings();
 
         // Create and register the search model.
         final Dashboard dashboard = getComponents().getDashboard();
-        final QueryKeyImpl initialQueryKey = new QueryKeyImpl(dashboard.getId(), dashboard.getName(),
-                getComponentData().getId());
-        searchModel.setInitialQueryKey(initialQueryKey);
+        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getId(), dashboard.getName(), getComponentData().getId());
+        searchModel.setDashboardUUID(dashboardUUID);
 
         // Read data source.
-        loadDataSource(queryData.getDataSource());
+        loadDataSource(queryComponentSettings.getDataSource());
 
         // Read expression.
-        ExpressionOperator root = queryData.getExpression();
+        ExpressionOperator root = queryComponentSettings.getExpression();
         if (root == null) {
-            root = new ExpressionBuilder(Op.AND).build();
+            root = new ExpressionOperator.Builder(Op.AND).build();
         }
         setExpression(root);
     }
@@ -470,8 +499,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         super.write(componentData);
 
         // Write expression.
-        queryData.setExpression(expressionPresenter.write());
-        componentData.setSettings(queryData);
+        queryComponentSettings.setExpression(expressionPresenter.write());
+        componentData.setSettings(queryComponentSettings);
     }
 
     @Override
@@ -498,7 +527,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Override
     public void changeSettings() {
         super.changeSettings();
-        loadDataSource(queryData.getDataSource());
+        loadDataSource(queryComponentSettings.getDataSource());
     }
 
     @Override
@@ -511,29 +540,29 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         return TYPE;
     }
 
-    private QueryData getSettings() {
+    private QueryComponentSettings getSettings() {
         ComponentSettings settings = getComponentData().getSettings();
-        if (settings == null || !(settings instanceof QueryData)) {
+        if (settings == null || !(settings instanceof QueryComponentSettings)) {
             settings = createSettings();
             getComponentData().setSettings(settings);
         }
 
-        return (QueryData) settings;
+        return (QueryComponentSettings) settings;
     }
 
     private Automate getAutomate() {
-        final QueryData queryData = getSettings();
-        Automate automate = queryData.getAutomate();
+        final QueryComponentSettings queryComponentSettings = getSettings();
+        Automate automate = queryComponentSettings.getAutomate();
         if (automate == null) {
             automate = new Automate();
-            queryData.setAutomate(automate);
+            queryComponentSettings.setAutomate(automate);
         }
 
         return automate;
     }
 
     private ComponentSettings createSettings() {
-        return new QueryData();
+        return new QueryComponentSettings();
     }
 
     public SearchModel getSearchModel() {
@@ -589,7 +618,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final stroom.query.client.Item selectedItem = getSelectedItem();
         final boolean hasSelection = selectedItem != null;
 
-        final List<Item> menuItems = new ArrayList<Item>();
+        final List<Item> menuItems = new ArrayList<>();
         menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null, true, () -> addTerm()));
         menuItems.add(new IconMenuItem(2, SvgPresets.OPERATOR, SvgPresets.OPERATOR, "Add Operator", null,
                 true, () -> addOperator()));
@@ -630,6 +659,35 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             }
         };
         ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+    }
+
+    private void downloadQuery() {
+        if (queryComponentSettings.getDataSource() != null) {
+
+            SearchRequest searchRequest = searchModel.buildSearchRequest(
+                    queryComponentSettings.getExpression(),
+                    params,
+                    false,
+                    false,
+                    null);
+
+            final Dashboard dashboard = getComponents().getDashboard();
+            final DashboardUUID dashboardUUID = new DashboardUUID(
+                    dashboard.getId(),
+                    dashboard.getName(),
+                    getComponentData().getId());
+            final DashboardQueryKey dashboardQueryKey = DashboardQueryKey.create(
+                    dashboardUUID.getUUID(),
+                    dashboard.getId(),
+                    dashboardUUID.getComponentId());
+
+            if (dashboardQueryKey != null) {
+                dispatcher.exec(
+                        new DownloadQueryAction(dashboardQueryKey, searchRequest))
+                        .onSuccess(result ->
+                                ExportFileCompleteUtil.onSuccess(locationManager, null, result));
+            }
+        }
     }
 
     public interface QueryView extends View, HasUiHandlers<QueryUiHandlers> {

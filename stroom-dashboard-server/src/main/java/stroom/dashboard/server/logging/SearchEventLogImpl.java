@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.logging;
+package stroom.dashboard.server.logging;
 
 import event.logging.Criteria;
 import event.logging.Criteria.DataSources;
@@ -26,29 +26,36 @@ import event.logging.Query;
 import event.logging.Query.Advanced;
 import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.server.DataSourceProviderRegistry;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.datasource.DataSourceProviderRegistry;
+import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.QueryDataLogUtil;
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.DataSource;
-import stroom.query.shared.ExpressionOperator;
+import stroom.logging.StroomEventLoggingService;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Insecure;
-import stroom.util.logging.StroomLogger;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @Component
 @Insecure
 public class SearchEventLogImpl implements SearchEventLog {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SearchEventLogImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchEventLogImpl.class);
 
-    @Resource
-    private StroomEventLoggingService eventLoggingService;
-    @Resource
-    private DataSourceProviderRegistry dataSourceProviderRegistry;
-    @Resource
-    private DictionaryService dictionaryService;
+    private final StroomEventLoggingService eventLoggingService;
+    private final DataSourceProviderRegistry dataSourceProviderRegistry;
+    private final DictionaryStore dictionaryStore;
+
+    @Inject
+    public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
+                              final DataSourceProviderRegistry dataSourceProviderRegistry,
+                              final DictionaryStore dictionaryStore) {
+        this.eventLoggingService = eventLoggingService;
+        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
+        this.dictionaryStore = dictionaryStore;
+    }
 
     @Override
     public void search(final DocRef dataSourceRef,
@@ -122,7 +129,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
             event.getEventDetail().setExport(exp);
             event.getEventDetail().setPurpose(getPurpose(queryInfo));
-            
+
             eventLoggingService.log(event);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -155,21 +162,21 @@ public class SearchEventLogImpl implements SearchEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
-    
-    public String getDataSourceName(final DocRef dataSourceRef) {
-        if (dataSourceRef == null) {
+
+    public String getDataSourceName(final DocRef docRef) {
+        if (docRef == null) {
             return null;
         }
 
-        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(dataSourceRef);
-        if (dataSource == null) {
-            return null;
-        }
+//        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(docRef);
+//        if (dataSource == null) {
+//            return null;
+//        }
 
-        return dataSource.getName();
+        return docRef.getName();
     }
 
     private Purpose getPurpose(final String queryInfo) {
@@ -181,12 +188,12 @@ public class SearchEventLogImpl implements SearchEventLog {
             return null;
         }
     }
-    
+
     private Query getQuery(final ExpressionOperator expression) {
         final Query query = new Query();
         final Advanced advanced = new Advanced();
         query.setAdvanced(advanced);
-        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryService, expression);
+        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryStore, expression);
         return query;
     }
 }

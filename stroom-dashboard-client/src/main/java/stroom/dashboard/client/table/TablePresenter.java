@@ -328,7 +328,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     .paramMap(activeSearch.getParamMap())
                                     .incremental(true)
                                     .storeHistory(false)
-                                    .searchPurpose(activeSearch.getSearchPurpose())
+                                    .queryInfo(activeSearch.getQueryInfo())
                                     .build();
 
                             final SearchRequest searchRequest = new SearchRequest(search, requestMap, timeZones.getTimeZone());
