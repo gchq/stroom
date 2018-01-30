@@ -101,7 +101,7 @@ public class SearchModel {
                        final String params,
                        final boolean incremental,
                        final boolean storeHistory,
-                       final String searchPurpose) {
+                       final String queryInfo) {
         // Toggle the request mode or start a new search.
         switch (mode) {
             case ACTIVE:
@@ -111,7 +111,7 @@ public class SearchModel {
                 break;
             case INACTIVE:
                 reset();
-                startNewSearch(expression, params, incremental, storeHistory, searchPurpose);
+                startNewSearch(expression, params, incremental, storeHistory, queryInfo);
                 break;
             case PAUSED:
                 // Tell every component that it should want data.
@@ -130,7 +130,7 @@ public class SearchModel {
                                 final String params,
                                 final boolean incremental,
                                 final boolean storeHistory,
-                                final String searchPurpose) {
+                                final String queryInfo) {
         final Map<String, ComponentSettings> resultComponentMap = createResultComponentMap();
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
@@ -154,7 +154,7 @@ public class SearchModel {
                         .dateTimeLocale(timeZones.getTimeZone())
                         .incremental(incremental)
                         .storeHistory(storeHistory)
-                        .searchPurpose(searchPurpose)
+                        .queryInfo(queryInfo)
                         .build();
                 activeSearch = currentSearch;
 

@@ -32,6 +32,7 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.query.QueryInfoPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
@@ -73,6 +74,7 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
     private final DashboardLayoutPresenter layoutPresenter;
     private final Provider<ComponentAddPresenter> addPresenterProvider;
     private final Components components;
+    private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private final ButtonView addButton;
     private ButtonPanel leftButtons;
     private ButtonPanel rightButtons;
@@ -80,16 +82,21 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
     private boolean loaded;
 
     private String currentParams;
+    private String lastUsedQueryInfo;
 
     @Inject
-    public DashboardPresenter(final EventBus eventBus, final DashboardView view,
+    public DashboardPresenter(final EventBus eventBus,
+                              final DashboardView view,
                               final DashboardLayoutPresenter layoutPresenter,
-                              final Provider<ComponentAddPresenter> addPresenterProvider, final Components components,
+                              final Provider<ComponentAddPresenter> addPresenterProvider,
+                              final Components components,
+                              final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                               final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.layoutPresenter = layoutPresenter;
         this.addPresenterProvider = addPresenterProvider;
         this.components = components;
+        this.queryInfoPresenterProvider = queryInfoPresenterProvider;
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
         saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
@@ -257,8 +264,8 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
             }
 
             // Set params on the component if it needs them.
-            if (component instanceof UsesParams) {
-                ((UsesParams) component).onParamsChanged(currentParams);
+            if (component instanceof Queryable) {
+                ((Queryable) component).onQuery(currentParams, null);
             }
 
             component.read(componentData);
@@ -344,10 +351,25 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
             setDirty(true);
 
             currentParams = trimmed;
+
+            // Get a sub list of components that can be queried.
+            final List<Queryable> queryableComponents = new ArrayList<>();
             for (final Component component : components) {
-                if (component instanceof UsesParams) {
-                    ((UsesParams) component).onParamsChanged(trimmed);
+                if (component instanceof Queryable) {
+                    queryableComponents.add((Queryable) component);
                 }
+            }
+
+            // If we have some queryable components then make sure we get query info for them.
+            if (queryableComponents.size() > 0) {
+                queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
+                    if (state.isOk()) {
+                        lastUsedQueryInfo = state.getQueryInfo();
+                        for (final Queryable queryable : queryableComponents) {
+                            queryable.onQuery(currentParams, lastUsedQueryInfo);
+                        }
+                    }
+                });
             }
         }
     }

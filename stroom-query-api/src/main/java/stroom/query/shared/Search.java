@@ -34,7 +34,7 @@ public class Search implements SharedObject {
     private String dateTimeLocale = "UTC";
     private boolean incremental = true;
     private boolean storeHistory = false;
-    private String searchPurpose;
+    private String queryInfo;
 
     public Search() {
         // Default constructor necessary for GWT serialisation.
@@ -56,7 +56,7 @@ public class Search implements SharedObject {
                   final String dateTimeLocale,
                   final boolean incremental,
                   final boolean storeHistory,
-                  final String searchPurpose) {
+                  final String queryInfo) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
@@ -64,7 +64,7 @@ public class Search implements SharedObject {
         this.dateTimeLocale = dateTimeLocale;
         this.incremental = incremental;
         this.storeHistory = storeHistory;
-        this.searchPurpose = searchPurpose;
+        this.queryInfo = queryInfo;
     }
 
     public DocRef getDataSourceRef() {
@@ -95,8 +95,8 @@ public class Search implements SharedObject {
         return storeHistory;
     }
 
-    public String getSearchPurpose() {
-        return searchPurpose;
+    public String getQueryInfo() {
+        return queryInfo;
     }
 
     public static class Builder {
@@ -135,8 +135,8 @@ public class Search implements SharedObject {
             return this;
         }
 
-        public Builder searchPurpose(final String searchPurpose) {
-            this.instance.searchPurpose = searchPurpose;
+        public Builder queryInfo(final String queryInfo) {
+            this.instance.queryInfo = queryInfo;
             return this;
         }
 

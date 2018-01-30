@@ -17,6 +17,7 @@
 package stroom;
 
 import java.io.File;
+import java.nio.file.Path;
 
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
@@ -59,7 +60,7 @@ public class StartupHelper {
         }
     }
 
-    public static void fixArgs(final String[] args, final String tmpPath, final boolean clean) {
+    public static void fixArgs(final String[] args, final Path tmpPath, final boolean clean) {
         final String userName = System.getProperty("user.name");
         final String workingPath = System.getProperty("user.dir");
         final File workingDir = new File(workingPath);
@@ -85,12 +86,11 @@ public class StartupHelper {
             }
         }
 
-        final File tmpFile = new File(projectDir, tmpPath);
-        FileUtil.mkdirs(tmpFile);
+        FileUtil.mkdirs(tmpPath.toFile());
 
         if (clean) {
-            System.out.println("Cleaning " + tmpFile.getAbsolutePath());
-            FileSystemUtil.deleteContents(tmpFile);
+            System.out.println("Cleaning " + tmpPath.toAbsolutePath().toString());
+            FileSystemUtil.deleteContents(tmpPath.toFile());
         }
 
         final String portEnd = String.valueOf(Math.abs(userName.hashCode() % 100));
@@ -104,10 +104,10 @@ public class StartupHelper {
         }
 
         setPath(args, "-war", runFile);
-        setPath(args, "-logdir", new File(tmpFile, "log"));
-        setPath(args, "-gen", new File(tmpFile, "gen"));
-        setPath(args, "-extra", new File(tmpFile, "extra"));
-        setPath(args, "-workDir", new File(tmpFile, "work"));
+        setPath(args, "-logdir", tmpPath.resolve("log").toFile());
+        setPath(args, "-gen", tmpPath.resolve("gen").toFile());
+        setPath(args, "-extra", tmpPath.resolve("extra").toFile());
+        setPath(args, "-workDir", tmpPath.resolve("work").toFile());
 
         final StringBuilder sb = new StringBuilder();
         for (final String arg : args) {

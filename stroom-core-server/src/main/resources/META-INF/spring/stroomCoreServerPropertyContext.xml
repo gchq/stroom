@@ -838,10 +838,26 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+
+        <!-- Query info popup -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.search.purpose.required"/>
+            <property name="name" value="stroom.query.infoPopup.enabled"/>
             <property name="value" value="false"/>
-            <property name="description" value="If you would like users to provide some purpose info when performing a search set this property to true."/>
+            <property name="description" value="If you would like users to provide some query info when performing a query set this property to true."/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.query.infoPopup.title"/>
+            <property name="value" value="Please Provide Query Info"/>
+            <property name="description" value="The title of the query info popup."/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.query.infoPopup.validationRegex"/>
+            <property name="value" value="^[\s\S]{3,}$"/>
+            <property name="description" value="A regex used to validate query info."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>

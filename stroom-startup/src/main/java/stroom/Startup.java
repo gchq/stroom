@@ -24,16 +24,29 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Startup extends StartupHelper {
     public static final String PROJECT_DIR = "stroom-startup";
     public static final String JAVA_SOURCE_DIR = "src/main/java";
     public static final String RESOURCES_DIR = "src/main/resources";
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws Exception {
+        final String workingPath = System.getProperty("user.dir");
+        final Path tempDir = Paths.get(workingPath).resolve(".temp");
+        if (!Files.isDirectory(tempDir)) {
+            Files.createDirectories(tempDir);
+        }
+
+        System.out.println("Setting temp dir to: " + tempDir.toAbsolutePath().toString());
+        System.setProperty("java.io.tmpdir", tempDir.toAbsolutePath().toString());
+
         addSourcesToClasspath();
         FileUtil.useDevTempDir();
-        fixArgs(args, "gwt-DevMode", true);
+
+        fixArgs(args, tempDir.resolve("gwt-DevMode"), true);
         System.out.println("Starting DevMode with arguments: ");
         for (String arg : args){
             System.out.println("  " + arg);

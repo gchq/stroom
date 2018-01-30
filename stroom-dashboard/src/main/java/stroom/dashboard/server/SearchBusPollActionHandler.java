@@ -193,12 +193,12 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             storeSearchHistory(queryKey, search);
 
             // Log this search action for the current user.
-            searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getSearchPurpose());
+            searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
 
             return searchResultCollector;
 
         } catch (final Exception e) {
-            searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getSearchPurpose(), e);
+            searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
             throw e;
         }
     }
