@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#150** : Added a property to optionally require specification of search purpose.
+
 ## [v5.1-beta.11] - 2018-01-29
 
 * Issue **#573** : Fixed viewing folders with no permitted underlying feeds. It now correctly shows blank data screen, rather than System/Data.
