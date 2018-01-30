@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.1-beta.12] - 2018-01-30
+
 * Issue **#150** : Added a property to optionally require specification of search purpose.
 
 ## [v5.1-beta.11] - 2018-01-29
