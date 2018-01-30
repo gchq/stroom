@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#570** : Refactor the heap histogram internal statistics for the new InternalStatisticsReceiver
+
 ## [v6.0-alpha.7]
 
 * Issue **#549** : Change to not try to connect to kafka when kafka is not configured and improve failure handling
