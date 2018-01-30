@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.logging;
+package stroom.logging;
 
-import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.entity.shared.DocRef;
+import stroom.query.shared.ExpressionOperator;
 
 public interface SearchEventLog {
-    void search(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose);
+    void search(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo);
 
-    void search(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose, Exception ex);
+    void search(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
 
-    void batchSearch(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose);
+    void batchSearch(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo);
 
-    void batchSearch(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose, Exception ex);
+    void batchSearch(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
 
-    void downloadResults(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose);
+    void downloadResults(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo);
 
-    void downloadResults(DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose, Exception ex);
+    void downloadResults(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
 
-    void downloadResults(String type, DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose, Exception ex);
+    void downloadResults(String type, DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
 
-    void search(String type, DocRef dataSourceRef, ExpressionOperator expression, String searchPurpose, Exception ex);
+    void search(String type, DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
 }

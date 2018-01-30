@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.logging;
+package stroom.logging;
 
 import event.logging.Criteria;
 import event.logging.Criteria.DataSources;
@@ -26,81 +26,80 @@ import event.logging.Query;
 import event.logging.Query.Advanced;
 import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.datasource.DataSourceProviderRegistry;
-import stroom.dictionary.server.DictionaryStore;
+import stroom.dashboard.server.DataSourceProviderRegistry;
+import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.QueryDataLogUtil;
-import stroom.logging.StroomEventLoggingService;
-import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.entity.shared.DocRef;
+import stroom.query.shared.DataSource;
+import stroom.query.shared.ExpressionOperator;
 import stroom.security.Insecure;
+import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 
 @Component
 @Insecure
 public class SearchEventLogImpl implements SearchEventLog {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SearchEventLogImpl.class);
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(SearchEventLogImpl.class);
 
     @Resource
     private StroomEventLoggingService eventLoggingService;
     @Resource
     private DataSourceProviderRegistry dataSourceProviderRegistry;
     @Resource
-    private DictionaryStore dictionaryStore;
+    private DictionaryService dictionaryService;
 
     @Override
     public void search(final DocRef dataSourceRef,
                        final ExpressionOperator expression,
-                       final String searchPurpose) {
-        search("Search", dataSourceRef, expression, searchPurpose, null);
+                       final String queryInfo) {
+        search("Search", dataSourceRef, expression, queryInfo, null);
     }
 
     @Override
     public void search(final DocRef dataSourceRef,
                        final ExpressionOperator expression,
-                       final String searchPurpose,
+                       final String queryInfo,
                        final Exception ex) {
-        search("Search", dataSourceRef, expression, searchPurpose, ex);
+        search("Search", dataSourceRef, expression, queryInfo, ex);
     }
 
     @Override
     public void batchSearch(final DocRef dataSourceRef,
                             final ExpressionOperator expression,
-                            final String searchPurpose) {
-        search("Batch search", dataSourceRef, expression, searchPurpose, null);
+                            final String queryInfo) {
+        search("Batch search", dataSourceRef, expression, queryInfo, null);
     }
 
     @Override
     public void batchSearch(final DocRef dataSourceRef,
                             final ExpressionOperator expression,
-                            final String searchPurpose,
+                            final String queryInfo,
                             final Exception ex) {
-        search("Batch search", dataSourceRef, expression, searchPurpose, ex);
+        search("Batch search", dataSourceRef, expression, queryInfo, ex);
     }
 
     @Override
     public void downloadResults(final DocRef dataSourceRef,
                                 final ExpressionOperator expression,
-                                final String searchPurpose) {
-        downloadResults("Batch search", dataSourceRef, expression, searchPurpose, null);
+                                final String queryInfo) {
+        downloadResults("Batch search", dataSourceRef, expression, queryInfo, null);
     }
 
     @Override
     public void downloadResults(final DocRef dataSourceRef,
                                 final ExpressionOperator expression,
-                                final String searchPurpose,
+                                final String queryInfo,
                                 final Exception ex) {
-        downloadResults("Download search results", dataSourceRef, expression, searchPurpose, ex);
+        downloadResults("Download search results", dataSourceRef, expression, queryInfo, ex);
     }
 
     @Override
     public void downloadResults(final String type,
                                 final DocRef dataSourceRef,
                                 final ExpressionOperator expression,
-                                final String searchPurpose,
+                                final String queryInfo,
                                 final Exception ex) {
         try {
             final String dataSourceName = getDataSourceName(dataSourceRef);
@@ -122,8 +121,8 @@ public class SearchEventLogImpl implements SearchEventLog {
             final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
 
             event.getEventDetail().setExport(exp);
-            event.getEventDetail().setPurpose(getPurpose(searchPurpose));
-
+            event.getEventDetail().setPurpose(getPurpose(queryInfo));
+            
             eventLoggingService.log(event);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -134,7 +133,7 @@ public class SearchEventLogImpl implements SearchEventLog {
     public void search(final String type,
                        final DocRef dataSourceRef,
                        final ExpressionOperator expression,
-                       final String searchPurpose,
+                       final String queryInfo,
                        final Exception ex) {
         try {
             String dataSourceName = getDataSourceName(dataSourceRef);
@@ -152,42 +151,42 @@ public class SearchEventLogImpl implements SearchEventLog {
 
             final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
             event.getEventDetail().setSearch(search);
-            event.getEventDetail().setPurpose(getPurpose(searchPurpose));
+            event.getEventDetail().setPurpose(getPurpose(queryInfo));
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e, e);
         }
     }
-
-    public String getDataSourceName(final DocRef docRef) {
-        if (docRef == null) {
+    
+    public String getDataSourceName(final DocRef dataSourceRef) {
+        if (dataSourceRef == null) {
             return null;
         }
 
-//        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(docRef);
-//        if (dataSource == null) {
-//            return null;
-//        }
+        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(dataSourceRef);
+        if (dataSource == null) {
+            return null;
+        }
 
-        return docRef.getName();
+        return dataSource.getName();
     }
 
-    private Purpose getPurpose(final String searchPurpose) {
-        if (null != searchPurpose) {
+    private Purpose getPurpose(final String queryInfo) {
+        if (null != queryInfo) {
             final Purpose purpose = new Purpose();
-            purpose.setJustification(searchPurpose);
+            purpose.setJustification(queryInfo);
             return purpose;
         } else {
             return null;
         }
     }
-
+    
     private Query getQuery(final ExpressionOperator expression) {
         final Query query = new Query();
         final Advanced advanced = new Advanced();
         query.setAdvanced(advanced);
-        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryStore, expression);
+        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryService, expression);
         return query;
     }
 }

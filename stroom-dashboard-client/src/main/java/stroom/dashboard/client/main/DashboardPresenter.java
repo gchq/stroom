@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.main;
@@ -33,7 +32,7 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
+import stroom.dashboard.client.query.QueryInfoPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
@@ -44,10 +43,11 @@ import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.document.client.DocumentTabData;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.document.client.event.WriteDocumentEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.EntityTabData;
+import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.entity.client.event.SaveEntityEvent;
+import stroom.entity.client.event.ShowSaveAsEntityDialogEvent;
+import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.Icon;
@@ -66,16 +66,15 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Dashboard>
-        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers {
-    private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
+public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.DashboardView, Dashboard>
+        implements FlexLayoutChangeHandler, EntityTabData, DashboardUiHandlers {
     private final ButtonView saveButton;
+    private final ButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
     private final Provider<ComponentAddPresenter> addPresenterProvider;
     private final Components components;
+    private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private final ButtonView addButton;
     private ButtonPanel leftButtons;
     private ButtonPanel rightButtons;
@@ -83,23 +82,35 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private boolean loaded;
 
     private String currentParams;
+    private String lastUsedQueryInfo;
 
     @Inject
-    public DashboardPresenter(final EventBus eventBus, final DashboardView view,
+    public DashboardPresenter(final EventBus eventBus,
+                              final DashboardView view,
                               final DashboardLayoutPresenter layoutPresenter,
-                              final Provider<ComponentAddPresenter> addPresenterProvider, final Components components,
+                              final Provider<ComponentAddPresenter> addPresenterProvider,
+                              final Components components,
+                              final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                               final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.layoutPresenter = layoutPresenter;
         this.addPresenterProvider = addPresenterProvider;
         this.components = components;
+        this.queryInfoPresenterProvider = queryInfoPresenterProvider;
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
+        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
         saveButton.setEnabled(false);
+        saveAsButton.setEnabled(false);
 
         registerHandler(saveButton.addClickHandler(event -> {
             if (saveButton.isEnabled()) {
-                WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+                SaveEntityEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+            }
+        }));
+        registerHandler(saveAsButton.addClickHandler(event -> {
+            if (saveAsButton.isEnabled()) {
+                ShowSaveAsEntityDialogEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
             }
         }));
 
@@ -156,12 +167,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         ShowPopupEvent.fire(this, presenter, PopupType.POPUP, popupPosition, null, target);
     }
 
-    public void setParams(final String params) {
-        logger.log(Level.INFO, "Dashboard Presenter setParams " + params);
-
-        this.currentParams = params;
-    }
-
     @Override
     protected void onRead(final Dashboard dashboard) {
         if (!loaded) {
@@ -173,11 +178,9 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
             final DashboardConfig dashboardData = dashboard.getDashboardData();
             if (dashboardData != null) {
-                if (null == currentParams) {
-                    currentParams = "";
-                    if (dashboardData.getParameters() != null && dashboardData.getParameters().trim().length() > 0) {
-                        currentParams = dashboardData.getParameters().trim();
-                    }
+                currentParams = "";
+                if (dashboardData.getParameters() != null && dashboardData.getParameters().trim().length() > 0) {
+                    currentParams = dashboardData.getParameters().trim();
                 }
                 getView().setParams(currentParams);
 
@@ -261,8 +264,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             }
 
             // Set params on the component if it needs them.
-            if (component instanceof UsesParams) {
-                ((UsesParams) component).onParamsChanged(currentParams);
+            if (component instanceof Queryable) {
+                ((Queryable) component).onQuery(currentParams, null);
             }
 
             component.read(componentData);
@@ -298,6 +301,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         super.onPermissionsCheck(readOnly);
 
         saveButton.setEnabled(isDirty() && !readOnly);
+        saveAsButton.setEnabled(true);
 
         addButton.setEnabled(!readOnly);
         if (!readOnly) {
@@ -347,10 +351,25 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             setDirty(true);
 
             currentParams = trimmed;
+
+            // Get a sub list of components that can be queried.
+            final List<Queryable> queryableComponents = new ArrayList<>();
             for (final Component component : components) {
-                if (component instanceof UsesParams) {
-                    ((UsesParams) component).onParamsChanged(trimmed);
+                if (component instanceof Queryable) {
+                    queryableComponents.add((Queryable) component);
                 }
+            }
+
+            // If we have some queryable components then make sure we get query info for them.
+            if (queryableComponents.size() > 0) {
+                queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
+                    if (state.isOk()) {
+                        lastUsedQueryInfo = state.getQueryInfo();
+                        for (final Queryable queryable : queryableComponents) {
+                            queryable.onQuery(currentParams, lastUsedQueryInfo);
+                        }
+                    }
+                });
             }
         }
     }
