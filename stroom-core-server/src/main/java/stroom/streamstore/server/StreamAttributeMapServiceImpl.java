@@ -21,9 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.dictionary.shared.DictionaryService;
-import stroom.entity.server.MarshalOptions;
-import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
@@ -85,7 +82,6 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final StreamMaintenanceService streamMaintenanceService;
     private final SecurityContext securityContext;
-    private final Provider<MarshalOptions> marshalOptionsProvider;
 
     @Inject
     StreamAttributeMapServiceImpl(@Named("cachedFeedService") final FeedService feedService,
@@ -98,8 +94,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                                   final StroomEntityManager entityManager,
                                   final StreamAttributeKeyService streamAttributeKeyService,
                                   final StreamMaintenanceService streamMaintenanceService,
-                                  final SecurityContext securityContext,
-                                  final Provider<MarshalOptions> marshalOptionsProvider) {
+                                  final SecurityContext securityContext) {
         this.feedService = feedService;
         this.pipelineService = pipelineService;
         this.streamTypeService = streamTypeService;
@@ -111,15 +106,11 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.streamMaintenanceService = streamMaintenanceService;
         this.securityContext = securityContext;
-        this.marshalOptionsProvider = marshalOptionsProvider;
     }
 
     @Override
     public BaseResultList<StreamAttributeMap> find(final FindStreamAttributeMapCriteria criteria)
             throws RuntimeException {
-        final MarshalOptions marshalOptions = marshalOptionsProvider.get();
-        marshalOptions.setDisabled(true);
-
         BaseResultList<StreamAttributeMap> result;
 
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
@@ -167,8 +158,6 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
 
             result = new BaseResultList<>(streamMDList, streamList.getPageResponse().getOffset(),
                     streamList.getPageResponse().getTotal(), streamList.getPageResponse().isExact());
-        } finally {
-            marshalOptions.setDisabled(false);
         }
 
         return result;
@@ -282,7 +271,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                             // failures as we don't mind users seeing streams even if they do
                             // not have visibility of the pipeline that created the stream.
                             final EntityRef pipelineRef = new EntityRef(PipelineEntity.ENTITY_TYPE, streamProcessor.getPipeline().getId());
-                            localCache.computeIfAbsent(pipelineRef, innerKey -> safeOptional(() -> pipelineEntityService.loadById(innerKey.id))).ifPresent(obj -> streamProcessor.setPipeline((PipelineEntity) obj));
+                            localCache.computeIfAbsent(pipelineRef, innerKey -> safeOptional(() -> pipelineService.loadById(innerKey.id))).ifPresent(obj -> streamProcessor.setPipeline((PipelineEntity) obj));
                         }
                     });
                 }
