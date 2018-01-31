@@ -1002,6 +1002,15 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.stroomStats.internalStats.eventsPerMessage"/>
+            <property name="value"
+                      value="100"/>
+            <property name="description"
+                      value="The number of internal statistic events to batch together in a single Kafka message. High numbers reduce network overhead but limit the parallelism."/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
 
         <!-- SQL Statistics -->
         <bean class="stroom.node.shared.GlobalProperty">
