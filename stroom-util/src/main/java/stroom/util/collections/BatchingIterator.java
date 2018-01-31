@@ -8,7 +8,12 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * Utility class for converting a stream of T into batches of T
+ * @param <T> The type of object in the stream
+ */
 public class BatchingIterator<T> implements Iterator<List<T>> {
+
     /**
      * Given a stream, convert it to a stream of batches no greater than the
      * batchSize.
