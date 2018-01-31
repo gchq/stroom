@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#593** : Fixed node save RPC call.
+
 * Issue **#591** : Made the query info popup more configurable with a title, validation regex etc. The popup will now only be displayed when enabled and when a manual user action takes place, e.g. clicking a search button or running a parameterised execution with one or more queries.
 
 ## [v6.0-alpha.7]
