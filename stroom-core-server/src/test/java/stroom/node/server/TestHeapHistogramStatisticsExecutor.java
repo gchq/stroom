@@ -11,8 +11,8 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.statistics.server.sql.StatisticEvent;
-import stroom.statistics.server.sql.Statistics;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;
 
@@ -23,13 +23,12 @@ import java.util.regex.Pattern;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestHeapHistogramStatisticsExecutor {
+
     @Mock
-    private
-    Statistics statistics;
+    private InternalStatisticsReceiver mockInternalStatisticsReceiver;
 
     @Captor
-    private
-    ArgumentCaptor<List<StatisticEvent>> eventsCaptor;
+    private ArgumentCaptor<List<InternalStatisticEvent>> eventsCaptor;
 
     private MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
     private HeapHistogramService heapHistogramService = new HeapHistogramService(mockStroomPropertyService);
@@ -46,30 +45,26 @@ public class TestHeapHistogramStatisticsExecutor {
             mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "^stroom\\..*$");
             mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "jmap");
 
-            executor = new HeapHistogramStatisticsExecutor(heapHistogramService, statistics, nodeCache);
+            executor = new HeapHistogramStatisticsExecutor(heapHistogramService, mockInternalStatisticsReceiver, nodeCache);
         } catch (Exception e) {
             throw new RuntimeException("Error during test setup", e);
         }
     }
 
-    private static Function<StatisticEvent, String> STAT_TO_CLASS_NAME_MAPPER = statisticEvent ->
-            statisticEvent.getTagValue(HeapHistogramStatisticsExecutor.CLASS_NAME_TAG_NAME);
+    private static Function<InternalStatisticEvent, String> STAT_TO_CLASS_NAME_MAPPER = event ->
+            event.getTags().get(HeapHistogramStatisticsExecutor.TAG_NAME_CLASS_NAME);
 
     @Test
     public void testExec_stroomClasses() throws InterruptedException {
-
-//        //Given
-//        Mockito.when(statisticsFactory.instance())
-//                .thenReturn(statistics);
 
         //When
         executor.exec();
 
         //Then
-        Mockito.verify(statistics, Mockito.timeout(5_000).times(2))
+        Mockito.verify(mockInternalStatisticsReceiver, Mockito.timeout(5_000).times(2))
                 .putEvents(eventsCaptor.capture());
 
-        List<List<StatisticEvent>> argValues = eventsCaptor.getAllValues();
+        List<List<InternalStatisticEvent>> argValues = eventsCaptor.getAllValues();
 
         //We must have some stroom classes in the list
         Assert.assertTrue(argValues.get(0).size() > 0);
@@ -79,7 +74,7 @@ public class TestHeapHistogramStatisticsExecutor {
 
 
         //Ensure all class names start with stroom as that was the regex applied in the property
-        for (List<StatisticEvent> statisticEvents : argValues) {
+        for (List<InternalStatisticEvent> statisticEvents : argValues) {
             Assert.assertTrue(statisticEvents.stream()
                     .map(STAT_TO_CLASS_NAME_MAPPER)
                     .allMatch(className -> className.startsWith("stroom")));
@@ -106,10 +101,10 @@ public class TestHeapHistogramStatisticsExecutor {
         executor.exec();
 
         //Then
-        Mockito.verify(statistics, Mockito.timeout(5_000).times(2))
+        Mockito.verify(mockInternalStatisticsReceiver, Mockito.timeout(5_000).times(2))
                 .putEvents(eventsCaptor.capture());
 
-        List<List<StatisticEvent>> argValues = eventsCaptor.getAllValues();
+        List<List<InternalStatisticEvent>> argValues = eventsCaptor.getAllValues();
 
         //We must have some classes in the list
         Assert.assertTrue(argValues.get(0).size() > 0);
@@ -118,7 +113,7 @@ public class TestHeapHistogramStatisticsExecutor {
         Assert.assertTrue(argValues.get(0).size() == argValues.get(1).size());
 
         //Ensure we have multiple starting letters of the class names to show a variety of classes are coming back
-        for (List<StatisticEvent> statisticEvents : argValues) {
+        for (List<InternalStatisticEvent> statisticEvents : argValues) {
             Assert.assertTrue(statisticEvents.stream()
                     .map(STAT_TO_CLASS_NAME_MAPPER)
                     .map(className -> className.substring(0, 1))

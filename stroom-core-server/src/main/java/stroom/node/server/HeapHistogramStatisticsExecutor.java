@@ -1,26 +1,34 @@
 package stroom.node.server;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.statistics.server.sql.StatisticEvent;
-import stroom.statistics.server.sql.StatisticTag;
-import stroom.statistics.server.sql.Statistics;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+/**
+ * Class for running scheduled jobs to execute a jmap heap histogram and load the results into
+ * the {@link InternalStatisticsReceiver}. This is for use in identifying memory issues at run time
+ * by capturing a regular snapshot of both the number of instances of classes and the bytes in use.
+ *
+ * As with all internal statistics it is reliant on the stat key being configured in stroom properties
+ * (i.e. stroomCoreServerPropertyContext
+ */
 @SuppressWarnings("unused")
 @Component
 @Scope(StroomScope.TASK)
@@ -28,23 +36,22 @@ public class HeapHistogramStatisticsExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeapHistogramStatisticsExecutor.class);
 
-    private static final String HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE = "Heap Histogram ";
-    private static final String HEAP_HISTOGRAM_BYTES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "Bytes";
-    private static final String HEAP_HISTOGRAM_INSTANCES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "Instances";
-    private static final String NODE_TAG_NAME = "Node";
-    static final String CLASS_NAME_TAG_NAME = "Class Name";
+    private static final String INTERNAL_STAT_KEY_HEAP_HISTOGRAM_INSTANCES = "heapHistogramInstances";
+    private static final String INTERNAL_STAT_KEY_HEAP_HISTOGRAM_BYTES = "heapHistogramBytes";
+    private static final String TAG_NAME_NODE = "Node";
+    static final String TAG_NAME_CLASS_NAME = "Class Name";
 
     private final HeapHistogramService heapHistogramService;
-    private final Statistics statistics;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final NodeCache nodeCache;
 
 
     @Inject
     HeapHistogramStatisticsExecutor(final HeapHistogramService heapHistogramService,
-                                    final Statistics statistics,
+                                    final InternalStatisticsReceiver internalStatisticsReceiver,
                                     final NodeCache nodeCache) {
         this.heapHistogramService = heapHistogramService;
-        this.statistics = statistics;
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
         this.nodeCache = nodeCache;
     }
 
@@ -77,7 +84,7 @@ public class HeapHistogramStatisticsExecutor {
         final long statTimeMs = Instant.now().toEpochMilli();
         final String nodeName = nodeCache.getDefaultNode().getName();
         //immutable so can be reused for all events
-        final StatisticTag nodeTag = new StatisticTag(NODE_TAG_NAME, nodeName);
+        final Map.Entry<String, String> nodeTag = Maps.immutableEntry(TAG_NAME_NODE, nodeName);
 
         mapToStatEventAndSend(
                 heapHistogramEntries,
@@ -91,46 +98,44 @@ public class HeapHistogramStatisticsExecutor {
     }
 
     private void mapToStatEventAndSend(final List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries,
-                                       final Function<HeapHistogramService.HeapHistogramEntry, StatisticEvent> mapper,
+                                       final Function<HeapHistogramService.HeapHistogramEntry, InternalStatisticEvent> mapper,
                                        final String type) {
 
-        List<StatisticEvent> statisticEvents = heapHistogramEntries.stream()
+        List<InternalStatisticEvent> statisticEvents = heapHistogramEntries.stream()
                 .map(mapper)
                 .collect(Collectors.toList());
 
         LOGGER.info("Sending %s '%s' histogram stat events", statisticEvents.size(), type);
 
-        statistics.putEvents(statisticEvents);
-
+        internalStatisticsReceiver.putEvents(statisticEvents);
     }
 
-    private static StatisticEvent buildBytesEvent(final long statTimeMs,
-                                                  final StatisticTag nodeTag,
-                                                  final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
-        return StatisticEvent.createValue(
+    private static InternalStatisticEvent buildBytesEvent(final long statTimeMs,
+                                                          final Map.Entry<String, String> nodeTag,
+                                                          final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
+        return InternalStatisticEvent.createValueStat(
+                INTERNAL_STAT_KEY_HEAP_HISTOGRAM_BYTES,
                 statTimeMs,
-                HEAP_HISTOGRAM_BYTES_STAT_NAME,
                 buildTags(nodeTag, heapHistogramEntry),
                 (double) heapHistogramEntry.getBytes());
     }
 
-    private static StatisticEvent buildInstancesEvent(final long statTimeMs,
-                                                      final StatisticTag nodeTag,
-                                                      final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
-        return StatisticEvent.createValue(
+    private static InternalStatisticEvent buildInstancesEvent(final long statTimeMs,
+                                                              final Map.Entry<String, String> nodeTag,
+                                                              final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
+        return InternalStatisticEvent.createValueStat(
+                INTERNAL_STAT_KEY_HEAP_HISTOGRAM_INSTANCES,
                 statTimeMs,
-                HEAP_HISTOGRAM_INSTANCES_STAT_NAME,
                 buildTags(nodeTag, heapHistogramEntry),
                 (double) heapHistogramEntry.getInstances());
     }
 
-    private static List<StatisticTag> buildTags(final StatisticTag nodeTag,
+    private static Map<String, String> buildTags(final Map.Entry<String, String> nodeTag,
                                                 final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
 
-        //tags need to be in name order else we will get problems with rollups
-        //We could manually order them here but if the names change in the static strings the order may then be wrong
-        return Stream.of(nodeTag, new StatisticTag(CLASS_NAME_TAG_NAME, heapHistogramEntry.getClassName()))
-                .sorted(Comparator.comparing(StatisticTag::getTag))
-                .collect(Collectors.toList());
+      return ImmutableMap.<String, String>builder()
+                .put(nodeTag)
+                .put(TAG_NAME_CLASS_NAME, heapHistogramEntry.getClassName())
+                .build();
     }
 }
