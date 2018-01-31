@@ -73,7 +73,7 @@ class HeapHistogramService {
 
         final List<HeapHistogramEntry> heapHistogramEntries;
         try {
-            LOGGER.info("Executing a heap histogram using command [%s]", command.toString());
+            LOGGER.info("Executing a heap histogram using command [{}]", command.toString());
             int exitCode = executor.execute(command);
             if (exitCode == 0) {
                 heapHistogramEntries = processSuccess(stdOut, stdErr);

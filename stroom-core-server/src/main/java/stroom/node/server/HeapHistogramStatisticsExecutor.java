@@ -70,7 +70,7 @@ public class HeapHistogramStatisticsExecutor {
             LOGGER.info("Java Heap Histogram Statistics job started");
             List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries = heapHistogramService.generateHeapHistogram();
             processHistogramEntries(heapHistogramEntries);
-            LOGGER.info("Java Heap Histogram Statistics job completed in %s",
+            LOGGER.info("Java Heap Histogram Statistics job completed in {}",
                     Duration.between(startTme, Instant.now()).toString());
         } catch (Exception e) {
             LOGGER.error("Error executing scheduled Heap Histogram job", e);
@@ -105,7 +105,7 @@ public class HeapHistogramStatisticsExecutor {
                 .map(mapper)
                 .collect(Collectors.toList());
 
-        LOGGER.info("Sending %s '%s' histogram stat events", statisticEvents.size(), type);
+        LOGGER.info("Sending {} '{}' histogram stat events", statisticEvents.size(), type);
 
         internalStatisticsReceiver.putEvents(statisticEvents);
     }
