@@ -76,7 +76,11 @@ public class LoginManager implements HasHandlers {
                             .onSuccess(result -> {
                                 final String authServiceUrl = result.get(ClientProperties.AUTHENTICATION_SERVICE_URL);
                                 // Send the user's browser to the remote Authentication Service's logout endpoint.
-                                Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + URL.encode(result.get(ClientProperties.ADVERTISED_HOST_URL)));
+                                // By adding 'prompt=login' we ask the Identity Provider to prompt the user for a login,
+                                // bypassing certificate checks. We need this to enable username/password
+                                // logins in an environment where the user's browser always presents a certificate.
+                                String redirectUrl = URL.encode(result.get(ClientProperties.ADVERTISED_HOST_URL) + "?prompt=login");
+                                Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + redirectUrl);
                             });
                 })
                 .onFailure(t -> AlertEvent.fireErrorFromException(LoginManager.this, t, null));
