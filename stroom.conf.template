@@ -40,8 +40,10 @@ stroom.advertisedUrl=http://IP_ADDRESS:8080
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true
 stroom.auth.services.url=http://IP_ADDRESS:8099
-stroom.auth.authentication.service.url=http://IP_ADDRESS:8099/authentication/v1
 stroom.auth.ui.url=http://IP_ADDRESS:5000
+# This should be set to HTTPS in production
+#stroom.auth.authentication.service.url=https://IP_ADDRESS/authenticationService/v1
+stroom.auth.authentication.service.url=http://IP_ADDRESS/authenticationService/v1
 
 stroom.users.ui.url=http://IP_ADDRESS:5000/userSearch
 stroom.apikeys.ui.url=http://IP_ADDRESS:5000/tokens
