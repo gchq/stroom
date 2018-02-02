@@ -26,6 +26,7 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import stroom.node.server.GlobalProperties;
+import stroom.node.server.StroomPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Version;
@@ -51,16 +52,32 @@ public class PersistenceConfiguration {
     }
 
     @Bean
-    public ComboPooledDataSource dataSource(final GlobalProperties globalProperties) throws PropertyVetoException {
+    public ComboPooledDataSource dataSource(final GlobalProperties globalProperties, final StroomPropertyService stroomPropertyService) throws PropertyVetoException {
         final ComboPooledDataSource dataSource = new ComboPooledDataSource();
         dataSource.setDriverClass(StroomProperties.getProperty("stroom.jdbcDriverClassName"));
         dataSource.setJdbcUrl(StroomProperties.getProperty("stroom.jdbcDriverUrl|trace"));
         dataSource.setUser(StroomProperties.getProperty("stroom.jdbcDriverUsername"));
         dataSource.setPassword(StroomProperties.getProperty("stroom.jdbcDriverPassword"));
-        dataSource.setMinPoolSize(1);
-        dataSource.setMaxPoolSize(StroomProperties.getIntProperty("stroom.jdbcMaxPoolSize", 10));
-        dataSource.setMaxIdleTimeExcessConnections(60);
-        dataSource.setIdleConnectionTestPeriod(60);
+
+        final C3P0Config config = new C3P0Config("stroom.db.connectionPool.", stroomPropertyService);
+        dataSource.setMaxStatements(config.getMaxStatements());
+        dataSource.setMaxStatementsPerConnection(config.getMaxStatementsPerConnection());
+        dataSource.setInitialPoolSize(config.getInitialPoolSize());
+        dataSource.setMinPoolSize(config.getMinPoolSize());
+        dataSource.setMaxPoolSize(config.getMaxPoolSize());
+        dataSource.setIdleConnectionTestPeriod(config.getIdleConnectionTestPeriod());
+        dataSource.setMaxIdleTime(config.getMaxIdleTime());
+        dataSource.setAcquireIncrement(config.getAcquireIncrement());
+        dataSource.setAcquireRetryAttempts(config.getAcquireRetryAttempts());
+        dataSource.setAcquireRetryDelay(config.getAcquireRetryDelay());
+        dataSource.setCheckoutTimeout(config.getCheckoutTimeout());
+        dataSource.setMaxAdministrativeTaskTime(config.getMaxAdministrativeTaskTime());
+        dataSource.setMaxIdleTimeExcessConnections(config.getMaxIdleTimeExcessConnections());
+        dataSource.setMaxConnectionAge(config.getMaxConnectionAge());
+        dataSource.setUnreturnedConnectionTimeout(config.getUnreturnedConnectionTimeout());
+        dataSource.setStatementCacheNumDeferredCloseThreads(config.getStatementCacheNumDeferredCloseThreads());
+        dataSource.setNumHelperThreads(config.getNumHelperThreads());
+
         dataSource.setPreferredTestQuery("select 1");
         dataSource.setConnectionTesterClassName(StroomProperties.getProperty("stroom.connectionTesterClassName"));
         return dataSource;
