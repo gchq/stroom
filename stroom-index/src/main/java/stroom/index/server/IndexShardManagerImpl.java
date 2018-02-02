@@ -268,13 +268,14 @@ public class IndexShardManagerImpl implements IndexShardManager {
         try {
             // Delete this shard if it is older than the retention age.
             final Index index = shard.getIndex();
-            if (index.getRetentionDayAge() != null && shard.getPartitionToTime() != null) {
+            final Integer retentionDayAge = index.getRetentionDayAge();
+            final Long partitionToTime = shard.getPartitionToTime();
+            if (retentionDayAge != null && partitionToTime != null && !IndexShardStatus.DELETED.equals(shard.getStatus())) {
                 // See if this index shard is older than the index retention
                 // period.
-                final long retentionTime = new DateTime().minusDays(index.getRetentionDayAge()).getMillis();
-                final long shardAge = shard.getPartitionToTime();
+                final long retentionTime = new DateTime().minusDays(retentionDayAge).getMillis();
 
-                if (shardAge < retentionTime) {
+                if (partitionToTime < retentionTime) {
                     setStatus(shard.getId(), IndexShardStatus.DELETED);
                 }
             }
@@ -309,12 +310,13 @@ public class IndexShardManagerImpl implements IndexShardManager {
             try {
                 run(() -> {
                     final IndexShard indexShard = indexShardService.loadById(indexShardId);
-
-                    // Only allow certain state transitions.
-                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
-                    if (allowed.contains(status)) {
-                        indexShard.setStatus(status);
-                        indexShardService.save(indexShard);
+                    if (indexShard != null) {
+                        // Only allow certain state transitions.
+                        final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
+                        if (allowed.contains(status)) {
+                            indexShard.setStatus(status);
+                            indexShardService.save(indexShard);
+                        }
                     }
                 });
             } catch (final Exception e) {
