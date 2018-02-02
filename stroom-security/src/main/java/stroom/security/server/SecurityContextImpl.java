@@ -45,6 +45,7 @@ import javax.inject.Inject;
 import javax.persistence.RollbackException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -56,7 +57,7 @@ class SecurityContextImpl implements SecurityContext {
     private final DocumentPermissionsCache documentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
-    private final UserService userService;
+    private final UserCache userCache;
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
 
@@ -66,11 +67,16 @@ class SecurityContextImpl implements SecurityContext {
     private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
 
     @Inject
-    SecurityContextImpl(final DocumentPermissionsCache documentPermissionsCache, final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {
+    SecurityContextImpl(final DocumentPermissionsCache documentPermissionsCache,
+                        final UserGroupsCache userGroupsCache,
+                        final UserAppPermissionsCache userAppPermissionsCache,
+                        final UserCache userCache,
+                        final DocumentPermissionService documentPermissionService,
+                        final GenericEntityService genericEntityService) {
         this.documentPermissionsCache = documentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
-        this.userService = userService;
+        this.userCache = userCache;
         this.documentPermissionService = documentPermissionService;
         this.genericEntityService = genericEntityService;
     }
@@ -99,11 +105,13 @@ class SecurityContextImpl implements SecurityContext {
                 }
             } else if (USER.equals(type)) {
                 if (name.length() > 0) {
-                    userRef = userService.getUserByName(name);
-                    if (userRef == null) {
+                    final Optional<UserRef> optional = userCache.get(name);
+                    if (!optional.isPresent()) {
                         final String message = "Unable to push user '" + name + "' as user is unknown";
                         LOGGER.error(message);
                         throw new AuthenticationServiceException(message);
+                    } else {
+                        userRef = optional.get();
                     }
                 }
             } else {
