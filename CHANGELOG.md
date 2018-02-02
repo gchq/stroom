@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#599** : DocumentServiceWriteAction was being used in the wrong places where EntityServiceSaveAction should have been used instead to save entities that aren't document entities.
+
 ## [v6.0-alpha.8]
 
 * Issue **#593** : Fixed node save RPC call.
