@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#611** : Changed properties to be defined in code rather than Spring XML.
+
 * Issue **#605** : Added a cache for retrieving user by name to reduce DB use when pushing users for each task.
 
 * Issue **#610** : Added `USE INDEX (PRIMARY)` hint to data retention select SQL to improve performance.
