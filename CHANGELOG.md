@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#605** : Added a cache for retrieving user by name to reduce DB use when pushing users for each task.
+
 * Issue **#610** : Added `USE INDEX (PRIMARY)` hint to data retention select SQL to improve performance.
 
 * Issue **#607** : Multiple improvements to the code to ensure DB connections, prepared statements, result sets etc use try-with-resources constructs wherever possible to ensure no DB resources are leaked. Also all connections obtained from a data source are now returned appropriately so that connections from pools are reused.
