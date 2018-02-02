@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#607** : Multiple improvements to the code to ensure DB connections, prepared statements, result sets etc use try-with-resources constructs wherever possible to ensure no DB resources are leaked. Also all connections obtained from a data source are now returned appropriately so that connections from pools are reused.
+
 * Issue **#602** : Changed the data retention rule table column order.
 
 * Issue **#606** : Added more stroom properties to tune the c3P0 connection pool. The properties are prefixed by `stroom.db.connectionPool` and `stroom.statistics.sql.db.connectionPool`.
