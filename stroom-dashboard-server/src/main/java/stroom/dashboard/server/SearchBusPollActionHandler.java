@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.server;
@@ -166,14 +165,14 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
             if (newSearch) {
                 // Log this search action for the current user.
-                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getSearchPurpose());
+                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
             }
 
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
 
             if (newSearch) {
-                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getSearchPurpose(), e);
+                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
             }
 
             result = new SearchResponse();

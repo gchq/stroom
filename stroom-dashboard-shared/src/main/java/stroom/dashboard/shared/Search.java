@@ -5,13 +5,6 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package stroom.dashboard.shared;
@@ -28,7 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental", "storeHistory", "searchPurpose"})
+@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental", "storeHistory", "queryInfo"})
 public class Search implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
@@ -51,7 +44,7 @@ public class Search implements Serializable {
     private boolean storeHistory;
 
     @XmlElement
-    private String searchPurpose;
+    private String queryInfo;
 
     public Search() {
         // Default constructor necessary for GWT serialisation.
@@ -81,8 +74,8 @@ public class Search implements Serializable {
         return storeHistory;
     }
 
-    public String getSearchPurpose() {
-        return searchPurpose;
+    public String getQueryInfo() {
+        return queryInfo;
     }
 
     @Override
@@ -150,8 +143,8 @@ public class Search implements Serializable {
             return this;
         }
 
-        public Builder searchPurpose(final String searchPurpose) {
-            this.instance.searchPurpose = searchPurpose;
+        public Builder queryInfo(final String queryInfo) {
+            this.instance.queryInfo = queryInfo;
             return this;
         }
 

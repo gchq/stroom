@@ -6,9 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#609** : Add configurable regex to replace IDs in heap histogram class names, e.g. '....$Proxy54' becomes '....$Proxy--ID-REMOVED--'
+* Issue **#609** : Add configurable regex to replace IDs in heap histogram class names, e.g. `....$Proxy54` becomes `....$Proxy--ID-REMOVED--`
 
 * Issue **#570** : Refactor the heap histogram internal statistics for the new InternalStatisticsReceiver
+
+* Issue **#599** : DocumentServiceWriteAction was being used in the wrong places where EntityServiceSaveAction should have been used instead to save entities that aren't document entities.
+
+## [v6.0-alpha.8]
+
+* Issue **#593** : Fixed node save RPC call.
+
+* Issue **#591** : Made the query info popup more configurable with a title, validation regex etc. The popup will now only be displayed when enabled and when a manual user action takes place, e.g. clicking a search button or running a parameterised execution with one or more queries.
+
+* Added 'prompt' option to force the identity provider to ask for a login.
 
 ## [v6.0-alpha.7]
 
@@ -723,7 +733,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...HEAD
+[v6.0-alpha.8]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...v6.0-alpha.8
 [v6.0-alpha.7]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...v6.0-alpha.7
 [v6.0-alpha.4]: https://github.com/gchq/stroom/commits/v6.0-alpha.4
 

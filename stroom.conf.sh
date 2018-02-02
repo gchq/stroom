@@ -32,7 +32,7 @@ mkdir -p /tmp/stroom
 
 if [ -f $confFile ]; then
     backupFile="${stroomDir}/stroom.conf.$(date +"%Y%m%dT%H%M")"
-    echo -e "Backing up ${GREEN}~/stroom.conf${NC} to ${GREEN}${backupFile}${NC}"
+    echo -e "Backing up ${GREEN}${confFile}${NC} to ${GREEN}${backupFile}${NC}"
     cp ${confFile} ${backupFile}
     echo
 fi

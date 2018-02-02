@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,70 +37,76 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Insecure;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @Component
 @Insecure
 public class SearchEventLogImpl implements SearchEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEventLogImpl.class);
 
-    @Resource
-    private StroomEventLoggingService eventLoggingService;
-    @Resource
-    private DataSourceProviderRegistry dataSourceProviderRegistry;
-    @Resource
-    private DictionaryStore dictionaryStore;
+    private final StroomEventLoggingService eventLoggingService;
+    private final DataSourceProviderRegistry dataSourceProviderRegistry;
+    private final DictionaryStore dictionaryStore;
 
-    @Override
-    public void search(final DocRef dataSourceRef,
-                       final ExpressionOperator expression,
-                       final String searchPurpose) {
-        search("Search", dataSourceRef, expression, searchPurpose, null);
+    @Inject
+    public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
+                              final DataSourceProviderRegistry dataSourceProviderRegistry,
+                              final DictionaryStore dictionaryStore) {
+        this.eventLoggingService = eventLoggingService;
+        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
+        this.dictionaryStore = dictionaryStore;
     }
 
     @Override
     public void search(final DocRef dataSourceRef,
                        final ExpressionOperator expression,
-                       final String searchPurpose,
+                       final String queryInfo) {
+        search("Search", dataSourceRef, expression, queryInfo, null);
+    }
+
+    @Override
+    public void search(final DocRef dataSourceRef,
+                       final ExpressionOperator expression,
+                       final String queryInfo,
                        final Exception ex) {
-        search("Search", dataSourceRef, expression, searchPurpose, ex);
+        search("Search", dataSourceRef, expression, queryInfo, ex);
     }
 
     @Override
     public void batchSearch(final DocRef dataSourceRef,
                             final ExpressionOperator expression,
-                            final String searchPurpose) {
-        search("Batch search", dataSourceRef, expression, searchPurpose, null);
+                            final String queryInfo) {
+        search("Batch search", dataSourceRef, expression, queryInfo, null);
     }
 
     @Override
     public void batchSearch(final DocRef dataSourceRef,
                             final ExpressionOperator expression,
-                            final String searchPurpose,
+                            final String queryInfo,
                             final Exception ex) {
-        search("Batch search", dataSourceRef, expression, searchPurpose, ex);
+        search("Batch search", dataSourceRef, expression, queryInfo, ex);
     }
 
     @Override
     public void downloadResults(final DocRef dataSourceRef,
                                 final ExpressionOperator expression,
-                                final String searchPurpose) {
-        downloadResults("Batch search", dataSourceRef, expression, searchPurpose, null);
+                                final String queryInfo) {
+        downloadResults("Batch search", dataSourceRef, expression, queryInfo, null);
     }
 
     @Override
     public void downloadResults(final DocRef dataSourceRef,
                                 final ExpressionOperator expression,
-                                final String searchPurpose,
+                                final String queryInfo,
                                 final Exception ex) {
-        downloadResults("Download search results", dataSourceRef, expression, searchPurpose, ex);
+        downloadResults("Download search results", dataSourceRef, expression, queryInfo, ex);
     }
 
     @Override
     public void downloadResults(final String type,
                                 final DocRef dataSourceRef,
                                 final ExpressionOperator expression,
-                                final String searchPurpose,
+                                final String queryInfo,
                                 final Exception ex) {
         try {
             final String dataSourceName = getDataSourceName(dataSourceRef);
@@ -122,7 +128,7 @@ public class SearchEventLogImpl implements SearchEventLog {
             final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
 
             event.getEventDetail().setExport(exp);
-            event.getEventDetail().setPurpose(getPurpose(searchPurpose));
+            event.getEventDetail().setPurpose(getPurpose(queryInfo));
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
@@ -134,7 +140,7 @@ public class SearchEventLogImpl implements SearchEventLog {
     public void search(final String type,
                        final DocRef dataSourceRef,
                        final ExpressionOperator expression,
-                       final String searchPurpose,
+                       final String queryInfo,
                        final Exception ex) {
         try {
             String dataSourceName = getDataSourceName(dataSourceRef);
@@ -152,7 +158,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
             final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
             event.getEventDetail().setSearch(search);
-            event.getEventDetail().setPurpose(getPurpose(searchPurpose));
+            event.getEventDetail().setPurpose(getPurpose(queryInfo));
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
@@ -173,10 +179,10 @@ public class SearchEventLogImpl implements SearchEventLog {
         return docRef.getName();
     }
 
-    private Purpose getPurpose(final String searchPurpose) {
-        if (null != searchPurpose) {
+    private Purpose getPurpose(final String queryInfo) {
+        if (null != queryInfo) {
             final Purpose purpose = new Purpose();
-            purpose.setJustification(searchPurpose);
+            purpose.setJustification(queryInfo);
             return purpose;
         } else {
             return null;

@@ -16,6 +16,7 @@
 
 package stroom.security.server;
 
+import com.google.common.base.Strings;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.slf4j.Logger;
@@ -252,7 +253,7 @@ public class SecurityFilter implements Filter {
             redirectUrl = config.getAdvertisedStroomUrl();
         }
 
-        final String authenticationRequestParams = "" +
+        String authenticationRequestParams = "" +
                 "?scope=openid" +
                 "&response_type=code" +
                 "&client_id=stroom" +
@@ -262,6 +263,15 @@ public class SecurityFilter implements Filter {
                 URLEncoder.encode(state.getId(), StreamUtil.DEFAULT_CHARSET_NAME) +
                 "&nonce=" +
                 URLEncoder.encode(state.getNonce(), StreamUtil.DEFAULT_CHARSET_NAME);
+
+        // If there's 'prompt' in the request then we'll want to pass that on to the AuthenticationService.
+        // In OpenId 'prompt=login' asks the IP to present a login page to the user, and that's the effect
+        // this will have. We need this so that we can bypass certificate logins, e.g. for when we need to
+        // log in as the 'admin' user but the browser is always presenting a certificate.
+        String prompt = request.getParameter("prompt");
+        if(!Strings.isNullOrEmpty(prompt)){
+            authenticationRequestParams += "&prompt=" + prompt;
+        }
 
         final String authenticationRequestUrl = authenticationRequestBaseUrl + authenticationRequestParams;
         LOGGER.info("Redirecting with an AuthenticationRequest to: {}", authenticationRequestUrl);

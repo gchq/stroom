@@ -7,7 +7,6 @@ import stroom.entity.server.EntityServiceBeanRegistry;
 import stroom.externaldoc.server.ExternalDocumentEntityServiceImpl;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.importexport.server.ImportExportActionHandlers;
-import stroom.importexport.server.ImportExportHelper;
 import stroom.logging.DocumentEventLog;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
@@ -25,14 +24,12 @@ public class ExternalDocRefConfiguration {
     public ExternalDocRefConfiguration(final EntityServiceBeanRegistry entityServiceBeanRegistry,
                                        final ExplorerActionHandlers explorerActionHandlers,
                                        final ImportExportActionHandlers importExportActionHandlers,
-                                       final ImportExportHelper importExportHelper,
                                        final SecurityContext securityContext,
                                        final DocumentEventLog documentEventLog,
                                        final StroomPropertyService propertyService) {
 
         propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES).stream()
                 .map(type -> new ExternalDocumentEntityServiceImpl(type,
-                        importExportHelper,
                         securityContext,
                         documentEventLog,
                         propertyService)

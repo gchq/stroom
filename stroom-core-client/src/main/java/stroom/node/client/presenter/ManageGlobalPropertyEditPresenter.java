@@ -23,7 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.ManageEntityEditPresenter;
-import stroom.entity.shared.DocumentServiceWriteAction;
+import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.GlobalProperty;
 import stroom.security.client.ClientSecurityContext;
@@ -78,7 +78,7 @@ public final class ManageGlobalPropertyEditPresenter
         }
 
         // Save the device.
-        dispatcher.exec(new DocumentServiceWriteAction<GlobalProperty>(getEntity())).onSuccess(result -> {
+        dispatcher.exec(new EntityServiceSaveAction<>(getEntity())).onSuccess(result -> {
             setEntity(result);
             if (hideOnSave) {
                 hide();
