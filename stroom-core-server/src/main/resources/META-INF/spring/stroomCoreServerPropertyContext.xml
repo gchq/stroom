@@ -808,6 +808,16 @@
             <property name="description"
                       value="A single regex that will be used to filter classes from the jmap histogram internal statistic based on their name. e.g '^(stroom\..*)$'. If no value is supplied all classes will be included. If a value is supplied only those class names matching the regex will be included."/>
             <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.node.status.heapHistogram.classNameReplacementRegex"/>
+            <!-- This is XML so XML escaping rules apply, not java's -->
+            <property name="value" value="((?&lt;=\$Proxy)[0-9]+|(?&lt;=\$\$)[0-9a-f]+|(?&lt;=\$\$Lambda\$)[0-9]+\/[0-9]+)"/>
+            <property name="description"
+                      value="A single regex that will be used to replace all matches in the class name with '--REPLACED--'. This is to prevent ids for anonymous inner classes and lambdas from being included in the class name. E.g '....DocRefResourceHttpClient$$Lambda$46/1402766141' becomes '....DocRefResourceHttpClient$$Lambda$--REPLACED--'. "/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.node.status.heapHistogram.jMapExecutable"/>

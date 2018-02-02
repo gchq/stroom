@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#609** : Add configurable regex to replace IDs in heap histogram class names, e.g. '....$Proxy54' becomes '....$Proxy--ID-REMOVED--'
+
 * Issue **#570** : Refactor the heap histogram internal statistics for the new InternalStatisticsReceiver
 
 ## [v6.0-alpha.7]

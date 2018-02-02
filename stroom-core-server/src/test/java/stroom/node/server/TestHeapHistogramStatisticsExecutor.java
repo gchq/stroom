@@ -139,6 +139,19 @@ public class TestHeapHistogramStatisticsExecutor {
         Assert.assertTrue(thrownException);
     }
 
+    @Test
+    public void testRegex() {
+        String regex = "((?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)";
+
+        Pattern pattern = Pattern.compile(regex);
+
+        String input = "stroom.query.audit.client.DocRefResourceHttpClient$$Lambda$46/1402766141";
+
+        String output = pattern.matcher(input).replaceAll("--");
+
+        Assert.assertEquals("stroom.query.audit.client.DocRefResourceHttpClient$$Lambda$--", output);
+    }
+
 }
 
 
