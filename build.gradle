@@ -218,7 +218,7 @@ ext.contentPacks = [
     'internal-statistics-sql': 'v2.1',
     'internal-dashboards': 'v1.1',
     'stroom-101': 'v1.0',
-    'event-logging-xml-schema': 'v3.1.1'
+    'event-logging-xml-schema': 'v3.2.3'
 ]
 
 //defines a list of gradle projects that we will publish with maven/bintray
