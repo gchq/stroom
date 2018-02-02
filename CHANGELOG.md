@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#601** : Fixed NPE generated during index shard retention process that was caused by a shard being deleted from the DB at the same time as the index shard retention job running.
+
 ## [v5.1-beta.13] - 2018-01-30
 
 * Issue **#591** : Made the query info popup more configurable with a title, validation regex etc. The popup will now only be displayed when enabled and when a manual user action takes place, e.g. clicking a search button or running a parameterised execution with one or more queries.
