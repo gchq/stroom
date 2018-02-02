@@ -29,6 +29,7 @@ task wrapper(type: Wrapper) {
 apply plugin: 'gchq.urldependencies'
 apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'de.undercouch.download'
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 
