@@ -16,6 +16,7 @@
 
 package stroom.streamstore.server;
 
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.streamstore.shared.StreamAttributeValue;
@@ -53,10 +54,9 @@ public class StreamAttributeValueServiceTransactionHelper {
     public void saveBatch(final List<StreamAttributeValue> list) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         if (list.size() > 0) {
-            Connection connection = null;
+            final Connection connection = DataSourceUtils.getConnection(dataSource);
             try {
-                connection = dataSource.getConnection();
-                try (PreparedStatement ps = connection.prepareStatement(INSERT_SQL)) {
+                try (final PreparedStatement ps = connection.prepareStatement(INSERT_SQL)) {
                     for (final StreamAttributeValue streamAttributeValue : list) {
                         ps.setInt(1, 1);
                         ps.setLong(2, streamAttributeValue.getCreateMs());
@@ -77,13 +77,12 @@ public class StreamAttributeValueServiceTransactionHelper {
                     }
 
                     ps.executeBatch();
-                    ps.close();
                 }
 
             } catch (final Exception ex) {
                 LOGGER.error("saveBatch()", ex);
             } finally {
-                ConnectionUtil.close(connection);
+                DataSourceUtils.releaseConnection(connection, dataSource);
             }
         }
         LOGGER.debug("saveBatch() - inserted %s records in %s", list.size(), logExecutionTime);

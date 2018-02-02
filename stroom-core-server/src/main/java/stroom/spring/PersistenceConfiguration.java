@@ -20,6 +20,7 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.flywaydb.core.Flyway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -101,8 +102,9 @@ public class PersistenceConfiguration {
             boolean usingFlyWay = false;
             LOGGER.info("Testing installed Stroom schema version");
 
+            final Connection connection = DataSourceUtils.getConnection(dataSource);
             try {
-                try (final Connection connection = dataSource.getConnection()) {
+                try {
                     try (final Statement statement = connection.createStatement()) {
                         try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
                             if (resultSet.next()) {
@@ -127,15 +129,13 @@ public class PersistenceConfiguration {
                             }
                         }
                     }
+                } catch (final Exception e) {
+                    LOGGER.debug(e.getMessage());
+                    // Ignore.
                 }
-            } catch (final Exception e) {
-                LOGGER.debug(e.getMessage());
-                // Ignore.
-            }
 
-            if (version == null) {
-                try {
-                    try (final Connection connection = dataSource.getConnection()) {
+                if (version == null) {
+                    try {
                         try (final Statement statement = connection.createStatement()) {
                             try (final ResultSet resultSet = statement.executeQuery("SELECT VER_MAJ, VER_MIN, VER_PAT FROM STROOM_VER ORDER BY VER_MAJ DESC, VER_MIN DESC, VER_PAT DESC LIMIT 1")) {
                                 if (resultSet.next()) {
@@ -143,16 +143,14 @@ public class PersistenceConfiguration {
                                 }
                             }
                         }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        // Ignore.
                     }
-                } catch (final Exception e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    // Ignore.
                 }
-            }
 
-            if (version == null) {
-                try {
-                    try (final Connection connection = dataSource.getConnection()) {
+                if (version == null) {
+                    try {
                         try (final Statement statement = connection.createStatement()) {
                             try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FD LIMIT 1")) {
                                 if (resultSet.next()) {
@@ -160,16 +158,14 @@ public class PersistenceConfiguration {
                                 }
                             }
                         }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        // Ignore.
                     }
-                } catch (final Exception e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    // Ignore.
                 }
-            }
 
-            if (version == null) {
-                try {
-                    try (final Connection connection = dataSource.getConnection()) {
+                if (version == null) {
+                    try {
                         try (final Statement statement = connection.createStatement()) {
                             try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FEED LIMIT 1")) {
                                 if (resultSet.next()) {
@@ -177,11 +173,13 @@ public class PersistenceConfiguration {
                                 }
                             }
                         }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        // Ignore.
                     }
-                } catch (final Exception e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    // Ignore.
                 }
+            } finally {
+                DataSourceUtils.releaseConnection(connection, dataSource);
             }
 
             if (version != null) {
@@ -189,7 +187,6 @@ public class PersistenceConfiguration {
             } else {
                 LOGGER.info("This is a new installation!");
             }
-
 
             if (version == null) {
                 // If we have no version then this is a new Stroom instance so perform full FlyWay migration.

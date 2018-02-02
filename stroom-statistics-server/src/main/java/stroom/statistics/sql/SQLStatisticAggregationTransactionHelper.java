@@ -16,6 +16,7 @@
 
 package stroom.statistics.sql;
 
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.ConnectionUtil;
@@ -324,8 +325,12 @@ public class SQLStatisticAggregationTransactionHelper {
 
     // @formatter:on
 
-    protected Connection getConnection() throws SQLException {
-        return statisticsDataSource.getConnection();
+    private Connection getConnection() {
+        return DataSourceUtils.getConnection(statisticsDataSource);
+    }
+
+    private void releaseConnection(final Connection connection) {
+        DataSourceUtils.releaseConnection(connection, statisticsDataSource);
     }
 
     protected int doAggregateSQL_Update(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
@@ -398,37 +403,30 @@ public class SQLStatisticAggregationTransactionHelper {
         return ConnectionUtil.executeQueryLongResult(connection, sql, args);
     }
 
-    protected void closeConnection(final Connection connection) {
-        ConnectionUtil.close(connection);
-    }
-
     public Long getAggregateMinId() throws SQLException {
-        Connection connection = null;
+        final Connection connection = getConnection();
         try {
-            connection = getConnection();
             return doAggregateSQL_LongResult(connection, AGGREGATE_MIN_ID, null);
         } finally {
-            closeConnection(connection);
+            releaseConnection(connection);
         }
     }
 
     public Long getAggregateMaxId() throws SQLException {
-        Connection connection = null;
+        final Connection connection = getConnection();
         try {
-            connection = getConnection();
             return doAggregateSQL_LongResult(connection, AGGREGATE_MAX_ID, null);
         } finally {
-            closeConnection(connection);
+            releaseConnection(connection);
         }
     }
 
     public Long getAggregateCount() throws SQLException {
-        Connection connection = null;
+        final Connection connection = getConnection();
         try {
-            connection = getConnection();
             return doAggregateSQL_LongResult(connection, AGGREGATE_COUNT, null);
         } finally {
-            closeConnection(connection);
+            releaseConnection(connection);
         }
     }
 
@@ -437,8 +435,6 @@ public class SQLStatisticAggregationTransactionHelper {
     }
 
     public Long deleteOldStats(final long timeNowMs, final TaskMonitor taskMonitor) throws SQLException {
-        Connection connection = null;
-
         final AggregateConfig mostCoarseLevel = new AggregateConfig(StatisticType.COUNT, MS_MONTH, MONTH_PRECISION,
                 DEFAULT_PRECISION, "* * *");
 
@@ -450,15 +446,15 @@ public class SQLStatisticAggregationTransactionHelper {
             // convert the max age into a time bucket so we can delete
             // everything older than that time bucket
             final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(timeNowMs - retentionAgeMs);
+            final Connection connection = getConnection();
             try {
-                connection = getConnection();
                 final long rowsAffected = doAggregateSQL_Update(connection, taskMonitor, "", DELETE_OLD_STATS,
                         Arrays.asList((Object) oldestTimeBucketToKeep));
                 LOGGER.info("Deleted %s stats with a time older than %s", rowsAffected,
                         DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep));
                 return rowsAffected;
             } finally {
-                closeConnection(connection);
+                releaseConnection(connection);
             }
         } else {
             return 0L;
@@ -477,11 +473,8 @@ public class SQLStatisticAggregationTransactionHelper {
 
         long processCount = 0;
 
-        Connection connection = null;
-
+        final Connection connection = getConnection();
         try {
-            connection = getConnection();
-
             // mark a set of records in STATVAL_SRC as being processed so all
             // DML below can filter by them
             // records are chosen at random to avoid overhead of a sort
@@ -537,7 +530,7 @@ public class SQLStatisticAggregationTransactionHelper {
                 }
             }
         } finally {
-            closeConnection(connection);
+            releaseConnection(connection);
         }
 
         return processCount;
@@ -550,11 +543,8 @@ public class SQLStatisticAggregationTransactionHelper {
             throw new UnsupportedOperationException("Need MySQL to do statistics aggregation");
         }
 
-        Connection connection = null;
-
+        final Connection connection = getConnection();
         try {
-            connection = getConnection();
-
             // Stage 2 is about moving stats from one precision in STAT_VAL to a
             // coarser one once they have become too old for their current
             // precision
@@ -608,7 +598,7 @@ public class SQLStatisticAggregationTransactionHelper {
                 }
             }
         } finally {
-            closeConnection(connection);
+            releaseConnection(connection);
         }
     }
 
@@ -625,36 +615,39 @@ public class SQLStatisticAggregationTransactionHelper {
     public void truncateTable(final String tableName) throws SQLException {
         LOGGER.debug(">>> %s", tableName);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try (Connection connection = getConnection()) {
+
+        final Connection connection = getConnection();
+        try (final Statement statement = connection.createStatement()) {
             final String sql = TRUNCATE_TABLE_SQL + tableName;
-            final Statement statement = connection.createStatement();// (TRUNCATE_TABLE_SQL
+            // (TRUNCATE_TABLE_SQL
             // +
             // tableName);
             statement.execute(sql);
-            statement.close();
 
             LOGGER.debug("Truncated table %s in %sms", tableName, logExecutionTime.getDuration());
 
         } catch (final SQLException sqlException) {
             LOGGER.error("truncating table %s", tableName, sqlException);
             throw sqlException;
+        } finally {
+            releaseConnection(connection);
         }
     }
 
     public void clearTable(final String tableName) throws SQLException {
         LOGGER.debug(">>> %s", tableName);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try (Connection connection = getConnection()) {
+        final Connection connection = getConnection();
+        try (final Statement statement = connection.createStatement()) {
             final String sql = CLEAR_TABLE_SQL + tableName;
-            final Statement statement = connection.createStatement();
             statement.execute(sql);
-            statement.close();
-
             LOGGER.debug("Cleared table %s in %sms", tableName, logExecutionTime.getDuration());
 
         } catch (final SQLException sqlException) {
             LOGGER.error("Clearing table %s", tableName, sqlException);
             throw sqlException;
+        } finally {
+            releaseConnection(connection);
         }
     }
 }

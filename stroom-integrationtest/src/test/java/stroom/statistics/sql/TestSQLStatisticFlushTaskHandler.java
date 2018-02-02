@@ -16,29 +16,23 @@
 
 package stroom.statistics.sql;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import stroom.AbstractCoreIntegrationTest;
+import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.statistics.common.RolledUpStatisticEvent;
+import stroom.statistics.common.StatisticEvent;
+import stroom.statistics.common.exception.StatisticsEventValidationException;
+import stroom.task.server.TaskMonitorImpl;
+import stroom.util.logging.StroomLogger;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import javax.annotation.Resource;
-import javax.sql.DataSource;
-
-import stroom.task.server.TaskMonitorImpl;
-import stroom.util.logging.StroomLogger;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import stroom.AbstractCoreIntegrationTest;
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.ConnectionUtil;
-import stroom.statistics.common.RolledUpStatisticEvent;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.exception.StatisticsEventValidationException;
-import stroom.util.shared.Monitor;
-import stroom.util.shared.TerminateHandler;
-import stroom.util.task.TaskMonitor;
 
 public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     @Resource
@@ -197,42 +191,34 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     }
 
     private int getRowCount() throws SQLException {
-        final Connection connection = getConnection();
-
         int count;
-
-        try {
-            final PreparedStatement preparedStatement = connection.prepareStatement(
-                    "select count(*) from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
-
-            final ResultSet resultSet = preparedStatement.executeQuery();
-
-            resultSet.next();
-            count = resultSet.getInt(1);
-            resultSet.close();
-
+        final Connection connection = getConnection();
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                resultSet.next();
+                count = resultSet.getInt(1);
+            }
         } finally {
-            ConnectionUtil.close(connection);
+            releaseConnection(connection);
         }
         return count;
     }
 
     private void deleteRows() throws SQLException {
         final Connection connection = getConnection();
-
-        try {
-            final PreparedStatement preparedStatement = connection
-                    .prepareStatement("delete from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
-
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
             preparedStatement.execute();
-
         } finally {
-            ConnectionUtil.close(connection);
+            releaseConnection(connection);
         }
     }
 
-    private Connection getConnection() throws SQLException {
-        return statisticsDataSource.getConnection();
+    private Connection getConnection() {
+        return DataSourceUtils.getConnection(statisticsDataSource);
+    }
+
+    private void releaseConnection(final Connection connection) {
+        DataSourceUtils.releaseConnection(connection, statisticsDataSource);
     }
 
 //    private static class MockTaskMonitor implements TaskMonitor {

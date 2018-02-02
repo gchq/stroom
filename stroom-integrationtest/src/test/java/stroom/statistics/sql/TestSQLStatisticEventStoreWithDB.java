@@ -18,9 +18,9 @@ package stroom.statistics.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
-import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
@@ -36,9 +36,6 @@ import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.task.server.TaskMonitorImpl;
 import stroom.util.logging.StroomLogger;
-import stroom.util.shared.Monitor;
-import stroom.util.shared.TerminateHandler;
-import stroom.util.task.TaskMonitor;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -60,6 +57,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     private static final String TAG2_OTHER_VALUE_1 = "Tag2OtherValue1";
     private static final String TAG2_OTHER_VALUE_2 = "Tag2OtherValue2";
     private static final String DATE_RANGE = "2000-01-01T00:00:00.000Z,3000-01-01T00:00:00.000Z";
+
     @Resource
     private CommonTestControl commonTestControl;
     @Resource
@@ -266,30 +264,25 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     }
 
     private int getRowCount(final String tableName) throws SQLException {
-        final Connection connection = getConnection();
-
         int count;
-
-        try {
-
-            final PreparedStatement preparedStatement = connection
-                    .prepareStatement("select count(*) from " + tableName);
-
-            final ResultSet resultSet = preparedStatement.executeQuery();
-
-            resultSet.next();
-            count = resultSet.getInt(1);
-            resultSet.close();
-
+        final Connection connection = getConnection();
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + tableName)) {
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                resultSet.next();
+                count = resultSet.getInt(1);
+            }
         } finally {
-
-            ConnectionUtil.close(connection);
+            releaseConnection(connection);
         }
         return count;
     }
 
-    private Connection getConnection() throws SQLException {
-        return statisticsDataSource.getConnection();
+    private Connection getConnection() {
+        return DataSourceUtils.getConnection(statisticsDataSource);
+    }
+
+    private void releaseConnection(final Connection connection) {
+        DataSourceUtils.releaseConnection(connection, statisticsDataSource);
     }
 
 //    private static class MockTaskMonitor implements TaskMonitor {

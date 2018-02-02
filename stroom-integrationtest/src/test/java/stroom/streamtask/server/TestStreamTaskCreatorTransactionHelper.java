@@ -206,7 +206,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
         List<Object> args = null;
         startTime = Instant.now();
 
-        try (Connection connection = ConnectionUtil.getConnection()) {
+        try (final Connection connection = ConnectionUtil.getConnection()) {
             for (int i = 1; i <= n; i++) {
                 if (stringBuilder == null) {
                     stringBuilder = new StringBuilder();

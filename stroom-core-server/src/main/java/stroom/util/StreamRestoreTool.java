@@ -16,7 +16,11 @@
 
 package stroom.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.mutable.MutableInt;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.Stream;
@@ -29,16 +33,13 @@ import stroom.util.io.LineReader;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.ThreadScopeRunnable;
-import stroom.feed.MetaMap;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.mutable.MutableInt;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -149,14 +150,14 @@ public class StreamRestoreTool extends DatabaseTool {
             pathStreamTypeMap = new HashMap<>();
 
             final String sql = "select " + StreamType.PATH + "," + StreamType.ID + " from " + StreamType.TABLE_NAME;
-            try (Statement statement = getConnection().createStatement()) {
-                try (ResultSet resultSet = statement.executeQuery(sql)) {
-                    while (resultSet.next()) {
-                        pathStreamTypeMap.put(resultSet.getString(1), resultSet.getLong(2));
+            try (final Connection connection = getConnection()) {
+                try (final Statement statement = connection.createStatement()) {
+                    try (final ResultSet resultSet = statement.executeQuery(sql)) {
+                        while (resultSet.next()) {
+                            pathStreamTypeMap.put(resultSet.getString(1), resultSet.getLong(2));
+                        }
                     }
-                    resultSet.close();
                 }
-                statement.close();
             }
         }
         return pathStreamTypeMap;
@@ -168,14 +169,14 @@ public class StreamRestoreTool extends DatabaseTool {
         if (pathVolumeMap == null) {
             pathVolumeMap = new HashMap<>();
             final String sql = "select " + Volume.PATH + "," + Volume.ID + " from " + Volume.TABLE_NAME;
-            try (Statement statement = getConnection().createStatement()) {
-                try (ResultSet resultSet = statement.executeQuery(sql)) {
-                    while (resultSet.next()) {
-                        pathVolumeMap.put(resultSet.getString(1), resultSet.getLong(2));
+            try (final Connection connection = getConnection()) {
+                try (final Statement statement = connection.createStatement()) {
+                    try (final ResultSet resultSet = statement.executeQuery(sql)) {
+                        while (resultSet.next()) {
+                            pathVolumeMap.put(resultSet.getString(1), resultSet.getLong(2));
+                        }
                     }
-                    resultSet.close();
                 }
-                statement.close();
             }
         }
         return pathVolumeMap;
@@ -186,15 +187,14 @@ public class StreamRestoreTool extends DatabaseTool {
     private Map<Long, String> getFeedIdNameMap() throws SQLException {
         if (feedIdNameMap == null) {
             feedIdNameMap = new HashMap<>();
-            try (Statement statement = getConnection().createStatement()) {
-                try (ResultSet resultSet = statement
-                        .executeQuery("select " + Feed.ID + "," + SQLNameConstants.NAME + " from " + Feed.TABLE_NAME)) {
-                    while (resultSet.next()) {
-                        feedIdNameMap.put(resultSet.getLong(1), resultSet.getString(2));
+            try (final Connection connection = getConnection()) {
+                try (final Statement statement = connection.createStatement()) {
+                    try (final ResultSet resultSet = statement.executeQuery("select " + Feed.ID + "," + SQLNameConstants.NAME + " from " + Feed.TABLE_NAME)) {
+                        while (resultSet.next()) {
+                            feedIdNameMap.put(resultSet.getLong(1), resultSet.getString(2));
+                        }
                     }
-                    resultSet.close();
                 }
-                statement.close();
             }
         }
         return feedIdNameMap;
@@ -282,7 +282,7 @@ public class StreamRestoreTool extends DatabaseTool {
             if (!inspect) {
                 for (final KeyCount keyCount : sortedList) {
                     final char response = readQuestion(keyCount.toString() + " (D)elete, (R)estore, (I)nspect, (S)kip",
-                            new char[] { 'd', 'r', 'i', 's' }, 's');
+                            new char[]{'d', 'r', 'i', 's'}, 's');
 
                     streamTypeResponse.put(keyCount.getKey().get(0), response);
 
@@ -316,7 +316,7 @@ public class StreamRestoreTool extends DatabaseTool {
                             processStreamTypeFeed(fileName, streamType, feed, 'd');
                         } else {
                             final char response = readQuestion(longLabel + " (D)elete, (R)estore, (S)kip",
-                                    new char[] { 'd', 'r', 's' }, 's');
+                                    new char[]{'d', 'r', 's'}, 's');
 
                             if (response == 'd' || response == 'r') {
                                 processStreamTypeFeed(fileName, streamType, feed, response);
@@ -326,14 +326,9 @@ public class StreamRestoreTool extends DatabaseTool {
                 }
             }
 
-        } catch (final IOException ioEx) {
+        } catch (final IOException | SQLException ioEx) {
             handleException(ioEx);
-        } catch (final SQLException sqlException) {
-            handleException(sqlException);
-        } finally {
-            closeConnection();
         }
-
     }
 
     private boolean mock = false;
@@ -447,7 +442,7 @@ public class StreamRestoreTool extends DatabaseTool {
     }
 
     public void processStreamTypeFeed(final String fileName, final String processStreamType, final String processFeedId,
-            final char action) throws IOException, SQLException {
+                                      final char action) throws IOException, SQLException {
         final LineReader lineReader = new LineReader(new FileInputStream(fileName), StreamUtil.DEFAULT_CHARSET_NAME);
 
         String line = null;
@@ -510,8 +505,8 @@ public class StreamRestoreTool extends DatabaseTool {
                     writeLine("Restore " + logInfo + " for file " + line);
 
                     if (!mock) {
-                        try {
-                            try (PreparedStatement statement1 = getConnection().prepareStatement(
+                        try (final Connection connection = getConnection()) {
+                            try (final PreparedStatement statement1 = connection.prepareStatement(
                                     "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
                                             + " values (?,1, ?,?, ?,?, ?,?, ?)")) {
                                 int s1i = 1;
@@ -537,16 +532,14 @@ public class StreamRestoreTool extends DatabaseTool {
                                 statement1.setLong(s1i++, stream.getStreamType().getId());
 
                                 statement1.executeUpdate();
-                                statement1.close();
                             }
 
-                            try (PreparedStatement statement2 = getConnection().prepareStatement(
+                            try (final PreparedStatement statement2 = connection.prepareStatement(
                                     "insert into strm_vol (ver, fk_strm_id,fk_vol_id) " + " values (1, ?,?)")) {
                                 int s2i = 1;
                                 statement2.setLong(s2i++, stream.getId());
                                 statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
                                 statement2.executeUpdate();
-                                statement2.close();
                             }
                         } catch (final Exception ex) {
                             writeLine("Failed " + logInfo + " " + ex.getMessage());

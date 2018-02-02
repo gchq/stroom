@@ -145,40 +145,24 @@ public class DatabaseCommonTestControlTransactionHelper {
     }
 
     public void enableConstraints() {
-        Connection connection = null;
-        try {
-            connection = ConnectionUtil.getConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException("Error getting connection", e);
-        }
-        String sql = "SET FOREIGN_KEY_CHECKS=1";
-        try {
+        final String sql = "SET FOREIGN_KEY_CHECKS=1";
+        try (final Connection connection = ConnectionUtil.getConnection()) {
             ConnectionUtil.executeStatement(connection, sql);
         } catch (SQLException e) {
             throw new RuntimeException(String.format("Error executing %s", sql), e);
-        } finally {
-            ConnectionUtil.close(connection);
         }
     }
 
     private void executeStatementsWithNoConstraints(final List<String> statements) {
-        Connection connection = null;
-        try {
-            connection = ConnectionUtil.getConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException("Error getting connection", e);
-        }
-        List<String> allStatements = new ArrayList<>();
+        final List<String> allStatements = new ArrayList<>();
         allStatements.add("SET FOREIGN_KEY_CHECKS=0");
         allStatements.addAll(statements);
         allStatements.add("SET FOREIGN_KEY_CHECKS=1");
 
-        try {
+        try (final Connection connection = ConnectionUtil.getConnection()) {
             ConnectionUtil.executeStatements(connection, allStatements);
         } catch (SQLException e) {
             throw new RuntimeException(String.format("Error executing %s", allStatements), e);
-        } finally {
-            ConnectionUtil.close(connection);
         }
     }
 }

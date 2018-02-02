@@ -16,13 +16,12 @@
 
 package stroom.util;
 
+import stroom.util.logging.StroomLogger;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import stroom.entity.server.util.ConnectionUtil;
-import stroom.util.logging.StroomLogger;
 
 public class DatabaseTool extends AbstractCommandLineTool {
     public static final StroomLogger LOGGER = StroomLogger.getLogger(DatabaseTool.class);
@@ -31,17 +30,14 @@ public class DatabaseTool extends AbstractCommandLineTool {
     private String jdbcDriverUrl;
     private String jdbcDriverUsername;
     private String jdbcDriverPassword;
-    private Connection connection;
 
     @Override
     public void run() {
         try {
-            try (Connection connection = getConnection()) {
-                try (Statement statement = connection.createStatement()) {
+            try (final Connection connection = getConnection()) {
+                try (final Statement statement = connection.createStatement()) {
                     statement.execute("select 1=1");
-                    statement.close();
                 }
-                connection.close();
             }
             System.out.println("Connected!!");
 
@@ -50,23 +46,19 @@ public class DatabaseTool extends AbstractCommandLineTool {
         }
     }
 
-    protected Connection getConnection() throws SQLException {
-        if (connection == null) {
-            try {
-                Class.forName(jdbcDriverClassName);
-            } catch (final ClassNotFoundException ex) {
-                throw new RuntimeException(ex);
-            }
+    protected Connection getConnection() {
+        Connection connection;
+        try {
+            Class.forName(jdbcDriverClassName);
+        } catch (final ClassNotFoundException ex) {
+            throw new RuntimeException(ex);
+        }
+        try {
             connection = DriverManager.getConnection(jdbcDriverUrl, jdbcDriverUsername, jdbcDriverPassword);
             LOGGER.info("getConnection() - Connected !! (%s,%s)", jdbcDriverClassName, jdbcDriverUrl);
-        }
-        return connection;
-    }
-
-    protected void closeConnection() {
-        if (connection != null) {
-            ConnectionUtil.close(connection);
-            connection = null;
+            return connection;
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

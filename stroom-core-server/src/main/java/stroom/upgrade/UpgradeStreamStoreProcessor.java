@@ -16,7 +16,13 @@
 
 package stroom.upgrade;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import stroom.entity.server.util.ConnectionUtil;
+import stroom.entity.server.util.PreparedStatementUtil;
+import stroom.feed.MetaMap;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -28,17 +34,14 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
-import stroom.feed.MetaMap;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -181,17 +184,15 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
 
     @Override
     public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,
-            final StreamTask streamTask, final StreamSource streamSource) {
+                     final StreamTask streamTask, final StreamSource streamSource) {
         final Stream stream = streamSource.getStream();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final String streamTime = DateUtil.createNormalDateTimeString(stream.getCreateMs());
         LOGGER.info("exec() - Processing stream %s %s - Start", stream, streamTime);
 
         final MetaMap metaMap = new MetaMap();
-        Connection connection = null;
+        final Connection connection = DataSourceUtils.getConnection(dataSource);
         try {
-            connection = dataSource.getConnection();
-
             final String query = getQuery(connection);
 
             final ArrayList<Object> argObjs = new ArrayList<>();
@@ -200,17 +201,22 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
             }
 
             if (StringUtils.hasText(query)) {
-                final ResultSet resultSet = ConnectionUtil.executeQueryResultSet(connection, query, argObjs);
-                while (resultSet.next()) {
-                    fillMap(resultSet, metaMap);
+                try (final PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    PreparedStatementUtil.setArguments(preparedStatement, argObjs);
+                    try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                        while (resultSet.next()) {
+                            fillMap(resultSet, metaMap);
+                        }
+                    }
+                } catch (final SQLException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    throw e;
                 }
-                resultSet.close();
             }
-
         } catch (final SQLException sqlEx) {
             LOGGER.error("exec() %s %s", query, args, sqlEx);
         } finally {
-            ConnectionUtil.close(connection);
+            DataSourceUtils.releaseConnection(connection, dataSource);
         }
 
         if (metaMap.size() > 0) {

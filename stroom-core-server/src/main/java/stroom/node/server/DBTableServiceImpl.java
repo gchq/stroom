@@ -21,9 +21,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
@@ -114,48 +114,42 @@ public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
         }
 
         final DataSource dataSource = (DataSource) bean;
-        Connection connection = null;
 
+        final Connection connection = DataSourceUtils.getConnection(dataSource);
         try {
-            connection = dataSource.getConnection();
             connection.setReadOnly(true);
 
             if (stroomDatabaseInfo.isMysql()) {
-                try (PreparedStatement ps = connection.prepareStatement("show table status where comment != 'VIEW'")) {
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
+                try (final PreparedStatement preparedStatement = connection.prepareStatement("show table status where comment != 'VIEW'")) {
+                    try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                        while (resultSet.next()) {
                             final DBTableStatus status = new DBTableStatus();
                             status.setDb(connection.getCatalog());
-                            status.setTable(rs.getString("Name"));
-                            status.setCount(rs.getLong("Rows"));
-                            status.setDataSize(rs.getLong("Data_length"));
-                            status.setIndexSize(rs.getLong("Index_length"));
+                            status.setTable(resultSet.getString("Name"));
+                            status.setCount(resultSet.getLong("Rows"));
+                            status.setDataSize(resultSet.getLong("Data_length"));
+                            status.setIndexSize(resultSet.getLong("Index_length"));
 
                             rtnList.add(status);
                         }
-                        rs.close();
                     }
-                    ps.close();
                 }
 
             } else {
                 final DatabaseMetaData databaseMetaData = connection.getMetaData();
-
-                final ResultSet resultSet = databaseMetaData.getTables(null, null, null, new String[]{"TABLE"});
-
-                while (resultSet.next()) {
-                    final DBTableStatus status = new DBTableStatus();
-                    status.setTable(resultSet.getString("TABLE_NAME"));
-                    rtnList.add(status);
+                try (final ResultSet resultSet = databaseMetaData.getTables(null, null, null, new String[]{"TABLE"})) {
+                    while (resultSet.next()) {
+                        final DBTableStatus status = new DBTableStatus();
+                        status.setTable(resultSet.getString("TABLE_NAME"));
+                        rtnList.add(status);
+                    }
                 }
-
-                resultSet.close();
             }
 
         } catch (final Exception ex) {
             LOGGER.error("findSystemTableStatus()", ex);
         } finally {
-            ConnectionUtil.close(connection);
+            DataSourceUtils.releaseConnection(connection, dataSource);
         }
     }
 
