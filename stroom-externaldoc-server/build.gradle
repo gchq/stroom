@@ -13,6 +13,5 @@ dependencies {
     compile libs.spring_context
 
     compile libs.javax_inject
-    compile libs.jackson_databind
     compile libs.ws_rs_api
 }
