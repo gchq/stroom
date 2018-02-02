@@ -226,16 +226,16 @@ public class DataRetentionExecutor {
         // Ignore rules if none are active.
         if (activeRules.getActiveRules().size() > 0) {
             // Create an object that can find streams with prepared statements and see if they match rules.
-            try (final DataRetentionStreamFinder streamFinder = new DataRetentionStreamFinder(connection, dictionaryService)) {
+            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryService)) {
 
                 // Find out how many rows we are likely to examine.
-                final long rowCount = streamFinder.getRowCount(ageRange, activeRules.getFieldSet());
+                final long rowCount = finder.getRowCount(ageRange, activeRules.getFieldSet());
 
                 // If we aren't likely to be touching any rows then ignore.
                 if (rowCount > 0) {
 
                     // Create an object that can delete streams with prepared statements.
-                    try (final DataRetentionStreamDeleter dataRetentionDeletionHelper = new DataRetentionStreamDeleter(connection)) {
+                    try (final DataRetentionStreamDeleter deleter = new DataRetentionStreamDeleter(connection)) {
                         List<Long> streamIdDeleteList = new ArrayList<>();
 
                         boolean more = true;
@@ -247,19 +247,19 @@ public class DataRetentionExecutor {
                                 streamIdRange = new Range<>(progress.getStreamId() + 1, null);
                             }
 
-                            more = streamFinder.findMatches(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskMonitor, progress, streamIdDeleteList);
+                            more = finder.findMatches(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskMonitor, progress, streamIdDeleteList);
 
                             // Delete a batch of streams.
                             while (streamIdDeleteList.size() > batchSize) {
                                 final List<Long> batch = streamIdDeleteList.subList(0, batchSize - 1);
                                 streamIdDeleteList = streamIdDeleteList.subList(batchSize, streamIdDeleteList.size() - 1);
-                                dataRetentionDeletionHelper.deleteStreams(batch);
+                                deleter.deleteStreams(batch);
                             }
                         }
 
                         // Delete any remaining streams in the list.
                         if (streamIdDeleteList.size() > 0) {
-                            dataRetentionDeletionHelper.deleteStreams(streamIdDeleteList);
+                            deleter.deleteStreams(streamIdDeleteList);
                         }
 
                     } catch (final SQLException e) {
