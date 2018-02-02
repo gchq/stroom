@@ -12,7 +12,6 @@ import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
-import stroom.statistics.util.NoCopyByteArrayOutputStream;
 import stroom.stats.schema.v4.ObjectFactory;
 import stroom.stats.schema.v4.Statistics;
 import stroom.stats.schema.v4.TagType;
@@ -25,6 +24,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
@@ -94,12 +94,12 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                 .forEach(entry -> {
                     final DocRef docRef = entry.getKey();
                     final List<InternalStatisticEvent> events = entry.getValue();
+                    //all have same name so all have same stat type, thus grab the first one's type
                     final String topic = getTopic(events.get(0).getType());
                     final String key = docRef.getUuid();
 
                     //The list of events may contain thousands of events, e.g for the
-                    //heap histo stats, so break it down into batches for better
-                    //scaling with kafka
+                    //heap histo stats, so break it down into batches for better scaling with kafka
                     BatchingIterator.batchedStreamOf(events.stream(), batchSize)
                             .forEach(eventsBatch ->
                                     sendMessage(stroomKafkaProducer, topic, key, eventsBatch));
@@ -111,15 +111,16 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                              final String key,
                              final List<InternalStatisticEvent> events) {
 
-        //all have same name so all have same stat type, thus grab the first one's type
-        byte[] message = buildMessage(events);
-        StroomKafkaProducerRecord<String, byte[]> producerRecord =
+        final byte[] message = buildMessage(events);
+
+        final StroomKafkaProducerRecord<String, byte[]> producerRecord =
                 new StroomKafkaProducerRecord.Builder<String, byte[]>()
                         .topic(topic)
                         .key(key)
                         .value(message)
                         .build();
-        Consumer<Throwable> exceptionHandler = StroomKafkaProducer
+
+        final Consumer<Throwable> exceptionHandler = StroomKafkaProducer
                 .createLogOnlyExceptionHandler(LOGGER, topic, key);
 
         //These are only internal stats so just send them async for performance
@@ -128,7 +129,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 
     private byte[] buildMessage(final List<InternalStatisticEvent> events) {
 
-        Statistics statistics = new ObjectFactory().createStatistics();
+        final Statistics statistics = new ObjectFactory().createStatistics();
         statistics.setVersion(STATISTICS_SCHEMA_VERSION);
         Preconditions.checkNotNull(events).stream()
                 .map(this::internalStatisticMapper)
@@ -190,7 +191,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     }
 
     private byte[] marshall(final Statistics statistics) {
-        NoCopyByteArrayOutputStream byteArrayOutputStream = new NoCopyByteArrayOutputStream();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         OutputStreamWriter writer = new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8);
         try {
             getMarshaller().marshal(statistics, writer);
