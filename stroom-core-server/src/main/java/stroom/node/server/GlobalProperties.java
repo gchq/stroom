@@ -16,8 +16,6 @@
 
 package stroom.node.server;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.shared.SQLNameConstants;
@@ -45,7 +43,7 @@ public class GlobalProperties {
 
     public GlobalProperties() {
         if (instance == null) {
-            loadSpringContext();
+            loadDefaultProperties();
             loadDBProperties();
         }
         instance = this;
@@ -67,14 +65,9 @@ public class GlobalProperties {
     }
 
     @SuppressWarnings("resource")
-    private void loadSpringContext() {
+    private void loadDefaultProperties() {
         try {
-            final ApplicationContext propertyContext = new ClassPathXmlApplicationContext(
-                    new String[]{"classpath:META-INF/spring/stroomCoreServerPropertyContext.xml"});
-
-            @SuppressWarnings("unchecked") final List<GlobalProperty> globalPropertyList = (List<GlobalProperty>) propertyContext
-                    .getBean("defaultPropertyList");
-
+            final List<GlobalProperty> globalPropertyList = DefaultProperties.getList();
             for (final GlobalProperty globalProperty : globalPropertyList) {
                 globalProperty.setSource("Default");
                 globalProperty.setDefaultValue(globalProperty.getValue());
