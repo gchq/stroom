@@ -20,7 +20,6 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.flywaydb.core.Flyway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -36,6 +35,7 @@ import javax.persistence.EntityManagerFactory;
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
@@ -102,8 +102,7 @@ public class PersistenceConfiguration {
             boolean usingFlyWay = false;
             LOGGER.info("Testing installed Stroom schema version");
 
-            final Connection connection = DataSourceUtils.getConnection(dataSource);
-            try {
+            try (final Connection connection = dataSource.getConnection()) {
                 try {
                     try (final Statement statement = connection.createStatement()) {
                         try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
@@ -178,8 +177,9 @@ public class PersistenceConfiguration {
                         // Ignore.
                     }
                 }
-            } finally {
-                DataSourceUtils.releaseConnection(connection, dataSource);
+            } catch (final SQLException e) {
+                LOGGER.fatal(e.getMessage());
+                throw new RuntimeException(e.getMessage(), e);
             }
 
             if (version != null) {
@@ -206,6 +206,7 @@ public class PersistenceConfiguration {
             }
 
             return flyway;
+
         }
 
         return null;

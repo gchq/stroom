@@ -18,7 +18,6 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.dictionary.shared.DictionaryService;
@@ -42,8 +41,8 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestDataRetentionTransactionHelper.class);
+public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestDataRetentionStreamFinder.class);
 
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
@@ -60,8 +59,7 @@ public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationT
 
     @Test
     public void testRowCount() throws SQLException {
-        final Connection connection = DataSourceUtils.getConnection(dataSource);
-        try {
+        try (final Connection connection = dataSource.getConnection()) {
             Feed feed = commonTestScenarioCreator.createSimpleFeed();
 
             final long now = System.currentTimeMillis();
@@ -84,12 +82,10 @@ public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationT
 
             // run the stream retention task which should 'delete' one stream
             final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
-            try (final DataRetentionStreamFinder dataRetentionStreamFinder = new DataRetentionStreamFinder(connection, dictionaryService)) {
-                final long count = dataRetentionStreamFinder.getRowCount(ageRange, Collections.singleton(StreamFields.STREAM_ID));
+            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryService)) {
+                final long count = finder.getRowCount(ageRange, Collections.singleton(StreamFields.STREAM_ID));
                 Assert.assertEquals(1, count);
             }
-        } finally {
-            DataSourceUtils.releaseConnection(connection, dataSource);
         }
     }
 

@@ -22,6 +22,7 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.StroomLogger;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,18 +38,13 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
 
     @Override
     public void run() {
-        try (final Connection connection = getConnection()) {
+        try {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
             final SQLStatisticValueBatchSaveService statisticValueBatchSaveService = new SQLStatisticValueBatchSaveService(null) {
                 @Override
                 protected Connection getConnection() {
-                    return connection;
-                }
-
-                @Override
-                void releaseConnection(final Connection connection) {
-                    // Do nothing.
+                    return SQLStatisticValueBatchSaveServiceTestDatabaseTool.this.getConnection();
                 }
             };
 
@@ -67,9 +63,8 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
                 statisticValueBatchSaveService.saveBatchStatisticValueSource_String(batch);
             }
             LOGGER.info("run() - took %s", logExecutionTime);
-
-        } catch (final Exception ex) {
-            ex.printStackTrace();
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 }

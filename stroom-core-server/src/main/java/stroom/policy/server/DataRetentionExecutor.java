@@ -19,7 +19,6 @@ package stroom.policy.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.util.XMLMarshallerUtil;
@@ -168,8 +167,7 @@ public class DataRetentionExecutor {
                         .collect(Collectors.toSet());
 
                 // Get a database connection.
-                final Connection connection = DataSourceUtils.getConnection(dataSource);
-                try {
+                try (final Connection connection = dataSource.getConnection()) {
                     final AtomicBoolean allSuccesful = new AtomicBoolean(true);
 
                     // Process the different data ages separately as they can consider different sets of streams.
@@ -187,9 +185,8 @@ public class DataRetentionExecutor {
                     if (!taskMonitor.isTerminated() && allSuccesful.get()) {
                         tracker.save();
                     }
-                } finally {
-                    // Release the database connection.
-                    DataSourceUtils.releaseConnection(connection, dataSource);
+                } catch (final SQLException e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
             }
         }

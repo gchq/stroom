@@ -16,33 +16,25 @@
 
 package stroom.streamstore.server;
 
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.ConnectionUtil;
-import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.util.logging.StroomLogger;
-import stroom.util.logging.LogExecutionTime;
 import org.hsqldb.types.Types;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.streamstore.shared.StreamAttributeValue;
+import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.List;
 
-@Transactional
 @Component
 public class StreamAttributeValueServiceTransactionHelper {
     private static StroomLogger LOGGER = StroomLogger.getLogger(StreamAttributeValueServiceTransactionHelper.class);
 
-    @Resource
-    private DataSource dataSource;
-
-    @Resource
-    private StroomDatabaseInfo stroomDatabaseInfo;
+    private final DataSource dataSource;
+    private final StroomDatabaseInfo stroomDatabaseInfo;
 
     private static final String INSERT_SQL = "INSERT INTO " + StreamAttributeValue.TABLE_NAME + " ("
             + StreamAttributeValue.VERSION + ", " + StreamAttributeValue.CREATE_MS + ", "
@@ -50,12 +42,17 @@ public class StreamAttributeValueServiceTransactionHelper {
             + StreamAttributeValue.STREAM_ID + ", " + StreamAttributeValue.STREAM_ATTRIBUTE_KEY_ID
             + ") VALUES (?, ?, ?, ?, ?, ?)";
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Inject
+    public StreamAttributeValueServiceTransactionHelper(final DataSource dataSource,
+                                                        final StroomDatabaseInfo stroomDatabaseInfo) {
+        this.dataSource = dataSource;
+        this.stroomDatabaseInfo = stroomDatabaseInfo;
+    }
+
     public void saveBatch(final List<StreamAttributeValue> list) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         if (list.size() > 0) {
-            final Connection connection = DataSourceUtils.getConnection(dataSource);
-            try {
+            try (final Connection connection = dataSource.getConnection()) {
                 try (final PreparedStatement ps = connection.prepareStatement(INSERT_SQL)) {
                     for (final StreamAttributeValue streamAttributeValue : list) {
                         ps.setInt(1, 1);
@@ -81,8 +78,6 @@ public class StreamAttributeValueServiceTransactionHelper {
 
             } catch (final Exception ex) {
                 LOGGER.error("saveBatch()", ex);
-            } finally {
-                DataSourceUtils.releaseConnection(connection, dataSource);
             }
         }
         LOGGER.debug("saveBatch() - inserted %s records in %s", list.size(), logExecutionTime);

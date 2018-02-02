@@ -17,7 +17,6 @@
 package stroom.upgrade;
 
 import org.springframework.context.annotation.Scope;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.entity.server.util.ConnectionUtil;
@@ -191,8 +190,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
         LOGGER.info("exec() - Processing stream %s %s - Start", stream, streamTime);
 
         final MetaMap metaMap = new MetaMap();
-        final Connection connection = DataSourceUtils.getConnection(dataSource);
-        try {
+        try (final Connection connection = dataSource.getConnection()) {
             final String query = getQuery(connection);
 
             final ArrayList<Object> argObjs = new ArrayList<>();
@@ -215,8 +213,6 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
             }
         } catch (final SQLException sqlEx) {
             LOGGER.error("exec() %s %s", query, args, sqlEx);
-        } finally {
-            DataSourceUtils.releaseConnection(connection, dataSource);
         }
 
         if (metaMap.size() > 0) {

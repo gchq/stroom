@@ -20,7 +20,6 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.flywaydb.core.Flyway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import stroom.node.server.GlobalProperties;
 import stroom.node.server.StroomPropertyService;
 import stroom.spring.C3P0Config;
@@ -103,8 +102,7 @@ public class StatisticsConfiguration {
             LOGGER.info("Testing installed statistics schema version");
 
             try {
-                final Connection connection = DataSourceUtils.getConnection(dataSource);
-                try {
+                try (final Connection connection = dataSource.getConnection()) {
                     try (final Statement statement = connection.createStatement()) {
                         try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
                             if (resultSet.next()) {
@@ -129,8 +127,6 @@ public class StatisticsConfiguration {
                             }
                         }
                     }
-                } finally {
-                    DataSourceUtils.releaseConnection(connection, dataSource);
                 }
             } catch (final Exception e) {
                 LOGGER.debug(e.getMessage());

@@ -17,7 +17,6 @@
 package stroom.statistics.sql;
 
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.util.logging.LogExecutionTime;
@@ -70,8 +69,7 @@ public class SQLStatisticValueBatchSaveService {
     public void saveBatchStatisticValueSource_String(final List<SQLStatisticValueSourceDO> batch) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        final Connection connection = getConnection();
-        try {
+        try (final Connection connection = getConnection()) {
             final StringBuilder sql = new StringBuilder();
             sql.append("INSERT INTO ");
             sql.append(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
@@ -118,8 +116,6 @@ public class SQLStatisticValueBatchSaveService {
             }
         } catch (final SQLException sqlEx) {
             throw new RuntimeException(sqlEx);
-        } finally {
-            releaseConnection(connection);
         }
     }
 
@@ -127,8 +123,7 @@ public class SQLStatisticValueBatchSaveService {
             throws SQLException {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        final Connection connection = getConnection();
-        try {
+        try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(SAVE_CALL)) {
                 for (final SQLStatisticValueSourceDO item : batch) {
                     preparedStatement.setLong(1, item.getCreateMs());
@@ -144,8 +139,6 @@ public class SQLStatisticValueBatchSaveService {
                 LOGGER.debug("saveBatchStatisticValueSource_PreparedStatement() - Saved %s records in %s", batch.size(),
                         logExecutionTime);
             }
-        } finally {
-            releaseConnection(connection);
         }
     }
 
@@ -160,8 +153,7 @@ public class SQLStatisticValueBatchSaveService {
         int savedCount = 0;
         int failedCount = 0;
 
-        final Connection connection = getConnection();
-        try {
+        try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(SAVE_CALL)) {
                 for (final SQLStatisticValueSourceDO item : batch) {
                     preparedStatement.setLong(1, item.getCreateMs());
@@ -189,8 +181,6 @@ public class SQLStatisticValueBatchSaveService {
             }
         } catch (final SQLException sqlEx) {
             throw new RuntimeException(sqlEx);
-        } finally {
-            releaseConnection(connection);
         }
 
         if (failedCount > 0) {
@@ -201,11 +191,7 @@ public class SQLStatisticValueBatchSaveService {
         return savedCount;
     }
 
-    Connection getConnection() {
-        return DataSourceUtils.getConnection(statisticsDataSource);
-    }
-
-    void releaseConnection(final Connection connection) {
-        DataSourceUtils.releaseConnection(connection, statisticsDataSource);
+    Connection getConnection() throws SQLException {
+        return statisticsDataSource.getConnection();
     }
 }

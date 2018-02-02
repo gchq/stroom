@@ -21,9 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
@@ -42,7 +40,6 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-@Transactional(readOnly = true)
 @Secured(DBTableStatus.MANAGE_DB_PERMISSION)
 @Component("dbTableService")
 public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
@@ -114,13 +111,14 @@ public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
         }
 
         final DataSource dataSource = (DataSource) bean;
-
-        final Connection connection = DataSourceUtils.getConnection(dataSource);
-        try {
+        try (final Connection connection = dataSource.getConnection()) {
             connection.setReadOnly(true);
 
             if (stroomDatabaseInfo.isMysql()) {
-                try (final PreparedStatement preparedStatement = connection.prepareStatement("show table status where comment != 'VIEW'")) {
+                try (final PreparedStatement preparedStatement = connection.prepareStatement("show table status where comment != 'VIEW'",
+                        ResultSet.TYPE_FORWARD_ONLY,
+                        ResultSet.CONCUR_READ_ONLY,
+                        ResultSet.CLOSE_CURSORS_AT_COMMIT)) {
                     try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                         while (resultSet.next()) {
                             final DBTableStatus status = new DBTableStatus();
@@ -148,8 +146,6 @@ public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
 
         } catch (final Exception ex) {
             LOGGER.error("findSystemTableStatus()", ex);
-        } finally {
-            DataSourceUtils.releaseConnection(connection, dataSource);
         }
     }
 

@@ -18,7 +18,6 @@ package stroom.statistics.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.statistics.common.RolledUpStatisticEvent;
@@ -192,34 +191,25 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
 
     private int getRowCount() throws SQLException {
         int count;
-        final Connection connection = getConnection();
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
-            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                resultSet.next();
-                count = resultSet.getInt(1);
+        try (final Connection connection = statisticsDataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    resultSet.next();
+                    count = resultSet.getInt(1);
+                }
             }
-        } finally {
-            releaseConnection(connection);
         }
         return count;
     }
 
     private void deleteRows() throws SQLException {
-        final Connection connection = getConnection();
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
-            preparedStatement.execute();
-        } finally {
-            releaseConnection(connection);
+        try (final Connection connection = statisticsDataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
+                preparedStatement.execute();
+            }
         }
     }
 
-    private Connection getConnection() {
-        return DataSourceUtils.getConnection(statisticsDataSource);
-    }
-
-    private void releaseConnection(final Connection connection) {
-        DataSourceUtils.releaseConnection(connection, statisticsDataSource);
-    }
 
 //    private static class MockTaskMonitor implements TaskMonitor {
 //        private static final long serialVersionUID = -8415095958756818805L;

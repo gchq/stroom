@@ -21,7 +21,6 @@ import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.node.server.StroomPropertyService;
@@ -382,8 +381,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         final StatisticDataSet statisticDataSet = new StatisticDataSet(dataSource.getName(),
                 dataSource.getStatisticType(), 1000L, dataPoints);
 
-        final Connection connection = DataSourceUtils.getConnection(statisticsDataSource);
-        try {
+        try (final Connection connection = statisticsDataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = buildSearchPreparedStatement(dataSource, criteria, connection)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
@@ -425,8 +423,6 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         } catch (final SQLException sqlEx) {
             LOGGER.error("performStatisticQuery failed", sqlEx);
             throw new RuntimeException("performStatisticQuery failed", sqlEx);
-        } finally {
-            DataSourceUtils.releaseConnection(connection, statisticsDataSource);
         }
         return statisticDataSet;
     }
