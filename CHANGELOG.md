@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.1-beta.14] - 2018-02-04
+
 * Issue **#600** : Added debug to help diagnose cause of missing index shards in shard list.
 
 * Issue **#611** : Changed properties to be defined in code rather than Spring XML.
@@ -719,7 +721,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-beta.14...HEAD
+[v5.1-beta.14]: https://github.com/gchq/stroom/compare/v5.1-beta.13...v5.1-beta.14
+[v5.1-beta.13]: https://github.com/gchq/stroom/compare/v5.1-beta.12...v5.1-beta.13
+[v5.1-beta.12]: https://github.com/gchq/stroom/compare/v5.1-beta.11...v5.1-beta.12
 [v5.1-beta.11]: https://github.com/gchq/stroom/compare/v5.1-beta.10...v5.1-beta.11
 [v5.1-beta.10]: https://github.com/gchq/stroom/compare/v5.1-beta.9...v5.1-beta.10
 [v5.1-beta.9]: https://github.com/gchq/stroom/compare/v5.1-beta.8...v5.1-beta.9
