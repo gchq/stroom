@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#600** : Added debug to help diagnose cause of missing index shards in shard list.
+
 * Issue **#611** : Changed properties to be defined in code rather than Spring XML.
 
 * Issue **#605** : Added a cache for retrieving user by name to reduce DB use when pushing users for each task.
