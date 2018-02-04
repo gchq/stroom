@@ -26,6 +26,7 @@ import stroom.entity.server.SystemEntityServiceImpl;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PermissionException;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
@@ -120,6 +121,21 @@ public class IndexShardServiceImpl
         CriteriaLoggingUtil.appendStringTerm(items, "partition", criteria.getPartition().getString());
 
         super.appendCriteria(items, criteria);
+    }
+
+    @Override
+    public BaseResultList<IndexShard> find(final FindIndexShardCriteria criteria) throws RuntimeException {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(">> find " + criteria.toString() + " " + criteria.obtainPageRequest().toString());
+        }
+
+        final BaseResultList<IndexShard> result =  super.find(criteria);
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("<< find " + " size=\"" + result.size() + "\" " + result.toString());
+        }
+
+        return result;
     }
 
     @Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
