@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#603** : Changed property description from `tags` to `XML elements` in `BadTextXMLFilterReader`.
+
 ## [v5.1-beta.14] - 2018-02-04
 
 * Issue **#600** : Added debug to help diagnose cause of missing index shards in shard list.
