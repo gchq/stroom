@@ -26,7 +26,6 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
 
     private final LoadingCache<DocRef, ElasticIndexConfig> cache;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final DocRefResourceHttpClient docRefHttpClient;
     private final SecurityContext securityContext;
 
@@ -46,11 +45,11 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
                 if (response.getStatus() != HttpStatus.SC_OK) {
                     final String msg = String.format("Invalid status returned by Elastic Explorer Service: %d - %s ",
                             response.getStatus(),
-                            response.getEntity());
+                            response.readEntity(String.class));
                     throw new RuntimeException(msg);
                 }
 
-                return objectMapper.readValue(response.getEntity().toString(), ElasticIndexConfig.class);
+                return response.readEntity(ElasticIndexConfig.class);
             } catch (Throwable e) {
                 throw new LoggedException(String.format("Failed to retrieve elastic index config for %s", k.getUuid()), e);
             }
