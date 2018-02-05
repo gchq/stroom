@@ -1,6 +1,5 @@
 package stroom.elastic.server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -24,9 +23,9 @@ import java.util.concurrent.TimeUnit;
 public class ElasticIndexCacheImpl implements ElasticIndexCache {
     private static final int MAX_CACHE_ENTRIES = 100;
 
-    private final LoadingCache<DocRef, ElasticIndexConfig> cache;
+    private final LoadingCache<DocRef, ElasticIndexDocRefEntity> cache;
 
-    private final DocRefResourceHttpClient docRefHttpClient;
+    private final DocRefResourceHttpClient<ElasticIndexDocRefEntity> docRefHttpClient;
     private final SecurityContext securityContext;
 
     @Inject
@@ -34,11 +33,11 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
                           final SecurityContext securityContext,
                           final StroomPropertyService propertyService) {
         final String urlPropKey = ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX;
-        docRefHttpClient = new DocRefResourceHttpClient(propertyService.getProperty(urlPropKey));
+        docRefHttpClient = new DocRefResourceHttpClient<>(propertyService.getProperty(urlPropKey));
 
         this.securityContext = securityContext;
 
-        final CacheLoader<DocRef, ElasticIndexConfig> cacheLoader = CacheLoader.from(k -> {
+        final CacheLoader<DocRef, ElasticIndexDocRefEntity> cacheLoader = CacheLoader.from(k -> {
             try {
                 final Response response = docRefHttpClient.get(serviceUser(), k.getUuid());
 
@@ -49,7 +48,7 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
                     throw new RuntimeException(msg);
                 }
 
-                return response.readEntity(ElasticIndexConfig.class);
+                return response.readEntity(ElasticIndexDocRefEntity.class);
             } catch (Throwable e) {
                 throw new LoggedException(String.format("Failed to retrieve elastic index config for %s", k.getUuid()), e);
             }
@@ -70,7 +69,7 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
     }
 
     @Override
-    public ElasticIndexConfig get(final DocRef key) {
+    public ElasticIndexDocRefEntity get(final DocRef key) {
         return cache.getUnchecked(key);
     }
 

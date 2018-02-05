@@ -66,7 +66,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     private final PipelineHolder pipelineHolder;
 
     private StroomElasticProducer elasticProducer = null;
-    private ElasticIndexConfig indexConfig = null;
+    private ElasticIndexDocRefEntity indexConfig = null;
     private Map<String, String> propertiesToIndex = null;
     private Locator locator = null;
 
