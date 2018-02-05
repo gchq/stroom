@@ -163,6 +163,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         sql.append(" FROM ");
         sql.append(Stream.TABLE_NAME);
         sql.append(" S");
+        sql.append(" USE INDEX (PRIMARY)");
 
         if (includeFeed) {
             sql.join(Feed.TABLE_NAME, "F", "S", Feed.FOREIGN_KEY, "F", Feed.ID);

@@ -19,18 +19,15 @@ package stroom.util;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
-import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTypeServiceImpl;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
@@ -116,8 +113,8 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
 
         final StreamStore streamStore = appContext.getBean(StreamStore.class);
-        final FeedServiceImpl feedService = appContext.getBean(FeedServiceImpl.class);
-        final StreamTypeServiceImpl streamTypeService = appContext.getBean(StreamTypeServiceImpl.class);
+        final FeedService feedService = (FeedService) appContext.getBean("cachedFeedService");
+        final StreamTypeService streamTypeService = (StreamTypeService) appContext.getBean("cachedStreamTypeService");
 
         Feed definition = null;
         if (feed != null) {
@@ -161,10 +158,10 @@ public class StreamDumpTool extends AbstractCommandLineTool {
     }
 
     private ApplicationContext buildAppContext() {
-        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD);
+        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
         final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-                ScopeConfiguration.class, PersistenceConfiguration.class, ServerComponentScanConfiguration.class,
-                ServerConfiguration.class);
+                ScopeConfiguration.class, PersistenceConfiguration.class,
+                ServerConfiguration.class, HeadlessConfiguration.class);
         return context;
     }
 

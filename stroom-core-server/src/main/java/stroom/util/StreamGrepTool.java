@@ -21,18 +21,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.feed.server.FeedServiceImpl;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
-import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTypeServiceImpl;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -131,8 +130,8 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
 
         final StreamStore streamStore = appContext.getBean(StreamStore.class);
-        final FeedServiceImpl feedService = appContext.getBean(FeedServiceImpl.class);
-        final StreamTypeServiceImpl streamTypeService = appContext.getBean(StreamTypeServiceImpl.class);
+        final FeedService feedService = (FeedService) appContext.getBean("cachedFeedService");
+        final StreamTypeService streamTypeService = (StreamTypeService) appContext.getBean("cachedStreamTypeService");
 
         Feed definition = null;
         if (feed != null) {
@@ -160,7 +159,6 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
         int count = 0;
         for (final Stream stream : results) {
-            // TODO : Add caching here to load stream types.
             final StreamType streamType = streamTypeService.load(stream.getStreamType());
             count++;
             LOGGER.info("processing() - " + count + "/" + results.size() + " "
@@ -179,10 +177,10 @@ public class StreamGrepTool extends AbstractCommandLineTool {
     }
 
     private ApplicationContext buildAppContext() {
-        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD);
+        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
         final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-                ScopeConfiguration.class, PersistenceConfiguration.class, ServerComponentScanConfiguration.class,
-                ServerConfiguration.class);
+                ScopeConfiguration.class, PersistenceConfiguration.class,
+                ServerConfiguration.class, HeadlessConfiguration.class);
         return context;
     }
 

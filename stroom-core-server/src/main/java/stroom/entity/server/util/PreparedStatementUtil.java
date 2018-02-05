@@ -16,12 +16,7 @@
 
 package stroom.entity.server.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.Proxy;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 
@@ -29,8 +24,6 @@ import java.sql.SQLSyntaxErrorException;
  * Utility Class
  */
 public class PreparedStatementUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PreparedStatementUtil.class);
-
     public static void setArguments(final PreparedStatement ps, final Iterable<Object> args) throws SQLException {
         if (args != null) {
             int index = 1;
@@ -59,22 +52,5 @@ public class PreparedStatementUtil {
                 index++;
             }
         }
-    }
-
-    static ResultSet createCloseStatementResultSet(final PreparedStatement statement) throws SQLException {
-        final ResultSet resultSet = statement.executeQuery();
-        return (ResultSet) Proxy.newProxyInstance(SqlUtil.class.getClassLoader(), new Class[]{ResultSet.class},
-                (proxy, method, args) -> {
-                    try {
-                        final Object r = method.invoke(resultSet, args);
-                        if (method.getName().equals("close")) {
-                            statement.close();
-                        }
-                        return r;
-                    } catch (final Throwable th) {
-                        LOGGER.error(th.getMessage(), th);
-                        throw th;
-                    }
-                });
     }
 }

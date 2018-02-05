@@ -32,7 +32,6 @@ public class DatabaseTool extends AbstractCommandLineTool {
     private String jdbcDriverUrl;
     private String jdbcDriverUsername;
     private String jdbcDriverPassword;
-    private Connection connection;
 
     public static void main(final String[] args) throws Exception {
         new DatabaseTool().doMain(args);
@@ -41,12 +40,10 @@ public class DatabaseTool extends AbstractCommandLineTool {
     @Override
     public void run() {
         try {
-            try (Connection connection = getConnection()) {
-                try (Statement statement = connection.createStatement()) {
+            try (final Connection connection = getConnection()) {
+                try (final Statement statement = connection.createStatement()) {
                     statement.execute("select 1=1");
-                    statement.close();
                 }
-                connection.close();
             }
             System.out.println("Connected!!");
 
@@ -55,23 +52,19 @@ public class DatabaseTool extends AbstractCommandLineTool {
         }
     }
 
-    protected Connection getConnection() throws SQLException {
-        if (connection == null) {
-            try {
-                Class.forName(jdbcDriverClassName);
-            } catch (final ClassNotFoundException ex) {
-                throw new RuntimeException(ex);
-            }
-            connection = DriverManager.getConnection(jdbcDriverUrl, jdbcDriverUsername, jdbcDriverPassword);
-            LOGGER.info("getConnection() - Connected !! ({},{})", jdbcDriverClassName, jdbcDriverUrl);
+    protected Connection getConnection() {
+        Connection connection;
+        try {
+            Class.forName(jdbcDriverClassName);
+        } catch (final ClassNotFoundException ex) {
+            throw new RuntimeException(ex);
         }
-        return connection;
-    }
-
-    protected void closeConnection() {
-        if (connection != null) {
-            ConnectionUtil.close(connection);
-            connection = null;
+        try {
+            connection = DriverManager.getConnection(jdbcDriverUrl, jdbcDriverUsername, jdbcDriverPassword);
+            LOGGER.info("getConnection() - Connected !! (%s,%s)", jdbcDriverClassName, jdbcDriverUrl);
+            return connection;
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

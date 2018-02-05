@@ -198,7 +198,7 @@ The table below includes licences for all Maven dependencies. Not included in th
 | com.google.protobuf                       | protobuf-java                                | 2.5.0            | Custom BSD    |         |               |
 | org.aspectj                               | aspectjrt                                    | 1.8.9            | EPL 1.0       |         |               |
 | org.aspectj                               | aspectjweaver                                | 1.8.9            | EPL 1.0       |         |               |
-| com.mchange                               | c3p0                                         | 0.9.5            | EPL 1.0       |         |               |
+| com.mchange                               | c3p0                                         | 0.9.5.2          | EPL 1.0       |         |               |
 | junit                                     | junit                                        | 4.12             | EPL 1.0       |         |               |
 | com.mchange                               | mchange-commons-java                         | 0.2.9            | EPL 1.0       |         |               |
 | com.thoughtworks.paranamer                | paranamer                                    | 2.3              | EPL 1.0       |         |               |

@@ -29,6 +29,7 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import stroom.node.server.GlobalProperties;
+import stroom.node.server.StroomPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
 
@@ -36,6 +37,7 @@ import javax.persistence.EntityManagerFactory;
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
@@ -49,16 +51,32 @@ public class PersistenceConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistenceConfiguration.class);
 
     @Bean
-    public ComboPooledDataSource dataSource(final GlobalProperties globalProperties) throws PropertyVetoException {
+    public ComboPooledDataSource dataSource(final GlobalProperties globalProperties, final StroomPropertyService stroomPropertyService) throws PropertyVetoException {
         final ComboPooledDataSource dataSource = new ComboPooledDataSource();
         dataSource.setDriverClass(StroomProperties.getProperty("stroom.jdbcDriverClassName"));
         dataSource.setJdbcUrl(StroomProperties.getProperty("stroom.jdbcDriverUrl|trace"));
         dataSource.setUser(StroomProperties.getProperty("stroom.jdbcDriverUsername"));
         dataSource.setPassword(StroomProperties.getProperty("stroom.jdbcDriverPassword"));
-        dataSource.setMinPoolSize(1);
-        dataSource.setMaxPoolSize(StroomProperties.getIntProperty("stroom.jdbcMaxPoolSize", 10));
-        dataSource.setMaxIdleTimeExcessConnections(60);
-        dataSource.setIdleConnectionTestPeriod(60);
+
+        final C3P0Config config = new C3P0Config("stroom.db.connectionPool.", stroomPropertyService);
+        dataSource.setMaxStatements(config.getMaxStatements());
+        dataSource.setMaxStatementsPerConnection(config.getMaxStatementsPerConnection());
+        dataSource.setInitialPoolSize(config.getInitialPoolSize());
+        dataSource.setMinPoolSize(config.getMinPoolSize());
+        dataSource.setMaxPoolSize(config.getMaxPoolSize());
+        dataSource.setIdleConnectionTestPeriod(config.getIdleConnectionTestPeriod());
+        dataSource.setMaxIdleTime(config.getMaxIdleTime());
+        dataSource.setAcquireIncrement(config.getAcquireIncrement());
+        dataSource.setAcquireRetryAttempts(config.getAcquireRetryAttempts());
+        dataSource.setAcquireRetryDelay(config.getAcquireRetryDelay());
+        dataSource.setCheckoutTimeout(config.getCheckoutTimeout());
+        dataSource.setMaxAdministrativeTaskTime(config.getMaxAdministrativeTaskTime());
+        dataSource.setMaxIdleTimeExcessConnections(config.getMaxIdleTimeExcessConnections());
+        dataSource.setMaxConnectionAge(config.getMaxConnectionAge());
+        dataSource.setUnreturnedConnectionTimeout(config.getUnreturnedConnectionTimeout());
+        dataSource.setStatementCacheNumDeferredCloseThreads(config.getStatementCacheNumDeferredCloseThreads());
+        dataSource.setNumHelperThreads(config.getNumHelperThreads());
+
         dataSource.setPreferredTestQuery("select 1");
         dataSource.setConnectionTesterClassName(StroomProperties.getProperty("stroom.connectionTesterClassName"));
         return dataSource;
@@ -82,8 +100,8 @@ public class PersistenceConfiguration {
             boolean usingFlyWay = false;
             LOGGER.info("Testing installed Stroom schema version");
 
-            try {
-                try (final Connection connection = dataSource.getConnection()) {
+            try (final Connection connection = dataSource.getConnection()) {
+                try {
                     try (final Statement statement = connection.createStatement()) {
                         try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
                             if (resultSet.next()) {
@@ -109,15 +127,13 @@ public class PersistenceConfiguration {
                             }
                         }
                     }
+                } catch (final Exception e) {
+                    LOGGER.debug(e.getMessage());
+                    // Ignore.
                 }
-            } catch (final Exception e) {
-                LOGGER.debug(e.getMessage());
-                // Ignore.
-            }
 
-            if (version == null) {
-                try {
-                    try (final Connection connection = dataSource.getConnection()) {
+                if (version == null) {
+                    try {
                         try (final Statement statement = connection.createStatement()) {
                             try (final ResultSet resultSet = statement.executeQuery("SELECT VER_MAJ, VER_MIN, VER_PAT FROM STROOM_VER ORDER BY VER_MAJ DESC, VER_MIN DESC, VER_PAT DESC LIMIT 1")) {
                                 if (resultSet.next()) {
@@ -126,16 +142,14 @@ public class PersistenceConfiguration {
                                 }
                             }
                         }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        // Ignore.
                     }
-                } catch (final Exception e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    // Ignore.
                 }
-            }
 
-            if (version == null) {
-                try {
-                    try (final Connection connection = dataSource.getConnection()) {
+                if (version == null) {
+                    try {
                         try (final Statement statement = connection.createStatement()) {
                             try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FD LIMIT 1")) {
                                 if (resultSet.next()) {
@@ -143,16 +157,14 @@ public class PersistenceConfiguration {
                                 }
                             }
                         }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        // Ignore.
                     }
-                } catch (final Exception e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    // Ignore.
                 }
-            }
 
-            if (version == null) {
-                try {
-                    try (final Connection connection = dataSource.getConnection()) {
+                if (version == null) {
+                    try {
                         try (final Statement statement = connection.createStatement()) {
                             try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FEED LIMIT 1")) {
                                 if (resultSet.next()) {
@@ -160,11 +172,14 @@ public class PersistenceConfiguration {
                                 }
                             }
                         }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        // Ignore.
                     }
-                } catch (final Exception e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    // Ignore.
                 }
+            } catch (final SQLException e) {
+                LOGGER.fatal(e.getMessage());
+                throw new RuntimeException(e.getMessage(), e);
             }
 
             if (version != null) {
@@ -172,7 +187,6 @@ public class PersistenceConfiguration {
             } else {
                 LOGGER.info("This is a new installation!");
             }
-
 
             if (version == null) {
                 // If we have no version then this is a new Stroom instance so perform full FlyWay migration.
@@ -192,6 +206,7 @@ public class PersistenceConfiguration {
             }
 
             return flyway;
+
         }
 
         return null;
