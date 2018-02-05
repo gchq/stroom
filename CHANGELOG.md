@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.1-beta.15] - 2018-02-05
+
 * Issue **#608** : Fixed stream grep and stream dump tools and added tests to ensure continued operation.
 
 * Issue **#603** : Changed property description from `tags` to `XML elements` in `BadTextXMLFilterReader`.
@@ -725,7 +727,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-beta.15...HEAD
+[v5.1-beta.15]: https://github.com/gchq/stroom/compare/v5.1-beta.14...v5.1-beta.15
 [v5.1-beta.14]: https://github.com/gchq/stroom/compare/v5.1-beta.13...v5.1-beta.14
 [v5.1-beta.13]: https://github.com/gchq/stroom/compare/v5.1-beta.12...v5.1-beta.13
 [v5.1-beta.12]: https://github.com/gchq/stroom/compare/v5.1-beta.11...v5.1-beta.12
