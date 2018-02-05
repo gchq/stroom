@@ -46,6 +46,7 @@ public class TestStroomIndexQueryResource {
 
     public static final String SEARCH_TARGET = "http://localhost:8080" +
             ResourcePaths.ROOT_PATH +
+            ResourcePaths.API_PATH +
             RegisteredService.INDEX_V2.getVersionedPath() +
             "/search";
 
