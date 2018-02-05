@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestStroomStatsInternalStatisticsService {
@@ -34,7 +36,7 @@ public class TestStroomStatsInternalStatisticsService {
     private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
 
     @Captor
-    ArgumentCaptor<Consumer<Throwable>> exceptionHandlerCaptor;
+    private ArgumentCaptor<Consumer<Throwable>> exceptionHandlerCaptor;
     @Mock
     private StroomKafkaProducer mockStroomKafkaProducer;
     @Mock
@@ -56,9 +58,9 @@ public class TestStroomStatsInternalStatisticsService {
         );
 
         //assemble test data
-        InternalStatisticEvent event1 = InternalStatisticEvent.createPlusOneCountStat("myKey", 0, Collections.emptyMap());
-        InternalStatisticEvent event2 = InternalStatisticEvent.createPlusOneCountStat("myKey", 1, Collections.emptyMap());
-        InternalStatisticEvent event3 = InternalStatisticEvent.createPlusOneCountStat("myKey", 1, Collections.emptyMap());
+        InternalStatisticEvent event1 = InternalStatisticEvent.createPlusOneCountStat("myKeyA", 0, Collections.emptyMap());
+        InternalStatisticEvent event2 = InternalStatisticEvent.createPlusOneCountStat("myKeyA", 1, Collections.emptyMap());
+        InternalStatisticEvent event3 = InternalStatisticEvent.createPlusOneCountStat("myKeyB", 1, Collections.emptyMap());
         DocRef docRefA = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat1");
         DocRef docRefB = new DocRef(DOC_REF_TYPE_2, UUID.randomUUID().toString(), "myStat2");
         Map<DocRef, List<InternalStatisticEvent>> map = ImmutableMap.of(
@@ -70,6 +72,44 @@ public class TestStroomStatsInternalStatisticsService {
         //two different doc refs so two calls to producer
         Mockito.verify(mockStroomKafkaProducer, Mockito.times(2))
                 .sendAsync(Mockito.any(StroomKafkaProducerRecord.class), Mockito.any());
+    }
+
+    @Test
+    public void putEvents_largeBatch() {
+
+        mockStroomPropertyService.setProperty(StroomStatsInternalStatisticsService.PROP_KEY_DOC_REF_TYPE, DOC_REF_TYPE_1);
+        mockStroomPropertyService.setProperty(
+                StroomStatsInternalStatisticsService.PROP_KEY_PREFIX_KAFKA_TOPICS +
+                        InternalStatisticEvent.Type.COUNT.toString().toLowerCase(),
+                "MyTopic");
+        mockStroomPropertyService.setProperty(StroomStatsInternalStatisticsService.PROP_KEY_EVENTS_PER_MESSAGE, "10");
+
+        Mockito.when(mockStroomKafkaProducerFactoryService.getConnector()).thenReturn(Optional.of(mockStroomKafkaProducer));
+        StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
+                mockStroomKafkaProducerFactoryService,
+                mockStroomPropertyService
+        );
+
+        //assemble test data
+        DocRef docRefA = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat1");
+        DocRef docRefB = new DocRef(DOC_REF_TYPE_2, UUID.randomUUID().toString(), "myStat2");
+        Map<DocRef, List<InternalStatisticEvent>> map = ImmutableMap.of(
+                docRefA, createNEvents("myKeyA",100),
+                docRefB, createNEvents("myKeyB", 15));
+
+        stroomStatsInternalStatisticsService.putEvents(map);
+
+        //two different doc refs and batch size of 10,
+        //so kafka msg count is 10 for A and 2 for B, thus 12
+        Mockito.verify(mockStroomKafkaProducer, Mockito.times(12))
+                .sendAsync(Mockito.any(StroomKafkaProducerRecord.class), Mockito.any());
+    }
+
+    private List<InternalStatisticEvent> createNEvents(final String key, final int count) {
+
+        return IntStream.rangeClosed(1, count)
+                .mapToObj(i -> InternalStatisticEvent.createPlusOneCountStat(key, i, Collections.emptyMap()) )
+                .collect(Collectors.toList());
     }
 
     @Test

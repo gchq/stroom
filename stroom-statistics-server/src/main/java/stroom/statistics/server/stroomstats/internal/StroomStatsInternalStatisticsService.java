@@ -12,10 +12,10 @@ import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
-import stroom.statistics.util.NoCopyByteArrayOutputStream;
 import stroom.stats.schema.v4.ObjectFactory;
 import stroom.stats.schema.v4.Statistics;
 import stroom.stats.schema.v4.TagType;
+import stroom.util.collections.BatchingIterator;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
@@ -24,6 +24,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
@@ -40,6 +41,8 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 
     static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.stroomStats.docRefType";
     static final String PROP_KEY_PREFIX_KAFKA_TOPICS = "stroom.services.stroomStats.kafkaTopics.";
+    static final String PROP_KEY_EVENTS_PER_MESSAGE = "stroom.services.stroomStats.internalStats.eventsPerMessage";
+
     public static final String STATISTICS_SCHEMA_VERSION = "4.0.0";
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
@@ -81,6 +84,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         }
 
         Preconditions.checkNotNull(eventsMap);
+        final int batchSize = getBatchSize();
 
         //We work on the basis that a stat may or may not have a valid datasource (StatisticConfiguration) but we
         //will let stroom-stats worry about that and just fire what we have at kafka
@@ -88,40 +92,53 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                 .filter(entry ->
                         !entry.getValue().isEmpty())
                 .forEach(entry -> {
-                    DocRef docRef = entry.getKey();
-                    List<InternalStatisticEvent> events = entry.getValue();
-                    String statName = docRef.getName();
-                    //all have same name so have same type
-                    String topic = getTopic(events.get(0).getType());
-                    byte[] message = buildMessage(docRef, events);
-                    String key = docRef.getUuid();
-                    StroomKafkaProducerRecord<String, byte[]> producerRecord =
-                            new StroomKafkaProducerRecord.Builder<String, byte[]>()
-                                    .topic(topic)
-                                    .key(key)
-                                    .value(message)
-                                    .build();
-                    Consumer<Throwable> exceptionHandler = StroomKafkaProducer
-                            .createLogOnlyExceptionHandler(LOGGER, topic, key);
+                    final DocRef docRef = entry.getKey();
+                    final List<InternalStatisticEvent> events = entry.getValue();
+                    //all have same name so all have same stat type, thus grab the first one's type
+                    final String topic = getTopic(events.get(0).getType());
+                    final String key = docRef.getUuid();
 
-                    //These are only internal stats so just send them async for performance
-                    stroomKafkaProducer.sendAsync(producerRecord, exceptionHandler);
+                    //The list of events may contain thousands of events, e.g for the
+                    //heap histo stats, so break it down into batches for better scaling with kafka
+                    BatchingIterator.batchedStreamOf(events.stream(), batchSize)
+                            .forEach(eventsBatch ->
+                                    sendMessage(stroomKafkaProducer, topic, key, eventsBatch));
                 });
     }
 
-    private byte[] buildMessage(final DocRef docRef, final List<InternalStatisticEvent> events) {
+    private void sendMessage(final StroomKafkaProducer stroomKafkaProducer,
+                             final String topic,
+                             final String key,
+                             final List<InternalStatisticEvent> events) {
 
-        Statistics statistics = new ObjectFactory().createStatistics();
+        final byte[] message = buildMessage(events);
+
+        final StroomKafkaProducerRecord<String, byte[]> producerRecord =
+                new StroomKafkaProducerRecord.Builder<String, byte[]>()
+                        .topic(topic)
+                        .key(key)
+                        .value(message)
+                        .build();
+
+        final Consumer<Throwable> exceptionHandler = StroomKafkaProducer
+                .createLogOnlyExceptionHandler(LOGGER, topic, key);
+
+        //These are only internal stats so just send them async for performance
+        stroomKafkaProducer.sendAsync(producerRecord, exceptionHandler);
+    }
+
+    private byte[] buildMessage(final List<InternalStatisticEvent> events) {
+
+        final Statistics statistics = new ObjectFactory().createStatistics();
         statistics.setVersion(STATISTICS_SCHEMA_VERSION);
         Preconditions.checkNotNull(events).stream()
-                .map(event -> internalStatisticMapper(docRef, event))
+                .map(this::internalStatisticMapper)
                 .forEach(statistic -> statistics.getStatistic().add(statistic));
 
         return marshall(statistics);
     }
 
-    private Statistics.Statistic internalStatisticMapper(final DocRef docRef,
-                                                         final InternalStatisticEvent internalStatisticEvent) {
+    private Statistics.Statistic internalStatisticMapper(final InternalStatisticEvent internalStatisticEvent) {
         Preconditions.checkNotNull(internalStatisticEvent);
         ObjectFactory objectFactory = new ObjectFactory();
         Statistics.Statistic statistic = objectFactory.createStatisticsStatistic();
@@ -174,7 +191,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     }
 
     private byte[] marshall(final Statistics statistics) {
-        NoCopyByteArrayOutputStream byteArrayOutputStream = new NoCopyByteArrayOutputStream();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         OutputStreamWriter writer = new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8);
         try {
             getMarshaller().marshal(statistics, writer);
@@ -205,6 +222,10 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                     String.format("Missing value for property %s, unable to send internal statistics", topic));
         }
         return topic;
+    }
+
+    private int getBatchSize() {
+        return stroomPropertyService.getIntProperty(PROP_KEY_EVENTS_PER_MESSAGE, 100);
     }
 
     @Override

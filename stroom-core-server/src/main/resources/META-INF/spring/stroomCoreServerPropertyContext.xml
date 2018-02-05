@@ -824,6 +824,16 @@
             <property name="description"
                       value="A single regex that will be used to filter classes from the jmap histogram internal statistic based on their name. e.g '^(stroom\..*)$'. If no value is supplied all classes will be included. If a value is supplied only those class names matching the regex will be included."/>
             <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.node.status.heapHistogram.classNameReplacementRegex"/>
+            <!-- This is XML so XML escaping rules apply, not java's -->
+            <property name="value" value="((?&lt;=\$Proxy)[0-9]+|(?&lt;=\$\$)[0-9a-f]+|(?&lt;=\$\$Lambda\$)[0-9]+\/[0-9]+)"/>
+            <property name="description"
+                      value="A single regex that will be used to replace all matches in the class name with '--REPLACED--'. This is to prevent ids for anonymous inner classes and lambdas from being included in the class name. E.g '....DocRefResourceHttpClient$$Lambda$46/1402766141' becomes '....DocRefResourceHttpClient$$Lambda$--REPLACED--'. "/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.node.status.heapHistogram.jMapExecutable"/>
@@ -1018,6 +1028,15 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.stroomStats.internalStats.eventsPerMessage"/>
+            <property name="value"
+                      value="100"/>
+            <property name="description"
+                      value="The number of internal statistic events to batch together in a single Kafka message. High numbers reduce network overhead but limit the parallelism."/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
 
         <!-- SQL Statistics -->
         <bean class="stroom.node.shared.GlobalProperty">
@@ -1048,6 +1067,9 @@
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
+
+
+
         <!-- Kafka properties -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
         <bean class="stroom.node.shared.GlobalProperty">
@@ -1061,6 +1083,9 @@
 
 
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+
 
         <!-- Service discovery properties -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -1153,6 +1178,9 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+
 
 
         <!-- Internal statistics definitions
@@ -1253,6 +1281,28 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.heapHistogramInstances.docRefs"/>
+            <property name="value"
+                      value="docRef(StatisticStore,e4f243b8-2c70-4d6e-9d5a-16466bf8764f,Heap Histogram Instances),docRef(StroomStatsStore,bdd933a4-4309-47fd-98f6-1bc2eb555f20,Heap Histogram Instances)"/>
+            <property name="description"
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...'"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.heapHistogramBytes.docRefs"/>
+            <property name="value"
+                      value="docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes),docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)"/>
+            <property name="description"
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...'"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
         <!-- Stroom Proxy Store for Pipeline Use -->
         <bean class="stroom.node.shared.GlobalProperty">
