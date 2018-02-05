@@ -20,9 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
-
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
@@ -266,31 +264,18 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     }
 
     private int getRowCount(final String tableName) throws SQLException {
-        final Connection connection = getConnection();
-
         int count;
-
-        try {
-
-            final PreparedStatement preparedStatement = connection
-                    .prepareStatement("select count(*) from " + tableName);
-
-            final ResultSet resultSet = preparedStatement.executeQuery();
-
-            resultSet.next();
-            count = resultSet.getInt(1);
-            resultSet.close();
-
-        } finally {
-
-            ConnectionUtil.close(connection);
+        try (final Connection connection = statisticsDataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + tableName)) {
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    resultSet.next();
+                    count = resultSet.getInt(1);
+                }
+            }
         }
         return count;
     }
 
-    private Connection getConnection() throws SQLException {
-        return statisticsDataSource.getConnection();
-    }
 
 //    private static class MockTaskMonitor implements TaskMonitor {
 //        private static final long serialVersionUID = -8415095958756818805L;

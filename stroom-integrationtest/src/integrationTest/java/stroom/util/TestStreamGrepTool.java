@@ -17,16 +17,14 @@
 package stroom.util;
 
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
-import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
-import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.annotation.Resource;
 
@@ -34,31 +32,24 @@ public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
-    private CommonTestControl commonTestControl;
-    @Resource
     private StreamStore streamStore;
 
     @Test
     public void test() {
-        new ThreadScopeRunnable() {
-            @Override
-            protected void exec() {
-                try {
-                    final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
+        try {
+            final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
 
-                    addData(feed, "This is some test data to match on");
-                    addData(feed, "This is some test data to not match on");
+            addData(feed, "This is some test data to match on");
+            addData(feed, "This is some test data to not match on");
 
-                    final StreamGrepTool streamGrepTool = new StreamGrepTool();
-                    streamGrepTool.setFeed(feed.getName());
-                    streamGrepTool.setMatch("to match on");
-                    streamGrepTool.run();
+            final StreamGrepTool streamGrepTool = new StreamGrepTool();
+            streamGrepTool.setFeed(feed.getName());
+            streamGrepTool.setMatch("to match on");
+            streamGrepTool.run();
 
-                } catch (final Exception e) {
-                    throw new RuntimeException(e.getMessage(), e);
-                }
-            }
-        }.run();
+        } catch (final Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     private void addData(final Feed feed, final String data) throws Exception {

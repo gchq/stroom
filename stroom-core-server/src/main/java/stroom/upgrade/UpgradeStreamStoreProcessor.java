@@ -211,7 +211,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
                 }
             }
         } catch (final SQLException sqlEx) {
-            LOGGER.error("exec() {} {}", new Object[]{query, args}, sqlEx)
+            LOGGER.error("exec() {} {}", new Object[]{query, args}, sqlEx);
         }
 
         if (metaMap.size() > 0) {
@@ -224,7 +224,5 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
 
         LOGGER.info("exec() - Processing stream {} {} - Finished in {} added {} attributes", new Object[]{stream, streamTime,
                 logExecutionTime, metaMap.size()});
-
     }
-
 }

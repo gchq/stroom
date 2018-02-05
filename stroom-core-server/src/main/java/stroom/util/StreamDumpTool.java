@@ -19,7 +19,9 @@ package stroom.util;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.headless.HeadlessConfiguration;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -28,6 +30,7 @@ import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
@@ -87,13 +90,12 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
-        String createStartTime = null;
-        if (StringUtils.isNotBlank(createPeriodFrom)) {
-            createStartTime = createPeriodFrom;
-        }
-        String createEndTime = null;
-        if (StringUtils.isNotBlank(createPeriodTo)) {
-            createEndTime = createPeriodTo;
+        if (StringUtils.isNotBlank(createPeriodFrom) && StringUtils.isNotBlank(createPeriodTo)) {
+            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
+        } else if (StringUtils.isNotBlank(createPeriodFrom)) {
+            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
+        } else if (StringUtils.isNotBlank(createPeriodTo)) {
+            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 
         if (outputDir == null || outputDir.length() == 0) {
@@ -109,8 +111,6 @@ public class StreamDumpTool extends AbstractCommandLineTool {
                 throw new UncheckedIOException(e);
             }
         }
-
-        builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
 
         final StreamStore streamStore = appContext.getBean(StreamStore.class);
         final FeedService feedService = (FeedService) appContext.getBean("cachedFeedService");

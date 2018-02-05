@@ -1,5 +1,4 @@
 dependencies {
-    compile project(':stroom-security-api')
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-entity-shared')

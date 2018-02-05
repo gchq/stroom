@@ -26,6 +26,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.concurrent.SimpleConcurrentMap;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
@@ -45,6 +46,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -452,13 +454,13 @@ public class StreamRestoreTool extends DatabaseTool {
 
                         writeLine("Restore " + logInfo + " for file " + line);
 
-                    if (!mock) {
-                        try (final Connection connection = getConnection()) {
-                            try (final PreparedStatement statement1 = connection.prepareStatement(
-                                    "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
-                                            + " values (?,1, ?,?, ?,?, ?,?, ?)")) {
-                                int s1i = 1;
-                                statement1.setLong(s1i++, stream.getId());
+                        if (!mock) {
+                            try (final Connection connection = getConnection()) {
+                                try (final PreparedStatement statement1 = connection.prepareStatement(
+                                        "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
+                                                + " values (?,1, ?,?, ?,?, ?,?, ?)")) {
+                                    int s1i = 1;
+                                    statement1.setLong(s1i++, stream.getId());
 
                                     statement1.setLong(s1i++, stream.getCreateMs());
                                     if (stream.getEffectiveMs() != null) {
@@ -479,26 +481,26 @@ public class StreamRestoreTool extends DatabaseTool {
 
                                     statement1.setLong(s1i++, stream.getStreamType().getId());
 
-                                statement1.executeUpdate();
-                            }
+                                    statement1.executeUpdate();
+                                }
 
-                            try (final PreparedStatement statement2 = connection.prepareStatement(
-                                    "insert into strm_vol (ver, fk_strm_id,fk_vol_id) " + " values (1, ?,?)")) {
-                                int s2i = 1;
-                                statement2.setLong(s2i++, stream.getId());
-                                statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
-                                statement2.executeUpdate();
+                                try (final PreparedStatement statement2 = connection.prepareStatement(
+                                        "insert into strm_vol (ver, fk_strm_id,fk_vol_id) " + " values (1, ?,?)")) {
+                                    int s2i = 1;
+                                    statement2.setLong(s2i++, stream.getId());
+                                    statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
+                                    statement2.executeUpdate();
+                                }
+                            } catch (final Exception ex) {
+                                writeLine("Failed " + logInfo + " " + ex.getMessage());
                             }
-                        } catch (final Exception ex) {
-                            writeLine("Failed " + logInfo + " " + ex.getMessage());
                         }
+                        count++;
                     }
-                    count++;
                 }
             }
+            writeLine("Processed " + ModelStringUtil.formatCsv(count) + " count");
         }
-        writeLine("Processed " + ModelStringUtil.formatCsv(count) + " count");
-
     }
 
     private ArrayList<KeyCount> writeTable(final Collection<KeyCount> values, final String heading) {

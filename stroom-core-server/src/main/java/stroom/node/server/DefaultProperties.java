@@ -35,6 +35,12 @@ public class DefaultProperties {
 
         // Stroom Proxy Repository and Aggregation 
         list.add(new GlobalProperty.Builder()
+                .name("stroom.feed.receiptPolicyUuid")
+                .value("")
+                .description("The UUID of the data receipt policy to use")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
                 .name("stroom.proxyDir")
                 .value("${stroom.temp}/proxy")
                 .description("Folder to look for Stroom Proxy Content to aggregate")
@@ -230,49 +236,6 @@ public class DefaultProperties {
                 .description("Prevent new logins to the system. This is useful if the system is scheduled to have an outage.")
                 .editable(true)
                 .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.developmentMode")
-                .value("false")
-                .description("")
-                .build());
-
-        // SECURITY PROPERTIES 
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.security.allowCertificateAuthentication")
-                .value("false")
-                .description("Choose whether Stroom should allow UI access using certificates")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.security.certificateDNPattern")
-                .value("CN=[^ ]+ [^ ]+ \\(?([a-zA-Z0-9]+)\\)?")
-                .description("The regular expression to use to extract user names from a certificate DN")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.security.userNamePattern")
-                .value("^[a-zA-Z0-9_-]{3,}$")
-                .description("The regex pattern for user names")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.daysToAccountExpiry")
-                .value("90")
-                .description("Number of days before we disable an account")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.daysToUnusedAccountExpiry")
-                .value("30")
-                .description("Number of days before we disable an unused account")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.daysToPasswordExpiry")
-                .value("90")
-                .description("Number of days before passwords expire")
-                .editable(true)
-                .build());
 
         // INDEX PROPERTIES 
         list.add(new GlobalProperty.Builder()
@@ -386,9 +349,15 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.search.maxResults")
+                .name("stroom.search.storeSize")
                 .value("1000000,100,10,1")
                 .description("The maximum number of search results to keep in memory at each level.")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.dashboard.defaultMaxResults")
+                .value("1000000,100,10,1")
+                .description("The default maximum number of search results to return to the dashboard, unless the user requests lower values")
                 .editable(true)
                 .build());
 
@@ -756,52 +725,6 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // EMAIL 
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.mail.host")
-                .value("")
-                .description("Email service host name, e.g. smtp.gmail.com")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.mail.port")
-                .value("587")
-                .description("Email service port, e.g. 587")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.mail.protocol")
-                .value("smtp")
-                .description("Email service protocol, e.g. smtp")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.mail.userName")
-                .value("")
-                .description("Email service username, e.g. XXXXX@gmail.com")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.mail.password")
-                .value("")
-                .description("Email service password")
-                .editable(true)
-                .password(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.mail.propertiesFile")
-                .value("~/.stroom/mail.properties")
-                .description("Additional mail properties can be defined in a file at the specified path, e.g. ~/.stroom/mail.properties")
-                .editable(true)
-                .build());
-
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.mail.userDomain")
-                .value("")
-                .description("User Domain (to append to user names)")
-                .editable(true)
-                .build());
-
         // UI 
         list.add(new GlobalProperty.Builder()
                 .name("stroom.theme.background-attachment")
@@ -904,23 +827,6 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
-        // Common statistics store properties 
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.statistics.common.statisticEngines")
-                .value("sql")
-                .description("Comma delimited list of enabled engines that implement Statistic Event Store (currently 'sql')")
-                .editable(true)
-                .requireUiRestart(true)
-                .build());
-
-        // Legacy statistics store properties 
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.statistics.legacy.statisticAggregationBatchSize")
-                .value("1000000")
-                .description("Number of STAT_VAL_SRC records to merge into STAT_VAL in one batch")
-                .editable(true)
-                .build());
-
         // SQL statistics store properties 
         list.add(new GlobalProperty.Builder()
                 .name("stroom.statistics.sql.statisticAggregationBatchSize")
@@ -961,9 +867,421 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
+                .name("stroom.node.status.heapHistogram.classNameReplacementRegex")
+                // This is XML so XML escaping rules apply, not java's 
+                .value("((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)")
+                .description("A single regex that will be used to replace all matches in the class name with '--REPLACED--'. This is to prevent ids for anonymous inner classes and lambdas from being included in the class name. E.g '....DocRefResourceHttpClient$$Lambda$46/1402766141' becomes '....DocRefResourceHttpClient$$Lambda$--REPLACED--'. ")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
                 .name("stroom.node.status.heapHistogram.jMapExecutable")
                 .value("jmap")
                 .description("The jmap executable name if it is available on the PATH or a fully qualified form")
+                .build());
+
+
+        // External Service properties, including DocRef.type name mappings
+        // ========================================START=========================================== 
+
+        // Stroom-Index 
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.stroomIndex.name")
+                .value("stroom-index")
+                .description("Name of the index service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.stroomIndex.version")
+                .value("1")
+                .description("Version of the index service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.stroomIndex.docRefType")
+                .value("Index")
+                .description("The entity type for the index service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        // Authentication 
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.authentication.name")
+                .value("authentication")
+                .description("Name of the authentication service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.authentication.version")
+                .value("1")
+                .description("Version of the authentication service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.authentication.docRefType")
+                .value("authentication")
+                .description("The entity type for the authentication service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.advertisedUrl")
+                .value("")
+                .description("The URL of Stroom as provided to the browser")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.auth.services.url")
+                .value("http://auth-service:8099")
+                .description("The URL of the auth service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.auth.authentication.service.url")
+                .value("http://auth-service:8099/authentication/v1")
+                .description("The URL of the authentication service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.auth.jwt.issuer")
+                .value("stroom")
+                .description("The issuer to expect when verifying JWTs.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.auth.jwt.enabletokenrevocationcheck")
+                .value("true")
+                .description("Whether or not to enable remote calls to the auth service to check if a token we have has been revoked.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.security.apitoken")
+                .value("eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc")
+                .description("The API token Stroom will use to authenticate itself when accessing other services")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.security.userNamePattern")
+                .value("^[a-zA-Z0-9_-]{3,}$")
+                .description("The regex pattern for user names")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.authentication.required")
+                .value("true")
+                .description("Choose whether Stroom requires authenticated access")
+                .build());
+
+        // Authorisation 
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.authorisation.name")
+                .value("authorisation")
+                .description("Name of the authorisation service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.authorisation.version")
+                .value("1")
+                .description("Version of the authorisation service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.authorisation.docRefType")
+                .value("authorisation")
+                .description("The entity type for the authorisation service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        // Stroom-Stats 
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.stroomStats.name")
+                .value("stroom-stats")
+                .description("The name of the stroom-stats service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.stroomStats.version")
+                .value("2")
+                .description("The version of the stroom-stats service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.stroomStats.docRefType")
+                .value("StroomStatsStore")
+                .description("The entity type for the stroom-stats service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.stroomStats.kafkaTopics.count")
+                .value("statisticEvents-Count")
+                .description("The kafka topic to send Count type stroom-stats statistic events to")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.stroomStats.kafkaTopics.value")
+                .value("statisticEvents-Value")
+                .description("The kafka topic to send Value type stroom-stats statistic events to")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.stroomStats.internalStats.eventsPerMessage")
+                .value("100")
+                .description("The number of internal statistic events to batch together in a single Kafka message. High numbers reduce network overhead but limit the parallelism.")
+                .editable(true)
+                .build());
+
+        // SQL Statistics 
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.sqlStatistics.name")
+                .value("sql_statistics")
+                .description("The name of the built-in sql statistics service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.sqlStatistics.version")
+                .value("1")
+                .description("The version of the built-in sql statistics service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.services.sqlStatistics.docRefType")
+                .value("StatisticStore")
+                .description("The entity type for the sql statistics service")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        // ========================================END=========================================== 
+
+
+        // Kafka properties 
+        // ========================================START=========================================== 
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.kafka.bootstrap.servers")
+                .value("localhost:9092")
+                .description("The list of kafka brokers to initially connect to to obtain the full set of kafka brokers, in the form `host1:port,host2:port,etc'")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+
+        // ========================================END=========================================== 
+
+
+        // Service discovery properties 
+        // ========================================START=========================================== 
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.serviceDiscovery.enabled")
+                .value("true")
+                .description("Set this to true to use Zookeeper for service discovery. Set this to false to use resolve all services locally, i.e. 127.0.0.1")
+                .editable(true)
+                .requireRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.serviceDiscovery.simpleLookup.basePath")
+                .value("http://127.0.0.1:8080")
+                .description("The base path to connect to local services on, when not using service discovery")
+                .editable(true)
+                .requireRestart(true)
+                .build());
+
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.serviceDiscovery.zookeeperUrl")
+                .value("localhost:2181")
+                .description("The Zookeeper quorum connection string, required for service discovery, in the form 'host1:port1,host2:port2,host3:port3'. The root znode to use in Zookeeper is defined in the property stroom.serviceDiscovery.zookeeperBasePath")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.serviceDiscovery.servicesHostNameOrIpAddress")
+                .value("localhost")
+                .description("The external facing address that stroom will register its services with service discovery. If this property is empty stroom will try to establish the hostname. Recommended to be left blank in production to avoid having host specific configuration, unless the hostname is that of a load balancer in front of stroom instances.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.serviceDiscovery.servicesPort")
+                .value("8080")
+                .description("The external facing port that stroom will register its services with service discovery")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.serviceDiscovery.curator.baseSleepTimeMs")
+                .value("5000")
+                .description("Initial time in ms between retries to establish a connection to zookeeper")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.serviceDiscovery.curator.maxSleepTimeMs")
+                .value("300000")
+                .description("Maximum time in ms between retries to establish a connection to zookeeper")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.serviceDiscovery.curator.maxRetries")
+                .value("100")
+                .description("Maximum number of retries to establish a connection to zookeeper before giving up")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.serviceDiscovery.zookeeperBasePath")
+                .value("/stroom-services")
+                .description("The base path to use in zookeeper for Curator service discover. All services registering or querying discoverable services must use the same value for this base path. Must start with a '/'")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        // ========================================END=========================================== 
+
+
+        // Internal statistics definitions
+        // Each internal statistic can have multiple docRef definitions, one for each statistics engine,
+        //            currently 'sql_statistics' and 'stroom-stats'
+        // Valid values for docRef.type are 'StatisticStore' and 'StroomStatsStore'
+        // The name and uuid so match those defined for the statistic in stroom-content
+        // If an internal statistic docRefs property has an empty value then the statistic events will be silently
+        // ignored.
+
+        // ========================================START=========================================== 
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.benchmarkCluster.docRefs")
+                .value("docRef(StatisticStore,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test),docRef(StroomStatsStore,2503f703-5ce0-4432-b9d4-e3272178f47e,Benchmark-Cluster Test)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.pipelineStreamProcessor.docRefs")
+                .value("docRef(StatisticStore,946a80fc-a59a-11e6-bdc4-0242ac110002,PipelineStreamProcessor),docRef(StroomStatsStore,efd9bad4-0bab-460f-ae98-79e9717deeaf,PipelineStreamProcessor)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.metaDataStreamSize.docRefs")
+                .value("docRef(StatisticStore,946a8814-a59a-11e6-bdc4-0242ac110002,Meta Data-Stream Size),docRef(StroomStatsStore,3b25d63b-5472-44d0-80e8-8eea94f40f14,Meta Data-Stream Size)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.eventsPerSecond.docRefs")
+                .value("docRef(StatisticStore,a9936548-2572-448b-9d5b-8543052c4d92,EPS),docRef(StroomStatsStore,cde67df0-0f77-45d3-b2c0-ee8bb7b3c9c6,EPS)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.cpu.docRefs")
+                .value("docRef(StatisticStore,af08c4a7-ee7c-44e4-8f5e-e9c6be280434,CPU),docRef(StroomStatsStore,1edfd582-5e60-413a-b91c-151bd544da47,CPU)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.metaDataStreamsReceived.docRefs")
+                .value("docRef(StatisticStore,946a87bc-a59a-11e6-bdc4-0242ac110002,Meta Data-Streams Received),docRef(StroomStatsStore,5535f493-29ae-4ee6-bba6-735aa3104136,Meta Data-Streams Received)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.streamTaskQueueSize.docRefs")
+                .value("docRef(StatisticStore,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size),docRef(StroomStatsStore,4ce8d6e7-94be-40e1-8294-bf29dd089962,Stream Task Queue Size)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.volumes.docRefs")
+                .value("docRef(StatisticStore,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes),docRef(StroomStatsStore,60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e,Volumes)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.memory.docRefs")
+                .value("docRef(StatisticStore,77c09ccb-e251-4ca5-bca0-56a842654397,Memory),docRef(StroomStatsStore,d8a7da4f-ef6d-47e0-b16a-af26367a2798,Memory)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...'")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.heapHistogramInstances.docRefs")
+                .value("docRef(StatisticStore,e4f243b8-2c70-4d6e-9d5a-16466bf8764f,Heap Histogram Instances),docRef(StroomStatsStore,bdd933a4-4309-47fd-98f6-1bc2eb555f20,Heap Histogram Instances)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...'")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.internalstatistics.heapHistogramBytes.docRefs")
+                .value("docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes),docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)")
+                .description("Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...'")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        // ========================================END=========================================== 
+
+        // Stroom Proxy Store for Pipeline Use 
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.proxy.store.dir")
+                .value("${stroom.temp}/stroom-proxy")
+                .description("The stroom proxy dir to write data to from a pipeline")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.proxy.store.format")
+                .value("#{'$'}{pathId}/#{'$'}{id}")
+                .description("The format to use for the stroom proxy store")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.proxy.store.rollCron")
+                .value("")
+                .description("How often should the stroom proxy store be rolled")
+                .editable(true)
                 .build());
 
         return Collections.unmodifiableList(list);

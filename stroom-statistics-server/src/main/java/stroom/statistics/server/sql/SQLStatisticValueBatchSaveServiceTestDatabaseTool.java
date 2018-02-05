@@ -37,10 +37,6 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
         new SQLStatisticValueBatchSaveServiceTestDatabaseTool().doMain(args);
     }
 
-    protected Connection doGetConnection() throws SQLException {
-        return super.getConnection();
-    }
-
     @Override
     public void run() {
         try {
@@ -48,8 +44,8 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
 
             final SQLStatisticValueBatchSaveService statisticValueBatchSaveService = new SQLStatisticValueBatchSaveService(null) {
                 @Override
-                protected Connection getConnection() throws SQLException {
-                    return doGetConnection();
+                protected Connection getConnection() {
+                    return SQLStatisticValueBatchSaveServiceTestDatabaseTool.this.getConnection();
                 }
             };
 
@@ -68,9 +64,8 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
                 statisticValueBatchSaveService.saveBatchStatisticValueSource_String(batch);
             }
             LOGGER.info("run() - took {}", logExecutionTime);
-
-        } catch (final Exception ex) {
-            ex.printStackTrace();
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 }

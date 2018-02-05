@@ -23,6 +23,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.headless.HeadlessConfiguration;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -118,16 +119,13 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
-        String createStartTime = null;
-        if (StringUtils.isNotBlank(createPeriodFrom)) {
-            createStartTime = createPeriodFrom;
+        if (StringUtils.isNotBlank(createPeriodFrom) && StringUtils.isNotBlank(createPeriodTo)) {
+            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
+        } else if (StringUtils.isNotBlank(createPeriodFrom)) {
+            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
+        } else if (StringUtils.isNotBlank(createPeriodTo)) {
+            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
-        String createEndTime = null;
-        if (StringUtils.isNotBlank(createPeriodTo)) {
-            createEndTime = createPeriodTo;
-        }
-
-        builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
 
         final StreamStore streamStore = appContext.getBean(StreamStore.class);
         final FeedService feedService = (FeedService) appContext.getBean("cachedFeedService");

@@ -59,24 +59,24 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
         String cat = null;
         String schema = null;
 
-        try (final ResultSet tableRs = databaseMetaData.getTables(null, null, null, new String[]{"TABLE"})) {
-            while (tableRs.next()) {
-                tables.add(tableRs.getString("TABLE_NAME"));
-                cat = tableRs.getString("TABLE_CAT");
-                schema = tableRs.getString("TABLE_SCHEM");
+        try (final ResultSet resultSet = databaseMetaData.getTables(null, null, null, new String[]{"TABLE"})) {
+            while (resultSet.next()) {
+                tables.add(resultSet.getString("TABLE_NAME"));
+                cat = resultSet.getString("TABLE_CAT");
+                schema = resultSet.getString("TABLE_SCHEM");
             }
         }
 
         for (final String table : tables) {
-            try (final ResultSet columnRs = databaseMetaData.getColumns(cat, schema, table, null)) {
-                while (columnRs.next()) {
-                    rtnList.add((table + " COL " + columnRs.getString("COLUMN_NAME") + "(" + columnRs.getString("TYPE_NAME")
+            try (final ResultSet resultSet = databaseMetaData.getColumns(cat, schema, table, null)) {
+                while (resultSet.next()) {
+                    rtnList.add((table + " COL " + resultSet.getString("COLUMN_NAME") + "(" + resultSet.getString("TYPE_NAME")
                             + ")").toUpperCase());
                 }
             }
-            try (final ResultSet indexRs = databaseMetaData.getIndexInfo(cat, schema, table.toUpperCase(), true, false)) {
-                while (indexRs.next()) {
-                    final String idx = (table + " IDX " + indexRs.getString("INDEX_NAME")).toUpperCase();
+            try (final ResultSet resultSet = databaseMetaData.getIndexInfo(cat, schema, table.toUpperCase(), true, false)) {
+                while (resultSet.next()) {
+                    final String idx = (table + " IDX " + resultSet.getString("INDEX_NAME")).toUpperCase();
                     if (!rtnList.contains(idx)) {
                         rtnList.add(idx);
                     }

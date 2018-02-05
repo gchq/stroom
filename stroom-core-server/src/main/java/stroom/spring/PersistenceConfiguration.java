@@ -178,7 +178,7 @@ public class PersistenceConfiguration {
                     }
                 }
             } catch (final SQLException e) {
-                LOGGER.fatal(e.getMessage());
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
                 throw new RuntimeException(e.getMessage(), e);
             }
 

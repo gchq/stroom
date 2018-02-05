@@ -20,7 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
@@ -669,86 +668,54 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
 
     }
 
-    private Connection getConnection() throws SQLException {
-        return statisticsDataSource.getConnection();
-    }
-
     private int getRowCount(final String tableName) throws SQLException {
-        final Connection connection = getConnection();
-
         int count;
 
-        try {
-            final PreparedStatement preparedStatement = connection
-                    .prepareStatement("select count(*) from " + tableName);
-
-            final ResultSet resultSet = preparedStatement.executeQuery();
-
-            resultSet.next();
-            count = resultSet.getInt(1);
-            resultSet.close();
-
-        } finally {
-            ConnectionUtil.close(connection);
+        try (final Connection connection = statisticsDataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + tableName)) {
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    resultSet.next();
+                    count = resultSet.getInt(1);
+                }
+            }
         }
         return count;
     }
 
     private int getAggregateByPrecision(final String colName, final byte precision) throws SQLException {
-        final Connection connection = getConnection();
-
         int count;
-
-        try {
-            final PreparedStatement preparedStatement = connection.prepareStatement("select sum(" + colName + ") from "
-                    + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME + " where PRES = " + precision);
-
-            final ResultSet resultSet = preparedStatement.executeQuery();
-
-            resultSet.next();
-            count = resultSet.getInt(1);
-            resultSet.close();
-
-        } finally {
-            ConnectionUtil.close(connection);
+        try (final Connection connection = statisticsDataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("select sum(" + colName + ") from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME + " where PRES = " + precision)) {
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    resultSet.next();
+                    count = resultSet.getInt(1);
+                }
+            }
         }
         return count;
     }
 
     private int getAggregateTotal(final String colName) throws SQLException {
-        final Connection connection = getConnection();
-
         int count;
-
-        try {
-            final PreparedStatement preparedStatement = connection.prepareStatement(
-                    "select sum(" + colName + ") from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME);
-
-            final ResultSet resultSet = preparedStatement.executeQuery();
-
-            resultSet.next();
-            count = resultSet.getInt(1);
-            resultSet.close();
-
-        } finally {
-            ConnectionUtil.close(connection);
+        try (final Connection connection = statisticsDataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("select sum(" + colName + ") from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME)) {
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    resultSet.next();
+                    count = resultSet.getInt(1);
+                }
+            }
         }
         return count;
     }
 
-    private void deleteRows(final String tableName) throws SQLException {
-        final Connection connection = getConnection();
-
-        try {
-            final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + tableName);
-
-            preparedStatement.execute();
-
-        } finally {
-            ConnectionUtil.close(connection);
-        }
-    }
-
+//    private void deleteRows(final String tableName) throws SQLException {
+//        try (final Connection connection = statisticsDataSource.getConnection()) {
+//            try (final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + tableName)) {
+//                preparedStatement.execute();
+//            }
+//        }
+//    }
+//
 //    private static class MockTaskMonitor implements TaskMonitor {
 //        private static final long serialVersionUID = -8415095958756818805L;
 //

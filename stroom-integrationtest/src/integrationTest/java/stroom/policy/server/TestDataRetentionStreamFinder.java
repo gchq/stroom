@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.server;
+package stroom.policy.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
-import stroom.dictionary.shared.DictionaryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
-import stroom.policy.server.DataRetentionStreamFinder;
-import stroom.streamstore.server.StreamFields;
 import stroom.streamstore.server.StreamMaintenanceService;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -42,7 +42,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestDataRetentionStreamFinder.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionStreamFinder.class);
 
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
@@ -51,7 +51,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
     @Resource
     private StreamMaintenanceService streamMaintenanceService;
     @Resource
-    private DictionaryService dictionaryService;
+    private DictionaryStore dictionaryStore;
     @Resource
     private DataSource dataSource;
 
@@ -82,8 +82,8 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
 
             // run the stream retention task which should 'delete' one stream
             final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
-            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryService)) {
-                final long count = finder.getRowCount(ageRange, Collections.singleton(StreamFields.STREAM_ID));
+            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
+                final long count = finder.getRowCount(ageRange, Collections.singleton(StreamDataSource.STREAM_ID));
                 Assert.assertEquals(1, count);
             }
         }
