@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#608** : Fixed stream grep and stream dump tools and added tests to ensure continued operation.
+
+* Issue **#603** : Changed property description from `tags` to `XML elements` in `BadTextXMLFilterReader`.
+
+* Issue **#600** : Added debug to help diagnose cause of missing index shards in shard list.
+
+* Issue **#611** : Changed properties to be defined in code rather than Spring XML.
+
+* Issue **#605** : Added a cache for retrieving user by name to reduce DB use when pushing users for each task.
+
+* Issue **#610** : Added `USE INDEX (PRIMARY)` hint to data retention select SQL to improve performance.
+
+* Issue **#607** : Multiple improvements to the code to ensure DB connections, prepared statements, result sets etc use try-with-resources constructs wherever possible to ensure no DB resources are leaked. Also all connections obtained from a data source are now returned appropriately so that connections from pools are reused.
+
+* Issue **#602** : Changed the data retention rule table column order.
+
+* Issue **#606** : Added more stroom properties to tune the c3P0 connection pool. The properties are prefixed by `stroom.db.connectionPool` and `stroom.statistics.sql.db.connectionPool`.
+
+* Issue **#601** : Fixed NPE generated during index shard retention process that was caused by a shard being deleted from the DB at the same time as the index shard retention job running.
+
 * Issue **#609** : Add configurable regex to replace IDs in heap histogram class names, e.g. `....$Proxy54` becomes `....$Proxy--ID-REMOVED--`
 
 * Issue **#570** : Refactor the heap histogram internal statistics for the new InternalStatisticsReceiver
@@ -737,4 +757,3 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v6.0-alpha.8]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...v6.0-alpha.8
 [v6.0-alpha.7]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...v6.0-alpha.7
 [v6.0-alpha.4]: https://github.com/gchq/stroom/commits/v6.0-alpha.4
-

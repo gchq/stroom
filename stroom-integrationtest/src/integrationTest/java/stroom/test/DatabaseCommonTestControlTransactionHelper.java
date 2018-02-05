@@ -135,32 +135,24 @@ public class DatabaseCommonTestControlTransactionHelper {
     }
 
     public void enableConstraints() {
+        final String sql = "SET FOREIGN_KEY_CHECKS=1";
         try (final Connection connection = ConnectionUtil.getConnection()) {
-            String sql = "SET FOREIGN_KEY_CHECKS=1";
-            try {
-                ConnectionUtil.executeStatement(connection, sql);
-            } catch (SQLException e) {
-                throw new RuntimeException(String.format("Error executing %s", sql), e);
-            }
+            ConnectionUtil.executeStatement(connection, sql);
         } catch (SQLException e) {
-            throw new RuntimeException("Error getting connection", e);
+            throw new RuntimeException(String.format("Error executing %s", sql), e);
         }
     }
 
     private void executeStatementsWithNoConstraints(final List<String> statements) {
-        try (final Connection connection = ConnectionUtil.getConnection()) {
-            List<String> allStatements = new ArrayList<>();
-            allStatements.add("SET FOREIGN_KEY_CHECKS=0");
-            allStatements.addAll(statements);
-            allStatements.add("SET FOREIGN_KEY_CHECKS=1");
+        final List<String> allStatements = new ArrayList<>();
+        allStatements.add("SET FOREIGN_KEY_CHECKS=0");
+        allStatements.addAll(statements);
+        allStatements.add("SET FOREIGN_KEY_CHECKS=1");
 
-            try {
-                ConnectionUtil.executeStatements(connection, allStatements);
-            } catch (SQLException e) {
-                throw new RuntimeException(String.format("Error executing %s", allStatements), e);
-            }
+        try (final Connection connection = ConnectionUtil.getConnection()) {
+            ConnectionUtil.executeStatements(connection, allStatements);
         } catch (SQLException e) {
-            throw new RuntimeException("Error getting connection", e);
+            throw new RuntimeException(String.format("Error executing %s", allStatements), e);
         }
     }
 }

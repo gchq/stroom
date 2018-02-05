@@ -30,11 +30,11 @@ import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
 import stroom.statistics.server.sql.datasource.StatisticStoreValidator;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
@@ -660,30 +660,30 @@ public class SQLStatisticEventStore implements Statistics {
         final StatisticDataSet statisticDataSet = new StatisticDataSet(dataSource.getName(),
                 dataSource.getStatisticType(), 1000L, dataPoints);
 
-        try (Connection connection = statisticsDataSource.getConnection()) {
-            try (PreparedStatement ps = buildSearchPreparedStatement(dataSource, criteria, connection)) {
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
+        try (final Connection connection = statisticsDataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = buildSearchPreparedStatement(dataSource, criteria, connection)) {
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
                         final StatisticType statisticType = StatisticType.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(rs.getByte(SQLStatisticNames.VALUE_TYPE));
+                                .fromPrimitiveValue(resultSet.getByte(SQLStatisticNames.VALUE_TYPE));
 
                         final List<StatisticTag> statisticTags = extractStatisticTagsFromColumn(
-                                rs.getString(SQLStatisticNames.NAME));
-                        final long timeMs = rs.getLong(SQLStatisticNames.TIME_MS);
+                                resultSet.getString(SQLStatisticNames.NAME));
+                        final long timeMs = resultSet.getLong(SQLStatisticNames.TIME_MS);
 
                         // the precision in the table represents the number of zeros
                         // of millisecond precision, e.g.
                         // 6=1,000,000ms
-                        final long precisionMs = (long) Math.pow(10, rs.getInt(SQLStatisticNames.PRECISION));
+                        final long precisionMs = (long) Math.pow(10, resultSet.getInt(SQLStatisticNames.PRECISION));
 
                         StatisticDataPoint statisticDataPoint;
 
                         if (StatisticType.COUNT.equals(statisticType)) {
                             statisticDataPoint = new CountStatisticDataPoint(timeMs, precisionMs, statisticTags,
-                                    rs.getLong(SQLStatisticNames.COUNT));
+                                    resultSet.getLong(SQLStatisticNames.COUNT));
                         } else {
-                            final double aggregatedValue = rs.getDouble(SQLStatisticNames.VALUE);
-                            final long count = rs.getLong(SQLStatisticNames.COUNT);
+                            final double aggregatedValue = resultSet.getDouble(SQLStatisticNames.VALUE);
+                            final long count = resultSet.getLong(SQLStatisticNames.COUNT);
 
                             // the aggregateValue is sum of all values against that
                             // key/time. We therefore need to get the

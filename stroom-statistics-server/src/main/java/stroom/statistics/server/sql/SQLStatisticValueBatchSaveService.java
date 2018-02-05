@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.ConnectionUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.sql.SQLSafe;
 
@@ -40,8 +39,8 @@ import java.util.List;
 @Transactional
 @Component
 public class SQLStatisticValueBatchSaveService {
-    public static final String SAVE_CALL;
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveService.class);
+    public static final String SAVE_CALL;
 
     static {
         final StringBuilder sql = new StringBuilder();
@@ -69,11 +68,8 @@ public class SQLStatisticValueBatchSaveService {
     @SuppressWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
     public void saveBatchStatisticValueSource_String(final List<SQLStatisticValueSourceDO> batch) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        Connection connection = null;
 
-        try {
-            connection = getConnection();
-
+        try (final Connection connection = getConnection()) {
             final StringBuilder sql = new StringBuilder();
             sql.append("INSERT INTO ");
             sql.append(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
@@ -95,7 +91,7 @@ public class SQLStatisticValueBatchSaveService {
                 sql.append(item.getCreateMs());
                 sql.append(",'");
                 sql.append(SQLSafe.escapeChars(item.getName())); // must escape
-                // any bad chars as we risk sql injecction (not an issue for prepared statements)
+                // any bad chars as we risk sql injection (not an issue for prepared statements)
                 sql.append("',");
                 sql.append(item.getType().getPrimitiveValue());
                 sql.append(",");
@@ -104,30 +100,23 @@ public class SQLStatisticValueBatchSaveService {
                 doneOne = true;
             }
 
-            try (Statement statement = connection.createStatement()) {
+            try (final Statement statement = connection.createStatement()) {
                 statement.executeUpdate(sql.toString());
 
                 LOGGER.debug("saveBatchStatisticValueSource_String() - Saved {} records in {}", batch.size(),
                         logExecutionTime);
-
-                statement.close();
             }
         } catch (final SQLException sqlEx) {
             throw new RuntimeException(sqlEx);
-        } finally {
-            ConnectionUtil.close(connection);
         }
     }
 
     public void saveBatchStatisticValueSource_PreparedStatement(final List<SQLStatisticValueSourceDO> batch)
             throws SQLException {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        Connection connection = null;
 
-        try {
-            connection = getConnection();
-
-            try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_CALL)) {
+        try (final Connection connection = getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(SAVE_CALL)) {
                 for (final SQLStatisticValueSourceDO item : batch) {
                     preparedStatement.setLong(1, item.getCreateMs());
                     preparedStatement.setString(2, item.getName());
@@ -141,11 +130,7 @@ public class SQLStatisticValueBatchSaveService {
 
                 LOGGER.debug("saveBatchStatisticValueSource_PreparedStatement() - Saved {} records in {}", batch.size(),
                         logExecutionTime);
-
-                preparedStatement.close();
             }
-        } finally {
-            ConnectionUtil.close(connection);
         }
     }
 
@@ -156,15 +141,12 @@ public class SQLStatisticValueBatchSaveService {
      */
     public int saveBatchStatisticValueSource_IndividualPreparedStatements(final List<SQLStatisticValueSourceDO> batch) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        Connection connection = null;
 
         int savedCount = 0;
         int failedCount = 0;
 
-        try {
-            connection = getConnection();
-
-            try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_CALL)) {
+        try (final Connection connection = getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(SAVE_CALL)) {
                 for (final SQLStatisticValueSourceDO item : batch) {
                     preparedStatement.setLong(1, item.getCreateMs());
                     preparedStatement.setString(2, item.getName());
@@ -188,13 +170,9 @@ public class SQLStatisticValueBatchSaveService {
 
                 LOGGER.debug("saveBatchStatisticValueSource_IndividualPreparedStatements() - Saved {} records in {}",
                         batch.size(), logExecutionTime);
-
-                preparedStatement.close();
             }
         } catch (final SQLException sqlEx) {
             throw new RuntimeException(sqlEx);
-        } finally {
-            ConnectionUtil.close(connection);
         }
 
         if (failedCount > 0) {
@@ -205,7 +183,7 @@ public class SQLStatisticValueBatchSaveService {
         return savedCount;
     }
 
-    protected Connection getConnection() throws SQLException {
+    Connection getConnection() throws SQLException {
         return statisticsDataSource.getConnection();
     }
 }

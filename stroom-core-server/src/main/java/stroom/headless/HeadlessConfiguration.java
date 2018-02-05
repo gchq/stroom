@@ -58,5 +58,5 @@ import org.springframework.context.annotation.FilterType;
         // Exclude other configurations that might be found accidentally during
         // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
-class HeadlessConfiguration {
+public class HeadlessConfiguration {
 }

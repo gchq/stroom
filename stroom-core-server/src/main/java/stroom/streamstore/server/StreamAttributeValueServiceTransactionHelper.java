@@ -20,41 +20,41 @@ import org.hsqldb.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.util.logging.LogExecutionTime;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.List;
 
-@Transactional
 @Component
 public class StreamAttributeValueServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueServiceTransactionHelper.class);
+
     private static final String INSERT_SQL = "INSERT INTO " + StreamAttributeValue.TABLE_NAME + " ("
             + StreamAttributeValue.VERSION + ", " + StreamAttributeValue.CREATE_MS + ", "
             + StreamAttributeValue.VALUE_STRING + ", " + StreamAttributeValue.VALUE_NUMBER + ", "
             + StreamAttributeValue.STREAM_ID + ", " + StreamAttributeValue.STREAM_ATTRIBUTE_KEY_ID
             + ") VALUES (?, ?, ?, ?, ?, ?)";
-    @Resource
-    private DataSource dataSource;
-    @Resource
-    private StroomDatabaseInfo stroomDatabaseInfo;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private final DataSource dataSource;
+    private final StroomDatabaseInfo stroomDatabaseInfo;
+
+    @Inject
+    public StreamAttributeValueServiceTransactionHelper(final DataSource dataSource,
+                                                        final StroomDatabaseInfo stroomDatabaseInfo) {
+        this.dataSource = dataSource;
+        this.stroomDatabaseInfo = stroomDatabaseInfo;
+    }
+
     public void saveBatch(final List<StreamAttributeValue> list) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         if (list.size() > 0) {
-            Connection connection = null;
-            try {
-                connection = dataSource.getConnection();
-                try (PreparedStatement ps = connection.prepareStatement(INSERT_SQL)) {
+            try (final Connection connection = dataSource.getConnection()) {
+                try (final PreparedStatement ps = connection.prepareStatement(INSERT_SQL)) {
                     for (final StreamAttributeValue streamAttributeValue : list) {
                         ps.setInt(1, 1);
                         ps.setLong(2, streamAttributeValue.getCreateMs());
@@ -75,13 +75,10 @@ public class StreamAttributeValueServiceTransactionHelper {
                     }
 
                     ps.executeBatch();
-                    ps.close();
                 }
 
             } catch (final Exception ex) {
                 LOGGER.error("saveBatch()", ex);
-            } finally {
-                ConnectionUtil.close(connection);
             }
         }
         LOGGER.debug("saveBatch() - inserted {} records in {}", list.size(), logExecutionTime);

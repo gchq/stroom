@@ -38,6 +38,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -130,14 +131,14 @@ public class StreamRestoreTool extends DatabaseTool {
             pathStreamTypeMap = new HashMap<>();
 
             final String sql = "select " + StreamType.PATH + "," + StreamType.ID + " from " + StreamType.TABLE_NAME;
-            try (Statement statement = getConnection().createStatement()) {
-                try (ResultSet resultSet = statement.executeQuery(sql)) {
-                    while (resultSet.next()) {
-                        pathStreamTypeMap.put(resultSet.getString(1), resultSet.getLong(2));
+            try (final Connection connection = getConnection()) {
+                try (final Statement statement = connection.createStatement()) {
+                    try (final ResultSet resultSet = statement.executeQuery(sql)) {
+                        while (resultSet.next()) {
+                            pathStreamTypeMap.put(resultSet.getString(1), resultSet.getLong(2));
+                        }
                     }
-                    resultSet.close();
                 }
-                statement.close();
             }
         }
         return pathStreamTypeMap;
@@ -147,14 +148,14 @@ public class StreamRestoreTool extends DatabaseTool {
         if (pathVolumeMap == null) {
             pathVolumeMap = new HashMap<>();
             final String sql = "select " + Volume.PATH + "," + Volume.ID + " from " + Volume.TABLE_NAME;
-            try (Statement statement = getConnection().createStatement()) {
-                try (ResultSet resultSet = statement.executeQuery(sql)) {
-                    while (resultSet.next()) {
-                        pathVolumeMap.put(resultSet.getString(1), resultSet.getLong(2));
+            try (final Connection connection = getConnection()) {
+                try (final Statement statement = connection.createStatement()) {
+                    try (final ResultSet resultSet = statement.executeQuery(sql)) {
+                        while (resultSet.next()) {
+                            pathVolumeMap.put(resultSet.getString(1), resultSet.getLong(2));
+                        }
                     }
-                    resultSet.close();
                 }
-                statement.close();
             }
         }
         return pathVolumeMap;
@@ -163,15 +164,14 @@ public class StreamRestoreTool extends DatabaseTool {
     private Map<Long, String> getFeedIdNameMap() throws SQLException {
         if (feedIdNameMap == null) {
             feedIdNameMap = new HashMap<>();
-            try (Statement statement = getConnection().createStatement()) {
-                try (ResultSet resultSet = statement
-                        .executeQuery("select " + Feed.ID + "," + SQLNameConstants.NAME + " from " + Feed.TABLE_NAME)) {
-                    while (resultSet.next()) {
-                        feedIdNameMap.put(resultSet.getLong(1), resultSet.getString(2));
+            try (final Connection connection = getConnection()) {
+                try (final Statement statement = connection.createStatement()) {
+                    try (final ResultSet resultSet = statement.executeQuery("select " + Feed.ID + "," + SQLNameConstants.NAME + " from " + Feed.TABLE_NAME)) {
+                        while (resultSet.next()) {
+                            feedIdNameMap.put(resultSet.getLong(1), resultSet.getString(2));
+                        }
                     }
-                    resultSet.close();
                 }
-                statement.close();
             }
         }
         return feedIdNameMap;
@@ -290,8 +290,6 @@ public class StreamRestoreTool extends DatabaseTool {
 
         } catch (final IOException | SQLException ioEx) {
             handleException(ioEx);
-        } finally {
-            closeConnection();
         }
     }
 
@@ -457,8 +455,8 @@ public class StreamRestoreTool extends DatabaseTool {
                         writeLine("Restore " + logInfo + " for file " + line);
 
                         if (!mock) {
-                            try {
-                                try (PreparedStatement statement1 = getConnection().prepareStatement(
+                            try (final Connection connection = getConnection()) {
+                                try (final PreparedStatement statement1 = connection.prepareStatement(
                                         "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
                                                 + " values (?,1, ?,?, ?,?, ?,?, ?)")) {
                                     int s1i = 1;
@@ -484,16 +482,14 @@ public class StreamRestoreTool extends DatabaseTool {
                                     statement1.setLong(s1i++, stream.getStreamType().getId());
 
                                     statement1.executeUpdate();
-                                    statement1.close();
                                 }
 
-                                try (PreparedStatement statement2 = getConnection().prepareStatement(
+                                try (final PreparedStatement statement2 = connection.prepareStatement(
                                         "insert into strm_vol (ver, fk_strm_id,fk_vol_id) " + " values (1, ?,?)")) {
                                     int s2i = 1;
                                     statement2.setLong(s2i++, stream.getId());
                                     statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
                                     statement2.executeUpdate();
-                                    statement2.close();
                                 }
                             } catch (final Exception ex) {
                                 writeLine("Failed " + logInfo + " " + ex.getMessage());

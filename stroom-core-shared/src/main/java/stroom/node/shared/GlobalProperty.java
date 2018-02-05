@@ -145,4 +145,46 @@ public class GlobalProperty extends NamedEntity implements HasPassword {
         this.source = source;
     }
 
+    public static class Builder {
+        private final GlobalProperty instance = new GlobalProperty();
+
+        public Builder name(final String name) {
+            instance.setName(name);
+            return this;
+        }
+
+        public Builder value(final String value) {
+            instance.value = value;
+            return this;
+        }
+
+        public Builder description(final String description) {
+            instance.description = description;
+            return this;
+        }
+
+        public Builder editable(final boolean editable) {
+            instance.editable = editable;
+            return this;
+        }
+
+        public Builder requireRestart(final boolean requireRestart) {
+            instance.requireRestart = requireRestart;
+            return this;
+        }
+
+        public Builder requireUiRestart(final boolean requireUiRestart) {
+            instance.requireUiRestart = requireUiRestart;
+            return this;
+        }
+
+        public Builder password(final boolean password) {
+            instance.password = password;
+            return this;
+        }
+
+        public GlobalProperty build() {
+            return instance;
+        }
+    }
 }
