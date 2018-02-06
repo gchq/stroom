@@ -26,7 +26,6 @@ import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.importexport.server.ImportExportActionHandlers;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * Exclude other configurations that might be found accidentally during a
@@ -39,7 +38,7 @@ public class DashboardConfiguration {
     @Inject
     public DashboardConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                                   final ImportExportActionHandlers importExportActionHandlers,
-                               final DashboardService dashboardService) {
+                                  final DashboardService dashboardService) {
         explorerActionHandlers.add(7, Dashboard.ENTITY_TYPE, Dashboard.ENTITY_TYPE, dashboardService);
         importExportActionHandlers.add(Dashboard.ENTITY_TYPE, dashboardService);
     }

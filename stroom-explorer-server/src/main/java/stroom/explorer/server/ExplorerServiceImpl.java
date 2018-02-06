@@ -244,9 +244,9 @@ class ExplorerServiceImpl implements ExplorerService {
 
     @Override
     public DocumentTypes getDocumentTypes() {
-        final List<DocumentType> allTypes = getAllTypes();
+        final List<DocumentType> nonSystemTypes = getNonSystemTypes();
         final List<DocumentType> visibleTypes = getVisibleTypes();
-        return new DocumentTypes(allTypes, visibleTypes);
+        return new DocumentTypes(nonSystemTypes, visibleTypes);
     }
 
     private List<DocumentType> getVisibleTypes() {
@@ -284,12 +284,12 @@ class ExplorerServiceImpl implements ExplorerService {
         return added;
     }
 
-    private List<DocumentType> getAllTypes() {
-        return explorerActionHandlers.getTypes();
+    private List<DocumentType> getNonSystemTypes() {
+        return explorerActionHandlers.getNonSystemTypes();
     }
 
     private List<DocumentType> getDocumentTypes(final Collection<String> visibleTypes) {
-        final List<DocumentType> allTypes = getAllTypes();
+        final List<DocumentType> allTypes = getNonSystemTypes();
         return allTypes.stream().filter(type -> visibleTypes.contains(type.getType())).collect(Collectors.toList());
     }
 
