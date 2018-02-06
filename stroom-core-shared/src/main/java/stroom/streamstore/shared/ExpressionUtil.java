@@ -83,7 +83,7 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createPipelineExpression(final PipelineEntity pipelineEntity) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, pipelineEntity.getName())
+                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, pipelineEntity.getUuid())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
     }
