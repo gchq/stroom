@@ -9,8 +9,12 @@ import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Period;
+import stroom.entity.shared.StringCriteria;
 import stroom.feed.server.FeedService;
+import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.shared.FindPipelineEntityCriteria;
+import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -201,14 +205,13 @@ public class ExpressionToFindCriteria {
             switch (field) {
                 case StreamDataSource.FEED:
                     if (negate) {
-                        criteria.obtainFeeds().setExclude(convertEntityIdSetValues(criteria.obtainFeeds().getExclude(), field, getAllValues(terms), feedService::loadByName));
+                        criteria.obtainFeeds().setExclude(convertEntityIdSetValues(criteria.obtainFeeds().getExclude(), field, getAllValues(terms), value -> findFeeds(field, value)));
                     } else {
-                        criteria.obtainFeeds().setInclude(convertEntityIdSetValues(criteria.obtainFeeds().getInclude(), field, getAllValues(terms), feedService::loadByName));
+                        criteria.obtainFeeds().setInclude(convertEntityIdSetValues(criteria.obtainFeeds().getInclude(), field, getAllValues(terms), value -> findFeeds(field, value)));
                     }
                     break;
                 case StreamDataSource.PIPELINE:
-                    // TODO : FIX PIPELINE FILTERING SO THAT DOCREFS ARE USED
-                    criteria.setPipelineIdSet(convertEntityIdSetValues(criteria.getPipelineIdSet(), field, getAllValues(terms), pipelineService::loadByUuid));
+                    criteria.setPipelineIdSet(convertEntityIdSetValues(criteria.getPipelineIdSet(), field, getAllValues(terms), value -> findPipelines(field, value)));
                     break;
                 case StreamDataSource.STREAM_TYPE:
                     criteria.setStreamTypeIdSet(convertEntityIdSetLongValues(criteria.getStreamTypeIdSet(), field, getAllValues(terms), STREAM_TYPE_MAP::get));
@@ -236,6 +239,58 @@ public class ExpressionToFindCriteria {
                     criteria.obtainAttributeConditionList().addAll(getStreamAttributeConditions(field, terms));
             }
         });
+    }
+
+    private Set<Feed> findFeeds(final String field, final String value) {
+        // Try by UUID
+        try {
+            final Feed feed = feedService.loadByUuid(value);
+            if (feed != null) {
+                return Collections.singleton(feed);
+            }
+        } catch (final Exception e) {
+            // Ignore.
+        }
+
+        // Try by name
+        try {
+            final Feed feed = feedService.loadByName(value);
+            if (feed != null) {
+                return Collections.singleton(feed);
+            }
+        } catch (final Exception e) {
+            // Ignore.
+        }
+
+        final String errorMsg = "Unexpected value '" + value + "' used for " + field;
+        throw new EntityServiceException(errorMsg);
+    }
+
+    private Set<PipelineEntity> findPipelines(final String field, final String value) {
+        // Try by UUID
+        try {
+            final PipelineEntity pipeline = pipelineService.loadByUuid(value);
+            if (pipeline != null) {
+                return Collections.singleton(pipeline);
+            }
+        } catch (final Exception e) {
+            // Ignore.
+        }
+
+        // Try by name
+        try {
+            final FindPipelineEntityCriteria criteria = new FindPipelineEntityCriteria();
+            criteria.setName(new StringCriteria(value));
+            final List<PipelineEntity> list = pipelineService.find(criteria);
+            if (list != null) {
+                return new HashSet<>(list);
+            }
+        } catch (final Exception e) {
+            // Ignore.
+        }
+
+        final String errorMsg = "Unexpected value '" + value + "' used for " + field;
+        throw new EntityServiceException(errorMsg);
     }
 
     private void setPeriod(final Period period, final List<ExpressionTerm> terms, final Context context) {
@@ -386,7 +441,7 @@ public class ExpressionToFindCriteria {
         return set;
     }
 
-    private <T extends BaseEntity> EntityIdSet<T> convertEntityIdSetValues(final EntityIdSet<T> existing, final String field, final List<String> values, final Function<String, T> mapping) {
+    private <T extends BaseEntity> EntityIdSet<T> convertEntityIdSetValues(final EntityIdSet<T> existing, final String field, final List<String> values, final Function<String, Set<T>> mapping) {
         if (existing != null && existing.size() > 0) {
             final String errorMsg = "Field has already been added " + field;
             throw new EntityServiceException(errorMsg);
@@ -400,12 +455,12 @@ public class ExpressionToFindCriteria {
                 throw new EntityServiceException(errorMsg);
             }
             try {
-                T val = mapping.apply(value);
+                final Set<T> val = mapping.apply(value);
                 if (val == null) {
                     final String errorMsg = "Unexpected value '" + value + "' used for " + field;
                     throw new EntityServiceException(errorMsg);
                 }
-                entityIdSet.add(val);
+                entityIdSet.addAllEntities(val);
             } catch (final Exception e) {
                 final String errorMsg = "Unexpected value '" + value + "' used for " + field;
                 throw new EntityServiceException(errorMsg);

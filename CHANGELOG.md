@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#568** : Fixed filtering streams by pipeline in the pipeline screen.
+
 ## [v6.0-alpha.9]
 
 * Issue **#592** : Mount stroom at /stroom.
