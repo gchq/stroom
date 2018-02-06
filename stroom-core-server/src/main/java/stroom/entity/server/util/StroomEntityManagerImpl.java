@@ -248,6 +248,13 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
     }
 
     @Override
+    public <T extends Entity> void detach(final T entity) {
+        if (entityManager.contains(entity)) {
+            entityManager.detach(entity);
+        }
+    }
+
+    @Override
     public void flush() {
         entityManager.flush();
     }

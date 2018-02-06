@@ -18,4 +18,9 @@ package stroom.entity.shared;
 
 public interface ProvidesNamePattern {
     String getNamePattern();
+
+    // Provide a string that can be used with String.format to provide a safe copy
+    default String getNameCopyPattern() {
+        return "%s_copy";
+    }
 }

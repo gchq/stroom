@@ -115,6 +115,11 @@ public class CachingEntityManager implements StroomEntityManager, Clearable {
     }
 
     @Override
+    public <T extends Entity> void detach(final T entity) {
+        stroomEntityManager.detach(entity);
+    }
+
+    @Override
     public Long executeNativeUpdate(final SqlBuilder sql) {
         return stroomEntityManager.executeNativeUpdate(sql);
     }

@@ -56,6 +56,8 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
     private static final String USER_NAME_PATTERN_PROPERTY = "stroom.security.userNamePattern";
     private static final String USER_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_-]{3,}$";
+    private static final String USER_NAME_COPY_PATTERN_PROPERTY = "stroom.security.userNameCopyPattern";
+    private static final String USER_NAME_COPY_PATTERN_VALUE = "copy.%s";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String SQL_ADD_USER_TO_GROUP;
@@ -344,6 +346,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public String getNamePattern() {
         return StroomProperties.getProperty(USER_NAME_PATTERN_PROPERTY, USER_NAME_PATTERN_VALUE);
+    }
+
+    @Transient
+    @Override
+    public String getNameCopyPattern() {
+        return StroomProperties.getProperty(USER_NAME_COPY_PATTERN_PROPERTY, USER_NAME_COPY_PATTERN_VALUE);
     }
 
     @Override
