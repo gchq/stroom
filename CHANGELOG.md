@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#623** : Fixed issue where items were being added to sublist causing a stack overflow exception during data retention processing.
+
 ## [v5.1-beta.15] - 2018-02-05
 
 * Issue **#608** : Fixed stream grep and stream dump tools and added tests to ensure continued operation.
