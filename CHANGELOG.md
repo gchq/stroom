@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#622** : Fix incorrect service discovery based api paths, remove authentication and authorisation from service discovery
+
 * Issue **#568** : Fixed filtering streams by pipeline in the pipeline screen.
 
 ## [v6.0-alpha.9]
