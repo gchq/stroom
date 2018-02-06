@@ -21,15 +21,15 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(
-        type = "ProxyRepositoryStreamAppender",
-        category = Category.DESTINATION,
-        roles = {PipelineElementType.ROLE_TARGET,
-                PipelineElementType.ROLE_DESTINATION,
-                PipelineElementType.VISABILITY_STEPPING},
-        icon = ElementIcons.STREAM)
+//@Component
+//@Scope(StroomScope.PROTOTYPE)
+//@ConfigurableElement(
+//        type = "ProxyRepositoryStreamAppender",
+//        category = Category.DESTINATION,
+//        roles = {PipelineElementType.ROLE_TARGET,
+//                PipelineElementType.ROLE_DESTINATION,
+//                PipelineElementType.VISABILITY_STEPPING},
+//        icon = ElementIcons.STREAM)
 public class ProxyRepositoryStreamAppender extends AbstractDestinationProvider implements Destination {
     private static Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryStreamAppender.class);
 
