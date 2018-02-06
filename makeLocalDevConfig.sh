@@ -3,5 +3,5 @@
 mkdir -p ~/.stroom
 mkdir -p ~/.stroom/plugins
 mkdir -p /tmp/stroom
-cp ./stroom.conf.example ~/.stroom/stroom.conf
+./stroom.conf.sh
 echo "stroom.plugins.lib.dir=$HOME/.stroom/plugins" >> ~/.stroom/stroom.conf
