@@ -8,12 +8,13 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 public class FSPersistence implements Persistence {
@@ -29,7 +30,7 @@ public class FSPersistence implements Persistence {
             this.dir = Paths.get(path);
             Files.createDirectories(dir);
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -38,7 +39,7 @@ public class FSPersistence implements Persistence {
             this.dir = dir;
             Files.createDirectories(dir);
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -54,7 +55,7 @@ public class FSPersistence implements Persistence {
             final Path path = getPath(docRef);
             return Files.newInputStream(path);
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -71,7 +72,7 @@ public class FSPersistence implements Persistence {
             }
             return Files.newOutputStream(filePath);
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -89,20 +90,20 @@ public class FSPersistence implements Persistence {
 
     @Override
     public List<DocRef> list(final String type) {
-        List<DocRef> list;
-        try (final Stream<Path> stream = Files.list(getPathForType(type))) {
-            list = stream
-                    .parallel()
-                    .filter(p -> p.toString().endsWith(FILE_EXTENSION))
-                    .map(p -> {
-                        final String fileName = p.getFileName().toString();
-                        final int index = fileName.indexOf(".");
-                        final String uuid = fileName.substring(0, index);
-                        return new DocRef(type, uuid);
-                    })
-                    .collect(Collectors.toList());
+        final List<DocRef> list = new ArrayList<>();
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(type), "*" + FILE_EXTENSION)) {
+            stream.forEach(file -> {
+                try {
+                    final String fileName = file.getFileName().toString();
+                    final int index = fileName.indexOf(".");
+                    final String uuid = fileName.substring(0, index);
+                    list.add(new DocRef(type, uuid));
+                } catch (final Exception e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            });
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
         return list;
     }
@@ -123,7 +124,7 @@ public class FSPersistence implements Persistence {
                 Files.createDirectories(path);
             }
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
         return path;
     }

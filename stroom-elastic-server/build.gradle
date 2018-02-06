@@ -5,6 +5,7 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-connectors')
     compile project(':stroom-util')
+    compile project(':stroom-security-api')
 
     compile libs.stroomQueryApi
     compile libs.stroomQueryAudit
@@ -12,7 +13,6 @@ dependencies {
     compile libs.guava
     compile libs.slf4j_api
     compile libs.spring_context
-    compile libs.jackson_databind
     compile libs.xml_apis
 
     compile libs.javax_inject

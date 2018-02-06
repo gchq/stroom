@@ -64,8 +64,8 @@ public class InfoDocumentPresenter
                 "\nName: " + info.getName() +
                 "\nCreated By: " + info.getCreateUser() +
                 "\nCreated On: " + ClientDateUtil.toISOString(info.getCreateTime()) +
-                "\nUpdated By: " + info.getCreateUser() +
-                "\nUpdated On: " + ClientDateUtil.toISOString(info.getCreateTime());
+                "\nUpdated By: " + info.getUpdateUser() +
+                "\nUpdated On: " + ClientDateUtil.toISOString(info.getUpdateTime());
 
         getView().setInfo(string);
 

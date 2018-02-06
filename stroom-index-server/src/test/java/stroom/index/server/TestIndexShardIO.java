@@ -31,7 +31,6 @@ import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Volume;
 import stroom.search.server.shard.IndexShardSearcher;
 import stroom.search.server.shard.IndexShardSearcherImpl;
-import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -92,7 +91,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1);
-        FileSystemUtil.deleteDirectory(dir);
+        FileUtil.deleteDir(dir);
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
@@ -122,7 +121,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1);
-        FileSystemUtil.deleteDirectory(dir);
+        FileUtil.deleteDir(dir);
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
@@ -162,7 +161,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 //
 //        // Clean up from previous tests.
 //        final File dir = IndexShardUtil.getIndexDir(idx1);
-//        FileSystemUtil.deleteDirectory(dir);
+//        FileUtil.deleteDir(dir);
 //
 //        final Map<IndexShardKey, IndexShardWriter> map = new ConcurrentHashMap<>();
 //
@@ -299,7 +298,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1);
-        FileSystemUtil.deleteDirectory(dir);
+        FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
 
@@ -330,7 +329,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1);
-        FileSystemUtil.deleteDirectory(dir);
+        FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
 
@@ -351,7 +350,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         final Volume volume = new Volume();
         final Path testDir = getCurrentTestDir();
         volume.setPath(FileUtil.getCanonicalPath(testDir));
-        FileSystemUtil.deleteDirectory(testDir);
+        FileUtil.deleteDir(testDir);
         final IndexShard idx1 = new IndexShard();
         idx1.setIndex(index);
         idx1.setPartition("all");
@@ -363,7 +362,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1);
-        FileSystemUtil.deleteDirectory(dir);
+        FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
 

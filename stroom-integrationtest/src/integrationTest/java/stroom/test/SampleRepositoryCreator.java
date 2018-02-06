@@ -45,7 +45,7 @@ public final class SampleRepositoryCreator {
     private final Path testDir;
 
     public SampleRepositoryCreator() {
-        FileSystemUtil.deleteContents(FileUtil.getTempDir());
+        FileUtil.deleteContents(FileUtil.getTempDir());
 
         System.setProperty("spring.profiles.active", StroomSpringProfiles.TEST);
         final String[] context = new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml",
@@ -88,7 +88,7 @@ public final class SampleRepositoryCreator {
 
         final Path repoDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve( "SampleRepositoryCreator/repo");
         Files.createDirectories(repoDir);
-        FileSystemUtil.deleteContents(repoDir);
+        FileUtil.deleteContents(repoDir);
 
         final StroomZipRepository repository = new StroomZipRepository(FileUtil.getCanonicalPath(repoDir));
 

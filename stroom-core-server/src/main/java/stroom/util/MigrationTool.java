@@ -134,13 +134,13 @@ public class MigrationTool {
     private static String executeStringQuery(final Connection connection, String sql) throws SQLException {
         String rtn = null;
         sql = stripTerm(sql);
-        final Statement statement = connection.createStatement();
-        final ResultSet rs = statement.executeQuery(sql);
-        if (rs.next()) {
-            rtn = rs.getString(1);
+        try (final Statement statement = connection.createStatement()) {
+            try (final ResultSet resultSet = statement.executeQuery(sql)) {
+                if (resultSet.next()) {
+                    rtn = resultSet.getString(1);
+                }
+            }
         }
-        rs.close();
-        statement.close();
         return rtn;
     }
 
@@ -151,9 +151,9 @@ public class MigrationTool {
 
             if (update) {
                 System.out.println("RUNNING : " + sql);
-                final Statement statement = connection.createStatement();
-                statement.execute(sql);
-                statement.close();
+                try (final Statement statement = connection.createStatement()) {
+                    statement.execute(sql);
+                }
             } else {
                 System.out.println(sql + ";");
             }

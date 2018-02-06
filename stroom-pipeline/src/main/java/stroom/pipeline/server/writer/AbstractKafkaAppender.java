@@ -17,11 +17,16 @@
 package stroom.pipeline.server.writer;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.connectors.kafka.StroomKafkaRecordMetaData;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.server.errorhandler.LoggedException;
+import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.util.shared.ModelStringUtil;
@@ -30,13 +35,21 @@ import stroom.util.shared.Severity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractKafkaAppender extends AbstractDestinationProvider implements Destination {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKafkaAppender.class);
+
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final StroomKafkaProducer stroomKafkaProducer;
+    private StroomKafkaProducer stroomKafkaProducer;
+    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
 
     private final ByteArrayOutputStream byteArrayOutputStream;
+    private final Queue<CompletableFuture<StroomKafkaRecordMetaData>> kafkaMetaFutures;
 
     private boolean flushOnSend = false;
     private long maxRecordCount;
@@ -47,28 +60,46 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     protected AbstractKafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
                                     final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
         this.errorReceiverProxy = errorReceiverProxy;
-        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer(exception ->
-                errorReceiverProxy.log(
-                        Severity.ERROR,
-                        null,
-                        null,
-                        "Called function on Fake Kafka proxy!",
-                        exception)
-        );
+        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
         this.byteArrayOutputStream = new ByteArrayOutputStream();
+        this.kafkaMetaFutures = new ArrayDeque<>();
+    }
+
+    @Override
+    public void startProcessing() {
+        try {
+            this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector().orElse(null);
+        } catch (Exception e) {
+            String msg = "Error initialising kafka producer - " + e.getMessage();
+            log(Severity.FATAL_ERROR, msg, e);
+            throw new LoggedException(msg);
+        }
+
+        if (stroomKafkaProducer == null) {
+            String msg = "No Kafka producer connector is available, check Stroom's configuration";
+            log(Severity.FATAL_ERROR, msg, null);
+            throw new LoggedException(msg);
+        }
+        super.startProcessing();
     }
 
     @Override
     public void endProcessing() {
         closeAndResetStream();
-        try {
-            //TODO this producer is shared by many threads so a flush here will flush all unsent messages from
-            //all threads so we may have to wait longer than needed.
-            //A better approach would be for the StroomKafkaProducer to expose the Future or an abstraction
-            //of it so we can call get on all the futures at the end of processing.
-            stroomKafkaProducer.flush();
-        } catch (Exception e) {
-            error(e);
+
+        //If flushOnSend was set we will have futures in the queue
+        //so call get on each one
+        CompletableFuture<StroomKafkaRecordMetaData> future;
+        while ((future = kafkaMetaFutures.poll()) != null) {
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                //reset interrupt status
+                Thread.currentThread().interrupt();
+                throw new ProcessException("Thread interrupted");
+            } catch (ExecutionException e) {
+                error(e);
+            }
         }
         super.endProcessing();
     }
@@ -147,7 +178,13 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
                         .value(messageValue)
                         .build();
         try {
-            stroomKafkaProducer.send(newRecord, flushOnSend, this::error);
+            final CompletableFuture<StroomKafkaRecordMetaData> future = stroomKafkaProducer.sendAsync(
+                    newRecord,
+                    StroomKafkaProducer.createLogOnlyExceptionHandler(LOGGER, topic, recordKey));
+            if (flushOnSend) {
+                //keep hold of the future so we can wait for it at the end of processing
+                kafkaMetaFutures.add(future);
+            }
         } catch (Exception e) {
             error(e);
         }
@@ -155,8 +192,8 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
 
     @SuppressWarnings("unused")
     @PipelineProperty(
-            description = "Flush the producer each time a message is sent. " +
-                    "Flushing on each message is slower but catches errors sooner.",
+            description = "Wait for acknowledgement from the Kafka broker for all of the messages sent." +
+                    "This is slower but catches errors in the pipeline process",
             defaultValue = "false")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;

@@ -35,11 +35,11 @@ import stroom.index.shared.IndexShardKey;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.io.FileUtil;
 import stroom.util.logging.LoggerPrintStream;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -47,7 +47,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
 
 public class IndexShardWriterImpl implements IndexShardWriter {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterImpl.class);
@@ -127,13 +126,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         // If we already have a directory then this is an existing index.
         final String path = FileUtil.getCanonicalPath(dir);
         if (Files.isDirectory(dir)) {
-            try (final Stream<Path> stream = Files.list(dir)) {
-                final long count = stream.count();
-                if (count == 0) {
-                    throw new IndexException("Unable to find any index shard data in directory: " + path);
-                }
-            } catch (final IOException e) {
-                LAMBDA_LOGGER.error(e::getMessage, e);
+            final long count = FileUtil.count(dir);
+            if (count == 0) {
                 throw new IndexException("Unable to find any index shard data in directory: " + path);
             }
 
@@ -334,10 +328,10 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         try {
             if (dir != null) {
                 final AtomicLong totalSize = new AtomicLong();
-                try (final Stream<Path> stream = Files.list(dir)) {
-                    stream.forEach(p -> {
+                try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+                    stream.forEach(file -> {
                         try {
-                            totalSize.getAndAdd(Files.size(p));
+                            totalSize.getAndAdd(Files.size(file));
                         } catch (final IOException e) {
                             LOGGER.trace(e.getMessage(), e);
                         }
@@ -345,7 +339,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 } catch (final IOException e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
-
                 fileSize = totalSize.get();
             }
         } catch (final Exception e) {

@@ -18,8 +18,6 @@ package stroom.node.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.shared.SQLNameConstants;
@@ -27,7 +25,9 @@ import stroom.node.shared.GlobalProperty;
 import stroom.util.config.StroomProperties;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,12 +36,15 @@ import java.util.Map.Entry;
 @Component
 public class GlobalProperties {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalProperties.class);
+
+    private static final String LOAD_DB_PROPERTIES_SQL = "SELECT " + SQLNameConstants.NAME + ", " + SQLNameConstants.VALUE + " FROM " + GlobalProperty.TABLE_NAME;
+
     private static GlobalProperties instance;
     private final Map<String, GlobalProperty> globalProperties = new HashMap<>();
 
     public GlobalProperties() {
         if (instance == null) {
-            loadSpringContext();
+            loadDefaultProperties();
             loadDBProperties();
         }
         instance = this;
@@ -63,14 +66,9 @@ public class GlobalProperties {
     }
 
     @SuppressWarnings("resource")
-    private void loadSpringContext() {
+    private void loadDefaultProperties() {
         try {
-            final ApplicationContext propertyContext = new ClassPathXmlApplicationContext(
-                    new String[]{"classpath:META-INF/spring/stroomCoreServerPropertyContext.xml"});
-
-            @SuppressWarnings("unchecked") final List<GlobalProperty> globalPropertyList = (List<GlobalProperty>) propertyContext
-                    .getBean("defaultPropertyList");
-
+            final List<GlobalProperty> globalPropertyList = DefaultProperties.getList();
             for (final GlobalProperty globalProperty : globalPropertyList) {
                 globalProperty.setSource("Default");
                 globalProperty.setDefaultValue(globalProperty.getValue());
@@ -86,34 +84,33 @@ public class GlobalProperties {
     }
 
     private void loadDBProperties() {
-        try {
+        try (final Connection connection = ConnectionUtil.getConnection()) {
             // Overwrite some properties from values in the DB.
-            final Connection connection = ConnectionUtil.getConnection();
             if (ConnectionUtil.tableExists(connection, GlobalProperty.TABLE_NAME)) {
-                final ResultSet resultSet = ConnectionUtil.executeQueryResultSet(connection, "SELECT "
-                                + SQLNameConstants.NAME + ", " + SQLNameConstants.VALUE + " FROM " + GlobalProperty.TABLE_NAME,
-                        null);
-
-                while (resultSet.next()) {
-                    final String name = resultSet.getString(1);
-                    final String value = resultSet.getString(2);
-
-                    if (value != null) {
-                        final GlobalProperty globalProperty = globalProperties.get(name);
-                        if (globalProperty != null) {
-                            globalProperty.setValue(value);
-                            globalProperty.setSource("Database");
+                LOGGER.debug(">>> %s", LOAD_DB_PROPERTIES_SQL);
+                try (final PreparedStatement preparedStatement = connection.prepareStatement(LOAD_DB_PROPERTIES_SQL)) {
+                    try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                        while (resultSet.next()) {
+                            final String name = resultSet.getString(1);
+                            final String value = resultSet.getString(2);
 
                             if (value != null) {
-                                StroomProperties.setProperty(name, value, StroomProperties.Source.DB);
+                                final GlobalProperty globalProperty = globalProperties.get(name);
+                                if (globalProperty != null) {
+                                    globalProperty.setValue(value);
+                                    globalProperty.setSource("Database");
+                                    StroomProperties.setProperty(name, value, StroomProperties.Source.DB);
+                                }
                             }
                         }
                     }
+                } catch (final SQLException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    throw e;
                 }
             }
-            ConnectionUtil.close(connection);
         } catch (final Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

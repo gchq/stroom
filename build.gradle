@@ -29,6 +29,7 @@ task wrapper(type: Wrapper) {
 apply plugin: 'gchq.urldependencies'
 apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'de.undercouch.download'
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 
@@ -64,8 +65,8 @@ ext.versions = [
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
     stroomAuth: 'v0.1-alpha.3',
-    stroomExpression: 'v1.0.2',
-    stroomQuery: 'v2.0.0-alpha.22', //same version for both stroom-query-api and stroom-query-common
+    stroomExpression: 'v1.0.3',
+    stroomQuery: 'v2.0.0-alpha.27', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
 
     //------------3rd-party------------
@@ -213,11 +214,11 @@ def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
     'core-xml-schemas': 'v2.0',
-    'internal-statistics-stroom-stats': 'v2.0',
-    'internal-statistics-sql': 'v2.0',
+    'internal-statistics-stroom-stats': 'v2.1',
+    'internal-statistics-sql': 'v2.1',
     'internal-dashboards': 'v1.1',
     'stroom-101': 'v1.0',
-    'event-logging-xml-schema': 'v3.1.1'
+    'event-logging-xml-schema': 'v3.2.3'
 ]
 
 //defines a list of gradle projects that we will publish with maven/bintray
@@ -243,6 +244,9 @@ def projectsWithSharedTestJars = subprojects.findAll { project ->
         'zzDUMMYzz to ease sorting'
     ]
 }
+
+//list to hold details of any failed test classes
+def failedTestReportFiles = []
 
 //Configuration applicable to all projects
 allprojects {
@@ -313,6 +317,19 @@ subprojects {
     tasks.withType(Test) {
         reports.html.destination = file("${reporting.baseDir}/${name}")
 
+
+        afterSuite { desc, result -> 
+            if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
+
+                //test class failed so add its project info and test report file to a global list for
+                //processing at the end of the build
+                def reportFileName = "${reports.junitXml.destination}/TEST-${desc.className}.xml"
+                def reportFile = file(reportFileName)
+                def pair = new Tuple2("${project.name} ${desc.name}", reportFile)
+                failedTestReportFiles.add(pair)
+            }
+        }
+
         //Use full logging for test exceptions so we can see where the failure occurred 
         testLogging {
             events "failed"
@@ -330,13 +347,25 @@ subprojects {
         afterTest { desc, result -> 
             println "Executed test ${desc.name} [${desc.className}] with result: ${result.resultType}"
         }
+        
+        //afterSuite { desc, result -> 
+            //if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
+                ////test class failed so add its project info and test report file to a global list for
+                ////processing at the end of the build
+
+                //def reportFileName = "${project.name}/build/test-results/integrationTest/TEST-${desc.className}.xml"
+                //def reportFile = file(reportFileName)
+                //def pair = new Tuple2("${project.name} ${desc.name}", reportFile)
+                //failedTestReportFiles.add(pair)
+            //}
+        //}
 
         //Use full logging for test exceptions so we can see where the failure occurred 
-        testLogging {
-            events "failed"
-            exceptionFormat = 'full'
-            showStackTraces = true
-        }
+        //testLogging {
+            //events "failed"
+            //exceptionFormat = 'full'
+            //showStackTraces = true
+        //}
     }
 
     clean{
@@ -535,4 +564,25 @@ urlDependencies {
             "https://github.com/gchq/hadoop-common-shaded/releases/download/$versions.hadoopCommonShaded/${urlLibs.hadoopCommonShaded}.jar")
 }
 
+gradle.buildFinished {
+    //if any of the tests failed dump the junit xml to the console
+    if (getPropertyOrDefault('dumpFailedTestXml', 'false') == 'true' && failedTestReportFiles.size > 0) {
+        println "Build has ${failedTestReportFiles.size} failed test classes, dumping JUnit xml output"
+        failedTestReportFiles.each { pair -> 
+            def info = pair.first
+            def reportFile = pair.second
+
+            if (reportFile.exists()) {
+                println "-----Failed test class ${info} ------------------"
+                def lines = reportFile.readLines()
+                lines.each { String line -> 
+                    println "${line}"
+                }
+                println "-----End of test class ${info} ------------------"
+            } else {
+                println "File ${reportFile.toString()}"
+            }
+        }
+    }
+}
 

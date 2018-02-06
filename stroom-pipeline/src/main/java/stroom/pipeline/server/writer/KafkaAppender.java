@@ -12,6 +12,9 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
+/**
+ * A generic Kafka appender for sending messages to kafka with any key and topic
+ */
 @SuppressWarnings("unused")
 @Component
 @Scope(StroomScope.PROTOTYPE)

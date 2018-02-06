@@ -25,7 +25,6 @@ import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Monitor;
 import stroom.util.thread.BufferFactory;
 
 import java.io.IOException;
@@ -33,34 +32,10 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * Class that reads a nested directory tree of stroom zip files.
- * <p>
- * <p>
- * TODO - This class is extended in ProxyAggregationExecutor in Stroom
- * so changes to the way files are stored in the zip repository
- * may have an impact on Stroom while it is using stroom.util.zip as opposed
- * to stroom-proxy-zip.  Need to pull all the zip repository stuff out
- * into its own repo with its own lifecycle and a clearly defined API,
- * then both stroom-proxy and stroom can use it.
- */
-public abstract class StroomZipRepositoryProcessor extends RepositoryProcessor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipRepositoryProcessor.class);
+public final class ProxyFileHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileHandler.class);
 
-    public StroomZipRepositoryProcessor(final Monitor monitor) {
-        super(monitor);
-    }
-
-    public abstract void startExecutor();
-
-    public abstract void stopExecutor(boolean now);
-
-    public abstract void waitForComplete();
-
-    public abstract void execute(String message, Runnable runnable);
-
-
-    public Long processFeedFile(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
+     public Long processFeedFile(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
                                 final StroomZipRepository stroomZipRepository, final Path file,
                                 final StreamProgressMonitor streamProgress,
                                 final long startSequence) throws IOException {
@@ -130,7 +105,7 @@ public abstract class StroomZipRepositoryProcessor extends RepositoryProcessor {
         return size;
     }
 
-    protected void sendEntry(final List<? extends StroomStreamHandler> requestHandlerList, final StroomZipFile stroomZipFile,
+    private void sendEntry(final List<? extends StroomStreamHandler> requestHandlerList, final StroomZipFile stroomZipFile,
                              final String sourceName, final StreamProgressMonitor streamProgress,
                              final StroomZipEntry targetEntry)
             throws IOException {
@@ -138,7 +113,7 @@ public abstract class StroomZipRepositoryProcessor extends RepositoryProcessor {
         sendEntry(requestHandlerList, inputStream, streamProgress, targetEntry);
     }
 
-    public void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final InputStream inputStream,
+    private void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final InputStream inputStream,
                           final StreamProgressMonitor streamProgress, final StroomZipEntry targetEntry)
             throws IOException {
         if (inputStream != null) {
@@ -173,7 +148,7 @@ public abstract class StroomZipRepositoryProcessor extends RepositoryProcessor {
         }
     }
 
-    public void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final MetaMap metaMap,
+    private void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final MetaMap metaMap,
                           final StroomZipEntry targetEntry) throws IOException {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("sendEntry() - " + targetEntry);
@@ -196,7 +171,7 @@ public abstract class StroomZipRepositoryProcessor extends RepositoryProcessor {
         }
     }
 
-    protected void deleteFiles(final StroomZipRepository stroomZipRepository, final List<Path> fileList) {
+    public void deleteFiles(final StroomZipRepository stroomZipRepository, final List<Path> fileList) {
         for (final Path file : fileList) {
             stroomZipRepository.delete(new StroomZipFile(file));
         }

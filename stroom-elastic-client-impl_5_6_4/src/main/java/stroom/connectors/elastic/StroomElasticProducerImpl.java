@@ -5,7 +5,6 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.connectors.ConnectorProperties;
-import stroom.connectors.kafka.StroomKafkaProducer;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -39,20 +38,20 @@ public class StroomElasticProducerImpl implements StroomElasticProducer {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Elastic: %s is required.",
                         StroomElasticProducer.ELASTIC_HTTP_URL);
-                LOGGER.error(msg);
+                throw new RuntimeException(msg);
             }
             if (Strings.isNullOrEmpty(clusterName)) {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Elastic: %s is required.",
                         StroomElasticProducer.CLUSTER_NAME);
-                LOGGER.error(msg);
+                throw new RuntimeException(msg);
             }
             final String transportHostsStr = properties.getProperty(StroomElasticProducer.TRANSPORT_HOSTS);
             if (Strings.isNullOrEmpty(transportHostsStr)) {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Elastic: %s is required.",
                         StroomElasticProducer.TRANSPORT_HOSTS);
-                LOGGER.error(msg);
+                throw new RuntimeException(msg);
             }
             final String[] transportHostsList = transportHostsStr.split(",");
             for (final String transportHost : transportHostsList) {
@@ -61,15 +60,12 @@ public class StroomElasticProducerImpl implements StroomElasticProducer {
                     transportHosts.put(transportHostParts[0], Integer.parseInt(transportHostParts[1]));
                 } else {
                     final String msg = String.format("Unexpected Transport Host, should be a colon delimited pair host:port %s", transportHost);
-                    LOGGER.error(msg);
+                    throw new RuntimeException(msg);
                 }
-
             }
+            LOGGER.info("Elastic Producer successfully created for {} {} {}", clusterName, elasticHttpUrl, transportHostsStr);
         } else {
-            final String msg = String.format(
-                    "Stroom is not properly configured to connect to Kafka: properties containing at least %s are required.",
-                    StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG);
-            LOGGER.error(msg);
+            throw new RuntimeException("Stroom is not properly configured to connect to Elastic: no connector properties have been supplied");
         }
     }
 

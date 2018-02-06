@@ -51,12 +51,12 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -96,11 +96,9 @@ public class TestDS3 extends StroomUnitTest {
     public void testProcessAll() throws Exception {
         // Get the testing directory.
         final Path testDir = getTestDir();
-        List<Path> paths = null;
-        try (final Stream<Path> stream = Files.list(testDir)) {
-            paths = stream
-                    .filter(p -> p.getFileName().toString().endsWith(".ds2"))
-                    .collect(Collectors.toList());
+        final List<Path> paths = new ArrayList<>();
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(testDir, "*.ds2")) {
+            stream.forEach(paths::add);
         }
 
         for (final Path path : paths) {

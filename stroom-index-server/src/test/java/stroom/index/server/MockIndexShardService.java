@@ -51,7 +51,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
         final IndexShard il = save(indexShard);
         final Path indexPath = IndexShardUtil.getIndexPath(indexShard);
         if (Files.isDirectory(indexPath)) {
-            FileSystemUtil.deleteContents(indexPath);
+            FileUtil.deleteContents(indexPath);
         }
         return il;
     }

@@ -22,21 +22,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.MetaMap;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
+import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.feed.StroomHeaderArguments;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 
 public class ProxyRepositoryCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryCreator.class);
@@ -57,22 +62,26 @@ public class ProxyRepositoryCreator {
     }
 
     private void readDir(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
-        try (final Stream<Path> stream = Files.walk(dir)) {
-            stream.forEach(p -> {
-                if (!p.getFileName().toString().startsWith(".")) {
-                    if (Files.isRegularFile(p)) {
-                        final String fileName = p.getFileName().toString().toLowerCase();
+        try {
+            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    try {
+                        final String fileName = file.getFileName().toString().toLowerCase();
                         if (fileName.endsWith(INPUT_EXTENSION)) {
-                            loadInput(p, mandateEffectiveDate, effectiveMs);
+                            loadInput(file, mandateEffectiveDate, effectiveMs);
 
                         } else if (fileName.endsWith(ZIP_EXTENSION)) {
-                            loadZip(p, mandateEffectiveDate, effectiveMs);
+                            loadZip(file, mandateEffectiveDate, effectiveMs);
                         }
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e.getMessage(), e);
                     }
+                    return super.visitFile(file, attrs);
                 }
             });
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -103,7 +112,7 @@ public class ProxyRepositoryCreator {
                 zipOutputStream.close();
             }
         } catch (final IOException e) {
-            throw new RuntimeException("Error loading file: " + FileUtil.getCanonicalPath(file), e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -154,7 +163,7 @@ public class ProxyRepositoryCreator {
                 zipOutputStream.close();
 
             } catch (final IOException e) {
-                throw new RuntimeException("Error loading file: " + FileUtil.getCanonicalPath(file), e);
+                throw new UncheckedIOException(e);
             }
         }
     }

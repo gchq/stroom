@@ -19,7 +19,11 @@ import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.query.api.v2.DocRef;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.UserTokenUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
@@ -58,21 +62,27 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     private final ElasticIndexCache elasticIndexCache;
 
     private final StroomElasticProducerFactoryService elasticProducerFactoryService;
+    private final SecurityContext securityContext;
+    private final PipelineHolder pipelineHolder;
 
     private StroomElasticProducer elasticProducer = null;
-    private ElasticIndexConfig indexConfig = null;
+    private ElasticIndexDocRefEntity indexConfig = null;
     private Map<String, String> propertiesToIndex = null;
     private Locator locator = null;
 
     @Inject
     public ElasticIndexingFilter(final LocationFactoryProxy locationFactory,
                                  final ElasticIndexCache elasticIndexCache,
+                                 final SecurityContext securityContext,
                                  final ErrorReceiverProxy errorReceiverProxy,
-                                 final StroomElasticProducerFactoryService elasticProducerFactoryService) {
+                                 final StroomElasticProducerFactoryService elasticProducerFactoryService,
+                                 final PipelineHolder pipelineHolder) {
         this.locationFactory = locationFactory;
         this.elasticIndexCache = elasticIndexCache;
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticProducerFactoryService = elasticProducerFactoryService;
+        this.securityContext = securityContext;
+        this.pipelineHolder = pipelineHolder;
     }
 
     @PipelineProperty(description = "The field name to use as the unique ID for records.")
@@ -108,15 +118,22 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
                 throw new LoggedException("Index has not been set");
             }
 
-            // Get the index and index fields from the cache.
-            indexConfig = elasticIndexCache.get(indexRef);
-            if (indexConfig == null) {
-                log(Severity.FATAL_ERROR, "Unable to load index", null);
-                throw new LoggedException("Unable to load index");
+            try (final SecurityHelper sh = SecurityHelper.asUser(
+                    securityContext,
+                    UserTokenUtil.create(pipelineHolder.getPipeline().getCreateUser(), null))) {
+                // Get the index and index fields from the cache.
+                indexConfig = elasticIndexCache.get(indexRef);
+                if (indexConfig == null) {
+                    log(Severity.FATAL_ERROR, "Unable to load index", null);
+                    throw new LoggedException("Unable to load index");
+                }
             }
 
-            elasticProducer = elasticProducerFactoryService.getProducer(e ->
-                    errorReceiverProxy.log(Severity.ERROR, null, null, "Called function on Fake Elastic proxy", e));
+            elasticProducer = elasticProducerFactoryService.getConnector().orElseThrow(() -> {
+                String msg = "No Elastic Search connector is available to use";
+                log(Severity.FATAL_ERROR, msg, null);
+                return new LoggedException(msg);
+            });
 
         } finally {
             super.startProcessing();
@@ -148,6 +165,12 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
+            if (elasticProducer == null) {
+                //shouldn't get here as we should have had a FATAL on start processing, but just in case
+                String msg = "No Elastic Search connector is available to use";
+                log(Severity.FATAL_ERROR, msg, null);
+                throw new LoggedException(msg);
+            }
             elasticProducer.send(idFieldName,
                     indexConfig.getIndexName(),
                     indexConfig.getIndexedType(),
@@ -161,7 +184,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
 
     @Override
     public void endProcessing() {
-        if (null != elasticProducer) {
+        if (elasticProducer != null) {
             elasticProducer.shutdown();
             elasticProducer = null;
         }

@@ -85,35 +85,26 @@ public class ConnectionUtil {
         return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
     }
 
-    /**
-     * Attempts to get the connection currently in use by a transaction using the passed datasource, or create one
-     * if there isn't one.
-     * @param dataSource The dataSource to get the connection to
-     * @return A new or existing connection
-     */
-    public static Connection getConnection(final DataSource dataSource) {
-        return DataSourceUtils.getConnection(dataSource);
-    }
-
     private static int getMultiInsertMaxBatchSize() {
         return StroomProperties.getIntProperty(MULTI_INSERT_BATCH_SIZE, MULTI_INSERT_BATCH_SIZE_DEFAULT);
     }
 
-    public static void close(final Connection connection) {
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (final SQLException ex) {
-                LOGGER.error("Unable to close connection!", ex);
-            }
-        }
-    }
+//    public static void close(final Connection connection) {
+//        if (connection != null) {
+//            try {
+//                connection.close();
+//            } catch (final SQLException ex) {
+//                LOGGER.error(ex, ex);
+//            }
+//        }
+//    }
 
     public static boolean tableExists(final Connection connection, final String tableName) throws SQLException {
+        boolean hasTable = false;
         final DatabaseMetaData databaseMetaData = connection.getMetaData();
-        final ResultSet resultSet = databaseMetaData.getTables(null, null, tableName, new String[]{"TABLE"});
-        final boolean hasTable = resultSet.next();
-        resultSet.close();
+        try (final ResultSet resultSet = databaseMetaData.getTables(null, null, tableName, new String[]{"TABLE"})) {
+            hasTable = resultSet.next();
+        }
         return hasTable;
     }
 
@@ -122,12 +113,9 @@ public class ConnectionUtil {
             throws SQLException {
         LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try {
-            final PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             PreparedStatementUtil.setArguments(preparedStatement, args);
             final int result = preparedStatement.executeUpdate();
-
-            preparedStatement.close();
 
             log(logExecutionTime, () -> Integer.toString(result), () -> sql, args);
 
@@ -144,11 +132,11 @@ public class ConnectionUtil {
         LOGGER.debug(">>> {}", sql);
         final List<Long> keyList = new ArrayList<>();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             PreparedStatementUtil.setArguments(preparedStatement, args);
             final int result = preparedStatement.executeUpdate();
 
-            try (ResultSet keySet = preparedStatement.getGeneratedKeys()) {
+            try (final ResultSet keySet = preparedStatement.getGeneratedKeys()) {
                 while (keySet.next()) {
                     keyList.add(keySet.getLong(1));
                 }
@@ -170,7 +158,7 @@ public class ConnectionUtil {
     public static void executeStatements(final Connection connection, final List<String> sqlStatements) throws SQLException {
         LOGGER.debug(">>> %s", sqlStatements);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try (Statement statement = connection.createStatement()) {
+        try (final Statement statement = connection.createStatement()) {
 
             sqlStatements.forEach(sql -> {
                 try {
@@ -207,9 +195,9 @@ public class ConnectionUtil {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Long result = null;
 
-        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             PreparedStatementUtil.setArguments(preparedStatement, args);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     result = SqlUtil.getLong(resultSet, 1);
                 }
@@ -224,62 +212,42 @@ public class ConnectionUtil {
         }
     }
 
-    @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    public static BaseResultList<SummaryDataRow> executeQuerySummaryDataResult(final Connection connection,
-                                                                               final String sql,
-                                                                               final int numberKeys,
-                                                                               final List<Object> args,
-                                                                               final List<? extends HasPrimitiveValue> stats,
-                                                                               final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
-        LOGGER.debug(">>> {}", sql);
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        final ArrayList<SummaryDataRow> summaryData = new ArrayList<>();
-        try {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                PreparedStatementUtil.setArguments(preparedStatement, args);
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        final SummaryDataRow summaryDataRow = new SummaryDataRow();
-                        int pos = 1;
-                        for (int i = 0; i < numberKeys; i++) {
-                            summaryDataRow.getKey().add(resultSet.getLong(pos++));
-                        }
-                        for (int i = 0; i < numberKeys; i++) {
-                            summaryDataRow.getLabel().add(resultSet.getString(pos++));
-                        }
-                        summaryDataRow.setCount(resultSet.getLong(pos++));
-                        summaryData.add(summaryDataRow);
-                    }
-                }
-            }
-            log(logExecutionTime, summaryData, sql, args);
-
-            return BaseResultList.createUnboundedList(summaryData);
-        } catch (final SQLException sqlException) {
-            LOGGER.error("executeQueryLongResult() - " + sql + " " + args, sqlException);
-            throw sqlException;
-        }
-    }
-
-    @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    public static ResultSet executeQueryResultSet(final Connection connection, final String sql,
-                                                  final List<Object> args) throws SQLException {
-        LOGGER.debug(">>> {}", sql);
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try {
-            final PreparedStatement preparedStatement = connection.prepareStatement(sql);
-
-            PreparedStatementUtil.setArguments(preparedStatement, args);
-            final ResultSet resultSet = PreparedStatementUtil.createCloseStatementResultSet(preparedStatement);
-
-            log(logExecutionTime, "ResultSet", sql, args);
-
-            return resultSet;
-        } catch (final SQLException sqlException) {
-            LOGGER.error("executeQueryResultSet() - " + sql + " " + args, sqlException);
-            throw sqlException;
-        }
-    }
+//    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+//    public static BaseResultList<SummaryDataRow> executeQuerySummaryDataResult(final Connection connection,
+//                                                                               final String sql,
+//                                                                               final int numberKeys,
+//                                                                               final List<Object> args,
+//                                                                               final List<? extends HasPrimitiveValue> stats,
+//                                                                               final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
+//        LOGGER.debug(">>> %s", sql);
+//        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+//        final ArrayList<SummaryDataRow> summaryData = new ArrayList<>();
+//        try {
+//            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+//                PreparedStatementUtil.setArguments(preparedStatement, args);
+//                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+//                    while (resultSet.next()) {
+//                        final SummaryDataRow summaryDataRow = new SummaryDataRow();
+//                        int pos = 1;
+//                        for (int i = 0; i < numberKeys; i++) {
+//                            summaryDataRow.getKey().add(resultSet.getLong(pos++));
+//                        }
+//                        for (int i = 0; i < numberKeys; i++) {
+//                            summaryDataRow.getLabel().add(resultSet.getString(pos++));
+//                        }
+//                        summaryDataRow.setCount(resultSet.getLong(pos++));
+//                        summaryData.add(summaryDataRow);
+//                    }
+//                }
+//            }
+//            log(logExecutionTime, summaryData, sql, args);
+//
+//            return BaseResultList.createUnboundedList(summaryData);
+//        } catch (final SQLException sqlException) {
+//            LOGGER.error("executeQueryLongResult() - " + sql + " " + args, sqlException);
+//            throw sqlException;
+//        }
+//    }
 
     private static void log(final LogExecutionTime logExecutionTime,
                             final Object result,
@@ -361,7 +329,7 @@ public class ConnectionUtil {
          * This method inserts multiple rows into a table, with many rows per statement as controlled
          * by a batch size property. This is to avoid using a hibernate native sql approach that will
          * cache a query plan for each unique query. An insert with two rows is considered different to
-         * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
+         * an insert with three rows so the cache quickly fills up with huge insert queries, each with
          * MANY param objects.
          *
          * @param argsList    A List of args (in columnName order), one list of args for each row, will
@@ -375,7 +343,7 @@ public class ConnectionUtil {
          * This method inserts multiple rows into a table, with many rows per statement as controlled
          * by a batch size property. This is to avoid using a hibernate native sql approach that will
          * cache a query plan for each unique query. An insert with two rows is considered different to
-         * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
+         * an insert with three rows so the cache quickly fills up with huge insert queries, each with
          * MANY param objects.
          *
          * @param argsList    A List of args (in columnName order), one list of args for each row, will

@@ -19,20 +19,25 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
+import stroom.util.io.AbstractFileVisitor;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
-import java.util.stream.Stream;
 
 /**
  * Class that represents a repository on the file system. By default files are
@@ -131,7 +136,7 @@ public class StroomZipRepository {
             try {
                 Files.createDirectories(baseLockDir);
             } catch (final IOException e) {
-                throw new RuntimeException("Unable to create directory " + baseLockDir);
+                throw new UncheckedIOException(e);
             }
         }
 
@@ -158,30 +163,14 @@ public class StroomZipRepository {
         LOGGER.info("Scanning repository to find existing files");
         final AtomicLong minId = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong maxId = new AtomicLong(Long.MIN_VALUE);
-        try (final Stream<Path> stream = walkZipFiles()) {
-            stream.forEach(p -> {
-                LOGGER.debug("Examining " + p.toString());
 
-                final String idString = getIdPart(p);
-                if (idString.length() == 0) {
-                    LOGGER.warn("File is not a valid repository file " + p.toString());
-                } else {
-                    final long id = Long.valueOf(idString);
+        final Path path = getRootDir();
 
-                    boolean success = false;
-                    while (!success) {
-                        final long min = minId.get();
-                        success = id >= min || minId.compareAndSet(min, id);
-                    }
-
-                    success = false;
-                    while (!success) {
-                        final long max = maxId.get();
-                        success = id <= max || maxId.compareAndSet(max, id);
-                    }
-                }
-            });
-        } catch (final IOException e) {
+        try {
+            if (path != null && Files.isDirectory(path)) {
+                scanDir(path, minId, maxId);
+            }
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -193,6 +182,45 @@ public class StroomZipRepository {
         }
 
         consumer.accept(firstFileId, lastFileId);
+    }
+
+    private void scanDir(final Path dir, final AtomicLong minId, final AtomicLong maxId) {
+        try {
+            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    try {
+                        if (file.toString().endsWith(ZIP_EXTENSION)) {
+                            LOGGER.debug("Examining " + file.toString());
+
+                            final String idString = getIdPart(file);
+                            if (idString.length() == 0) {
+                                LOGGER.warn("File is not a valid repository file " + file.toString());
+                            } else {
+                                final long id = Long.valueOf(idString);
+
+                                boolean success = false;
+                                while (!success) {
+                                    final long min = minId.get();
+                                    success = id >= min || minId.compareAndSet(min, id);
+                                }
+
+                                success = false;
+                                while (!success) {
+                                    final long max = maxId.get();
+                                    success = id <= max || maxId.compareAndSet(max, id);
+                                }
+                            }
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                    return super.visitFile(file, attrs);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 
     /**
@@ -236,7 +264,7 @@ public class StroomZipRepository {
         return "";
     }
 
-    Path getRootDir() {
+    public Path getRootDir() {
         if (baseResultantDir != null) {
             return baseResultantDir;
         }
@@ -330,54 +358,62 @@ public class StroomZipRepository {
 
     private void clean(final Path path) {
         try {
-            if (Files.isDirectory(path)) {
+            if (path != null && Files.isDirectory(path)) {
                 final long tenSecondsAgoMs = System.currentTimeMillis() - TEN_SECONDS;
                 final long oldestLockFileMs = System.currentTimeMillis() - lockDeleteAgeMs;
 
-                try (final Stream<Path> stream = Files.walk(path)) {
-                    stream.sorted(Comparator.reverseOrder()).forEach(p -> {
-                        try {
-                            if (p.toString().endsWith(".zip.lock")) {
-                                final FileTime lastModified = getLastModifiedTime(p);
-                                if (lastModified != null && lastModified.toMillis() < oldestLockFileMs) {
-                                    try {
-                                        Files.delete(p);
-                                        LOGGER.info("Removed old lock file due to age " + p.toString() + " " + DateUtil.createNormalDateTimeString());
-                                    } catch (final IOException e) {
-                                        LOGGER.error("Unable to remove old lock file due to age " + p.toString());
-                                    }
-                                }
-                            } else if (Files.isDirectory(p)) {
-                                // Only try and delete directories that are at least 10 seconds old.
-                                final FileTime lastModified = getLastModifiedTime(p);
-                                if (lastModified != null && lastModified.toMillis() < tenSecondsAgoMs) {
-                                    // Synchronize deletion of directories so that the getStroomOutputStream() method has a
-                                    // chance to create dirs and place files inside them before this method cleans them up.
-                                    synchronized (StroomZipRepository.this) {
-                                        // Have a go at deleting this directory if it is empty and not just about to be written to.
-                                        delete(p);
-                                    }
-                                }
-                            }
-                        } catch (final Exception e) {
-                            LOGGER.error(e.getMessage(), e);
-                        }
-                    });
-                }
+                cleanDir(path, tenSecondsAgoMs, oldestLockFileMs);
             }
-        } catch (final IOException e) {
-            LOGGER.error("Failed to clean repo " + path);
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
-    private FileTime getLastModifiedTime(final Path path) {
+    private void cleanDir(final Path dir, final long tenSecondsAgoMs, final long oldestLockFileMs) {
         try {
-            return Files.getLastModifiedTime(path);
-        } catch (final Exception e) {
-            LOGGER.trace(e.getMessage(), e);
-        }
+            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    try {
+                        if (file.toString().endsWith(".zip.lock")) {
+                            final FileTime lastModified = attrs.lastModifiedTime();
+                            if (lastModified != null && lastModified.toMillis() < oldestLockFileMs) {
+                                try {
+                                    Files.delete(file);
+                                    LOGGER.info("Removed old lock file due to age " + file.toString());
+                                } catch (final IOException e) {
+                                    LOGGER.error("Unable to remove old lock file due to age " + file.toString());
+                                }
+                            }
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    }
+                    return super.visitFile(file, attrs);
+                }
 
-        return null;
+                @Override
+                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
+                    try {
+                        // Only try and delete directories that are at least 10 seconds old.
+                        final FileTime lastModified = attrs.lastModifiedTime();
+                        if (lastModified != null && lastModified.toMillis() < tenSecondsAgoMs) {
+                            // Synchronize deletion of directories so that the getStroomOutputStream() method has a
+                            // chance to create dirs and place files inside them before this method cleans them up.
+                            synchronized (StroomZipRepository.this) {
+                                // Have a go at deleting this directory if it is empty and not just about to be written to.
+                                delete(dir);
+                            }
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    }
+                    return super.preVisitDirectory(dir, attrs);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
     }
 
     private void removeLock() {
@@ -385,7 +421,7 @@ public class StroomZipRepository {
             try {
                 Files.move(baseLockDir, baseResultantDir);
             } catch (final IOException e) {
-                throw new RuntimeException("Unable to rename directory " + baseLockDir + " to " + baseResultantDir);
+                throw new UncheckedIOException(e);
             }
             baseResultantDir = null;
         }
@@ -403,37 +439,54 @@ public class StroomZipRepository {
 
     private boolean deleteEmptyDir(final Path path) {
         boolean success = true;
+        try {
+            if (Files.isDirectory(path)) {
+                Files.walkFileTree(path, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                    @Override
+                    public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
+                        try {
+                            if (!dir.equals(path)) {
+                                if (LOGGER.isDebugEnabled()) {
+                                    LOGGER.debug("Attempting to delete dir: " + dir.toString());
+                                }
+                                Files.delete(dir);
+                                if (LOGGER.isDebugEnabled()) {
+                                    LOGGER.debug("Deleted dir: " + dir.toString());
+                                }
+                            }
+                        } catch (final Exception e) {
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug("Failed to delete dir: " + dir.toString());
+                            }
+                            LOGGER.trace(e.getMessage(), e);
+                        }
+                        return super.postVisitDirectory(dir, exc);
+                    }
+                });
 
-        if (Files.isDirectory(path)) {
-            LOGGER.debug("Attempting to delete dir: " + path.toString());
-
-            // Delete all empty sub directories.
-            try (final Stream<Path> stream = Files
-                    .walk(path, FileVisitOption.FOLLOW_LINKS)
-                    .sorted(Comparator.reverseOrder())
-                    .filter(p -> Files.isDirectory(p))) {
-                stream.forEach(this::delete);
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
+                // Remove the directory.
+                Files.delete(path);
             }
-
-            // See if we removed the directory.
-            success = !Files.isDirectory(path);
-
-            if (success) {
-                LOGGER.debug("Deleted dir: " + path.toString());
-            } else {
-                LOGGER.debug("Failed to delete dir: " + path.toString());
-            }
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+            success = false;
         }
-
+        if (success) {
+            LOGGER.debug("Deleted dir: " + path.toString());
+        } else {
+            LOGGER.debug("Failed to delete dir: " + path.toString());
+        }
         return success;
     }
 
     private boolean delete(final Path path) {
         try {
-            LOGGER.trace("Attempting to delete: " + path.toString());
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Attempting to delete: " + path.toString());
+            }
+
             Files.delete(path);
+
             return true;
         } catch (final DirectoryNotEmptyException e) {
             LOGGER.trace("Unable to delete dir as it was not empty: " + path.toString());
@@ -457,23 +510,25 @@ public class StroomZipRepository {
         }
     }
 
-    /**
-     * Returns a Stream of Paths to repository Zip files. This stream must be closed after use.
-     */
-    public Stream<Path> walkZipFiles() throws IOException {
-        return walk(ZIP_EXTENSION);
-    }
-
-    /**
-     * Returns a Stream of Paths to repository files with the specified extension. This stream must be closed after use.
-     *
-     * @param extension The file extension to filter by.
-     */
-    public Stream<Path> walk(final String extension) throws IOException {
-        if (getRootDir() == null || !Files.isDirectory(getRootDir())) {
-            return Stream.empty();
+    public List<Path> listAllZipFiles() {
+        final List<Path> list = new ArrayList<>();
+        try {
+            Files.walkFileTree(getRootDir(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    try {
+                        if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
+                            list.add(file);
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                    return super.visitFile(file, attrs);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
         }
-
-        return Files.walk(getRootDir()).filter(p -> Files.isRegularFile(p) && p.toString().endsWith(extension));
+        return list;
     }
 }

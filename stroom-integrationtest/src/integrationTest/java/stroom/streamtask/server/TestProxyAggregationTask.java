@@ -32,7 +32,7 @@ import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.task.server.TaskManager;
+import stroom.task.server.ExecutorProvider;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
@@ -69,13 +69,15 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Resource
     private TaskMonitor taskMonitor;
     @Resource
-    private TaskManager taskManager;
+    private ExecutorProvider executorProvider;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
 
     private void aggregate(final String proxyDir,
-                           final int maxAggregation, final long maxStreamSize) {
-        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(streamStore, feedService, metaDataStatistic, taskMonitor, taskManager, proxyDir, 10, maxAggregation, maxStreamSize, 10000);
+                           final int maxAggregation,
+                           final long maxStreamSize) {
+        final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedService, metaDataStatistic, maxAggregation, maxStreamSize);
+        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(proxyFileProcessor, taskMonitor, executorProvider, proxyDir, 10, maxAggregation, 10000, maxStreamSize);
         proxyAggregationExecutor.exec(new DummyTask());
     }
 

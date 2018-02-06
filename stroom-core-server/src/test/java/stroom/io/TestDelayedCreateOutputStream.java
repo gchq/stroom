@@ -25,6 +25,7 @@ import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -68,7 +69,7 @@ public class TestDelayedCreateOutputStream extends StroomUnitTest {
                 try {
                     return Files.newOutputStream(file);
                 } catch (final IOException e) {
-                    throw new RuntimeException(e);
+                    throw new UncheckedIOException(e);
                 }
             }
         };

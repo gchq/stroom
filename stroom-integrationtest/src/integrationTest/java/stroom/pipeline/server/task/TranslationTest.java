@@ -77,6 +77,8 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
@@ -87,7 +89,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
@@ -172,31 +173,31 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 streamProcessorFilterService.addFindStreamCriteria(streamProcessor, priority, findStreamQueryData);
 
                 // Add data.
-                try (final java.util.stream.Stream<Path> stream = Files.list(inputDir)) {
-                    final List<Path> files = stream
-                            .filter(p -> {
-                                final String fileName = p.getFileName().toString();
-                                return fileName.startsWith(feed.getName()) && (fileName.endsWith(".in") || fileName.endsWith(".zip"));
-                            })
-                            .sorted(Comparator.naturalOrder())         // The order these files are added in is important for the stepping tests.
-                            .collect(Collectors.toList());
+                final List<Path> files = new ArrayList<>();
+                addFiles(inputDir, files, feed.getName(), "in");
+                addFiles(inputDir, files, feed.getName(), "zip");
+                files.sort(Comparator.naturalOrder());
+                files.forEach(p -> {
+                    // Add and test each file.
+                    final String fileName = p.getFileName().toString();
+                    final int index = fileName.lastIndexOf(".");
+                    final String stem = fileName.substring(0, index);
 
-                    files.forEach(p -> {
-                        // Add and test each file.
-                        final String fileName = p.getFileName().toString();
-                        final int index = fileName.lastIndexOf(".");
-                        final String stem = fileName.substring(0, index);
-
-                        try {
-                            test(p, feed, outputDir, stem, compareOutput, exceptions);
-                        } catch (final Exception e) {
-                            Assert.fail(e.getMessage());
-                        }
-                    });
-                } catch (final IOException e) {
-                    throw new RuntimeException(e.getMessage(), e);
-                }
+                    try {
+                        test(p, feed, outputDir, stem, compareOutput, exceptions);
+                    } catch (final Exception e) {
+                        Assert.fail(e.getMessage());
+                    }
+                });
             }
+        }
+    }
+
+    private void addFiles(final Path dir, final List<Path> files, final String feed, final String extension) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, feed + "*." + extension)) {
+            stream.forEach(files::add);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

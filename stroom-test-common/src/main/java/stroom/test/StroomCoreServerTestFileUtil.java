@@ -22,6 +22,7 @@ import stroom.util.io.StreamUtil;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -58,7 +59,7 @@ public final class StroomCoreServerTestFileUtil {
             try {
                 Files.createDirectories(dir);
             } catch (final IOException e) {
-                throw new RuntimeException("Test output directory not found: " + FileUtil.getCanonicalPath(dir));
+                throw new UncheckedIOException(e);
             }
             TEST_OUTPUT_DIR = dir;
         }
@@ -93,7 +94,7 @@ public final class StroomCoreServerTestFileUtil {
         try (final InputStream is = new BufferedInputStream(Files.newInputStream(file))) {
             return StreamUtil.streamToString(is);
         } catch (final IOException e) {
-            throw new RuntimeException("File not found: " + FileUtil.getCanonicalPath(file));
+            throw new UncheckedIOException(e);
         }
     }
 }

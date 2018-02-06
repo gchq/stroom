@@ -47,6 +47,7 @@ import stroom.util.thread.BufferFactory;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -141,8 +142,8 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
             stroomZipOutputStream = null;
 
             return result;
-        } catch (final IOException ioEx) {
-            throw new RuntimeException(ioEx);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         } finally {
             closeDelete(data, stroomZipOutputStream);
             taskMonitor.info("done");

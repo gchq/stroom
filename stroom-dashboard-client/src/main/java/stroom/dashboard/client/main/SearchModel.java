@@ -25,7 +25,6 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.query.api.v2.DocRef;
-
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -97,7 +96,8 @@ public class SearchModel {
     public void search(final ExpressionOperator expression,
                        final String params,
                        final boolean incremental,
-                       final boolean storeHistory) {
+                       final boolean storeHistory,
+                       final String queryInfo) {
         // Toggle the request mode or start a new search.
         switch (mode) {
             case ACTIVE:
@@ -107,7 +107,7 @@ public class SearchModel {
                 break;
             case INACTIVE:
                 reset();
-                startNewSearch(expression, params, incremental, storeHistory);
+                startNewSearch(expression, params, incremental, storeHistory, queryInfo);
                 break;
             case PAUSED:
                 // Tell every component that it should want data.
@@ -124,7 +124,8 @@ public class SearchModel {
     private Map<String, ComponentSettings> initModel(final ExpressionOperator expression,
                                                      final String params,
                                                      final boolean incremental,
-                                                     final boolean storeHistory) {
+                                                     final boolean storeHistory,
+                                                     final String queryInfo) {
 
         final Map<String, ComponentSettings> resultComponentMap = createResultComponentMap();
         if (resultComponentMap != null) {
@@ -142,13 +143,16 @@ public class SearchModel {
                         dashboardUUID.getUUID(),
                         dashboardUUID.getDashboardId(),
                         dashboardUUID.getComponentId());
-                currentSearch = new Search(
-                        dataSourceRef,
-                        currentExpression,
-                        resultComponentMap,
-                        currentParameterMap,
-                        incremental,
-                        storeHistory);
+
+                currentSearch = new Search.Builder()
+                        .dataSourceRef(dataSourceRef)
+                        .expression(currentExpression)
+                        .componentSettingsMap(resultComponentMap)
+                        .paramMap(currentParameterMap)
+                        .incremental(incremental)
+                        .storeHistory(storeHistory)
+                        .queryInfo(queryInfo)
+                        .build();
             }
         }
         return resultComponentMap;
@@ -162,13 +166,15 @@ public class SearchModel {
     private void startNewSearch(final ExpressionOperator expression,
                                 final String params,
                                 final boolean incremental,
-                                final boolean storeHistory) {
+                                final boolean storeHistory,
+                                final String queryInfo) {
 
         final Map<String, ComponentSettings> resultComponentMap = initModel(
                 expression,
                 params,
                 incremental,
-                storeHistory);
+                storeHistory,
+                queryInfo);
 
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
@@ -231,13 +237,14 @@ public class SearchModel {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    currentSearch = new Search(
-                            dataSourceRef,
-                            currentExpression,
-                            resultComponentMap,
-                            currentParameterMap,
-                            true,
-                            false);
+                    currentSearch = new Search.Builder()
+                            .dataSourceRef(dataSourceRef)
+                            .expression(currentExpression)
+                            .componentSettingsMap(resultComponentMap)
+                            .paramMap(currentParameterMap)
+                            .incremental(true)
+                            .storeHistory(false)
+                            .build();
                     activeSearch = currentSearch;
 
                     // Tell the refreshing component that it should want data.
@@ -356,9 +363,10 @@ public class SearchModel {
     public SearchRequest buildSearchRequest(final ExpressionOperator expression,
                                             final String params,
                                             final boolean incremental,
-                                            final boolean storeHistory) {
+                                            final boolean storeHistory,
+                                            final String searchPurpose) {
 
-        initModel(expression, params, incremental, storeHistory);
+        initModel(expression, params, incremental, storeHistory, searchPurpose);
 
         return getCurrentRequest();
     }

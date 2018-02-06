@@ -26,6 +26,7 @@ import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,7 +36,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 @Component
@@ -81,30 +81,29 @@ public class ContentPackImport {
         AtomicInteger failedCounter = new AtomicInteger();
 
         contentPacksDirs.forEach(contentPacksDir -> {
-            try {
-                if (!Files.isDirectory(contentPacksDir)) {
-                    LOGGER.warn("Content packs directory {} doesn't exist", FileUtil.getCanonicalPath(contentPacksDir));
-                } else {
+            if (!Files.isDirectory(contentPacksDir)) {
+                LOGGER.warn("Content packs directory {} doesn't exist", FileUtil.getCanonicalPath(contentPacksDir));
 
-                    LOGGER.info("Processing content packs in directory {}", FileUtil.getCanonicalPath(contentPacksDir));
+            } else {
+                LOGGER.info("Processing content packs in directory {}", FileUtil.getCanonicalPath(contentPacksDir));
 
-                    try (final Stream<Path> stream = Files.list(contentPacksDir)) {
-                        stream.filter(path -> path.toString().endsWith("zip"))
-                                .sorted()
-                                .forEachOrdered((contentPackPath) -> {
-                                    boolean result = importContentPack(contentPacksDir, contentPackPath);
-                                    if (result) {
-                                        successCounter.incrementAndGet();
-                                    } else {
-                                        failedCounter.incrementAndGet();
-                                    }
-                                });
-                    }
+                try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPacksDir, "*.zip")) {
+                    stream.forEach(file -> {
+                        try {
+                            boolean result = importContentPack(contentPacksDir, file);
+                            if (result) {
+                                successCounter.incrementAndGet();
+                            } else {
+                                failedCounter.incrementAndGet();
+                            }
+                        } catch (final Exception e) {
+                            LOGGER.error(e.getMessage(), e);
+                        }
+                    });
+                } catch (final IOException e) {
+                    LOGGER.error("Unable to read content pack files from {}", FileUtil.getCanonicalPath(contentPacksDir), e);
                 }
-            } catch (IOException e) {
-                LOGGER.error("Unable to read content pack files from {}", FileUtil.getCanonicalPath(contentPacksDir), e);
             }
-
         });
         LOGGER.info("Content pack import counts - success: {}, failed: {}",
                 successCounter.get(),

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+#Exit script on first error
+set -e 
+
 # Exports config environment variables, overriding stroom.conf. This allows us to specify IP addresses more easily
 
 #Shell Colour constants for use in 'echo -e'
@@ -18,5 +21,28 @@ fi
 echo
 echo -e "Using IP ${GREEN}${ip}${NC} as the IP, as determined from the operating system"
 
-echo -e "Overwriting ${GREEN}~/.stroom.conf${NC} with a version templated from ${GREEN}./stroom.conf.template${NC}"
-sed "s/IP_ADDRESS/$ip/g" stroom.conf.template > ~/.stroom/stroom.conf
+stroomDir=~/.stroom
+confFile=${stroomDir}/stroom.conf
+templateFile=stroom.conf.template
+
+#Ensure various dirs exist
+mkdir -p ${stroomDir}
+mkdir -p ${stroomDir}/plugins
+mkdir -p /tmp/stroom
+
+if [ -f $confFile ]; then
+    backupFile="${stroomDir}/stroom.conf.$(date +"%Y%m%dT%H%M")"
+    echo -e "Backing up ${GREEN}${confFile}${NC} to ${GREEN}${backupFile}${NC}"
+    cp ${confFile} ${backupFile}
+    echo
+fi
+
+echo -e "Overwriting ${GREEN}${confFile}${NC} with a version templated from ${GREEN}${templateFile}${NC}"
+#Use '#' delimiter in HOME_DIR sed script as HOME contains '\'
+cat ${templateFile} | sed "s/IP_ADDRESS/${ip}/g" | sed "s#HOME_DIR#${HOME}#g" > ${confFile}
+
+if [[ "x${backupFile}" != "x" ]]; then
+    echo
+    echo -e "Run the following to see the changes made to your stroom.conf"
+    echo -e "${GREEN}diff ${backupFile} ${confFile}${NC}"
+fi

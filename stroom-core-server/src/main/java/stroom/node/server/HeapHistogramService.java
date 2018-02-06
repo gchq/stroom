@@ -18,11 +18,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Class for generating a java heap map histogram using the 'jmap' tool supplied with the JDK. Requires that
@@ -35,16 +36,20 @@ class HeapHistogramService {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeapHistogramService.class);
 
     static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
+    static final String ANON_ID_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameReplacementRegex";
     static final String JMAP_EXECUTABLE_PROP_KEY = "stroom.node.status.heapHistogram.jMapExecutable";
+    private static String ID_REPLACEMENT = "--ID-REMOVED--";
 
     private static final int STRING_TRUNCATE_LIMIT = 200;
 
     private final StroomPropertyService stroomPropertyService;
+    private final Pattern lineMatchPattern;
 
     @SuppressWarnings("unused")
     @Inject
     HeapHistogramService(final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
+        this.lineMatchPattern = Pattern.compile("\\s*\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
     }
 
     /**
@@ -73,7 +78,7 @@ class HeapHistogramService {
 
         final List<HeapHistogramEntry> heapHistogramEntries;
         try {
-            LOGGER.info("Executing a heap histogram using command [%s]", command.toString());
+            LOGGER.info("Executing a heap histogram using command [{}]", command.toString());
             int exitCode = executor.execute(command);
             if (exitCode == 0) {
                 heapHistogramEntries = processSuccess(stdOut, stdErr);
@@ -173,32 +178,59 @@ class HeapHistogramService {
         }
     }
 
+    private Function<String, String> getClassReplacementMapper() {
+        final String anonymousIdRegex = stroomPropertyService.getProperty(ANON_ID_REGEX_PROP_KEY);
+
+        if (anonymousIdRegex == null || anonymousIdRegex.isEmpty()) {
+            return Function.identity();
+        } else {
+            try {
+                final Pattern pattern = Pattern.compile(anonymousIdRegex);
+                return className -> pattern.matcher(className).replaceAll(ID_REPLACEMENT);
+            } catch (Exception e) {
+                LOGGER.error("Value [{}] for property [{}] is not valid regex",
+                        anonymousIdRegex, ANON_ID_REGEX_PROP_KEY, e);
+                return Function.identity();
+            }
+        }
+    }
+
+    private Function<String, Optional<HeapHistogramEntry>> buildLineToEntryMapper(final Function<String, String> classNameReplacer) {
+        Preconditions.checkNotNull(classNameReplacer);
+        return line -> {
+            Matcher matcher = lineMatchPattern.matcher(line);
+            if (matcher.matches()) {
+                //if this is a data row then extract the values of interest
+                final long instances = Long.parseLong(matcher.group("instances"));
+                final long bytes = Long.parseLong(matcher.group("bytes"));
+                final String className = matcher.group("class");
+                final String newClassName = classNameReplacer.apply(className);
+                LOGGER.trace("className [{}], newClassName [{}]", className, newClassName);
+
+                return Optional.of(new HeapHistogramEntry(newClassName, instances, bytes));
+            } else {
+                LOGGER.trace("Ignoring jamp histogram line [{}]", line);
+                return Optional.empty();
+            }
+        };
+    }
+
     private List<HeapHistogramEntry> processStdOut(final String stdOut) {
         Preconditions.checkNotNull(stdOut);
 
         try {
-            Pattern matchPattern = Pattern.compile("\\s*\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
             Predicate<String> classNamePredicate = getClassNameMatchPredicate(stroomPropertyService);
+            Function<String, String> classNameReplacer = getClassReplacementMapper();
+            Function<String, Optional<HeapHistogramEntry>> lineToEntryMapper = buildLineToEntryMapper(classNameReplacer);
 
             String[] lines = stdOut.split("\\r?\\n");
 
-            LOGGER.debug("processing %s lines of stdout", lines.length);
+            LOGGER.debug("processing {} lines of stdout", lines.length);
 
-            List<HeapHistogramService.HeapHistogramEntry> histogramEntries = Arrays.stream(lines)
-                    .flatMap(line -> {
-                        Matcher matcher = matchPattern.matcher(line);
-                        if (matcher.matches()) {
-                            //if this is a data row then extract the values of interest
-                            final long instances = Long.parseLong(matcher.group("instances"));
-                            final long bytes = Long.parseLong(matcher.group("bytes"));
-                            final String className = matcher.group("class");
-                            return Stream.of(new HeapHistogramEntry(className, instances, bytes));
-                        } else {
-                            LOGGER.debug("Ignoring jamp histogram line [%s]", line);
-                            //return null so we can filter out the
-                            return Stream.empty();
-                        }
-                    })
+            final List<HeapHistogramService.HeapHistogramEntry> histogramEntries = Arrays.stream(lines)
+                    .map(lineToEntryMapper)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
                     .filter(heapHistogramEntry -> classNamePredicate.test(heapHistogramEntry.getClassName()))
                     .collect(Collectors.toList());
 
@@ -206,7 +238,6 @@ class HeapHistogramService {
             if (histogramEntries.size() == 0) {
                 LOGGER.error("Something has gone wrong filtering the heap histogram, zero entries returned");
             }
-
             return histogramEntries;
 
         } catch (Exception e) {

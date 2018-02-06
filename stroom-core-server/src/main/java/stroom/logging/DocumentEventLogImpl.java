@@ -24,6 +24,7 @@ import event.logging.Criteria;
 import event.logging.Criteria.ResultPage;
 import event.logging.Event;
 import event.logging.Event.EventDetail.Update;
+import event.logging.Export;
 import event.logging.MultiObject;
 import event.logging.Object;
 import event.logging.ObjectOutcome;
@@ -34,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
@@ -337,6 +339,26 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             eventLoggingService.log(event);
         } catch (final Exception e) {
             LOGGER.error("Unable to doDelete!", e);
+        }
+    }
+
+    @Override
+    public void download(final java.lang.Object object, final Throwable ex) {
+        try {
+            final Event event = createAction("Download", "Downloading", object);
+
+            final MultiObject multiObject = new MultiObject();
+            multiObject.getObjects().add(createBaseObject(object));
+
+            final Export exp = new Export();
+            exp.setSource(multiObject);
+            exp.setOutcome(EventLoggingUtil.createOutcome(ex));
+
+            event.getEventDetail().setExport(exp);
+
+            eventLoggingService.log(event);
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

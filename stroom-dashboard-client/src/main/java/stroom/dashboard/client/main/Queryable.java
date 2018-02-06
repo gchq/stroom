@@ -16,6 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-public interface UsesParams {
-    void onParamsChanged(String params);
+public interface Queryable {
+    void onQuery(String params, String queryInfo);
 }

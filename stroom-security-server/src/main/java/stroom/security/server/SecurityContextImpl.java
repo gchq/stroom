@@ -40,6 +40,7 @@ import javax.inject.Inject;
 import javax.persistence.RollbackException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -55,7 +56,7 @@ class SecurityContextImpl implements SecurityContext {
     private final DocumentPermissionsCache documentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
-    private final UserService userService;
+    private final UserCache userCache;
     private final DocumentPermissionService documentPermissionService;
     private final DocumentTypePermissions documentTypePermissions;
     private final AuthenticationServiceClients authenticationServiceClients;
@@ -65,14 +66,14 @@ class SecurityContextImpl implements SecurityContext {
             final DocumentPermissionsCache documentPermissionsCache,
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
-            final UserService userService,
+            final UserCache userCache,
             final DocumentPermissionService documentPermissionService,
             final DocumentTypePermissions documentTypePermissions,
             final AuthenticationServiceClients authenticationServiceClients) {
         this.documentPermissionsCache = documentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
-        this.userService = userService;
+        this.userCache = userCache;
         this.documentPermissionService = documentPermissionService;
         this.documentTypePermissions = documentTypePermissions;
         this.authenticationServiceClients = authenticationServiceClients;
@@ -102,11 +103,13 @@ class SecurityContextImpl implements SecurityContext {
                 }
             } else if (USER.equals(type)) {
                 if (name.length() > 0) {
-                    userRef = userService.getUserByName(name);
-                    if (userRef == null) {
+                    final Optional<UserRef> optional = userCache.get(name);
+                    if (!optional.isPresent()) {
                         final String message = "Unable to push user '" + name + "' as user is unknown";
                         LOGGER.error(message);
                         throw new AuthenticationException(message);
+                    } else {
+                        userRef = optional.get();
                     }
                 }
             } else {

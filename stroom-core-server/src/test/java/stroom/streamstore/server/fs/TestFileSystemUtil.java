@@ -170,8 +170,8 @@ public class TestFileSystemUtil extends StroomUnitTest {
         Assert.assertTrue("Delete Files", FileSystemUtil.deleteAnyPath(files));
         Assert.assertTrue("Delete Files Gone", FileSystemUtil.deleteAnyPath(files));
 
-        Assert.assertTrue("Delete Files Gone", FileSystemUtil.deleteContents(dir1));
-        Assert.assertTrue("Delete Files Gone", FileSystemUtil.deleteContents(dir2));
+        Assert.assertTrue("Delete Files Gone", FileUtil.deleteContents(dir1));
+        Assert.assertTrue("Delete Files Gone", FileUtil.deleteContents(dir2));
 
     }
 
@@ -224,7 +224,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
         Assert.assertTrue(allOk.get());
 
-        FileSystemUtil.deleteDirectory(dir1);
+        FileUtil.deleteDir(dir1);
     }
 
     @Test

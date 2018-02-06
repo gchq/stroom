@@ -79,7 +79,14 @@ public class SearchRequestTestData {
         paramMap.put("param1", "val1");
         paramMap.put("param2", "val2");
 
-        final Search search = new Search(docRef, expressionOperator.build(), componentSettingsMap, paramMap, true, false);
+        final Search search = new Search.Builder()
+                .dataSourceRef(docRef)
+                .expression(expressionOperator.build())
+                .componentSettingsMap(componentSettingsMap)
+                .paramMap(paramMap)
+                .incremental(true)
+                .storeHistory(false)
+                .build();
 
         final Map<String, ComponentResultRequest> componentResultRequestMap = new HashMap<>();
         for (final Map.Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {

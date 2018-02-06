@@ -24,8 +24,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.entity.shared.EntityServiceFindAction;
+import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.item.client.ItemListBox;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
@@ -104,7 +104,7 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
             }
             volume.setBytesLimit(bytesLimit);
 
-            clientDispatchAsync.exec(new DocumentServiceWriteAction<Volume>(volume)).onSuccess(result -> {
+            clientDispatchAsync.exec(new EntityServiceSaveAction<>(volume)).onSuccess(result -> {
                 volume = result;
                 HidePopupEvent.fire(VolumeEditPresenter.this, VolumeEditPresenter.this, false, true);
                 // Only fire this event here as the parent only

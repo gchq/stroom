@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.query;
@@ -31,9 +30,9 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DashboardUUID;
 import stroom.dashboard.client.main.IndexLoader;
+import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchBus;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.main.UsesParams;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
@@ -43,8 +42,8 @@ import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.QueryComponentSettings;
-import stroom.datasource.api.v2.DataSourceField;
 import stroom.dashboard.shared.SearchRequest;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.document.client.event.DirtyEvent;
@@ -57,14 +56,12 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.CreateProcessorAction;
 import stroom.query.api.v2.DocRef;
-
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessor;
@@ -89,7 +86,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements QueryUiHandlers, HasDirtyHandlers, UsesParams {
+        implements QueryUiHandlers, HasDirtyHandlers, Queryable {
 
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query");
     public static final int TEN_SECONDS = 10000;
@@ -101,11 +98,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
     private final Provider<EntityChooser> pipelineSelection;
+    private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
     private final LocationManager locationManager;
-    private final TimeZones timeZones;
 
     private final IndexLoader indexLoader;
     private final SearchModel searchModel;
@@ -126,6 +123,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private long defaultProcessorRecordLimit = DEFAULT_RECORD_LIMIT;
     private boolean initialised;
     private Timer autoRefreshTimer;
+    private String lastUsedQueryInfo;
 
     @Inject
     public QueryPresenter(final EventBus eventBus,
@@ -136,6 +134,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<EntityChooser> pipelineSelection,
+                          final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final MenuListPresenter menuListPresenter,
                           final ClientDispatchAsync dispatcher,
@@ -148,11 +147,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.historyPresenter = historyPresenter;
         this.favouritesPresenter = favouritesPresenter;
         this.pipelineSelection = pipelineSelection;
+        this.queryInfoPresenterProvider = queryInfoPresenterProvider;
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
         this.dispatcher = dispatcher;
         this.locationManager = locationManager;
-        this.timeZones = timeZones;
 
         view.setExpressionView(expressionPresenter.getView());
         view.setUiHandlers(this);
@@ -422,17 +421,27 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public void onParamsChanged(final String params) {
+    public void onQuery(final String params, final String queryInfo) {
         this.params = params;
+        lastUsedQueryInfo = queryInfo;
         if (initialised) {
             stop();
-            start();
+            run(true, true);
         }
     }
 
     @Override
     public void start() {
-        run(true, true);
+        if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
+            queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
+                if (state.isOk()) {
+                    lastUsedQueryInfo = state.getQueryInfo();
+                    run(true, true);
+                }
+            });
+        } else {
+            run(true, true);
+        }
     }
 
     @Override
@@ -444,7 +453,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         searchModel.destroy();
     }
 
-    private void run(final boolean incremental, final boolean storeHistory) {
+    private void run(final boolean incremental,
+                     final boolean storeHistory) {
         final DocRef dataSourceRef = queryComponentSettings.getDataSource();
 
         if (dataSourceRef == null) {
@@ -458,7 +468,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
 
-            searchModel.search(root, params, incremental, storeHistory);
+            // Start search.
+            searchModel.search(root, params, incremental, storeHistory, lastUsedQueryInfo);
         }
     }
 
@@ -650,7 +661,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
     }
 
-
     private void downloadQuery() {
         if (queryComponentSettings.getDataSource() != null) {
 
@@ -658,7 +668,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     queryComponentSettings.getExpression(),
                     params,
                     false,
-                    false);
+                    false,
+                    null);
 
             final Dashboard dashboard = getComponents().getDashboard();
             final DashboardUUID dashboardUUID = new DashboardUUID(

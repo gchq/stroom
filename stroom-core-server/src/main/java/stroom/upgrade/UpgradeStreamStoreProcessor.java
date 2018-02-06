@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.entity.server.util.ConnectionUtil;
+import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.feed.MetaMap;
 import stroom.streamstore.server.StreamAttributeMapService;
 import stroom.streamstore.server.StreamSource;
@@ -41,6 +42,7 @@ import stroom.util.spring.StroomScope;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -55,6 +57,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
     private static volatile String query;
     private static volatile int args;
     private static ReentrantLock lock = new ReentrantLock();
+
     @Resource
     private StreamStore streamStore;
     @Resource
@@ -186,10 +189,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
         LOGGER.info("exec() - Processing stream {} {} - Start", stream, streamTime);
 
         final MetaMap metaMap = new MetaMap();
-        Connection connection = null;
-        try {
-            connection = dataSource.getConnection();
-
+        try (final Connection connection = dataSource.getConnection()) {
             final String query = getQuery(connection);
 
             final ArrayList<Object> argObjs = new ArrayList<>();
@@ -198,17 +198,20 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
             }
 
             if (StringUtils.hasText(query)) {
-                final ResultSet resultSet = ConnectionUtil.executeQueryResultSet(connection, query, argObjs);
-                while (resultSet.next()) {
-                    fillMap(resultSet, metaMap);
+                try (final PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    PreparedStatementUtil.setArguments(preparedStatement, argObjs);
+                    try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                        while (resultSet.next()) {
+                            fillMap(resultSet, metaMap);
+                        }
+                    }
+                } catch (final SQLException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    throw e;
                 }
-                resultSet.close();
             }
-
         } catch (final SQLException sqlEx) {
             LOGGER.error("exec() {} {}", new Object[]{query, args}, sqlEx);
-        } finally {
-            ConnectionUtil.close(connection);
         }
 
         if (metaMap.size() > 0) {
@@ -221,7 +224,5 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
 
         LOGGER.info("exec() - Processing stream {} {} - Finished in {} added {} attributes", new Object[]{stream, streamTime,
                 logExecutionTime, metaMap.size()});
-
     }
-
 }

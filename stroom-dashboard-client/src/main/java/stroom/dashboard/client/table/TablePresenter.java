@@ -321,7 +321,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             final Map<String, ComponentResultRequest> requestMap = new HashMap<>();
                             requestMap.put(getComponentData().getId(), tableResultRequest);
 
-                            final Search search = new Search(activeSearch.getDataSourceRef(), activeSearch.getExpression(), activeSearch.getComponentSettingsMap(), activeSearch.getParamMap(), true, false);
+                            final Search search = new Search.Builder()
+                                    .dataSourceRef(activeSearch.getDataSourceRef())
+                                    .expression(activeSearch.getExpression())
+                                    .componentSettingsMap(activeSearch.getComponentSettingsMap())
+                                    .paramMap(activeSearch.getParamMap())
+                                    .incremental(true)
+                                    .storeHistory(false)
+                                    .queryInfo(activeSearch.getQueryInfo())
+                                    .build();
+
                             final SearchRequest searchRequest = new SearchRequest(search, requestMap, timeZones.getTimeZone());
 
                             dispatcher.exec(

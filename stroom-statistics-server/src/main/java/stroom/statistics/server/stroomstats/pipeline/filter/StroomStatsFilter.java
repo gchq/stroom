@@ -16,7 +16,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;
 import stroom.statistics.server.stroomstats.kafka.TopicNameFactory;
-import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
@@ -34,12 +33,13 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.STROOM_STATS)
 public class StroomStatsFilter extends AbstractKafkaProducerFilter {
+
     private final TopicNameFactory topicNameFactory;
     private final StroomStatsStoreEntityService stroomStatsStoreEntityService;
 
     private String topic;
     private String recordKey;
-    private DocRef statisticStoreRef;
+    private DocRef stroomStatStoreRef;
 
     @Inject
     public StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
@@ -48,9 +48,11 @@ public class StroomStatsFilter extends AbstractKafkaProducerFilter {
                              final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
                              final TopicNameFactory topicNameFactory,
                              final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
+
         super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
         this.topicNameFactory = topicNameFactory;
         this.stroomStatsStoreEntityService = stroomStatsStoreEntityService;
+
     }
 
     @Override
@@ -65,16 +67,16 @@ public class StroomStatsFilter extends AbstractKafkaProducerFilter {
 
     @Override
     public void startProcessing() {
-        if (statisticStoreRef == null) {
+        if (stroomStatStoreRef == null) {
             super.log(Severity.FATAL_ERROR, "Stroom-Stats data source has not been set", null);
             throw new LoggedException("Stroom-Stats data source has not been set");
         }
 
-        final StroomStatsStoreEntity stroomStatsStoreEntity = stroomStatsStoreEntityService.loadByUuid(statisticStoreRef.getUuid());
+        final StroomStatsStoreEntity stroomStatsStoreEntity = stroomStatsStoreEntityService.loadByUuid(stroomStatStoreRef.getUuid());
 
         if (stroomStatsStoreEntity == null) {
-            super.log(Severity.FATAL_ERROR, "Unable to find Stroom-Stats data source " + statisticStoreRef, null);
-            throw new LoggedException("Unable to find Stroom-Stats data source " + statisticStoreRef);
+            super.log(Severity.FATAL_ERROR, "Unable to find Stroom-Stats data source " + stroomStatStoreRef, null);
+            throw new LoggedException("Unable to find Stroom-Stats data source " + stroomStatStoreRef);
         }
 
         if (!stroomStatsStoreEntity.isEnabled()) {
@@ -90,8 +92,8 @@ public class StroomStatsFilter extends AbstractKafkaProducerFilter {
     }
 
     @PipelineProperty(description = "The stroom-stats data source to record statistics against.")
-    @PipelinePropertyDocRef(types = StatisticStoreEntity.ENTITY_TYPE)
-    public void setStatisticsDataSource(final DocRef statisticStoreRef) {
-        this.statisticStoreRef = statisticStoreRef;
+    @PipelinePropertyDocRef(types = StroomStatsStoreEntity.ENTITY_TYPE)
+    public void setStatisticsDataSource(final DocRef stroomStatStoreRef) {
+        this.stroomStatStoreRef = stroomStatStoreRef;
     }
 }

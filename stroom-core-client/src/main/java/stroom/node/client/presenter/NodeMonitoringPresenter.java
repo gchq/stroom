@@ -36,16 +36,16 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
-import stroom.entity.shared.DocumentServiceWriteAction;
+import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.node.shared.FetchNodeInfoAction;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeInfoResult;
 import stroom.streamstore.client.presenter.ActionDataProvider;
-import stroom.util.shared.ModelStringUtil;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -268,7 +268,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (ok) {
                     if (node.getClusterURL() == null || !node.getClusterURL().equals(editor.getClusterUrl())) {
                         node.setClusterURL(editor.getClusterUrl());
-                        dispatcher.exec(new DocumentServiceWriteAction<>(node)).onSuccess(result -> refresh());
+                        dispatcher.exec(new EntityServiceSaveAction<>(node)).onSuccess(result -> refresh());
                     }
                 }
 

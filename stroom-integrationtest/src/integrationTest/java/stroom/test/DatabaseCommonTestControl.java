@@ -69,6 +69,7 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
+import stroom.util.io.FileUtil;
 import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 
@@ -202,7 +203,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         for (final Volume volume : volumes) {
             // The parent will also pick up the index shard (as well as the
             // store)
-            FileSystemUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParent());
+            FileUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParent());
         }
 
         //Clear any un-flushed stream attributes

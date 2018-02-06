@@ -17,6 +17,7 @@
 
 package stroom.streamstore.server.fs;
 
+import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -74,7 +75,6 @@ import stroom.streamtask.server.ExpressionToFindCriteria;
 import stroom.streamtask.server.ExpressionToFindCriteria.Context;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -849,14 +849,19 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     private void buildRawSelectSQL(final OldFindStreamCriteria queryCriteria, final SqlBuilder sql) {
+        final PageRequest pageRequest = queryCriteria.obtainPageRequest();
+
         // If we are doing more than one feed query (but less than 20) query
         // using union
-        if (queryCriteria.getFeeds() != null && queryCriteria.getFeeds().getExclude() == null
+        if (queryCriteria.getFeeds() != null
+                && queryCriteria.getFeeds().getExclude() == null
                 && queryCriteria.getFeeds().getInclude() != null
                 && queryCriteria.getFeeds().getInclude().getSet().size() > 1
                 && queryCriteria.getFeeds().getInclude().getSet().size() < 20
-                && queryCriteria.obtainPageRequest().getOffset() != null
-                && queryCriteria.obtainPageRequest().getOffset() < 1000) {
+                && (pageRequest.getOffset() != null
+                && pageRequest.getOffset() <= 1000)
+                && (pageRequest.getLength() != null
+                && pageRequest.getLength() <= 1000)) {
             sql.append("SELECT U.* FROM (");
             boolean doneOne = false;
             for (final Long feedId : queryCriteria.getFeeds().getInclude().getSet()) {
@@ -869,18 +874,12 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 unionCriteria.obtainFeeds().clear();
                 unionCriteria.obtainFeeds().obtainInclude().add(feedId);
                 unionCriteria.obtainPageRequest().setOffset(0L);
-                if (queryCriteria.getPageRequest() != null && queryCriteria.getPageRequest().getLength() != null) {
-                    unionCriteria.obtainPageRequest().setLength(queryCriteria.getPageRequest().getLength());
-                } else {
-                    unionCriteria.obtainPageRequest().setLength(1000);
-                }
-
+                unionCriteria.obtainPageRequest().setLength((int) (pageRequest.getOffset() + pageRequest.getLength()));
                 rawBuildSQL(unionCriteria, sql);
                 sql.append(")");
                 doneOne = true;
             }
             sql.append(") AS U");
-
             sql.appendOrderBy(FIELD_MAP.getSqlFieldMap(), queryCriteria, "U");
             sql.applyRestrictionCriteria(queryCriteria);
         } else {

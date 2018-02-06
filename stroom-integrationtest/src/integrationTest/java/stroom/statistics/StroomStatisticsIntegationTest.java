@@ -38,7 +38,7 @@ public abstract class StroomStatisticsIntegationTest extends StroomIntegrationTe
     // @Before
     // public final void before() throws Exception {
     // if (!doneClearDown.contains(this.getClass())) {
-    // commonTestControl.deleteAll();
+    // commonTestControl.deleteDir();
     // doneClearDown.add(this.getClass());
     //
     // onInit();

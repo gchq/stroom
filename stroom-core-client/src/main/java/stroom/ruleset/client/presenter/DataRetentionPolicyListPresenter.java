@@ -67,7 +67,16 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
                 return getSafeHtml(row.getName(), row.isEnabled());
             }
         };
-        getView().addResizableColumn(nameColumn, "Name", ColumnSizeConstants.MEDIUM_COL);
+        getView().addResizableColumn(nameColumn, "Name", 200);
+
+        // Retention.
+        final Column<DataRetentionRule, SafeHtml> ageColumn = new Column<DataRetentionRule, SafeHtml>(new SafeHtmlCell()) {
+            @Override
+            public SafeHtml getValue(final DataRetentionRule row) {
+                return getSafeHtml(row.getAgeString(), row.isEnabled());
+            }
+        };
+        getView().addResizableColumn(ageColumn, "Retention", ColumnSizeConstants.SMALL_COL);
 
         // Expression.
         final Column<DataRetentionRule, SafeHtml> expressionColumn = new Column<DataRetentionRule, SafeHtml>(new SafeHtmlCell()) {
@@ -77,16 +86,6 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
             }
         };
         getView().addResizableColumn(expressionColumn, "Expression", 500);
-
-        // Age.
-        final Column<DataRetentionRule, SafeHtml> ageColumn = new Column<DataRetentionRule, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final DataRetentionRule row) {
-                return getSafeHtml(row.getAgeString(), row.isEnabled());
-            }
-        };
-        getView().addResizableColumn(ageColumn, "Retention", ColumnSizeConstants.SMALL_COL);
-
 
         getView().addEndColumn(new EndColumn<>());
     }

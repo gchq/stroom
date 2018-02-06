@@ -26,9 +26,9 @@ import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Insecure;
 import stroom.security.Secured;
-import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -153,7 +153,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
             final Path dir = IndexShardUtil.getIndexPath(shard);
 
             // See if there are any files in the directory.
-            if (!Files.isDirectory(dir) || FileSystemUtil.deleteDirectory(dir)) {
+            if (!Files.isDirectory(dir) || FileUtil.deleteDir(dir)) {
                 // The directory either doesn't exist or we have
                 // successfully deleted it so delete this index
                 // shard from the database.
@@ -264,13 +264,14 @@ public class IndexShardManagerImpl implements IndexShardManager {
         try {
             // Delete this shard if it is older than the retention age.
             final Index index = shard.getIndex();
-            if (index.getRetentionDayAge() != null && shard.getPartitionToTime() != null) {
+            final Integer retentionDayAge = index.getRetentionDayAge();
+            final Long partitionToTime = shard.getPartitionToTime();
+            if (retentionDayAge != null && partitionToTime != null && !IndexShardStatus.DELETED.equals(shard.getStatus())) {
                 // See if this index shard is older than the index retention
                 // period.
-                final long retentionTime = ZonedDateTime.now(ZoneOffset.UTC).minusDays(index.getRetentionDayAge()).toInstant().toEpochMilli();
-                final long shardAge = shard.getPartitionToTime();
+                final long retentionTime = ZonedDateTime.now(ZoneOffset.UTC).minusDays(retentionDayAge).toInstant().toEpochMilli();
 
-                if (shardAge < retentionTime) {
+                if (partitionToTime < retentionTime) {
                     setStatus(shard.getId(), IndexShardStatus.DELETED);
                 }
             }
@@ -304,13 +305,16 @@ public class IndexShardManagerImpl implements IndexShardManager {
             lock.lock();
             try {
                 final IndexShard indexShard = indexShardService.loadById(indexShardId);
-
-                // Only allow certain state transitions.
-                final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
-                if (allowed.contains(status)) {
-                    indexShard.setStatus(status);
-                    indexShardService.save(indexShard);
+                if (indexShard != null) {
+                    // Only allow certain state transitions.
+                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
+                    if (allowed.contains(status)) {
+                        indexShard.setStatus(status);
+                        indexShardService.save(indexShard);
+                    }
                 }
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
             } finally {
                 lock.unlock();
             }

@@ -63,6 +63,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 @Component
 public class StreamAttributeMapServiceImpl implements StreamAttributeMapService {
@@ -168,11 +171,12 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
 
         // Get a list of valid stream ids.
+        final Map<EntityRef, Optional<Object>> localCache = new HashMap<>();
         final StringBuilder streamIds = new StringBuilder();
         for (final Stream stream : streamList) {
             try {
                 // Resolve Relations
-                resolveRelations(criteria, stream);
+                resolveRelations(criteria, stream, localCache);
 
                 final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);
                 streamMDList.add(streamAttributeMap);
@@ -240,46 +244,51 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         streamMap.values().parallelStream().forEach(ruleDecorator::addMatchingRetentionRuleInfo);
     }
 
-    private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream) throws PermissionException {
-        if (criteria.getFetchSet().contains(Feed.ENTITY_TYPE) && stream.getFeed() != null) {
-            stream.setFeed(feedService.loadById(stream.getFeed().getId()));
+    private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream, final Map<EntityRef, Optional<Object>> localCache) throws PermissionException {
+        if (stream.getFeed() != null && criteria.getFetchSet().contains(Feed.ENTITY_TYPE)) {
+            final EntityRef ref = new EntityRef(Feed.ENTITY_TYPE, stream.getFeed().getId());
+            localCache.computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id))).ifPresent(obj -> stream.setFeed((Feed) obj));
         }
 
-        if (criteria.getFetchSet().contains(StreamType.ENTITY_TYPE) && stream.getStreamType() != null) {
-            stream.setStreamType(streamTypeService.loadById(stream.getStreamType().getId()));
+        if (stream.getStreamType() != null && criteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {
+            final EntityRef ref = new EntityRef(StreamType.ENTITY_TYPE, stream.getStreamType().getId());
+            localCache.computeIfAbsent(ref, key -> safeOptional(() -> streamTypeService.loadById(key.id))).ifPresent(obj -> stream.setStreamType((StreamType) obj));
         }
 
-        StreamProcessor streamProcessor = null;
-        if (criteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE) && stream.getStreamProcessor() != null) {
+        if (stream.getStreamProcessor() != null && criteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE)) {
             // We will try and load the stream processor but will ignore
             // permission failures as we don't mind users seeing streams even if
             // they do not have visibility of the processor that created the
             // stream.
-            try {
-                streamProcessor = streamProcessorService.loadByIdInsecure(stream.getStreamProcessor().getId());
-                stream.setStreamProcessor(streamProcessor);
-            } catch (final PermissionException e) {
-                // The current user might not have permission to see this stream
-                // processor.
-                LOGGER.debug(e.getMessage());
-            }
+            final EntityRef ref = new EntityRef(StreamProcessor.ENTITY_TYPE, stream.getStreamProcessor().getId());
+            final Optional<Object> optional = localCache.computeIfAbsent(ref, key -> {
+                final Optional<Object> optionalStreamProcessor = safeOptional(() -> streamProcessorService.loadByIdInsecure(key.id));
+                if (criteria.getFetchSet().contains(PipelineEntity.ENTITY_TYPE)) {
+                    optionalStreamProcessor.ifPresent(proc -> {
+                        final StreamProcessor streamProcessor = (StreamProcessor) proc;
+                        if (streamProcessor.getPipeline() != null) {
+                            // We will try and load the pipeline but will ignore permission
+                            // failures as we don't mind users seeing streams even if they do
+                            // not have visibility of the pipeline that created the stream.
+                            final EntityRef pipelineRef = new EntityRef(PipelineEntity.ENTITY_TYPE, streamProcessor.getPipeline().getId());
+                            localCache.computeIfAbsent(pipelineRef, innerKey -> safeOptional(() -> pipelineService.loadById(innerKey.id))).ifPresent(obj -> streamProcessor.setPipeline((PipelineEntity) obj));
+                        }
+                    });
+                }
+                return optionalStreamProcessor;
+            });
+            optional.ifPresent(obj -> stream.setStreamProcessor((StreamProcessor) obj));
         }
+    }
 
-        if (streamProcessor != null && criteria.getFetchSet().contains(PipelineEntity.ENTITY_TYPE)) {
-            // We will try and load the pipeline but will ignore permission
-            // failures as we don't mind users seeing streams even if they do
-            // not have visibility of the pipeline that created the stream.
-            try {
-                streamProcessor.setPipeline(pipelineService.load(streamProcessor.getPipeline()));
-            } catch (final PermissionException e) {
-                streamProcessor.setPipeline(null);
-
-                // The current user might not have permission to see this
-                // pipeline.
-                LOGGER.debug(e.getMessage());
-                throw e;
-            }
+    private static <T> Optional<T> safeOptional(final Supplier<T> supplier) {
+        Optional<T> optional = Optional.empty();
+        try {
+            optional = Optional.ofNullable(supplier.get());
+        } catch (final Exception e) {
+            LOGGER.debug(e.getMessage());
         }
+        return optional;
     }
 
     private void loadAttributeMapFromFileSystem(final FindStreamAttributeMapCriteria criteria,
@@ -299,13 +308,14 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         findStreamVolumeCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
         final BaseResultList<StreamVolume> volumeList = streamMaintenanceService.find(findStreamVolumeCriteria);
 
+        final Map<EntityRef, Optional<Object>> localCache = new HashMap<>();
         for (final StreamVolume streamVolume : volumeList) {
             StreamAttributeMap streamAttributeMap = streamMap.get(streamVolume.getStream());
             if (streamAttributeMap == null) {
                 try {
                     final Stream stream = streamVolume.getStream();
                     // Resolve Relations
-                    resolveRelations(criteria, stream);
+                    resolveRelations(criteria, stream, localCache);
 
                     streamAttributeMap = new StreamAttributeMap(stream);
                     streamMDList.add(streamAttributeMap);
@@ -363,5 +373,29 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     @Override
     public FindStreamAttributeMapCriteria createCriteria() {
         return new FindStreamAttributeMapCriteria();
+    }
+
+    private static class EntityRef {
+        private final String type;
+        private final long id;
+
+        private EntityRef(final String type, final long id) {
+            this.type = type;
+            this.id = id;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final EntityRef entityRef = (EntityRef) o;
+            return id == entityRef.id &&
+                    Objects.equals(type, entityRef.type);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(type, id);
+        }
     }
 }

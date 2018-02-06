@@ -18,10 +18,8 @@ package stroom.node.shared;
 
 import stroom.util.shared.SharedObject;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.StreamSupport;
 
 public class ClientProperties implements SharedObject {
     public static final String LOGIN_HTML = "stroom.loginHTML";
@@ -40,6 +38,9 @@ public class ClientProperties implements SharedObject {
     public static final String NAME_PATTERN = "stroom.namePattern";
     public static final String LABEL_COLOURS = "stroom.theme.labelColours";
     public static final String HELP_URL = "stroom.helpUrl";
+    public static final String QUERY_INFO_POPUP_ENABLED = "stroom.query.infoPopup.enabled";
+    public static final String QUERY_INFO_POPUP_TITLE = "stroom.query.infoPopup.title";
+    public static final String QUERY_INFO_POPUP_VALIDATION_REGEX = "stroom.query.infoPopup.validationRegex";
     public static final String AUTHENTICATION_SERVICE_URL = "stroom.auth.authentication.service.url";
     public static final String USERS_UI_URL = "stroom.users.ui.url";
     public static final String API_KEYS_UI_URL = "stroom.apikeys.ui.url";
@@ -70,6 +71,30 @@ public class ClientProperties implements SharedObject {
 
     public String get(final String key) {
         return map.get(key);
+    }
+
+    public String get(final String key, final String defaultValue) {
+        final String value = map.get(key);
+        if (value != null) {
+            try {
+                return value;
+            } catch (final Exception e) {
+            }
+        }
+
+        return defaultValue;
+    }
+
+    public Boolean getBoolean(final String key, final boolean defaultValue) {
+        final String value = map.get(key);
+        if (value != null) {
+            try {
+                return Boolean.valueOf(value);
+            } catch (final Exception e) {
+            }
+        }
+
+        return defaultValue;
     }
 
     public long getLong(final String key, final long defaultValue) {

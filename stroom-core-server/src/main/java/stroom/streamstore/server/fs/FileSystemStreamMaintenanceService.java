@@ -44,6 +44,7 @@ import stroom.util.io.FileUtil;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -53,7 +54,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /**
  * API used by the tasks to interface to the stream store under the bonnet.
@@ -224,13 +224,16 @@ public class FileSystemStreamMaintenanceService
             return result;
         }
         // Get the list of kids
-        final List<String> kids = FileUtil.list(directory).stream().map(p -> p.getFileName().toString()).collect(Collectors.toList());
+        final List<String> kids = new ArrayList<>();
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+            stream.forEach(file -> kids.add(file.getFileName().toString()));
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
 
         LOGGER.debug("scanDirectory() - {}", FileUtil.getCanonicalPath(directory));
 
-        if (kids != null) {
-            result.setFileCount(kids.size());
-        }
+        result.setFileCount(kids.size());
 
         // Here we check the file system for files before querying the database.
         // The idea is that entries are written in the database before the file

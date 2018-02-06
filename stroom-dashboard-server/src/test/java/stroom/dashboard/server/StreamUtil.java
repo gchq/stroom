@@ -19,6 +19,7 @@ package stroom.dashboard.server;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -54,8 +55,8 @@ public final class StreamUtil {
             try (BufferedWriter writer = Files.newBufferedWriter(path, charset)) {
                 writer.write(string);
             }
-        } catch (final IOException ex) {
-            throw new RuntimeException(ex);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -82,8 +83,8 @@ public final class StreamUtil {
                     }
                 }
             }
-        } catch (final IOException ex) {
-            throw new RuntimeException(ex);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
 
         return sb.toString();

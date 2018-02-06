@@ -22,20 +22,25 @@ import org.slf4j.MarkerFactory;
 import stroom.util.config.StroomProperties;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class FileUtil {
     public static final int MKDIR_RETRY_COUNT = 2;
@@ -102,11 +107,11 @@ public final class FileUtil {
             forgetTempDir();
 
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
-    public static void forgetTempDir() throws IOException {
+    public static void forgetTempDir() {
         synchronized (FileUtil.class) {
             tempDir = null;
         }
@@ -135,19 +140,73 @@ public final class FileUtil {
         }
     }
 
-    public static void deleteAll(final Path path) {
-        if (Files.exists(path)) {
-            try (final Stream<Path> stream = Files.walk(path).sorted(Comparator.reverseOrder())) {
-                stream.forEach(f -> {
-                    try {
-                        Files.delete(f);
-                    } catch (final IOException e) {
-                        throw new FileUtilException("Unable to delete \"" + FileUtil.getCanonicalPath(f) + "\"");
+    public static boolean deleteDir(final Path path) {
+        final AtomicBoolean success = new AtomicBoolean(true);
+        if (path != null && Files.isDirectory(path)) {
+            recursiveDelete(path, success);
+            delete(path, success);
+        }
+        return success.get();
+    }
+
+    public static boolean deleteContents(final Path path) {
+        final AtomicBoolean success = new AtomicBoolean(true);
+        if (path != null && Files.isDirectory(path)) {
+            recursiveDelete(path, success);
+        }
+        return success.get();
+    }
+
+    private static void recursiveDelete(final Path path, final AtomicBoolean success) {
+        try {
+            Files.walkFileTree(path, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    delete(file, success);
+                    return super.visitFile(file, attrs);
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
+                    if (!dir.equals(path)) {
+                        delete(dir, success);
                     }
-                });
-            } catch (final IOException e) {
-                throw new FileUtilException("Unable to delete \"" + FileUtil.getCanonicalPath(path) + "\"");
+                    return super.postVisitDirectory(dir, exc);
+                }
+            });
+        } catch (final NotDirectoryException e) {
+            // Ignore.
+        } catch (final IOException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+    }
+
+    public static long count(final Path dir) {
+        final AtomicLong count = new AtomicLong();
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+            stream.forEach(file -> {
+                try {
+                    count.incrementAndGet();
+                } catch (final Exception e) {
+                    LOGGER.debug(e.getMessage(), e);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+        return count.get();
+    }
+
+    private static void delete(final Path path, final AtomicBoolean success) {
+        try {
+            Files.delete(path);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Deleted file " + path);
             }
+        } catch (final IOException e) {
+            success.set(false);
+            LOGGER.error("Failed to delete file " + path);
+            LOGGER.trace(e.getMessage(), e);
         }
     }
 
@@ -155,7 +214,6 @@ public final class FileUtil {
      * Similar to the unix touch cammand. Sets the last modified time to now if the file
      * exists else, creates the file
      *
-     * @param file
      * @throws IOException
      */
     public static void touch(Path file) throws IOException {
@@ -191,14 +249,6 @@ public final class FileUtil {
 
     public static void setLastModified(final Path file, final long time) throws IOException {
         Files.setLastModifiedTime(file, FileTime.fromMillis(time));
-    }
-
-    public static Collection<Path> list(final Path path) {
-        try (final Stream<Path> steam = Files.list(path)) {
-            return steam.collect(Collectors.toList());
-        } catch (final IOException e) {
-            throw new FileUtilException(e.getMessage());
-        }
     }
 
     public static void addFilePermision(final Path path, final PosixFilePermission... posixFilePermission) throws IOException {

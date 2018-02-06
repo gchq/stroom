@@ -23,7 +23,7 @@ import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.SharedList;
 import stroom.util.zip.ZipUtil;
@@ -82,7 +82,7 @@ public class ImportExportServiceImpl implements ImportExportService {
         } catch (final Exception ex) {
             throw EntityServiceExceptionUtil.create(ex);
         } finally {
-            FileSystemUtil.deleteDirectory(explodeDir);
+            FileUtil.deleteDir(explodeDir);
         }
     }
 
@@ -106,7 +106,7 @@ public class ImportExportServiceImpl implements ImportExportService {
         } catch (final Exception ex) {
             throw EntityServiceExceptionUtil.create(ex);
         } finally {
-            FileSystemUtil.deleteDirectory(explodeDir);
+            FileUtil.deleteDir(explodeDir);
         }
     }
 }
