@@ -314,8 +314,11 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return success;
     }
 
-    private E copy(final E document, final String name, final String parentFolderUUID) {
+    private E copy(final E document, final String parentFolderUUID) {
         try {
+            // Ensure we are working with effectively a 'new document'
+            entityManager.detach(document);
+
             // Check create permissions of the parent folder.
             checkCreatePermission(parentFolderUUID);
 
@@ -325,6 +328,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             document.setUuid(UUID.randomUUID().toString());
 
             // Validate the entity name.
+            final String name = "Copy of " + document.getName();
             NameValidationUtil.validate(getNamePattern(), name);
             document.setName(name);
 
@@ -488,7 +492,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         if (entity == null) {
             throw new EntityServiceException("Entity not found");
         }
-        return DocRefUtil.create(copy(entity, "Copy of " + entity.getName(), parentFolderUUID));
+        final E copy = copy(entity, parentFolderUUID);
+        return DocRefUtil.create(copy);
     }
 
     @Override

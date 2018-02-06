@@ -40,9 +40,25 @@ public class TestStroomProperties {
     }
 
     @Test
-    public void test() {
+    public void testSimple() {
         String propertyName = "stroom.advertisedUrl";
         String environmentVariableName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, propertyName.replace('.', '_'));
         Assert.assertEquals("STROOM_ADVERTISED_URL", environmentVariableName);
+    }
+
+    @Test
+    public void testDocRefEntity() {
+        String propertyName = "stroom.url.doc-ref.service.AnnotationsIndex";
+        String environmentVariableName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, propertyName.replace('.', '_'));
+        Assert.assertEquals("STROOM_URL_DOC-REF_SERVICE__ANNOTATIONS_INDEX", environmentVariableName);
+    }
+
+    @Test
+    public void testDocRefList() {
+        String propertyName = "stroom.doc-ref.types";
+        String environmentVariableName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, propertyName.replace('.', '_'));
+        Assert.assertEquals("STROOM_DOC-REF_TYPES", environmentVariableName);
+
+
     }
 }
