@@ -22,6 +22,7 @@ import stroom.feed.MetaMap;
 import stroom.task.server.TaskContext;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.ExtensionFileVisitor;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
@@ -44,7 +45,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
@@ -102,17 +102,22 @@ public abstract class StroomZipRepositoryProcessor {
     public boolean process(final StroomZipRepository stroomZipRepository) {
         boolean isComplete = true;
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("process() - Scanning " + stroomZipRepository.getRootDir());
-        }
         // Scan all of the zip files in the repository so that we can map zip files to feeds.
         try {
             final List<Path> filesBatch = new ArrayList<>();
             final Path path = stroomZipRepository.getRootDir();
             if (path != null && Files.isDirectory(path)) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Scanning file tree '" + FileUtil.getCanonicalPath(path.toFile()) + "'");
+                }
+
                 Files.walkFileTree(path, new ExtensionFileVisitor(StroomZipRepository.ZIP_EXTENSION) {
                     @Override
                     protected FileVisitResult matchingFile(final Path file, final BasicFileAttributes attrs) {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Found zip file '" + FileUtil.getCanonicalPath(file.toFile()) + "'");
+                        }
+
                         filesBatch.add(file);
                         if (filesBatch.size() == maxFileScan) {
                             return FileVisitResult.TERMINATE;
@@ -127,7 +132,7 @@ public abstract class StroomZipRepositoryProcessor {
             if (filesBatch.size() >= maxFileScan) {
                 isComplete = false;
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("process() - Hit scan limit of " + maxFileScan);
+                    LOGGER.debug("Hit scan limit of " + maxFileScan);
                 }
             }
 
@@ -147,7 +152,7 @@ public abstract class StroomZipRepositoryProcessor {
                                     Collectors.toList())));
 
             if (LOGGER.isDebugEnabled()) {
-                int fileCount = feedToFilesMap.values().stream()
+                final int fileCount = feedToFilesMap.values().stream()
                         .mapToInt(List::size)
                         .sum();
                 LOGGER.debug("Found %s feeds across %s files", feedToFilesMap.keySet().size(), fileCount);
@@ -187,7 +192,7 @@ public abstract class StroomZipRepositoryProcessor {
             }
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("process() - Completed");
+                LOGGER.debug("Completed");
             }
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
@@ -216,6 +221,13 @@ public abstract class StroomZipRepositoryProcessor {
      * Peek at the stream to get the header file feed
      */
     private Optional<Entry<String, Path>> fileScan(final StroomZipRepository stroomZipRepository, final Path file) {
+        final String path = FileUtil.getCanonicalPath(file.toFile());
+
+        Optional<Entry<String, Path>> result = Optional.empty();
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Extracting meta data for file " + path);
+        }
 
         //only a single thread is working on this file so we don't need any thread safety
 
@@ -224,46 +236,42 @@ public abstract class StroomZipRepositoryProcessor {
             stroomZipFile = new StroomZipFile(file);
 
             final Set<String> baseNameSet = stroomZipFile.getStroomZipNameSet().getBaseNameSet();
-
             if (baseNameSet.isEmpty()) {
-                stroomZipRepository.addErrorMessage(stroomZipFile, "Unable to find any entry??", true);
-                return Optional.empty();
+                throw new RuntimeException("Unable to find any entry??");
             }
 
             final String anyBaseName = baseNameSet.iterator().next();
-
             final InputStream anyHeaderStream = stroomZipFile.getInputStream(anyBaseName, StroomZipFileType.Meta);
 
             if (anyHeaderStream == null) {
-                stroomZipRepository.addErrorMessage(stroomZipFile, "Unable to find header??", true);
-                return Optional.empty();
+                throw new RuntimeException("Unable to find embedded meta data??");
             }
 
-            final MetaMap headerMap = new MetaMap();
-            headerMap.read(anyHeaderStream, false);
+            final MetaMap metaMap = new MetaMap();
+            metaMap.read(anyHeaderStream, false);
 
-            final String feed = headerMap.get(StroomHeaderArguments.FEED);
-
+            final String feed = metaMap.get(StroomHeaderArguments.FEED);
             if (!StringUtils.hasText(feed)) {
-                stroomZipRepository.addErrorMessage(stroomZipFile, "Unable to find feed in header??", true);
-                return Optional.empty();
-            } else {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("fileScan() - " + file + " belongs to feed " + feed);
-                }
+                throw new RuntimeException("Unable to find feed in embedded meta data??");
             }
 
-            return Optional.of(Maps.immutableEntry(feed, file));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("File " + FileUtil.getCanonicalPath(file.toFile()) + " belongs to feed " + feed);
+            }
 
-        } catch (final IOException ex) {
+            result = Optional.of(Maps.immutableEntry(feed, file));
+
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage() + " (" + file + ")");
+            LOGGER.debug(e.getMessage() + " (" + file + ")", e);
+
             // Unable to open file ... must be bad.
-            stroomZipRepository.addErrorMessage(stroomZipFile, ex.getMessage(), true);
-            LOGGER.error("fileScan()", ex);
-            return Optional.empty();
-
+            stroomZipRepository.addErrorMessage(stroomZipFile, e.getMessage(), true);
         } finally {
             CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
         }
+
+        return result;
     }
 
     public Long processFeedFile(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
