@@ -168,7 +168,7 @@ public class DataRetentionExecutor {
 
                 // Get a database connection.
                 try (final Connection connection = dataSource.getConnection()) {
-                    final AtomicBoolean allSuccesful = new AtomicBoolean(true);
+                    final AtomicBoolean allSuccessful = new AtomicBoolean(true);
 
                     // Process the different data ages separately as they can consider different sets of streams.
                     ages.forEach(age -> {
@@ -176,13 +176,13 @@ public class DataRetentionExecutor {
                         if (!taskMonitor.isTerminated()) {
                             final boolean success = processAge(connection, age, timeElapsedSinceLastRun, rules, batchSize, ageMap);
                             if (!success) {
-                                allSuccesful.set(false);
+                                allSuccessful.set(false);
                             }
                         }
                     });
 
                     // If we finished running then save the tracker for use next time.
-                    if (!taskMonitor.isTerminated() && allSuccesful.get()) {
+                    if (!taskMonitor.isTerminated() && allSuccessful.get()) {
                         tracker.save();
                     }
                 } catch (final SQLException e) {
@@ -248,8 +248,8 @@ public class DataRetentionExecutor {
 
                             // Delete a batch of streams.
                             while (streamIdDeleteList.size() > batchSize) {
-                                final List<Long> batch = streamIdDeleteList.subList(0, batchSize - 1);
-                                streamIdDeleteList = streamIdDeleteList.subList(batchSize, streamIdDeleteList.size() - 1);
+                                final List<Long> batch = new ArrayList<>(streamIdDeleteList.subList(0, batchSize - 1));
+                                streamIdDeleteList = new ArrayList<>(streamIdDeleteList.subList(batchSize, streamIdDeleteList.size() - 1));
                                 deleter.deleteStreams(batch);
                             }
                         }
