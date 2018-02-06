@@ -510,7 +510,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // Folders are not valid items for requesting info
         final boolean containsFolder = documentPermissionMap.keySet().stream()
-                    .findFirst().map(n -> n.getType().equals(ExplorerConstants.FOLDER))
+                    .findFirst().map(n -> DocumentTypes.isFolder(n.getType()))
                     .orElse(false);
 
         // Actions allowed based on permissions of selection
