@@ -46,7 +46,6 @@ else
 
     echo "Configure our plugins directory so stroom can find the kafka jar"
     mkdir -p ~/.stroom/plugins
-
     #Run the script to convert stroom.conf.template into stroom.conf
     ./stroom.conf.sh
 fi

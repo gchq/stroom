@@ -125,7 +125,7 @@ public class App extends Application<Config> {
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
-        bootstrap.addBundle(new AssetsBundle("/ui", "/", "index.html", "ui"));
+        bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
     }
 
     @Override
@@ -135,7 +135,7 @@ public class App extends Application<Config> {
         environment.healthChecks().register(LogLevelInspector.class.getName(), new LogLevelInspector());
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
-        environment.jersey().setUrlPattern(ResourcePaths.ROOT_PATH + "/*");
+        environment.jersey().setUrlPattern(ResourcePaths.API_PATH + "/*");
 
         // Set up a session manager for Jetty
         SessionHandler sessions = new SessionHandler();
@@ -167,12 +167,12 @@ public class App extends Application<Config> {
         GuiceUtil.addFilter(servletContextHandler, injector, ProxySecurityFilter.class, "/*");
 
         // Add servlets
-        servletContextHandler.addServlet(new ServletHolder(new ConfigServlet(configPath)), "/config");
-        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed");
-        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed/*");
-        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, "/stroom");
-        GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, "/status");
-        GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, "/debug");
+        servletContextHandler.addServlet(new ServletHolder(new ConfigServlet(configPath)), ResourcePaths.ROOT_PATH + "/config");
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed");
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*");
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, ResourcePaths.ROOT_PATH + "/ui");
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, ResourcePaths.ROOT_PATH + "/status");
+        GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug");
 
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
@@ -215,23 +215,23 @@ public class App extends Application<Config> {
         SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*");
 
         // Add servlets
-        SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, "/stroom");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DashboardServlet.class, "/dashboard");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DynamicCSSServlet.class, "/dynamic.css");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DispatchService.class, "/dispatch.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ImportFileServlet.class, "/importfile.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ScriptServlet.class, "/script");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ClusterCallServiceRPC.class, "/clustercall.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ExportConfigServlet.class, "/export");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, StatusServlet.class, "/status");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, EchoServlet.class, "/echo");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DebugServlet.class, "/debug");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionListServlet.class, "/sessionList");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, "/resourcestore/*");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, "/gwtRequest");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, "/remoting/remotefeedservice.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, "/datafeed");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, "/datafeed/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, ResourcePaths.ROOT_PATH + "/ui");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DashboardServlet.class, ResourcePaths.ROOT_PATH + "/dashboard");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DynamicCSSServlet.class, ResourcePaths.ROOT_PATH + "/dynamic.css");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DispatchService.class, ResourcePaths.ROOT_PATH + "/dispatch.rpc");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, ImportFileServlet.class, ResourcePaths.ROOT_PATH + "/importfile.rpc");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, ScriptServlet.class, ResourcePaths.ROOT_PATH + "/script");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, ClusterCallServiceRPC.class, ResourcePaths.ROOT_PATH + "/clustercall.rpc");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, ExportConfigServlet.class, ResourcePaths.ROOT_PATH + "/export");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, StatusServlet.class, ResourcePaths.ROOT_PATH + "/status");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, EchoServlet.class, ResourcePaths.ROOT_PATH + "/echo");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionListServlet.class, ResourcePaths.ROOT_PATH + "/sessionList");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, ResourcePaths.ROOT_PATH + "/resourcestore/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, ResourcePaths.ROOT_PATH + "/gwtRequest");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*");
 
         // Add session listeners.
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);

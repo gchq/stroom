@@ -1,7 +1,8 @@
 package stroom.servicediscovery;
 
 public interface ResourcePaths {
-    String ROOT_PATH = "/api";
+    String ROOT_PATH = "/stroom";
+    String API_PATH = "/api";
 
     String STROOM_INDEX = "/stroom-index";
     String SQL_STATISTICS = "/sqlstatistics";
