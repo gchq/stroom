@@ -58,7 +58,9 @@ import java.util.stream.Collectors;
 public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, ProvidesNamePattern {
     public static final String FOLDER = ExplorerConstants.FOLDER;
     private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
+    private static final String NAME_COPY_PATTERN_PROPERTY = "stroom.nameCopyPattern";
     private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
+    public static final String NAME_COPY_PATTERN_VALUE = "Copy of %s";
     public static final String ID = "@ID@";
     public static final String TYPE = "@TYPE@";
     public static final String NAME = "@NAME@";
@@ -314,8 +316,11 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return success;
     }
 
-    private E copy(final E document, final String name, final String parentFolderUUID) {
+    private E copy(final E document, final String parentFolderUUID) {
         try {
+            // Ensure we are working with effectively a 'new document'
+            entityManager.detach(document);
+
             // Check create permissions of the parent folder.
             checkCreatePermission(parentFolderUUID);
 
@@ -323,6 +328,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             document.clearPersistence();
 
             document.setUuid(UUID.randomUUID().toString());
+
+            // Create a safe copy name
+            final String name = String.format(getNameCopyPattern(), document.getName());
 
             // Validate the entity name.
             NameValidationUtil.validate(getNamePattern(), name);
@@ -453,6 +461,12 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
     }
 
+    @Transient
+    @Override
+    public String getNameCopyPattern() {
+        return StroomProperties.getProperty(NAME_COPY_PATTERN_PROPERTY, NAME_COPY_PATTERN_VALUE);
+    }
+
     private String getDocReference(BaseEntity entity) {
         if (entity == null) {
             return "";
@@ -488,7 +502,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         if (entity == null) {
             throw new EntityServiceException("Entity not found");
         }
-        return DocRefUtil.create(copy(entity, "Copy of " + entity.getName(), parentFolderUUID));
+        final E copy = copy(entity, parentFolderUUID);
+        return DocRefUtil.create(copy);
     }
 
     @Override

@@ -34,6 +34,8 @@ public interface StroomEntityManager extends Flushable {
 
     <T extends Entity> Boolean deleteEntity(T entity);
 
+    <T extends Entity> void detach(T entity);
+
     Long executeNativeUpdate(SqlBuilder sql);
 
     long executeNativeQueryLongResult(SqlBuilder sql);
