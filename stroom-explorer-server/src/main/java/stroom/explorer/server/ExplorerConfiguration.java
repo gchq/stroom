@@ -46,7 +46,7 @@ public class ExplorerConfiguration {
     public ExplorerConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                                  final SystemExplorerActionHandler systemExplorerActionHandler,
                                  final FolderExplorerActionHandler folderExplorerActionHandler) {
-        explorerActionHandlers.add(0, SystemExplorerActionHandler.SYSTEM, SystemExplorerActionHandler.SYSTEM, systemExplorerActionHandler);
-        explorerActionHandlers.add(1, FolderExplorerActionHandler.FOLDER, FolderExplorerActionHandler.FOLDER, folderExplorerActionHandler);
+        explorerActionHandlers.add(true, 0, SystemExplorerActionHandler.SYSTEM, SystemExplorerActionHandler.SYSTEM, systemExplorerActionHandler);
+        explorerActionHandlers.add(false, 1, FolderExplorerActionHandler.FOLDER, FolderExplorerActionHandler.FOLDER, folderExplorerActionHandler);
     }
 }

@@ -39,7 +39,7 @@ public class RuleSetConfiguration {
     public RuleSetConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                                 final ImportExportActionHandlers importExportActionHandlers,
                                 final RuleSetService ruleSetService) {
-        explorerActionHandlers.add(100, RuleSet.DOCUMENT_TYPE, "Rule Set", ruleSetService);
+        explorerActionHandlers.add(false, 100, RuleSet.DOCUMENT_TYPE, "Rule Set", ruleSetService);
         importExportActionHandlers.add(RuleSet.DOCUMENT_TYPE, ruleSetService);
     }
 }

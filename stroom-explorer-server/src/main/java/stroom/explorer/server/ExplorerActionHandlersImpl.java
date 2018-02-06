@@ -35,10 +35,10 @@ class ExplorerActionHandlersImpl implements ExplorerActionHandlers {
     private volatile List<DocumentType> documentTypes;
 
     @Override
-    public void add(final int priority, final String type, final String displayType, final ExplorerActionHandler explorerActionHandler) {
+    public void add(final boolean system, final int priority, final String type, final String displayType, final ExplorerActionHandler explorerActionHandler) {
         allHandlers.put(type, explorerActionHandler);
 
-        final DocumentType documentType = new DocumentType(priority, type, displayType, getIconUrl(type));
+        final DocumentType documentType = new DocumentType(system, priority, type, displayType, getIconUrl(type));
         allTypes.put(type, documentType);
 
         rebuild.set(true);

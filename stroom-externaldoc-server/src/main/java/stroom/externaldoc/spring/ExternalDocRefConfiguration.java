@@ -35,7 +35,7 @@ public class ExternalDocRefConfiguration {
                         propertyService)
                 ).forEach(service -> {
                     entityServiceBeanRegistry.addExternal(service.getType(), service);
-                    explorerActionHandlers.add(30, service.getType(), service.getType(), service);
+                    explorerActionHandlers.add(false, 30, service.getType(), service.getType(), service);
                     importExportActionHandlers.add(service.getType(), service);
                 });
 

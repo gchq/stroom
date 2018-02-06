@@ -39,7 +39,7 @@ public class DictionaryConfiguration {
     public DictionaryConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                                    final ImportExportActionHandlers importExportActionHandlers,
                                    final DictionaryStore dictionaryStore) {
-        explorerActionHandlers.add(9, DictionaryDoc.ENTITY_TYPE, DictionaryDoc.ENTITY_TYPE, dictionaryStore);
+        explorerActionHandlers.add(false, 9, DictionaryDoc.ENTITY_TYPE, DictionaryDoc.ENTITY_TYPE, dictionaryStore);
         importExportActionHandlers.add(DictionaryDoc.ENTITY_TYPE, dictionaryStore);
     }
 }

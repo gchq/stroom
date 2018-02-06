@@ -37,7 +37,7 @@ public class ServerConfiguration {
     public ServerConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                                final ImportExportActionHandlers importExportActionHandlers,
                                final FeedService feedService) {
-        explorerActionHandlers.add(3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE, feedService);
+        explorerActionHandlers.add(false, 3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE, feedService);
         importExportActionHandlers.add(Feed.ENTITY_TYPE, feedService);
     }
 

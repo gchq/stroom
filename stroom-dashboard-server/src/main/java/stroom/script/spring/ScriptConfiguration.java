@@ -41,7 +41,7 @@ public class ScriptConfiguration {
     public ScriptConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                                final ImportExportActionHandlers importExportActionHandlers,
                                final ScriptService scriptService) {
-        explorerActionHandlers.add(99, Script.ENTITY_TYPE, Script.ENTITY_TYPE, scriptService);
+        explorerActionHandlers.add(false, 99, Script.ENTITY_TYPE, Script.ENTITY_TYPE, scriptService);
         importExportActionHandlers.add(Script.ENTITY_TYPE, scriptService);
     }
 }

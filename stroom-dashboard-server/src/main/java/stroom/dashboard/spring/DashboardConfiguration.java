@@ -40,7 +40,7 @@ public class DashboardConfiguration {
     public DashboardConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                                   final ImportExportActionHandlers importExportActionHandlers,
                                final DashboardService dashboardService) {
-        explorerActionHandlers.add(7, Dashboard.ENTITY_TYPE, Dashboard.ENTITY_TYPE, dashboardService);
+        explorerActionHandlers.add(false, 7, Dashboard.ENTITY_TYPE, Dashboard.ENTITY_TYPE, dashboardService);
         importExportActionHandlers.add(Dashboard.ENTITY_TYPE, dashboardService);
     }
 }

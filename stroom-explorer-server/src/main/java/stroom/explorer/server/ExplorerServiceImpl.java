@@ -290,7 +290,7 @@ class ExplorerServiceImpl implements ExplorerService {
 
     private List<DocumentType> getDocumentTypes(final Collection<String> visibleTypes) {
         final List<DocumentType> allTypes = getAllTypes();
-        return allTypes.stream().filter(type -> visibleTypes.contains(type.getType())).collect(Collectors.toList());
+        return allTypes.stream().filter(type -> !type.isSystem() && visibleTypes.contains(type.getType())).collect(Collectors.toList());
     }
 
     @Override

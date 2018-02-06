@@ -16,7 +16,9 @@
 
 package stroom.explorer.shared;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import stroom.util.shared.SharedObject;
 
@@ -25,6 +27,7 @@ public class DocumentTypes implements SharedObject {
 
     private List<DocumentType> allTypes;
     private List<DocumentType> visibleTypes;
+    private transient Map<String, DocumentType> map;
 
     public DocumentTypes() {
         // Default constructor necessary for GWT serialisation.
@@ -41,5 +44,15 @@ public class DocumentTypes implements SharedObject {
 
     public List<DocumentType> getVisibleTypes() {
         return visibleTypes;
+    }
+
+    public DocumentType getByName(final String name) {
+        if (map == null) {
+            map = new HashMap<>();
+            if (allTypes != null) {
+                allTypes.forEach(type -> map.put(type.getType(), type));
+            }
+        }
+        return map.get(name);
     }
 }

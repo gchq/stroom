@@ -59,8 +59,8 @@ public class StatisticsConfiguration {
                                    final ImportExportActionHandlers importExportActionHandlers,
                                    final StatisticStoreEntityService statisticStoreEntityService,
                                    final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
-        explorerActionHandlers.add(11, StatisticStoreEntity.ENTITY_TYPE, StatisticStoreEntity.ENTITY_TYPE_FOR_DISPLAY, statisticStoreEntityService);
-        explorerActionHandlers.add(12, StroomStatsStoreEntity.ENTITY_TYPE, StroomStatsStoreEntity.ENTITY_TYPE_FOR_DISPLAY, stroomStatsStoreEntityService);
+        explorerActionHandlers.add(false, 11, StatisticStoreEntity.ENTITY_TYPE, StatisticStoreEntity.ENTITY_TYPE_FOR_DISPLAY, statisticStoreEntityService);
+        explorerActionHandlers.add(false, 12, StroomStatsStoreEntity.ENTITY_TYPE, StroomStatsStoreEntity.ENTITY_TYPE_FOR_DISPLAY, stroomStatsStoreEntityService);
         importExportActionHandlers.add(StatisticStoreEntity.ENTITY_TYPE, statisticStoreEntityService);
         importExportActionHandlers.add(StroomStatsStoreEntity.ENTITY_TYPE, stroomStatsStoreEntityService);
     }

@@ -36,7 +36,7 @@ public class IndexConfiguration {
     public IndexConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                               final ImportExportActionHandlers importExportActionHandlers,
                               final IndexService indexService) {
-        explorerActionHandlers.add(10, Index.ENTITY_TYPE, Index.ENTITY_TYPE, indexService);
+        explorerActionHandlers.add(false, 10, Index.ENTITY_TYPE, Index.ENTITY_TYPE, indexService);
         importExportActionHandlers.add(Index.ENTITY_TYPE, indexService);
     }
 }
