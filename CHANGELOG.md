@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#617** : Introduced a concept of `system` document types that prevents the root `System` folder type from being created, copied, deleted, moved, renamed etc.
+
 * Issue **#568** : Fixed filtering streams by pipeline in the pipeline screen.
 
 ## [v6.0-alpha.9]
