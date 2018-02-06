@@ -18,4 +18,6 @@ package stroom.entity.shared;
 
 public interface ProvidesNamePattern {
     String getNamePattern();
+
+    String getNameCopyPattern();
 }
