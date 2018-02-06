@@ -24,7 +24,6 @@ public class DocumentType implements SharedObject {
 
     private static final long serialVersionUID = -7826692935161793565L;
 
-    private boolean system;
     private int priority;
     private String type;
     private String displayType;
@@ -34,16 +33,11 @@ public class DocumentType implements SharedObject {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public DocumentType(final boolean system, final int priority, final String type, final String displayType, final String iconUrl) {
-        this.system = system;
+    public DocumentType(final int priority, final String type, final String displayType, final String iconUrl) {
         this.priority = priority;
         this.type = type;
         this.displayType = displayType;
         this.iconUrl = iconUrl;
-    }
-
-    public boolean isSystem() {
-        return system;
     }
 
     public int getPriority() {

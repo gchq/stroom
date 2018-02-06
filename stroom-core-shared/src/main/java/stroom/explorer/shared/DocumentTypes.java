@@ -16,43 +16,40 @@
 
 package stroom.explorer.shared;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import stroom.util.shared.SharedObject;
+
+import java.util.List;
 
 public class DocumentTypes implements SharedObject {
     private static final long serialVersionUID = -8432367046243288634L;
 
-    private List<DocumentType> allTypes;
+    public static final String[] FOLDER_TYPES = new String[]{ExplorerConstants.SYSTEM, ExplorerConstants.FOLDER};
+
+    private List<DocumentType> nonSystemTypes;
     private List<DocumentType> visibleTypes;
-    private transient Map<String, DocumentType> map;
 
     public DocumentTypes() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public DocumentTypes(final List<DocumentType> allTypes, final List<DocumentType> visibleTypes) {
-        this.allTypes = allTypes;
+    public DocumentTypes(final List<DocumentType> nonSystemTypes, final List<DocumentType> visibleTypes) {
+        this.nonSystemTypes = nonSystemTypes;
         this.visibleTypes = visibleTypes;
     }
 
-    public List<DocumentType> getAllTypes() {
-        return allTypes;
+    public List<DocumentType> getNonSystemTypes() {
+        return nonSystemTypes;
     }
 
     public List<DocumentType> getVisibleTypes() {
         return visibleTypes;
     }
 
-    public DocumentType getByName(final String name) {
-        if (map == null) {
-            map = new HashMap<>();
-            if (allTypes != null) {
-                allTypes.forEach(type -> map.put(type.getType(), type));
-            }
-        }
-        return map.get(name);
+    public static boolean isFolder(final String type) {
+        return ExplorerConstants.FOLDER.equals(type) || ExplorerConstants.SYSTEM.equals(type);
+    }
+
+    public static boolean isSystem(final String type) {
+        return ExplorerConstants.SYSTEM.equals(type);
     }
 }

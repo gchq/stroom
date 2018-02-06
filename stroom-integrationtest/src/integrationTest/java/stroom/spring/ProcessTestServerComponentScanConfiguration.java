@@ -184,10 +184,10 @@ public class ProcessTestServerComponentScanConfiguration {
                                                        final XSLTService xsltService,
                                                        final PipelineService pipelineService,
                                                        final XMLSchemaService xmlSchemaService) {
-        explorerActionHandlers.add(false, 4, TextConverter.ENTITY_TYPE, "Text Converter", textConverterService);
-        explorerActionHandlers.add(false, 5, XSLT.ENTITY_TYPE, XSLT.ENTITY_TYPE, xsltService);
-        explorerActionHandlers.add(false, 6, PipelineEntity.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE, pipelineService);
-        explorerActionHandlers.add(false, 13, XMLSchema.ENTITY_TYPE, "XML Schema", xmlSchemaService);
+        explorerActionHandlers.add(4, TextConverter.ENTITY_TYPE, "Text Converter", textConverterService);
+        explorerActionHandlers.add(5, XSLT.ENTITY_TYPE, XSLT.ENTITY_TYPE, xsltService);
+        explorerActionHandlers.add(6, PipelineEntity.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE, pipelineService);
+        explorerActionHandlers.add(13, XMLSchema.ENTITY_TYPE, "XML Schema", xmlSchemaService);
         importExportActionHandlers.add(TextConverter.ENTITY_TYPE, textConverterService);
         importExportActionHandlers.add(XSLT.ENTITY_TYPE, xsltService);
         importExportActionHandlers.add(PipelineEntity.ENTITY_TYPE, pipelineService);

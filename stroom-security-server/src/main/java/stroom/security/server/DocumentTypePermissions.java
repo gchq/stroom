@@ -3,9 +3,9 @@ package stroom.security.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.server.ExplorerService;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.security.shared.DocumentPermissionNames;
 
 import javax.inject.Inject;
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -31,7 +32,7 @@ class DocumentTypePermissions {
     }
 
     String[] getPermissions(final String type) {
-        if (ExplorerConstants.FOLDER.equals(type)) {
+        if (DocumentTypes.isFolder(type)) {
             return getFolderPermissions();
         }
 
@@ -46,8 +47,10 @@ class DocumentTypePermissions {
         if (folderPermissions == null) {
             final List<String> permissionList = new ArrayList<>();
             try {
-                final List<DocumentType> documentTypes = explorerService.getDocumentTypes().getAllTypes();
-                documentTypes.forEach(documentType -> permissionList.add(DocumentPermissionNames.getDocumentCreatePermission(documentType.getType())));
+                final List<DocumentType> documentTypes = explorerService.getDocumentTypes().getNonSystemTypes();
+                permissionList.addAll(documentTypes.stream()
+                        .map(documentType -> DocumentPermissionNames.getDocumentCreatePermission(documentType.getType()))
+                        .collect(Collectors.toList()));
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }

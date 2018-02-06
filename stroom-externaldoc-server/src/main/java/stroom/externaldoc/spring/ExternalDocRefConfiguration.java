@@ -4,8 +4,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import stroom.entity.server.EntityServiceBeanRegistry;
-import stroom.externaldoc.server.ExternalDocumentEntityServiceImpl;
 import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.externaldoc.server.ExternalDocumentEntityServiceImpl;
 import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.logging.DocumentEventLog;
 import stroom.node.server.StroomPropertyService;
@@ -34,11 +34,9 @@ public class ExternalDocRefConfiguration {
                         documentEventLog,
                         propertyService)
                 ).forEach(service -> {
-                    entityServiceBeanRegistry.addExternal(service.getType(), service);
-                    explorerActionHandlers.add(false, 30, service.getType(), service.getType(), service);
-                    importExportActionHandlers.add(service.getType(), service);
-                });
-
-
+            entityServiceBeanRegistry.addExternal(service.getType(), service);
+            explorerActionHandlers.add(30, service.getType(), service.getType(), service);
+            importExportActionHandlers.add(service.getType(), service);
+        });
     }
 }
