@@ -2,18 +2,14 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
-import stroom.util.spring.StroomShutdown;
-import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
@@ -30,8 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * Manager class that handles rolling the repository if required. Also tracks
  * old rolled repositories.
  */
-@Singleton
-@Component
 public class ProxyRepositoryManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryManager.class);
 
@@ -85,7 +79,6 @@ public class ProxyRepositoryManager {
         return null;
     }
 
-    @StroomStartup
     public synchronized void start() {
         LOGGER.info("Using repository format: " + repositoryFormat);
 
@@ -121,7 +114,6 @@ public class ProxyRepositoryManager {
         }
     }
 
-    @StroomShutdown
     public void stop() {
         finish = true;
         rollCurrentRepo();
@@ -232,8 +224,5 @@ public class ProxyRepositoryManager {
             proxyRepository.finish();
             rolledRepository.add(proxyRepository);
         }
-
-//        // Delete empty repos.
-//        rolledRepository.removeIf(StroomZipRepository::deleteIfEmpty);
     }
 }
