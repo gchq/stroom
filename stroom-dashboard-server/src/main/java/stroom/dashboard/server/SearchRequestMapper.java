@@ -127,7 +127,13 @@ public class SearchRequestMapper {
 
                 final TableSettings tableSettings = mapTableSettings(tableResultRequest.getTableSettings());
 
-                final stroom.query.api.v2.ResultRequest copy = new stroom.query.api.v2.ResultRequest(componentId, Collections.singletonList(tableSettings), mapOffsetRange(tableResultRequest.getRequestedRange()), mapCollection(String.class, tableResultRequest.getOpenGroups()), ResultStyle.TABLE, tableResultRequest.getFetch());
+                final stroom.query.api.v2.ResultRequest copy = new stroom.query.api.v2.ResultRequest(
+                        componentId,
+                        Collections.singletonList(tableSettings),
+                        mapOffsetRange(tableResultRequest.getRequestedRange()),
+                        mapCollection(String.class, tableResultRequest.getOpenGroups()),
+                        ResultStyle.TABLE,
+                        tableResultRequest.getFetch());
                 resultRequests.add(copy);
 
             } else if (componentResultRequest instanceof VisResultRequest) {

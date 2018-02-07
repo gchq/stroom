@@ -20,8 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.DownloadQueryAction;
+import stroom.dashboard.shared.SearchRequest;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
+import stroom.query.api.v2.ResultRequest;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -62,9 +64,19 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
             if (action.getSearchRequest() == null) {
                 throw new EntityServiceException("Query is empty");
             }
+            final SearchRequest searchRequest = action.getSearchRequest();
+
+            //API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
+            if (searchRequest != null && searchRequest.getComponentResultRequests() != null) {
+                searchRequest.getComponentResultRequests()
+                        .forEach((k, componentResultRequest) ->
+                                componentResultRequest.setFetch(ResultRequest.Fetch.ALL));
+            }
+
+            //convert our internal model to the model used by the api
             stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                     action.getDashboardQueryKey(),
-                    action.getSearchRequest());
+                    searchRequest);
 
             if (apiSearchRequest == null) {
                 throw new EntityServiceException("Query could not be mapped to a SearchRequest");
@@ -76,7 +88,7 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
             fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
             fileName = fileName + ".json";
 
-            ResourceKey resourceKey = sessionResourceStore.createTempFile(fileName);
+            final ResourceKey resourceKey = sessionResourceStore.createTempFile(fileName);
             final Path outputFile = sessionResourceStore.getTempFile(resourceKey);
 
             JsonUtil.writeValue(outputFile, apiSearchRequest);

@@ -52,7 +52,6 @@ import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerPermissions;
 import stroom.explorer.shared.ExplorerServiceCopyAction;
@@ -262,7 +261,7 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
             if (getSelectedItems().size() > 0) {
                 fetchPermissions(getSelectedItems()).onSuccess(documentPermissionMap -> documentTypeCache.fetch().onSuccess(documentTypes -> {
-                    final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE);
+                    final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE, false);
                     if (deletableItems.size() > 0) {
                         deleteItems(deletableItems);
                     }
@@ -392,10 +391,10 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
 
-    private List<ExplorerNode> getExplorerNodeListWithPermission(final SharedMap<ExplorerNode, ExplorerPermissions> documentPermissionMap, final String permission) {
+    private List<ExplorerNode> getExplorerNodeListWithPermission(final SharedMap<ExplorerNode, ExplorerPermissions> documentPermissionMap, final String permission, final boolean includeSystemNodes) {
         final List<ExplorerNode> list = new ArrayList<>();
         for (final Map.Entry<ExplorerNode, ExplorerPermissions> entry : documentPermissionMap.entrySet()) {
-            if (entry.getValue().hasDocumentPermission(permission)) {
+            if ((includeSystemNodes || !DocumentTypes.isSystem(entry.getKey().getType())) && entry.getValue().hasDocumentPermission(permission)) {
                 list.add(entry.getKey());
             }
         }
@@ -488,14 +487,14 @@ public class DocumentPluginEventManager extends Plugin {
                                           final ExplorerPermissions documentPermissions, final DocumentTypes documentTypes) {
         final List<Item> children = new ArrayList<>();
 
-        for (final DocumentType documentType : documentTypes.getAllTypes()) {
+        for (final DocumentType documentType : documentTypes.getNonSystemTypes()) {
             if (documentPermissions.hasCreatePermission(documentType)) {
                 final Item item = new IconMenuItem(documentType.getPriority(), new SvgIcon(ImageUtil.getImageURL() + documentType.getIconUrl(), 18, 18), null,
                         documentType.getDisplayType(), null, true, () -> ShowCreateDocumentDialogEvent.fire(DocumentPluginEventManager.this,
                         explorerNode, documentType.getType(), documentType.getDisplayType(), true));
                 children.add(item);
 
-                if (ExplorerConstants.FOLDER.equals(documentType.getType())) {
+                if (DocumentTypes.isFolder(documentType.getType())) {
                     children.add(new Separator(documentType.getPriority()));
                 }
             }
@@ -505,13 +504,13 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private void addModifyMenuItems(final List<Item> menuItems, final boolean singleSelection, final SharedMap<ExplorerNode, ExplorerPermissions> documentPermissionMap) {
-        final List<ExplorerNode> readableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.READ);
-        final List<ExplorerNode> updatableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.UPDATE);
-        final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE);
+        final List<ExplorerNode> readableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.READ, false);
+        final List<ExplorerNode> updatableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.UPDATE, false);
+        final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE, false);
 
         // Folders are not valid items for requesting info
         final boolean containsFolder = documentPermissionMap.keySet().stream()
-                    .findFirst().map(n -> n.getType().equals(ExplorerConstants.FOLDER))
+                    .findFirst().map(n -> DocumentTypes.isFolder(n.getType()))
                     .orElse(false);
 
         // Actions allowed based on permissions of selection
@@ -527,7 +526,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // Only allow users to change permissions if they have a single item selected.
         if (singleSelection) {
-            final List<ExplorerNode> ownedItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.OWNER);
+            final List<ExplorerNode> ownedItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.OWNER, true);
             if (ownedItems.size() == 1) {
                 menuItems.add(new Separator(8));
                 menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 8, true));

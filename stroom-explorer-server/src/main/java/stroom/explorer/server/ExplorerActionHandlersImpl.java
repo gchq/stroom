@@ -18,6 +18,7 @@ package stroom.explorer.server;
 
 import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypes;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 @Component
 class ExplorerActionHandlersImpl implements ExplorerActionHandlers {
@@ -48,10 +50,12 @@ class ExplorerActionHandlersImpl implements ExplorerActionHandlers {
         return DocumentType.DOC_IMAGE_URL + type + ".svg";
     }
 
-    List<DocumentType> getTypes() {
+    List<DocumentType> getNonSystemTypes() {
         if (rebuild.compareAndSet(true, false)) {
-            final List<DocumentType> list = new ArrayList<>(allTypes.values());
-            list.sort(Comparator.comparingInt(DocumentType::getPriority));
+            final List<DocumentType> list = new ArrayList<>(allTypes.values().stream()
+                    .filter(type -> !DocumentTypes.isSystem(type.getType()))
+                    .sorted(Comparator.comparingInt(DocumentType::getPriority))
+                    .collect(Collectors.toList()));
             this.documentTypes = list;
         }
 

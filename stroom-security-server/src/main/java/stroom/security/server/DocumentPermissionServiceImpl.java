@@ -195,7 +195,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         try {
             final SqlBuilder sqlBuilder = new SqlBuilder(SQL_GET_PERMISSION_FOR_DOCUMENT, document.getType(), document.getUuid());
             final List list = entityManager.executeNativeQueryResultList(sqlBuilder);
-            list.stream().forEach(o -> {
+            list.forEach(o -> {
                 final Object[] arr = (Object[]) o;
                 final String uuid = (String) arr[0];
                 final String name = (String) arr[1];

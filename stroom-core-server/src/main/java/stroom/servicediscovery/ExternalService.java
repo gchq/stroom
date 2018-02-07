@@ -32,16 +32,6 @@ public enum ExternalService {
     SQL_STATISTICS(
             "sqlStatistics",
             Type.CLIENT_AND_SERVER,
-            new RandomStrategy<>()),
-    //stateless so random strategy
-    AUTHENTICATION(
-            "authentication",
-            Type.CLIENT_AND_SERVER,
-            new RandomStrategy<>()),
-    //stateless so random strategy
-    AUTHORISATION(
-            "authorisation",
-            Type.CLIENT_AND_SERVER,
             new RandomStrategy<>());
 
     private static final String PROP_KEY_PREFIX = "stroom.services.";

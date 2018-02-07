@@ -21,7 +21,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.item.client.ItemListBox;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
@@ -60,7 +60,7 @@ public class DocumentPermissionsPresenter
     }
 
     public void show(final ExplorerNode explorerNode) {
-        getView().setCascasdeVisible(ExplorerConstants.FOLDER.equals(explorerNode.getType()));
+        getView().setCascasdeVisible(DocumentTypes.isFolder(explorerNode.getType()));
         final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
         final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerNode);
 
@@ -91,7 +91,7 @@ public class DocumentPermissionsPresenter
             };
 
             PopupSize popupSize;
-            if (ExplorerConstants.FOLDER.equals(explorerNode.getType())) {
+            if (DocumentTypes.isFolder(explorerNode.getType())) {
                 popupSize = new PopupSize(384, 664, 384, 664, true);
             } else {
                 popupSize = new PopupSize(384, 500, 384, 500, true);
@@ -102,7 +102,7 @@ public class DocumentPermissionsPresenter
     }
 
     private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {
-        if (ExplorerConstants.FOLDER.equals(entity.getType())) {
+        if (DocumentTypes.isFolder(entity.getType())) {
             return folderPermissionsListPresenterProvider.get();
         }
 

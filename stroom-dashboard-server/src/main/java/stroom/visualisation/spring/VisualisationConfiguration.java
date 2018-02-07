@@ -41,7 +41,7 @@ public class VisualisationConfiguration {
     public VisualisationConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                                       final ImportExportActionHandlers importExportActionHandlers,
                                       final VisualisationService visualisationService) {
-        explorerActionHandlers.add(9, Visualisation.ENTITY_TYPE, Visualisation.ENTITY_TYPE, visualisationService);
+        explorerActionHandlers.add( 9, Visualisation.ENTITY_TYPE, Visualisation.ENTITY_TYPE, visualisationService);
         importExportActionHandlers.add(Visualisation.ENTITY_TYPE, visualisationService);
     }
 }

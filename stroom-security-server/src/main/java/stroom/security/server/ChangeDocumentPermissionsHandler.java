@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.EntityServiceException;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.server.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
@@ -130,7 +131,7 @@ public class ChangeDocumentPermissionsHandler
         // Add permissions from the change set.
         for (final UserPermission userPermission : changeSet.getAddSet()) {
             // Don't add create permissions to items that aren't folders as it makes no sense.
-            if (ExplorerConstants.FOLDER.equals(docRef.getType()) || !userPermission.getPermission().startsWith(DocumentPermissionNames.CREATE)) {
+            if (DocumentTypes.isFolder(docRef.getType()) || !userPermission.getPermission().startsWith(DocumentPermissionNames.CREATE)) {
                 final UserRef userRef = userPermission.getUserRef();
                 try {
                     documentPermissionService.addPermission(userRef, docRef, userPermission.getPermission());
@@ -198,7 +199,7 @@ public class ChangeDocumentPermissionsHandler
 //    }
 
     private void cascadeChanges(final DocRef docRef, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<UserRef> affectedUserRefs, final ChangeDocumentPermissionsAction.Cascade cascade) {
-        if (ExplorerConstants.FOLDER.equals(docRef.getType())) {
+        if (DocumentTypes.isFolder(docRef.getType())) {
             switch (cascade) {
                 case CHANGES_ONLY:
                     // We are only cascading changes so just pass on the change set.
