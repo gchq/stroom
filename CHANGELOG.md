@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#481** : Fix handling of non-incremental queries on the query API. Adds timeout option in request and blocking code to wait for the query to complete.
+
 * Issue **#480** : Change the downloaded search request API JSON to have a fetch type of ALL.
 
 * Issue **#623** : Fixed issue where items were being added to sublist causing a stack overflow exception during data retention processing.
