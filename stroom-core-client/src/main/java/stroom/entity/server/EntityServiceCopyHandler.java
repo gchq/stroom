@@ -77,9 +77,9 @@ class EntityServiceCopyHandler
             }
 
             result = entityService.copy(entity, DocRef.create(folder), action.getName(), action.getPermissionInheritance());
-            entityEventLog.create(result);
+            entityEventLog.create(result, action.getPermissionInheritance(), null);
         } catch (final RuntimeException e) {
-            entityEventLog.create(entity, e);
+            entityEventLog.create(entity, action.getPermissionInheritance(), e);
             throw e;
         }
 

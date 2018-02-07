@@ -105,11 +105,18 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     @Override
     public E create(final DocRef folder, final String name) throws RuntimeException {
-        return create(folder, name, PermissionInheritance.NONE);
+        return create(folder, name, PermissionInheritance.DESTINATION);
     }
 
     @Override
     public E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
+        // Ensure permission inheritance is set to something.
+        PermissionInheritance perms = permissionInheritance;
+        if (perms == null) {
+            LOGGER.warn("Null permission inheritance supplied for create operation");
+            perms = PermissionInheritance.DESTINATION;
+        }
+
         // Create a new entity instance.
         E entity;
         try {
@@ -121,19 +128,23 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         entity.setName(name);
         setFolder(entity, folder);
         final E result = entityServiceHelper.create(entity);
-        final DocRef dest = DocRef.create(result);
+        final DocRef docRef = DocRef.create(result);
 
         // Create the initial user permissions for this new document.
-        switch (permissionInheritance) {
-            case NONE:
-                addDocumentPermissions(null, dest, true);
-                break;
-            case COMBINED:
-                addDocumentPermissions(folder, dest, true);
-                break;
-            case INHERIT:
-                addDocumentPermissions(folder, dest, true);
-                break;
+        try {
+            switch (perms) {
+                case NONE:
+                    addDocumentPermissions(null, docRef, true);
+                    break;
+                case DESTINATION:
+                    addDocumentPermissions(folder, docRef, true);
+                    break;
+                default:
+                    LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for create operation");
+                    break;
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         return result;
@@ -363,6 +374,13 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     @Override
     public E copy(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
+        // Ensure permission inheritance is set to something.
+        PermissionInheritance perms = permissionInheritance;
+        if (perms == null) {
+            LOGGER.warn("Null permission inheritance supplied for copy operation");
+            perms = PermissionInheritance.DESTINATION;
+        }
+
         final DocRef source = DocRef.create(entity);
 
         // Check that we can read the entity that we are going to copy.
@@ -376,21 +394,29 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         setFolder(entity, folder);
 
         final E result = entityServiceHelper.create(entity);
-        final DocRef dest = DocRef.create(result);
+        final DocRef docRef = DocRef.create(result);
 
-        if (permissionInheritance != null) {
-            switch (permissionInheritance) {
+        try {
+            switch (perms) {
                 case NONE:
-                    addDocumentPermissions(source, dest, true);
+                    addDocumentPermissions(null, docRef, true);
+                    break;
+                case SOURCE:
+                    addDocumentPermissions(source, docRef, true);
+                    break;
+                case DESTINATION:
+                    addDocumentPermissions(folder, docRef, true);
                     break;
                 case COMBINED:
-                    addDocumentPermissions(source, dest, true);
-                    addDocumentPermissions(folder, dest, true);
+                    addDocumentPermissions(source, docRef, true);
+                    addDocumentPermissions(folder, docRef, true);
                     break;
-                case INHERIT:
-                    addDocumentPermissions(folder, dest, true);
+                default:
+                    LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for copy operation");
                     break;
             }
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         return result;
@@ -398,26 +424,43 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     @Override
     public E move(final E entity, final DocRef folder, final PermissionInheritance permissionInheritance) {
+        // Ensure permission inheritance is set to something.
+        PermissionInheritance perms = permissionInheritance;
+        if (perms == null) {
+            LOGGER.warn("Null permission inheritance supplied for copy operation");
+            perms = PermissionInheritance.DESTINATION;
+        }
+
         // Check that we can read the entity that we are going to move.
         checkReadPermission(entity);
 
         setFolder(entity, folder);
 
         final E result = save(entity);
-        final DocRef dest = DocRef.create(result);
+        final DocRef docRef = DocRef.create(result);
 
-        if (permissionInheritance != null) {
-            switch (permissionInheritance) {
+        try {
+            switch (perms) {
                 case NONE:
+                    clearDocumentPermissions(docRef);
+                    addDocumentPermissions(null, docRef, true);
+                    break;
+                case SOURCE:
+                    // We are keeping the permissions that we already have so do nothing.
+                    break;
+                case DESTINATION:
+                    clearDocumentPermissions(docRef);
+                    addDocumentPermissions(folder, docRef, true);
                     break;
                 case COMBINED:
-                    addDocumentPermissions(folder, dest, false);
+                    addDocumentPermissions(folder, docRef, true);
                     break;
-                case INHERIT:
-                    clearDocumentPermissions(dest);
-                    addDocumentPermissions(folder, dest, false);
+                default:
+                    LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for move operation");
                     break;
             }
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         return result;
@@ -497,6 +540,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                                  final Map<String, String> dataMap,
                                  final ImportState importState,
                                  final ImportMode importMode) {
+        // TODO : Make it possible to choose the permission inheritance.
+        PermissionInheritance perms = PermissionInheritance.DESTINATION;
 
         LOGGER.debug("importDocument: folder [%s]",
                 (folder != null ? folder.getName()  + " - " + folder.getUuid() : "null"));
@@ -553,6 +598,30 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             if (importMode == ImportMode.IGNORE_CONFIRMATION
                     || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
                 entity = getEntityManager().saveEntity(entity);
+
+
+
+                // TODO : Make it possible to choose the permission inheritance.
+                // Create the initial user permissions for this new document.
+                try {
+                    switch (perms) {
+                        case NONE:
+                            addDocumentPermissions(null, DocRef.create(entity), true);
+                            break;
+                        case DESTINATION:
+                            addDocumentPermissions(DocRef.create(folder), DocRef.create(entity), true);
+                            break;
+                        default:
+                            LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for import operation");
+                            break;
+                    }
+                } catch (final Exception e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
+
+
+
             }
 
         } catch (final Exception e) {

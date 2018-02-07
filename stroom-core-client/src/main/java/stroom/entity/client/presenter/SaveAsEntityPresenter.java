@@ -84,7 +84,7 @@ public class SaveAsEntityPresenter
                 AlertEvent.fireWarn(SaveAsEntityPresenter.this, "You must provide a new name for " + entity.getName(),
                         null);
             } else {
-                SaveAsEntityEvent.fire(this, this, tabData, entityName, PermissionInheritance.NONE);
+                SaveAsEntityEvent.fire(this, this, tabData, entityName, PermissionInheritance.SOURCE);
             }
         } else {
             HidePopupEvent.fire(this, this, autoClose, ok);

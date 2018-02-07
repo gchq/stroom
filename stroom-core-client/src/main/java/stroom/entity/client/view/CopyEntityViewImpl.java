@@ -53,9 +53,10 @@ public class CopyEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imple
         widget.addAttachHandler(event -> Scheduler.get().scheduleDeferred(() -> name.setFocus(true)));
 
         permissionInheritance.addItem(PermissionInheritance.NONE);
-        permissionInheritance.addItem(PermissionInheritance.INHERIT);
+        permissionInheritance.addItem(PermissionInheritance.SOURCE);
+        permissionInheritance.addItem(PermissionInheritance.DESTINATION);
         permissionInheritance.addItem(PermissionInheritance.COMBINED);
-        permissionInheritance.setSelectedItem(PermissionInheritance.INHERIT);
+        permissionInheritance.setSelectedItem(PermissionInheritance.DESTINATION);
     }
 
     @Override

@@ -63,8 +63,6 @@ public class CreateEntityPresenter
     @ProxyEvent
     @Override
     public void onCreate(final ShowCreateEntityDialogEvent event) {
-        getView().setPermissionInheritance(PermissionInheritance.INHERIT);
-
         entityType = event.getEntityType();
 
         entityTreePresenter.setSelectedItem(null);
@@ -101,6 +99,8 @@ public class CreateEntityPresenter
     @Override
     protected void revealInParent() {
         getView().setName("");
+        getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
+
         final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
         getView().focus();

@@ -36,6 +36,7 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageResponse;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.security.Insecure;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
@@ -90,14 +91,9 @@ public class EntityEventLogImpl implements EntityEventLog {
     }
 
     @Override
-    public void create(final String entityType, final String entityName) {
-        create(entityType, entityName, null);
-    }
-
-    @Override
-    public void create(final String entityType, final String entityName, final Exception ex) {
+    public void create(final String entityType, final String entityName, final PermissionInheritance permissionInheritance, final Exception ex) {
         try {
-            final Event event = createAction("Create", "Creating", entityType, entityName);
+            final Event event = createAction("Create", "Creating", entityType, entityName, permissionInheritance);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             event.getEventDetail().setCreate(objectOutcome);
 
@@ -113,15 +109,15 @@ public class EntityEventLogImpl implements EntityEventLog {
         }
     }
 
+    //    @Override
+//    public void create(final BaseEntity entity) {
+//        create(entity, null);
+//    }
+//
     @Override
-    public void create(final BaseEntity entity) {
-        create(entity, null);
-    }
-
-    @Override
-    public void create(final BaseEntity entity, final Exception ex) {
+    public void create(final BaseEntity entity, final PermissionInheritance permissionInheritance, final Exception ex) {
         try {
-            final Event event = createAction("Create", "Creating", entity);
+            final Event event = createAction("Create", "Creating", entity, permissionInheritance);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             event.getEventDetail().setCreate(objectOutcome);
             objectOutcome.getObjects().add(createBaseObject(entity));
@@ -131,16 +127,16 @@ public class EntityEventLogImpl implements EntityEventLog {
             LOGGER.error(e, e);
         }
     }
+//
+//    @Override
+//    public void update(final BaseEntity before, final BaseEntity after) {
+//        update(before, after, null);
+//    }
 
     @Override
-    public void update(final BaseEntity before, final BaseEntity after) {
-        update(before, after, null);
-    }
-
-    @Override
-    public void update(final BaseEntity before, final BaseEntity after, final Exception ex) {
+    public void update(final BaseEntity before, final BaseEntity after, final PermissionInheritance permissionInheritance, final Exception ex) {
         try {
-            final Event event = createAction("Update", "Updating", before);
+            final Event event = createAction("Update", "Updating", before, permissionInheritance);
             final Update update = new Update();
             event.getEventDetail().setUpdate(update);
 
@@ -163,16 +159,16 @@ public class EntityEventLogImpl implements EntityEventLog {
             LOGGER.error(e, e);
         }
     }
+//
+//    @Override
+//    public void move(final BaseEntity before, final BaseEntity after) {
+//        move(before, after, null);
+//    }
 
     @Override
-    public void move(final BaseEntity before, final BaseEntity after) {
-        move(before, after, null);
-    }
-
-    @Override
-    public void move(final BaseEntity before, final BaseEntity after, final Exception ex) {
+    public void move(final BaseEntity before, final BaseEntity after, final PermissionInheritance permissionInheritance, final Exception ex) {
         try {
-            final Event event = createAction("Move", "Moving", before);
+            final Event event = createAction("Move", "Moving", before, permissionInheritance);
             final CopyMove move = new CopyMove();
             event.getEventDetail().setMove(move);
 
@@ -201,15 +197,15 @@ public class EntityEventLogImpl implements EntityEventLog {
         }
     }
 
-    @Override
-    public void delete(final BaseEntity entity) {
-        delete(entity, null);
-    }
+//    @Override
+//    public void delete(final BaseEntity entity) {
+//        delete(entity, null);
+//    }
 
     @Override
     public void delete(final BaseEntity entity, final Exception ex) {
         try {
-            final Event event = createAction("Delete", "Deleting", entity);
+            final Event event = createAction("Delete", "Deleting", entity, null);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             event.getEventDetail().setDelete(objectOutcome);
             objectOutcome.getObjects().add(createBaseObject(entity));
@@ -220,15 +216,15 @@ public class EntityEventLogImpl implements EntityEventLog {
         }
     }
 
-    @Override
-    public void view(final BaseEntity entity) {
-        view(entity, null);
-    }
+//    @Override
+//    public void view(final BaseEntity entity) {
+//        view(entity, null);
+//    }
 
     @Override
     public void view(final BaseEntity entity, final Exception ex) {
         try {
-            final Event event = createAction("View", "Viewing", entity);
+            final Event event = createAction("View", "Viewing", entity, null);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             event.getEventDetail().setView(objectOutcome);
             objectOutcome.getObjects().add(createBaseObject(entity));
@@ -252,7 +248,7 @@ public class EntityEventLogImpl implements EntityEventLog {
     private void doDelete(final BaseCriteria criteria, final Query query, final Long size, final Exception ex) {
         try {
             final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
-                    null);
+                    null, null);
 
             final Criteria crit = new Criteria();
             crit.setQuery(query);
@@ -306,7 +302,7 @@ public class EntityEventLogImpl implements EntityEventLog {
                           final Exception ex) {
         try {
             final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
-                    null);
+                    null, null);
             final Search search = new Search();
             event.getEventDetail().setSearch(search);
             search.setQuery(query);
@@ -341,7 +337,7 @@ public class EntityEventLogImpl implements EntityEventLog {
                                  final Exception ex) {
         try {
             final Event event = createAction(criteria.getClass().getSimpleName(),
-                    "Finding Summary " + getObjectType(criteria), null);
+                    "Finding Summary " + getObjectType(criteria), null, null);
             final Search search = new Search();
             event.getEventDetail().setSearch(search);
             search.setQuery(query);
@@ -379,7 +375,7 @@ public class EntityEventLogImpl implements EntityEventLog {
         return resultPage;
     }
 
-    private Event createAction(final String typeId, final String description, final BaseEntity entity) {
+    private Event createAction(final String typeId, final String description, final BaseEntity entity, final PermissionInheritance permissionInheritance) {
         String desc = description;
         if (entity != null) {
             if (entity instanceof NamedEntity) {
@@ -390,14 +386,31 @@ public class EntityEventLogImpl implements EntityEventLog {
                 desc = description + " " + getObjectType(entity) + " id=" + entity.getId();
             }
         }
-
+        desc += getPermissionString(permissionInheritance);
         return eventLoggingService.createAction(typeId, desc);
     }
 
     private Event createAction(final String typeId, final String description, final String entityType,
-                               final String entityName) {
-        final String desc = description + " " + entityType + " \"" + entityName;
+                               final String entityName, final PermissionInheritance permissionInheritance) {
+        String desc = description + " " + entityType + " \"" + entityName + "\"";
+        desc += getPermissionString(permissionInheritance);
         return eventLoggingService.createAction(typeId, desc);
+    }
+
+    private String getPermissionString(final PermissionInheritance permissionInheritance) {
+        if (permissionInheritance != null) {
+            switch (permissionInheritance) {
+                case NONE:
+                    return " with no permissions";
+                case SOURCE:
+                    return " with source permissions";
+                case DESTINATION:
+                    return " with destination permissions";
+                case COMBINED:
+                    return " with combined permissions";
+            }
+        }
+        return "";
     }
 
     private String getObjectType(final java.lang.Object object) {

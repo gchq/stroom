@@ -90,7 +90,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         Feed fd = feedService.create(commonTestScenarioCreator.getTestFolder(), feedName);
 
-        fd = feedService.copy(fd, DocRef.create(fd.getFolder()), fd.getName() + "COPY", PermissionInheritance.INHERIT);
+        fd = feedService.copy(fd, DocRef.create(fd.getFolder()), fd.getName() + "COPY", PermissionInheritance.DESTINATION);
 
         feedService.save(fd);
     }

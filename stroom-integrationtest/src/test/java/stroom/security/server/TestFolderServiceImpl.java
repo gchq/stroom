@@ -91,8 +91,8 @@ public class TestFolderServiceImpl extends AbstractCoreIntegrationTest {
     public void testVersionCheck() {
         // commonTestControl.deleteAll();
         Folder dbGroupV1 = folderService.create(null, "Testing");
-        Folder dbGroupV2 = folderService.copy(dbGroupV1, null, "TestingV2", PermissionInheritance.INHERIT);
-        Folder dbGroupV3 = folderService.copy(dbGroupV2, null, "TestingV3", PermissionInheritance.INHERIT);
+        Folder dbGroupV2 = folderService.copy(dbGroupV1, null, "TestingV2", PermissionInheritance.DESTINATION);
+        Folder dbGroupV3 = folderService.copy(dbGroupV2, null, "TestingV3", PermissionInheritance.DESTINATION);
 
         // Make sure we can't save a stale object.
         try {

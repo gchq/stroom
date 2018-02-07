@@ -44,7 +44,7 @@ class EntityServiceDeleteHandler extends AbstractTaskHandler<EntityServiceDelete
         try {
             entityService.delete(entity);
             if (entity != null) {
-                entityEventLog.delete(entity);
+                entityEventLog.delete(entity, null);
             }
         } catch (final RuntimeException e) {
             if (entity != null) {

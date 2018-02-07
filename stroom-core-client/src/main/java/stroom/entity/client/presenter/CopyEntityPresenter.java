@@ -65,7 +65,6 @@ public class CopyEntityPresenter
     @ProxyEvent
     @Override
     public void onCopy(final ShowCopyEntityDialogEvent event) {
-        getView().setPermissionInheritance(PermissionInheritance.INHERIT);
         explorerDataList = event.getExplorerDataList();
         copyNextEntity();
     }
@@ -116,6 +115,8 @@ public class CopyEntityPresenter
     protected void revealInParent() {
         final String caption = "Copy " + entity.getDisplayValue();
         getView().setName(entity.getDisplayValue());
+        getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
+
         final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
         getView().focus();

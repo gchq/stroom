@@ -58,8 +58,6 @@ public class MoveEntityPresenter
     @ProxyEvent
     @Override
     public void onMove(final ShowMoveEntityDialogEvent event) {
-        getView().setPermissionInheritance(PermissionInheritance.INHERIT);
-
         this.explorerDataList = event.getExplorerDataList();
 
         entityTreePresenter.setSelectedItem(null);
@@ -79,6 +77,7 @@ public class MoveEntityPresenter
         if (explorerDataList.size() == 1) {
             caption = "Move " + explorerDataList.get(0).getDisplayValue();
         }
+        getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
         final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);

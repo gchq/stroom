@@ -66,21 +66,21 @@ class EntityServiceSaveHandler extends AbstractTaskHandler<EntityServiceSaveActi
                 NameValidationUtil.validate(entityService, before, entity);
 
                 result = entityService.save(entity);
-                entityEventLog.update(before, result);
+                entityEventLog.update(before, result, null, null);
 
             } else {
                 // Validate the entity name.
                 NameValidationUtil.validate(entityService, entity);
 
                 result = entityService.save(entity);
-                entityEventLog.create(result);
+                entityEventLog.create(result, null, null);
             }
         } catch (final RuntimeException e) {
             if (persistent) {
                 // Get the before version.
-                entityEventLog.update(null, entity, e);
+                entityEventLog.update(null, entity, null, e);
             } else {
-                entityEventLog.create(entity, e);
+                entityEventLog.create(entity, null, e);
             }
             throw e;
         }

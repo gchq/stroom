@@ -57,7 +57,7 @@ class EntityServiceLoadHandler
             }
 
             if (result != null) {
-                entityEventLog.view(result);
+                entityEventLog.view(result, null);
             }
         } catch (final RuntimeException e) {
             throw e;

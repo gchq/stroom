@@ -63,7 +63,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 
     @Override
     public E create(final DocRef folder, final String name) throws RuntimeException {
-        return create(folder, name, PermissionInheritance.NONE);
+        return create(folder, name, PermissionInheritance.DESTINATION);
     }
 
     @Override

@@ -20,29 +20,18 @@ import event.logging.Query;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.PermissionInheritance;
 
 public interface EntityEventLog {
-    void create(BaseEntity entity);
+    void create(BaseEntity entity, PermissionInheritance permissionInheritance, Exception ex);
 
-    void create(BaseEntity entity, Exception ex);
+    void create(String entityType, String entityName, PermissionInheritance permissionInheritance, Exception ex);
 
-    void create(String entityType, String entityName);
+    void update(BaseEntity before, BaseEntity after, PermissionInheritance permissionInheritance, Exception ex);
 
-    void create(String entityType, String entityName, Exception ex);
-
-    void update(BaseEntity before, BaseEntity after);
-
-    void update(BaseEntity before, BaseEntity after, Exception ex);
-
-    void move(BaseEntity before, BaseEntity after);
-
-    void move(BaseEntity before, BaseEntity after, Exception ex);
-
-    void delete(BaseEntity entity);
+    void move(BaseEntity before, BaseEntity after, PermissionInheritance permissionInheritance, Exception ex);
 
     void delete(BaseEntity entity, Exception ex);
-
-    void view(BaseEntity entity);
 
     void view(BaseEntity entity, Exception ex);
 

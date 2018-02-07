@@ -62,9 +62,9 @@ class EntityServiceCreateHandler extends AbstractTaskHandler<EntityServiceCreate
             NameValidationUtil.validate(entityService, action.getName());
 
             result = entityService.create(action.getFolder(), action.getName(), action.getPermissionInheritance());
-            entityEventLog.create(result);
+            entityEventLog.create(result, action.getPermissionInheritance(), null);
         } catch (final RuntimeException e) {
-            entityEventLog.create(action.getType(), action.getName(), e);
+            entityEventLog.create(action.getType(), action.getName(), action.getPermissionInheritance(), e);
             throw e;
         }
 
