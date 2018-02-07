@@ -88,7 +88,14 @@ public class StroomIndexQueryResource implements HasHealthCheck {
             value = "Submit a search request",
             response = SearchResponse.class)
     public SearchResponse search(@ApiParam("SearchRequest") final SearchRequest request) {
+
+        //if this is the first call for this query key then it will create a searchResponseCreator (& store) that have
+        //a lifespan beyond the scope of this request and then begin the search for the data
+        //If it is not the first call for this query key then it will return the existing searchResponseCreator with
+        //access to whatever data has been found so far
         final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(new Key(request));
+
+        //create a response from the data found so far, this could be complete/incomplete
         return searchResponseCreator.create(request);
     }
 
