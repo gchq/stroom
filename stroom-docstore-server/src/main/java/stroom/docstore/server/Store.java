@@ -110,7 +110,7 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         final D document = read(uuid);
         document.setType(type);
         document.setUuid(UUID.randomUUID().toString());
-        document.setName("Copy of " + document.getName());
+        document.setName(document.getName());
         document.setVersion(UUID.randomUUID().toString());
         document.setCreateTime(now);
         document.setUpdateTime(now);

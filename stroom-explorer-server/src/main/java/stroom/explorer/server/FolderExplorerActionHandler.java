@@ -45,7 +45,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
         }
-        return new DocRef(FOLDER, UUID.randomUUID().toString(), "Copy of " + explorerTreeNode.getName());
+        return new DocRef(FOLDER, UUID.randomUUID().toString(), explorerTreeNode.getName());
     }
 
     @Override

@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -161,18 +162,35 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     @Override
     public List<ExplorerNode> getDescendants(final DocRef docRef) {
+        return getDescendants(docRef, explorerTreeDao::getTree);
+    }
+
+    @Override
+    public List<ExplorerNode> getChildren(final DocRef docRef) {
+        return getDescendants(docRef, explorerTreeDao::getChildren);
+    }
+
+    /**
+     * General form a function that returns a list of explorer nodes from the tree DAO
+     *
+     * @param folderDocRef The root doc ref of the query
+     * @param fetchFunction The function to call to get the list of ExplorerTreeNodes given a root ExplorerTreeNode
+     * @return The list of converted ExplorerNodes
+     */
+    private List<ExplorerNode> getDescendants(final DocRef folderDocRef,
+                                              final Function<ExplorerTreeNode, List<ExplorerTreeNode>> fetchFunction) {
         List<ExplorerTreeNode> nodes;
 
-        if (docRef == null) {
+        if (folderDocRef == null) {
             nodes = new ArrayList<>();
             final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-            roots.forEach(root -> nodes.addAll(explorerTreeDao.getTree(root)));
+            roots.forEach(root -> nodes.addAll(fetchFunction.apply(root)));
         } else {
-            final ExplorerTreeNode node = getNodeForDocRef(docRef);
+            final ExplorerTreeNode node = getNodeForDocRef(folderDocRef);
             if (node == null) {
                 nodes = Collections.emptyList();
             } else {
-                nodes = explorerTreeDao.getTree(node);
+                nodes = fetchFunction.apply(node);
             }
         }
 
@@ -212,7 +230,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             explorerTreeDao.addChild(folderNode, docNode);
 
         } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
@@ -223,7 +241,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             explorerTreeDao.move(docNode, folderNode);
 
         } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
@@ -237,7 +255,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 explorerTreeDao.update(docNode);
             }
         } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
@@ -267,6 +285,11 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
-        return new ExplorerNode(explorerTreeNode.getType(), explorerTreeNode.getUuid(), explorerTreeNode.getName(), explorerTreeNode.getTags());
+        return new ExplorerNode.Builder()
+                .type(explorerTreeNode.getType())
+                .uuid(explorerTreeNode.getUuid())
+                .name(explorerTreeNode.getName())
+                .tags(explorerTreeNode.getTags())
+                .build();
     }
 }

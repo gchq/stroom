@@ -23,10 +23,12 @@ import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.feed.shared.Feed;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
@@ -37,6 +39,7 @@ import stroom.util.spring.StroomScope;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -119,7 +122,11 @@ class ExplorerServiceImpl implements ExplorerService {
         return forcedOpen;
     }
 
-    private void forceMinDepthOpen(final TreeModel masterTreeModel, final Set<ExplorerNode> forcedOpen, final ExplorerNode parent, final int minDepth, final int depth) {
+    private void forceMinDepthOpen(final TreeModel masterTreeModel,
+                                   final Set<ExplorerNode> forcedOpen,
+                                   final ExplorerNode parent,
+                                   final int minDepth,
+                                   final int depth) {
         final List<ExplorerNode> children = masterTreeModel.getChildMap().get(parent);
         if (children != null) {
             for (final ExplorerNode child : children) {
@@ -131,7 +138,13 @@ class ExplorerServiceImpl implements ExplorerService {
         }
     }
 
-    private boolean addDescendants(final ExplorerNode parent, final TreeModel treeModelIn, final TreeModel treeModelOut, final ExplorerTreeFilter filter, final boolean ignoreNameFilter, final Set<ExplorerNode> allOpenItemns, final int currentDepth) {
+    private boolean addDescendants(final ExplorerNode parent,
+                                   final TreeModel treeModelIn,
+                                   final TreeModel treeModelOut,
+                                   final ExplorerTreeFilter filter,
+                                   final boolean ignoreNameFilter,
+                                   final Set<ExplorerNode> allOpenItemns,
+                                   final int currentDepth) {
         int added = 0;
 
         final List<ExplorerNode> children = treeModelIn.getChildMap().get(parent);
@@ -204,7 +217,11 @@ class ExplorerServiceImpl implements ExplorerService {
         return nameFilter == null || explorerNode.getDisplayValue().toLowerCase().contains(nameFilter.toLowerCase());
     }
 
-    private void addRoots(final TreeModel filteredModel, final Set<ExplorerNode> openItems, final Set<ExplorerNode> forcedOpenItems, final Set<ExplorerNode> temporaryOpenItems, final FetchExplorerNodeResult result) {
+    private void addRoots(final TreeModel filteredModel,
+                          final Set<ExplorerNode> openItems,
+                          final Set<ExplorerNode> forcedOpenItems,
+                          final Set<ExplorerNode> temporaryOpenItems,
+                          final FetchExplorerNodeResult result) {
         final List<ExplorerNode> children = filteredModel.getChildMap().get(null);
         if (children != null) {
             for (final ExplorerNode child : children) {
@@ -214,7 +231,13 @@ class ExplorerServiceImpl implements ExplorerService {
         }
     }
 
-    private void addChildren(final ExplorerNode parent, final TreeModel filteredModel, final Set<ExplorerNode> openItems, final Set<ExplorerNode> forcedOpenItems, final Set<ExplorerNode> temporaryOpenItems, final int currentDepth, final FetchExplorerNodeResult result) {
+    private void addChildren(final ExplorerNode parent,
+                             final TreeModel filteredModel,
+                             final Set<ExplorerNode> openItems,
+                             final Set<ExplorerNode> forcedOpenItems,
+                             final Set<ExplorerNode> temporaryOpenItems,
+                             final int currentDepth,
+                             final FetchExplorerNodeResult result) {
         parent.setDepth(currentDepth);
 
         // See if we need to force this item open.
@@ -263,7 +286,10 @@ class ExplorerServiceImpl implements ExplorerService {
         return getDocumentTypes(visibleTypes);
     }
 
-    private boolean addTypes(final ExplorerNode parent, final TreeModel treeModel, final Set<String> types, final Set<String> requiredPermissions) {
+    private boolean addTypes(final ExplorerNode parent,
+                             final TreeModel treeModel,
+                             final Set<String> types,
+                             final Set<String> requiredPermissions) {
         boolean added = false;
 
         final List<ExplorerNode> children = treeModel.getChildMap().get(parent);
@@ -323,7 +349,9 @@ class ExplorerServiceImpl implements ExplorerService {
     }
 
     @Override
-    public BulkActionResult copy(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public BulkActionResult copy(final List<DocRef> docRefs,
+                                 final DocRef destinationFolderRef,
+                                 final PermissionInheritance permissionInheritance) {
         DocRef folderRef = destinationFolderRef;
         if (folderRef == null) {
             folderRef = explorerNodeService.getRoot().getDocRef();
@@ -332,29 +360,8 @@ class ExplorerServiceImpl implements ExplorerService {
         final List<DocRef> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        for (final DocRef docRef : docRefs) {
-            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
-
-            DocRef result = null;
-
-            try {
-                result = handler.copyDocument(docRef.getUuid(), getUUID(folderRef));
-                explorerEventLog.copy(docRef, folderRef, permissionInheritance, null);
-                resultDocRefs.add(result);
-
-            } catch (final Exception e) {
-                explorerEventLog.copy(docRef, folderRef, permissionInheritance, e);
-                resultMessage.append("Unable to copy '");
-                resultMessage.append(docRef.getName());
-                resultMessage.append("' ");
-                resultMessage.append(e.getMessage());
-                resultMessage.append("\n");
-            }
-
-            // Create the explorer node
-            if (result != null) {
-                explorerNodeService.copyNode(docRef, result, folderRef, permissionInheritance);
-            }
+        for (final DocRef sourceDocRef : docRefs) {
+            recurseCopy(sourceDocRef, folderRef, permissionInheritance, resultDocRefs, resultMessage);
         }
 
         // Make sure the tree model is rebuilt.
@@ -363,8 +370,63 @@ class ExplorerServiceImpl implements ExplorerService {
         return new BulkActionResult(resultDocRefs, resultMessage.toString());
     }
 
+    /**
+     * Copy the contents of a folder recursively
+     *
+     * @param sourceDocRef          The doc ref for the folder being copied
+     * @param destinationFolderRef  The doc ref for the destination folder
+     * @param permissionInheritance The mode of permission inheritance being used for the whole operation
+     * @param resultDocRefs         Allow contribution to result doc refs
+     * @param resultMessage         Allow contribution to result message
+     */
+    private void recurseCopy(final DocRef sourceDocRef,
+                             final DocRef destinationFolderRef,
+                             final PermissionInheritance permissionInheritance,
+                             final List<DocRef> resultDocRefs,
+                             final StringBuilder resultMessage) {
+
+        final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceDocRef.getType());
+
+        DocRef destinationDocRef = null;
+
+        try {
+            destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(), getUUID(destinationFolderRef));
+            explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, null);
+            resultDocRefs.add(destinationDocRef);
+
+        } catch (final Exception e) {
+            explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, e);
+            resultMessage.append("Unable to copy '");
+            resultMessage.append(sourceDocRef.getName());
+            resultMessage.append("' ");
+            resultMessage.append(e.getMessage());
+            resultMessage.append("\n");
+        }
+
+        // Create the explorer node
+        if (destinationDocRef != null) {
+            explorerNodeService.copyNode(sourceDocRef, destinationDocRef, destinationFolderRef, permissionInheritance);
+        }
+
+        // Handle recursion for copying folders
+        if (sourceDocRef.getType().equals(ExplorerConstants.FOLDER)) {
+            final List<ExplorerNode> sourceDescendants = explorerNodeService.getChildren(sourceDocRef);
+            for (final ExplorerNode sourceDescendant : sourceDescendants) {
+
+                // The tree DAO returns the node itself when descendants are requested
+                recurseCopy(sourceDescendant.getDocRef(),
+                        destinationDocRef,
+                        permissionInheritance,
+                        resultDocRefs,
+                        resultMessage);
+            }
+        }
+    }
+
     @Override
-    public BulkActionResult move(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public BulkActionResult move(final List<DocRef> docRefs,
+                                 final DocRef destinationFolderRef,
+                                 final PermissionInheritance permissionInheritance) {
         DocRef folderRef = destinationFolderRef;
         if (folderRef == null) {
             folderRef = explorerNodeService.getRoot().getDocRef();

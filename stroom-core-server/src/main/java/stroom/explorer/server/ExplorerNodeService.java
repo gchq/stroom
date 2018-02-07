@@ -40,7 +40,19 @@ public interface ExplorerNodeService {
 
     List<ExplorerNode> getPath(DocRef docRef);
 
+    /**
+     * This will return all descendants (including itself) for a doc ref
+     * @param folderRef The root of the tree query
+     * @return A list of all descendants.
+     */
     List<ExplorerNode> getDescendants(DocRef folderRef);
+
+    /**
+     * This will return the immediate children of a folder doc ref
+     * @param folderRef The root of the tree query
+     * @return A list of the immediate children
+     */
+    List<ExplorerNode> getChildren(final DocRef folderRef);
 
     List<ExplorerNode> getNodesByName(ExplorerNode parent, String name);
 

@@ -16,6 +16,7 @@
 
 package stroom.externaldoc.server;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.eclipse.jetty.http.HttpStatus;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.SharedDocRef;
@@ -28,16 +29,18 @@ import stroom.query.api.v2.DocRefInfo;
 import stroom.query.audit.ExportDTO;
 import stroom.query.audit.client.DocRefResourceHttpClient;
 import stroom.query.audit.security.ServiceUser;
+import stroom.query.audit.service.DocRefEntity;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntityService {
 
@@ -117,19 +120,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         final String uuid = UUID.randomUUID().toString();
         final Response response = docRefHttpClient.createDocument(serviceUser(), uuid, name, parentFolderUUID);
 
-        try {
-            if (response.getStatus() != HttpStatus.OK_200) {
-                throw new EntityServiceException("Invalid HTTP status returned from create: " + response.getStatus());
-            }
-        } finally {
-            response.close();
-        }
-
-        return new DocRef.Builder()
-                .uuid(uuid)
-                .name(name)
-                .type(type)
-                .build();
+        return readDocRefEntityResponse(response);
     }
 
     @Override
@@ -137,55 +128,21 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         final String copyUuid = UUID.randomUUID().toString();
         final Response response = docRefHttpClient.copyDocument(serviceUser(), uuid, copyUuid, parentFolderUUID);
 
-        try {
-            if (response.getStatus() != HttpStatus.OK_200) {
-                throw new EntityServiceException("Invalid HTTP status returned from copy: " + response.getStatus());
-            }
-        } finally {
-            response.close();
-        }
-
-        return new DocRef.Builder()
-                .uuid(uuid)
-                .type(this.type)
-                .build();
+        return readDocRefEntityResponse(response);
     }
 
     @Override
     public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
         final Response response = docRefHttpClient.moveDocument(serviceUser(), uuid, parentFolderUUID);
 
-        try {
-            if (response.getStatus() != HttpStatus.OK_200) {
-                throw new EntityServiceException("Invalid HTTP status returned from move: " + response.getStatus());
-            }
-        } finally {
-            response.close();
-        }
-
-        return new DocRef.Builder()
-                .uuid(uuid)
-                .type(this.type)
-                .build();
+        return readDocRefEntityResponse(response);
     }
 
     @Override
     public DocRef renameDocument(final String uuid, final String name) {
         final Response response = docRefHttpClient.renameDocument(serviceUser(), uuid, name);
 
-        try {
-            if (response.getStatus() != HttpStatus.OK_200) {
-                throw new EntityServiceException("Invalid HTTP status returned from rename: " + response.getStatus());
-            }
-        } finally {
-            response.close();
-        }
-
-        return new DocRef.Builder()
-                .uuid(uuid)
-                .name(name)
-                .type(this.type)
-                .build();
+        return readDocRefEntityResponse(response);
     }
 
     @Override
@@ -205,16 +162,12 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     public DocRefInfo info(final String uuid) {
         final Response response = docRefHttpClient.getInfo(serviceUser(), uuid);
 
-        try {
-            if (response.getStatus() != HttpStatus.OK_200) {
-                throw new EntityServiceException("Invalid HTTP status returned from move: " + response.getStatus());
-            }
-
-            return response.readEntity(DocRefInfo.class);
-        } finally {
+        if (response.getStatus() != HttpStatus.OK_200) {
             response.close();
+            throw new EntityServiceException("Invalid HTTP status returned from move: " + response.getStatus());
         }
 
+        return response.readEntity(DocRefInfo.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -236,15 +189,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
                 importState.ok(importMode),
                 dataMap);
 
-        try {
-            if (response.getStatus() != HttpStatus.OK_200) {
-                throw new EntityServiceException("Invalid HTTP status returned from delete: " + response.getStatus());
-            }
-
-            return docRef;
-        } finally {
-            response.close();
-        }
+        return readDocRefEntityResponse(response);
     }
 
     @Override
@@ -264,15 +209,17 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     public Set<DocRef> listDocuments() {
         final Response response = docRefHttpClient.getAll(serviceUser());
 
-        try {
-            if (response.getStatus() != HttpStatus.OK_200) {
-                throw new EntityServiceException("Invalid HTTP status returned from delete: " + response.getStatus());
-            }
-
-            return new HashSet<>();
-        } finally {
+        if (response.getStatus() != HttpStatus.OK_200) {
             response.close();
+            throw new EntityServiceException("Invalid HTTP status returned from delete: " + response.getStatus());
         }
+
+
+        final List<DocRefEntity> results = response.readEntity(new GenericType<List<DocRefEntity>>(){});
+
+        return results.stream()
+                .map(this::getDocRef)
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -283,4 +230,39 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExport
     ////////////////////////////////////////////////////////////////////////
+
+    /**
+     * This class soley exists to allow us to deserialize the JSON to a generic Doc Ref Entity while ignoring
+     * properties which are specific to the doc ref entity type.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class DocRefEntitySafe extends DocRefEntity {
+        public DocRefEntitySafe() {
+
+        }
+    }
+
+    /**
+     * General form of parsing a response into a Doc Ref
+     * @param response The Response from the client, should be HTTP 200, with the Doc Ref Entity in the body
+     * @return The Doc Ref, created from the Doc Ref Entity
+     */
+    private DocRef readDocRefEntityResponse(final Response response) {
+        if (response.getStatus() != HttpStatus.OK_200) {
+            response.close();
+            throw new EntityServiceException("Invalid HTTP status returned from rename: " + response.getStatus());
+        }
+
+        final DocRefEntity docRefEntity = response.readEntity(DocRefEntitySafe.class);
+
+        return getDocRef(docRefEntity);
+    }
+
+    private DocRef getDocRef(final DocRefEntity entity) {
+        return new DocRef.Builder()
+                .uuid(entity.getUuid())
+                .name(entity.getName())
+                .type(this.type)
+                .build();
+    }
 }
