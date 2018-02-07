@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -99,33 +100,32 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     @Override
     public void deleteNode(final DocRef docRef) {
         try {
-            final ExplorerTreeNode docNode = getNodeForDocRef(docRef);
-            explorerTreeDao.remove(docNode);
+            getNodeForDocRef(docRef).ifPresent(explorerTreeDao::remove);
 
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
-    private ExplorerTreeNode getNodeForDocRef(final DocRef docRef) {
-        if (docRef == null) {
-            return null;
-        }
-
-        return explorerTreeDao.findByUUID(docRef.getUuid());
+    private Optional<ExplorerTreeNode> getNodeForDocRef(final DocRef docRef) {
+        return Optional.of(docRef)
+                .map(d -> explorerTreeDao.findByUUID(d.getUuid()));
     }
 
     @Override
-    public ExplorerNode getRoot() {
-        List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-        if (roots == null || roots.size() == 0) {
-            createRoot();
-            roots = explorerTreeDao.getRoots();
-        }
-        if (roots == null || roots.size() == 0) {
-            return null;
-        }
-        return createExplorerNode(roots.get(0));
+    public Optional<ExplorerNode> getRoot() {
+        final List<ExplorerTreeNode> roots = Optional
+                .of(explorerTreeDao.getRoots())
+                .filter(r -> r.size() > 0)
+                .orElseGet(() -> {
+                    createRoot();
+                    return explorerTreeDao.getRoots();
+                });
+
+        return Optional.of(roots)
+                .filter(r -> r.size() > 0)
+                .map(r -> r.get(0))
+                .map(this::createExplorerNode);
     }
 
     private synchronized void createRoot() {
@@ -138,26 +138,24 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public ExplorerNode getNode(final DocRef docRef) {
-        final ExplorerTreeNode node = getNodeForDocRef(docRef);
-        if (node == null) {
-            return null;
-        }
-
-        return createExplorerNode(node);
+    public Optional<ExplorerNode> getNode(final DocRef docRef) {
+        return getNodeForDocRef(docRef)
+                .map(this::createExplorerNode);
     }
 
     @Override
     public List<ExplorerNode> getPath(final DocRef docRef) {
-        final ExplorerTreeNode node = getNodeForDocRef(docRef);
-        if (node == null) {
-            return null;
-        }
-
-        final List<ExplorerTreeNode> path = explorerTreeDao.getPath(node);
-        return path.stream()
+        return getNodeForDocRef(docRef)
+                .map(explorerTreeDao::getPath).orElse(Collections.emptyList()).stream()
                 .map(this::createExplorerNode)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<ExplorerNode> getParent(DocRef docRef) {
+        return getNodeForDocRef(docRef)
+                .map(explorerTreeDao::getParent)
+                .map(this::createExplorerNode);
     }
 
     @Override
@@ -179,24 +177,20 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
      */
     private List<ExplorerNode> getDescendants(final DocRef folderDocRef,
                                               final Function<ExplorerTreeNode, List<ExplorerTreeNode>> fetchFunction) {
-        List<ExplorerTreeNode> nodes;
-
         if (folderDocRef == null) {
-            nodes = new ArrayList<>();
-            final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-            roots.forEach(root -> nodes.addAll(fetchFunction.apply(root)));
+            return explorerTreeDao.getRoots().stream()
+                    .map(fetchFunction)
+                    .flatMap(List::stream) // potential multiple roots returned from tree DAO
+                    .map(this::createExplorerNode)
+                    .collect(Collectors.toList());
         } else {
-            final ExplorerTreeNode node = getNodeForDocRef(folderDocRef);
-            if (node == null) {
-                nodes = Collections.emptyList();
-            } else {
-                nodes = fetchFunction.apply(node);
-            }
+            return getNodeForDocRef(folderDocRef)
+                    .map(fetchFunction)
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .map(this::createExplorerNode)
+                    .collect(Collectors.toList());
         }
-
-        return nodes.stream()
-                .map(this::createExplorerNode)
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -224,7 +218,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private void addNode(final DocRef parentFolderRef, final DocRef docRef) {
         try {
-            final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef);
+            final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
             final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef);
             setTags(docNode);
             explorerTreeDao.addChild(folderNode, docNode);
@@ -236,8 +230,8 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private void moveNode(final DocRef parentFolderRef, final DocRef docRef) {
         try {
-            final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef);
-            final ExplorerTreeNode docNode = getNodeForDocRef(docRef);
+            final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
+            final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
             explorerTreeDao.move(docNode, folderNode);
 
         } catch (final Exception e) {
@@ -247,7 +241,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private void updateNode(final DocRef docRef) {
         try {
-            final ExplorerTreeNode docNode = getNodeForDocRef(docRef);
+            final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
             if (docNode != null) {
                 docNode.setType(docRef.getType());
                 docNode.setUuid(docRef.getUuid());

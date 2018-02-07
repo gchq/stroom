@@ -22,6 +22,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRef;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ExplorerNodeService {
     void createNode(DocRef docRef, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
@@ -34,11 +35,13 @@ public interface ExplorerNodeService {
 
     void deleteNode(DocRef docRef);
 
-    ExplorerNode getRoot();
+    Optional<ExplorerNode> getRoot();
 
-    ExplorerNode getNode(DocRef docRef);
+    Optional<ExplorerNode> getNode(DocRef docRef);
 
     List<ExplorerNode> getPath(DocRef docRef);
+
+    Optional<ExplorerNode> getParent(DocRef docRef);
 
     /**
      * This will return all descendants (including itself) for a doc ref

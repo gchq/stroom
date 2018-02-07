@@ -74,6 +74,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to update (" + FOLDER + ")");
         }
         NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
+        explorerTreeNode.setName(name);
         return explorerTreeNode.getDocRef();
     }
 

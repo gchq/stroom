@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -321,10 +322,10 @@ class ExplorerServiceImpl implements ExplorerService {
 
     @Override
     public DocRef create(final String type, final String name, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        DocRef folderRef = destinationFolderRef;
-        if (folderRef == null) {
-            folderRef = explorerNodeService.getRoot().getDocRef();
-        }
+        final DocRef folderRef = Optional.of(destinationFolderRef)
+                .orElse(explorerNodeService.getRoot()
+                        .map(ExplorerNode::getDocRef).orElse(null)
+                );
 
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
 
@@ -352,17 +353,24 @@ class ExplorerServiceImpl implements ExplorerService {
     public BulkActionResult copy(final List<DocRef> docRefs,
                                  final DocRef destinationFolderRef,
                                  final PermissionInheritance permissionInheritance) {
-        DocRef folderRef = destinationFolderRef;
-        if (folderRef == null) {
-            folderRef = explorerNodeService.getRoot().getDocRef();
-        }
+        final DocRef folderRef = Optional.of(destinationFolderRef)
+                .orElse(explorerNodeService.getRoot()
+                        .map(ExplorerNode::getDocRef)
+                        .orElse(null));
 
         final List<DocRef> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        for (final DocRef sourceDocRef : docRefs) {
-            recurseCopy(sourceDocRef, folderRef, permissionInheritance, resultDocRefs, resultMessage);
-        }
+        docRefs.forEach(sourceDocRef ->
+            explorerNodeService.getParent(sourceDocRef)
+                    .map(ExplorerNode::getDocRef)
+                    .ifPresent(sourceParent -> recurseCopy(sourceParent,
+                            sourceDocRef,
+                            folderRef,
+                            permissionInheritance,
+                            resultDocRefs,
+                            resultMessage))
+        );
 
         // Make sure the tree model is rebuilt.
         rebuildTree();
@@ -373,13 +381,15 @@ class ExplorerServiceImpl implements ExplorerService {
     /**
      * Copy the contents of a folder recursively
      *
+     * @param sourceDirectoryFolderRef The doc ref of the folder that the source belongs to
      * @param sourceDocRef          The doc ref for the folder being copied
      * @param destinationFolderRef  The doc ref for the destination folder
      * @param permissionInheritance The mode of permission inheritance being used for the whole operation
      * @param resultDocRefs         Allow contribution to result doc refs
      * @param resultMessage         Allow contribution to result message
      */
-    private void recurseCopy(final DocRef sourceDocRef,
+    private void recurseCopy(final DocRef sourceDirectoryFolderRef,
+                             final DocRef sourceDocRef,
                              final DocRef destinationFolderRef,
                              final PermissionInheritance permissionInheritance,
                              final List<DocRef> resultDocRefs,
@@ -387,13 +397,35 @@ class ExplorerServiceImpl implements ExplorerService {
 
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceDocRef.getType());
 
-        DocRef destinationDocRef = null;
-
         try {
-            destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(), getUUID(destinationFolderRef));
+            final DocRef destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(), getUUID(destinationFolderRef));
             explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, null);
             resultDocRefs.add(destinationDocRef);
 
+            // Create the explorer node
+            if (destinationDocRef != null) {
+                explorerNodeService.copyNode(sourceDocRef, destinationDocRef, destinationFolderRef, permissionInheritance);
+
+                // If the source directory and destination directory are the same, rename it with 'copy of'
+                if (sourceDirectoryFolderRef.getUuid().equals(destinationFolderRef.getUuid())) {
+                    rename(handler, destinationDocRef, String.format("Copy of %s", destinationDocRef.getName()));
+                }
+            }
+
+            // Handle recursion for copying folders
+            if (sourceDocRef.getType().equals(ExplorerConstants.FOLDER)) {
+                final List<ExplorerNode> sourceDescendants = explorerNodeService.getChildren(sourceDocRef);
+                for (final ExplorerNode sourceDescendant : sourceDescendants) {
+
+                    // The tree DAO returns the node itself when descendants are requested
+                    recurseCopy(sourceDocRef,
+                            sourceDescendant.getDocRef(),
+                            destinationDocRef,
+                            permissionInheritance,
+                            resultDocRefs,
+                            resultMessage);
+                }
+            }
         } catch (final Exception e) {
             explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, e);
             resultMessage.append("Unable to copy '");
@@ -402,35 +434,16 @@ class ExplorerServiceImpl implements ExplorerService {
             resultMessage.append(e.getMessage());
             resultMessage.append("\n");
         }
-
-        // Create the explorer node
-        if (destinationDocRef != null) {
-            explorerNodeService.copyNode(sourceDocRef, destinationDocRef, destinationFolderRef, permissionInheritance);
-        }
-
-        // Handle recursion for copying folders
-        if (sourceDocRef.getType().equals(ExplorerConstants.FOLDER)) {
-            final List<ExplorerNode> sourceDescendants = explorerNodeService.getChildren(sourceDocRef);
-            for (final ExplorerNode sourceDescendant : sourceDescendants) {
-
-                // The tree DAO returns the node itself when descendants are requested
-                recurseCopy(sourceDescendant.getDocRef(),
-                        destinationDocRef,
-                        permissionInheritance,
-                        resultDocRefs,
-                        resultMessage);
-            }
-        }
     }
 
     @Override
     public BulkActionResult move(final List<DocRef> docRefs,
                                  final DocRef destinationFolderRef,
                                  final PermissionInheritance permissionInheritance) {
-        DocRef folderRef = destinationFolderRef;
-        if (folderRef == null) {
-            folderRef = explorerNodeService.getRoot().getDocRef();
-        }
+        final DocRef folderRef = Optional.of(destinationFolderRef)
+                .orElse(explorerNodeService.getRoot()
+                        .map(ExplorerNode::getDocRef)
+                        .orElse(null));
 
         final List<DocRef> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
@@ -470,6 +483,17 @@ class ExplorerServiceImpl implements ExplorerService {
     public DocRef rename(final DocRef docRef, final String docName) {
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
 
+        final DocRef result = rename(handler, docRef, docName);
+
+        // Make sure the tree model is rebuilt.
+        rebuildTree();
+
+        return result;
+    }
+
+    private DocRef rename(final ExplorerActionHandler handler,
+                          final DocRef docRef,
+                          final String docName) {
         DocRef result;
 
         try {
@@ -482,9 +506,6 @@ class ExplorerServiceImpl implements ExplorerService {
 
         // Rename the explorer node.
         explorerNodeService.renameNode(result);
-
-        // Make sure the tree model is rebuilt.
-        rebuildTree();
 
         return result;
     }
