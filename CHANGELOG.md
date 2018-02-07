@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#623** : Fixed issue where items were being added to sublist causing a stack overflow exception during data retention processing.
+
 * Issue **#617** : Introduced a concept of `system` document types that prevents the root `System` folder type from being created, copied, deleted, moved, renamed etc.
 
 * Issue **#622** : Fix incorrect service discovery based api paths, remove authentication and authorisation from service discovery
