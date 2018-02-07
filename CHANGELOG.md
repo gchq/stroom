@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#480** : Change the downloaded search request API JSON to have a fetch type of ALL.
+
 * Issue **#617** : Introduced a concept of `system` document types that prevents the root `System` folder type from being created, copied, deleted, moved, renamed etc.
 
 * Issue **#622** : Fix incorrect service discovery based api paths, remove authentication and authorisation from service discovery
