@@ -247,9 +247,9 @@ public class DataRetentionExecutor {
                             more = finder.findMatches(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskMonitor, progress, streamIdDeleteList);
 
                             // Delete a batch of streams.
-                            while (streamIdDeleteList.size() > batchSize) {
-                                final List<Long> batch = new ArrayList<>(streamIdDeleteList.subList(0, batchSize - 1));
-                                streamIdDeleteList = new ArrayList<>(streamIdDeleteList.subList(batchSize, streamIdDeleteList.size() - 1));
+                            while (streamIdDeleteList.size() >= batchSize) {
+                                final List<Long> batch = new ArrayList<>(streamIdDeleteList.subList(0, batchSize));
+                                streamIdDeleteList = new ArrayList<>(streamIdDeleteList.subList(batchSize, streamIdDeleteList.size()));
                                 deleter.deleteStreams(batch);
                             }
                         }
