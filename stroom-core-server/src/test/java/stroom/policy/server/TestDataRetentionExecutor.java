@@ -30,7 +30,9 @@ import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.util.date.DateUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class TestDataRetentionExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionExecutor.class);
@@ -60,6 +62,24 @@ public class TestDataRetentionExecutor {
         LOGGER.info("stream " + progress.toString());
 
         Assert.assertEquals("age between 2010-01-01T00:00:00.000Z and 2010-01-02T00:00:00.000Z (1 of 100), 1% complete, current stream id=12345", progress.toString());
+    }
+
+    @Test
+    public void testSubList() {
+        List<Integer> streamIdDeleteList = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            streamIdDeleteList.add(i);
+        }
+
+        final int batchSize = 10;
+        while (streamIdDeleteList.size() >= batchSize) {
+            final List<Integer> batch = new ArrayList<>(streamIdDeleteList.subList(0, batchSize));
+            streamIdDeleteList = new ArrayList<>(streamIdDeleteList.subList(batchSize, streamIdDeleteList.size()));
+
+            Assert.assertEquals(10, batch.size());
+        }
+
+        Assert.assertEquals(0, streamIdDeleteList.size());
     }
 
     private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final stroom.streamstore.shared.TimeUnit timeUnit) {
