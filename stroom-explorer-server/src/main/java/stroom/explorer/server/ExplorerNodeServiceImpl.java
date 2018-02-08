@@ -108,21 +108,22 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private Optional<ExplorerTreeNode> getNodeForDocRef(final DocRef docRef) {
-        return Optional.of(docRef)
-                .map(d -> explorerTreeDao.findByUUID(d.getUuid()));
+        return Optional.ofNullable(docRef)
+                .map(DocRef::getUuid)
+                .map(explorerTreeDao::findByUUID);
     }
 
     @Override
     public Optional<ExplorerNode> getRoot() {
         final List<ExplorerTreeNode> roots = Optional
-                .of(explorerTreeDao.getRoots())
+                .ofNullable(explorerTreeDao.getRoots())
                 .filter(r -> r.size() > 0)
                 .orElseGet(() -> {
                     createRoot();
                     return explorerTreeDao.getRoots();
                 });
 
-        return Optional.of(roots)
+        return Optional.ofNullable(roots)
                 .filter(r -> r.size() > 0)
                 .map(r -> r.get(0))
                 .map(this::createExplorerNode);
