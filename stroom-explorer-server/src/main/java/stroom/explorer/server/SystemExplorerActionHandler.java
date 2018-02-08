@@ -8,6 +8,7 @@ import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -28,19 +29,22 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public DocRef copyDocument(final String uuid, final String parentFolderUUID) {
-        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(uuid);
+    public DocRef copyDocument(final String originalUuid,
+                               final String copyUuid,
+                               final Map<String, String> otherCopiesByOriginalUuid,
+                               final String parentFolderUUID) {
+        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(originalUuid);
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to copy");
         }
 
-        if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(FOLDER, originalUuid, DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
         if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
         }
-        return new DocRef(FOLDER, UUID.randomUUID().toString(), explorerTreeNode.getName());
+        return new DocRef(FOLDER, copyUuid, explorerTreeNode.getName());
     }
 
     @Override

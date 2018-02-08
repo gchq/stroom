@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.dashboard.shared.Dashboard;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
@@ -62,6 +63,22 @@ public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualis
     @Override
     public FindVisualisationCriteria createCriteria() {
         return new FindVisualisationCriteria();
+    }
+
+    @Override
+    public DocRef copyDocument(final String originalUuid,
+                               final String copyUuid,
+                               final Map<String, String> otherCopiesByOriginalUuid,
+                               final String parentFolderUUID) {
+        final DocRef copiedDocRef = super.copyDocument(originalUuid,
+                copyUuid,
+                otherCopiesByOriginalUuid,
+                parentFolderUUID);
+
+        return makeCopyUuidReplacements(copiedDocRef,
+                otherCopiesByOriginalUuid,
+                Visualisation::getScriptRefXML,
+                Visualisation::setScriptRefXML);
     }
 
     @Override

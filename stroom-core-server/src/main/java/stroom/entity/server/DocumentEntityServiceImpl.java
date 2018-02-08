@@ -50,7 +50,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -314,7 +317,41 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return success;
     }
 
-    private E copy(final E document, final String parentFolderUUID) {
+    /**
+     * This function is used when doing batch document copy operations.
+     *
+     * It can be used by any entities which serialize themselves into a single string field.
+     * If that string field contains all the UUID's of dependant entities, then it is simple a case of
+     * string replacing the original UUID's with the UUID's of the copies being made.
+     *
+     * @param copyDocRef The Doc Ref of the new copy
+     * @param otherCopiesByOriginalUuid The map of copies of other documents, by their original UUID
+     * @param dataSupplier The getter
+     * @param dataReceiver The setter
+     */
+    protected DocRef makeCopyUuidReplacements(final DocRef copyDocRef,
+                                              final Map<String, String> otherCopiesByOriginalUuid,
+                                              final Function<E, String> dataSupplier,
+                                              final BiConsumer<E, String> dataReceiver) {
+
+        final E copiedEntity = loadByUuid(copyDocRef.getUuid(), Collections.emptySet(), null);
+
+        // Rewrite UUID's of dependant documents
+        String modifiedData = dataSupplier.apply(copiedEntity);
+        for (final Map.Entry<String, String> copyByOriginal : otherCopiesByOriginalUuid.entrySet()) {
+            modifiedData = modifiedData.replaceAll(copyByOriginal.getKey(), copyByOriginal.getValue());
+        }
+
+        dataReceiver.accept(copiedEntity, modifiedData);
+
+        save(copiedEntity, null);
+
+        return copyDocRef;
+    }
+
+    private E copy(final E document,
+                   final String copyUuid,
+                   final String parentFolderUUID) {
         try {
             // Ensure we are working with effectively a 'new document'
             entityManager.detach(document);
@@ -325,7 +362,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             // This is going to be a copy so clear the persistence so save will create a new DB entry.
             document.clearPersistence();
 
-            document.setUuid(UUID.randomUUID().toString());
+            document.setUuid(copyUuid);
 
             return entityServiceHelper.save(document, queryAppender);
         } catch (final RuntimeException e) {
@@ -482,12 +519,15 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     @Override
-    public DocRef copyDocument(final String uuid, final String parentFolderUUID) {
-        final E entity = loadByUuid(uuid);
+    public DocRef copyDocument(final String originalUuid,
+                               final String copyUuid,
+                               final Map<String, String> otherCopiesByOriginalUuid,
+                               final String parentFolderUUID) {
+        final E entity = loadByUuid(originalUuid);
         if (entity == null) {
             throw new EntityServiceException("Entity not found");
         }
-        final E copy = copy(entity, parentFolderUUID);
+        final E copy = copy(entity, copyUuid, parentFolderUUID);
         return DocRefUtil.create(copy);
     }
 

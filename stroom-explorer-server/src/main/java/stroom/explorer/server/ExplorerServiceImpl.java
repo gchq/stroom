@@ -40,12 +40,18 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -316,15 +322,17 @@ class ExplorerServiceImpl implements ExplorerService {
     }
 
     private List<DocumentType> getDocumentTypes(final Collection<String> visibleTypes) {
-        final List<DocumentType> allTypes = getNonSystemTypes();
-        return allTypes.stream().filter(type -> visibleTypes.contains(type.getType())).collect(Collectors.toList());
+        return getNonSystemTypes().stream()
+                .filter(type -> visibleTypes.contains(type.getType()))
+                .collect(Collectors.toList());
     }
 
     @Override
     public DocRef create(final String type, final String name, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        final DocRef folderRef = Optional.of(destinationFolderRef)
+        final DocRef folderRef = Optional.ofNullable(destinationFolderRef)
                 .orElse(explorerNodeService.getRoot()
-                        .map(ExplorerNode::getDocRef).orElse(null)
+                        .map(ExplorerNode::getDocRef)
+                        .orElse(null)
                 );
 
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
@@ -351,31 +359,62 @@ class ExplorerServiceImpl implements ExplorerService {
 
     @Override
     public BulkActionResult copy(final List<DocRef> docRefs,
-                                 final DocRef destinationFolderRef,
+                                 final DocRef potentialDestinationFolderRef,
                                  final PermissionInheritance permissionInheritance) {
-        final DocRef folderRef = Optional.of(destinationFolderRef)
+        final DocRef destinationFolderRef = Optional.ofNullable(potentialDestinationFolderRef)
                 .orElse(explorerNodeService.getRoot()
                         .map(ExplorerNode::getDocRef)
-                        .orElse(null));
+                        .orElseThrow(() -> new RuntimeException("Cannot copy into null destination")));
 
         final List<DocRef> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
+
+        final Map<DocRef, List<ExplorerNode>> childNodesByParent = new HashMap<>();
+        recurseGetNodes(docRefs.stream(), childNodesByParent::put);
+
+        // Create the UUID's of the copies up front
+        final Map<String, String> copiesByOriginalUuid = childNodesByParent.keySet() .stream()
+                .filter(d -> !d.getType().equals(Feed.ENTITY_TYPE)) // we don't copy feeds
+                .collect(Collectors.toMap(DocRef::getUuid, (d) -> UUID.randomUUID().toString()));
 
         docRefs.forEach(sourceDocRef ->
             explorerNodeService.getParent(sourceDocRef)
                     .map(ExplorerNode::getDocRef)
                     .ifPresent(sourceParent -> recurseCopy(sourceParent,
                             sourceDocRef,
-                            folderRef,
+                            destinationFolderRef,
                             permissionInheritance,
                             resultDocRefs,
-                            resultMessage))
+                            resultMessage,
+                            copiesByOriginalUuid,
+                            childNodesByParent)
+                    )
         );
 
         // Make sure the tree model is rebuilt.
         rebuildTree();
 
         return new BulkActionResult(resultDocRefs, resultMessage.toString());
+    }
+
+    /**
+     * This traverses the explorer tree and creates a cache of child Explorer Nodes by their parent Doc Ref.
+     * This will be used to pre-choose UUID's for all the copies to be made, and then used as a cache for executing
+     * the copy.
+     * @param docRefs The source doc refs being copied
+     * @param childNodesByUuid The map of children by parent being built
+     */
+    private void recurseGetNodes(final Stream<DocRef> docRefs,
+                                 final BiConsumer<DocRef, List<ExplorerNode>> childNodesByUuid) {
+        docRefs.forEach(sourceDocRef -> {
+            final List<ExplorerNode> sourceDescendants = explorerNodeService.getChildren(sourceDocRef);
+            childNodesByUuid.accept(sourceDocRef, sourceDescendants);
+
+            sourceDescendants.stream()
+                    .map(ExplorerNode::getDocRef)
+                    .map(Stream::of)
+                    .forEach(l -> recurseGetNodes(l, childNodesByUuid));
+        });
     }
 
     /**
@@ -387,18 +426,27 @@ class ExplorerServiceImpl implements ExplorerService {
      * @param permissionInheritance The mode of permission inheritance being used for the whole operation
      * @param resultDocRefs         Allow contribution to result doc refs
      * @param resultMessage         Allow contribution to result message
+     * @param copiesByOriginalUuid  UUID's of the intended copies by their original UUID
+     * @param childNodesByParent    A cached version of the explorer node tree
      */
     private void recurseCopy(final DocRef sourceDirectoryFolderRef,
                              final DocRef sourceDocRef,
                              final DocRef destinationFolderRef,
                              final PermissionInheritance permissionInheritance,
                              final List<DocRef> resultDocRefs,
-                             final StringBuilder resultMessage) {
+                             final StringBuilder resultMessage,
+                             final Map<String, String> copiesByOriginalUuid,
+                             final Map<DocRef, List<ExplorerNode>> childNodesByParent) {
+        final String destinationUuid = copiesByOriginalUuid.get(sourceDocRef.getUuid());
+        if (null == destinationUuid) return;
 
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceDocRef.getType());
 
         try {
-            final DocRef destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(), getUUID(destinationFolderRef));
+            final DocRef destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(),
+                    destinationUuid,
+                    copiesByOriginalUuid,
+                    getUUID(destinationFolderRef));
             explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, null);
             resultDocRefs.add(destinationDocRef);
 
@@ -408,24 +456,24 @@ class ExplorerServiceImpl implements ExplorerService {
 
                 // If the source directory and destination directory are the same, rename it with 'copy of'
                 if (sourceDirectoryFolderRef.getUuid().equals(destinationFolderRef.getUuid())) {
-                    rename(handler, destinationDocRef, String.format("Copy of %s", destinationDocRef.getName()));
+                    final String copyName = getCopyName(destinationFolderRef, destinationDocRef);
+                    rename(handler, destinationDocRef, copyName);
                 }
             }
 
-            // Handle recursion for copying folders
-            if (sourceDocRef.getType().equals(ExplorerConstants.FOLDER)) {
-                final List<ExplorerNode> sourceDescendants = explorerNodeService.getChildren(sourceDocRef);
-                for (final ExplorerNode sourceDescendant : sourceDescendants) {
-
-                    // The tree DAO returns the node itself when descendants are requested
-                    recurseCopy(sourceDocRef,
-                            sourceDescendant.getDocRef(),
-                            destinationDocRef,
-                            permissionInheritance,
-                            resultDocRefs,
-                            resultMessage);
-                }
-            }
+            // Handle recursion
+            childNodesByParent.get(sourceDocRef)
+                    .forEach(sourceDescendant ->
+                            recurseCopy(sourceDocRef,
+                                    sourceDescendant.getDocRef(),
+                                    destinationDocRef,
+                                    permissionInheritance,
+                                    resultDocRefs,
+                                    resultMessage,
+                                    copiesByOriginalUuid,
+                                    childNodesByParent
+                            )
+                    );
         } catch (final Exception e) {
             explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, e);
             resultMessage.append("Unable to copy '");
@@ -436,11 +484,32 @@ class ExplorerServiceImpl implements ExplorerService {
         }
     }
 
+    private String getCopyName(final DocRef destinationFolderDocRef,
+                               final DocRef destinationDocRef) {
+
+        final List<String> otherDestinationChildrenNames = explorerNodeService.getChildren(destinationFolderDocRef)
+                .stream()
+                .map(ExplorerNode::getDocRef)
+                .map(DocRef::getName)
+                .collect(Collectors.toList());
+
+        int copyIndex = 0;
+        String copyName = String.format("%s - Copy", destinationDocRef.getName());
+
+        while (otherDestinationChildrenNames.contains(copyName)) {
+            copyIndex++;
+            copyName = String.format("%s - Copy %d", destinationDocRef.getName(), copyIndex);
+        }
+
+
+        return copyName;
+    }
+
     @Override
     public BulkActionResult move(final List<DocRef> docRefs,
                                  final DocRef destinationFolderRef,
                                  final PermissionInheritance permissionInheritance) {
-        final DocRef folderRef = Optional.of(destinationFolderRef)
+        final DocRef folderRef = Optional.ofNullable(destinationFolderRef)
                 .orElse(explorerNodeService.getRoot()
                         .map(ExplorerNode::getDocRef)
                         .orElse(null));
@@ -554,10 +623,9 @@ class ExplorerServiceImpl implements ExplorerService {
     }
 
     private String getUUID(final DocRef docRef) {
-        if (docRef == null) {
-            return null;
-        }
-        return docRef.getUuid();
+        return Optional.ofNullable(docRef)
+                .map(DocRef::getUuid)
+                .orElse(null);
     }
 
 //    private void addDocumentPermissions(final DocRef source, final DocRef dest, final boolean owner) {

@@ -18,6 +18,7 @@ package stroom.externaldoc.server;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.eclipse.jetty.http.HttpStatus;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.SharedDocRef;
 import stroom.importexport.shared.ImportState;
@@ -36,10 +37,12 @@ import stroom.util.shared.Severity;
 
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntityService {
@@ -124,9 +127,15 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     }
 
     @Override
-    public DocRef copyDocument(final String uuid, final String parentFolderUUID) {
-        final String copyUuid = UUID.randomUUID().toString();
-        final Response response = docRefHttpClient.copyDocument(serviceUser(), uuid, copyUuid, parentFolderUUID);
+    public DocRef copyDocument(final String originalUuid,
+                               final String copyUuid,
+                               final Map<String, String> otherCopiesByOriginalUuid,
+                               final String parentFolderUUID) {
+        final Response response = docRefHttpClient.copyDocument(
+                serviceUser(),
+                originalUuid,
+                copyUuid,
+                parentFolderUUID);
 
         return readDocRefEntityResponse(response);
     }
@@ -224,7 +233,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
-        return null;
+        return listDocuments().stream().collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
     ////////////////////////////////////////////////////////////////////////
