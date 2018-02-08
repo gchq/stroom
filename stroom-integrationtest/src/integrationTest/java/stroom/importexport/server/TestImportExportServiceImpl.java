@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.shared.ImportState;
 import stroom.explorer.server.ExplorerNodeService;
 import stroom.explorer.server.ExplorerService;
@@ -59,7 +60,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     public void testExport() {
         // commonTestControl.deleteDir();
 
-        final DocRef system = explorerNodeService.getRoot().getDocRef();
+        final DocRef system = explorerNodeService.getRoot().map(ExplorerNode::getDocRef).orElse(null);
         Assert.assertEquals(1, explorerNodeService.getDescendants(system).size());
 
         final DocRef folder1 = explorerService.create(ExplorerConstants.FOLDER, "Root1_", system, null);

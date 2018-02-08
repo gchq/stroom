@@ -124,4 +124,51 @@ public class ExplorerNode implements HasType, HasUuid, HasNodeState, HasDisplayV
     public String toString() {
         return getDisplayValue();
     }
+
+    public static class Builder {
+        private final ExplorerNode instance;
+
+        public Builder() {
+            this.instance = new ExplorerNode();
+        }
+
+        public Builder type(final String type) {
+            this.instance.type = type;
+            return this;
+        }
+
+        public Builder uuid(final String uuid) {
+            this.instance.uuid = uuid;
+            return this;
+        }
+
+        public Builder name(final String name) {
+            this.instance.name = name;
+            return this;
+        }
+
+        public Builder tags(final String tags) {
+            this.instance.tags = tags;
+            return this;
+        }
+
+        public Builder depth(final int depth) {
+            this.instance.depth = depth;
+            return this;
+        }
+
+        public Builder iconUrl(final String iconUrl) {
+            this.instance.iconUrl = iconUrl;
+            return this;
+        }
+
+        public Builder nodeState(final NodeState nodeState) {
+            this.instance.nodeState = nodeState;
+            return this;
+        }
+
+        public ExplorerNode build() {
+            return instance;
+        }
+    }
 }
