@@ -66,8 +66,6 @@ public class CreateDocumentPresenter
     @ProxyEvent
     @Override
     public void onCreate(final ShowCreateDocumentDialogEvent event) {
-        getView().setPermissionInheritance(PermissionInheritance.INHERIT);
-
         docType = event.getDocType();
 
         entityTreePresenter.setSelectedItem(null);
@@ -104,6 +102,8 @@ public class CreateDocumentPresenter
     @Override
     protected void revealInParent() {
         getView().setName("");
+        getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
+
         final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
         getView().focus();

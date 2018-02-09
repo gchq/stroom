@@ -41,9 +41,10 @@ public class CopyDocumentViewImpl extends ViewWithUiHandlers<PopupUiHandlers> im
         widget = binder.createAndBindUi(this);
 
         permissionInheritance.addItem(PermissionInheritance.NONE);
-        permissionInheritance.addItem(PermissionInheritance.INHERIT);
+        permissionInheritance.addItem(PermissionInheritance.SOURCE);
+        permissionInheritance.addItem(PermissionInheritance.DESTINATION);
         permissionInheritance.addItem(PermissionInheritance.COMBINED);
-        permissionInheritance.setSelectedItem(PermissionInheritance.INHERIT);
+        permissionInheritance.setSelectedItem(PermissionInheritance.DESTINATION);
     }
 
     @Override
