@@ -40,6 +40,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -78,8 +79,30 @@ public class DictionaryStoreImpl implements DictionaryStore {
     }
 
     @Override
-    public DocRef copyDocument(final String uuid, final String parentFolderUUID) {
-        return store.copyDocument(uuid, parentFolderUUID);
+    public DocRef copyDocument(final String originalUuid,
+                               final String copyUuid,
+                               final Map<String, String> otherCopiesByOriginalUuid,
+                               final String parentFolderUUID) {
+        final DocRef docRef = store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid, parentFolderUUID);
+
+        final DictionaryDoc doc = read(docRef.getUuid());
+
+        if (null != doc.getImports()) {
+            final List<DocRef> replacedDocRefImports = doc.getImports().stream()
+                    .map(docRefImport -> Optional.ofNullable(otherCopiesByOriginalUuid.get(docRefImport.getUuid())) // if there is a copy
+                            .map(u -> new DocRef.Builder() // build a new Doc Ref
+                                    .type(docRefImport.getType())
+                                    .name(docRefImport.getName())
+                                    .uuid(u)
+                                    .build())
+                            .orElse(docRefImport)) // otherwise just leave it as is
+                    .collect(Collectors.toList());
+
+            doc.setImports(replacedDocRefImports);
+            writeDocument(doc);
+        }
+
+        return docRef;
     }
 
     @Override

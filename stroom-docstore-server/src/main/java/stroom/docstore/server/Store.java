@@ -103,14 +103,17 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
     }
 
     @Override
-    public final DocRef copyDocument(final String uuid, final String parentFolderUUID) {
+    public final DocRef copyDocument(final String originalUuid,
+                                     final String copyUuid,
+                                     final Map<String, String> otherCopiesByOriginalUuid,
+                                     final String parentFolderUUID) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
-        final D document = read(uuid);
+        final D document = read(originalUuid);
         document.setType(type);
-        document.setUuid(UUID.randomUUID().toString());
-        document.setName("Copy of " + document.getName());
+        document.setUuid(copyUuid);
+        document.setName(document.getName());
         document.setVersion(UUID.randomUUID().toString());
         document.setCreateTime(now);
         document.setUpdateTime(now);
@@ -269,7 +272,9 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
     }
 
     @Override
-    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, String> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         Map<String, String> data = Collections.emptyMap();
 
         final String uuid = docRef.getUuid();
