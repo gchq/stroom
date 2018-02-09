@@ -187,10 +187,9 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         } else {
             return getNodeForDocRef(folderDocRef)
                     .map(fetchFunction)
-                    .orElse(Collections.emptyList())
-                    .stream()
-                    .map(this::createExplorerNode)
-                    .collect(Collectors.toList());
+                    .map(d -> d.stream().map(this::createExplorerNode)
+                            .collect(Collectors.toList()))
+                    .orElse(Collections.emptyList());
         }
     }
 
