@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import stroom.entity.client.presenter.HasReadAndWrite;
 import stroom.item.client.StringListBox;
+import stroom.query.api.v2.DocRef;
 import stroom.util.client.JSONUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.tab.client.presenter.Layer;

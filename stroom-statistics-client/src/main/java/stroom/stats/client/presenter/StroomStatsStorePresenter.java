@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntityData;
@@ -68,14 +69,14 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     }
 
     @Override
-    public void onRead(final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    public void onRead(final DocRef docRef, final StroomStatsStoreEntity stroomStatsStoreEntity) {
         if (stroomStatsStoreEntity != null) {
             if (stroomStatsStoreEntity.getDataObject() == null) {
                 stroomStatsStoreEntity.setDataObject(new StroomStatsStoreEntityData());
             }
         }
 
-        tabContentProvider.read(stroomStatsStoreEntity);
+        tabContentProvider.read(docRef, stroomStatsStoreEntity);
 
         // the field and rollup presenters need to know about each other as
         // changes in one affect the other

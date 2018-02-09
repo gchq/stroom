@@ -32,7 +32,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.HasRead;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.svg.client.SvgPreset;
@@ -46,7 +45,7 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import java.util.Comparator;
 import java.util.Map;
 
-public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheNodeRow>> implements HasRead<CacheRow> {
+public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheNodeRow>> {
     private static final int SMALL_COL = 90;
     private static final int MEDIUM_COL = 150;
 
@@ -150,7 +149,6 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         return sb.toString();
     }
 
-    @Override
     public void read(final CacheRow entity) {
         if (entity != null) {
             action.setCacheName(entity.getCacheName());

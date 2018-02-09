@@ -37,7 +37,6 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.util.shared.HasNodeState;
 import stroom.widget.spinner.client.SpinnerSmall;
-import stroom.widget.util.client.DoubleSelectTest;
 import stroom.widget.util.client.MultiSelectEvent;
 
 import java.util.List;

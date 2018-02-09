@@ -34,7 +34,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
@@ -80,7 +80,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStructurePresenter.PipelineStructureView>
-        implements HasRead<PipelineEntity>, HasWrite<PipelineEntity>, HasDirtyHandlers, PipelineStructureUiHandlers {
+        implements HasDocumentRead<PipelineEntity>, HasWrite<PipelineEntity>, HasDirtyHandlers, PipelineStructureUiHandlers {
     private final EntityDropDownPresenter pipelinePresenter;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -206,7 +206,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     @Override
-    public void read(final PipelineEntity pipelineEntity) {
+    public void read(final DocRef docRef, final PipelineEntity pipelineEntity) {
         final PipelineElement previousSelection = this.selectedElement;
 
         this.pipelineEntity = pipelineEntity;

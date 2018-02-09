@@ -27,6 +27,7 @@ import stroom.entity.client.presenter.TabContentProvider;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.process.client.presenter.ProcessorPresenter;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
@@ -98,8 +99,8 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     }
 
     @Override
-    public void onRead(final PipelineEntity pipelineEntity) {
-        tabContentProvider.read(pipelineEntity);
+    public void onRead(final DocRef docRef, final PipelineEntity pipelineEntity) {
+        tabContentProvider.read(docRef, pipelineEntity);
     }
 
     @Override

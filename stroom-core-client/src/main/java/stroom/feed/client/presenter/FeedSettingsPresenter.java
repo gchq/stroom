@@ -36,6 +36,7 @@ import stroom.feed.shared.FetchSupportedEncodingsAction;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.StreamTypeUiManager;
 import stroom.streamstore.shared.StreamType;
@@ -109,7 +110,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     }
 
     @Override
-    protected void onRead(final Feed feed) {
+    protected void onRead(final DocRef docRef, final Feed feed) {
         getView().getDescription().setText(feed.getDescription());
         getView().getReference().setBooleanValue(feed.isReference());
         getView().getClassification().setText(feed.getClassification());

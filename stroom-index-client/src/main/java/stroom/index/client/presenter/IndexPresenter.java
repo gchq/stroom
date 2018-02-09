@@ -25,6 +25,7 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.index.shared.Index;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -64,8 +65,8 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
     }
 
     @Override
-    public void onRead(final Index index) {
-        tabContentProvider.read(index);
+    public void onRead(final DocRef docRef, final Index index) {
+        tabContentProvider.read(docRef, index);
     }
 
     @Override

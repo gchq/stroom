@@ -34,7 +34,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
-import stroom.entity.client.presenter.HasRead;
 import stroom.jobsystem.client.JobTypeCell;
 import stroom.jobsystem.shared.FetchJobDataAction;
 import stroom.jobsystem.shared.Job;
@@ -50,7 +49,7 @@ import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
-public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNodeRow>> implements HasRead<Job> {
+public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNodeRow>> {
     private final SchedulePresenter schedulePresenter;
 
     private final SaveQueue<JobNode> jobNodeSaver;
@@ -260,7 +259,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         getView().addEndColumn(new EndColumn<>());
     }
 
-    @Override
     public void read(final Job entity) {
         action.setJob(entity);
         dataProvider.refresh();

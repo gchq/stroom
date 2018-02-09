@@ -31,8 +31,9 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
@@ -41,7 +42,7 @@ import stroom.widget.tickbox.client.view.TickBox;
 
 public class StatisticsDataSourceSettingsPresenter
         extends MyPresenterWidget<StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView>
-        implements HasRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers,
+        implements HasDocumentRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers,
         StatisticsDataSourceSettingsUiHandlers {
 
     @Inject
@@ -67,7 +68,7 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     @Override
-    public void read(final StatisticStoreEntity statisticsDataSource) {
+    public void read(final DocRef docRef, final StatisticStoreEntity statisticsDataSource) {
         if (statisticsDataSource != null) {
             getView().getDescription().setText(statisticsDataSource.getDescription());
             getView().setStatisticType(statisticsDataSource.getStatisticType());

@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
@@ -69,14 +70,14 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
     }
 
     @Override
-    public void onRead(final StatisticStoreEntity statisticsDataSource) {
+    public void onRead(final DocRef docRef, final StatisticStoreEntity statisticsDataSource) {
         if (statisticsDataSource != null) {
             if (statisticsDataSource.getStatisticDataSourceDataObject() == null) {
                 statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData());
             }
         }
 
-        tabContentProvider.read(statisticsDataSource);
+        tabContentProvider.read(docRef, statisticsDataSource);
 
         // the field and rollup presenters need to know about each other as
         // changes in one affect the other
