@@ -16,7 +16,14 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
-import stroom.query.common.v2.*;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.Payload;
+import stroom.query.common.v2.SearchResponseCreator;
+import stroom.query.common.v2.StoreSize;
+import stroom.query.common.v2.TableCoprocessor;
+import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.statistics.server.sql.SQLStatisticEventStore;
 import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
@@ -26,7 +33,11 @@ import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.util.shared.HasTerminate;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -183,10 +194,12 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
         StoreSize storeSize = new StoreSize(getStoreSizes());
         List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-        SqlStatisticsStore store = new SqlStatisticsStore(defaultMaxResultsSizes, storeSize);
-        store.process(coprocessorSettingsMap);
-        store.coprocessorMap(coprocessorMap);
-        store.payloadMap(payloadMap);
+        SqlStatisticsStore store = new SqlStatisticsStore(
+                defaultMaxResultsSizes,
+                storeSize,
+                coprocessorSettingsMap,
+                coprocessorMap,
+                payloadMap);
 
         SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);
         SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
