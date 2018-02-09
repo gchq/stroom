@@ -19,6 +19,7 @@ package stroom.search.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
+import stroom.query.common.v2.CompletionListener;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
@@ -41,10 +42,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
+public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult>, CompletionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
 
     public static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
@@ -63,6 +67,8 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     private volatile boolean terminated;
 
+    private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
+
     private ClusterSearchResultCollector(final TaskManager taskManager,
                                          final Task<VoidResult> task,
                                          final Node node,
@@ -79,6 +85,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         this.resultHandler = resultHandler;
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
+        this.resultHandler.registerCompletionListener(this);
 
         id = CollectorIdFactory.create();
 
@@ -125,6 +132,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     public void destroy() {
         clusterResultCollectorCache.remove(id);
         task.terminate();
+        completionListeners.clear();
     }
 
     @Override
@@ -167,6 +175,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     @Override
     public void terminate() {
         terminated = true;
+        notifyListenersOfCompletion();
     }
 
     public Set<String> getErrorSet(final Node node) {
@@ -222,6 +231,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         return storeSize;
     }
 
+
     @Override
     public Data getData(final String componentId) {
         // Keep the cluster result collector cache fresh.
@@ -236,5 +246,33 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     public ResultHandler getResultHandler() {
         return resultHandler;
+    }
+
+    @Override
+    public void registerCompletionListener(final CompletionListener completionListener) {
+        if (isComplete()) {
+            //immediate notification
+            completionListener.onCompletion();
+        } else {
+            completionListeners.add(Objects.requireNonNull(completionListener));
+        }
+    }
+
+    @Override
+    public void onCompletion() {
+        //fired on completion of the resultHandler that we registered an in interest in
+        //'this' is both a completion listener (on the ResultHandler) and has completionListeners of its own
+        notifyListenersOfCompletion();
+    }
+
+    private void notifyListenersOfCompletion() {
+        //Call isComplete to ensure we are complete and not terminated
+        if (isComplete()) {
+            for (CompletionListener listener; (listener = completionListeners.poll()) != null;){
+                //when notified they will check isComplete
+                LOGGER.debug("Notifying {} {} that we are complete", listener.getClass().getName(), listener);
+                listener.onCompletion();
+            }
+        }
     }
 }
