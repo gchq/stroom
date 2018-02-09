@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#523** : Changed permission behaviours for copy and move to support `None`, `Source`, `Destination` and `Combined` behaviours. Creating new items now allows for `None` and `Destination` permission behaviours. Also imported items now receive permissions from the destination folder. Event logging now indicates the permission behaviour used during copy, move and create operations.
+
 * Issue **#480** : Change the downloaded search request API JSON to have a fetch type of ALL.
 
 * Issue **#623** : Fixed issue where items were being added to sublist causing a stack overflow exception during data retention processing.

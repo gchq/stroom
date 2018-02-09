@@ -233,7 +233,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                         // Add explorer node afterwards on successful import as they won't be controlled by doc service.
                         if (!existingNode.isPresent() && !ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
-                            explorerNodeService.createNode(imported, folderRef, PermissionInheritance.INHERIT);
+                            explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
                             importExportEventLog.importDocument(type, imported.getUuid(), name, null);
                         }
                     }
@@ -292,7 +292,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     // Go and create the folder if we are actually importing now.
                     if (create) {
                         // Go and create the folder.
-                        final DocRef newFolder = explorerService.create(FOLDER, element, folderRef, PermissionInheritance.INHERIT);
+                        final DocRef newFolder = explorerService.create(FOLDER, element, folderRef, PermissionInheritance.DESTINATION);
                         parent = ExplorerNode.create(newFolder);
                     }
 
