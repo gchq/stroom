@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.clickable.client.Hyperlink;
 import stroom.cell.clickable.client.HyperlinkTarget;
 import stroom.core.client.ContentManager;

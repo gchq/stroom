@@ -27,6 +27,7 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
+import stroom.query.api.v2.DocRef;
 import stroom.ruleset.shared.RuleSet;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
@@ -101,7 +102,7 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     }
 
     @Override
-    public void onRead(final RuleSet dataReceiptPolicy) {
+    public void onRead(final DocRef docRef, final RuleSet dataReceiptPolicy) {
         if (dataReceiptPolicy.getFields() == null) {
             dataReceiptPolicy.setFields(new ArrayList<>());
         }
@@ -109,7 +110,7 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
             dataReceiptPolicy.setRules(new ArrayList<>());
         }
 
-        tabContentProvider.read(dataReceiptPolicy);
+        tabContentProvider.read(docRef, dataReceiptPolicy);
     }
 
     @Override

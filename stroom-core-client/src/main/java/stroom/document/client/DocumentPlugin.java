@@ -18,7 +18,6 @@
 package stroom.document.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.SelectContentTabEvent;

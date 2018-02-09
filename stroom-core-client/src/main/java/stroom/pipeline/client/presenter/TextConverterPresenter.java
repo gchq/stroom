@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.pipeline.shared.TextConverter;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -75,8 +76,8 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    public void onRead(final TextConverter textConverter) {
-        settingsPresenter.read(getDocRef(), textConverter);
+    public void onRead(final DocRef docRef, final TextConverter textConverter) {
+        settingsPresenter.read(docRef, textConverter);
 
         if (codePresenter != null) {
             codePresenter.setText(textConverter.getData());

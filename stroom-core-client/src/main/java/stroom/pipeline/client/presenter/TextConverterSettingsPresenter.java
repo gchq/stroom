@@ -29,6 +29,7 @@ import stroom.item.client.ItemListBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
 public class TextConverterSettingsPresenter
@@ -62,7 +63,7 @@ public class TextConverterSettingsPresenter
     }
 
     @Override
-    protected void onRead(final TextConverter textConverter) {
+    protected void onRead(final DocRef docRef, final TextConverter textConverter) {
         getView().getDescription().setText(textConverter.getDescription());
         getView().getConverterType().setSelectedItem(textConverter.getConverterType());
     }

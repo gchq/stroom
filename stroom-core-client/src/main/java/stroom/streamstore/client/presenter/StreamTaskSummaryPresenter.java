@@ -26,12 +26,13 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
@@ -44,7 +45,7 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<SummaryDataRow>>
-        implements HasRead<BaseEntity> {
+        implements HasDocumentRead<BaseEntity> {
     private EntityServiceFindSummaryActionDataProvider<FindStreamTaskCriteria> dataProvider;
 
     @Inject
@@ -162,7 +163,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
     }
 
     @Override
-    public void read(final BaseEntity entity) {
+    public void read(final DocRef docRef, final BaseEntity entity) {
         if (entity instanceof Feed) {
             setCriteria((Feed) entity);
         } else if (entity instanceof PipelineEntity) {

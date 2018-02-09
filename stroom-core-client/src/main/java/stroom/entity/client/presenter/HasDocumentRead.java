@@ -16,6 +16,8 @@
 
 package stroom.entity.client.presenter;
 
-public interface HasRead<E> {
-    void read(E entity);
+import stroom.query.api.v2.DocRef;
+
+public interface HasDocumentRead<E> {
+    void read(DocRef docRef, E entity);
 }

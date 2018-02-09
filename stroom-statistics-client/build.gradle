@@ -7,6 +7,7 @@ dependencies {
     compile project(':stroom-statistics-api')
     compile project(':stroom-statistics-shared')
 
+    compile libs.stroomQueryApi
     compile libs.gwt_user
     compile libs.gin
     compile libs.guice3

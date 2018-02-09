@@ -20,14 +20,15 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.SummaryDataRow;
+import stroom.query.api.v2.DocRef;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
 
 public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.StreamTaskView>
-        implements HasRead<BaseEntity> {
+        implements HasDocumentRead<BaseEntity> {
     public static final String STREAM_TASK_LIST = "STREAM_TASK_LIST";
     public static final String STREAM_TASK_SUMMARY = "STREAM_TASK_SUMMARY";
     private final StreamTaskSummaryPresenter streamTaskSummaryPresenter;
@@ -76,9 +77,9 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
     }
 
     @Override
-    public void read(final BaseEntity entity) {
-        streamTaskSummaryPresenter.read(entity);
-        streamTaskListPresenter.read(entity);
+    public void read(final DocRef docRef, final BaseEntity entity) {
+        streamTaskSummaryPresenter.read(docRef, entity);
+        streamTaskListPresenter.read(docRef, entity);
     }
 
     public interface StreamTaskView extends View {

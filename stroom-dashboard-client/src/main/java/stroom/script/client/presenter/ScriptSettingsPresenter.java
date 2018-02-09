@@ -26,6 +26,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.query.api.v2.DocRef;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.Script;
 import stroom.security.client.ClientSecurityContext;
@@ -65,10 +66,10 @@ public class ScriptSettingsPresenter
     }
 
     @Override
-    protected void onRead(final Script script) {
+    protected void onRead(final DocRef docRef, final Script script) {
         getView().getDescription().setText(script.getDescription());
 
-        scriptDependencyListPresenter.read(script);
+        scriptDependencyListPresenter.read(docRef, script);
     }
 
     @Override

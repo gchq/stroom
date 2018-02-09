@@ -30,8 +30,9 @@ import stroom.data.grid.client.EndColumn;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.v2.DocRef;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntityData;
@@ -43,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
-        implements HasRead<StroomStatsStoreEntity>, HasWrite<StroomStatsStoreEntity>, HasDirtyHandlers {
+        implements HasDocumentRead<StroomStatsStoreEntity>, HasWrite<StroomStatsStoreEntity>, HasDirtyHandlers {
     private final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -221,12 +222,12 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     }
 
     @Override
-    public void read(final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    public void read(final DocRef docRef, final StroomStatsStoreEntity stroomStatsStoreEntity) {
         if (stroomStatsStoreEntity != null) {
             stroomStatsStoreEntityData = stroomStatsStoreEntity.getDataObject();
 
             if (customMaskListPresenter != null) {
-                customMaskListPresenter.read(stroomStatsStoreEntity);
+                customMaskListPresenter.read(docRef, stroomStatsStoreEntity);
             }
             refresh();
         }

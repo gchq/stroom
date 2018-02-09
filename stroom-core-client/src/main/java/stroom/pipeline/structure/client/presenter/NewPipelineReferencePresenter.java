@@ -23,11 +23,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.HasRead;
-import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.shared.Feed;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.PipelineEntity;
@@ -38,8 +35,7 @@ import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType.Purpose;
 
 public class NewPipelineReferencePresenter
-        extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView>
-        implements HasRead<PipelineReference>, HasWrite<PipelineReference> {
+        extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView> {
     private final EntityDropDownPresenter pipelinePresenter;
     private final EntityDropDownPresenter feedPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -72,7 +68,6 @@ public class NewPipelineReferencePresenter
         getView().setStreamTypeWidget(streamTypesWidget);
     }
 
-    @Override
     public void read(final PipelineReference pipelineReference) {
         getView().setElement(pipelineReference.getElement());
 
@@ -111,7 +106,6 @@ public class NewPipelineReferencePresenter
         });
     }
 
-    @Override
     public void write(final PipelineReference pipelineReference) {
         pipelineReference.setPipeline(pipelinePresenter.getSelectedEntityReference());
         pipelineReference.setFeed(feedPresenter.getSelectedEntityReference());
