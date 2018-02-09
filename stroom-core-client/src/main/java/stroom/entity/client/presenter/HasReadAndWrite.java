@@ -16,5 +16,7 @@
 
 package stroom.entity.client.presenter;
 
-public interface HasReadAndWrite<E> extends HasRead<E>, HasWrite<E> {
+public interface HasReadAndWrite<E> {
+    void read(E entity);
+    void write(E entity);
 }

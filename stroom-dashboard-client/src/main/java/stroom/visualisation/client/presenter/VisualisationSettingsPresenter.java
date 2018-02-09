@@ -30,6 +30,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.query.api.v2.DocRef;
 import stroom.script.shared.Script;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -86,7 +87,7 @@ public class VisualisationSettingsPresenter
     }
 
     @Override
-    protected void onRead(final Visualisation visualisation) {
+    protected void onRead(final DocRef docRef, final Visualisation visualisation) {
         getView().getDescription().setText(visualisation.getDescription());
         getView().getFunctionName().setText(visualisation.getFunctionName());
         scriptPresenter.setSelectedEntityReference(visualisation.getScriptRef());

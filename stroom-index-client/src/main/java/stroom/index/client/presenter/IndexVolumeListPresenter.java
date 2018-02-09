@@ -27,13 +27,14 @@ import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.index.shared.Index;
 import stroom.node.client.presenter.VolumeListPresenter;
 import stroom.node.client.presenter.VolumeStatusListPresenter;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.Volume;
+import stroom.query.api.v2.DocRef;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -51,7 +52,7 @@ import java.util.List;
 import java.util.Set;
 
 public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasRead<Index>, HasWrite<Index>, HasDirtyHandlers {
+        implements HasDocumentRead<Index>, HasWrite<Index>, HasDirtyHandlers {
     private final VolumeListPresenter volumeListPresenter;
     private final VolumeStatusListPresenter volumeStatusListPresenter;
     private final ButtonView addButton;
@@ -159,7 +160,7 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     @Override
-    public void read(final Index index) {
+    public void read(final DocRef docRef, final Index index) {
         volumes = new ArrayList<>();
         if (index != null) {
             if (index.getVolumes() != null) {

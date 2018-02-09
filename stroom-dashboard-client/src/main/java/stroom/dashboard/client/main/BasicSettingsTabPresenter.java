@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.EqualsUtil;
 
 public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.SettingsView>

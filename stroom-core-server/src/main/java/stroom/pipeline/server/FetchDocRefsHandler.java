@@ -56,10 +56,10 @@ public class FetchDocRefsHandler
                 try {
                     // Only return entries the user has permission to see.
                     if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.USE)) {
-                        final ExplorerNode explorerNode = explorerNodeService.getNode(docRef);
-                        if (explorerNode != null) {
-                            result.add(SharedDocRef.create(explorerNode.getDocRef()));
-                        }
+                        explorerNodeService.getNode(docRef)
+                                .map(ExplorerNode::getDocRef)
+                                .map(SharedDocRef::create)
+                                .ifPresent(result::add);
                     }
                 } catch (final Exception e) {
                     LOGGER.debug(e.getMessage(), e);

@@ -28,7 +28,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.view.WrapperView;
@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasRead<DictionaryDoc>, HasWrite<DictionaryDoc>, HasDirtyHandlers {
+        implements HasDocumentRead<DictionaryDoc>, HasWrite<DictionaryDoc>, HasDirtyHandlers {
     private final DocRefListPresenter docRefListPresenter;
     private final Provider<EntityChooser> dictionarySelection;
     private final ButtonView addButton;
@@ -117,7 +117,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     @Override
-    public void read(final DictionaryDoc dictionary) {
+    public void read(final DocRef docRef, final DictionaryDoc dictionary) {
         currentDoc = new DocRef(dictionary.getType(), dictionary.getUuid(), dictionary.getName());
         imports = new ArrayList<>();
         if (dictionary != null) {

@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.shared.DocRefUtil;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.visualisation.shared.Visualisation;
 import stroom.widget.tab.client.presenter.TabData;
@@ -62,9 +63,9 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    public void onRead(final Visualisation visualisation) {
+    public void onRead(final DocRef docRef, final Visualisation visualisation) {
         loadCount++;
-        settingsPresenter.read(getDocRef(), visualisation);
+        settingsPresenter.read(docRef, visualisation);
 
         if (loadCount > 1) {
             // Remove the visualisation function from the cache so dashboards

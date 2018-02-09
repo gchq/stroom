@@ -27,6 +27,7 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.XSLTSettingsPresenter.XSLTSettingsView;
 import stroom.pipeline.shared.XSLT;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
 public class XSLTSettingsPresenter extends DocumentSettingsPresenter<XSLTSettingsView, XSLT> {
@@ -53,7 +54,7 @@ public class XSLTSettingsPresenter extends DocumentSettingsPresenter<XSLTSetting
     }
 
     @Override
-    protected void onRead(final XSLT xslt) {
+    protected void onRead(final DocRef docRef, final XSLT xslt) {
         getView().getDescription().setText(xslt.getDescription());
     }
 

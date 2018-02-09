@@ -430,11 +430,15 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
-    public DocRef copyDocument(final String uuid, final String parentFolderUUID) {
-        final E entity = loadByUuid(uuid);
+    public DocRef copyDocument(final String originalUuid,
+                               final String copyUuid,
+                               final Map<String, String> otherCopiesByOriginalUuid,
+                               final String parentFolderUUID) {
+        final E entity = loadByUuid(originalUuid);
 
         // This is going to be a copy so clear the persistence so save will create a new DB entry.
         entity.clearPersistence();
+        entity.setUuid(copyUuid);
 
         final E result = doSave(entity);
         return DocRefUtil.create(result);
