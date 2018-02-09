@@ -17,6 +17,7 @@ import stroom.query.common.v2.TablePayload;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SqlStatisticsStore implements Store {
 
@@ -26,6 +27,8 @@ public class SqlStatisticsStore implements Store {
 
     private final List<Integer> defaultMaxResultsSizes;
     private final StoreSize storeSize;
+    //results are currently assembled synchronously in getData so the store is always complete
+    private final AtomicBoolean isComplete = new AtomicBoolean(true);
 
     public SqlStatisticsStore(final List<Integer> defaultMaxResultsSizes,
                               final StoreSize storeSize,
@@ -41,12 +44,12 @@ public class SqlStatisticsStore implements Store {
 
     @Override
     public void destroy() {
-
+        //nothing to do as this store doesn't hold any query state
     }
 
     @Override
     public boolean isComplete() {
-        return true;
+        return isComplete.get();
     }
 
     @Override
