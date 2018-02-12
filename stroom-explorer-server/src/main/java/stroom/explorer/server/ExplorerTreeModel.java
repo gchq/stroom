@@ -20,12 +20,11 @@ import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.Insecure;
+import stroom.util.concurrent.AgeingLockableCache;
 import stroom.util.task.TaskScopeRunnable;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 class ExplorerTreeModel {
@@ -33,52 +32,22 @@ class ExplorerTreeModel {
 
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerActionHandlersImpl explorerActionHandlers;
-    private final ReentrantLock treeBuildLock = new ReentrantLock();
-
-    private volatile boolean isBuilding = false;
-    private volatile boolean rebuildRequired = true;
-    private volatile TreeModel treeModel;
-    private volatile long lastBuildTime;
+    private final AgeingLockableCache<TreeModel> lockedTreeModel;
 
     @Inject
     ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlersImpl explorerActionHandlers) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerActionHandlers = explorerActionHandlers;
-    }
 
-    private boolean isRebuildRequired() {
-        // If the tree is more than 10 minutes old then rebuild it.
-        // OR if something has requested a rebuild after the last rebuild
-        return (lastBuildTime < System.currentTimeMillis() - TEN_MINUTES)
-                || rebuildRequired
-                || isBuilding;
+        lockedTreeModel = AgeingLockableCache.<TreeModel>protect()
+                .fetch(this::createModel)
+                .maximumAge(TEN_MINUTES)
+                .build();
     }
 
     @Insecure
     public TreeModel getModel() {
-        if (isRebuildRequired()) {
-            // Try and get the map under lock.
-            treeBuildLock.lock();
-            isBuilding = true;
-
-            try {
-
-                // If calls are made to 'rebuildTree' while a build is happening, it will force it to go round again
-                while (rebuildRequired) {
-                    rebuildRequired = false;
-
-                    // Record the last time we built the full tree.
-                    treeModel = createModel();
-
-                    lastBuildTime = System.currentTimeMillis();
-                }
-            } finally {
-                isBuilding = false;
-                treeBuildLock.unlock();
-            }
-        }
-
-        return treeModel;
+        return lockedTreeModel.get();
     }
 
     private TreeModel createModel() {
@@ -140,7 +109,7 @@ class ExplorerTreeModel {
     }
 
     void rebuildTree() {
-        this.rebuildRequired = true;
+        this.lockedTreeModel.forceRebuild();
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
