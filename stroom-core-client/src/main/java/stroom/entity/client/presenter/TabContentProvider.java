@@ -81,9 +81,10 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, H
         return currentPresenter;
     }
 
+    @Override
     public void read(final DocRef docRef, final E entity) {
-        this.entity = entity;
         this.docRef = docRef;
+        this.entity = entity;
 
         // Clear the used presenter set as we are reading a new entity.
         if (usedPresenters != null) {

@@ -118,7 +118,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
 
     @Override
     public void read(final DocRef docRef, final DictionaryDoc dictionary) {
-        currentDoc = new DocRef(dictionary.getType(), dictionary.getUuid(), dictionary.getName());
+        currentDoc = docRef;
         imports = new ArrayList<>();
         if (dictionary != null) {
             if (dictionary.getImports() != null) {

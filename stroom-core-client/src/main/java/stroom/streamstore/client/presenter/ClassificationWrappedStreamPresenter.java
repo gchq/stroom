@@ -41,7 +41,7 @@ public class ClassificationWrappedStreamPresenter extends ClassificationWrapperP
     }
 
     @Override
-    public void read(final DocRef docRef, BaseEntity entity) {
+    public void read(final DocRef docRef, final BaseEntity entity) {
         streamPresenter.read(docRef, entity);
     }
 

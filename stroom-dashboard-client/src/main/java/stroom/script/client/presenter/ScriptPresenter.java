@@ -103,7 +103,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     @Override
     public void onRead(final DocRef docRef, final Script script) {
         loadCount++;
-        settingsPresenter.read(getDocRef(), script);
+        settingsPresenter.read(docRef, script);
 
         // Reload the resource if we have loaded it before.
         if (codePresenter != null) {

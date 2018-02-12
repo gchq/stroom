@@ -27,7 +27,7 @@ public interface ComponentDataModifier {
 
     void setComponents(Components components);
 
-    void read(ComponentConfig config);
+    void read(ComponentConfig componentConfig);
 
-    void write(ComponentConfig config);
+    void write(ComponentConfig componentConfig);
 }

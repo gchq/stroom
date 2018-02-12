@@ -18,5 +18,6 @@ package stroom.entity.client.presenter;
 
 public interface HasReadAndWrite<E> {
     void read(E entity);
+
     void write(E entity);
 }

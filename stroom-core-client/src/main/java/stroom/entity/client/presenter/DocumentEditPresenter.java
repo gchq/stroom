@@ -36,7 +36,6 @@ import stroom.widget.valuespinner.client.ValueSpinner;
 public abstract class DocumentEditPresenter<V extends View, D> extends MyPresenterWidget<V>
         implements HasDocumentRead<D>, HasWrite<D>, HasPermissionCheck, HasDirtyHandlers, HasType {
     private final ClientSecurityContext securityContext;
-    private DocRef docRef;
     private D entity;
     private boolean dirty;
     private boolean reading;
@@ -69,6 +68,7 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
         setDirty(dirty, false);
     }
 
+    @Override
     public final void read(final DocRef docRef, final D entity) {
         // Check document permissions if we haven't already.
         if (!checkedPermissions) {
@@ -81,7 +81,6 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
             }
         }
 
-        this.docRef = docRef;
         this.entity = entity;
         if (entity != null) {
             reading = true;
@@ -117,10 +116,6 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
      * Called when an attempt is made to close this presenter
      */
     public void onClose() {
-    }
-
-    public DocRef getDocRef() {
-        return docRef;
     }
 
     public D getEntity() {

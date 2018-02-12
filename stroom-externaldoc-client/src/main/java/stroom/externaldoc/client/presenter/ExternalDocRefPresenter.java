@@ -15,7 +15,6 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
 
 import java.util.Map;
 
@@ -25,6 +24,7 @@ public class ExternalDocRefPresenter
 
     private final IFrameContentPresenter settingsPresenter;
     private Map<String, String> uiUrls;
+    private DocRef docRef;
 
     @Inject
     public ExternalDocRefPresenter(final EventBus eventBus,
@@ -41,6 +41,7 @@ public class ExternalDocRefPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final SharedDocRef document) {
+        this.docRef = docRef;
         final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                 .href(this.uiUrls.get(document.getType()) + "/" + document.getUuid())
                 .build();
@@ -55,13 +56,13 @@ public class ExternalDocRefPresenter
 
     @Override
     public String getType() {
-        return getDocRef().getType();
+        return docRef.getType();
     }
 
     @Override
     public Icon getIcon() {
-        if (null != getDocRef()) {
-            switch (getDocRef().getType()) {
+        if (null != docRef) {
+            switch (docRef.getType()) {
                 case ExternalDocRefConstants.ANNOTATIONS_INDEX:
                     return SvgPresets.ANNOTATIONS;
                 case ExternalDocRefConstants.ELASTIC_INDEX:
@@ -74,7 +75,7 @@ public class ExternalDocRefPresenter
 
     @Override
     public String getLabel() {
-        return getDocRef().getName();
+        return docRef.getName();
     }
 
     @Override

@@ -70,7 +70,7 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
         if (loadCount > 1) {
             // Remove the visualisation function from the cache so dashboards
             // reload it.
-            ClearFunctionCacheEvent.fire(this, DocRefUtil.create(visualisation));
+            ClearFunctionCacheEvent.fire(this, docRef);
         }
     }
 

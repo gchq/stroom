@@ -43,10 +43,6 @@ public interface Component extends TabData, Layer, HasDisplayValue {
      */
     void showSettings();
 
-    void read(ComponentConfig entity);
-
-    void write(ComponentConfig entity);
-
     /**
      * Set the associated tab layout for this component.
      *
@@ -61,4 +57,8 @@ public interface Component extends TabData, Layer, HasDisplayValue {
     void onRemove();
 
     String getId();
+
+    void read(ComponentConfig componentConfig);
+
+    void write(ComponentConfig componentConfig);
 }

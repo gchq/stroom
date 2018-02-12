@@ -503,7 +503,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         } else {
             setNullCriteria();
         }
-
     }
 
     void setNextSelection(final StreamProcessorFilter nextSelection) {
