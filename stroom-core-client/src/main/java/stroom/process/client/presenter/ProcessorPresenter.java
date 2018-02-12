@@ -87,7 +87,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     @Override
     public void read(final DocRef docRef, final BaseEntity entity) {
-        processorListPresenter.read(entity);
+        processorListPresenter.read(docRef, entity);
         if (entity instanceof PipelineEntity) {
             this.pipelineEntity = (PipelineEntity) entity;
         }

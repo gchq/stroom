@@ -26,7 +26,6 @@ import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.PermissionException;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportHelper;

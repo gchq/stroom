@@ -9,7 +9,6 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 
 import java.util.Map;
-import java.util.UUID;
 
 @Component
 class SystemExplorerActionHandler implements ExplorerActionHandler {

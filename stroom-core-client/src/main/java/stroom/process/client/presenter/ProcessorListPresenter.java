@@ -49,6 +49,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.FetchProcessorAction;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.streamstore.client.presenter.StreamTooltipPresenterUtil;
