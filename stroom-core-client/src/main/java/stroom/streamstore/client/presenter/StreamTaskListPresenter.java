@@ -34,6 +34,7 @@ import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
@@ -228,7 +229,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
     }
 
     @Override
-    public void read(final BaseEntity entity) {
+    public void read(final DocRef docRef, final BaseEntity entity) {
         if (entity instanceof Feed) {
             setCriteria((Feed) entity);
         } else if (entity instanceof PipelineEntity) {

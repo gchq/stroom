@@ -32,6 +32,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.CreateProcessorAction;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -85,7 +86,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     @Override
-    public void read(final BaseEntity entity) {
+    public void read(final DocRef docRef, final BaseEntity entity) {
         processorListPresenter.read(entity);
         if (entity instanceof PipelineEntity) {
             this.pipelineEntity = (PipelineEntity) entity;

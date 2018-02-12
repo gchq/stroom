@@ -33,6 +33,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
@@ -67,7 +68,7 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     @Override
-    public void read(final StatisticStoreEntity statisticsDataSource) {
+    public void read(final DocRef docRef, final StatisticStoreEntity statisticsDataSource) {
         if (statisticsDataSource != null) {
             getView().getDescription().setText(statisticsDataSource.getDescription());
             getView().setStatisticType(statisticsDataSource.getStatisticType());

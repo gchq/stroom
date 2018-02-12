@@ -32,6 +32,7 @@ import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
@@ -162,7 +163,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
     }
 
     @Override
-    public void read(final BaseEntity entity) {
+    public void read(final DocRef docRef, final BaseEntity entity) {
         if (entity instanceof Feed) {
             setCriteria((Feed) entity);
         } else if (entity instanceof PipelineEntity) {

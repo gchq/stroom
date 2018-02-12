@@ -37,6 +37,7 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
+import stroom.query.api.v2.DocRef;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -337,7 +338,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     @Override
-    public void read(final Index index) {
+    public void read(final DocRef docRef, final Index index) {
         if (index != null) {
             indexFields = index.getIndexFieldsObject();
             refresh();

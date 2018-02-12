@@ -27,6 +27,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -95,10 +96,10 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     }
 
     @Override
-    public void onRead(final DictionaryDoc doc) {
+    public void onRead(final DocRef docRef, final DictionaryDoc doc) {
         this.doc = doc;
         downloadButton.setEnabled(true);
-        settingsPresenter.read(getDocRef(), doc);
+        settingsPresenter.read(docRef, doc);
 
         if (codePresenter != null) {
             codePresenter.setText(doc.getData());

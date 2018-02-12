@@ -25,6 +25,7 @@ import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntity.PipelineType;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
 public class PipelineSettingsPresenter
@@ -43,7 +44,7 @@ public class PipelineSettingsPresenter
     }
 
     @Override
-    protected void onRead(final PipelineEntity pipelineEntity) {
+    protected void onRead(final DocRef docRef, final PipelineEntity pipelineEntity) {
         getView().setDescription(pipelineEntity.getDescription());
         getView().clearTypes();
         for (final PipelineEntity.PipelineType type : PipelineEntity.PipelineType.values()) {

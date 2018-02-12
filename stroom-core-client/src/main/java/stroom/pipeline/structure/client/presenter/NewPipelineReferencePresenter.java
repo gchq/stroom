@@ -38,8 +38,7 @@ import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType.Purpose;
 
 public class NewPipelineReferencePresenter
-        extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView>
-        implements HasRead<PipelineReference>, HasWrite<PipelineReference> {
+        extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView> {
     private final EntityDropDownPresenter pipelinePresenter;
     private final EntityDropDownPresenter feedPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -72,7 +71,6 @@ public class NewPipelineReferencePresenter
         getView().setStreamTypeWidget(streamTypesWidget);
     }
 
-    @Override
     public void read(final PipelineReference pipelineReference) {
         getView().setElement(pipelineReference.getElement());
 
@@ -111,7 +109,6 @@ public class NewPipelineReferencePresenter
         });
     }
 
-    @Override
     public void write(final PipelineReference pipelineReference) {
         pipelineReference.setPipeline(pipelinePresenter.getSelectedEntityReference());
         pipelineReference.setFeed(feedPresenter.getSelectedEntityReference());

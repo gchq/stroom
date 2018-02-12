@@ -34,9 +34,8 @@ import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 public abstract class DocumentEditPresenter<V extends View, D> extends MyPresenterWidget<V>
-        implements HasWrite<D>, HasPermissionCheck, HasDirtyHandlers, HasType {
+        implements HasRead<D>, HasWrite<D>, HasPermissionCheck, HasDirtyHandlers, HasType {
     private final ClientSecurityContext securityContext;
-    private DocRef docRef;
     private D entity;
     private boolean dirty;
     private boolean reading;
@@ -69,6 +68,7 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
         setDirty(dirty, false);
     }
 
+    @Override
     public final void read(final DocRef docRef, final D entity) {
         // Check document permissions if we haven't already.
         if (!checkedPermissions) {
@@ -81,11 +81,10 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
             }
         }
 
-        this.docRef = docRef;
         this.entity = entity;
         if (entity != null) {
             reading = true;
-            onRead(entity);
+            onRead(docRef, entity);
             reading = false;
             setDirty(false, true);
         }
@@ -119,15 +118,11 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     public void onClose() {
     }
 
-    public DocRef getDocRef() {
-        return docRef;
-    }
-
     public D getEntity() {
         return entity;
     }
 
-    protected abstract void onRead(D entity);
+    protected abstract void onRead(DocRef docRef, D entity);
 
     protected abstract void onWrite(D entity);
 

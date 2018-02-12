@@ -43,6 +43,7 @@ import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.jobsystem.shared.JobNodeInfo;
 import stroom.jobsystem.shared.JobNodeRow;
 import stroom.monitoring.client.presenter.SchedulePresenter;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.ModelStringUtil;
@@ -50,7 +51,7 @@ import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
-public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNodeRow>> implements HasRead<Job> {
+public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNodeRow>> {
     private final SchedulePresenter schedulePresenter;
 
     private final SaveQueue<JobNode> jobNodeSaver;
@@ -181,42 +182,30 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNodeRow, Number> maxColumn = new Column<JobNodeRow, Number>(new ValueSpinnerCell(1, 100)) {
             @Override
             public Number getValue(final JobNodeRow row) {
-                if (row instanceof JobNodeRow) {
-                    final JobNodeRow jobNodeRow = (row);
-                    if (jobNodeRow.getEntity().getJobType().equals(JobType.DISTRIBUTED)) {
-                        return new EditableInteger(row.getEntity().getTaskLimit());
-                    }
+                if (row.getEntity().getJobType().equals(JobType.DISTRIBUTED)) {
+                    return new EditableInteger(row.getEntity().getTaskLimit());
                 }
                 return null;
             }
         };
 
-        maxColumn.setFieldUpdater((index, row, value) -> {
-            if (row instanceof JobNodeRow) {
-                final JobNodeRow jobNodeRow = row;
-                jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
-                    @Override
-                    protected void setValue(final JobNode entity) {
-                        entity.setTaskLimit(value.intValue());
-                    }
-                });
+        maxColumn.setFieldUpdater((index, row, value) -> jobNodeSaver.save(new EntitySaveTask<JobNode>(row) {
+            @Override
+            protected void setValue(final JobNode entity) {
+                entity.setTaskLimit(value.intValue());
             }
-        });
+        }));
         getView().addColumn(maxColumn, "Max", 59);
 
         // Cur.
         final Column<JobNodeRow, String> curColumn = new Column<JobNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final JobNodeRow row) {
-                if (row instanceof JobNodeRow) {
-                    final JobNodeRow jobNodeRow = row;
-                    if (jobNodeRow.getJobNodeInfo() != null) {
-                        return ModelStringUtil.formatCsv(jobNodeRow.getJobNodeInfo().getCurrentTaskCount());
-                    } else {
-                        return "?";
-                    }
+                if (row.getJobNodeInfo() != null) {
+                    return ModelStringUtil.formatCsv(row.getJobNodeInfo().getCurrentTaskCount());
+                } else {
+                    return "?";
                 }
-                return null;
             }
         };
         getView().addColumn(curColumn, "Cur", 59);
@@ -225,15 +214,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNodeRow, String> lastExecutedColumn = new Column<JobNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final JobNodeRow row) {
-                if (row instanceof JobNodeRow) {
-                    final JobNodeRow jobNodeRow = (row);
-                    if (jobNodeRow.getJobNodeInfo() != null) {
-                        return ClientDateUtil.toISOString(jobNodeRow.getJobNodeInfo().getLastExecutedTime());
-                    } else {
-                        return "?";
-                    }
+                if (row.getJobNodeInfo() != null) {
+                    return ClientDateUtil.toISOString(row.getJobNodeInfo().getLastExecutedTime());
+                } else {
+                    return "?";
                 }
-                return null;
             }
         };
         getView().addColumn(lastExecutedColumn, "Last Executed", ColumnSizeConstants.DATE_COL);
@@ -260,7 +245,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         getView().addEndColumn(new EndColumn<>());
     }
 
-    @Override
     public void read(final Job entity) {
         action.setJob(entity);
         dataProvider.refresh();

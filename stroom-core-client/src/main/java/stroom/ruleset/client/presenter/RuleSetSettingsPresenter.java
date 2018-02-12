@@ -32,6 +32,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
@@ -263,7 +264,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
     }
 
     @Override
-    public void read(final RuleSet policy) {
+    public void read(final DocRef docRef, final RuleSet policy) {
         if (policy != null) {
             this.fields = policy.getFields();
             this.rules = policy.getRules();

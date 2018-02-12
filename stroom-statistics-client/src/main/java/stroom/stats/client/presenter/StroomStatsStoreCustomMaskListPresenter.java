@@ -37,6 +37,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.v2.DocRef;
 import stroom.stats.shared.CustomRollUpMask;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsRollUpBitMaskPermGenerationAction;
@@ -224,7 +225,7 @@ public class StroomStatsStoreCustomMaskListPresenter
     }
 
     @Override
-    public void read(final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    public void read(final DocRef docRef, final StroomStatsStoreEntity stroomStatsStoreEntity) {
         // initialise the columns and hold the statDataSource on first time
         // or if we are passed a different object
         if (this.stroomStatsStoreEntity == null || this.stroomStatsStoreEntity != stroomStatsStoreEntity) {

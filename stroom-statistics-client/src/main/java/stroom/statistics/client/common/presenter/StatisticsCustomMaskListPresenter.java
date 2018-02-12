@@ -35,6 +35,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.client.common.presenter.StatisticsCustomMaskListPresenter.MaskHolder;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
@@ -218,7 +219,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     }
 
     @Override
-    public void read(final StatisticStoreEntity statisticsDataSource) {
+    public void read(final DocRef docRef, final StatisticStoreEntity statisticsDataSource) {
         // initialise the columns and hold the statDataSource on first time
         // or if we are passed a different object
         if (this.statisticsDataSource == null || this.statisticsDataSource != statisticsDataSource) {

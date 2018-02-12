@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.pipeline.shared.XSLT;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -70,8 +71,8 @@ public class XSLTPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XS
     }
 
     @Override
-    public void onRead(final XSLT xslt) {
-        settingsPresenter.read(getDocRef(), xslt);
+    public void onRead(final DocRef docRef, final XSLT xslt) {
+        settingsPresenter.read(docRef, xslt);
 
         if (codePresenter != null) {
             codePresenter.setText(xslt.getData());

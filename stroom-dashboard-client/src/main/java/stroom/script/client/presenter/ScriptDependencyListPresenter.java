@@ -120,7 +120,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     }
 
     @Override
-    public void read(final Script script) {
+    public void read(final DocRef docRef, final Script script) {
         scripts = new DocRefs();
         if (script != null) {
             if (script.getDependencies() != null) {

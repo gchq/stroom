@@ -40,7 +40,6 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
-import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.NamedEntity;
@@ -70,7 +69,7 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<SharedObject>>
-        implements Refreshable, HasRead<BaseEntity> {
+        implements Refreshable {
     private final ActionDataProvider<SharedObject> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorAction action;
@@ -495,14 +494,12 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         doDataDisplay();
     }
 
-    @Override
     public void read(final BaseEntity entity) {
         if (entity instanceof PipelineEntity) {
             setPipeline((PipelineEntity) entity);
         } else {
             setNullCriteria();
         }
-
     }
 
     void setNextSelection(final StreamProcessorFilter nextSelection) {

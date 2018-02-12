@@ -27,6 +27,7 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.shared.XSLT;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
 public class DictionarySettingsPresenter extends DocumentSettingsPresenter<DictionarySettingsPresenter.DictionarySettingsView, DictionaryDoc> {
@@ -61,9 +62,9 @@ public class DictionarySettingsPresenter extends DocumentSettingsPresenter<Dicti
     }
 
     @Override
-    protected void onRead(final DictionaryDoc doc) {
+    protected void onRead(final DocRef docRef, final DictionaryDoc doc) {
         getView().getDescription().setText(doc.getDescription());
-        dictionaryListPresenter.read(doc);
+        dictionaryListPresenter.read(docRef, doc);
     }
 
     @Override

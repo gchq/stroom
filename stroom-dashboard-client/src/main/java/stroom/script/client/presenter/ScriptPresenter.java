@@ -29,6 +29,7 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Res;
+import stroom.query.api.v2.DocRef;
 import stroom.script.shared.Script;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
@@ -100,9 +101,9 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    public void onRead(final Script script) {
+    public void onRead(final DocRef docRef, final Script script) {
         loadCount++;
-        settingsPresenter.read(getDocRef(), script);
+        settingsPresenter.read(docRef, script);
 
         // Reload the resource if we have loaded it before.
         if (codePresenter != null) {

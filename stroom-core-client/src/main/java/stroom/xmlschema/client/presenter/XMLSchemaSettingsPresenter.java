@@ -26,6 +26,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
@@ -59,7 +60,7 @@ public class XMLSchemaSettingsPresenter
     }
 
     @Override
-    public void onRead(final XMLSchema xmlSchema) {
+    public void onRead(final DocRef docRef, final XMLSchema xmlSchema) {
         getView().getDescription().setText(xmlSchema.getDescription());
         getView().getNamespaceURI().setText(xmlSchema.getNamespaceURI());
         getView().getSystemId().setText(xmlSchema.getSystemId());

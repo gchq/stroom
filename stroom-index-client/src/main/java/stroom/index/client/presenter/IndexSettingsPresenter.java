@@ -36,6 +36,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.Index.PartitionBy;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
+import stroom.query.api.v2.DocRef;
 
 public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPresenter.IndexSettingsView>
         implements HasRead<Index>, HasWrite<Index>, HasDirtyHandlers, IndexSettingsUiHandlers {
@@ -77,7 +78,7 @@ public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPrese
     }
 
     @Override
-    public void read(final Index index) {
+    public void read(final DocRef docRef, final Index index) {
         if (index != null) {
             getView().getDescription().setText(index.getDescription());
             getView().setMaxDocsPerShard(index.getMaxDocsPerShard());
@@ -86,7 +87,7 @@ public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPrese
             getView().setPartitionSize(index.getPartitionSize());
             getView().getRetentionAge().setSelectedItem(SupportedRetentionAge.get(index.getRetentionDayAge()));
 
-            indexVolumeListPresenter.read(index);
+            indexVolumeListPresenter.read(docRef, index);
         }
     }
 

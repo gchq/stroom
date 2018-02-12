@@ -23,6 +23,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.SummaryDataRow;
+import stroom.query.api.v2.DocRef;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
 
@@ -76,9 +77,9 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
     }
 
     @Override
-    public void read(final BaseEntity entity) {
-        streamTaskSummaryPresenter.read(entity);
-        streamTaskListPresenter.read(entity);
+    public void read(final DocRef docRef, final BaseEntity entity) {
+        streamTaskSummaryPresenter.read(docRef, entity);
+        streamTaskListPresenter.read(docRef, entity);
     }
 
     public interface StreamTaskView extends View {

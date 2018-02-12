@@ -357,9 +357,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     @Override
-    public void read(final Index index) {
-        final DocRef docRef = DocRefUtil.create(index);
-
+    public void read(final DocRef docRef, final Index index) {
         this.index = index;
         selectionCriteria.getIndexSet().add(docRef);
         selectionCriteria.getFetchSet().add(Node.ENTITY_TYPE);

@@ -206,7 +206,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     @Override
-    public void read(final PipelineEntity pipelineEntity) {
+    public void read(final DocRef docRef, final PipelineEntity pipelineEntity) {
         final PipelineElement previousSelection = this.selectedElement;
 
         this.pipelineEntity = pipelineEntity;

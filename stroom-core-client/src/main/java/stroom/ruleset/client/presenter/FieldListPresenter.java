@@ -35,6 +35,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.v2.DocRef;
 import stroom.ruleset.shared.RuleSet;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -279,7 +280,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourc
     }
 
     @Override
-    public void read(final RuleSet policy) {
+    public void read(final DocRef docRef, final RuleSet policy) {
         if (policy != null) {
             fields = policy.getFields();
             refresh();

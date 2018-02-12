@@ -26,6 +26,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.process.client.presenter.ProcessorPresenter;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
@@ -90,8 +91,8 @@ public class FolderPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    public void onRead(final SharedObject folder) {
-        tabContentProvider.read(folder);
+    public void onRead(final DocRef docRef, final SharedObject folder) {
+        tabContentProvider.read(docRef, folder);
     }
 
     @Override
