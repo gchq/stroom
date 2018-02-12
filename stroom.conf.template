@@ -35,26 +35,24 @@ stroom.statistics.sql.jdbcDriverPassword=stroompassword1
 
 stroom.security.apiToken=eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDQ4NjMwNDMsInN1YiI6InN0cm9vbVNlcnZpY2VVc2VyIiwiaXNzIjoic3Ryb29tIn0.gHJkpxeW5CjU_hBzuLhQd8Ot8XkLvhu45_-Ql4gOX96iNbl0AnKEwKu2QmMY3uVerGjYBHDczgKJlLVF_RQtFiwFLorT2P_Mv-9ShcCL0Ml-Tq-1i-_UnHMYHP5Nv-rP3ajUz-vTHwIYqi_WU-IEpIF56MCYBqeDkgQfe-I03VyfsLkWt-3f8L3AKESZirmqjPUB_SPi4vWGpyN28FuJe1KyqdCPo5QVKnrM_dpguE_aIj1Dy1sovmgO5WxFm3-hE7asW3WrnokSopNXQ1bJ3W77v4k1CnMpYDw5schQAKqUffPVGxNE6UxNunZTlRQJQqYihKkhpeiTiZMo9XCHGg
 
-stroom.advertisedUrl=http://IP_ADDRESS/stroom/ui
+stroom.advertisedUrl=https://IP_ADDRESS/stroom/ui
 
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true
 stroom.auth.services.url=http://IP_ADDRESS:8099
-stroom.auth.ui.url=http://IP_ADDRESS:5000
-# This should be set to HTTPS in production
-#stroom.auth.authentication.service.url=https://IP_ADDRESS/authenticationService/v1
+stroom.auth.ui.url=https://IP_ADDRESS:5000
 stroom.auth.authentication.service.url=http://IP_ADDRESS/authenticationService/v1
 
-stroom.users.ui.url=http://IP_ADDRESS:5000/userSearch
-stroom.apikeys.ui.url=http://IP_ADDRESS:5000/tokens
-stroom.changepassword.url=http://IP_ADDRESS:5000/changepassword
+stroom.users.ui.url=https://IP_ADDRESS/users
+stroom.apikeys.ui.url=https://IP_ADDRESS/tokens
+stroom.changepassword.url=https://IP_ADDRESS/changepassword
 
 #Service discovery
 #~~~~~~~~~~~~~~~~~
 #Set this to false to local service lookup when you do not have Zookeeper
 stroom.serviceDiscovery.enabled=false
 #If simple serviceDiscovery is in use, this sets the host/port to use use for all simple lookups
-stroom.serviceDiscovery.simpleLookup.basePath=http://IP_ADDRESS:8080
+stroom.serviceDiscovery.simpleLookup.basePath=https://IP_ADDRESS:8080
 
 #Plugins
 stroom.plugins.lib.dir=HOME_DIR/.stroom/plugins
