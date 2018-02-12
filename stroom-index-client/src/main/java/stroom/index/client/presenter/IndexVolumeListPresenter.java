@@ -27,7 +27,7 @@ import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.index.shared.Index;
 import stroom.node.client.presenter.VolumeListPresenter;
@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.Set;
 
 public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasRead<Index>, HasWrite<Index>, HasDirtyHandlers {
+        implements HasDocumentRead<Index>, HasWrite<Index>, HasDirtyHandlers {
     private final VolumeListPresenter volumeListPresenter;
     private final VolumeStatusListPresenter volumeStatusListPresenter;
     private final ButtonView addButton;

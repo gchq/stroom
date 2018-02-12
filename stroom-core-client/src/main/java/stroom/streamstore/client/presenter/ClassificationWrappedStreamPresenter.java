@@ -21,13 +21,13 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.IdSet;
 import stroom.query.api.v2.DocRef;
 
 public class ClassificationWrappedStreamPresenter extends ClassificationWrapperPresenter
-        implements HasDataSelectionHandlers<IdSet>, HasRead<BaseEntity> {
+        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<BaseEntity> {
     private final StreamPresenter streamPresenter;
 
     @Inject

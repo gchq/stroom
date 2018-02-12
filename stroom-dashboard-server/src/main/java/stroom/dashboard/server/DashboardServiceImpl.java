@@ -26,8 +26,6 @@ import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.entity.shared.DocRefs;
-import stroom.logging.DocumentEventLog;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryEntity;
@@ -42,15 +40,12 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -83,6 +78,22 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     @Override
     public FindDashboardCriteria createCriteria() {
         return new FindDashboardCriteria();
+    }
+
+    @Override
+    public DocRef copyDocument(final String originalUuid,
+                               final String copyUuid,
+                               final Map<String, String> otherCopiesByOriginalUuid,
+                               final String parentFolderUUID) {
+        final DocRef copiedDocRef = super.copyDocument(originalUuid,
+                copyUuid,
+                otherCopiesByOriginalUuid,
+                parentFolderUUID);
+
+        return makeCopyUuidReplacements(copiedDocRef,
+                otherCopiesByOriginalUuid,
+                Dashboard::getData,
+                Dashboard::setData);
     }
 
     @Override

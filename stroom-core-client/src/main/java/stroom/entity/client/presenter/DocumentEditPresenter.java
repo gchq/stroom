@@ -34,7 +34,7 @@ import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 public abstract class DocumentEditPresenter<V extends View, D> extends MyPresenterWidget<V>
-        implements HasRead<D>, HasWrite<D>, HasPermissionCheck, HasDirtyHandlers, HasType {
+        implements HasDocumentRead<D>, HasWrite<D>, HasPermissionCheck, HasDirtyHandlers, HasType {
     private final ClientSecurityContext securityContext;
     private D entity;
     private boolean dirty;

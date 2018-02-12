@@ -30,7 +30,7 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.index.shared.Index;
 import stroom.index.shared.Index.PartitionBy;
@@ -39,7 +39,7 @@ import stroom.pipeline.shared.SupportedRetentionAge;
 import stroom.query.api.v2.DocRef;
 
 public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPresenter.IndexSettingsView>
-        implements HasRead<Index>, HasWrite<Index>, HasDirtyHandlers, IndexSettingsUiHandlers {
+        implements HasDocumentRead<Index>, HasWrite<Index>, HasDirtyHandlers, IndexSettingsUiHandlers {
 
     private final IndexVolumeListPresenter indexVolumeListPresenter;
 

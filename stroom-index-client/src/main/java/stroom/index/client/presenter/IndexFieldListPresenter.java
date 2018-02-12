@@ -32,7 +32,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Set;
 
 public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<IndexField>>
-        implements HasRead<Index>, HasWrite<Index>, HasDirtyHandlers {
+        implements HasDocumentRead<Index>, HasWrite<Index>, HasDirtyHandlers {
     private final IndexFieldEditPresenter indexFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;

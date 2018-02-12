@@ -1,6 +1,5 @@
 package stroom.explorer.client.view;
 
-import stroom.explorer.shared.ExplorerNode;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;

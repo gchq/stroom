@@ -33,7 +33,7 @@ import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.query.api.v2.DocRef;
 import stroom.ruleset.shared.RuleSet;
@@ -47,7 +47,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourceField>>
-        implements HasRead<RuleSet>, HasWrite<RuleSet>, HasDirtyHandlers {
+        implements HasDocumentRead<RuleSet>, HasWrite<RuleSet>, HasDirtyHandlers {
     private final FieldEditPresenter fieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;

@@ -23,7 +23,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceDeleteAction;
@@ -37,8 +37,8 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.SharedObject;
@@ -51,7 +51,7 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
-        implements HasRead<BaseEntity> {
+        implements HasDocumentRead<BaseEntity> {
     private final ProcessorListPresenter processorListPresenter;
     private final ExpressionPresenter filterPresenter;
     private final ExpressionTreePresenter expressionPresenter;

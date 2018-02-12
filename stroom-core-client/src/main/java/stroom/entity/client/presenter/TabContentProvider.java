@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermissionCheck {
+public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, HasPermissionCheck {
     private final Map<TabData, Provider<?>> tabProviders = new HashMap<>();
     private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<>();
 
@@ -102,7 +102,6 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermis
         }
     }
 
-    @Override
     public void write(final E entity) {
         if (usedPresenters != null) {
             for (final PresenterWidget<?> presenter : usedPresenters) {
@@ -122,10 +121,12 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermis
     }
 
     @SuppressWarnings("unchecked")
-    private void read(final PresenterWidget<?> presenter, final DocRef docRef, final E entity) {
-        if (presenter != null && presenter instanceof HasRead<?>) {
-            final HasRead<E> hasRead = (HasRead<E>) presenter;
-            hasRead.read(docRef, entity);
+    private void read(final PresenterWidget<?> presenter,
+                      final DocRef docRef,
+                      final E entity) {
+        if (presenter != null && presenter instanceof HasDocumentRead<?>) {
+            final HasDocumentRead<E> hasDocumentRead = (HasDocumentRead<E>) presenter;
+            hasDocumentRead.read(docRef, entity);
 
             if (usedPresenters == null) {
                 usedPresenters = new HashSet<>();

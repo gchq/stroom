@@ -20,8 +20,6 @@ import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TabConfig;
-import stroom.entity.client.presenter.HasRead;
-import stroom.entity.client.presenter.HasWrite;
 import stroom.util.shared.HasDisplayValue;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.TabData;
@@ -44,6 +42,10 @@ public interface Component extends TabData, Layer, HasDisplayValue {
      * Called when a component is requested that it show it's settings.
      */
     void showSettings();
+
+    void read(ComponentConfig entity);
+
+    void write(ComponentConfig entity);
 
     /**
      * Set the associated tab layout for this component.

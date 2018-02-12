@@ -36,8 +36,6 @@ public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends Fi
         extends SystemEntityServiceImpl<E, C> implements NamedEntityService<E> {
     public static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
     public static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
-    public static final String NAME_COPY_PATTERN_PROPERTY = "stroom.nameCopyPattern";
-    public static final String NAME_COPY_PATTERN_VALUE = "Copy of %s";
 
     protected NamedEntityServiceImpl(final StroomEntityManager entityManager) {
         super(entityManager);
@@ -98,12 +96,6 @@ public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends Fi
     @Override
     public String getNamePattern() {
         return StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
-    }
-
-    @Transient
-    @Override
-    public String getNameCopyPattern() {
-        return StroomProperties.getProperty(NAME_COPY_PATTERN_PROPERTY, NAME_COPY_PATTERN_VALUE);
     }
 
     @Override

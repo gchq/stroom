@@ -34,7 +34,7 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
@@ -79,7 +79,7 @@ import java.util.List;
 import java.util.Set;
 
 public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamView>
-        implements HasDataSelectionHandlers<IdSet>, HasRead<BaseEntity>, BeginSteppingHandler {
+        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<BaseEntity>, BeginSteppingHandler {
     public static final String DATA = "DATA";
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
     public static final String STREAM_LIST = "STREAM_LIST";

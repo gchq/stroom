@@ -34,7 +34,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
-import stroom.entity.client.presenter.HasRead;
 import stroom.jobsystem.client.JobTypeCell;
 import stroom.jobsystem.shared.FetchJobDataAction;
 import stroom.jobsystem.shared.Job;

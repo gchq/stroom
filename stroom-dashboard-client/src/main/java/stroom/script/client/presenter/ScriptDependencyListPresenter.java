@@ -26,7 +26,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.client.presenter.EntityChooser;
@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasRead<Script>, HasWrite<Script>, HasDirtyHandlers {
+        implements HasDocumentRead<Script>, HasWrite<Script>, HasDirtyHandlers {
     private final ScriptListPresenter scriptListPresenter;
     private final EntityChooser explorerDropDownTreePresenter;
     private final ButtonView addButton;

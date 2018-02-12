@@ -31,7 +31,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 public class EntityReferenceListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
-        implements HasRead<BaseEntity> {
+        implements HasDocumentRead<BaseEntity> {
     private final ClientDispatchAsync dispatcher;
 
     @Inject
