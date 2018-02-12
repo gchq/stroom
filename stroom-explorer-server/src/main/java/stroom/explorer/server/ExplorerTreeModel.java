@@ -24,6 +24,7 @@ import stroom.util.task.TaskScopeRunnable;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
@@ -34,9 +35,10 @@ class ExplorerTreeModel {
     private final ExplorerActionHandlersImpl explorerActionHandlers;
     private final ReentrantLock treeBuildLock = new ReentrantLock();
 
+    private volatile boolean isBuilding = false;
+    private volatile boolean rebuildRequired = true;
     private volatile TreeModel treeModel;
     private volatile long lastBuildTime;
-    private volatile boolean rebuildRequired;
 
     @Inject
     ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlersImpl explorerActionHandlers) {
@@ -44,50 +46,53 @@ class ExplorerTreeModel {
         this.explorerActionHandlers = explorerActionHandlers;
     }
 
+    private boolean isRebuildRequired() {
+        // If the tree is more than 10 minutes old then rebuild it.
+        // OR if something has requested a rebuild after the last rebuild
+        return (lastBuildTime < System.currentTimeMillis() - TEN_MINUTES)
+                || rebuildRequired
+                || isBuilding;
+    }
+
     @Insecure
     public TreeModel getModel() {
-        // If the tree is more than 10 minutes old then rebuild it.
-        if (!rebuildRequired && lastBuildTime < System.currentTimeMillis() - TEN_MINUTES) {
-            rebuildRequired = true;
-            treeModel = null;
-        }
-
-        TreeModel model = treeModel;
-        if (model == null || rebuildRequired) {
+        if (isRebuildRequired()) {
             // Try and get the map under lock.
             treeBuildLock.lock();
-            try {
-                model = treeModel;
-                while (model == null || rebuildRequired) {
-                    // Record the last time we built the full tree.
-                    lastBuildTime = System.currentTimeMillis();
-                    rebuildRequired = false;
-                    model = createModel();
-                }
+            isBuilding = true;
 
-                // Record the last time we built the full tree.
-                lastBuildTime = System.currentTimeMillis();
-                treeModel = model;
+            try {
+
+                // If calls are made to 'rebuildTree' while a build is happening, it will force it to go round again
+                while (rebuildRequired) {
+                    rebuildRequired = false;
+
+                    // Record the last time we built the full tree.
+                    treeModel = createModel();
+
+                    lastBuildTime = System.currentTimeMillis();
+                }
             } finally {
+                isBuilding = false;
                 treeBuildLock.unlock();
             }
         }
 
-        return model;
+        return treeModel;
     }
 
     private TreeModel createModel() {
-        final TreeModel treeModel = new TreeModelImpl();
+        final TreeModel newTreeModel = new TreeModelImpl();
         final TaskScopeRunnable runnable = new TaskScopeRunnable(null) {
             @Override
             protected void exec() {
                 final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-                addChildren(treeModel, sort(roots), null);
+                addChildren(newTreeModel, sort(roots), null);
             }
         };
 
         runnable.run();
-        return treeModel;
+        return newTreeModel;
     }
 
     private void addChildren(final TreeModel treeModel, final List<ExplorerTreeNode> children, final ExplorerNode parentNode) {
@@ -134,8 +139,8 @@ class ExplorerTreeModel {
         return documentType.getPriority();
     }
 
-    void setRebuildRequired(final boolean rebuildRequired) {
-        this.rebuildRequired = rebuildRequired;
+    void rebuildTree() {
+        this.rebuildRequired = true;
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {

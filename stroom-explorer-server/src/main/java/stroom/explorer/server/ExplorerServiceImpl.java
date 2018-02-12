@@ -619,7 +619,7 @@ class ExplorerServiceImpl implements ExplorerService {
 
     @Override
     public void rebuildTree() {
-        explorerTreeModel.setRebuildRequired(true);
+        explorerTreeModel.rebuildTree();
     }
 
     private String getUUID(final DocRef docRef) {
