@@ -17,6 +17,7 @@
 package stroom.explorer.server;
 
 import org.springframework.stereotype.Component;
+import org.springframework.ui.Model;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.Insecure;
@@ -24,56 +25,28 @@ import stroom.util.task.TaskScopeRunnable;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 class ExplorerTreeModel {
-    private static final long TEN_MINUTES = 1000 * 60 * 10;
-
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerActionHandlersImpl explorerActionHandlers;
-    private final ReentrantLock treeBuildLock = new ReentrantLock();
-
-    private volatile TreeModel treeModel;
-    private volatile long lastBuildTime;
-    private volatile boolean rebuildRequired;
+    private final ModelCache<TreeModel> modelCache;
 
     @Inject
     ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlersImpl explorerActionHandlers) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerActionHandlers = explorerActionHandlers;
+        this.modelCache = new ModelCache.Builder<TreeModel>()
+                .supplier(this::createModel)
+                .maxAge(10, TimeUnit.MINUTES)
+                .build();
     }
 
     @Insecure
     public TreeModel getModel() {
-        // If the tree is more than 10 minutes old then rebuild it.
-        if (!rebuildRequired && lastBuildTime < System.currentTimeMillis() - TEN_MINUTES) {
-            rebuildRequired = true;
-            treeModel = null;
-        }
-
-        TreeModel model = treeModel;
-        if (model == null || rebuildRequired) {
-            // Try and get the map under lock.
-            treeBuildLock.lock();
-            try {
-                model = treeModel;
-                while (model == null || rebuildRequired) {
-                    // Record the last time we built the full tree.
-                    lastBuildTime = System.currentTimeMillis();
-                    rebuildRequired = false;
-                    model = createModel();
-                }
-
-                // Record the last time we built the full tree.
-                lastBuildTime = System.currentTimeMillis();
-                treeModel = model;
-            } finally {
-                treeBuildLock.unlock();
-            }
-        }
-
-        return model;
+        return modelCache.get();
     }
 
     private TreeModel createModel() {
@@ -134,8 +107,8 @@ class ExplorerTreeModel {
         return documentType.getPriority();
     }
 
-    void setRebuildRequired(final boolean rebuildRequired) {
-        this.rebuildRequired = rebuildRequired;
+    void rebuild() {
+        modelCache.rebuild();
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
