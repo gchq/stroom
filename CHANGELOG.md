@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-alpha.10]
+
 * Issue **#523** : Changed permission behaviours for copy and move to support `None`, `Source`, `Destination` and `Combined` behaviours. Creating new items now allows for `None` and `Destination` permission behaviours. Also imported items now receive permissions from the destination folder. Event logging now indicates the permission behaviour used during copy, move and create operations.
 
 * Issue **#480** : Change the downloaded search request API JSON to have a fetch type of ALL.
@@ -17,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#622** : Fix incorrect service discovery based api paths, remove authentication and authorisation from service discovery
 
 * Issue **#568** : Fixed filtering streams by pipeline in the pipeline screen.
+
+* Issue **#565** : Fixed authorisation issue on dashboards.
 
 ## [v6.0-alpha.9]
 
@@ -769,7 +773,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.10...HEAD
+[v6.0-alpha.10]: https://github.com/gchq/stroom/compare/v6.0-alpha.9...v6.0-alpha.10
+[v6.0-alpha.9]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...v6.0-alpha.9
 [v6.0-alpha.8]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...v6.0-alpha.8
 [v6.0-alpha.7]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...v6.0-alpha.7
 [v6.0-alpha.4]: https://github.com/gchq/stroom/commits/v6.0-alpha.4
