@@ -28,6 +28,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
+import stroom.servlet.HttpSessionUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;
@@ -88,7 +89,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
             // We'll look for the user's API key in the session, but if they're not logged in we'll try and get
             // one from the security context.
-            String usersApiKey = (String)httpServletRequestHolder.get().getSession(true).getAttribute("SESSION_USER_API_KEY");
+            String usersApiKey = HttpSessionUtil.getUserApiKey(httpServletRequestHolder.get().getSession(true));
             if(Strings.isNullOrEmpty(usersApiKey)){
                 usersApiKey = securityContext.getApiToken();
             }
