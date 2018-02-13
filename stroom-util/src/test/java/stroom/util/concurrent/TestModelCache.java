@@ -4,6 +4,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,6 +46,23 @@ public class TestModelCache {
                 .build();
 
         testRefreshRequired(valueSupplier, timeSupplier, modelCache, () -> timeSupplier.jumpTime(MAXIMUM_AGE * 2));
+    }
+
+    @Test
+    public void testCombined() {
+        final SlowSupplier<String> valueSupplier = new SlowSupplier<>(ONE_SECOND);
+        final TimeSupplier timeSupplier = new TimeSupplier();
+        final ModelCache<String> modelCache = new ModelCache.Builder<String>()
+                .maxAge(MAXIMUM_AGE)
+                .timeSupplier(timeSupplier)
+                .valueSupplier(valueSupplier)
+                .build();
+
+        testRefreshRequired(valueSupplier, timeSupplier, modelCache, modelCache::rebuild);
+        modelCache.rebuild();
+        testRefreshRequired(valueSupplier, timeSupplier, modelCache, () -> timeSupplier.jumpTime(MAXIMUM_AGE * 2));
+        timeSupplier.jumpTime(MAXIMUM_AGE * 2);
+        testRefreshRequired(valueSupplier, timeSupplier, modelCache, modelCache::rebuild);
     }
 
     /**
@@ -168,8 +186,10 @@ public class TestModelCache {
                                      final ModelCache<String> modelCache,
                                      final Runnable causeRebuild) {
 
-        final String firstValue = "First";
-        final String secondValue = "Second";
+        final String firstValue = UUID.randomUUID().toString();
+        final String secondValue = UUID.randomUUID().toString();
+
+        LOGGER.info(String.format("Testing Refresh with First: %s, Second: %s", firstValue, secondValue));
 
         // Give the supplier a value to serve up
         valueSupplier.setCurrentValue(firstValue);
@@ -219,7 +239,7 @@ public class TestModelCache {
                                        final T expectedValue) {
 
         // Call get a bunch more times, multiple threads at once
-        final long successiveCalls = 10;
+        final long successiveCalls = 5
         final MultithreadedCaller<T> caller0 = new MultithreadedCaller<>(valueSupplier, timeSupplier);
         final ExecutorService exec = Executors.newFixedThreadPool((int) successiveCalls);
 
