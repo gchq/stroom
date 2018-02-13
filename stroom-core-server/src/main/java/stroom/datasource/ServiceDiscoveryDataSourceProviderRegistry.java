@@ -20,6 +20,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ExternalService;
 import stroom.servicediscovery.ServiceDiscoverer;
+import stroom.servlet.HttpServletRequestHolder;
 
 import java.util.Optional;
 
@@ -29,12 +30,15 @@ public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourcePro
 
     private final SecurityContext securityContext;
     private final ServiceDiscoverer serviceDiscoverer;
+    private HttpServletRequestHolder httpServletRequestHolder;
 
     //    @Inject
     public ServiceDiscoveryDataSourceProviderRegistry(final SecurityContext securityContext,
-                                                      final ServiceDiscoverer serviceDiscoverer) {
+                                                      final ServiceDiscoverer serviceDiscoverer,
+                                                      final HttpServletRequestHolder httpServletRequestHolder) {
         this.securityContext = securityContext;
         this.serviceDiscoverer = serviceDiscoverer;
+        this.httpServletRequestHolder = httpServletRequestHolder;
     }
 
     /**
@@ -55,7 +59,7 @@ public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourcePro
 //                .filter(ServiceInstance::isEnabled) //not available until curator 2.12
                 .flatMap(serviceInstance -> {
                     String address = serviceInstance.buildUriSpec();
-                    return Optional.of(new RemoteDataSourceProvider(securityContext, address));
+                    return Optional.of(new RemoteDataSourceProvider(securityContext, address, httpServletRequestHolder));
                 });
     }
 
