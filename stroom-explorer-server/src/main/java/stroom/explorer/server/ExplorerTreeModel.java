@@ -20,34 +20,31 @@ import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.Insecure;
-import stroom.util.concurrent.AgeingLockableCache;
 import stroom.util.task.TaskScopeRunnable;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Component
 class ExplorerTreeModel {
-    private static final long TEN_MINUTES = 1000 * 60 * 10;
-
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerActionHandlersImpl explorerActionHandlers;
-    private final AgeingLockableCache<TreeModel> lockedTreeModel;
+    private final ModelCache<TreeModel> modelCache;
 
     @Inject
     ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlersImpl explorerActionHandlers) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerActionHandlers = explorerActionHandlers;
-
-        lockedTreeModel = AgeingLockableCache.<TreeModel>protect()
-                .fetch(this::createModel)
-                .maximumAge(TEN_MINUTES)
+        this.modelCache = new ModelCache.Builder<TreeModel>()
+                .supplier(this::createModel)
+                .maxAge(10, TimeUnit.MINUTES)
                 .build();
     }
 
     @Insecure
     public TreeModel getModel() {
-        return lockedTreeModel.get();
+        return modelCache.get();
     }
 
     private TreeModel createModel() {
@@ -108,8 +105,8 @@ class ExplorerTreeModel {
         return documentType.getPriority();
     }
 
-    void rebuildTree() {
-        this.lockedTreeModel.forceRebuild();
+    void rebuild() {
+        modelCache.rebuild();
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
