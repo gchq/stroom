@@ -16,6 +16,7 @@
 
 package stroom.datasource;
 
+import com.google.common.base.Strings;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.security.SecurityContext;
+import stroom.servlet.HttpServletRequestHolder;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;
@@ -46,11 +48,14 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     private final SecurityContext securityContext;
     private final String url;
+    private HttpServletRequestHolder httpServletRequestHolder;
 
     RemoteDataSourceProvider(final SecurityContext securityContext,
-                                    final String url) {
+                             final String url,
+                             final HttpServletRequestHolder httpServletRequestHolder) {
         this.securityContext = securityContext;
         this.url = url;
+        this.httpServletRequestHolder = httpServletRequestHolder;
         LOGGER.trace("Creating RemoteDataSourceProvider for url {}", url);
     }
 
@@ -80,7 +85,15 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             WebTarget webTarget = client.target(url).path(path);
 
             Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-            invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + securityContext.getApiToken());
+
+            // We'll look for the user's API key in the session, but if they're not logged in we'll try and get
+            // one from the security context.
+            String usersApiKey = (String)httpServletRequestHolder.get().getSession(true).getAttribute("SESSION_USER_API_KEY");
+            if(Strings.isNullOrEmpty(usersApiKey)){
+                usersApiKey = securityContext.getApiToken();
+            }
+
+            invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiKey);
             Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
             if (HttpServletResponse.SC_OK == response.getStatus()) {

@@ -161,6 +161,11 @@ public class SecurityFilter implements Filter {
             if (useSession) {
                 // Set the user ref in the session.
                 UserRefSessionUtil.set(request.getSession(true), userRef);
+
+                // Get the user's API key and store it in the session
+                String apiKey = authenticationServiceClients.getUsersApiToken(userRef.getName());
+                request.getSession(true).setAttribute("SESSION_USER_API_KEY", apiKey);
+
             }
 
             continueAsUser(request, response, chain, userRef);
@@ -209,6 +214,11 @@ public class SecurityFilter implements Filter {
                     if (userRef != null) {
                         // Set the user ref in the session.
                         UserRefSessionUtil.set(request.getSession(true), userRef);
+
+                        // Get the user's API key and store it in the session
+                        String apiKey = authenticationServiceClients.getUsersApiToken(userRef.getName());
+                        request.getSession(true).setAttribute("SESSION_USER_API_KEY", apiKey);
+
                         loggedIn = true;
                     }
 

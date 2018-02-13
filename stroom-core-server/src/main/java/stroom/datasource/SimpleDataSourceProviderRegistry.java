@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
+import stroom.servlet.HttpServletRequestHolder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,10 +41,13 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
     private final Map<String, String> urlMap;
 
     private final SecurityContext securityContext;
+    private HttpServletRequestHolder httpServletRequestHolder;
 
     SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
-                                            final StroomPropertyService stroomPropertyService) {
+                                     final StroomPropertyService stroomPropertyService,
+                                     final HttpServletRequestHolder httpServletRequestHolder) {
         this.securityContext = securityContext;
+        this.httpServletRequestHolder = httpServletRequestHolder;
 
         final String basePath = stroomPropertyService.getProperty(PROP_KEY_BASE_PATH);
         final String annotationsPath = stroomPropertyService.getProperty(PROP_KEY_ANNOTATIONS_PATH);
@@ -91,7 +95,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
      */
     private Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
         return Optional.ofNullable(urlMap.get(docRefType))
-                .map(url -> new RemoteDataSourceProvider(securityContext, url));
+                .map(url -> new RemoteDataSourceProvider(securityContext, url, httpServletRequestHolder));
     }
 
     /**
