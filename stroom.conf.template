@@ -52,7 +52,7 @@ stroom.changepassword.url=https://IP_ADDRESS/changepassword
 #Set this to false to local service lookup when you do not have Zookeeper
 stroom.serviceDiscovery.enabled=false
 #If simple serviceDiscovery is in use, this sets the host/port to use use for all simple lookups
-stroom.serviceDiscovery.simpleLookup.basePath=https://IP_ADDRESS:8080
+stroom.serviceDiscovery.simpleLookup.basePath=http://IP_ADDRESS:8080
 
 #Plugins
 stroom.plugins.lib.dir=HOME_DIR/.stroom/plugins
