@@ -1,20 +1,25 @@
-package stroom.explorer.server;
+package stroom.util.concurrent;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class ModelCache<T> {
-    private final Supplier<T> supplier;
+    private final Supplier<T> valueSupplier;
+    private final Supplier<Long> timeSupplier;
     private final long maxAge;
 
     private volatile Model<T> model;
     private volatile boolean rebuildRequired = true;
 
-    private ModelCache(final Supplier<T> supplier, final long maxAge) {
-        Objects.requireNonNull(supplier);
+    private ModelCache(final Supplier<T> valueSupplier,
+                       final Supplier<Long> timeSupplier,
+                       final long maxAge) {
+        Objects.requireNonNull(valueSupplier);
+        Objects.requireNonNull(timeSupplier);
 
-        this.supplier = supplier;
+        this.valueSupplier = valueSupplier;
+        this.timeSupplier = timeSupplier;
         this.maxAge = maxAge;
 
         model = new Model<>(null, maxAge);
@@ -35,11 +40,14 @@ public class ModelCache<T> {
     }
 
     private synchronized void create() {
+        if (model.isOld()) {
+            rebuildRequired = true;
+        }
+
         while (rebuildRequired) {
             rebuildRequired = false;
-            final T t = supplier.get();
-            Model<T> model = new Model<>(t, maxAge);
-            this.model = model;
+            final T t = valueSupplier.get();
+            this.model = new Model<>(t, maxAge);
         }
     }
 
@@ -51,11 +59,17 @@ public class ModelCache<T> {
     public static class Builder<T> {
         private static final long DEFAULT_MAX_AGE = TimeUnit.MINUTES.toMillis(10);
 
-        private Supplier<T> supplier;
+        private Supplier<T> valueSupplier;
+        private Supplier<Long> timeSupplier = System::currentTimeMillis;
         private long maxAge = DEFAULT_MAX_AGE;
 
-        public Builder<T> supplier(final Supplier<T> supplier) {
-            this.supplier = supplier;
+        public Builder<T> valueSupplier(final Supplier<T> supplier) {
+            this.valueSupplier = supplier;
+            return this;
+        }
+
+        public Builder<T> timeSupplier(final Supplier<Long> supplier) {
+            this.timeSupplier = supplier;
             return this;
         }
 
@@ -70,24 +84,24 @@ public class ModelCache<T> {
         }
 
         public ModelCache<T> build() {
-            return new ModelCache<>(supplier, maxAge);
+            return new ModelCache<>(valueSupplier, timeSupplier, maxAge);
         }
     }
 
-    private static class Model<T> {
+    private class Model<T> {
         private final long createTime;
         private final long maxTime;
         private final T t;
         private volatile boolean old;
 
         private Model(final T t, final long maxAge) {
-            createTime = System.currentTimeMillis();
+            createTime = ModelCache.this.timeSupplier.get();
             maxTime = createTime + maxAge;
             this.t = t;
         }
 
         boolean isOld() {
-            if (!old && maxTime < System.currentTimeMillis()) {
+            if (!old && maxTime < ModelCache.this.timeSupplier.get()) {
                 old = true;
             }
             return old;

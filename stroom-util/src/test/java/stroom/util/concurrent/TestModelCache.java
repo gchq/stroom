@@ -1,6 +1,8 @@
 package stroom.util.concurrent;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
@@ -12,7 +14,38 @@ import java.util.stream.LongStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class TestAgeingLockableCache {
+public class TestModelCache {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestModelCache.class);
+
+    private static final Long ONE_SECOND = 1000L;
+    private static final Long MAXIMUM_AGE = 10 * ONE_SECOND;
+
+    @Test
+    public void testForceRebuild() {
+
+        final SlowSupplier<String> valueSupplier = new SlowSupplier<>(ONE_SECOND);
+        final TimeSupplier timeSupplier = new TimeSupplier();
+        final ModelCache<String> modelCache = new ModelCache.Builder<String>()
+                .maxAge(MAXIMUM_AGE)
+                .timeSupplier(timeSupplier)
+                .valueSupplier(valueSupplier)
+                .build();
+
+        testRefreshRequired(valueSupplier, timeSupplier, modelCache, modelCache::rebuild);
+    }
+
+    @Test
+    public void testAge() {
+        final SlowSupplier<String> valueSupplier = new SlowSupplier<>(ONE_SECOND);
+        final TimeSupplier timeSupplier = new TimeSupplier();
+        final ModelCache<String> modelCache = new ModelCache.Builder<String>()
+                .maxAge(MAXIMUM_AGE)
+                .timeSupplier(timeSupplier)
+                .valueSupplier(valueSupplier)
+                .build();
+
+        testRefreshRequired(valueSupplier, timeSupplier, modelCache, () -> timeSupplier.jumpTime(MAXIMUM_AGE * 2));
+    }
 
     /**
      * Used as the supplier of values, with the supply function taking time defined by sleep time
@@ -61,21 +94,47 @@ public class TestAgeingLockableCache {
      */
     private class MultithreadedCaller<T> implements Runnable {
 
-        private final ConcurrentLinkedDeque<T> values;
-        private final Supplier<T> supplier;
+        private class TimedValue<T> {
+            private final T value;
+            private final Long timestamp;
+            
+            TimedValue(final T value, final Long timestamp) 
+            {
+                this.value = value;
+                this.timestamp = timestamp;
+            }
 
-        private MultithreadedCaller(final Supplier<T> supplier) {
+            public T getValue() {
+                return value;
+            }
+        }
+        
+        private final ConcurrentLinkedDeque<TimedValue<T>> values;
+        private final Supplier<T> valueSupplier;
+        private final Supplier<Long> timeSupplier;
+
+        private MultithreadedCaller(final Supplier<T> valueSupplier,
+                                    final Supplier<Long> timeSupplier) {
             this.values = new ConcurrentLinkedDeque<>();
-            this.supplier = supplier;
+            this.valueSupplier = valueSupplier;
+            this.timeSupplier = timeSupplier;
         }
 
         @Override
         public void run() {
-            values.add(supplier.get());
+            final T value = valueSupplier.get();
+            final Long time = timeSupplier.get();
+            values.add(new TimedValue<>(value, time));
         }
 
-        public long matchingValue(final T value) {
-            return values.stream().filter(value::equals).count();
+        long matchingValue(final T value) {
+            LOGGER.info(String.format("Checking for Value %s", value));
+            
+            return values.stream()
+                    .peek(d -> LOGGER.info(String.format("\t%s at %d", d.value.toString(), d.timestamp)))
+                    .map(TimedValue::getValue)
+                    .filter(value::equals)
+                    .count();
         }
     }
 
@@ -96,19 +155,18 @@ public class TestAgeingLockableCache {
         }
     }
 
-    private static final Long ONE_SECOND = 1000L;
-    private static final Long MAXIMUM_AGE = 10 * ONE_SECOND;
-
-    @Test
-    public void testForceRebuild() {
-
-        final SlowSupplier<String> valueSupplier = new SlowSupplier<>(ONE_SECOND);
-        final TimeSupplier timeSupplier = new TimeSupplier();
-        final AgeingLockableCache<String> lockable = AgeingLockableCache.<String>protect()
-                .maximumAge(MAXIMUM_AGE)
-                .timeSupplier(timeSupplier)
-                .fetch(valueSupplier)
-                .build();
+    /**
+     * General form of a test that moves the value supplier between two values, with some event to trigger the rebuild.
+     * 
+     * @param valueSupplier The underlying supplier of values
+     * @param timeSupplier  The time supplier
+     * @param modelCache      The model cache object under test
+     * @param causeRebuild  A function that should cause a rebuild
+     */
+    private void testRefreshRequired(final SlowSupplier<String> valueSupplier,
+                                     final TimeSupplier timeSupplier,
+                                     final ModelCache<String> modelCache,
+                                     final Runnable causeRebuild) {
 
         final String firstValue = "First";
         final String secondValue = "Second";
@@ -117,11 +175,11 @@ public class TestAgeingLockableCache {
         valueSupplier.setCurrentValue(firstValue);
 
         // Try and get that value
-        final String result0 = lockable.get();
+        final String result0 = modelCache.get();
         assertEquals(firstValue, result0);
 
         // Call get a bunch more times, multiple threads at once
-        thrashWithThreads(lockable, firstValue);
+        thrashWithThreads(modelCache::get, timeSupplier, firstValue);
 
         // These subsequent calls should not result in additional calls to the underlying supplier
         assertEquals(1, valueSupplier.getNumberRequestsForValue());
@@ -130,83 +188,39 @@ public class TestAgeingLockableCache {
         valueSupplier.setCurrentValue(secondValue);
 
         // Get the value again, it should still be the first one
-        final String result1 = lockable.get();
+        final String result1 = modelCache.get();
         assertEquals(firstValue, result1);
 
-        // Since the ageing lockable has not been told to rebuild, the underlying supplier should be left untouched
+        // Since the ageing modelCache has not been told to rebuild, the underlying supplier should be left untouched
         assertEquals(0, valueSupplier.getNumberRequestsForValue());
 
         // Now trigger the rebuild on the next fetch
-        lockable.forceRebuild();
+        causeRebuild.run();
 
         // Call get a bunch more times, multiple threads at once
-        thrashWithThreads(lockable, secondValue);
+        thrashWithThreads(modelCache::get, timeSupplier, secondValue);
 
         // Now that a rebuild has been forced, the next get should return the updated value
         // All of those accesses should have resulted in a single call to underlying supplier
         // All other calls should have waited for the first
         assertEquals(1, valueSupplier.getNumberRequestsForValue());
     }
-
-    @Test
-    public void testAge() {
-        final SlowSupplier<String> valueSupplier = new SlowSupplier<>(ONE_SECOND);
-        final TimeSupplier timeSupplier = new TimeSupplier();
-        final AgeingLockableCache<String> lockable = AgeingLockableCache.<String>protect()
-                .maximumAge(MAXIMUM_AGE)
-                .timeSupplier(timeSupplier)
-                .fetch(valueSupplier)
-                .build();
-
-        final String firstValue = "First";
-        final String secondValue = "Second";
-
-        // Give the supplier a value to serve up
-        valueSupplier.setCurrentValue(firstValue);
-
-        // Call get() a bunch of times, expecting the first value to be served up in all cases.
-        thrashWithThreads(lockable, firstValue);
-
-        // These subsequent calls should not result in additional calls to the underlying supplier
-        assertEquals(1, valueSupplier.getNumberRequestsForValue());
-
-        // Change the value of the underlying supplier
-        valueSupplier.setCurrentValue(secondValue);
-
-        // Get the value again, it should still be the first one
-        final String result1 = lockable.get();
-        assertEquals(firstValue, result1);
-
-        // Since the ageing lockable has not been told to rebuild, the underlying supplier should be left untouched
-        assertEquals(0, valueSupplier.getNumberRequestsForValue());
-
-        // Force the time forwards on the cache, so that the next call decides that the cache must be refreshed
-        timeSupplier.jumpTime(MAXIMUM_AGE * 2);
-
-        // Call get a bunch more times, multiple threads at once, now expecting the second value to be served up
-        thrashWithThreads(lockable, secondValue);
-
-        // Now that a rebuild has been forced, the next get should return the updated value
-        // All of those accesses should have resulted in a single call to underlying supplier
-        // All other calls should have waited for the first
-        assertEquals(1, valueSupplier.getNumberRequestsForValue());
-    }
-
 
     /**
-     * Given a lockable cache, it spins up a pool of threads to repeatedly hammer it.
+     * Given a modelCache cache, it spins up a pool of threads to repeatedly hammer it.
      * It should find that the underlying supplier is not called any more times,
      *
-     * @param lockable The lockable cache under test
+     * @param valueSupplier The modelCache cache under test
      * @param expectedValue The value being supplied through this test
      * @param <T> The type that the cache is tied to
      */
-    private <T> void thrashWithThreads(final AgeingLockableCache<T> lockable,
+    private <T> void thrashWithThreads(final Supplier<T> valueSupplier,
+                                       final Supplier<Long> timeSupplier,
                                        final T expectedValue) {
 
         // Call get a bunch more times, multiple threads at once
-        final long successiveCalls = 5;
-        final MultithreadedCaller<T> caller0 = new MultithreadedCaller<>(lockable::get);
+        final long successiveCalls = 10;
+        final MultithreadedCaller<T> caller0 = new MultithreadedCaller<>(valueSupplier, timeSupplier);
         final ExecutorService exec = Executors.newFixedThreadPool((int) successiveCalls);
 
         LongStream.range(0, successiveCalls)

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.Insecure;
+import stroom.util.concurrent.ModelCache;
 import stroom.util.task.TaskScopeRunnable;
 
 import javax.inject.Inject;
@@ -37,7 +38,7 @@ class ExplorerTreeModel {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerActionHandlers = explorerActionHandlers;
         this.modelCache = new ModelCache.Builder<TreeModel>()
-                .supplier(this::createModel)
+                .valueSupplier(this::createModel)
                 .maxAge(10, TimeUnit.MINUTES)
                 .build();
     }
