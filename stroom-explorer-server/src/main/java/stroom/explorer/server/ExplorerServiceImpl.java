@@ -91,14 +91,21 @@ class ExplorerServiceImpl implements ExplorerService {
         addDescendants(null, masterTreeModel, filteredModel, filter, false, allOpenItems, 0);
 
         // If the name filter has changed then we want to temporarily expand all nodes.
-        HashSet<ExplorerNode> temporaryOpenItems = null;
-        if (filter.isNameFilterChange() && filter.getNameFilter() != null) {
-            temporaryOpenItems = new HashSet<>(filteredModel.getChildMap().keySet());
+        if (filter.isNameFilterChange()) {
+            final Set<ExplorerNode> temporaryOpenItems;
+
+            if (filter.getNameFilter() == null) {
+                temporaryOpenItems = new HashSet<>();
+            } else {
+                temporaryOpenItems = new HashSet<>(filteredModel.getChildMap().keySet());
+            }
+
+            addRoots(filteredModel, criteria.getOpenItems(), forcedOpenItems, temporaryOpenItems, result);
+            result.setTemporaryOpenedItems(temporaryOpenItems);
+        } else {
+            addRoots(filteredModel, criteria.getOpenItems(), forcedOpenItems, criteria.getTemporaryOpenedItems(), result);
         }
 
-        addRoots(filteredModel, criteria.getOpenItems(), forcedOpenItems, temporaryOpenItems, result);
-
-        result.setTemporaryOpenedItems(temporaryOpenItems);
         return result;
     }
 
