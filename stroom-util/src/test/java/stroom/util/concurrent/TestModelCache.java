@@ -239,7 +239,7 @@ public class TestModelCache {
                                        final T expectedValue) {
 
         // Call get a bunch more times, multiple threads at once
-        final long successiveCalls = 5
+        final long successiveCalls = 5;
         final MultithreadedCaller<T> caller0 = new MultithreadedCaller<>(valueSupplier, timeSupplier);
         final ExecutorService exec = Executors.newFixedThreadPool((int) successiveCalls);
 
