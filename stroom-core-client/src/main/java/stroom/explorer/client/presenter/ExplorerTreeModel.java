@@ -103,9 +103,12 @@ public class ExplorerTreeModel {
     private void fetchData() {
         final ExplorerTreeFilter explorerTreeFilter = explorerTreeFilterBuilder.build();
         if (explorerTreeFilter != null) {
-            final Set<ExplorerNode> allOpenItems = openItems.getAllOpenItems();
             // Fetch a list of data items that belong to this parent.
-            currentCriteria = new FindExplorerNodeCriteria(allOpenItems, explorerTreeFilter, minDepth, ensureVisible);
+            currentCriteria = new FindExplorerNodeCriteria(openItems.getOpenItems(),
+                    openItems.getTemporaryOpenItems(),
+                    explorerTreeFilter,
+                    minDepth,
+                    ensureVisible);
 
             if (!fetching) {
                 fetching = true;

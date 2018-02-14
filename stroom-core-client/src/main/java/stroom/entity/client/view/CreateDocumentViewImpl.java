@@ -50,8 +50,8 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<PopupUiHandlers> 
         widget.addAttachHandler(event -> focus());
 
         permissionInheritance.addItem(PermissionInheritance.NONE);
-        permissionInheritance.addItem(PermissionInheritance.INHERIT);
-        permissionInheritance.setSelectedItem(PermissionInheritance.INHERIT);
+        permissionInheritance.addItem(PermissionInheritance.DESTINATION);
+        permissionInheritance.setSelectedItem(PermissionInheritance.DESTINATION);
     }
 
     @Override

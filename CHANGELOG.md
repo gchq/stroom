@@ -6,7 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#481** : Fix handling of non-incremental queries on the query API. Adds timeout option in request and blocking code to wait for the query to complete.
+* Issue **#481** : Fix handling of non-incremental index queries on the query API. Adds timeout option in request and blocking code to wait for the query to complete.
+
+* Issue **#626** : Fixed issue with document settings not being persisted
+
+* Issue **#621** : Changed the document info to prevent requests for multi selections
+
+* Issue **#620** : Copying a directory now recursively copies it's contents, plus renaming copies is done more intelligently.
+
+* Issue **#546** : Fixed race conditions with the Explorer Tree, it was causing odd delays to population of the explorer in various places.
+
+* Issue **#495** : Fixed the temporary expansion of the Explorer Tree caused by filtering
+
+* Issue **#523** : Changed permission behaviours for copy and move to support `None`, `Source`, `Destination` and `Combined` behaviours. Creating new items now allows for `None` and `Destination` permission behaviours. Also imported items now receive permissions from the destination folder. Event logging now indicates the permission behaviour used during copy, move and create operations.
 
 * Issue **#480** : Change the downloaded search request API JSON to have a fetch type of ALL.
 
@@ -17,6 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#622** : Fix incorrect service discovery based api paths, remove authentication and authorisation from service discovery
 
 * Issue **#568** : Fixed filtering streams by pipeline in the pipeline screen.
+
+* Issue **#376** : Welcome tab details fixed since move to gradle
 
 ## [v6.0-alpha.9]
 

@@ -50,7 +50,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
     @Override
     public void create(final String type, final String uuid, final String name, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception ex) {
         try {
-            final Event event = createAction("Create", "Creating", type, name);
+            final Event event = createAction("Create", "Creating", type, name, permissionInheritance);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             event.getEventDetail().setCreate(objectOutcome);
 
@@ -70,7 +70,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
     @Override
     public void copy(final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception ex) {
         try {
-            final Event event = createAction("Copy", "Copying", document);
+            final Event event = createAction("Copy", "Copying", document, permissionInheritance);
             final CopyMove copy = new CopyMove();
             event.getEventDetail().setCopy(copy);
 
@@ -102,7 +102,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
     @Override
     public void move(final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception ex) {
         try {
-            final Event event = createAction("Move", "Moving", document);
+            final Event event = createAction("Move", "Moving", document, permissionInheritance);
             final CopyMove move = new CopyMove();
             event.getEventDetail().setMove(move);
 
@@ -134,7 +134,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
     @Override
     public void rename(final DocRef document, final String name, final Exception ex) {
         try {
-            final Event event = createAction("Rename", "Renaming", document);
+            final Event event = createAction("Rename", "Renaming", document, null);
             final CopyMove move = new CopyMove();
             event.getEventDetail().setMove(move);
 
@@ -167,7 +167,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
     @Override
     public void delete(final DocRef document, final Exception ex) {
         try {
-            final Event event = createAction("Delete", "Deleting", document);
+            final Event event = createAction("Delete", "Deleting", document, null);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             event.getEventDetail().setDelete(objectOutcome);
             objectOutcome.getObjects().add(createBaseObject(document));
@@ -178,20 +178,43 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
         }
     }
 
-    private Event createAction(final String typeId, final String description, final DocRef entity) {
+    private Event createAction(final String typeId,
+                               final String description,
+                               final DocRef docRef,
+                               final PermissionInheritance permissionInheritance) {
         String desc = description;
-        if (entity != null) {
-            desc = description + " " + entity.getType() + " \"" + entity.getName() + "\" uuid="
-                    + entity.getUuid();
+        if (docRef != null) {
+            desc = description + " " + docRef.getType() + " \"" + docRef.getName() + "\" uuid="
+                    + docRef.getUuid();
         }
-
+        desc += getPermissionString(permissionInheritance);
         return eventLoggingService.createAction(typeId, desc);
     }
 
-    private Event createAction(final String typeId, final String description, final String entityType,
-                               final String entityName) {
-        final String desc = description + " " + entityType + " \"" + entityName;
+    private Event createAction(final String typeId,
+                               final String description,
+                               final String objectType,
+                               final String objectName,
+                               final PermissionInheritance permissionInheritance) {
+        String desc = description + " " + objectType + " \"" + objectName + "\"";
+        desc += getPermissionString(permissionInheritance);
         return eventLoggingService.createAction(typeId, desc);
+    }
+
+    private String getPermissionString(final PermissionInheritance permissionInheritance) {
+        if (permissionInheritance != null) {
+            switch (permissionInheritance) {
+                case NONE:
+                    return " with no permissions";
+                case SOURCE:
+                    return " with source permissions";
+                case DESTINATION:
+                    return " with destination permissions";
+                case COMBINED:
+                    return " with combined permissions";
+            }
+        }
+        return "";
     }
 
     private BaseObject createBaseObject(final DocRef docRef) {

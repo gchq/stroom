@@ -1,5 +1,7 @@
 package stroom.explorer.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.ExplorerConstants;
@@ -13,10 +15,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
 class ExplorerNodeServiceImpl implements ExplorerNodeService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerNodeServiceImpl.class);
+
     // TODO : This is a temporary means to set tags on nodes for the purpose of finding data source nodes.
     // TODO : The explorer will eventually allow a user to set custom tags and to find nodes searching by tag.
     private static Map<String, String> DEFAULT_TAG_MAP = new HashMap<>();
@@ -41,13 +47,30 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     @Override
     public void createNode(final DocRef docRef, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        // Ensure permission inheritance is set to something.
+        PermissionInheritance perms = permissionInheritance;
+        if (perms == null) {
+            LOGGER.warn("Null permission inheritance supplied for create operation");
+            perms = PermissionInheritance.DESTINATION;
+        }
+
         // Set the permissions on the new item.
-        if (permissionInheritance == null || PermissionInheritance.NONE.equals(permissionInheritance)) {
-            // Make the new item owned by the current user.
-            addDocumentPermissions(null, docRef, true);
-        } else if (PermissionInheritance.COMBINED.equals(permissionInheritance) || PermissionInheritance.INHERIT.equals(permissionInheritance)) {
-            // Copy permissions from the containing folder and make the new item owned by the current user.
-            addDocumentPermissions(destinationFolderRef, docRef, true);
+        try {
+            switch (perms) {
+                case NONE:
+                    // Make the new item owned by the current user.
+                    addDocumentPermissions(null, docRef, true);
+                    break;
+                case DESTINATION:
+                    // Copy permissions from the containing folder and make the new item owned by the current user.
+                    addDocumentPermissions(destinationFolderRef, docRef, true);
+                    break;
+                default:
+                    LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for create operation");
+                    break;
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         addNode(destinationFolderRef, docRef);
@@ -55,18 +78,39 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     @Override
     public void copyNode(final DocRef sourceDocRef, final DocRef destDocRef, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        // Ensure permission inheritance is set to something.
+        PermissionInheritance perms = permissionInheritance;
+        if (perms == null) {
+            LOGGER.warn("Null permission inheritance supplied for copy operation");
+            perms = PermissionInheritance.DESTINATION;
+        }
+
         // Set the permissions on the copied item.
-        if (permissionInheritance == null || PermissionInheritance.NONE.equals(permissionInheritance)) {
-            // Copy permissions from the original and make the new item owned by the current user.
-            addDocumentPermissions(sourceDocRef, destDocRef, true);
-        } else if (PermissionInheritance.COMBINED.equals(permissionInheritance)) {
-            // Copy permissions from the original and make the new item owned by the current user.
-            addDocumentPermissions(sourceDocRef, destDocRef, true);
-            // Add additional permissions from the folder of the new copy.
-            addDocumentPermissions(destinationFolderRef, destDocRef, true);
-        } else if (PermissionInheritance.INHERIT.equals(permissionInheritance)) {
-            // Just add permissions from the folder of the new copy and make the new item owned by the current user.
-            addDocumentPermissions(destinationFolderRef, destDocRef, true);
+        try {
+            switch (perms) {
+                case NONE:
+                    // Ignore original permissions, ignore permissions of the destination folder, just make the new item owned by the current user.
+                    addDocumentPermissions(null, destDocRef, true);
+                    break;
+                case SOURCE:
+                    // Copy permissions from the original, ignore permissions of the destination folder, and make the new item owned by the current user.
+                    addDocumentPermissions(sourceDocRef, destDocRef, true);
+                    break;
+                case DESTINATION:
+                    // Ignore permissions of the original, add permissions of the destination folder, and make the new item owned by the current user.
+                    addDocumentPermissions(destinationFolderRef, destDocRef, true);
+                    break;
+                case COMBINED:
+                    // Copy permissions from the original, add permissions of the destination folder, and make the new item owned by the current user.
+                    addDocumentPermissions(sourceDocRef, destDocRef, true);
+                    addDocumentPermissions(destinationFolderRef, destDocRef, true);
+                    break;
+                default:
+                    LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for copy operation");
+                    break;
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         addNode(destinationFolderRef, destDocRef);
@@ -74,17 +118,39 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     @Override
     public void moveNode(final DocRef docRef, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        // Ensure permission inheritance is set to something.
+        PermissionInheritance perms = permissionInheritance;
+        if (perms == null) {
+            LOGGER.warn("Null permission inheritance supplied for copy operation");
+            perms = PermissionInheritance.DESTINATION;
+        }
+
         // Set the permissions on the moved item.
-        if (permissionInheritance != null) {
-            if (PermissionInheritance.COMBINED.equals(permissionInheritance)) {
-                // Add permissions from the new folder.
-                addDocumentPermissions(destinationFolderRef, docRef, false);
-            } else if (PermissionInheritance.INHERIT.equals(permissionInheritance)) {
-                // Clear existing permissions from this item.
-                securityContext.clearDocumentPermissions(docRef.getType(), docRef.getUuid());
-                // Add permissions from the new folder and make the current user the owner.
-                addDocumentPermissions(destinationFolderRef, docRef, true);
+        try {
+            switch (perms) {
+                case NONE:
+                    // Remove all current permissions, ignore permissions of the destination folder, just make the new item owned by the current user.
+                    clearDocumentPermissions(docRef);
+                    addDocumentPermissions(null, docRef, true);
+                    break;
+                case SOURCE:
+                    // We are keeping the permissions that we already have so do nothing.
+                    break;
+                case DESTINATION:
+                    // Remove all current permissions, add permissions of the destination folder, and make the new item owned by the current user.
+                    clearDocumentPermissions(docRef);
+                    addDocumentPermissions(destinationFolderRef, docRef, true);
+                    break;
+                case COMBINED:
+                    // Keep all current permissions, add permissions of the destination folder, and make the new item owned by the current user.
+                    addDocumentPermissions(destinationFolderRef, docRef, true);
+                    break;
+                default:
+                    LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for move operation");
+                    break;
             }
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         moveNode(destinationFolderRef, docRef);
@@ -98,33 +164,33 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     @Override
     public void deleteNode(final DocRef docRef) {
         try {
-            final ExplorerTreeNode docNode = getNodeForDocRef(docRef);
-            explorerTreeDao.remove(docNode);
+            getNodeForDocRef(docRef).ifPresent(explorerTreeDao::remove);
 
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
-    private ExplorerTreeNode getNodeForDocRef(final DocRef docRef) {
-        if (docRef == null) {
-            return null;
-        }
-
-        return explorerTreeDao.findByUUID(docRef.getUuid());
+    private Optional<ExplorerTreeNode> getNodeForDocRef(final DocRef docRef) {
+        return Optional.ofNullable(docRef)
+                .map(DocRef::getUuid)
+                .map(explorerTreeDao::findByUUID);
     }
 
     @Override
-    public ExplorerNode getRoot() {
-        List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-        if (roots == null || roots.size() == 0) {
-            createRoot();
-            roots = explorerTreeDao.getRoots();
-        }
-        if (roots == null || roots.size() == 0) {
-            return null;
-        }
-        return createExplorerNode(roots.get(0));
+    public Optional<ExplorerNode> getRoot() {
+        final List<ExplorerTreeNode> roots = Optional
+                .ofNullable(explorerTreeDao.getRoots())
+                .filter(r -> r.size() > 0)
+                .orElseGet(() -> {
+                    createRoot();
+                    return explorerTreeDao.getRoots();
+                });
+
+        return Optional.ofNullable(roots)
+                .filter(r -> r.size() > 0)
+                .map(r -> r.get(0))
+                .map(this::createExplorerNode);
     }
 
     private synchronized void createRoot() {
@@ -137,48 +203,58 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public ExplorerNode getNode(final DocRef docRef) {
-        final ExplorerTreeNode node = getNodeForDocRef(docRef);
-        if (node == null) {
-            return null;
-        }
-
-        return createExplorerNode(node);
+    public Optional<ExplorerNode> getNode(final DocRef docRef) {
+        return getNodeForDocRef(docRef)
+                .map(this::createExplorerNode);
     }
 
     @Override
     public List<ExplorerNode> getPath(final DocRef docRef) {
-        final ExplorerTreeNode node = getNodeForDocRef(docRef);
-        if (node == null) {
-            return null;
-        }
-
-        final List<ExplorerTreeNode> path = explorerTreeDao.getPath(node);
-        return path.stream()
+        return getNodeForDocRef(docRef)
+                .map(explorerTreeDao::getPath).orElse(Collections.emptyList()).stream()
                 .map(this::createExplorerNode)
                 .collect(Collectors.toList());
     }
 
     @Override
+    public Optional<ExplorerNode> getParent(DocRef docRef) {
+        return getNodeForDocRef(docRef)
+                .map(explorerTreeDao::getParent)
+                .map(this::createExplorerNode);
+    }
+
+    @Override
     public List<ExplorerNode> getDescendants(final DocRef docRef) {
-        List<ExplorerTreeNode> nodes;
+        return getDescendants(docRef, explorerTreeDao::getTree);
+    }
 
-        if (docRef == null) {
-            nodes = new ArrayList<>();
-            final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-            roots.forEach(root -> nodes.addAll(explorerTreeDao.getTree(root)));
+    @Override
+    public List<ExplorerNode> getChildren(final DocRef docRef) {
+        return getDescendants(docRef, explorerTreeDao::getChildren);
+    }
+
+    /**
+     * General form a function that returns a list of explorer nodes from the tree DAO
+     *
+     * @param folderDocRef The root doc ref of the query
+     * @param fetchFunction The function to call to get the list of ExplorerTreeNodes given a root ExplorerTreeNode
+     * @return The list of converted ExplorerNodes
+     */
+    private List<ExplorerNode> getDescendants(final DocRef folderDocRef,
+                                              final Function<ExplorerTreeNode, List<ExplorerTreeNode>> fetchFunction) {
+        if (folderDocRef == null) {
+            return explorerTreeDao.getRoots().stream()
+                    .map(fetchFunction)
+                    .flatMap(List::stream) // potential multiple roots returned from tree DAO
+                    .map(this::createExplorerNode)
+                    .collect(Collectors.toList());
         } else {
-            final ExplorerTreeNode node = getNodeForDocRef(docRef);
-            if (node == null) {
-                nodes = Collections.emptyList();
-            } else {
-                nodes = explorerTreeDao.getTree(node);
-            }
+            return getNodeForDocRef(folderDocRef)
+                    .map(fetchFunction)
+                    .map(d -> d.stream().map(this::createExplorerNode)
+                            .collect(Collectors.toList()))
+                    .orElse(Collections.emptyList());
         }
-
-        return nodes.stream()
-                .map(this::createExplorerNode)
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -206,30 +282,30 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private void addNode(final DocRef parentFolderRef, final DocRef docRef) {
         try {
-            final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef);
+            final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
             final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef);
             setTags(docNode);
             explorerTreeDao.addChild(folderNode, docNode);
 
         } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
     private void moveNode(final DocRef parentFolderRef, final DocRef docRef) {
         try {
-            final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef);
-            final ExplorerTreeNode docNode = getNodeForDocRef(docRef);
+            final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
+            final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
             explorerTreeDao.move(docNode, folderNode);
 
         } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
     private void updateNode(final DocRef docRef) {
         try {
-            final ExplorerTreeNode docNode = getNodeForDocRef(docRef);
+            final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
             if (docNode != null) {
                 docNode.setType(docRef.getType());
                 docNode.setUuid(docRef.getUuid());
@@ -237,7 +313,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 explorerTreeDao.update(docNode);
             }
         } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
@@ -266,7 +342,16 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         securityContext.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
     }
 
+    private void clearDocumentPermissions(final DocRef docRef) {
+        securityContext.clearDocumentPermissions(docRef.getType(), docRef.getUuid());
+    }
+
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
-        return new ExplorerNode(explorerTreeNode.getType(), explorerTreeNode.getUuid(), explorerTreeNode.getName(), explorerTreeNode.getTags());
+        return new ExplorerNode.Builder()
+                .type(explorerTreeNode.getType())
+                .uuid(explorerTreeNode.getUuid())
+                .name(explorerTreeNode.getName())
+                .tags(explorerTreeNode.getTags())
+                .build();
     }
 }

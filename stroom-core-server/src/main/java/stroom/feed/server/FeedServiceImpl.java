@@ -25,6 +25,7 @@ import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportHelper;
@@ -44,8 +45,6 @@ import java.util.Set;
 public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCriteria> implements FeedService {
     private static final String FEED_NAME_PATTERN_PROPERTY = "stroom.feedNamePattern";
     private static final String FEED_NAME_PATTERN_VALUE = "^[A-Z0-9_\\-]{3,}$";
-    private static final String FEED_NAME_COPY_PATTERN_PROPERTY = "stroom.feedNameCopyPattern";
-    private static final String FEED_NAME_COPY_PATTERN_VALUE = "COPY_OF_%s";
     private static final Set<String> FETCH_SET = Collections.singleton(StreamType.ENTITY_TYPE);
 
     @Inject
@@ -53,6 +52,11 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
                     final ImportExportHelper importExportHelper,
                     final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
+    }
+
+    @Override
+    public DocRef copyDocument(String uuid, String parentFolderUUID) {
+        throw new EntityServiceException("You cannot copy Feeds");
     }
 
     @SuppressWarnings("unchecked")
@@ -100,12 +104,6 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
     @Override
     public String getNamePattern() {
         return StroomProperties.getProperty(FEED_NAME_PATTERN_PROPERTY, FEED_NAME_PATTERN_VALUE);
-    }
-
-    @Transient
-    @Override
-    public String getNameCopyPattern() {
-        return StroomProperties.getProperty(FEED_NAME_COPY_PATTERN_PROPERTY, FEED_NAME_COPY_PATTERN_VALUE);
     }
 
     @Override

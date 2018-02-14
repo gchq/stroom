@@ -63,8 +63,6 @@ public class CopyDocumentPresenter
     @ProxyEvent
     @Override
     public void onCopy(final ShowCopyDocumentDialogEvent event) {
-        getView().setPermissionInheritance(PermissionInheritance.INHERIT);
-
         this.explorerNodeList = event.getExplorerNodeList();
 
         entityTreePresenter.setSelectedItem(null);
@@ -84,6 +82,7 @@ public class CopyDocumentPresenter
         if (explorerNodeList.size() == 1) {
             caption = "Copy " + explorerNodeList.get(0).getDisplayValue();
         }
+        getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
         final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);

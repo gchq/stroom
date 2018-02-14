@@ -35,8 +35,9 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.v2.DocRef;
 import stroom.stats.shared.CustomRollUpMask;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsRollUpBitMaskPermGenerationAction;
@@ -55,7 +56,7 @@ import java.util.Set;
 
 public class StroomStatsStoreCustomMaskListPresenter
         extends MyPresenterWidget<DataGridView<StroomStatsStoreCustomMaskListPresenter.MaskHolder>>
-        implements HasRead<StroomStatsStoreEntity>, HasWrite<StroomStatsStoreEntity>, HasDirtyHandlers {
+        implements HasDocumentRead<StroomStatsStoreEntity>, HasWrite<StroomStatsStoreEntity>, HasDirtyHandlers {
 
     private final ButtonView newButton;
     private final ButtonView removeButton;
@@ -224,7 +225,7 @@ public class StroomStatsStoreCustomMaskListPresenter
     }
 
     @Override
-    public void read(final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    public void read(final DocRef docRef, final StroomStatsStoreEntity stroomStatsStoreEntity) {
         // initialise the columns and hold the statDataSource on first time
         // or if we are passed a different object
         if (this.stroomStatsStoreEntity == null || this.stroomStatsStoreEntity != stroomStatsStoreEntity) {

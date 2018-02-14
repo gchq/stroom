@@ -34,7 +34,7 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.entity.client.presenter.HasRead;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
@@ -47,6 +47,7 @@ import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.process.client.presenter.ExpressionPresenter;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -78,7 +79,7 @@ import java.util.List;
 import java.util.Set;
 
 public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamView>
-        implements HasDataSelectionHandlers<IdSet>, HasRead<BaseEntity>, BeginSteppingHandler {
+        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<BaseEntity>, BeginSteppingHandler {
     public static final String DATA = "DATA";
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
     public static final String STREAM_LIST = "STREAM_LIST";
@@ -437,7 +438,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     @Override
-    public void read(final BaseEntity entity) {
+    public void read(final DocRef docRef, final BaseEntity entity) {
         if (entity instanceof Feed) {
             setFeedCriteria((Feed) entity);
         } else if (entity instanceof PipelineEntity) {

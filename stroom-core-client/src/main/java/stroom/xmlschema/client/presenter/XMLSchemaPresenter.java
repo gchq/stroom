@@ -24,6 +24,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -109,8 +110,8 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    protected void onRead(final XMLSchema xmlSchema) {
-        settingsPresenter.read(getDocRef(), xmlSchema);
+    protected void onRead(final DocRef docRef, final XMLSchema xmlSchema) {
+        settingsPresenter.read(docRef, xmlSchema);
 
         shownText = false;
         updateDiagram = false;

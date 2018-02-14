@@ -20,13 +20,11 @@ import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TabConfig;
-import stroom.entity.client.presenter.HasRead;
-import stroom.entity.client.presenter.HasWrite;
 import stroom.util.shared.HasDisplayValue;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
-public interface Component extends TabData, Layer, HasRead<ComponentConfig>, HasWrite<ComponentConfig>, HasDisplayValue {
+public interface Component extends TabData, Layer, HasDisplayValue {
     Components getComponents();
 
     void setComponents(Components components);
@@ -59,4 +57,8 @@ public interface Component extends TabData, Layer, HasRead<ComponentConfig>, Has
     void onRemove();
 
     String getId();
+
+    void read(ComponentConfig componentConfig);
+
+    void write(ComponentConfig componentConfig);
 }

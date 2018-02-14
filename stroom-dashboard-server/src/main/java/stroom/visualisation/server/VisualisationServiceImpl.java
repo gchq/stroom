@@ -65,6 +65,22 @@ public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualis
     }
 
     @Override
+    public DocRef copyDocument(final String originalUuid,
+                               final String copyUuid,
+                               final Map<String, String> otherCopiesByOriginalUuid,
+                               final String parentFolderUUID) {
+        final DocRef copiedDocRef = super.copyDocument(originalUuid,
+                copyUuid,
+                otherCopiesByOriginalUuid,
+                parentFolderUUID);
+
+        return makeCopyUuidReplacements(copiedDocRef,
+                otherCopiesByOriginalUuid,
+                Visualisation::getScriptRefXML,
+                Visualisation::setScriptRefXML);
+    }
+
+    @Override
     protected QueryAppender<Visualisation, FindVisualisationCriteria> createQueryAppender(StroomEntityManager entityManager) {
         return new VisualisationQueryAppender(entityManager);
     }

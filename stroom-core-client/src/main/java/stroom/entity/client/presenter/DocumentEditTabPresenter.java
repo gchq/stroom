@@ -26,6 +26,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.shared.DocumentType;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPreset;
@@ -51,6 +52,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     private ButtonPanel leftButtons;
     private ButtonPanel rightButtons;
     private PresenterWidget<?> currentContent;
+    private DocRef docRef;
 
     public DocumentEditTabPresenter(final EventBus eventBus, final V view,
                                     final ClientSecurityContext securityContext) {
@@ -66,7 +68,6 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         }));
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
     }
-
 
 
 //    public ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
@@ -158,12 +159,17 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
+    protected void onRead(final DocRef docRef, final D entity) {
+        this.docRef = docRef;
+    }
+
+    @Override
     public String getLabel() {
         if (isDirty()) {
-            return "* " + getDocRef().getName();
+            return "* " + docRef.getName();
         }
 
-        return getDocRef().getName();
+        return docRef.getName();
     }
 
     @Override

@@ -20,6 +20,10 @@ package stroom.explorer.server;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.UUID;
+
 /**
  * This interface is intended to be used by the explorer for document store operations that need not know much about the
  * documents that are stored just how to create, copy, move and delete them.
@@ -37,11 +41,28 @@ public interface ExplorerActionHandler {
     /**
      * Copy an existing document identified by uuid, to the specified location.
      *
-     * @param uuid             The uuid of the document you want to copy.
+     * @param originalUuid     The uuid of the document you want to copy.
+     * @param copyUuid         The uuid of the intended copy
+     * @param otherCopiesByOriginalUUid For bulk copy operations, this contains all other copies being made.
+     *                                  This allows the sub service to repoint dependencies on this copy to other copies being made.
      * @param parentFolderUUID The uuid of the parent folder that you want to create the copy in.
      * @return A doc ref for the new document copy.
      */
-    DocRef copyDocument(String uuid, String parentFolderUUID);
+    DocRef copyDocument(String originalUuid,
+                        String copyUuid,
+                        Map<String, String> otherCopiesByOriginalUUid,
+                        String parentFolderUUID);
+
+    /**
+     * Default form of the copy function, allow clients to let a UUID be made for them.
+     * Assumes singular copy, no bulk repointing will happen
+     * @param uuid              The uuid of the document you want to copy.
+     * @param parentFolderUUID  The uuid of the parent folder that you want to create the copy in.
+     * @return
+     */
+    default DocRef copyDocument(String uuid, String parentFolderUUID) {
+        return copyDocument(uuid, UUID.randomUUID().toString(), Collections.emptyMap(), parentFolderUUID);
+    }
 
     /**
      * Move an existing document identified by uuid, to the specified location.

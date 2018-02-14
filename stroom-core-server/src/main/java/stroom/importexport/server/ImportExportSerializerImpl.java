@@ -56,6 +56,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -180,17 +181,17 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 }
 
                 // See if we have an existing node for this item.
-                final ExplorerNode existingNode = explorerNodeService.getNode(docRef);
+                final Optional<ExplorerNode> existingNode = explorerNodeService.getNode(docRef);
                 ExplorerNode parentNode = null;
 
-                if (existingNode == null) {
+                if (!existingNode.isPresent()) {
                     importState.setState(State.NEW);
                     importState.setDestPath(createPath(path, docRef.getName()));
 
                     // Create a parent folder for the new node.
                     // Get the root node.
                     // TODO : Allow the user to specify what the parent folder should be for the import.
-                    ExplorerNode parent = explorerNodeService.getRoot();
+                    ExplorerNode parent = explorerNodeService.getRoot().orElse(null);
                     parentNode = getOrCreateParentFolder(parent, path, importState.ok(importMode));
 
                 } else {
@@ -231,8 +232,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         final DocRef imported = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
 
                         // Add explorer node afterwards on successful import as they won't be controlled by doc service.
-                        if (existingNode == null && !ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
-                            explorerNodeService.createNode(imported, folderRef, PermissionInheritance.INHERIT);
+                        if (!existingNode.isPresent() && !ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
+                            explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
                             importExportEventLog.importDocument(type, imported.getUuid(), name, null);
                         }
                     }
@@ -270,7 +271,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
     }
 
-    private ExplorerNode getOrCreateParentFolder(ExplorerNode parent, final String path, final boolean create) {
+    private ExplorerNode getOrCreateParentFolder(ExplorerNode parent,
+                                                 final String path,
+                                                 final boolean create) {
         // Create a parent folder for the new node.
         final String[] elements = path.split("/");
 
@@ -289,7 +292,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     // Go and create the folder if we are actually importing now.
                     if (create) {
                         // Go and create the folder.
-                        final DocRef newFolder = explorerService.create(FOLDER, element, folderRef, PermissionInheritance.INHERIT);
+                        final DocRef newFolder = explorerService.create(FOLDER, element, folderRef, PermissionInheritance.DESTINATION);
                         parent = ExplorerNode.create(newFolder);
                     }
 
@@ -343,10 +346,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             final Map<String, String> dataMap = importExportActionHandler.exportDocument(docRef, omitAuditFields, messageList);
 
             // Get an explorer node for this doc ref.
-            final ExplorerNode explorerNode = explorerNodeService.getNode(docRef);
-            if (explorerNode == null) {
-                throw new RuntimeException("Unable to locate a '" + docRef + "' in explorer tree");
-            }
+            final ExplorerNode explorerNode = explorerNodeService.getNode(docRef)
+                    .orElseThrow(() -> new RuntimeException("Unable to locate a '" + docRef + "' in explorer tree"));
 
             // Get the explorer path to this doc ref.
             List<ExplorerNode> path = explorerNodeService.getPath(docRef);

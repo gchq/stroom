@@ -19,7 +19,7 @@ package stroom.entity.shared;
 import stroom.util.shared.HasDisplayValue;
 
 public enum PermissionInheritance implements HasDisplayValue {
-    NONE("None"), COMBINED("Combined"), INHERIT("Inherit");
+    NONE("None"), SOURCE("Source"), DESTINATION("Destination"), COMBINED("Combined");
 
     private final String displayValue;
 

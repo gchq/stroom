@@ -78,6 +78,22 @@ public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntit
     }
 
     @Override
+    public DocRef copyDocument(final String originalUuid,
+                               final String copyUuid,
+                               final Map<String, String> otherCopiesByOriginalUuid,
+                               final String parentFolderUUID) {
+        final DocRef copiedDocRef = super.copyDocument(originalUuid,
+                copyUuid,
+                otherCopiesByOriginalUuid,
+                parentFolderUUID);
+
+        return makeCopyUuidReplacements(copiedDocRef,
+                otherCopiesByOriginalUuid,
+                PipelineEntity::getData,
+                PipelineEntity::setData);
+    }
+
+    @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
         final Set<DocRef> docs = super.listDocuments();
         return docs.stream().collect(Collectors.toMap(Function.identity(), this::getDependencies));

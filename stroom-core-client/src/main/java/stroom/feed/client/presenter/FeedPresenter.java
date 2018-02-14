@@ -25,6 +25,7 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.feed.shared.Feed;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
@@ -78,8 +79,8 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     }
 
     @Override
-    public void onRead(final Feed feed) {
-        tabContentProvider.read(feed);
+    public void onRead(final DocRef docRef, final Feed feed) {
+        tabContentProvider.read(docRef, feed);
     }
 
     @Override

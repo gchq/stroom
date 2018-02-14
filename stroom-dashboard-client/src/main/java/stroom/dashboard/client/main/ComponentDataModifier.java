@@ -17,10 +17,8 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.entity.client.presenter.HasRead;
-import stroom.entity.client.presenter.HasWrite;
 
-public interface ComponentDataModifier extends HasRead<ComponentConfig>, HasWrite<ComponentConfig> {
+public interface ComponentDataModifier {
     boolean validate();
 
     boolean isDirty(ComponentConfig componentData);
@@ -28,4 +26,8 @@ public interface ComponentDataModifier extends HasRead<ComponentConfig>, HasWrit
     Components getComponents();
 
     void setComponents(Components components);
+
+    void read(ComponentConfig componentConfig);
+
+    void write(ComponentConfig componentConfig);
 }

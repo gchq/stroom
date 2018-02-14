@@ -21,6 +21,7 @@ import com.google.inject.Provider;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.query.api.v2.DocRef;
 import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.HashMap;
@@ -28,7 +29,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermissionCheck {
+public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, HasPermissionCheck {
     private final Map<TabData, Provider<?>> tabProviders = new HashMap<>();
     private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<>();
 
@@ -37,6 +38,7 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermis
 
     private DirtyHandler dirtyHandler;
     private PresenterWidget<?> currentPresenter;
+    private DocRef docRef;
     private E entity;
     private boolean readOnly;
 
@@ -72,7 +74,7 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermis
 
         // Read entity if not read since entity set.
         if (usedPresenters == null || !usedPresenters.contains(currentPresenter)) {
-            read(currentPresenter, entity);
+            read(currentPresenter, docRef, entity);
             onPermissionsCheck(currentPresenter, readOnly);
         }
 
@@ -80,7 +82,8 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermis
     }
 
     @Override
-    public void read(final E entity) {
+    public void read(final DocRef docRef, final E entity) {
+        this.docRef = docRef;
         this.entity = entity;
 
         // Clear the used presenter set as we are reading a new entity.
@@ -95,11 +98,10 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermis
         // If there is currently a presenter visible then let it read the
         // entity.
         if (currentPresenter != null) {
-            read(currentPresenter, entity);
+            read(currentPresenter, docRef, entity);
         }
     }
 
-    @Override
     public void write(final E entity) {
         if (usedPresenters != null) {
             for (final PresenterWidget<?> presenter : usedPresenters) {
@@ -119,10 +121,12 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermis
     }
 
     @SuppressWarnings("unchecked")
-    private void read(final PresenterWidget<?> presenter, final E entity) {
-        if (presenter != null && presenter instanceof HasRead<?>) {
-            final HasRead<E> hasRead = (HasRead<E>) presenter;
-            hasRead.read(entity);
+    private void read(final PresenterWidget<?> presenter,
+                      final DocRef docRef,
+                      final E entity) {
+        if (presenter != null && presenter instanceof HasDocumentRead<?>) {
+            final HasDocumentRead<E> hasDocumentRead = (HasDocumentRead<E>) presenter;
+            hasDocumentRead.read(docRef, entity);
 
             if (usedPresenters == null) {
                 usedPresenters = new HashSet<>();

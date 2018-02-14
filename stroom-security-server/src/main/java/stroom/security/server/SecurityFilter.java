@@ -25,6 +25,7 @@ import stroom.auth.service.ApiException;
 import stroom.security.server.AuthenticationStateSessionUtil.AuthenticationState;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
+import stroom.servlet.HttpSessionUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.servlet.Filter;
@@ -161,6 +162,10 @@ public class SecurityFilter implements Filter {
             if (useSession) {
                 // Set the user ref in the session.
                 UserRefSessionUtil.set(request.getSession(true), userRef);
+
+                // Get the user's API key and store it in the session
+                String apiKey = authenticationServiceClients.getUsersApiToken(userRef.getName());
+                HttpSessionUtil.setUserApiKey(request.getSession(true), apiKey);
             }
 
             continueAsUser(request, response, chain, userRef);
@@ -209,6 +214,11 @@ public class SecurityFilter implements Filter {
                     if (userRef != null) {
                         // Set the user ref in the session.
                         UserRefSessionUtil.set(request.getSession(true), userRef);
+
+                        // Get the user's API key and store it in the session
+                        String apiKey = authenticationServiceClients.getUsersApiToken(userRef.getName());
+                        HttpSessionUtil.setUserApiKey(request.getSession(true), apiKey);
+
                         loggedIn = true;
                     }
 

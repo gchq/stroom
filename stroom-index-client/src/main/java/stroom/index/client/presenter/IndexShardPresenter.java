@@ -35,8 +35,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasPermissionCheck;
-import stroom.entity.client.presenter.HasRead;
-import stroom.entity.shared.DocRefUtil;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.index.shared.DeleteIndexShardAction;
@@ -65,7 +64,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexShard>>
-        implements Refreshable, HasRead<Index>, HasPermissionCheck {
+        implements Refreshable, HasDocumentRead<Index>, HasPermissionCheck {
     private final TooltipPresenter tooltipPresenter;
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
@@ -357,9 +356,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     @Override
-    public void read(final Index index) {
-        final DocRef docRef = DocRefUtil.create(index);
-
+    public void read(final DocRef docRef, final Index index) {
         this.index = index;
         selectionCriteria.getIndexSet().add(docRef);
         selectionCriteria.getFetchSet().add(Node.ENTITY_TYPE);
