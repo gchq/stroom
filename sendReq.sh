@@ -3,8 +3,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Script to send an API request to stroom
 #
-# To work with the most recently json request downloaded from a stroom dashboard 
-# you can do stuff like:
+# To work with the json request most recently downloaded from a stroom dashboard you can do stuff like:
 #
 # #Edit the file in vim
 # vim "$(ls -1tr ~/Downloads/DashboardQuery* | tail -n 1 | grep -oP '/home/.*\.json')"
