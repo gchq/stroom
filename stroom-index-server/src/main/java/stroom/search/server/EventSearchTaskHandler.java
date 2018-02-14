@@ -23,19 +23,26 @@ import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
+import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.api.v2.Query;
 import stroom.query.common.v2.StoreSize;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
+import stroom.util.logging.LambdaLogger;
 import stroom.util.spring.StroomScope;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = EventSearchTask.class)
@@ -100,12 +107,27 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         asyncSearchTask.setResultCollector(searchResultCollector);
 
         try {
+            final ReentrantLock completionLock = new ReentrantLock();
+            final Condition searchCompletedCondition = completionLock.newCondition();
+
+            //when the search completes signal the condition to stop waiting
+            resultHandler.registerCompletionListener(searchCompletedCondition::signal);
+
             // Start asynchronous search execution.
             searchResultCollector.start();
 
-            // Wait for completion.
+            // Wait for completion or termination
             while (!task.isTerminated() && !resultHandler.isComplete()) {
-                ThreadUtil.sleep(task.getResultSendFrequency());
+                try {
+                    //drop out of the await state every 2s to check we haven't been terminated.
+                    //If the search completes while the condition will be signalled in the listner
+                    //above
+                    searchCompletedCondition.await(2, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(LambdaLogger.buildMessage("Thread {} interrupted executing task {}",
+                            Thread.currentThread().getName(), task));
+                }
             }
 
             eventRefs = resultHandler.getStreamReferences();
