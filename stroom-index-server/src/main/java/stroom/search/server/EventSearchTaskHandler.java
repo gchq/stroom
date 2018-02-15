@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -107,11 +108,10 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         asyncSearchTask.setResultCollector(searchResultCollector);
 
         try {
-            final ReentrantLock completionLock = new ReentrantLock();
-            final Condition searchCompletedCondition = completionLock.newCondition();
+            final Semaphore completionSemaphore = new Semaphore(0);
 
-            //when the search completes signal the condition to stop waiting
-            resultHandler.registerCompletionListener(searchCompletedCondition::signal);
+            //when the search completes release a permit so we can get past the semaphore
+            resultHandler.registerCompletionListener(completionSemaphore::release);
 
             // Start asynchronous search execution.
             searchResultCollector.start();
@@ -119,14 +119,14 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
             // Wait for completion or termination
             while (!task.isTerminated() && !resultHandler.isComplete()) {
                 try {
-                    //drop out of the await state every 2s to check we haven't been terminated.
-                    //If the search completes while the condition will be signalled in the listner
-                    //above
-                    searchCompletedCondition.await(2, TimeUnit.SECONDS);
+                    //drop out of the waiting state every 2s to check we haven't been terminated.
+                    //If the search completes while waiting we will drop out of the wait immediately
+                    completionSemaphore.tryAcquire(2, TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    throw new RuntimeException(LambdaLogger.buildMessage("Thread {} interrupted executing task {}",
-                            Thread.currentThread().getName(), task));
+                    throw new RuntimeException(
+                            LambdaLogger.buildMessage("Thread {} interrupted executing task {}",
+                                    Thread.currentThread().getName(), task));
                 }
             }
 
