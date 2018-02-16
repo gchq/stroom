@@ -42,8 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = EventSearchTask.class)
@@ -119,9 +117,10 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
             // Wait for completion or termination
             while (!task.isTerminated() && !resultHandler.isComplete()) {
                 try {
-                    //drop out of the waiting state every 2s to check we haven't been terminated.
+                    //Drop out of the waiting state every 5s to check we haven't been terminated.
+                    //This is a bit of extra protection as the resultHnadler so
                     //If the search completes while waiting we will drop out of the wait immediately
-                    completionSemaphore.tryAcquire(2, TimeUnit.SECONDS);
+                    completionSemaphore.tryAcquire(5, TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(
