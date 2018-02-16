@@ -68,6 +68,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private volatile boolean terminated;
 
     private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
+    private final Queue<Runnable> changeListeners = new ConcurrentLinkedQueue<>();
 
     private ClusterSearchResultCollector(final TaskManager taskManager,
                                          final Task<VoidResult> task,
@@ -164,18 +165,21 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         if (result.isComplete()) {
             completedNodes.add(node);
         }
+        notifyListenersOfChange();
     }
 
     @Override
     public void onFailure(final Node node, final Throwable throwable) {
         completedNodes.add(node);
         getErrorSet(node).add(throwable.getMessage());
+        notifyListenersOfChange();
     }
 
     @Override
     public void terminate() {
         terminated = true;
         notifyListenersOfCompletion();
+        notifyListenersOfChange();
     }
 
     public Set<String> getErrorSet(final Node node) {
@@ -274,5 +278,21 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                 listener.onCompletion();
             }
         }
+    }
+
+    public void registerChangeListner(final Runnable changeListener) {
+        changeListeners.add(Objects.requireNonNull(changeListener));
+    }
+
+    private void notifyListenersOfChange() {
+        changeListeners.forEach(Runnable::run);
+    }
+
+    @Override
+    public String toString() {
+        return "ClusterSearchResultCollector{" +
+                "task=" + task +
+                ", terminated=" + terminated +
+                '}';
     }
 }
