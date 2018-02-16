@@ -102,6 +102,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
 
     @Override
     public void onRead(final DocRef docRef, final Script script) {
+        super.onRead(docRef, script);
         loadCount++;
         settingsPresenter.read(docRef, script);
 

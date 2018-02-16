@@ -100,6 +100,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
     @Override
     public void onRead(final DocRef docRef, final PipelineEntity pipelineEntity) {
+        super.onRead(docRef, pipelineEntity);
         tabContentProvider.read(docRef, pipelineEntity);
     }
 

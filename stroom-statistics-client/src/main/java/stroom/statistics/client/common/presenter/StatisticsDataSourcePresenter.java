@@ -71,6 +71,7 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
 
     @Override
     public void onRead(final DocRef docRef, final StatisticStoreEntity statisticsDataSource) {
+        super.onRead(docRef, statisticsDataSource);
         if (statisticsDataSource != null) {
             if (statisticsDataSource.getStatisticDataSourceDataObject() == null) {
                 statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData());

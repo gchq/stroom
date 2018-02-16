@@ -77,6 +77,8 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
 
     @Override
     public void onRead(final DocRef docRef, final TextConverter textConverter) {
+        super.onRead(docRef, textConverter);
+
         settingsPresenter.read(docRef, textConverter);
 
         if (codePresenter != null) {

@@ -64,6 +64,7 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
 
     @Override
     public void onRead(final DocRef docRef, final Visualisation visualisation) {
+        super.onRead(docRef, visualisation);
         loadCount++;
         settingsPresenter.read(docRef, visualisation);
 
