@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -106,10 +106,10 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         asyncSearchTask.setResultCollector(searchResultCollector);
 
         try {
-            final Semaphore completionSemaphore = new Semaphore(0);
+            final CountDownLatch completionLatch = new CountDownLatch(1);
 
-            //when the search completes release a permit so we can get past the semaphore
-            resultHandler.registerCompletionListener(completionSemaphore::release);
+            //when the search completes reduce our latch to zero to release the block below
+            resultHandler.registerCompletionListener(completionLatch::countDown);
 
             // Start asynchronous search execution.
             searchResultCollector.start();
@@ -118,9 +118,10 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
             while (!task.isTerminated() && !resultHandler.isComplete()) {
                 try {
                     //Drop out of the waiting state every 5s to check we haven't been terminated.
-                    //This is a bit of extra protection as the resultHnadler so
+                    //This is a bit of extra protection as the resultHandler should notify our
+                    //completion listener if it is terminated.
                     //If the search completes while waiting we will drop out of the wait immediately
-                    completionSemaphore.tryAcquire(5, TimeUnit.SECONDS);
+                    completionLatch.await(5, TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(
