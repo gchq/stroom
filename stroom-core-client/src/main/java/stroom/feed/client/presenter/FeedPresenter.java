@@ -80,6 +80,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
 
     @Override
     public void onRead(final DocRef docRef, final Feed feed) {
+        super.onRead(docRef, feed);
         tabContentProvider.read(docRef, feed);
     }
 

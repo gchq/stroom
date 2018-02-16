@@ -111,6 +111,7 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
 
     @Override
     protected void onRead(final DocRef docRef, final XMLSchema xmlSchema) {
+        super.onRead(docRef, xmlSchema);
         settingsPresenter.read(docRef, xmlSchema);
 
         shownText = false;

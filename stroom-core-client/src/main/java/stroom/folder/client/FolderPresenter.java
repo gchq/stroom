@@ -92,6 +92,7 @@ public class FolderPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
 
     @Override
     public void onRead(final DocRef docRef, final SharedObject folder) {
+        super.onRead(docRef, folder);
         tabContentProvider.read(docRef, folder);
     }
 
