@@ -32,9 +32,12 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,6 +51,7 @@ import java.util.stream.Collectors;
 @Scope(StroomScope.PROTOTYPE)
 class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventRefs> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchTaskHandler.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(EventSearchTaskHandler.class);
 
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
@@ -114,14 +118,25 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
             // Start asynchronous search execution.
             searchResultCollector.start();
 
+            LOGGER.debug("Started searchResultCollector {}", searchResultCollector);
+
             // Wait for completion or termination
             while (!task.isTerminated() && !resultHandler.isComplete()) {
                 try {
-                    //Drop out of the waiting state every 5s to check we haven't been terminated.
+                    //Drop out of the waiting state every 30s to check we haven't been terminated.
                     //This is a bit of extra protection as the resultHandler should notify our
                     //completion listener if it is terminated.
                     //If the search completes while waiting we will drop out of the wait immediately
-                    completionLatch.await(5, TimeUnit.SECONDS);
+                    final Instant startTime;
+                    if (LOGGER.isTraceEnabled()) {
+                        startTime = Instant.now();
+                    } else {
+                        startTime = Instant.EPOCH;
+                    }
+                    boolean awaitResult = completionLatch.await(30, TimeUnit.SECONDS);
+                    LAMBDA_LOGGER.trace(() ->
+                            LambdaLogger.buildMessage("Await finished with result {} in {}",
+                                    awaitResult, Duration.between(startTime, Instant.now())));
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(
