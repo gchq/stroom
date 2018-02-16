@@ -363,6 +363,9 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             try {
                                 //wait until the next poll frequency time or drop out as soon
                                 //as the search completes and the latch is counted down
+
+                                //TODO something is causing lots of 'Await finished with wait time 0 result false in PT0S'
+                                //to be seen in the logs
                                 long waitTime = latestSendTimeMs - System.currentTimeMillis();
                                 final Instant startTime;
                                 if (LOGGER.isTraceEnabled()) {
