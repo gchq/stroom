@@ -31,7 +31,6 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
-import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
@@ -52,6 +51,7 @@ import stroom.search.server.shard.IndexShardSearchTaskProducer;
 import stroom.search.server.shard.IndexShardSearchTaskProperties;
 import stroom.search.server.shard.IndexShardSearcherCache;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskCallback;
@@ -61,6 +61,8 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskTerminatedException;
 import stroom.task.server.ThreadPoolImpl;
 import stroom.util.config.PropertyUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.ThreadPool;
@@ -69,6 +71,8 @@ import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -78,6 +82,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -90,6 +95,7 @@ import java.util.stream.Collectors;
 @Scope(StroomScope.TASK)
 class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
     /**
      * We don't want to collect more than 1 million doc's data into the queue by
@@ -99,7 +105,11 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000000;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Result Sender", 5, 0, Integer.MAX_VALUE);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Search Result Sender",
+            5,
+            0,
+            Integer.MAX_VALUE);
 
     private final IndexService indexService;
     private final DictionaryStore dictionaryStore;
@@ -116,6 +126,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final int maxStoredDataQueueSize;
     private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
     private final AtomicBoolean searchComplete = new AtomicBoolean();
+    private final CountDownLatch searchCompleteLatch = new CountDownLatch(1);
     private final AtomicBoolean sendingData = new AtomicBoolean();
     private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
     private final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider;
@@ -267,6 +278,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 } finally {
                     // Tell the client that the search has completed.
                     searchComplete.set(true);
+                    //countDown the latch so sendData knows we are complete
+                    searchCompleteLatch.countDown();
                 }
 
                 // Now we must wait for results to be sent to the requesting node.
@@ -278,7 +291,10 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         }
     }
 
-    private void sendData(final Map<CoprocessorKey, Coprocessor> coprocessorMap, final TaskCallback<NodeResult> callback, final long frequency, final Executor executor) {
+    private void sendData(final Map<CoprocessorKey, Coprocessor> coprocessorMap,
+                          final TaskCallback<NodeResult> callback,
+                          final long frequency,
+                          final Executor executor) {
         final long now = System.currentTimeMillis();
 
         final Supplier<Boolean> supplier = () -> {
@@ -335,9 +351,33 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                     } else {
                         // If we aren't complete then send more using the supplied sending frequency.
-                        final long duration = System.currentTimeMillis() - now;
-                        if (duration < frequency) {
-                            ThreadUtil.sleep(frequency - duration);
+//                        final long duration = System.currentTimeMillis() - now;
+                        final long latestSendTimeMs = now + frequency;
+//                        if (duration < frequency) {
+//                            ThreadUtil.sleep(frequency - duration);
+//
+//                        }
+                        while (!taskContext.isTerminated() &&
+                                !searchComplete.get() &&
+                                System.currentTimeMillis() <= latestSendTimeMs) {
+                            try {
+                                //wait until the next poll frequency time or drop out as soon
+                                //as the search completes and the latch is counted down
+                                long waitTime = latestSendTimeMs - System.currentTimeMillis();
+                                final Instant startTime;
+                                if (LOGGER.isTraceEnabled()) {
+                                    startTime = Instant.now();
+                                } else {
+                                    startTime = Instant.EPOCH;
+                                }
+                                boolean awaitResult = searchCompleteLatch.await(waitTime, TimeUnit.MILLISECONDS);
+                                LAMBDA_LOGGER.trace(() ->
+                                        LambdaLogger.buildMessage("Await finished with wait time {} result {} in {}",
+                                                waitTime, awaitResult, Duration.between(startTime, Instant.now())));
+                            } catch (InterruptedException e) {
+                                //TODO should we reset the interrupt status or not?
+                                throw new RuntimeException("Thread interrupted");
+                            }
                         }
 
                         // Make sure we don't continue to execute this task if it should have terminated.
@@ -355,8 +395,11 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 });
     }
 
-    private void search(final ClusterSearchTask task, final stroom.query.api.v2.Query query, final String[] storedFieldNames,
-                        final boolean filterStreams, final IndexFieldsMap indexFieldsMap,
+    private void search(final ClusterSearchTask task,
+                        final stroom.query.api.v2.Query query,
+                        final String[] storedFieldNames,
+                        final boolean filterStreams,
+                        final IndexFieldsMap indexFieldsMap,
                         final FieldIndexMap extractionFieldIndexMap,
                         final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {
         taskContext.info("Searching...");
