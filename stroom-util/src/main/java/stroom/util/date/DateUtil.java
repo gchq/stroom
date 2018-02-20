@@ -140,6 +140,16 @@ public final class DateUtil {
     /**
      * Create a 'normal' type date in UTC
      */
+    public static String createNormalDateTimeString(final LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            return "";
+        }
+        return createNormalDateTimeString(localDateTime.atZone(ZoneOffset.UTC));
+    }
+
+    /**
+     * Create a 'normal' type date
+     */
     public static String createNormalDateTimeString(final ZonedDateTime zonedDateTime) {
         if (zonedDateTime == null) {
             return "";
