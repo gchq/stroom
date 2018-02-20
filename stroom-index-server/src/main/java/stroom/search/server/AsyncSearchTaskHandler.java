@@ -193,15 +193,13 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
                                 () -> {
                                     try {
-                                        try {
-                                            reentrantLock.lock();
-                                            return condition.await(30, TimeUnit.SECONDS);
-                                        } finally {
-                                            reentrantLock.unlock();
-                                        }
+                                        reentrantLock.lock();
+                                        return condition.await(30, TimeUnit.SECONDS);
                                     } catch (InterruptedException e) {
                                         //TODO should we reset the interrupt status or not?
                                         throw new RuntimeException("Thread interrupted");
+                                    } finally {
+                                        reentrantLock.unlock();
                                     }
                                 },
                                 "waiting for completion condition");
