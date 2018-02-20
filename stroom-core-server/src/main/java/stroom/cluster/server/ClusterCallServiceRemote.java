@@ -21,7 +21,6 @@ import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import stroom.feed.server.StroomHessianProxyFactory;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
@@ -41,7 +40,6 @@ import java.util.Map;
  * makes a local JVM call if the remote call is to it's self. This helps with
  * performance and testing.
  */
-@Component("clusterCallServiceRemote")
 class ClusterCallServiceRemote implements ClusterCallService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCallServiceRemote.class);
 

@@ -18,7 +18,6 @@ package stroom.cluster.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.EntityServiceException;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
@@ -33,7 +32,6 @@ import java.lang.reflect.Method;
  * Basic implementation of ClusterCallService that calls the local service by
  * bean name.
  */
-@Component("clusterCallServiceLocal")
 class ClusterCallServiceLocal implements ClusterCallService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCallServiceLocal.class);
 

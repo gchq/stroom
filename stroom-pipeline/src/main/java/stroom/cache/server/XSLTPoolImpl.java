@@ -22,7 +22,6 @@ import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.DocumentPermissionCache;
 import stroom.pipeline.server.DefaultLocationFactory;
 import stroom.pipeline.server.LocationFactory;
@@ -48,7 +47,6 @@ import javax.xml.transform.stream.StreamSource;
 import java.util.List;
 
 @Insecure
-@Component
 class XSLTPoolImpl extends AbstractEntityPool<XSLT, StoredXsltExecutable> implements XSLTPool {
     private static final Logger LOGGER = LoggerFactory.getLogger(XSLTPoolImpl.class);
 

@@ -21,9 +21,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import stroom.cache.server.PipelineCacheSpringConfig;
 import stroom.cluster.server.ClusterNodeManagerImpl;
+import stroom.cluster.server.ClusterSpringConfig;
+import stroom.connectors.ConnectorsSpringConfig;
 import stroom.node.server.NodeConfigImpl;
 import stroom.streamtask.server.StreamProcessorTaskFactory;
+import stroom.task.cluster.ClusterTaskSpringConfig;
 
 /**
  * Configures the context for core integration tests.
@@ -40,9 +45,6 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
  */
 @Configuration
 @ComponentScan(basePackages = {
-        "stroom.apiclients",
-        "stroom.cache",
-        "stroom.cluster",
         "stroom.datafeed",
         "stroom.datasource",
         "stroom.docstore.server",
@@ -55,7 +57,6 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
         "stroom.internalstatistics",
         "stroom.io",
         "stroom.jobsystem",
-        "stroom.connectors",
         "stroom.connectors.kafka",
         "stroom.lifecycle",
         "stroom.logging",
@@ -85,6 +86,7 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = NodeConfigImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorTaskFactory.class)})
+@Import({ClusterSpringConfig.class, PipelineCacheSpringConfig.class, ClusterTaskSpringConfig.class, ConnectorsSpringConfig.class})
 public class ServerComponentScanTestConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerComponentScanTestConfiguration.class);
 

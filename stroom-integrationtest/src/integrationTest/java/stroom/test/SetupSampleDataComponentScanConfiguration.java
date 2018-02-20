@@ -24,8 +24,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import stroom.cache.CacheSpringConfig;
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.cluster.server.MockClusterNodeManager;
+import stroom.connectors.ConnectorsSpringConfig;
 import stroom.dashboard.server.MockQueryService;
 import stroom.dashboard.server.MockVisualisationService;
 import stroom.datafeed.server.MockHttpServletRequest;
@@ -64,6 +67,7 @@ import stroom.streamtask.server.MockStreamProcessorFilterService;
 import stroom.streamtask.server.MockStreamProcessorService;
 import stroom.streamtask.server.MockStreamTaskCreator;
 import stroom.streamtask.server.MockStreamTaskService;
+import stroom.task.cluster.ClusterTaskSpringConfig;
 import stroom.volume.server.MockVolumeService;
 import stroom.xmlschema.server.MockXMLSchemaService;
 
@@ -77,8 +81,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
  */
 @Configuration
 @ComponentScan(basePackages = {
-        "stroom.cache",
-        "stroom.cluster",
         "stroom.datafeed",
         "stroom.datasource",
         "stroom.docstore.server",
@@ -92,7 +94,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         "stroom.internalstatistics",
         "stroom.io",
         "stroom.jobsystem",
-        "stroom.connectors",
         "stroom.connectors.kafka",
         "stroom.lifecycle",
         "stroom.logging",
@@ -164,6 +165,7 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockXMLSchemaService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockXSLTService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),})
+@Import({CacheSpringConfig.class, ClusterTaskSpringConfig.class, ConnectorsSpringConfig.class})
 public class SetupSampleDataComponentScanConfiguration implements BeanFactoryAware {
     private BeanFactory beanFactory;
 

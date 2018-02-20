@@ -23,7 +23,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import stroom.cluster.server.ClusterNodeManagerImpl;
+import stroom.connectors.ConnectorsSpringConfig;
 import stroom.dashboard.server.QueryServiceImpl;
 import stroom.dictionary.server.DictionaryStoreImpl;
 import stroom.explorer.server.ExplorerActionHandlers;
@@ -86,9 +88,6 @@ import stroom.xmlschema.shared.XMLSchema;
  */
 @Configuration
 @ComponentScan(basePackages = {
-        "stroom.apiclients",
-        "stroom.cache",
-        "stroom.cluster",
         "stroom.datafeed",
         "stroom.datasource",
         "stroom.db",
@@ -102,7 +101,6 @@ import stroom.xmlschema.shared.XMLSchema;
         "stroom.internalstatistics",
         "stroom.io",
         "stroom.jobsystem",
-        "stroom.connectors",
         "stroom.connectors.kafka",
         "stroom.lifecycle",
         "stroom.logging",
@@ -175,6 +173,7 @@ import stroom.xmlschema.shared.XMLSchema;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = VolumeServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = XMLSchemaServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = XSLTServiceImpl.class)})
+@Import({ConnectorsSpringConfig.class})
 public class ProcessTestServerComponentScanConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessTestServerComponentScanConfiguration.class);
 

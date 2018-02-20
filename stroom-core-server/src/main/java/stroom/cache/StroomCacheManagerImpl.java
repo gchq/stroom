@@ -18,7 +18,6 @@ package stroom.cache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.shared.BaseResultList;
@@ -39,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Component
 public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomCacheManagerImpl.class);
 

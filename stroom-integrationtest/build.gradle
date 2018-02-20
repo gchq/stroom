@@ -28,6 +28,7 @@ dependencies {
 
     integrationTestCompile libs.slf4j_api
     integrationTestCompile libs.junit
+    integrationTestCompile libs.fast_classpath_scanner
 
     integrationTestCompile libs.commons_io
     integrationTestRuntime libs.javax_el

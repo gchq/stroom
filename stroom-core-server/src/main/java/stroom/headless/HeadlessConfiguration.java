@@ -19,6 +19,8 @@ package stroom.headless;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import stroom.connectors.ConnectorsSpringConfig;
 
 /**
  * Defines the component scanning required for the server module.
@@ -28,7 +30,6 @@ import org.springframework.context.annotation.FilterType;
  */
 @Configuration
 @ComponentScan(basePackages = {
-        "stroom.cache",
         "stroom.docstore.server",
         "stroom.dictionary",
         "stroom.logging",
@@ -42,7 +43,6 @@ import org.springframework.context.annotation.FilterType;
         "stroom.lifecycle",
         "stroom.node",
         "stroom.pipeline",
-        "stroom.connectors",
         "stroom.pool",
         "stroom.process",
         "stroom.resource",
@@ -58,5 +58,6 @@ import org.springframework.context.annotation.FilterType;
         // Exclude other configurations that might be found accidentally during
         // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
+@Import(ConnectorsSpringConfig.class)
 public class HeadlessConfiguration {
 }

@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Scope;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.node.server.GlobalProperties;
@@ -32,10 +33,12 @@ import stroom.node.server.StroomPropertyService;
 import stroom.spring.C3P0Config;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;
+import stroom.statistics.server.stroomstats.pipeline.appender.StroomStatsAppender;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -165,5 +168,11 @@ public class StatisticsConfiguration {
         }
 
         return null;
+    }
+
+    @Bean
+    @Scope(StroomScope.PROTOTYPE)
+    public StroomStatsAppender stroomStatsAppender() {
+        return new StroomStatsAppender(null, null, null, null);
     }
 }

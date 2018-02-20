@@ -17,22 +17,12 @@
 package stroom.cluster.server;
 
 import com.caucho.hessian.server.HessianServlet;
-import org.springframework.stereotype.Component;
 import stroom.node.shared.Node;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Component//(ClusterCallServiceRPC.BEAN_NAME)
 public class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService {
-//    public static final String BEAN_NAME = "clusterCallServiceRPC";
-//
-//    @Inject
-//    ClusterCallServiceRPC(@Named("clusterCallServiceLocal") final ClusterCallService clusterCallService) {
-//        setService(clusterCallService);
-//        setServiceInterface(ClusterCallService.class);
-//    }
-
     private final ClusterCallService clusterCallService;
 
     @Inject

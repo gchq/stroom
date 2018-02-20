@@ -15,13 +15,11 @@
  *
  */
 
-package stroom.benchmark.server;
+package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
 import stroom.feed.server.FeedService;
@@ -68,7 +66,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
@@ -81,8 +78,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
-@Component
-@Scope(StroomScope.TASK)
 public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // 20 min timeout
     private static final int TIME_OUT = 1000 * 60 * 20;

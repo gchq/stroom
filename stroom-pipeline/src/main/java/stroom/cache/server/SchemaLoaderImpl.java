@@ -18,7 +18,6 @@ package stroom.cache.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import stroom.pipeline.server.DefaultLocationFactory;
@@ -38,7 +37,6 @@ import javax.xml.validation.SchemaFactory;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Component
 public class SchemaLoaderImpl implements SchemaLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(SchemaLoaderImpl.class);
 

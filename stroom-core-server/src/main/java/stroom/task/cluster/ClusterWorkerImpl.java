@@ -19,8 +19,6 @@ package stroom.task.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 import stroom.cluster.server.ClusterCallService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
@@ -33,8 +31,6 @@ import stroom.util.thread.ThreadUtil;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Component(value = ClusterWorkerImpl.BEAN_NAME)
-@Lazy
 public class ClusterWorkerImpl implements ClusterWorker {
     public static final String BEAN_NAME = "clusterWorker";
     static final String EXEC_ASYNC_METHOD = "execAsync";

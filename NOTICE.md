@@ -227,6 +227,7 @@ The table below includes licences for all Maven dependencies. Not included in th
 | Roboto Fonts                              | n/a                                          | n/a              | AL 2.0        |         |               |
 | Roboto Mono Fonts                         | n/a                                          | n/a              | AL 2.0        |         |               |
 | Droid Sans Mono Font                      | n/a                                          | n/a              | AL 2.0        |         |               |
+| io.github.lukehutch                       | fast-classpath-scanner                       | 2.9.4            | MIT           |         |               |
 
 \* The mysql-client-connector is distributed under a GPL license but has exceptions that allow it to be distributed with OSS without requiring the GPL license to be applied to the OSS. See [http://www.mysql.com/about/legal/licensing/foss-exception/](http://www.mysql.com/about/legal/licensing/foss-exception/) for details.
 

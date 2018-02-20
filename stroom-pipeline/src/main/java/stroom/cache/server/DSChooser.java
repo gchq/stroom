@@ -16,19 +16,17 @@
 
 package stroom.cache.server;
 
-import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.util.io.StreamUtil;
-import stroom.util.spring.StroomBeanStore;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.ds3.DS3ParserFactory;
 import stroom.xml.converter.xmlfragment.XMLFragmentParserFactory;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.StringReader;
 
-@Component
 public class DSChooser {
     private static final String DATA_SPLITTER_ELEMENT = "<dataSplitter";
     private static final String DATA_SPLITTER_2_ELEMENT = "<dataSplitter";
@@ -36,10 +34,14 @@ public class DSChooser {
     private static final String VERSION2 = "2.0";
     private static final String VERSION3 = "3.0";
 
-    @Resource
-    private StroomBeanStore beanStore;
+    private final Provider<DS3ParserFactory> parserFactoryProvider;
 
-    public ParserFactory configure(final String xml, final ErrorHandler errorHandler) throws Exception {
+    @Inject
+    public DSChooser(final Provider<DS3ParserFactory> parserFactoryProvider) {
+        this.parserFactoryProvider = parserFactoryProvider;
+    }
+
+    public ParserFactory configure(final String xml, final ErrorHandler errorHandler) {
         if (xml.contains(DATA_SPLITTER_2_ELEMENT)) {
             final String version = getVersion(xml);
 
@@ -53,7 +55,7 @@ public class DSChooser {
             // } else
 
             if (VERSION3.equals(version)) {
-                final DS3ParserFactory dataSplitterParserFactory = beanStore.getBean(DS3ParserFactory.class);
+                final DS3ParserFactory dataSplitterParserFactory = parserFactoryProvider.get();
                 dataSplitterParserFactory.configure(new StringReader(xml), errorHandler);
                 return dataSplitterParserFactory;
 

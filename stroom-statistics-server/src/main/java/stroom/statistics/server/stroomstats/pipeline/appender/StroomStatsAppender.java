@@ -1,7 +1,5 @@
 package stroom.statistics.server.stroomstats.pipeline.appender;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -16,7 +14,6 @@ import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService
 import stroom.statistics.server.stroomstats.kafka.TopicNameFactory;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
@@ -25,8 +22,6 @@ import javax.inject.Inject;
  * The key and topic are derived from the selected statistic data source
  */
 @SuppressWarnings("unused")
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
         type = "StroomStatsAppender",
         category = PipelineElementType.Category.DESTINATION,

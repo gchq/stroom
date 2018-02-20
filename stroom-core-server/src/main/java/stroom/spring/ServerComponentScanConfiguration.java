@@ -19,6 +19,10 @@ package stroom.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import stroom.cluster.server.ClusterSpringConfig;
+import stroom.connectors.ConnectorsSpringConfig;
+import stroom.task.cluster.ClusterTaskSpringConfig;
 
 /**
  * Defines the component scanning required for the server module.
@@ -28,9 +32,6 @@ import org.springframework.context.annotation.FilterType;
  */
 @Configuration
 @ComponentScan(basePackages = {
-        "stroom.cache",
-        "stroom.apiclients",
-        "stroom.cluster",
         "stroom.datafeed",
         "stroom.datasource",
         "stroom.db",
@@ -44,7 +45,6 @@ import org.springframework.context.annotation.FilterType;
         "stroom.internalstatistics",
         "stroom.io",
         "stroom.jobsystem",
-        "stroom.connectors",
         "stroom.connectors.kafka",
         "stroom.lifecycle",
         "stroom.logging",
@@ -71,5 +71,6 @@ import org.springframework.context.annotation.FilterType;
         // Exclude other configurations that might be found accidentally during
         // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
+@Import({ClusterSpringConfig.class, ClusterTaskSpringConfig.class, ConnectorsSpringConfig.class})
 public class ServerComponentScanConfiguration {
 }

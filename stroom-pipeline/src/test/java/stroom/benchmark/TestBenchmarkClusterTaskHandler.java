@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.benchmark.server;
+package stroom.benchmark;
 
 import org.junit.Assert;
 import org.junit.Test;

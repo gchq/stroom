@@ -16,14 +16,13 @@
 
 package stroom.cache.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.pool.AbstractPoolCache;
 import stroom.pool.PoolItem;
-import stroom.security.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.util.cache.CacheManager;
 import stroom.xmlschema.server.XMLSchemaCache;
 import stroom.xmlschema.shared.XMLSchema;
@@ -31,7 +30,6 @@ import stroom.xmlschema.shared.XMLSchema;
 import javax.inject.Inject;
 
 @Insecure
-@Component
 @EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
 class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
         implements SchemaPool, EntityEvent.Handler {

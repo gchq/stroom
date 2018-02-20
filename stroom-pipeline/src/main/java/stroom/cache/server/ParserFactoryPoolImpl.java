@@ -18,7 +18,6 @@ package stroom.cache.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 import stroom.entity.server.DocumentPermissionCache;
 import stroom.pipeline.server.DefaultLocationFactory;
@@ -39,7 +38,6 @@ import stroom.xml.converter.xmlfragment.XMLFragmentParserFactory;
 import javax.inject.Inject;
 
 @Insecure
-@Component
 class ParserFactoryPoolImpl
         extends AbstractEntityPool<TextConverter, StoredParserFactory>
         implements ParserFactoryPool {

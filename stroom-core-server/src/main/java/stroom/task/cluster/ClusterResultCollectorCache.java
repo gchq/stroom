@@ -18,7 +18,6 @@ package stroom.task.cluster;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.Clearable;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
@@ -27,7 +26,6 @@ import stroom.util.spring.StroomShutdown;
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
-@Component
 public class ClusterResultCollectorCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000000;
 

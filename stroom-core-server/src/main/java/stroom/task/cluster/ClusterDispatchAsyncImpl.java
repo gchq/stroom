@@ -19,8 +19,6 @@ package stroom.task.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 import stroom.cluster.server.ClusterCallService;
 import stroom.node.shared.Node;
 import stroom.task.server.GenericServerTask;
@@ -42,8 +40,6 @@ import java.util.Set;
 /**
  * Entry to point to distribute cluster tasks in system.
  */
-@Component(ClusterDispatchAsyncImpl.BEAN_NAME)
-@Lazy
 public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     public static final String BEAN_NAME = "clusterDispatchAsync";
     public static final String RECEIVE_RESULT_METHOD = "receiveResult";

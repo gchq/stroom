@@ -19,6 +19,8 @@ package stroom.pipeline.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import stroom.cache.server.PipelineCacheSpringConfig;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.pipeline.server.PipelineService;
@@ -42,7 +44,6 @@ import javax.inject.Inject;
 @ComponentScan(basePackages = {
         "stroom.pipeline",
         "stroom.refdata",
-        "stroom.cache",
         "stroom.resource",
         "stroom.xml",
         "stroom.benchmark",
@@ -51,6 +52,7 @@ import javax.inject.Inject;
         // during a component scan as configurations should be specified
         // explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
+@Import({PipelineCacheSpringConfig.class})
 public class PipelineConfiguration {
     @Inject
     public PipelineConfiguration(final ExplorerActionHandlers explorerActionHandlers,

@@ -19,6 +19,7 @@ package stroom.test;
 import org.junit.Before;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import stroom.cluster.server.ClusterSpringConfig;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
@@ -33,6 +34,8 @@ import stroom.spring.ScopeConfiguration;
 import stroom.spring.ScopeTestConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.statistics.spring.StatisticsConfiguration;
+import stroom.task.cluster.ClusterTaskSpringConfig;
+import stroom.util.cache.CacheManagerSpringConfig;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.spring.VisualisationConfiguration;
 
@@ -41,6 +44,8 @@ import stroom.visualisation.spring.VisualisationConfiguration;
         StroomSpringProfiles.IT,
         SecurityConfiguration.MOCK_SECURITY})
 @ContextConfiguration(classes = {
+        ClusterSpringConfig.class,
+        ClusterTaskSpringConfig.class,
         ScopeConfiguration.class,
         PersistenceConfiguration.class,
         ProcessTestServerComponentScanConfiguration.class,
