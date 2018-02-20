@@ -64,7 +64,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
         this.stroomPropertyService = stroomPropertyService;
     }
 
-    public static Coprocessor createCoprocessor(final CoprocessorSettings settings,
+    private static Coprocessor createCoprocessor(final CoprocessorSettings settings,
                                                 final FieldIndexMap fieldIndexMap,
                                                 final Map<String, String> paramMap,
                                                 final HasTerminate taskMonitor) {
