@@ -101,4 +101,12 @@ public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
     public void setProperty(final String name, final String value) {
         properties.put(name, value);
     }
+
+    /**
+     * Loads all properties defined in {@link DefaultProperties}
+     */
+    public void loadDefaults() {
+        DefaultProperties.getList().forEach(globalProperty ->
+                setProperty(globalProperty.getName(), globalProperty.getValue()));
+    }
 }
