@@ -12,6 +12,8 @@
 
     <logger name="stroom.statistics" level="debug" />
 
+    <logger name="stroom.query" level="debug" />
+
     <root level="error">
         <appender-ref ref="STDOUT" />
     </root>
