@@ -118,13 +118,33 @@ public final class DateUtil {
     }
 
     /**
-     * Create a 'normal' type date.
+     * Create a 'normal' type date in UTC
      */
     public static String createNormalDateTimeString(final Long ms) {
         if (ms == null) {
             return "";
         }
-        return NORMAL_STROOM_TIME_FORMATTER.format(Instant.ofEpochMilli(ms).atZone(ZoneOffset.UTC));
+        return createNormalDateTimeString(Instant.ofEpochMilli(ms).atZone(ZoneOffset.UTC));
+    }
+
+    /**
+     * Create a 'normal' type date in UTC
+     */
+    public static String createNormalDateTimeString(final Instant instant) {
+        if (instant == null) {
+            return "";
+        }
+        return createNormalDateTimeString(instant.atZone(ZoneOffset.UTC));
+    }
+
+    /**
+     * Create a 'normal' type date in UTC
+     */
+    public static String createNormalDateTimeString(final ZonedDateTime zonedDateTime) {
+        if (zonedDateTime == null) {
+            return "";
+        }
+        return NORMAL_STROOM_TIME_FORMATTER.format(zonedDateTime);
     }
 
     /**
