@@ -66,7 +66,7 @@ ext.versions = [
     hadoopHdfsShaded: 'v2.6.4',
     stroomAuth: 'v0.1-alpha.3',
     stroomExpression: 'v1.0.3',
-    stroomQuery: 'v2.0.0-alpha.27', //same version for both stroom-query-api and stroom-query-common
+    stroomQuery: 'v2.0.0-alpha.28', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
 
     //------------3rd-party------------
@@ -109,7 +109,7 @@ ext.libs = [
     aopalliance: "aopalliance:aopalliance:1.0",
     aspectjrt: "org.aspectj:aspectjrt:1.8.10",
     aspectjweaver: "org.aspectj:aspectjweaver:1.8.10",
-    assertj_core: "org.assertj:assertj-core:3.6.2",
+    assertj_core: "org.assertj:assertj-core:3.8.0",
     c3p0: "com.mchange:c3p0:0.9.5.2",
     commons_compress: "org.apache.commons:commons-compress:1.12",
     commons_exec: "org.apache.commons:commons-exec:1.3",
