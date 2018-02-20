@@ -129,7 +129,8 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
                             try {
                                 return completionLatch.await(30, TimeUnit.SECONDS);
                             } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
+                                //Don't want to reset interrupt status as this thread will go back into
+                                //the executor's pool. Throwing an exception will terminate the task
                                 throw new RuntimeException(
                                         LambdaLogger.buildMessage("Thread {} interrupted executing task {}",
                                                 Thread.currentThread().getName(), task));

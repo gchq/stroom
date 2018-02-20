@@ -196,7 +196,8 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                                         reentrantLock.lock();
                                         return condition.await(30, TimeUnit.SECONDS);
                                     } catch (InterruptedException e) {
-                                        //TODO should we reset the interrupt status or not?
+                                        //Don't reset the interrupt status as we are at the top level of
+                                        //the task execution
                                         throw new RuntimeException("Thread interrupted");
                                     } finally {
                                         reentrantLock.unlock();
