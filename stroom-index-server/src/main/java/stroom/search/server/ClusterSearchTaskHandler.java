@@ -71,8 +71,6 @@ import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -297,6 +295,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                           final Executor executor) {
         final long now = System.currentTimeMillis();
 
+        LOGGER.trace("sendData() called");
+
         final Supplier<Boolean> supplier = () -> {
             // Find out if searching is complete.
             final boolean searchComplete = ClusterSearchTaskHandler.this.searchComplete.get();
@@ -351,36 +351,28 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                     } else {
                         // If we aren't complete then send more using the supplied sending frequency.
-//                        final long duration = System.currentTimeMillis() - now;
                         final long latestSendTimeMs = now + frequency;
-//                        if (duration < frequency) {
-//                            ThreadUtil.sleep(frequency - duration);
-//
-//                        }
+
                         while (!taskContext.isTerminated() &&
                                 !searchComplete.get() &&
-                                System.currentTimeMillis() <= latestSendTimeMs) {
-                            try {
-                                //wait until the next poll frequency time or drop out as soon
-                                //as the search completes and the latch is counted down
+                                System.currentTimeMillis() < latestSendTimeMs) {
+                            //wait until the next send frequency time or drop out as soon
+                            //as the search completes and the latch is counted down.
+                            //Compute the wait time as we may have used up some of the frequency getting to here
+                            long waitTime = latestSendTimeMs - System.currentTimeMillis() + 1;
+                            LOGGER.trace("frequency [{}], waitTime [{}]", frequency, waitTime);
 
-                                //TODO something is causing lots of 'Await finished with wait time 0 result false in PT0S'
-                                //to be seen in the logs
-                                long waitTime = latestSendTimeMs - System.currentTimeMillis();
-                                final Instant startTime;
-                                if (LOGGER.isTraceEnabled()) {
-                                    startTime = Instant.now();
-                                } else {
-                                    startTime = Instant.EPOCH;
-                                }
-                                boolean awaitResult = searchCompleteLatch.await(waitTime, TimeUnit.MILLISECONDS);
-                                LAMBDA_LOGGER.trace(() ->
-                                        LambdaLogger.buildMessage("Await finished with wait time {} result {} in {}",
-                                                waitTime, awaitResult, Duration.between(startTime, Instant.now())));
-                            } catch (InterruptedException e) {
-                                //TODO should we reset the interrupt status or not?
-                                throw new RuntimeException("Thread interrupted");
-                            }
+                            boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
+                                    () -> {
+                                        try {
+                                            return searchCompleteLatch.await(waitTime, TimeUnit.MILLISECONDS);
+                                        } catch (InterruptedException e) {
+                                            //TODO should we reset the interrupt status or not?
+                                            throw new RuntimeException("Thread interrupted");
+                                        }
+                                    },
+                                    "sendData wait");
+                            LOGGER.trace("await finished with result {}", awaitResult);
                         }
 
                         // Make sure we don't continue to execute this task if it should have terminated.
@@ -391,7 +383,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     }
                 })
                 .exceptionally(t -> {
-                    // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
+                    // If we failed to send the result or the source node rejected the result because the source
+                    // task has been terminated then terminate the task.
                     LOGGER.info("Terminating search because we were unable to send result");
                     task.terminate();
                     return null;
@@ -421,44 +414,9 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                 // Search all index shards.
                 final Map<Version, SearchExpressionQuery> queryMap = new HashMap<>();
-                final IndexShardQueryFactory queryFactory = new IndexShardQueryFactory() {
-                    @Override
-                    public Query getQuery(final Version luceneVersion) {
-                        SearchExpressionQuery searchExpressionQuery = queryMap.get(luceneVersion);
-                        if (searchExpressionQuery == null) {
-                            // Get a query for the required lucene version.
-                            searchExpressionQuery = getQuery(luceneVersion, query.getExpression(), indexFieldsMap);
-                            queryMap.put(luceneVersion, searchExpressionQuery);
-                        }
 
-                        return searchExpressionQuery.getQuery();
-                    }
-
-                    private SearchExpressionQuery getQuery(final Version version, final ExpressionOperator expression,
-                                                           final IndexFieldsMap indexFieldsMap) {
-                        SearchExpressionQuery query = null;
-                        try {
-                            final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                                    dictionaryStore, indexFieldsMap, maxBooleanClauseCount, task.getDateTimeLocale(), task.getNow());
-                            query = searchExpressionQueryBuilder.buildQuery(version, expression);
-
-                            // Make sure the query was created successfully.
-                            if (query.getQuery() == null) {
-                                throw new SearchException("Failed to build Lucene query given expression");
-                            } else if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("Lucene Query is " + query.toString());
-                            }
-                        } catch (final Exception e) {
-                            error(e.getMessage(), e);
-                        }
-
-                        if (query == null) {
-                            query = new SearchExpressionQuery(null, null);
-                        }
-
-                        return query;
-                    }
-                };
+                final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
+                        task, query, indexFieldsMap, queryMap);
 
                 // Create a transfer list to capture stored data from the index that can be used by coprocessors.
                 storedData = new LinkedBlockingQueue<>(maxStoredDataQueueSize);
@@ -530,6 +488,52 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         } catch (final Exception pEx) {
             throw SearchException.wrap(pEx);
         }
+    }
+
+    private IndexShardQueryFactory createIndexShardQueryFactory(final ClusterSearchTask task, final stroom.query.api.v2.Query query, final IndexFieldsMap indexFieldsMap, final Map<Version, SearchExpressionQuery> queryMap) {
+        return new IndexShardQueryFactory() {
+
+            @Override
+            public Query getQuery(final Version luceneVersion) {
+                SearchExpressionQuery searchExpressionQuery = queryMap.get(luceneVersion);
+                if (searchExpressionQuery == null) {
+                    // Get a query for the required lucene version.
+                    searchExpressionQuery = getQuery(luceneVersion, query.getExpression(), indexFieldsMap);
+                    queryMap.put(luceneVersion, searchExpressionQuery);
+                }
+
+                return searchExpressionQuery.getQuery();
+            }
+
+            private SearchExpressionQuery getQuery(final Version version, final ExpressionOperator expression,
+                                                   final IndexFieldsMap indexFieldsMap1) {
+                SearchExpressionQuery query1 = null;
+                try {
+                    final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                            dictionaryStore,
+                            indexFieldsMap1,
+                            maxBooleanClauseCount,
+                            task.getDateTimeLocale(),
+                            task.getNow());
+                    query1 = searchExpressionQueryBuilder.buildQuery(version, expression);
+
+                    // Make sure the query was created successfully.
+                    if (query1.getQuery() == null) {
+                        throw new SearchException("Failed to build Lucene query given expression");
+                    } else if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Lucene Query is " + query1.toString());
+                    }
+                } catch (final Exception e) {
+                    error(e.getMessage(), e);
+                }
+
+                if (query1 == null) {
+                    query1 = new SearchExpressionQuery(null, null);
+                }
+
+                return query1;
+            }
+        };
     }
 
     private void transfer(final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,

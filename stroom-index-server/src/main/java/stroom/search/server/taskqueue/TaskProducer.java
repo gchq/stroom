@@ -23,6 +23,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class TaskProducer implements Comparable<TaskProducer> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskProducer.class);
 
     private final long now = System.currentTimeMillis();

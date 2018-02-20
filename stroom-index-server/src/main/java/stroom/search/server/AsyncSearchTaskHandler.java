@@ -51,8 +51,6 @@ import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -188,29 +186,31 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     resultHandler.registerCompletionListener(signalCondition::run);
                     resultCollector.registerChangeListner(signalCondition);
 
-                    while (!task.isTerminated() && !resultHandler.shouldTerminateSearch() && !resultHandler.isComplete()) {
-                        final Instant startTime;
-                        if (LOGGER.isTraceEnabled()) {
-                            startTime = Instant.now();
-                        } else {
-                            startTime = Instant.EPOCH;
-                        }
-                        try {
-                            reentrantLock.lock();
-                            boolean awaitResult = condition.await(30, TimeUnit.SECONDS);
-                            LAMBDA_LOGGER.trace(() ->
-                                    LambdaLogger.buildMessage("Await finished with result {} in {}",
-                                            awaitResult, Duration.between(startTime, Instant.now())));
-                        } finally {
-                            reentrantLock.unlock();
-                        }
+                    while (!task.isTerminated() &&
+                            !resultHandler.shouldTerminateSearch() &&
+                            !resultHandler.isComplete()) {
+
+                        boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
+                                () -> {
+                                    try {
+                                        try {
+                                            reentrantLock.lock();
+                                            return condition.await(30, TimeUnit.SECONDS);
+                                        } finally {
+                                            reentrantLock.unlock();
+                                        }
+                                    } catch (InterruptedException e) {
+                                        //TODO should we reset the interrupt status or not?
+                                        throw new RuntimeException("Thread interrupted");
+                                    }
+                                },
+                                "waiting for completion condition");
+
+                        LOGGER.trace("await finished with result {}", awaitResult);
                         final boolean complete = resultCollector.getCompletedNodes().size() >= expectedNodeResultCount;
 
                         //TODO why call setComplete if false?
-//                        resultHandler.setComplete(complete);
-                        if (complete) {
-                            resultHandler.setComplete(true);
-                        }
+                        resultHandler.setComplete(complete);
 
                         // If the collector is no longer in the cache then terminate
                         // this search task.

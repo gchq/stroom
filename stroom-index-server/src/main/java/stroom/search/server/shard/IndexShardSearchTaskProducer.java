@@ -37,7 +37,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class IndexShardSearchTaskProducer extends TaskProducer {
-    static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Index Shard", 5, 0, Integer.MAX_VALUE);
+
+    static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Search Index Shard",
+            5,
+            0,
+            Integer.MAX_VALUE);
 
     private final ClusterSearchTask clusterSearchTask;
     private final IndexShardSearcherCache indexShardSearcherCache;
