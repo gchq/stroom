@@ -24,7 +24,6 @@ import com.gwtplatform.mvp.client.View;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntity.PipelineType;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
@@ -46,30 +45,10 @@ public class PipelineSettingsPresenter
     @Override
     protected void onRead(final DocRef docRef, final PipelineEntity pipelineEntity) {
         getView().setDescription(pipelineEntity.getDescription());
-        getView().clearTypes();
-        for (final PipelineEntity.PipelineType type : PipelineEntity.PipelineType.values()) {
-            getView().addType(type);
-        }
-
-        PipelineEntity.PipelineType type = null;
-        if (pipelineEntity.getPipelineType() != null) {
-            for (final PipelineEntity.PipelineType t : PipelineEntity.PipelineType.values()) {
-                if (t.getDisplayValue().equals(pipelineEntity.getPipelineType())) {
-                    type = t;
-                }
-            }
-        }
-
-        getView().setType(type);
     }
 
     @Override
     protected void onWrite(final PipelineEntity pipelineEntity) {
-        final PipelineType pipelineType = getView().getType();
-        if (pipelineType != null && !pipelineType.getDisplayValue().equals(pipelineEntity.getPipelineType())) {
-            pipelineEntity.setPipelineType(pipelineType.getDisplayValue());
-            setDirty(true);
-        }
         if (!getView().getDescription().trim().equals(pipelineEntity.getDescription())) {
             pipelineEntity.setDescription(getView().getDescription().trim());
             setDirty(true);
@@ -80,13 +59,5 @@ public class PipelineSettingsPresenter
         String getDescription();
 
         void setDescription(String description);
-
-        void clearTypes();
-
-        void addType(PipelineEntity.PipelineType type);
-
-        PipelineEntity.PipelineType getType();
-
-        void setType(PipelineEntity.PipelineType type);
     }
 }
