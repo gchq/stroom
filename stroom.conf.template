@@ -102,3 +102,5 @@ stroom.url.doc-ref.ui.ElasticIndex=http://IP_ADDRESS:5002
 #stroom.internalstatistics.streamTaskQueueSize.docRefs=docRef(StatisticStore,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size)
 #stroom.internalstatistics.volumes.docRefs=docRef(StatisticStore,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes)
 #stroom.internalstatistics.memory.docRefs=docRef(StatisticStore,77c09ccb-e251-4ca5-bca0-56a842654397,Memory)
+#stroom.internalstatistics.heapHistogramInstances.docRefs=docRef(StatisticStore,e4f243b8-2c70-4d6e-9d5a-16466bf8764f,Heap Histogram Instances)
+#stroom.internalstatistics.heapHistogramBytes.docRefs=docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)
