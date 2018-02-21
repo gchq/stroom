@@ -2,6 +2,5 @@
 <pipeline>
    <description/>
    <name>RAW_STREAMING-EVENTS</name>
-   <pipelineType>Event Data</pipelineType>
    <uuid>dc3b6921-6602-4eeb-865f-01cbaea5024b</uuid>
 </pipeline>

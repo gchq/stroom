@@ -86,8 +86,8 @@ stroom.url.dashboard=http://IP_ADDRESS/stroom/dashboard.jsp
 stroom.doc-ref.types=AnnotationsIndex,ElasticIndex
 stroom.url.doc-ref.service.AnnotationsIndex=http://IP_ADDRESS:8199
 stroom.url.doc-ref.service.ElasticIndex=http://IP_ADDRESS:8299
-stroom.url.doc-ref.ui.AnnotationsIndex=http://IP_ADDRESS:5001
-stroom.url.doc-ref.ui.ElasticIndex=http://IP_ADDRESS:5002
+stroom.url.doc-ref.ui.AnnotationsIndex=https://IP_ADDRESS:5001
+stroom.url.doc-ref.ui.ElasticIndex=https://IP_ADDRESS:5002
 
 # Internal statistic definitions
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

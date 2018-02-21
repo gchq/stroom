@@ -3,6 +3,5 @@
    <description/>
    <name>XML_FILTERING_ANALYTIC</name>
    <parentPipelineXML/>
-   <pipelineType>Event Data</pipelineType>
    <uuid>b7649b31-836b-4fba-a0d6-8931e8e061d7</uuid>
 </pipeline>
