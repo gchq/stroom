@@ -3,6 +3,5 @@
    <description/>
    <name>Batch Search</name>
    <parentPipelineXML/>
-   <pipelineType>Search Extraction</pipelineType>
    <uuid>67510b80-c65f-402d-acc5-c74fd7876d70</uuid>
 </pipeline>

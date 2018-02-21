@@ -9,6 +9,5 @@
       &lt;name&gt;Common Test Reference Pipeline&lt;/name&gt;
       &lt;/doc&gt;
    </parentPipelineXML>
-   <pipelineType>Reference Data</pipelineType>
    <uuid>7826035a-b248-4d86-bf15-3fbdd03084a6</uuid>
 </pipeline>
