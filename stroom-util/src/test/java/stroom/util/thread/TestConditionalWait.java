@@ -18,7 +18,7 @@ public class TestConditionalWait {
     @Test
     public void wait_zeroTimeout() {
 
-        assertTimeTaken(Duration.ZERO, 10L, () -> {
+        assertTimeTaken(Duration.ZERO, 100L, () -> {
             ConditionalWait.Outcome outcome = ConditionalWait.wait(() -> false, Duration.ZERO);
             Assertions.assertThat(outcome).isEqualTo(ConditionalWait.Outcome.TIMED_OUT);
         });
@@ -28,7 +28,7 @@ public class TestConditionalWait {
     public void wait_2secTimeout() {
 
         final Duration duration = Duration.of(2, ChronoUnit.SECONDS);
-        assertTimeTaken(duration, 10L, () -> {
+        assertTimeTaken(duration, 100L, () -> {
             ConditionalWait.Outcome outcome = ConditionalWait.wait(() -> false, duration);
             Assertions.assertThat(outcome).isEqualTo(ConditionalWait.Outcome.TIMED_OUT);
         });
