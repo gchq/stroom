@@ -63,6 +63,7 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
+import stroom.util.functions.TriFunction;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -72,6 +73,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -80,7 +82,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiFunction;
 
 /**
  * Script to create some base data for testing.
@@ -92,12 +93,15 @@ public final class SetupSampleDataBean {
 
     private static final String STATS_COUNT_FEED_LARGE_NAME = "COUNT_FEED_LARGE";
     private static final String STATS_COUNT_FEED_SMALL_NAME = "COUNT_FEED_SMALL";
+    private static final String STATS_COUNT_FEED_LONG_PERIOD_NAME = "COUNT_FEED_LONG_PERIOD";
     private static final String STATS_VALUE_FEED_LARGE_NAME = "VALUE_FEED_LARGE";
     private static final String STATS_VALUE_FEED_SMALL_NAME = "VALUE_FEED_SMALL";
+    private static final String STATS_VALUE_FEED_LONG_PERIOD_NAME = "VALUE_FEED_LONG_PERIOD";
     // 52,000 is just over 3 days at 5000ms intervals
     private static final int STATS_ITERATIONS_LARGE = 52_000;
     // 1,000 is just over 1hr at 5000ms intervals
     private static final int STATS_ITERATIONS_SMALL = 1_000;
+    private static final int STATS_ITERATIONS_LONG_PERIOD = 500;
     private static final String STATS_COUNT_API_FEED_NAME = "COUNT_V3";
     private static final String STATS_COUNT_API_DATA_FILE = "./stroom-integrationtest/src/integrationTest/resources/SetupSampleDataBean_COUNT_V3.xml";
 
@@ -381,7 +385,8 @@ public final class SetupSampleDataBean {
                                final String feedName,
                                final int iterations,
                                final Instant startTime,
-                               final BiFunction<Integer, Instant, String> dataGenerationFunction) {
+                               final Duration eventTimeDelta,
+                               final TriFunction<Integer, Instant, Duration, String> dataGenerationFunction) {
         try {
             LOGGER.info("Generating statistics test data for feed {}", feedName);
 
@@ -390,7 +395,7 @@ public final class SetupSampleDataBean {
             dataLoader.loadInputStream(
                     feed,
                     "Auto generated statistics data",
-                    StreamUtil.stringToStream(dataGenerationFunction.apply(iterations, startTime)),
+                    StreamUtil.stringToStream(dataGenerationFunction.apply(iterations, startTime, eventTimeDelta)),
                     false,
                     startTime.toEpochMilli());
         } catch (final RuntimeException e) {
@@ -409,12 +414,16 @@ public final class SetupSampleDataBean {
         //keep the big and small feeds apart in terms of their event times
         Instant startOfToday = Instant.now().truncatedTo(ChronoUnit.DAYS);
         Instant startOfAWeekAgo = startOfToday.minus(7, ChronoUnit.DAYS);
+        Instant fiveHundredDaysAgo = Instant.now().minus(500, ChronoUnit.DAYS);
+        Duration fiveSeconds = Duration.ofSeconds(5);
+        Duration fiveHundredDays = Duration.ofDays(500);
 
         loadStatsData(
                 dataLoader,
                 STATS_COUNT_FEED_LARGE_NAME,
                 STATS_ITERATIONS_LARGE,
                 startOfAWeekAgo,
+                fiveSeconds,
                 GenerateSampleStatisticsData::generateCountData);
 
         loadStatsData(
@@ -422,6 +431,15 @@ public final class SetupSampleDataBean {
                 STATS_COUNT_FEED_SMALL_NAME,
                 STATS_ITERATIONS_SMALL,
                 startOfToday,
+                fiveSeconds,
+                GenerateSampleStatisticsData::generateCountData);
+
+        loadStatsData(
+                dataLoader,
+                STATS_COUNT_FEED_LONG_PERIOD_NAME,
+                STATS_ITERATIONS_LONG_PERIOD,
+                fiveHundredDaysAgo,
+                fiveHundredDays,
                 GenerateSampleStatisticsData::generateCountData);
 
         loadStatsData(
@@ -429,6 +447,7 @@ public final class SetupSampleDataBean {
                 STATS_VALUE_FEED_LARGE_NAME,
                 STATS_ITERATIONS_LARGE,
                 startOfAWeekAgo,
+                fiveSeconds,
                 GenerateSampleStatisticsData::generateValueData);
 
         loadStatsData(
@@ -436,6 +455,15 @@ public final class SetupSampleDataBean {
                 STATS_VALUE_FEED_SMALL_NAME,
                 STATS_ITERATIONS_SMALL,
                 startOfToday,
+                fiveSeconds,
+                GenerateSampleStatisticsData::generateValueData);
+
+        loadStatsData(
+                dataLoader,
+                STATS_VALUE_FEED_LONG_PERIOD_NAME,
+                STATS_ITERATIONS_LONG_PERIOD,
+                fiveHundredDaysAgo,
+                fiveHundredDays,
                 GenerateSampleStatisticsData::generateValueData);
 
         try {

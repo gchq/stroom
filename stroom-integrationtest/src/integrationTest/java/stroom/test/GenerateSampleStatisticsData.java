@@ -26,6 +26,7 @@ import stroom.util.date.DateUtil;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class GenerateSampleStatisticsData {
 
     // 52,000 is just over 3 days at 5000ms intervals
     private static final int DEFAULT_ITERATION_COUNT = 52_000;
-    private static final int EVENT_TIME_DELTA_MS = 5000;
+    private static final Duration DEFAULT_EVENT_TIME_DELTA = Duration.ofSeconds(5);
 
     private static final String COLOUR_RED = "Red";
     private static final String COLOUR_GREEN = "Green";
@@ -59,12 +60,12 @@ public class GenerateSampleStatisticsData {
         System.out.println("Writing value data...");
 
         try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsTestData_Values.xml"))) {
-            writer.write(generateValueData(DEFAULT_ITERATION_COUNT, getStartTime()));
+            writer.write(generateValueData(DEFAULT_ITERATION_COUNT, getStartTime(), DEFAULT_EVENT_TIME_DELTA));
         }
         System.out.println("Writing count data...");
 
         try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsTestData_Counts.xml"))) {
-            writer.write(generateCountData(DEFAULT_ITERATION_COUNT, getStartTime()));
+            writer.write(generateCountData(DEFAULT_ITERATION_COUNT, getStartTime(), DEFAULT_EVENT_TIME_DELTA));
         }
         System.out.println("Finished!");
     }
@@ -72,16 +73,21 @@ public class GenerateSampleStatisticsData {
     private static Instant getStartTime() {
         //get the start of today
         return Instant.now().truncatedTo(ChronoUnit.DAYS);
+//        return Instant.now().minus(500, ChronoUnit.DAYS);
     }
 
-    public static String generateValueData(final int iterations, final Instant startTime) {
+    public static String generateValueData(final int iterations,
+                                           final Instant startTime,
+                                           final Duration eventTimeDelta) {
 
-        return buildEvents(iterations, startTime, StatisticType.VALUE);
+        return buildEvents(iterations, startTime, eventTimeDelta, StatisticType.VALUE);
     }
 
-    public static String generateCountData(final int iterations, final Instant startTime) {
+    public static String generateCountData(final int iterations,
+                                           final Instant startTime,
+                                           final Duration eventTimeDelta) {
 
-        return buildEvents(iterations, startTime, StatisticType.COUNT);
+        return buildEvents(iterations, startTime, eventTimeDelta, StatisticType.COUNT);
     }
 
     private static List<Tuple3<String, String, String>> buildUserColourStateCombinations() {
@@ -98,6 +104,7 @@ public class GenerateSampleStatisticsData {
 
     private static String buildEvents(final int iterations,
                                       final Instant initialEventTime,
+                                      final Duration eventTimeDelta,
                                       final StatisticType statisticType) {
         final StringBuffer stringBuffer = new StringBuffer();
         stringBuffer.append("<data>\n");
@@ -116,7 +123,8 @@ public class GenerateSampleStatisticsData {
                 .boxed()
                 .map(i ->
                         DateUtil.createNormalDateTimeString(
-                                initialEventTime.plusMillis(i * EVENT_TIME_DELTA_MS).toEpochMilli()))
+                                initialEventTime.plusMillis(i * eventTimeDelta.toMillis())
+                                        .toEpochMilli()))
                 .flatMap(timeStr ->
                         combinations.stream()
                                 .map(userColourState -> new Tuple4<>(
@@ -140,7 +148,7 @@ public class GenerateSampleStatisticsData {
                             .append("<value>")
                             .append(getStatValue(statisticType, tuple4._3()))
                             .append("</value>")
-                            .append("</event>\n");
+                            .append("</event>");
                     eventCount.incrementAndGet();
                     return stringBuilder.toString();
                 })
