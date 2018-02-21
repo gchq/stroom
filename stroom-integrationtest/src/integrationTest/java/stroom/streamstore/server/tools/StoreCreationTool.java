@@ -38,7 +38,6 @@ import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntity.PipelineType;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.XSLT;
@@ -628,7 +627,6 @@ public final class StoreCreationTool {
 
     public PipelineEntity getSearchResultPipeline(final String name, final Path xsltLocation) {
         final PipelineEntity pipeline = getPipeline(name, StreamUtil.fileToString(searchExtractionPipeline));
-        pipeline.setPipelineType(PipelineType.SEARCH_EXTRACTION.getDisplayValue());
 
         // Setup the xslt.
         final XSLT xslt = getXSLT(name, xsltLocation);

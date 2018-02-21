@@ -9,12 +9,6 @@
           <g:TextArea ui:field="description" width="400px" />
         </g:customCell>
       </g:row>
-      <g:row>
-        <g:cell>Type:</g:cell>
-        <g:customCell>
-          <list:ItemListBox ui:field="type" />
-        </g:customCell>
-      </g:row>
     </g:Grid>
   </g:FlowPanel>
 </ui:UiBinder> 
