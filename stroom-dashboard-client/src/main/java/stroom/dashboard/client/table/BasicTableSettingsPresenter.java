@@ -44,7 +44,6 @@ public class BasicTableSettingsPresenter
         this.pipelinePresenter = pipelinePresenter;
 
         pipelinePresenter.setIncludedTypes(PipelineEntity.ENTITY_TYPE);
-        pipelinePresenter.setTags(PipelineEntity.PipelineType.SEARCH_EXTRACTION.getDisplayValue());
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         view.setPipelineView(pipelinePresenter.getView());
