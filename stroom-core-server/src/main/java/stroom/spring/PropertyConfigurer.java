@@ -16,7 +16,7 @@
 
 package stroom.spring;
 
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.util.spring.PropertyProvider;
 
 import javax.inject.Inject;

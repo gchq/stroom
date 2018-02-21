@@ -19,7 +19,7 @@ package stroom.statistics.server.stroomstats.internal;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 
 @Configuration
 public class InternalSpringConfig {

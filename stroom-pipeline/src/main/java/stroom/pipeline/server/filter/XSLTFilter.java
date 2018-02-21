@@ -29,7 +29,7 @@ import org.xml.sax.SAXException;
 import stroom.cache.server.StoredXsltExecutable;
 import stroom.cache.server.XSLTPool;
 import stroom.entity.shared.StringCriteria;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.SupportsCodeInjection;
 import stroom.pipeline.server.XSLTService;

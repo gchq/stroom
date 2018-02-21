@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.node.server.GlobalProperties;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.spring.C3P0Config;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;

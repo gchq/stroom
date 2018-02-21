@@ -2,7 +2,7 @@ package stroom.statistics.server.stroomstats.pipeline.filter;
 
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.filter.AbstractKafkaProducerFilter;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;

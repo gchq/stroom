@@ -23,7 +23,7 @@ import stroom.entity.server.GenericEntityService;
 import stroom.explorer.server.ExplorerNodeService;
 import stroom.explorer.server.ExplorerService;
 import stroom.logging.StroomEventLoggingService;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.servlet.SessionResourceStore;
 import stroom.util.spring.StroomScope;

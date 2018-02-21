@@ -26,7 +26,7 @@ import stroom.feed.server.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.logging.StreamEventLog;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.pipeline.server.PipelineService;
 import stroom.policy.server.DataRetentionService;
 import stroom.security.SecurityContext;

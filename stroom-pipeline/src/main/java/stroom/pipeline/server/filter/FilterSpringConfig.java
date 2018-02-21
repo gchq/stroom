@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import stroom.cache.server.SchemaPool;
 import stroom.cache.server.XSLTPool;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.shared.RecordCountService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.XSLTService;

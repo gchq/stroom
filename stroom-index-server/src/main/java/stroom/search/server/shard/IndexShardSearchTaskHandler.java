@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.util.shared.Severity;

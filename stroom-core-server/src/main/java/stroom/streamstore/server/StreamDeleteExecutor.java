@@ -20,7 +20,7 @@ import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamStatus;

@@ -28,7 +28,7 @@ import stroom.feed.StroomStreamException;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;

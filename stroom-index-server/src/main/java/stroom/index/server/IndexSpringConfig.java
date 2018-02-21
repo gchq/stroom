@@ -26,7 +26,7 @@ import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.index.shared.Index;
 import stroom.node.server.NodeCache;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.server.VolumeService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;

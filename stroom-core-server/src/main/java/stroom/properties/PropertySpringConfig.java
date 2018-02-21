@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.statistics.internal;
+package stroom.properties;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.properties.StroomPropertyService;
-import stroom.util.spring.StroomBeanStore;
 
 @Configuration
-public class InternalStatisticsSpringConfig {
+public class PropertySpringConfig {
     @Bean
-    public InternalStatisticDocRefCache internalStatisticDocRefCache(final StroomPropertyService stroomPropertyService) {
-        return new InternalStatisticDocRefCache(stroomPropertyService);
-    }
-
-    @Bean
-    public InternalStatisticsReceiver internalStatisticsReceiver(final StroomBeanStore stroomBeanStore,
-                                                                 final InternalStatisticDocRefCache internalStatisticDocRefCache) {
-        return new InternalStatisticsReceiverImpl(stroomBeanStore, internalStatisticDocRefCache);
+    public StroomPropertyService stroomPropertyService() {
+        return new StroomPropertyServiceImpl();
     }
 }

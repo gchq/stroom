@@ -19,7 +19,7 @@ package stroom.datasource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.spring.StroomBeanStore;

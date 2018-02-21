@@ -28,6 +28,7 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.RecordCountService;
+import stroom.properties.StroomPropertyService;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.util.spring.StroomScope;
@@ -173,8 +174,4 @@ public class NodeSpringConfig {
 //        return new RemoteStatusServiceRPC();
 //    }
 
-    @Bean
-    public StroomPropertyService stroomPropertyService() {
-        return new StroomPropertyServiceImpl();
-    }
 }

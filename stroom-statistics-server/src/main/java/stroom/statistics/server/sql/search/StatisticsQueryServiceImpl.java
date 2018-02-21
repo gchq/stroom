@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.datasource.api.v2.DataSource;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.OffsetRange;

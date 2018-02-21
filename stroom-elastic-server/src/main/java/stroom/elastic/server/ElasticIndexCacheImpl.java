@@ -5,7 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.http.HttpStatus;
 import stroom.entity.shared.ExternalDocRefConstants;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.query.api.v2.DocRef;

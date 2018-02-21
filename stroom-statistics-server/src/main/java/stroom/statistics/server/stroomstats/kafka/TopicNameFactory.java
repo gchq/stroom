@@ -3,7 +3,7 @@ package stroom.statistics.server.stroomstats.kafka;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.statistics.shared.StatisticType;
 
 import javax.inject.Inject;

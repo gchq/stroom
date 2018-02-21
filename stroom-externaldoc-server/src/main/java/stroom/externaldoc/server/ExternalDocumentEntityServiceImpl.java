@@ -18,12 +18,11 @@ package stroom.externaldoc.server;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.eclipse.jetty.http.HttpStatus;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.SharedDocRef;
 import stroom.importexport.shared.ImportState;
 import stroom.logging.DocumentEventLog;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;

@@ -24,7 +24,7 @@ import stroom.dictionary.server.DictionaryStore;
 import stroom.index.server.IndexService;
 import stroom.index.server.IndexShardService;
 import stroom.node.server.NodeCache;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.search.server.extraction.ExtractionTaskExecutor;
 import stroom.search.server.extraction.ExtractionTaskHandler;
 import stroom.search.server.extraction.ExtractionTaskProperties;

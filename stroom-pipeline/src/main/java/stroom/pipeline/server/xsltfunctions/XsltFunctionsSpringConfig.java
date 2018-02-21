@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.feed.server.FeedService;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;

@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
 import stroom.search.server.EventRef;

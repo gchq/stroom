@@ -18,16 +18,14 @@ package stroom.connectors;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.connectors.elastic.StroomElasticProducerFactoryService;
-import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
-import stroom.node.server.StroomPropertyService;
-import stroom.util.spring.StroomScope;
+import org.springframework.context.annotation.Import;
+import stroom.properties.PropertySpringConfig;
+import stroom.properties.StroomPropertyService;
 
 import javax.inject.Singleton;
 
-
 @Configuration
+@Import({PropertySpringConfig.class})
 public class ConnectorsSpringConfig {
     @Bean
     @Singleton

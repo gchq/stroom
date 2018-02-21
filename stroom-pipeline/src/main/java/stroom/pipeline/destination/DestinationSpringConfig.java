@@ -18,7 +18,7 @@ package stroom.pipeline.destination;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 
 @Configuration
 public class DestinationSpringConfig {

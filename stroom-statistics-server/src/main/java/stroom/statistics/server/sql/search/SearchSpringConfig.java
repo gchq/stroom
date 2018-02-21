@@ -18,7 +18,7 @@ package stroom.statistics.server.sql.search;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.statistics.server.sql.SQLStatisticEventStore;
 import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;

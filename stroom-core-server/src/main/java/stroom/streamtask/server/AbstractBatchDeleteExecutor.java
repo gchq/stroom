@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.jobsystem.server.ClusterLockService;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;

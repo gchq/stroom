@@ -8,6 +8,7 @@ import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.properties.StroomPropertyService;
 
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;

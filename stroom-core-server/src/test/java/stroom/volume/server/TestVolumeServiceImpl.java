@@ -26,7 +26,7 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.server.NodeCache;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;

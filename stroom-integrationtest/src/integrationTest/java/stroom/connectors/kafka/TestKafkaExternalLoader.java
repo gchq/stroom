@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import stroom.connectors.ExternalLibService;
 import stroom.node.server.MockStroomPropertyService;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;

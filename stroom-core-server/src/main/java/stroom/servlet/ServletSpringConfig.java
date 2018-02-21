@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.importexport.server.ImportExportService;
 import stroom.logging.StreamEventLog;
 import stroom.node.server.NodeService;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.server.VolumeService;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.resource.server.ResourceStore;

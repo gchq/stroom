@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.node.server;
+package stroom.properties;
 
 import stroom.security.Insecure;
 import stroom.util.config.StroomProperties;
@@ -23,7 +23,7 @@ import stroom.util.config.StroomProperties;
  * A service that can be injected with spring that caches and delegates property
  * lookups to StroomProperties.
  */
-public class StroomPropertyServiceImpl implements StroomPropertyService {
+class StroomPropertyServiceImpl implements StroomPropertyService {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(StroomPropertyServiceImpl.class);
 //
 //    private LoadingCache<String, Optional<String>> cache;

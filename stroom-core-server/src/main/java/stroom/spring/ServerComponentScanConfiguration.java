@@ -23,7 +23,7 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import stroom.cluster.server.ClusterSpringConfig;
 import stroom.connectors.ConnectorsSpringConfig;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.task.cluster.ClusterTaskSpringConfig;
 
 /**

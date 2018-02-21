@@ -7,7 +7,7 @@ import net.sf.saxon.trans.XPathException;
 import org.mortbay.jetty.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 
 import javax.inject.Inject;

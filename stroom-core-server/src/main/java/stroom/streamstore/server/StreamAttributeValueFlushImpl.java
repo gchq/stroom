@@ -19,13 +19,12 @@ package stroom.streamstore.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.jobsystem.server.ClusterLockService;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
@@ -35,7 +34,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;

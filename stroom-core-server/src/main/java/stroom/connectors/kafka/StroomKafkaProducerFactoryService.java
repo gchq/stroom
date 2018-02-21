@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.connectors.ExternalLibService;
 import stroom.connectors.StroomAbstractConnectorFactoryService;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Inject;

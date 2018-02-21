@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;

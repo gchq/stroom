@@ -23,7 +23,7 @@ import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;

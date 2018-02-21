@@ -29,7 +29,7 @@ import stroom.explorer.server.ExplorerService;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.logging.AuthenticationEventLog;
 import stroom.logging.AuthorisationEventLog;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cache.CacheManager;

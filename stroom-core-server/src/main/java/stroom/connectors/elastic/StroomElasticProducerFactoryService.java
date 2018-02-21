@@ -6,7 +6,7 @@ import stroom.connectors.ExternalLibService;
 import stroom.connectors.StroomAbstractConnectorFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactory;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Inject;

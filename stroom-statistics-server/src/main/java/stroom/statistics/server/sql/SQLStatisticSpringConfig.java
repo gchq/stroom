@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.jobsystem.server.ClusterLockService;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
 import stroom.statistics.server.sql.datasource.StatisticStoreValidator;
 import stroom.task.server.TaskManager;

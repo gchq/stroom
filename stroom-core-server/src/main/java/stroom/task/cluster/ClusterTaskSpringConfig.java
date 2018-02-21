@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.cluster.server.ClusterCallService;
 import stroom.cluster.server.ClusterNodeManager;
 import stroom.node.server.NodeCache;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.task.server.TaskManager;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;

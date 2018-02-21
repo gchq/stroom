@@ -5,7 +5,7 @@ import stroom.entity.server.EntityServiceBeanRegistry;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.logging.DocumentEventLog;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.security.SecurityContext;
 

@@ -25,7 +25,7 @@ import stroom.datafeed.server.MetaMapFilterFactory;
 import stroom.datafeed.server.RequestHandler;
 import stroom.feed.server.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
 import stroom.util.spring.StroomScope;

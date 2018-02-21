@@ -19,12 +19,9 @@ package stroom.dashboard.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.util.shared.Task;
-import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 

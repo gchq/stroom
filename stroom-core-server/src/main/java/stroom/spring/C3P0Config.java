@@ -16,7 +16,7 @@
 
 package stroom.spring;
 
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 
 public class C3P0Config {
     private static final int MAX_STATEMENTS = 0;

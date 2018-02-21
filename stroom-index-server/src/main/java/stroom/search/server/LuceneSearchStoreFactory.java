@@ -26,7 +26,7 @@ import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.node.server.NodeCache;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.ExpressionOperator;

@@ -28,7 +28,7 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.servlet.SessionResourceStore;
 import stroom.util.cache.CacheManager;

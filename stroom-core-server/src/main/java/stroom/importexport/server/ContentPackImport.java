@@ -18,8 +18,7 @@ package stroom.importexport.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomStartup;
