@@ -52,6 +52,8 @@ import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticRollUpType;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 
@@ -75,6 +77,8 @@ import java.util.stream.Collectors;
 @Component
 public class SQLStatisticEventStore implements Statistics {
     public static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
+    public static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticEventStore.class);
+
 
     static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
 
@@ -662,6 +666,9 @@ public class SQLStatisticEventStore implements Statistics {
 
         try (final Connection connection = statisticsDataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = buildSearchPreparedStatement(dataSource, criteria, connection)) {
+                LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("About to execute query: {}",
+                        preparedStatement.toString()));
+
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         final StatisticType statisticType = StatisticType.PRIMITIVE_VALUE_CONVERTER
@@ -743,12 +750,12 @@ public class SQLStatisticEventStore implements Statistics {
 
         final String statNameWithMask = dataSource.getName() + rollUpBitMask.asHexString();
 
-        final List<String> bindVariables = new ArrayList<>();
+        final List<String> extraBindVariables = new ArrayList<>();
 
         String sqlQuery = STAT_QUERY_SKELETON + " ";
 
         final String whereClause = SQLTagValueWhereClauseConverter
-                .buildTagValueWhereClause(criteria.getFilterTermsTree(), bindVariables);
+                .buildTagValueWhereClause(criteria.getFilterTermsTree(), extraBindVariables);
 
         if (whereClause != null && whereClause.length() != 0) {
             sqlQuery += " AND " + whereClause;
@@ -773,7 +780,7 @@ public class SQLStatisticEventStore implements Statistics {
         ps.setLong(position++, criteria.getPeriod().getFromMs());
         ps.setLong(position++, criteria.getPeriod().getToMs());
 
-        for (final String bindVariable : bindVariables) {
+        for (final String bindVariable : extraBindVariables) {
             ps.setString(position++, bindVariable);
         }
 
