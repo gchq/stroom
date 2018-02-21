@@ -21,7 +21,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
-import stroom.cluster.server.ClusterSpringConfig;
+import stroom.cluster.ClusterSpringConfig;
 import stroom.connectors.ConnectorsSpringConfig;
 import stroom.properties.StroomPropertyService;
 import stroom.task.cluster.ClusterTaskSpringConfig;

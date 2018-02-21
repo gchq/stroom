@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.server.reader.InvalidXMLCharFilterReader.XMLmode;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.reader.InvalidXMLCharFilterReader.XMLmode;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;

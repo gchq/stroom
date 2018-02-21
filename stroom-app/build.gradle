@@ -169,9 +169,9 @@ swagger {
         springmvc = false //makes it search for jersey annotations
         outputFormats = 'json,yaml'
         locations = [
-                'stroom.statistics.server.sql.search.SqlStatisticsQueryResource',
-                'stroom.index.server.StroomIndexQueryResource',
-                'stroom.security.server.AuthorisationResource' ]
+                'stroom.statistics.sql.search.SqlStatisticsQueryResource',
+                'stroom.index.StroomIndexQueryResource',
+                'stroom.security.AuthorisationResource' ]
         schemes = [
                 'http',
                 'https' ]

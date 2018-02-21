@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
-import stroom.entity.server.EntityMarshaller;
+import stroom.entity.EntityMarshaller;
 
 class DashboardMarshaller extends EntityMarshaller<Dashboard, DashboardConfig> {
     DashboardMarshaller() {

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.statistics.server;
+package stroom.statistics;
 
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.streamstore.server.tools.StoreCreationTool;
-import stroom.streamtask.server.StreamTaskCreator;
-import stroom.task.server.TaskManager;
+import stroom.streamstore.tools.StoreCreationTool;
+import stroom.streamtask.StreamTaskCreator;
+import stroom.task.TaskManager;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTranslationTest;
 

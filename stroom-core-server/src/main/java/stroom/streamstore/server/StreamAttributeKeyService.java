@@ -15,10 +15,10 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
-import stroom.entity.server.BaseEntityService;
-import stroom.entity.server.FindService;
+import stroom.entity.BaseEntityService;
+import stroom.entity.FindService;
 import stroom.entity.shared.BaseResultList;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeKey;

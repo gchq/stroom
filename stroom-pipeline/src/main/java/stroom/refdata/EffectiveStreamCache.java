@@ -22,11 +22,11 @@ import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Period;
-import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.streamstore.server.EffectiveMetaDataCriteria;
-import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.EffectiveMetaDataCriteria;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.util.cache.CacheManager;
 

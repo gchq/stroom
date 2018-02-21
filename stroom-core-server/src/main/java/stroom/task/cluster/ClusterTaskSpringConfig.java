@@ -20,11 +20,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
-import stroom.cluster.server.ClusterCallService;
-import stroom.cluster.server.ClusterNodeManager;
-import stroom.node.server.NodeCache;
+import stroom.cluster.ClusterCallService;
+import stroom.cluster.ClusterNodeManager;
+import stroom.node.NodeCache;
 import stroom.properties.StroomPropertyService;
-import stroom.task.server.TaskManager;
+import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
 

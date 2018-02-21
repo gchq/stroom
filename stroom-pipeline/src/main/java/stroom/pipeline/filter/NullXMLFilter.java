@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.factory.Processor;
-import stroom.pipeline.server.factory.Terminator;
+import stroom.pipeline.factory.Processor;
+import stroom.pipeline.factory.Terminator;
 
 import java.util.Collections;
 import java.util.List;

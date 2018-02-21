@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.stepping;
+package stroom.pipeline.stepping;
 
 /**
  * A recorder collects data from either the input or output of a pipeline

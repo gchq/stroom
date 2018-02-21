@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.datafeed.server;
+package stroom.datafeed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.streamstore.server.MockStreamStore;
+import stroom.streamstore.MockStreamStore;
 
 /**
  * @Configuration specific to TesetDataFeedServiceImpl.

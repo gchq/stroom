@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +22,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.node.shared.RecordCountService;
 import stroom.node.shared.RecordCounter;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -60,7 +60,7 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     }
 
     /**
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startProcessing()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startProcessing()
      */
     @Override
     public void startProcessing() {
@@ -79,7 +79,7 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     }
 
     /**
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endProcessing()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endProcessing()
      */
     @Override
     public void endProcessing() {

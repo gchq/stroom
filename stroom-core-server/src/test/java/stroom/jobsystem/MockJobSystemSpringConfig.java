@@ -19,11 +19,11 @@ package stroom.jobsystem;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.jobsystem.server.MockClusterLockService;
-import stroom.jobsystem.server.MockJobManager;
-import stroom.jobsystem.server.MockJobNodeService;
-import stroom.jobsystem.server.MockJobService;
-import stroom.jobsystem.server.MockScheduleService;
+import stroom.jobsystem.MockClusterLockService;
+import stroom.jobsystem.MockJobManager;
+import stroom.jobsystem.MockJobNodeService;
+import stroom.jobsystem.MockJobService;
+import stroom.jobsystem.MockScheduleService;
 import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration

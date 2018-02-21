@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
-import stroom.pipeline.server.factory.PipelineFactoryException;
-import stroom.pipeline.server.factory.Target;
+import stroom.pipeline.factory.PipelineFactoryException;
+import stroom.pipeline.factory.Target;
 
 public final class XMLFilterForkFactory {
     private XMLFilterForkFactory() {

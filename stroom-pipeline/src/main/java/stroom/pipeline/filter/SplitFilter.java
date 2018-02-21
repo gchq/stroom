@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -136,7 +136,7 @@ public class SplitFilter extends AbstractXMLFilter {
      * equals the split depth.
      *
      * @throws org.xml.sax.SAXException The client may throw an exception during processing.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startDocument()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startDocument()
      */
     @Override
     public void startDocument() throws SAXException {
@@ -148,7 +148,7 @@ public class SplitFilter extends AbstractXMLFilter {
      * the split depth.
      *
      * @throws org.xml.sax.SAXException The client may throw an exception during processing.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startDocument()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startDocument()
      */
     @Override
     public void endDocument() throws SAXException {
@@ -161,7 +161,7 @@ public class SplitFilter extends AbstractXMLFilter {
      * @param prefix The prefix.
      * @param uri    The URI of the prefix.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
      * java.lang.String)
      */
     @Override
@@ -179,7 +179,7 @@ public class SplitFilter extends AbstractXMLFilter {
      *
      * @param prefix The prefix.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
      */
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
@@ -203,7 +203,7 @@ public class SplitFilter extends AbstractXMLFilter {
      * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @param atts      The element's attributes.
      * @throws org.xml.sax.SAXException The client may throw an exception during processing.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startElement(java.lang.String,
      * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
@@ -266,7 +266,7 @@ public class SplitFilter extends AbstractXMLFilter {
      * @param localName The element's local name, or the empty string.
      * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @throws org.xml.sax.SAXException The client may throw an exception during processing.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endElement(java.lang.String,
      * java.lang.String, java.lang.String)
      */
     @Override
@@ -309,7 +309,7 @@ public class SplitFilter extends AbstractXMLFilter {
      * @param start  The starting position in the array.
      * @param length The number of characters to use from the array.
      * @throws org.xml.sax.SAXException The client may throw an exception during processing.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
      * int, int)
      */
     @Override

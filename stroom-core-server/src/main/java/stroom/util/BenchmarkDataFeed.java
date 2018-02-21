@@ -16,7 +16,7 @@
 
 package stroom.util;
 
-import stroom.task.server.StroomThreadGroup;
+import stroom.task.StroomThreadGroup;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;

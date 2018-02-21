@@ -20,9 +20,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.writer.PathCreator;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.writer.PathCreator;
 import stroom.util.spring.StroomScope;
 
 @Configuration

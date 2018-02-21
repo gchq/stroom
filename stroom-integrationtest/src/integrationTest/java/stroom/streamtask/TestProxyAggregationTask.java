@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.io.SeekableInputStream;
 import stroom.proxy.repo.StroomZipFile;
-import stroom.streamstore.server.StreamSource;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.fs.serializable.NestedInputStream;
-import stroom.streamstore.server.fs.serializable.RANestedInputStream;
+import stroom.streamstore.StreamSource;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.fs.serializable.NestedInputStream;
+import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.task.server.ExecutorProvider;
+import stroom.task.ExecutorProvider;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;

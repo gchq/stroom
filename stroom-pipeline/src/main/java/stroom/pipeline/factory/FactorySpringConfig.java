@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.server.DocumentPermissionCache;
-import stroom.pipeline.server.PipelineService;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.entity.DocumentPermissionCache;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.security.SecurityContext;
-import stroom.task.server.TaskManager;
+import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;

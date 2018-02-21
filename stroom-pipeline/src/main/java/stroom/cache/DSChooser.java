@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
 import org.xml.sax.ErrorHandler;
-import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.StreamUtil;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.ds3.DS3ParserFactory;

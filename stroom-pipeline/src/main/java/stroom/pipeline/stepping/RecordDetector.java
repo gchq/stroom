@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.stepping;
+package stroom.pipeline.stepping;
 
 /**
  * This is a marker interface for identifying pipeline elements that detect

@@ -15,12 +15,12 @@
  *
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.DocumentEntityServiceImpl;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.importexport.server.ImportExportHelper;
+import stroom.entity.DocumentEntityServiceImpl;
+import stroom.entity.util.StroomEntityManager;
+import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
 import stroom.security.SecurityContext;

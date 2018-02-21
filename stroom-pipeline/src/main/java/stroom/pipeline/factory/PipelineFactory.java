@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.destination.DestinationProvider;
-import stroom.pipeline.server.SupportsCodeInjection;
-import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.pipeline.server.filter.SAXEventRecorder;
-import stroom.pipeline.server.filter.SAXRecordDetector;
-import stroom.pipeline.server.filter.SplitFilter;
-import stroom.pipeline.server.filter.XMLFilter;
-import stroom.pipeline.server.parser.AbstractParser;
-import stroom.pipeline.server.reader.InputStreamRecordDetectorElement;
-import stroom.pipeline.server.reader.ReaderRecordDetectorElement;
-import stroom.pipeline.server.source.SourceElement;
-import stroom.pipeline.server.stepping.ElementMonitor;
-import stroom.pipeline.server.stepping.Recorder;
-import stroom.pipeline.server.stepping.SteppingController;
-import stroom.pipeline.server.stepping.SteppingFilter;
-import stroom.pipeline.server.stepping.SteppingTask;
-import stroom.pipeline.server.writer.OutputRecorder;
+import stroom.pipeline.SupportsCodeInjection;
+import stroom.pipeline.errorhandler.TerminatedException;
+import stroom.pipeline.filter.SAXEventRecorder;
+import stroom.pipeline.filter.SAXRecordDetector;
+import stroom.pipeline.filter.SplitFilter;
+import stroom.pipeline.filter.XMLFilter;
+import stroom.pipeline.parser.AbstractParser;
+import stroom.pipeline.reader.InputStreamRecordDetectorElement;
+import stroom.pipeline.reader.ReaderRecordDetectorElement;
+import stroom.pipeline.source.SourceElement;
+import stroom.pipeline.stepping.ElementMonitor;
+import stroom.pipeline.stepping.Recorder;
+import stroom.pipeline.stepping.SteppingController;
+import stroom.pipeline.stepping.SteppingFilter;
+import stroom.pipeline.stepping.SteppingTask;
+import stroom.pipeline.writer.OutputRecorder;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;

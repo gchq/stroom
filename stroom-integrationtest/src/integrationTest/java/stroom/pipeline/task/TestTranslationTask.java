@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.task;
+package stroom.pipeline.task;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.streamstore.server.MockStreamStore;
+import stroom.streamstore.MockStreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.StreamProcessorTaskExecutor;
+import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTest;
 import stroom.test.ComparisonHelper;

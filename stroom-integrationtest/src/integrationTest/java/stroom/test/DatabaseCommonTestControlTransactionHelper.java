@@ -18,9 +18,9 @@ package stroom.test;
 
 import org.junit.Assert;
 import org.springframework.dao.DataIntegrityViolationException;
-import stroom.entity.server.util.ConnectionUtil;
-import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.util.ConnectionUtil;
+import stroom.entity.util.HqlBuilder;
+import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 
 import javax.inject.Inject;

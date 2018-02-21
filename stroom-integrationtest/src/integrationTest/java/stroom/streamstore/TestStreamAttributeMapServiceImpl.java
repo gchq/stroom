@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;

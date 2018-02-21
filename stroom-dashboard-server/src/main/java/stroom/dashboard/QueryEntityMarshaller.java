@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import stroom.dashboard.shared.QueryEntity;
-import stroom.entity.server.EntityMarshaller;
+import stroom.entity.EntityMarshaller;
 import stroom.query.api.v2.Query;
 
 class QueryEntityMarshaller extends EntityMarshaller<QueryEntity, Query> {

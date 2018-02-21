@@ -15,11 +15,11 @@
  *
  */
 
-package stroom.index.server;
+package stroom.index;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.server.util.BaseEntityDeProxyProcessor;
+import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;

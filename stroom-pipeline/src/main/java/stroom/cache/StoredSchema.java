@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
-import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
 
 import javax.xml.validation.Schema;
 

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.AbstractElement;
-import stroom.pipeline.server.factory.Processor;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.factory.AbstractElement;
+import stroom.pipeline.factory.Processor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +47,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
      * Called just before a pipeline begins processing a file.
      *
      * @throws SAXException Could be thrown by a filter.
-     * @see stroom.pipeline.server.filter.XMLFilter#startProcessing()
+     * @see stroom.pipeline.filter.XMLFilter#startProcessing()
      */
     @Override
     public void startProcessing() {
@@ -77,7 +77,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
      * Called just after a pipeline has finished processing a file.
      *
      * @throws SAXException Could be thrown by a filter.
-     * @see stroom.pipeline.server.filter.XMLFilter#endProcessing()
+     * @see stroom.pipeline.filter.XMLFilter#endProcessing()
      */
     @Override
     public void endProcessing() {

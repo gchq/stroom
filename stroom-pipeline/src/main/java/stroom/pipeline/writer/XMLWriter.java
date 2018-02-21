@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,15 +22,15 @@ import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.entity.server.util.XMLUtil;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.server.filter.NullXMLFilter;
-import stroom.pipeline.server.filter.XMLFilter;
+import stroom.entity.util.XMLUtil;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.filter.NullXMLFilter;
+import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -124,7 +124,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      * @param locator an object that can return the location of any SAX document
      *                event
      * @see org.xml.sax.Locator
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#setDocumentLocator(org.xml.sax.Locator)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#setDocumentLocator(org.xml.sax.Locator)
      */
     @Override
     public void setDocumentLocator(final Locator locator) {
@@ -176,7 +176,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #endPrefixMapping
      * @see #startElement
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
      * java.lang.String)
      */
     @Override
@@ -191,7 +191,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #startPrefixMapping
      * @see #endElement
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
      */
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
@@ -214,7 +214,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startElement(java.lang.String,
      * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
@@ -293,7 +293,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      * @param qName     the qualified XML name (with prefix), or the empty string if
      *                  qualified names are not available
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endElement(java.lang.String,
      * java.lang.String, java.lang.String)
      */
     @Override
@@ -361,7 +361,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #ignorableWhitespace
      * @see org.xml.sax.Locator
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
      * int, int)
      */
     @Override
@@ -376,7 +376,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      * @param length the number of characters to read from the array
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #characters
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#ignorableWhitespace(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#ignorableWhitespace(char[],
      * int, int)
      */
     @Override
@@ -391,7 +391,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      *               The data does not include any whitespace separating it from
      *               the target
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#processingInstruction(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#processingInstruction(java.lang.String,
      * java.lang.String)
      */
     @Override
@@ -408,7 +408,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      *             the name will begin with '%', and if it is the external DTD
      *             subset, it will be the string "[dtd]"
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#skippedEntity(java.lang.String)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#skippedEntity(java.lang.String)
      */
     @Override
     public void skippedEntity(final String name) throws SAXException {

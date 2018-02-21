@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.SqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.util.SqlBuilder;
+import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.streamstore.shared.StreamType;
 

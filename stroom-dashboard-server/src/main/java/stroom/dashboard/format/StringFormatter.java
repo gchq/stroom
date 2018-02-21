@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.format;
+package stroom.dashboard.format;
 
 public class StringFormatter implements Formatter {
     private StringFormatter() {

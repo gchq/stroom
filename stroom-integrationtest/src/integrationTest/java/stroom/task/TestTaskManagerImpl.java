@@ -1,4 +1,4 @@
-package stroom.task.server;
+package stroom.task;
 
 import org.junit.Assert;
 import org.junit.Test;

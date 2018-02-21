@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.errorhandler;
+package stroom.pipeline.errorhandler;
 
 /**
  * Exception used to wrap all exceptions generated within transformation code.

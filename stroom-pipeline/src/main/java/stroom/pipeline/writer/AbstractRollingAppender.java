@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.PipelineFactoryException;
-import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.factory.PipelineFactoryException;
+import stroom.pipeline.factory.PipelineProperty;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.task.TaskMonitor;
 

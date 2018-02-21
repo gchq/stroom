@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.importexport.server;
+package stroom.importexport;
 
 import io.swagger.annotations.ApiModel;
 import stroom.query.api.v2.DocRef;

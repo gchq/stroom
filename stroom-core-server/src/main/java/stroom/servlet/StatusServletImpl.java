@@ -17,8 +17,8 @@
 
 package stroom.servlet;
 
-import stroom.node.server.NodeService;
-import stroom.node.server.VolumeService;
+import stroom.node.NodeService;
+import stroom.node.VolumeService;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.FindNodeCriteria;

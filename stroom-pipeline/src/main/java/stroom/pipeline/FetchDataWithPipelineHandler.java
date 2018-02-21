@@ -15,14 +15,14 @@
  *
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 import stroom.entity.shared.EntityServiceException;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.logging.StreamEventLog;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.factory.PipelineDataCache;
-import stroom.pipeline.server.factory.PipelineFactory;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.state.FeedHolder;
@@ -30,9 +30,9 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
-import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.Stream;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 

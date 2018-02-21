@@ -11,7 +11,7 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.server.MockStroomPropertyService;
+import stroom.node.MockStroomPropertyService;
 import stroom.query.api.v2.DocRef;
 
 import java.util.Arrays;

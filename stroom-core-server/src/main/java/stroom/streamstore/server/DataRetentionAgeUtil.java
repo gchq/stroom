@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import stroom.ruleset.shared.DataRetentionRule;
 

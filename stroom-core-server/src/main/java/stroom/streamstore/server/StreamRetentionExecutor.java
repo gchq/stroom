@@ -15,17 +15,17 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.PeriodUtil;
+import stroom.entity.util.PeriodUtil;
 import stroom.entity.shared.Period;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
-import stroom.jobsystem.server.ClusterLockService;
-import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.jobsystem.ClusterLockService;
+import stroom.jobsystem.JobTrackedSchedule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;

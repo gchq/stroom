@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

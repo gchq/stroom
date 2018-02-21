@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.tools;
+package stroom.streamstore.tools;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.feed.server.FeedService;
-import stroom.index.server.IndexService;
-import stroom.pipeline.server.PipelineService;
-import stroom.pipeline.server.TextConverterService;
-import stroom.pipeline.server.XSLTService;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamtask.server.StreamProcessorFilterService;
-import stroom.streamtask.server.StreamProcessorService;
+import stroom.feed.FeedService;
+import stroom.index.IndexService;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.TextConverterService;
+import stroom.pipeline.XSLTService;
+import stroom.streamstore.StreamStore;
+import stroom.streamtask.StreamProcessorFilterService;
+import stroom.streamtask.StreamProcessorService;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.spring.StroomSpringProfiles;

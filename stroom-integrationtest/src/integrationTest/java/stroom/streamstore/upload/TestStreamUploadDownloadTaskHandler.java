@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.upload;
+package stroom.streamstore.upload;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,20 +23,20 @@ import stroom.feed.shared.Feed;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.security.UserTokenUtil;
-import stroom.streamstore.server.StreamAttributeValueFlush;
-import stroom.streamstore.server.StreamSource;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.server.fs.serializable.NestedStreamTarget;
-import stroom.streamstore.server.StreamDownloadSettings;
-import stroom.streamstore.server.StreamDownloadTask;
-import stroom.streamstore.server.StreamUploadTask;
+import stroom.streamstore.StreamAttributeValueFlush;
+import stroom.streamstore.StreamSource;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
+import stroom.streamstore.fs.serializable.NestedStreamTarget;
+import stroom.streamstore.StreamDownloadSettings;
+import stroom.streamstore.StreamDownloadTask;
+import stroom.streamstore.StreamUploadTask;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
-import stroom.task.server.TaskManager;
+import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;

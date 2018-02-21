@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 

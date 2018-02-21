@@ -15,10 +15,10 @@
  *
  */
 
-package stroom.visualisation.server;
+package stroom.visualisation;
 
-import stroom.entity.server.DocumentEntityService;
-import stroom.entity.server.FindService;
+import stroom.entity.DocumentEntityService;
+import stroom.entity.FindService;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 

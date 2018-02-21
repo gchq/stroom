@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.download;
+package stroom.dashboard.download;
 
-import stroom.dashboard.server.SampleGenerator;
+import stroom.dashboard.SampleGenerator;
 import stroom.dashboard.shared.Field;
 import stroom.query.api.v2.Row;
 

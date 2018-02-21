@@ -1,6 +1,6 @@
 package stroom.test;
 
-import stroom.importexport.server.ImportExportService;
+import stroom.importexport.ImportExportService;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 

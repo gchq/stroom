@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import stroom.entity.shared.PageRequest;
-import stroom.streamstore.server.fs.serializable.SegmentInputStream;
+import stroom.streamstore.fs.serializable.SegmentInputStream;
 
 import java.io.IOException;
 

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.stepping;
+package stroom.pipeline.stepping;
 
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.state.StreamHolder;

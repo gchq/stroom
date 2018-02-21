@@ -1,4 +1,4 @@
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import java.util.ArrayList;
 import java.util.Collections;

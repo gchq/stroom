@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.xsltfunctions;
+package stroom.pipeline.xsltfunctions;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Item;
@@ -24,8 +24,8 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.BooleanValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;

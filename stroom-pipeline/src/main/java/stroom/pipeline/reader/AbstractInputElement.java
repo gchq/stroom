@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
 import stroom.pipeline.destination.DestinationProvider;
-import stroom.pipeline.server.factory.PipelineFactoryException;
-import stroom.pipeline.server.factory.TakesInput;
-import stroom.pipeline.server.factory.Target;
-import stroom.pipeline.server.factory.Terminator;
+import stroom.pipeline.factory.PipelineFactoryException;
+import stroom.pipeline.factory.TakesInput;
+import stroom.pipeline.factory.Target;
+import stroom.pipeline.factory.Terminator;
 
 import java.io.IOException;
 import java.io.InputStream;

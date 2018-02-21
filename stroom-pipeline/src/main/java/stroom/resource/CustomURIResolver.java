@@ -18,7 +18,7 @@
 package stroom.resource;
 
 import stroom.entity.shared.BaseResultList;
-import stroom.pipeline.server.XSLTService;
+import stroom.pipeline.XSLTService;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
 import stroom.util.io.StreamUtil;

@@ -15,18 +15,18 @@
  *
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import stroom.dashboard.server.vis.VisSettings;
-import stroom.dashboard.server.vis.VisSettings.Control;
-import stroom.dashboard.server.vis.VisSettings.Nest;
-import stroom.dashboard.server.vis.VisSettings.Structure;
-import stroom.dashboard.server.vis.VisSettings.Tab;
+import stroom.dashboard.vis.VisSettings;
+import stroom.dashboard.vis.VisSettings.Control;
+import stroom.dashboard.vis.VisSettings.Nest;
+import stroom.dashboard.vis.VisSettings.Structure;
+import stroom.dashboard.vis.VisSettings.Tab;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DateTimeFormatSettings;
@@ -54,7 +54,7 @@ import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.util.shared.OffsetRange;
-import stroom.visualisation.server.VisualisationService;
+import stroom.visualisation.VisualisationService;
 import stroom.visualisation.shared.Visualisation;
 
 import javax.inject.Inject;

@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.entity.server.AutoMarshal;
-import stroom.entity.server.DocumentEntityServiceImpl;
-import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.FieldMap;
-import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.SqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.importexport.server.ImportExportHelper;
+import stroom.entity.AutoMarshal;
+import stroom.entity.DocumentEntityServiceImpl;
+import stroom.entity.QueryAppender;
+import stroom.entity.util.FieldMap;
+import stroom.entity.util.HqlBuilder;
+import stroom.entity.util.SqlBuilder;
+import stroom.entity.util.StroomEntityManager;
+import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;

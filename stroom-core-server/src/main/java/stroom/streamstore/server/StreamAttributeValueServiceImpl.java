@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.CriteriaLoggingUtil;
-import stroom.entity.server.QueryAppender;
-import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.SqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.CriteriaLoggingUtil;
+import stroom.entity.QueryAppender;
+import stroom.entity.SystemEntityServiceImpl;
+import stroom.entity.util.HqlBuilder;
+import stroom.entity.util.SqlBuilder;
+import stroom.entity.util.StroomEntityManager;
 import stroom.streamstore.shared.StreamAttributeValue;
 
 import javax.inject.Inject;

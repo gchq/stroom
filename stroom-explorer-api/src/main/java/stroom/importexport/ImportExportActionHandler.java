@@ -1,4 +1,4 @@
-package stroom.importexport.server;
+package stroom.importexport;
 
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;

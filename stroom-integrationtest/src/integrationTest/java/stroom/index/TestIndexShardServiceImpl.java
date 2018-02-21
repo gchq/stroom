@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.index.server;
+package stroom.index;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,8 +28,8 @@ import stroom.index.shared.Index;
 import stroom.index.shared.Index.PartitionBy;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.server.NodeCache;
-import stroom.node.server.VolumeService;
+import stroom.node.NodeCache;
+import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;

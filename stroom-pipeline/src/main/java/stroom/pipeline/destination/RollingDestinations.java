@@ -18,10 +18,10 @@ package stroom.pipeline.destination;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.errorhandler.TerminatedException;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.task.TaskMonitor;

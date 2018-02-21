@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
-import stroom.node.server.NodeCache;
+import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -29,7 +29,7 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
-import stroom.task.server.TaskMonitorImpl;
+import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;

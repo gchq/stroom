@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.io.StreamCloser;
-import stroom.node.server.NodeCache;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.node.NodeCache;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.MetaDataHolder;
@@ -32,8 +32,8 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTypeService;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTypeService;
 import stroom.util.spring.StroomScope;
 
 import java.io.OutputStream;

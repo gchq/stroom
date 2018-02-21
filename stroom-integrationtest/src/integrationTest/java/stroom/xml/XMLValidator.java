@@ -17,12 +17,12 @@
 package stroom.xml;
 
 import org.apache.commons.lang.StringUtils;
-import stroom.pipeline.server.PipelineService;
-import stroom.pipeline.server.PipelineTestUtil;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.server.factory.Pipeline;
-import stroom.pipeline.server.factory.PipelineFactory;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineTestUtil;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.factory.Pipeline;
+import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;

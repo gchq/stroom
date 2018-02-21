@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.xsltfunctions;
+package stroom.pipeline.xsltfunctions;
 
 import java.util.HashMap;
 import java.util.Map;

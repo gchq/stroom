@@ -15,27 +15,27 @@
  *
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.node.server.NodeCache;
+import stroom.node.NodeCache;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingStreamDestination;
 import stroom.pipeline.destination.StreamKey;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.server.factory.PipelinePropertyDocRef;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
 import stroom.query.api.v2.DocRef;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.server.StreamTypeService;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
+import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 

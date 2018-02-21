@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
-import stroom.streamstore.server.ScanVolumePathResult;
+import stroom.streamstore.ScanVolumePathResult;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Queue;

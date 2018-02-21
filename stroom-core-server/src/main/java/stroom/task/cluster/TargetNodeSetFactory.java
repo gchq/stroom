@@ -16,9 +16,9 @@
 
 package stroom.task.cluster;
 
-import stroom.cluster.server.ClusterNodeManager;
-import stroom.cluster.server.ClusterState;
-import stroom.node.server.NodeCache;
+import stroom.cluster.ClusterNodeManager;
+import stroom.cluster.ClusterState;
+import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 
 import javax.inject.Inject;

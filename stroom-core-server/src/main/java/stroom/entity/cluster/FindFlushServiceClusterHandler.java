@@ -17,9 +17,9 @@
 
 package stroom.entity.cluster;
 
-import stroom.entity.server.FindFlushService;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.entity.FindFlushService;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
 

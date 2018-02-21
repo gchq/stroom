@@ -19,14 +19,14 @@ package stroom.xml;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.pipeline.server.PipelineService;
-import stroom.pipeline.server.TextConverterService;
-import stroom.pipeline.server.XSLTService;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.factory.PipelineFactory;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.TextConverterService;
+import stroom.pipeline.XSLTService;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
-import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.StreamStore;
 import stroom.util.spring.StroomScope;
 
 @Configuration

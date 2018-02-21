@@ -15,10 +15,10 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
-import stroom.entity.server.FindService;
-import stroom.entity.server.NamedEntityService;
+import stroom.entity.FindService;
+import stroom.entity.NamedEntityService;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
 

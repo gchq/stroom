@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.dictionary.server.DictionaryStore;
-import stroom.entity.server.CachingEntityManager;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.feed.server.FeedService;
+import stroom.dictionary.DictionaryStore;
+import stroom.entity.CachingEntityManager;
+import stroom.entity.util.StroomEntityManager;
+import stroom.feed.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
-import stroom.jobsystem.server.ClusterLockService;
+import stroom.jobsystem.ClusterLockService;
 import stroom.logging.StreamEventLog;
 import stroom.properties.StroomPropertyService;
-import stroom.pipeline.server.PipelineService;
-import stroom.policy.server.DataRetentionService;
+import stroom.pipeline.PipelineService;
+import stroom.policy.DataRetentionService;
 import stroom.security.SecurityContext;
 import stroom.servlet.SessionResourceStore;
-import stroom.streamtask.server.BatchIdTransactionHelper;
-import stroom.streamtask.server.StreamProcessorService;
-import stroom.task.server.TaskManager;
+import stroom.streamtask.BatchIdTransactionHelper;
+import stroom.streamtask.StreamProcessorService;
+import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
-import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.StreamVolume;
 
 import java.util.Set;

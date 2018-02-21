@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.logging;
+package stroom.dashboard.logging;
 
 import event.logging.Criteria;
 import event.logging.Criteria.DataSources;
@@ -29,8 +29,8 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.dictionary.server.DictionaryStore;
-import stroom.entity.server.QueryDataLogUtil;
+import stroom.dictionary.DictionaryStore;
+import stroom.entity.QueryDataLogUtil;
 import stroom.logging.StroomEventLoggingService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;

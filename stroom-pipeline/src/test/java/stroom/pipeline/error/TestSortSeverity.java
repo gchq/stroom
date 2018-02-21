@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.error;
+package stroom.pipeline.error;
 
 import org.junit.Test;
 import stroom.util.shared.Severity;

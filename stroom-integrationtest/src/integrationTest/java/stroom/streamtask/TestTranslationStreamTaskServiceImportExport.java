@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import org.junit.Ignore;
 import org.junit.Test;

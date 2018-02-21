@@ -1,4 +1,4 @@
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
 public interface Terminator {
     Terminator DEFAULT = () -> {

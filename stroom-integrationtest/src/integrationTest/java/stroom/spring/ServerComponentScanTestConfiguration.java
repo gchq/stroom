@@ -22,12 +22,12 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
-import stroom.cache.server.PipelineCacheSpringConfig;
-import stroom.cluster.server.ClusterNodeManagerImpl;
-import stroom.cluster.server.ClusterSpringConfig;
+import stroom.cache.PipelineCacheSpringConfig;
+import stroom.cluster.ClusterNodeManagerImpl;
+import stroom.cluster.ClusterSpringConfig;
 import stroom.connectors.ConnectorsSpringConfig;
-import stroom.node.server.NodeConfigImpl;
-import stroom.streamtask.server.StreamProcessorTaskFactory;
+import stroom.node.NodeConfigImpl;
+import stroom.streamtask.StreamProcessorTaskFactory;
 import stroom.task.cluster.ClusterTaskSpringConfig;
 
 /**

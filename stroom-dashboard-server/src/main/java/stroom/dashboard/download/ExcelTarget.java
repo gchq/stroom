@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.download;
+package stroom.dashboard.download;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;

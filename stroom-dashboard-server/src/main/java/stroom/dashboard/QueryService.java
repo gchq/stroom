@@ -15,12 +15,12 @@
  *
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.entity.server.DocumentEntityService;
-import stroom.entity.server.FindService;
+import stroom.entity.DocumentEntityService;
+import stroom.entity.FindService;
 
 import java.util.List;
 

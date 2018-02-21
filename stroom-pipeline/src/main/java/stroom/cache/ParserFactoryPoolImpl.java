@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
-import stroom.entity.server.DocumentPermissionCache;
-import stroom.pipeline.server.DefaultLocationFactory;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
+import stroom.entity.DocumentPermissionCache;
+import stroom.pipeline.DefaultLocationFactory;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pool.AbstractEntityPool;

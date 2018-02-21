@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.record;
+package stroom.pipeline.record;
 
 import stroom.util.io.ByteSlice;
 

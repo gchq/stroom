@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
@@ -23,19 +23,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import stroom.entity.server.CriteriaLoggingUtil;
-import stroom.entity.server.SupportsCriteriaLogging;
-import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.CriteriaLoggingUtil;
+import stroom.entity.SupportsCriteriaLogging;
+import stroom.entity.util.HqlBuilder;
+import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.node.shared.Volume;
 import stroom.security.Secured;
-import stroom.streamstore.server.FileArrayList;
-import stroom.streamstore.server.FindStreamVolumeCriteria;
-import stroom.streamstore.server.ScanVolumePathResult;
-import stroom.streamstore.server.StreamMaintenanceService;
-import stroom.streamstore.server.StreamRange;
-import stroom.streamstore.server.StreamTypeService;
+import stroom.streamstore.FileArrayList;
+import stroom.streamstore.FindStreamVolumeCriteria;
+import stroom.streamstore.ScanVolumePathResult;
+import stroom.streamstore.StreamMaintenanceService;
+import stroom.streamstore.StreamRange;
+import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.util.io.FileUtil;

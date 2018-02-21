@@ -19,11 +19,11 @@ package stroom.pipeline.state;
 
 import stroom.feed.MetaMap;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
-import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
+import stroom.streamstore.fs.serializable.StreamSourceInputStream;
+import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.StreamProcessorService;
+import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
 

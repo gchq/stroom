@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import java.io.Serializable;
 import java.util.ArrayList;

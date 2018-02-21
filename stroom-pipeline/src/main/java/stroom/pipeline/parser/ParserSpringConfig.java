@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.parser;
+package stroom.pipeline.parser;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.cache.server.ParserFactoryPool;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.TextConverterService;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.cache.ParserFactoryPool;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.TextConverterService;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.util.spring.StroomScope;
 
 @Configuration

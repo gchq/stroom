@@ -19,10 +19,10 @@ package stroom.node;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.node.server.NodeConfigForTesting;
-import stroom.node.server.NodeService;
-import stroom.node.server.VolumeService;
+import stroom.entity.util.StroomEntityManager;
+import stroom.node.NodeConfigForTesting;
+import stroom.node.NodeService;
+import stroom.node.VolumeService;
 import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration

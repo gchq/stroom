@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 import org.junit.Assert;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamstore.server.StreamSource;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
+import stroom.streamstore.StreamSource;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.test.ComparisonHelper;

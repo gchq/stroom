@@ -19,8 +19,8 @@ package stroom.entity.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
 

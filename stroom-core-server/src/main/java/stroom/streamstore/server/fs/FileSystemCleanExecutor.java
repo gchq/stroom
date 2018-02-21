@@ -15,19 +15,19 @@
  *
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.node.server.NodeCache;
-import stroom.node.server.VolumeService;
+import stroom.jobsystem.JobTrackedSchedule;
+import stroom.node.NodeCache;
+import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
-import stroom.task.server.AsyncTaskHelper;
-import stroom.task.server.TaskCallbackAdaptor;
-import stroom.task.server.TaskManager;
+import stroom.task.AsyncTaskHelper;
+import stroom.task.TaskCallbackAdaptor;
+import stroom.task.TaskManager;
 import stroom.util.config.PropertyUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;

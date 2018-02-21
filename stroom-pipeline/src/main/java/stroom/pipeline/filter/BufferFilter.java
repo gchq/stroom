@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
@@ -32,7 +32,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
     /**
      * Called just after a pipeline has finished processing.
      *
-     * @see stroom.pipeline.server.filter.XMLFilter#endProcessing()
+     * @see stroom.pipeline.filter.XMLFilter#endProcessing()
      */
     @Override
     public void endProcessing() {
@@ -91,7 +91,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      *
      * @param locator an object that can return the location of any SAX document
      *                event
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#setDocumentLocator(org.xml.sax.Locator)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#setDocumentLocator(org.xml.sax.Locator)
      */
     @Override
     public void setDocumentLocator(final Locator locator) {
@@ -106,7 +106,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      * Buffers a startDocument event if buffer is set to true.
      *
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startDocument()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startDocument()
      */
     @Override
     public void startDocument() throws SAXException {
@@ -121,7 +121,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      * Buffers a endDocument event if buffer is set to true.
      *
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endDocument()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endDocument()
      */
     @Override
     public void endDocument() throws SAXException {
@@ -139,7 +139,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      *               for the default element namespace, which has no prefix.
      * @param uri    the Namespace URI the prefix is mapped to
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
      * java.lang.String)
      */
     @Override
@@ -157,7 +157,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      * @param prefix the prefix that was being mapped. This is the empty string
      *               when a default mapping scope ends.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
      */
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
@@ -176,7 +176,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @param atts      The element's attributes.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startElement(java.lang.String,
      * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
@@ -200,7 +200,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      * @param qName     the qualified XML name (with prefix), or the empty string if
      *                  qualified names are not available
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endElement(java.lang.String,
      * java.lang.String, java.lang.String)
      */
     @Override
@@ -219,7 +219,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      * @param start  The starting position in the array.
      * @param length The number of characters to use from the array.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
      * int, int)
      */
     @Override
@@ -238,7 +238,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      * @param start  the start position in the array
      * @param length the number of characters to read from the array
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#ignorableWhitespace(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#ignorableWhitespace(char[],
      * int, int)
      */
     @Override
@@ -258,7 +258,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      *               The data does not include any whitespace separating it from
      *               the target
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#processingInstruction(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#processingInstruction(java.lang.String,
      * java.lang.String)
      */
     @Override
@@ -277,7 +277,7 @@ public abstract class BufferFilter extends AbstractXMLFilter {
      *             the name will begin with '%', and if it is the external DTD
      *             subset, it will be the string "[dtd]"
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#skippedEntity(java.lang.String)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#skippedEntity(java.lang.String)
      */
     @Override
     public void skippedEntity(final String name) throws SAXException {

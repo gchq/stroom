@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
 import org.springframework.context.annotation.Profile;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.filter.RecordCountFilter;
-import stroom.pipeline.server.filter.RecordOutputFilter;
-import stroom.pipeline.server.filter.SchemaFilter;
-import stroom.pipeline.server.filter.SchemaFilterSplit;
-import stroom.pipeline.server.filter.SplitFilter;
-import stroom.pipeline.server.filter.XSLTFilter;
-import stroom.pipeline.server.parser.CombinedParser;
-import stroom.pipeline.server.parser.DSParser;
-import stroom.pipeline.server.parser.JSONParser;
-import stroom.pipeline.server.parser.XMLFragmentParser;
-import stroom.pipeline.server.parser.XMLParser;
-import stroom.pipeline.server.source.SourceElement;
-import stroom.pipeline.server.writer.FileAppender;
-import stroom.pipeline.server.writer.JSONWriter;
-import stroom.pipeline.server.writer.StreamAppender;
-import stroom.pipeline.server.writer.TextWriter;
-import stroom.pipeline.server.writer.XMLWriter;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.filter.RecordCountFilter;
+import stroom.pipeline.filter.RecordOutputFilter;
+import stroom.pipeline.filter.SchemaFilter;
+import stroom.pipeline.filter.SchemaFilterSplit;
+import stroom.pipeline.filter.SplitFilter;
+import stroom.pipeline.filter.XSLTFilter;
+import stroom.pipeline.parser.CombinedParser;
+import stroom.pipeline.parser.DSParser;
+import stroom.pipeline.parser.JSONParser;
+import stroom.pipeline.parser.XMLFragmentParser;
+import stroom.pipeline.parser.XMLParser;
+import stroom.pipeline.source.SourceElement;
+import stroom.pipeline.writer.FileAppender;
+import stroom.pipeline.writer.JSONWriter;
+import stroom.pipeline.writer.StreamAppender;
+import stroom.pipeline.writer.TextWriter;
+import stroom.pipeline.writer.XMLWriter;
 import stroom.pipeline.state.PipelineContext;
 import stroom.util.spring.StroomSpringProfiles;
 

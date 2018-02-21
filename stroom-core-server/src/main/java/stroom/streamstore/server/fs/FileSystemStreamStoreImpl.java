@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import event.logging.util.DateUtil;
 import org.slf4j.Logger;
@@ -23,13 +23,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.EntityServiceLogUtil;
-import stroom.entity.server.util.FieldMap;
-import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.SqlBuilder;
-import stroom.entity.server.util.SqlUtil;
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.util.EntityServiceLogUtil;
+import stroom.entity.util.FieldMap;
+import stroom.entity.util.HqlBuilder;
+import stroom.entity.util.SqlBuilder;
+import stroom.entity.util.SqlUtil;
+import stroom.entity.util.StroomDatabaseInfo;
+import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
@@ -39,25 +39,25 @@ import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Sort.Direction;
 import stroom.feed.MetaMap;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
-import stroom.node.server.NodeCache;
-import stroom.node.server.VolumeService;
+import stroom.node.NodeCache;
+import stroom.node.VolumeService;
 import stroom.node.shared.Volume;
-import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.server.EffectiveMetaDataCriteria;
-import stroom.streamstore.server.OldFindStreamCriteria;
-import stroom.streamstore.server.StreamAttributeValueFlush;
-import stroom.streamstore.server.StreamException;
-import stroom.streamstore.server.StreamSource;
-import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.server.StreamTypeService;
+import stroom.streamstore.EffectiveMetaDataCriteria;
+import stroom.streamstore.OldFindStreamCriteria;
+import stroom.streamstore.StreamAttributeValueFlush;
+import stroom.streamstore.StreamException;
+import stroom.streamstore.StreamSource;
+import stroom.streamstore.StreamTarget;
+import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeCondition;
@@ -70,9 +70,9 @@ import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.streamstore.server.ExpressionToFindCriteria;
-import stroom.streamstore.server.ExpressionToFindCriteria.Context;
-import stroom.streamtask.server.StreamProcessorService;
+import stroom.streamstore.ExpressionToFindCriteria;
+import stroom.streamstore.ExpressionToFindCriteria.Context;
+import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.logging.LogExecutionTime;
 
@@ -533,7 +533,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     // /**
     // * Overridden.
     // *
-    // * @see stroom.streamstore.server.StreamStore#deleteLocks()
+    // * @see stroom.streamstore.StreamStore#deleteLocks()
     // */
     // @Override
     // public void deleteLocks() {

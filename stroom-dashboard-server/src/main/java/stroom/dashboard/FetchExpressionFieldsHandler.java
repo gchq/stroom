@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import stroom.dashboard.shared.FetchDataSourceFieldsAction;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.entity.shared.DataSourceFields;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 

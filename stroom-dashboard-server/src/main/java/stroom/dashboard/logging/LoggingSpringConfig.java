@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.logging;
+package stroom.dashboard.logging;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.DictionaryStore;
 import stroom.logging.StroomEventLoggingService;
 
 @Configuration

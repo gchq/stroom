@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.security.server;
+package stroom.security;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.TransactionException;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
-import stroom.index.server.IndexService;
+import stroom.index.IndexService;
 import stroom.index.shared.Index;
 import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissionNames;

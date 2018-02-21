@@ -19,7 +19,7 @@ package stroom.test;
 import org.junit.Before;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.security.server.SecuritySpringConfig;
+import stroom.security.SecuritySpringConfig;
 import stroom.util.spring.StroomSpringProfiles;
 
 @ActiveProfiles(value = {

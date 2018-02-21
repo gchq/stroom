@@ -15,25 +15,25 @@
  *
  */
 
-package stroom.pipeline.server.stepping;
+package stroom.pipeline.stepping;
 
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.SharedDocRef;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.List;

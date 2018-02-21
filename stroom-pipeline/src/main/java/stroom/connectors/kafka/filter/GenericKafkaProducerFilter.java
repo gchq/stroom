@@ -17,11 +17,11 @@
 package stroom.connectors.kafka.filter;
 
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.server.writer.PathCreator;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 

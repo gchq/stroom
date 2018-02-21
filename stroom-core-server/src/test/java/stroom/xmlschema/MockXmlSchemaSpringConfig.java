@@ -19,9 +19,9 @@ package stroom.xmlschema;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.importexport.server.ImportExportHelper;
+import stroom.importexport.ImportExportHelper;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.xmlschema.server.MockXMLSchemaService;
+import stroom.xmlschema.MockXMLSchemaService;
 
 @Configuration
 public class MockXmlSchemaSpringConfig {

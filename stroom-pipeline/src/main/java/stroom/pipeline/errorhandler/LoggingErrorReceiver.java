@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.errorhandler;
+package stroom.pipeline.errorhandler;
 
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
 import stroom.pipeline.shared.TextConverter;
 import stroom.pool.Pool;

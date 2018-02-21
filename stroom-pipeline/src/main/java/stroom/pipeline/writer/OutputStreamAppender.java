@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 
 import java.io.IOException;
 import java.io.OutputStream;

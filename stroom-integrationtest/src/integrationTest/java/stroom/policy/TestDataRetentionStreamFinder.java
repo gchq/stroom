@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.policy.server;
+package stroom.policy;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
-import stroom.streamstore.server.StreamMaintenanceService;
-import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.StreamMaintenanceService;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;

@@ -15,34 +15,34 @@
  *
  */
 
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.jobsystem.server.MockTask;
-import stroom.node.server.NodeCache;
-import stroom.node.server.NodeService;
+import stroom.jobsystem.MockTask;
+import stroom.node.NodeCache;
+import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.streamstore.server.FindStreamVolumeCriteria;
-import stroom.streamstore.server.StreamDeleteExecutor;
-import stroom.streamstore.server.StreamMaintenanceService;
-import stroom.streamstore.server.StreamRetentionExecutor;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.server.fs.FileSystemCleanExecutor;
+import stroom.streamstore.FindStreamVolumeCriteria;
+import stroom.streamstore.StreamDeleteExecutor;
+import stroom.streamstore.StreamMaintenanceService;
+import stroom.streamstore.StreamRetentionExecutor;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
+import stroom.streamstore.fs.FileSystemCleanExecutor;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.task.server.TaskManager;
-import stroom.task.server.TaskMonitorImpl;
+import stroom.task.TaskManager;
+import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.config.StroomProperties;
-import stroom.volume.server.VolumeServiceImpl;
+import stroom.volume.VolumeServiceImpl;
 
 import javax.annotation.Resource;
 import java.time.ZoneOffset;

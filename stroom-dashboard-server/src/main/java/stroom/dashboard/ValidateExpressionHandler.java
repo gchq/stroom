@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
@@ -23,8 +23,8 @@ import stroom.dashboard.expression.v1.FunctionFactory;
 import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.dashboard.shared.ValidateExpressionAction;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 
 import java.text.ParseException;
 

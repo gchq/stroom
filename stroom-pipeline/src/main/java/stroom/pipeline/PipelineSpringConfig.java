@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.server.CachingEntityManager;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.feed.server.FeedService;
-import stroom.importexport.server.ImportExportHelper;
+import stroom.entity.CachingEntityManager;
+import stroom.entity.util.StroomEntityManager;
+import stroom.feed.FeedService;
+import stroom.importexport.ImportExportHelper;
 import stroom.logging.StreamEventLog;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.factory.ElementRegistryFactory;
-import stroom.pipeline.server.factory.PipelineDataCache;
-import stroom.pipeline.server.factory.PipelineDataValidator;
-import stroom.pipeline.server.factory.PipelineFactory;
-import stroom.pipeline.server.factory.PipelineStackLoader;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.factory.ElementRegistryFactory;
+import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.factory.PipelineDataValidator;
+import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.factory.PipelineStackLoader;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.SecurityContext;
-import stroom.streamstore.server.StreamStore;
-import stroom.task.server.TaskManager;
+import stroom.streamstore.StreamStore;
+import stroom.task.TaskManager;
 import stroom.util.spring.StroomScope;
 
 @Configuration

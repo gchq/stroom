@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -63,7 +63,7 @@ public class TextWriter extends AbstractWriter {
      * @param start  The starting position in the array.
      * @param length The number of characters to use from the array.
      * @throws org.xml.sax.SAXException The client may throw an exception during processing.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
      * int, int)
      */
     @Override

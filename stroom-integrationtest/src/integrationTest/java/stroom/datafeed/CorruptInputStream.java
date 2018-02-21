@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.datafeed.server;
+package stroom.datafeed;
 
 import java.io.FilterInputStream;
 import java.io.IOException;

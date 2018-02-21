@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.volume.server.MockVolumeService;
+import stroom.volume.MockVolumeService;
 
 
 @Configuration

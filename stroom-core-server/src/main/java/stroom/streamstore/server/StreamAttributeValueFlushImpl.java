@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
-import stroom.jobsystem.server.ClusterLockService;
+import stroom.jobsystem.ClusterLockService;
 import stroom.properties.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeKey;

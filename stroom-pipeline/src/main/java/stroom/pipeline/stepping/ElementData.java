@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.stepping;
+package stroom.pipeline.stepping;
 
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.data.PipelineElementType;

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.stepping.RecordDetector;
-import stroom.pipeline.server.stepping.SteppingController;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.stepping.RecordDetector;
+import stroom.pipeline.stepping.SteppingController;
 
 import java.io.FilterReader;
 import java.io.IOException;

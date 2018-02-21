@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.server.sql;
+package stroom.statistics.sql;
 
 import java.io.Serializable;
 import java.util.Comparator;

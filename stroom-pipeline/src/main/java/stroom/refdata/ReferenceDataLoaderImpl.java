@@ -16,7 +16,7 @@
 
 package stroom.refdata;
 
-import stroom.task.server.TaskManager;
+import stroom.task.TaskManager;
 
 import javax.inject.Inject;
 

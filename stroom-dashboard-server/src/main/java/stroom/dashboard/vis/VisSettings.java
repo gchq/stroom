@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.vis;
+package stroom.dashboard.vis;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

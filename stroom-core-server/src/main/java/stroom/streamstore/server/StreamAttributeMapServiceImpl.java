@@ -15,28 +15,28 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.server.DictionaryStore;
-import stroom.entity.server.util.SqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.dictionary.DictionaryStore;
+import stroom.entity.util.SqlBuilder;
+import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.Sort.Direction;
 import stroom.feed.MetaMap;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Volume;
-import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.policy.server.DataRetentionService;
+import stroom.policy.DataRetentionService;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
+import stroom.streamstore.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -46,7 +46,7 @@ import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.streamtask.server.StreamProcessorService;
+import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.io.FileUtil;
 

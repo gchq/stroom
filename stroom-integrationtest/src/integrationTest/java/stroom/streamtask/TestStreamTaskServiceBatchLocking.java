@@ -15,11 +15,11 @@
  *
  */
 
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import org.junit.Test;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.node.server.NodeCache;
+import stroom.entity.util.StroomEntityManager;
+import stroom.node.NodeCache;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 

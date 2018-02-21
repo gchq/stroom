@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.xml.sax.ContentHandler;
-import stroom.pipeline.server.factory.Target;
+import stroom.pipeline.factory.Target;
 
 /**
  * Extension of content handler to provide interface for all XML filters.

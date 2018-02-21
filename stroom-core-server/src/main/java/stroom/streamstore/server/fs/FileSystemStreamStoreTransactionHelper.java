@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.util.StroomDatabaseInfo;
+import stroom.entity.util.StroomEntityManager;
 
 import javax.inject.Inject;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -24,11 +24,11 @@ import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.connectors.kafka.StroomKafkaRecordMetaData;
 import stroom.pipeline.destination.Destination;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.PipelineFactoryException;
-import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.factory.PipelineFactoryException;
+import stroom.pipeline.factory.PipelineProperty;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 

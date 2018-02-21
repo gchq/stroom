@@ -4,7 +4,7 @@ import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.entity.server.util.XMLMarshallerUtil;
+import stroom.entity.util.XMLMarshallerUtil;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.Range;
 import stroom.query.api.v2.DocRef;

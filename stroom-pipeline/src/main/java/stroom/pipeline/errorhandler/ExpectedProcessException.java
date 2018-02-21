@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.errorhandler;
+package stroom.pipeline.errorhandler;
 
 public class ExpectedProcessException extends ProcessException {
     private static final long serialVersionUID = -7360011976020716290L;

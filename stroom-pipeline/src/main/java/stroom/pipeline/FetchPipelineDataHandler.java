@@ -15,10 +15,10 @@
  *
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
-import stroom.pipeline.server.factory.PipelineDataValidator;
-import stroom.pipeline.server.factory.PipelineStackLoader;
+import stroom.pipeline.factory.PipelineDataValidator;
+import stroom.pipeline.factory.PipelineStackLoader;
 import stroom.pipeline.shared.FetchPipelineDataAction;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineEntity;
@@ -27,8 +27,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedList;
 
 import javax.inject.Inject;

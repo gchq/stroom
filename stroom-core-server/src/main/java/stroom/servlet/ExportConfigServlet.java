@@ -18,9 +18,9 @@ package stroom.servlet;
 
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.importexport.server.ImportExportService;
+import stroom.importexport.ImportExportService;
 import stroom.properties.StroomPropertyService;
-import stroom.resource.server.ResourceStore;
+import stroom.resource.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
 

@@ -19,8 +19,8 @@ package stroom.search;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.index.server.IndexShardManager;
-import stroom.streamstore.server.tools.StoreCreationTool;
+import stroom.index.IndexShardManager;
+import stroom.streamstore.tools.StoreCreationTool;
 import stroom.test.CommonTranslationTest;
 import stroom.util.spring.StroomSpringProfiles;
 

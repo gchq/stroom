@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
-import stroom.entity.server.util.EntityServiceExceptionUtil;
+import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.logging.StreamEventLog;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.Stream;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
-import stroom.task.server.TaskManager;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
+import stroom.task.TaskManager;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 

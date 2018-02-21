@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.task;
+package stroom.pipeline.task;
 
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.tools.StoreCreationTool;
-import stroom.task.server.TaskManager;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.tools.StoreCreationTool;
+import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;

@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.AbstractElement;
-import stroom.pipeline.server.factory.Element;
-import stroom.pipeline.server.factory.HasTargets;
-import stroom.pipeline.server.factory.Processor;
-import stroom.pipeline.server.factory.TakesInput;
-import stroom.pipeline.server.factory.TakesReader;
-import stroom.pipeline.server.factory.Target;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.factory.AbstractElement;
+import stroom.pipeline.factory.Element;
+import stroom.pipeline.factory.HasTargets;
+import stroom.pipeline.factory.Processor;
+import stroom.pipeline.factory.TakesInput;
+import stroom.pipeline.factory.TakesReader;
+import stroom.pipeline.factory.Target;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;

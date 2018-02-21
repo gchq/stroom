@@ -18,8 +18,8 @@ package stroom.resource;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.resource.server.ResourceStore;
-import stroom.resource.server.ResourceStoreImpl;
+import stroom.resource.ResourceStore;
+import stroom.resource.ResourceStoreImpl;
 
 @Configuration
 public class ResourceSpringConfig {

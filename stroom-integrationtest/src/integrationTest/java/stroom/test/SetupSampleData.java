@@ -17,7 +17,7 @@
 package stroom.test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.security.server.SecuritySpringConfig;
+import stroom.security.SecuritySpringConfig;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskScopeContextHolder;
@@ -29,7 +29,7 @@ public final class SetupSampleData {
     public static void main(final String[] args) throws Exception {
         FileUtil.useDevTempDir();
         System.setProperty("stroom.connectionTesterClassName",
-                "stroom.entity.server.util.StroomConnectionTesterOkOnException");
+                "stroom.entity.util.StroomConnectionTesterOkOnException");
 
         TaskScopeContextHolder.addContext();
         try {

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
-import stroom.pipeline.server.stepping.SteppingTask;
+import stroom.pipeline.stepping.SteppingTask;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.SteppingResult;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
-import stroom.task.server.TaskManager;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
+import stroom.task.TaskManager;
 
 import javax.inject.Inject;
 

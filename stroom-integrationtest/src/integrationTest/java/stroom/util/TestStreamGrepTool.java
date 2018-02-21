@@ -18,8 +18,8 @@ package stroom.util;
 
 import org.junit.Test;
 import stroom.feed.shared.Feed;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;

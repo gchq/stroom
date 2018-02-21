@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import stroom.io.EncodingWriter;
 import stroom.io.MultiOutputStream;
@@ -22,14 +22,14 @@ import stroom.io.NullOutputStream;
 import stroom.io.OutputStreamWrapper;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.HasTargets;
-import stroom.pipeline.server.factory.PipelineFactoryException;
-import stroom.pipeline.server.factory.Target;
-import stroom.pipeline.server.filter.AbstractXMLFilter;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.factory.HasTargets;
+import stroom.pipeline.factory.PipelineFactoryException;
+import stroom.pipeline.factory.Target;
+import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
@@ -185,7 +185,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
     /**
      * Called by the pipeline when processing of a file is complete.
      *
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endProcessing()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endProcessing()
      */
     @Override
     public void endProcessing() {

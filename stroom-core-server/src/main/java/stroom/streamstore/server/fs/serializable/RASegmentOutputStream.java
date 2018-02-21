@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs.serializable;
+package stroom.streamstore.fs.serializable;
 
-import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.StreamTarget;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.CloseableUtil;
 

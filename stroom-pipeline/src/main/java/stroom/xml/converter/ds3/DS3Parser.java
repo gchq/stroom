@@ -22,7 +22,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.util.CharBuffer;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;

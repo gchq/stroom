@@ -8,11 +8,11 @@ import org.xml.sax.SAXException;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.server.filter.AbstractSamplingFilter;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.filter.AbstractSamplingFilter;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 

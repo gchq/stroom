@@ -20,10 +20,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.jobsystem.server.ScheduledTaskExecutor;
+import stroom.entity.util.StroomEntityManager;
+import stroom.jobsystem.ScheduledTaskExecutor;
 import stroom.security.SecurityContext;
-import stroom.task.server.TaskManager;
+import stroom.task.TaskManager;
 import stroom.util.spring.StroomBeanLifeCycle;
 import stroom.util.spring.StroomScope;
 

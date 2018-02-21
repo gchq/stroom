@@ -15,17 +15,17 @@
  *
  */
 
-package stroom.pipeline.server.util;
+package stroom.pipeline.util;
 
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.factory.Processor;
-import stroom.pipeline.server.factory.ProcessorFactory;
-import stroom.pipeline.server.factory.SimpleProcessorFactory;
-import stroom.pipeline.server.factory.Target;
-import stroom.pipeline.server.filter.XMLFilter;
-import stroom.pipeline.server.parser.AbstractParser;
-import stroom.pipeline.server.parser.XMLParser;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.factory.Processor;
+import stroom.pipeline.factory.ProcessorFactory;
+import stroom.pipeline.factory.SimpleProcessorFactory;
+import stroom.pipeline.factory.Target;
+import stroom.pipeline.filter.XMLFilter;
+import stroom.pipeline.parser.AbstractParser;
+import stroom.pipeline.parser.XMLParser;
 
 import java.io.InputStream;
 import java.util.List;

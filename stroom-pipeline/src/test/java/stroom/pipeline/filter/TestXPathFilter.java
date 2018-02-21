@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;

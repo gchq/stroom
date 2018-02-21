@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import stroom.pipeline.destination.DestinationProvider;
-import stroom.pipeline.server.factory.AbstractElement;
-import stroom.pipeline.server.factory.Processor;
+import stroom.pipeline.factory.AbstractElement;
+import stroom.pipeline.factory.Processor;
 
 import java.util.Collections;
 import java.util.List;

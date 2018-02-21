@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.datafeed.server;
+package stroom.datafeed;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,14 +23,14 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ProcessTestServerComponentScanConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerConfiguration;
-import stroom.streamstore.server.MockStreamStore;
+import stroom.streamstore.MockStreamStore;
 import stroom.test.StroomIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;

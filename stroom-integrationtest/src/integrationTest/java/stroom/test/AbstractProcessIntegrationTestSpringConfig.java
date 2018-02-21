@@ -18,7 +18,7 @@ package stroom.test;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import stroom.cluster.server.ClusterSpringConfig;
+import stroom.cluster.ClusterSpringConfig;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.spring.MetaDataStatisticConfiguration;
 import stroom.spring.PersistenceConfiguration;

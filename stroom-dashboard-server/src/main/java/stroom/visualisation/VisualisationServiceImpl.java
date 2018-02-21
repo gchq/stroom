@@ -15,16 +15,16 @@
  *
  */
 
-package stroom.visualisation.server;
+package stroom.visualisation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.DocumentEntityServiceImpl;
-import stroom.entity.server.ObjectMarshaller;
-import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.importexport.server.ImportExportHelper;
+import stroom.entity.DocumentEntityServiceImpl;
+import stroom.entity.ObjectMarshaller;
+import stroom.entity.QueryAppender;
+import stroom.entity.util.StroomEntityManager;
+import stroom.importexport.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.visualisation.shared.FindVisualisationCriteria;

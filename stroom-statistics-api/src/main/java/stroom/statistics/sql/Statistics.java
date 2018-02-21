@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.server.sql;
+package stroom.statistics.sql;
 
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.statistics.shared.StatisticStore;

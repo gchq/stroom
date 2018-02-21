@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
-import stroom.pipeline.server.errorhandler.ExpectedProcessException;
+import stroom.pipeline.errorhandler.ExpectedProcessException;
 
 public class ExitSteppingException extends ExpectedProcessException {
     private static final long serialVersionUID = -4291139272314171562L;

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.record;
+package stroom.pipeline.record;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.filter.XMLFilterAdaptor;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.filter.XMLFilterAdaptor;
 import stroom.util.io.ByteSlice;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;

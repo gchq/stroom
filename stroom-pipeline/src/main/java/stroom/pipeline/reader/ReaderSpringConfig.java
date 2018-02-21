@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.util.spring.StroomScope;
 
 @Configuration

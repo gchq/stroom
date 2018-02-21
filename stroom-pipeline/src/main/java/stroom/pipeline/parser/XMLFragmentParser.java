@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.parser;
+package stroom.pipeline.parser;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.cache.server.ParserFactoryPool;
-import stroom.cache.server.StoredParserFactory;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.SupportsCodeInjection;
-import stroom.pipeline.server.TextConverterService;
-import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.server.factory.PipelinePropertyDocRef;
+import stroom.cache.ParserFactoryPool;
+import stroom.cache.StoredParserFactory;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.SupportsCodeInjection;
+import stroom.pipeline.TextConverterService;
+import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;

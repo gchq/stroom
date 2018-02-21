@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.task;
+package stroom.pipeline.task;
 
 import org.junit.Test;
 import org.slf4j.Logger;

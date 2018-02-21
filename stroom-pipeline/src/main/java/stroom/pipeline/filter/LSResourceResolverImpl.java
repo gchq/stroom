@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
-import stroom.xmlschema.server.XMLSchemaCache;
-import stroom.xmlschema.server.XMLSchemaCache.SchemaSet;
+import stroom.xmlschema.XMLSchemaCache;
+import stroom.xmlschema.XMLSchemaCache.SchemaSet;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 

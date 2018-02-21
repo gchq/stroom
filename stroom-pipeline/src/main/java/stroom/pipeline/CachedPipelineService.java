@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.CachingEntityManager;
-import stroom.importexport.server.ImportExportHelper;
+import stroom.entity.CachingEntityManager;
+import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;

@@ -15,12 +15,12 @@
  *
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindDashboardCriteria;
-import stroom.entity.server.DocumentEntityService;
-import stroom.entity.server.FindService;
+import stroom.entity.DocumentEntityService;
+import stroom.entity.FindService;
 
 public interface DashboardService
         extends DocumentEntityService<Dashboard>, FindService<Dashboard, FindDashboardCriteria> {

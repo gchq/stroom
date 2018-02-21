@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
 public abstract class AbstractElement implements Element {
     private Terminator terminator = Terminator.DEFAULT;

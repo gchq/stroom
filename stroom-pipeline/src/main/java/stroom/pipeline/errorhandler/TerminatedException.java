@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.errorhandler;
+package stroom.pipeline.errorhandler;
 
 public class TerminatedException extends ExpectedProcessException {
     private static final long serialVersionUID = 1077524777133763043L;

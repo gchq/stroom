@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.tools;
+package stroom.streamstore.tools;
 
 import org.junit.Assert;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
-import stroom.index.server.IndexService;
+import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
-import stroom.pipeline.server.PipelineService;
-import stroom.pipeline.server.PipelineTestUtil;
-import stroom.pipeline.server.TextConverterService;
-import stroom.pipeline.server.XSLTService;
-import stroom.pipeline.server.parser.CombinedParser;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineTestUtil;
+import stroom.pipeline.TextConverterService;
+import stroom.pipeline.XSLTService;
+import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.FindXSLTCriteria;
@@ -45,17 +45,17 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.server.StreamSource;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
+import stroom.streamstore.StreamSource;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
+import stroom.streamstore.fs.serializable.RASegmentOutputStream;
+import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.StreamProcessorFilterService;
-import stroom.streamtask.server.StreamProcessorService;
+import stroom.streamtask.StreamProcessorFilterService;
+import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.test.CommonTestControl;

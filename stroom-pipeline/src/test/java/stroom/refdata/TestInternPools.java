@@ -18,7 +18,7 @@ package stroom.refdata;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.pipeline.server.filter.EventListInternPool;
+import stroom.pipeline.filter.EventListInternPool;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.thread.ThreadUtil;
 import stroom.xml.event.EventList;

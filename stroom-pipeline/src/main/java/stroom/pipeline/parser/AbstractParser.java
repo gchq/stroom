@@ -14,31 +14,31 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.parser;
+package stroom.pipeline.parser;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.ErrorStatistics;
-import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.pipeline.server.factory.AbstractElement;
-import stroom.pipeline.server.factory.HasTargets;
-import stroom.pipeline.server.factory.Processor;
-import stroom.pipeline.server.factory.TakesInput;
-import stroom.pipeline.server.factory.TakesReader;
-import stroom.pipeline.server.factory.Target;
-import stroom.pipeline.server.factory.Terminator;
-import stroom.pipeline.server.filter.ExitSteppingException;
-import stroom.pipeline.server.filter.NullXMLFilter;
-import stroom.pipeline.server.filter.XMLFilter;
-import stroom.pipeline.server.filter.XMLFilterForkFactory;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.ErrorStatistics;
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.TerminatedException;
+import stroom.pipeline.factory.AbstractElement;
+import stroom.pipeline.factory.HasTargets;
+import stroom.pipeline.factory.Processor;
+import stroom.pipeline.factory.TakesInput;
+import stroom.pipeline.factory.TakesReader;
+import stroom.pipeline.factory.Target;
+import stroom.pipeline.factory.Terminator;
+import stroom.pipeline.filter.ExitSteppingException;
+import stroom.pipeline.filter.NullXMLFilter;
+import stroom.pipeline.filter.XMLFilter;
+import stroom.pipeline.filter.XMLFilterForkFactory;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 

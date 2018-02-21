@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.visualisation.server;
+package stroom.visualisation;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.explorer.server.ExplorerActionHandlers;
-import stroom.importexport.server.ImportExportActionHandlers;
-import stroom.importexport.server.ImportExportHelper;
+import stroom.entity.util.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandlers;
+import stroom.importexport.ImportExportActionHandlers;
+import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.visualisation.server.VisualisationService;
-import stroom.visualisation.server.VisualisationServiceImpl;
+import stroom.visualisation.VisualisationService;
+import stroom.visualisation.VisualisationServiceImpl;
 import stroom.visualisation.shared.Visualisation;
 
 import javax.inject.Inject;

@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.feed.server;
+package stroom.feed;
 
 import org.junit.Assert;
 import org.junit.Test;

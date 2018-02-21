@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.format;
+package stroom.dashboard.format;
 
 import stroom.dashboard.expression.v1.TypeConverter;
 import stroom.dashboard.shared.DateTimeFormatSettings;

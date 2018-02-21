@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import stroom.query.api.v2.DocRef;
 import stroom.util.shared.VoidResult;

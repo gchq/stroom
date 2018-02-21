@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.Stream;

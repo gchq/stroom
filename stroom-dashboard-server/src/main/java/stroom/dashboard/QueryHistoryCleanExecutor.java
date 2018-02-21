@@ -15,11 +15,11 @@
  *
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.util.shared.Task;
 import stroom.util.spring.StroomSimpleCronSchedule;

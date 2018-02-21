@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
-import stroom.policy.server.DataRetentionStreamFinder;
-import stroom.streamstore.server.StreamMaintenanceService;
-import stroom.streamstore.server.StreamStore;
+import stroom.policy.DataRetentionStreamFinder;
+import stroom.streamstore.StreamMaintenanceService;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;

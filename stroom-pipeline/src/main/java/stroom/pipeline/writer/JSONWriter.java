@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -22,11 +22,11 @@ import com.fasterxml.jackson.core.io.SerializedString;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.io.IgnoreCloseWriter;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -93,7 +93,7 @@ public class JSONWriter extends AbstractWriter {
     /**
      * Called by the pipeline when processing of a file is complete.
      *
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endProcessing()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endProcessing()
      */
     @Override
     public void endProcessing() {
@@ -124,7 +124,7 @@ public class JSONWriter extends AbstractWriter {
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startElement(java.lang.String,
      * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
@@ -177,7 +177,7 @@ public class JSONWriter extends AbstractWriter {
      * @param qName     the qualified XML name (with prefix), or the empty string if
      *                  qualified names are not available
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endElement(java.lang.String,
      * java.lang.String, java.lang.String)
      */
     @Override
@@ -274,7 +274,7 @@ public class JSONWriter extends AbstractWriter {
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #ignorableWhitespace
      * @see org.xml.sax.Locator
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
      * int, int)
      */
     @Override

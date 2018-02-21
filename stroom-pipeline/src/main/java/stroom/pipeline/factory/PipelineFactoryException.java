@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
 public class PipelineFactoryException extends RuntimeException {
     private static final long serialVersionUID = 7205183559602784143L;

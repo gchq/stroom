@@ -17,12 +17,12 @@
 package stroom.search;
 
 import org.junit.Assert;
-import stroom.index.server.IndexShardManager;
+import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.pipeline.server.task.PipelineStreamProcessor;
+import stroom.pipeline.task.PipelineStreamProcessor;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamstore.server.tools.StoreCreationTool;
-import stroom.streamtask.server.StreamProcessorTaskExecutor;
+import stroom.streamstore.tools.StoreCreationTool;
+import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.CommonTranslationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;

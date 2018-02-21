@@ -15,10 +15,10 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
-import stroom.entity.server.FindDeleteService;
-import stroom.entity.server.FindService;
+import stroom.entity.FindDeleteService;
+import stroom.entity.FindService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.streamstore.shared.FindStreamCriteria;

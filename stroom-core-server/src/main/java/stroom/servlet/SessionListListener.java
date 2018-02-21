@@ -25,7 +25,7 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.StroomHeaderArguments;
 import stroom.security.UserTokenUtil;
-import stroom.task.server.TaskManager;
+import stroom.task.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.spring.StroomBeanStore;
@@ -124,7 +124,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
         for (final HttpSession httpSession : sessionMap.values()) {
             final SessionDetails sessionDetails = new SessionDetails();
 
-            final Object user = httpSession.getAttribute("stroom.security.server.AuthenticationServiceImpl_UID");
+            final Object user = httpSession.getAttribute("stroom.security.AuthenticationServiceImpl_UID");
             if (user != null) {
                 sessionDetails.setUserName(user.toString());
             }

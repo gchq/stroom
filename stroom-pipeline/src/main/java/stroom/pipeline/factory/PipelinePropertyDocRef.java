@@ -1,4 +1,4 @@
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.feed.server;
+package stroom.feed;
 
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
-import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.shared.StreamType;

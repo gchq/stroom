@@ -19,9 +19,9 @@ package stroom.dashboard;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.dashboard.server.MockQueryService;
-import stroom.dashboard.server.MockVisualisationService;
-import stroom.importexport.server.ImportExportHelper;
+import stroom.dashboard.MockQueryService;
+import stroom.dashboard.MockVisualisationService;
+import stroom.importexport.ImportExportHelper;
 import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration

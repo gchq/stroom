@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.parser;
+package stroom.pipeline.parser;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.ConfigurableElement;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;

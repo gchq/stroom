@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.task;
+package stroom.pipeline.task;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.io.StreamCloser;
-import stroom.node.server.NodeCache;
-import stroom.pipeline.server.ErrorWriterProxy;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.PipelineService;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.RecordErrorReceiver;
-import stroom.pipeline.server.factory.PipelineDataCache;
-import stroom.pipeline.server.factory.PipelineFactory;
+import stroom.node.NodeCache;
+import stroom.pipeline.ErrorWriterProxy;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.RecordErrorReceiver;
+import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.PipelineHolder;
@@ -37,7 +37,7 @@ import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.StreamStore;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 

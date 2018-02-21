@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,13 +28,13 @@ import stroom.dashboard.shared.QueryEntity;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.entity.server.AutoMarshal;
-import stroom.entity.server.DocumentEntityServiceImpl;
-import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.SqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.AutoMarshal;
+import stroom.entity.DocumentEntityServiceImpl;
+import stroom.entity.QueryAppender;
+import stroom.entity.util.SqlBuilder;
+import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.DocRefUtil;
-import stroom.importexport.server.ImportExportHelper;
+import stroom.importexport.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import stroom.util.io.FileUtil;
 import stroom.util.io.WrappedOutputStream;

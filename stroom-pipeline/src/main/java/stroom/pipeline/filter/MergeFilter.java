@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
 
@@ -55,7 +55,7 @@ public class MergeFilter extends AbstractXMLFilter {
     /**
      * Called by the pipeline when processing of a file is complete.
      *
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endProcessing()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endProcessing()
      */
     @Override
     public void endProcessing() {
@@ -84,7 +84,7 @@ public class MergeFilter extends AbstractXMLFilter {
 
     /**
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startDocument()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startDocument()
      */
     @Override
     public void startDocument() throws SAXException {
@@ -97,7 +97,7 @@ public class MergeFilter extends AbstractXMLFilter {
 
     /**
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endDocument()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endDocument()
      */
     @Override
     public void endDocument() throws SAXException {
@@ -149,7 +149,7 @@ public class MergeFilter extends AbstractXMLFilter {
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startElement(java.lang.String,
      * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
@@ -174,7 +174,7 @@ public class MergeFilter extends AbstractXMLFilter {
      * @param qName     the qualified XML name (with prefix), or the empty string if
      *                  qualified names are not available
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endElement(java.lang.String,
      * java.lang.String, java.lang.String)
      */
     @Override
@@ -192,7 +192,7 @@ public class MergeFilter extends AbstractXMLFilter {
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #ignorableWhitespace
      * @see org.xml.sax.Locator
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
      * int, int)
      */
     @Override
@@ -208,7 +208,7 @@ public class MergeFilter extends AbstractXMLFilter {
      * @param length the number of characters to read from the array
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #characters
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#ignorableWhitespace(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#ignorableWhitespace(char[],
      * int, int)
      */
     @Override

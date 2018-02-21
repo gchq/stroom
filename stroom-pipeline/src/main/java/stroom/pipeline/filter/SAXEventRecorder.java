@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.xpath.XPathEvaluator;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.stepping.Recorder;
-import stroom.pipeline.server.stepping.SteppingFilter;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.stepping.Recorder;
+import stroom.pipeline.stepping.SteppingFilter;
 import stroom.pipeline.shared.Record;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.XPathFilter;

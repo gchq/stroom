@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.w3c.dom.ls.LSInput;
 import stroom.util.io.StreamUtil;

@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-import stroom.entity.server.util.XMLUtil;
+import stroom.entity.util.XMLUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;

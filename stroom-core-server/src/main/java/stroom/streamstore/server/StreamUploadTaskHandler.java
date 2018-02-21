@@ -15,26 +15,26 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.EntityServiceExceptionUtil;
+import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.streamstore.server.fs.serializable.NestedStreamTarget;
+import stroom.streamstore.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.StreamTargetStroomStreamHandler;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.streamtask.StreamTargetStroomStreamHandler;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamProgressMonitor;

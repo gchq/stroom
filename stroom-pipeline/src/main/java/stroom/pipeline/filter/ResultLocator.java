@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
@@ -78,7 +78,7 @@ public class ResultLocator extends AbstractXMLFilter implements Locator {
      * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @param atts      The element's attributes.
      * @throws org.xml.sax.SAXException The client may throw an exception during processing.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startElement(java.lang.String,
      * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
@@ -136,7 +136,7 @@ public class ResultLocator extends AbstractXMLFilter implements Locator {
      * @param start  Start of char buffer.
      * @param length Number of chars to send.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
      * int, int)
      */
     @Override

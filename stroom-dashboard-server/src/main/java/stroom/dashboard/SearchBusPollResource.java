@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.SearchBusPollAction;

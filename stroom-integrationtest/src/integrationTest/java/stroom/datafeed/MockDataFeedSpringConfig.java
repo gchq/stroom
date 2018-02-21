@@ -18,8 +18,8 @@ package stroom.datafeed;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.datafeed.server.MockHttpServletRequest;
-import stroom.datafeed.server.MockHttpServletResponse;
+import stroom.datafeed.MockHttpServletRequest;
+import stroom.datafeed.MockHttpServletResponse;
 
 @Configuration
 public class MockDataFeedSpringConfig {

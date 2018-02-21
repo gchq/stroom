@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.util.FieldMap;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.SystemEntityServiceImpl;
+import stroom.entity.util.FieldMap;
+import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.security.Insecure;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;

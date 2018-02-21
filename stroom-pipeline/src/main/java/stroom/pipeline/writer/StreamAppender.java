@@ -15,17 +15,17 @@
  *
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import stroom.feed.MetaMap;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.server.factory.PipelinePropertyDocRef;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -33,10 +33,10 @@ import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.query.api.v2.DocRef;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.server.StreamTypeService;
-import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
+import stroom.streamstore.StreamTypeService;
+import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.WrappedOutputStream;

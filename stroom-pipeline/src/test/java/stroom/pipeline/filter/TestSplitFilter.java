@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.server.util.ProcessorUtil;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.util.ProcessorUtil;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;

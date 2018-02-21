@@ -17,7 +17,7 @@
 package stroom.refdata;
 
 import stroom.entity.shared.Range;
-import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.refdata.MapStoreImpl.RangeStore;
 import stroom.refdata.MapStoreImpl.RangeStoreComparator;
 import stroom.xml.event.EventList;

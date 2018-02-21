@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.xmlschema.server;
+package stroom.xmlschema;
 
 import org.junit.Assert;
 import org.junit.Test;

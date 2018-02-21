@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
-import stroom.entity.server.event.EntityEvent;
-import stroom.entity.server.event.EntityEventHandler;
+import stroom.entity.event.EntityEvent;
+import stroom.entity.event.EntityEventHandler;
 import stroom.pool.AbstractPoolCache;
 import stroom.pool.PoolItem;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.util.cache.CacheManager;
-import stroom.xmlschema.server.XMLSchemaCache;
+import stroom.xmlschema.XMLSchemaCache;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;

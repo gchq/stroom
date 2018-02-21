@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import stroom.entity.shared.DataSourceFields;
 import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 
 @TaskHandlerBean(task = FetchFieldsAction.class)
 class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, DataSourceFields> {

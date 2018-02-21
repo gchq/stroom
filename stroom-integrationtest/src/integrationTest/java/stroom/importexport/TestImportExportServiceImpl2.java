@@ -15,14 +15,14 @@
  *
  */
 
-package stroom.importexport.server;
+package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.importexport.shared.ImportState;
-import stroom.feed.server.FeedService;
-import stroom.pipeline.server.PipelineService;
-import stroom.resource.server.ResourceStore;
+import stroom.feed.FeedService;
+import stroom.pipeline.PipelineService;
+import stroom.resource.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.zip.ZipUtil;

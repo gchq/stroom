@@ -20,12 +20,12 @@ package stroom.test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.feed.server.FeedService;
-import stroom.importexport.server.ImportExportSerializer;
-import stroom.node.server.NodeCache;
+import stroom.feed.FeedService;
+import stroom.importexport.ImportExportSerializer;
+import stroom.node.NodeCache;
 import stroom.proxy.repo.ProxyRepositoryCreator;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.streamstore.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
 

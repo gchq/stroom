@@ -18,8 +18,8 @@ package stroom.entity;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.entity.server.EntityServiceImplTestTransactionHelper;
-import stroom.feed.server.FeedService;
+import stroom.entity.EntityServiceImplTestTransactionHelper;
+import stroom.feed.FeedService;
 
 import javax.inject.Named;
 

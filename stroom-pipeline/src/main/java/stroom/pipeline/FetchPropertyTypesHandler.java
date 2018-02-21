@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
-import stroom.pipeline.server.factory.ElementRegistryFactory;
+import stroom.pipeline.factory.ElementRegistryFactory;
 import stroom.pipeline.shared.FetchPropertyTypesAction;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 

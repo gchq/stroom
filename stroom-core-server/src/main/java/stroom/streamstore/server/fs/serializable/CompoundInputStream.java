@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs.serializable;
+package stroom.streamstore.fs.serializable;
 
-import stroom.streamstore.server.StreamSource;
+import stroom.streamstore.StreamSource;
 import stroom.streamstore.shared.StreamType;
 
 import java.io.IOException;

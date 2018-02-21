@@ -26,10 +26,10 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
 import stroom.entity.shared.NamedEntity;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamstore.server.StreamTypeService;
+import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 
 import javax.inject.Inject;

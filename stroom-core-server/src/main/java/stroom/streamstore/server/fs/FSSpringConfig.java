@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.feed.server.FeedService;
-import stroom.node.server.NodeCache;
-import stroom.node.server.VolumeService;
-import stroom.pipeline.server.PipelineService;
+import stroom.entity.util.StroomDatabaseInfo;
+import stroom.entity.util.StroomEntityManager;
+import stroom.feed.FeedService;
+import stroom.node.NodeCache;
+import stroom.node.VolumeService;
+import stroom.pipeline.PipelineService;
 import stroom.security.SecurityContext;
-import stroom.streamstore.server.ExpressionToFindCriteria;
-import stroom.streamstore.server.StreamAttributeValueFlush;
-import stroom.streamstore.server.StreamMaintenanceService;
-import stroom.streamstore.server.StreamTypeService;
-import stroom.streamtask.server.StreamProcessorService;
-import stroom.task.server.TaskManager;
+import stroom.streamstore.ExpressionToFindCriteria;
+import stroom.streamstore.StreamAttributeValueFlush;
+import stroom.streamstore.StreamMaintenanceService;
+import stroom.streamstore.StreamTypeService;
+import stroom.streamtask.StreamProcessorService;
+import stroom.task.TaskManager;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 

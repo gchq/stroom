@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
-import stroom.entity.server.EntityMarshaller;
+import stroom.entity.EntityMarshaller;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 

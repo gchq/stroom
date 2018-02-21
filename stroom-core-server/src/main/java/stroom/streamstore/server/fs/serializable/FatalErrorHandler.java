@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs.serializable;
+package stroom.streamstore.fs.serializable;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;

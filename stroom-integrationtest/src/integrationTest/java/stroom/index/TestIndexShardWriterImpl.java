@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.index.server;
+package stroom.index;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;

@@ -15,18 +15,18 @@
  *
  */
 
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.streamstore.server.StreamMaintenanceService;
-import stroom.streamstore.server.StreamRetentionExecutor;
-import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.StreamMaintenanceService;
+import stroom.streamstore.StreamRetentionExecutor;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;

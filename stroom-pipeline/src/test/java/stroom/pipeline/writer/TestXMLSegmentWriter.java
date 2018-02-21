@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.server.filter.RecordCountFilter;
-import stroom.pipeline.server.util.ProcessorUtil;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.filter.RecordCountFilter;
+import stroom.pipeline.util.ProcessorUtil;
 import stroom.pipeline.state.RecordCount;
-import stroom.streamstore.server.fs.BlockGZIPInputFile;
-import stroom.streamstore.server.fs.BlockGZIPOutputFile;
-import stroom.streamstore.server.fs.UncompressedInputStream;
-import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
-import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.server.fs.serializable.SegmentInputStream;
+import stroom.streamstore.fs.BlockGZIPInputFile;
+import stroom.streamstore.fs.BlockGZIPOutputFile;
+import stroom.streamstore.fs.UncompressedInputStream;
+import stroom.streamstore.fs.serializable.RASegmentInputStream;
+import stroom.streamstore.fs.serializable.RASegmentOutputStream;
+import stroom.streamstore.fs.serializable.SegmentInputStream;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;

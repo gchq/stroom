@@ -15,14 +15,14 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.NamedEntityServiceImpl;
-import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.NamedEntityServiceImpl;
+import stroom.entity.QueryAppender;
+import stroom.entity.util.HqlBuilder;
+import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.security.Insecure;
 import stroom.streamstore.shared.FindStreamTypeCriteria;

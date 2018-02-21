@@ -15,28 +15,28 @@
  *
  */
 
-package stroom.pipeline.server.task;
+package stroom.pipeline.task;
 
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
-import stroom.node.server.NodeCache;
-import stroom.pipeline.server.XSLTService;
-import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.node.NodeCache;
+import stroom.pipeline.XSLTService;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.XSLT;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.tools.StoreCreationTool;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.StreamProcessorTask;
-import stroom.streamtask.server.StreamProcessorTaskExecutor;
-import stroom.streamtask.server.StreamTaskCreator;
+import stroom.streamtask.StreamProcessorTask;
+import stroom.streamtask.StreamProcessorTaskExecutor;
+import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
-import stroom.task.server.TaskManager;
-import stroom.task.server.TaskMonitorImpl;
+import stroom.task.TaskManager;
+import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StroomPipelineTestFileUtil;

@@ -18,7 +18,7 @@ package stroom.resource;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.pipeline.server.XSLTService;
+import stroom.pipeline.XSLTService;
 
 @Configuration
 public class ResourceSpringConfig {

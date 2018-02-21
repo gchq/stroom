@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.streamstore.server.ScanVolumePathResult;
-import stroom.streamstore.server.StreamMaintenanceService;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskCallbackAdaptor;
-import stroom.task.server.TaskHandlerBean;
+import stroom.streamstore.ScanVolumePathResult;
+import stroom.streamstore.StreamMaintenanceService;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskCallbackAdaptor;
+import stroom.task.TaskHandlerBean;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.TaskMonitor;

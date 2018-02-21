@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
-import stroom.jobsystem.server.MockTask;
-import stroom.streamstore.server.FindStreamVolumeCriteria;
-import stroom.streamstore.server.StreamMaintenanceService;
-import stroom.streamstore.server.StreamRange;
+import stroom.jobsystem.MockTask;
+import stroom.streamstore.FindStreamVolumeCriteria;
+import stroom.streamstore.StreamMaintenanceService;
+import stroom.streamstore.StreamRange;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;

@@ -15,11 +15,11 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
-import stroom.entity.server.BaseEntityService;
-import stroom.entity.server.FindDeleteService;
-import stroom.entity.server.FindService;
+import stroom.entity.BaseEntityService;
+import stroom.entity.FindDeleteService;
+import stroom.entity.FindService;
 import stroom.streamstore.shared.StreamAttributeValue;
 
 public interface StreamAttributeValueService

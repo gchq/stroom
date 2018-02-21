@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.explorer.server;
+package stroom.explorer;
 
 import org.junit.Test;
 import stroom.test.AbstractCoreIntegrationTest;

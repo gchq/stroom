@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.xsltfunctions;
+package stroom.pipeline.xsltfunctions;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.dictionary.server.DictionaryStore;
-import stroom.feed.server.FeedService;
+import stroom.dictionary.DictionaryStore;
+import stroom.feed.FeedService;
 import stroom.properties.StroomPropertyService;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;

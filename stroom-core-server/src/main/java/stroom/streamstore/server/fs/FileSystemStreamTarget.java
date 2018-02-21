@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.io.SeekableOutputStream;
-import stroom.streamstore.server.StreamException;
-import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.StreamException;
+import stroom.streamstore.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import stroom.pipeline.destination.Destination;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.streamstore.fs.serializable.SegmentOutputStream;
 import stroom.util.shared.Severity;
 
 import java.io.IOException;

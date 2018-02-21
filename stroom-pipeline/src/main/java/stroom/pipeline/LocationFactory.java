@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 import stroom.util.shared.Location;
 

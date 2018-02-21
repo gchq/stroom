@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import stroom.cache.CacheSpringConfig;
-import stroom.entity.server.DocumentPermissionCache;
+import stroom.entity.DocumentPermissionCache;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomBeanStore;
 import stroom.xml.converter.ds3.DS3ParserFactory;
-import stroom.xmlschema.server.XMLSchemaCache;
+import stroom.xmlschema.XMLSchemaCache;
 
 import javax.inject.Provider;
 import javax.xml.transform.URIResolver;

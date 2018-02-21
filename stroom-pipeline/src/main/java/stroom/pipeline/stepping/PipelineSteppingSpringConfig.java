@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.stepping;
+package stroom.pipeline.stepping;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.io.StreamCloser;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.PipelineService;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.factory.PipelineDataCache;
-import stroom.pipeline.server.factory.PipelineFactory;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.SecurityContext;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTypeService;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTypeService;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 

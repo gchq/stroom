@@ -19,9 +19,9 @@ package stroom.task.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
-import stroom.task.server.TaskManager;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
+import stroom.task.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
 

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pool.Pool;

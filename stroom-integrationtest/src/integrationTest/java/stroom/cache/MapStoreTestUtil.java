@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
 import org.xml.sax.SAXException;
 import stroom.refdata.MapStore;

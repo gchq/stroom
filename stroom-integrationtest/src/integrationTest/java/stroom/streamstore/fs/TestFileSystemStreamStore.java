@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamstore.server.fs;
+package stroom.streamstore.fs;
 
 import org.hibernate.LazyInitializationException;
 import org.junit.Assert;
@@ -25,22 +25,22 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.server.EffectiveMetaDataCriteria;
-import stroom.streamstore.server.FindStreamAttributeValueCriteria;
-import stroom.streamstore.server.FindStreamVolumeCriteria;
-import stroom.streamstore.server.StreamAttributeMapService;
-import stroom.streamstore.server.StreamAttributeValueFlush;
-import stroom.streamstore.server.StreamAttributeValueService;
-import stroom.streamstore.server.StreamException;
-import stroom.streamstore.server.StreamMaintenanceService;
-import stroom.streamstore.server.StreamSource;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.EffectiveMetaDataCriteria;
+import stroom.streamstore.FindStreamAttributeValueCriteria;
+import stroom.streamstore.FindStreamVolumeCriteria;
+import stroom.streamstore.StreamAttributeMapService;
+import stroom.streamstore.StreamAttributeValueFlush;
+import stroom.streamstore.StreamAttributeValueService;
+import stroom.streamstore.StreamException;
+import stroom.streamstore.StreamMaintenanceService;
+import stroom.streamstore.StreamSource;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -52,8 +52,8 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.streamtask.server.StreamTaskCreator;
-import stroom.task.server.TaskMonitorImpl;
+import stroom.streamtask.StreamTaskCreator;
+import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
@@ -61,7 +61,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
-import stroom.volume.server.VolumeServiceImpl;
+import stroom.volume.VolumeServiceImpl;
 
 import javax.annotation.Resource;
 import java.io.IOException;

@@ -15,13 +15,13 @@
  *
  */
 
-package stroom.node.server;
+package stroom.node;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
-import stroom.entity.server.util.BaseEntityUtil;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.util.BaseEntityUtil;
+import stroom.entity.util.StroomEntityManager;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;

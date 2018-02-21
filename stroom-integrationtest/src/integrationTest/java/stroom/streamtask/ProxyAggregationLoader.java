@@ -1,4 +1,4 @@
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import stroom.proxy.repo.StroomZipFile;
 import stroom.util.io.FileUtil;

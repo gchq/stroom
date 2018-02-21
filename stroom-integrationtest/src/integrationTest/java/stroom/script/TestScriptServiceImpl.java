@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.script.server;
+package stroom.script;
 
 import org.junit.Assert;
 import org.junit.Test;

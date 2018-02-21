@@ -15,17 +15,17 @@
  *
  */
 
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.MetaMap;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.streamstore.server.MockStreamStore;
-import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.MockStreamStore;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.feed.StroomHeaderArguments;

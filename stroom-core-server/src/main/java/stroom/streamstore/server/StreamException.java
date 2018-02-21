@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 /**
  * Unchecked error in the stream store.

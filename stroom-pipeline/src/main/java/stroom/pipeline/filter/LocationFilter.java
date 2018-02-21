@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
@@ -49,7 +49,7 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
      * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @param atts      The element's attributes.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startElement(java.lang.String,
      * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
@@ -67,7 +67,7 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
      * @param localName The element's local name, or the empty string.
      * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endElement(java.lang.String,
      * java.lang.String, java.lang.String)
      */
     @Override
@@ -84,7 +84,7 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
      * @param start  the start position in the array
      * @param length the number of characters to read from the array
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
      * int, int)
      */
     @Override

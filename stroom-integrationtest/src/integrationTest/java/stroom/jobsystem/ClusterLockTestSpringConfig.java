@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.server;
+package stroom.jobsystem;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

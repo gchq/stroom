@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
-import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
+import stroom.streamstore.fs.serializable.RASegmentOutputStream;
+import stroom.streamstore.fs.serializable.SegmentOutputStream;
 import stroom.util.io.WrappedOutputStream;
 
 import java.io.IOException;

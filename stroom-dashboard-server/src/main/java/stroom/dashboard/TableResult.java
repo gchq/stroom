@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import stroom.query.api.v2.Row;
 import stroom.util.shared.EqualsBuilder;

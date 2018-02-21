@@ -15,23 +15,23 @@
  *
  */
 
-package stroom.search.server;
+package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.server.DashboardService;
-import stroom.dashboard.server.QueryHistoryCleanExecutor;
-import stroom.dashboard.server.QueryService;
+import stroom.dashboard.DashboardService;
+import stroom.dashboard.QueryHistoryCleanExecutor;
+import stroom.dashboard.QueryService;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.entity.server.util.BaseEntityDeProxyProcessor;
+import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Sort.Direction;
-import stroom.index.server.IndexService;
+import stroom.index.IndexService;
 import stroom.index.shared.Index;
 import stroom.query.api.v2.DocRef;
 
@@ -39,7 +39,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
-import stroom.security.server.UserService;
+import stroom.security.UserService;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 

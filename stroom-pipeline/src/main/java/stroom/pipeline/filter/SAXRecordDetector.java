@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.stepping.RecordDetector;
-import stroom.pipeline.server.stepping.SteppingController;
+import stroom.pipeline.stepping.RecordDetector;
+import stroom.pipeline.stepping.SteppingController;
 
 public class SAXRecordDetector extends AbstractXMLFilter implements RecordDetector {
     private SteppingController controller;

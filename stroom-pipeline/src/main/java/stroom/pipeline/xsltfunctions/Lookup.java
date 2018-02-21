@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.xsltfunctions;
+package stroom.pipeline.xsltfunctions;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Sequence;

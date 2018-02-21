@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.download;
+package stroom.dashboard.download;
 
-import stroom.dashboard.server.format.FieldFormatter;
+import stroom.dashboard.format.FieldFormatter;
 import stroom.dashboard.shared.Field;
 
 import java.io.BufferedWriter;

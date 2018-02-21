@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;

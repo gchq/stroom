@@ -19,10 +19,10 @@ package stroom.spring;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import stroom.explorer.server.ExplorerActionHandlers;
-import stroom.feed.server.FeedService;
+import stroom.explorer.ExplorerActionHandlers;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.importexport.server.ImportExportActionHandlers;
+import stroom.importexport.ImportExportActionHandlers;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;

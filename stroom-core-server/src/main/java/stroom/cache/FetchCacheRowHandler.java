@@ -21,8 +21,8 @@ import stroom.cache.shared.FetchCacheRowAction;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.security.Secured;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;

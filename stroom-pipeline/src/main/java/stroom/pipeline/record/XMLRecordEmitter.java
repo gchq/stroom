@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.record;
+package stroom.pipeline.record;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.entity.server.util.TransformerFactoryFactory;
-import stroom.entity.server.util.XMLUtil;
+import stroom.entity.util.TransformerFactoryFactory;
+import stroom.entity.util.XMLUtil;
 import stroom.pipeline.destination.DestinationProvider;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.factory.HasElementId;
-import stroom.pipeline.server.filter.XMLFilterAdaptor;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.factory.HasElementId;
+import stroom.pipeline.filter.XMLFilterAdaptor;
 import stroom.util.io.ByteSlice;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;

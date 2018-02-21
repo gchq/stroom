@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
@@ -22,13 +22,13 @@ import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.DocumentPermissionCache;
-import stroom.pipeline.server.DefaultLocationFactory;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
-import stroom.pipeline.server.xsltfunctions.StroomXSLTFunctionLibrary;
+import stroom.entity.DocumentPermissionCache;
+import stroom.pipeline.DefaultLocationFactory;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.xsltfunctions.StroomXSLTFunctionLibrary;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pool.AbstractEntityPool;

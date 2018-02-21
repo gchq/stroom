@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.ErrorStatistics;
-import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.task.server.TaskCallback;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorStatistics;
+import stroom.pipeline.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.task.TaskCallback;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 

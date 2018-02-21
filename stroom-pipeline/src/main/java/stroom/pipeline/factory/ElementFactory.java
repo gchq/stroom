@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
 public interface ElementFactory {
     <T extends Element> T getElementInstance(Class<T> elementClass);

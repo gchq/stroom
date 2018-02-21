@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.apache.commons.lang.StringUtils;
 import org.xml.sax.Attributes;
@@ -22,20 +22,20 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-import stroom.cache.server.SchemaKey;
-import stroom.cache.server.SchemaPool;
-import stroom.cache.server.StoredSchema;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggedException;
+import stroom.cache.SchemaKey;
+import stroom.cache.SchemaPool;
+import stroom.cache.StoredSchema;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.xmlschema.server.XMLSchemaCache;
-import stroom.xmlschema.server.XMLSchemaCache.SchemaSet;
+import stroom.xmlschema.XMLSchemaCache;
+import stroom.xmlschema.XMLSchemaCache.SchemaSet;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
@@ -96,7 +96,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     }
 
     /**
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startProcessing()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startProcessing()
      */
     @Override
     public void startProcessing() {
@@ -191,7 +191,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
      * Fires necessary end document event for the current validator.
      *
      * @throws SAXException Could be thrown by validator.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endDocument()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endDocument()
      */
     @Override
     public void endDocument() throws SAXException {
@@ -212,7 +212,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
      * @param prefix The prefix to add.
      * @param uri    The URI of the prefix.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
      * java.lang.String)
      */
     @Override
@@ -235,7 +235,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
      *
      * @param prefix The prefix to remove.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
      */
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
@@ -262,7 +262,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
      * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @param atts      The element's attributes.
      * @throws org.xml.sax.SAXException The client may throw an exception during processing.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startElement(java.lang.String,
      * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
@@ -345,7 +345,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
      * @param start  Start of char buffer.
      * @param length Number of chars to send.
      * @throws SAXException Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
      * int, int)
      */
     @Override

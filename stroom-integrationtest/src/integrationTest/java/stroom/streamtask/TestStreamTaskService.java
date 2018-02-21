@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,7 +23,7 @@ import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -31,7 +31,7 @@ import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
-import stroom.task.server.TaskMonitorImpl;
+import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 

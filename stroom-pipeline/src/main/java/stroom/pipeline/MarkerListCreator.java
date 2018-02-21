@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 import org.apache.commons.lang.ArrayUtils;
 import stroom.pipeline.shared.FetchMarkerResult;

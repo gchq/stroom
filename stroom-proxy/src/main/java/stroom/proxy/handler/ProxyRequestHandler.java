@@ -2,9 +2,9 @@ package stroom.proxy.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.datafeed.server.MetaMapFilter;
-import stroom.datafeed.server.MetaMapFilterFactory;
-import stroom.datafeed.server.RequestHandler;
+import stroom.datafeed.MetaMapFilter;
+import stroom.datafeed.MetaMapFilterFactory;
+import stroom.datafeed.RequestHandler;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomStatusCode;

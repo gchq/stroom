@@ -15,9 +15,9 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
-import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.DictionaryStore;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;

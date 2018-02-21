@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.jaxp.TemplatesImpl;
@@ -26,24 +26,24 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.cache.server.StoredXsltExecutable;
-import stroom.cache.server.XSLTPool;
+import stroom.cache.StoredXsltExecutable;
+import stroom.cache.XSLTPool;
 import stroom.entity.shared.StringCriteria;
 import stroom.properties.StroomPropertyService;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.SupportsCodeInjection;
-import stroom.pipeline.server.XSLTService;
-import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.server.factory.PipelinePropertyDocRef;
-import stroom.pipeline.server.writer.PathCreator;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.SupportsCodeInjection;
+import stroom.pipeline.XSLTService;
+import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.factory.PipelinePropertyDocRef;
+import stroom.pipeline.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
@@ -280,7 +280,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * @param locator an object that can return the location of any SAX document
      *                event
      * @see org.xml.sax.Locator
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#setDocumentLocator(org.xml.sax.Locator)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#setDocumentLocator(org.xml.sax.Locator)
      */
     @Override
     public void setDocumentLocator(final Locator locator) {
@@ -334,7 +334,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     /**
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #startDocument
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endDocument()
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endDocument()
      */
     @Override
     public void endDocument() throws SAXException {
@@ -395,7 +395,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #endPrefixMapping
      * @see #startElement
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
      * java.lang.String)
      */
     @Override
@@ -416,7 +416,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #startPrefixMapping
      * @see #endElement
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
      */
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
@@ -442,7 +442,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#startElement(java.lang.String,
      * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
@@ -487,7 +487,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * @param qName     the qualified XML name (with prefix), or the empty string if
      *                  qualified names are not available
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#endElement(java.lang.String,
      * java.lang.String, java.lang.String)
      */
     @Override
@@ -506,7 +506,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #ignorableWhitespace
      * @see org.xml.sax.Locator
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
      * int, int)
      */
     @Override
@@ -524,7 +524,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * @param length the number of characters to read from the array
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #characters
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#ignorableWhitespace(char[],
+     * @see stroom.pipeline.filter.AbstractXMLFilter#ignorableWhitespace(char[],
      * int, int)
      */
     @Override
@@ -542,7 +542,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      *               The data does not include any whitespace separating it from
      *               the target
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#processingInstruction(java.lang.String,
+     * @see stroom.pipeline.filter.AbstractXMLFilter#processingInstruction(java.lang.String,
      * java.lang.String)
      */
     @Override
@@ -559,7 +559,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      *             the name will begin with '%', and if it is the external DTD
      *             subset, it will be the string "[dtd]"
      * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#skippedEntity(java.lang.String)
+     * @see stroom.pipeline.filter.AbstractXMLFilter#skippedEntity(java.lang.String)
      */
     @Override
     public void skippedEntity(final String name) throws SAXException {

@@ -15,11 +15,11 @@
  *
  */
 
-package stroom.importexport.server;
+package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.dashboard.server.DashboardService;
+import stroom.dashboard.DashboardService;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
@@ -27,21 +27,21 @@ import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Res;
-import stroom.explorer.server.ExplorerNodeService;
-import stroom.explorer.server.ExplorerService;
+import stroom.explorer.ExplorerNodeService;
+import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.importexport.shared.ImportState;
-import stroom.index.server.IndexService;
+import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
@@ -49,13 +49,13 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.resource.server.ResourceStore;
-import stroom.script.server.ScriptService;
+import stroom.resource.ResourceStore;
+import stroom.script.ScriptService;
 import stroom.script.shared.Script;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
-import stroom.visualisation.server.VisualisationService;
+import stroom.visualisation.VisualisationService;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 

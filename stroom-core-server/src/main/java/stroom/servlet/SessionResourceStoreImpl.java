@@ -16,7 +16,7 @@
 
 package stroom.servlet;
 
-import stroom.resource.server.ResourceStore;
+import stroom.resource.ResourceStore;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
 

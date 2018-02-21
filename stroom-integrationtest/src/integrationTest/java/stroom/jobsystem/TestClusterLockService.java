@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.server;
+package stroom.jobsystem;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.entity.util.StroomDatabaseInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 

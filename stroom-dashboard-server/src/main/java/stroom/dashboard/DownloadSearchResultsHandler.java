@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
-import stroom.dashboard.server.download.DelimitedTarget;
-import stroom.dashboard.server.download.ExcelTarget;
-import stroom.dashboard.server.download.SearchResultWriter;
-import stroom.dashboard.server.format.FieldFormatter;
-import stroom.dashboard.server.format.FormatterFactory;
-import stroom.dashboard.server.logging.SearchEventLog;
+import stroom.dashboard.download.DelimitedTarget;
+import stroom.dashboard.download.ExcelTarget;
+import stroom.dashboard.download.SearchResultWriter;
+import stroom.dashboard.format.FieldFormatter;
+import stroom.dashboard.format.FormatterFactory;
+import stroom.dashboard.logging.SearchEventLog;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -31,15 +31,15 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.datasource.DataSourceProvider;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.entity.server.util.EntityServiceExceptionUtil;
+import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 

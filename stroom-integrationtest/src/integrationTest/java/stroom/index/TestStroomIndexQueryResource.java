@@ -1,4 +1,4 @@
-package stroom.index.server;
+package stroom.index;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;

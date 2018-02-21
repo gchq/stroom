@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.io.StreamCloser;
-import stroom.streamtask.server.StreamProcessorService;
+import stroom.streamtask.StreamProcessorService;
 import stroom.util.spring.StroomScope;
 
 @Configuration

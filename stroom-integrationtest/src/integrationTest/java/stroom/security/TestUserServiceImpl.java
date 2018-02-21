@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.server;
+package stroom.security;
 
 import org.junit.Assert;
 import org.junit.Test;

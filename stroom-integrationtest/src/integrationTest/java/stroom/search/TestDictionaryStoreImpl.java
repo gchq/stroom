@@ -15,11 +15,11 @@
  *
  */
 
-package stroom.search.server;
+package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;

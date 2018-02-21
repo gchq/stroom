@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.source;
+package stroom.pipeline.source;
 
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.Element;
-import stroom.pipeline.server.reader.AbstractInputElement;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.Element;
+import stroom.pipeline.reader.AbstractInputElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 

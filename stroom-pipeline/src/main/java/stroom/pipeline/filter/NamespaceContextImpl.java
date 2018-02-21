@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import javax.xml.namespace.NamespaceContext;
 import java.util.HashMap;

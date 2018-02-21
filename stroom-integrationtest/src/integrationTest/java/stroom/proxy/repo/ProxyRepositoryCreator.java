@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;

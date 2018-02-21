@@ -18,16 +18,16 @@ package stroom.test;
 
 import org.junit.Assert;
 import stroom.feed.shared.Feed;
-import stroom.node.server.NodeCache;
+import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.tools.StoreCreationTool;
-import stroom.streamtask.server.StreamProcessorTask;
-import stroom.streamtask.server.StreamProcessorTaskExecutor;
-import stroom.streamtask.server.StreamTaskCreator;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.tools.StoreCreationTool;
+import stroom.streamtask.StreamProcessorTask;
+import stroom.streamtask.StreamProcessorTaskExecutor;
+import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
-import stroom.task.server.TaskManager;
-import stroom.task.server.TaskMonitorImpl;
+import stroom.task.TaskManager;
+import stroom.task.TaskMonitorImpl;
 
 import javax.inject.Inject;
 import java.io.IOException;

@@ -19,10 +19,10 @@ package stroom.pipeline;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.importexport.server.ImportExportHelper;
-import stroom.pipeline.server.MockPipelineService;
-import stroom.pipeline.server.MockTextConverterService;
-import stroom.pipeline.server.MockXSLTService;
+import stroom.importexport.ImportExportHelper;
+import stroom.pipeline.MockPipelineService;
+import stroom.pipeline.MockTextConverterService;
+import stroom.pipeline.MockXSLTService;
 import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.CachingEntityManager;
+import stroom.entity.CachingEntityManager;
 
 import javax.inject.Inject;
 

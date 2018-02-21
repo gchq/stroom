@@ -19,9 +19,9 @@ package stroom.node;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.node.server.MockGlobalPropertyService;
-import stroom.node.server.MockNodeService;
-import stroom.node.server.MockRecordCountService;
+import stroom.node.MockGlobalPropertyService;
+import stroom.node.MockNodeService;
+import stroom.node.MockRecordCountService;
 import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration

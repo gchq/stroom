@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
 import net.sf.saxon.s9api.XsltExecutable;
-import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
-import stroom.pipeline.server.xsltfunctions.StroomXSLTFunctionLibrary;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.xsltfunctions.StroomXSLTFunctionLibrary;
 
 public class StoredXsltExecutable {
     private final XsltExecutable xsltExecutable;

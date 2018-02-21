@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
-import stroom.pipeline.server.factory.ConfigurableElement;
+import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.resource.server.BOMRemovalInputStream;
+import stroom.resource.BOMRemovalInputStream;
 
 import java.io.InputStream;
 

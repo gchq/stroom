@@ -18,12 +18,12 @@ package stroom.dispatch;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.dispatch.server.DispatchServiceImpl;
+import stroom.dispatch.DispatchServiceImpl;
 import stroom.dispatch.shared.DispatchService;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
-import stroom.task.server.TaskHandlerBeanRegistry;
-import stroom.task.server.TaskManager;
+import stroom.task.TaskHandlerBeanRegistry;
+import stroom.task.TaskManager;
 
 @Configuration
 public class DispatchSpringConfig {

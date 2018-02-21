@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.server.sql;
+package stroom.statistics.sql;
 
 import stroom.statistics.shared.StatisticType;
 

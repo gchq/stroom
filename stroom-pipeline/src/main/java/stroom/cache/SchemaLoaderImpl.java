@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.cache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.DefaultLocationFactory;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
-import stroom.pipeline.server.filter.LSResourceResolverImpl;
+import stroom.pipeline.DefaultLocationFactory;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.filter.LSResourceResolverImpl;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import stroom.xmlschema.server.XMLSchemaCache;
+import stroom.xmlschema.XMLSchemaCache;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
 import javax.inject.Inject;

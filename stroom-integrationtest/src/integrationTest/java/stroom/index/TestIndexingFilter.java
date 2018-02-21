@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index.server;
+package stroom.index;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexOptions;
@@ -31,13 +31,13 @@ import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
-import stroom.pipeline.server.PipelineService;
-import stroom.pipeline.server.PipelineTestUtil;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.server.factory.Pipeline;
-import stroom.pipeline.server.factory.PipelineDataCache;
-import stroom.pipeline.server.factory.PipelineFactory;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineTestUtil;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.factory.Pipeline;
+import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;

@@ -1,4 +1,4 @@
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,9 +8,9 @@ import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStreamException;
 import stroom.pipeline.destination.ByteCountOutputStream;
 import stroom.pipeline.destination.Destination;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;

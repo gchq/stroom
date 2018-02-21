@@ -15,9 +15,9 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
-import stroom.entity.server.FindService;
+import stroom.entity.FindService;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamVolume;

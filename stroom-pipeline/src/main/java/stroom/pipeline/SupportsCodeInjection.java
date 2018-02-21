@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 public interface SupportsCodeInjection {
     void setInjectedCode(String injectedCode);

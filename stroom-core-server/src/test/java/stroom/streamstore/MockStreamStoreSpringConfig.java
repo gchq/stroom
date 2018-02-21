@@ -19,9 +19,9 @@ package stroom.streamstore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.streamstore.server.MockStreamAttributeKeyService;
-import stroom.streamstore.server.MockStreamStore;
-import stroom.streamstore.server.MockStreamTypeService;
+import stroom.streamstore.MockStreamAttributeKeyService;
+import stroom.streamstore.MockStreamStore;
+import stroom.streamstore.MockStreamTypeService;
 import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration

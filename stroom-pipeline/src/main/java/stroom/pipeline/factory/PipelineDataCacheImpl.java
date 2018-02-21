@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import stroom.entity.server.DocumentPermissionCache;
+import stroom.entity.DocumentPermissionCache;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.pipeline.shared.PipelineDataMerger;

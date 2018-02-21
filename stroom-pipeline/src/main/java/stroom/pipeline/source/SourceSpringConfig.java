@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.source;
+package stroom.pipeline.source;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

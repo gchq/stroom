@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.writer;
+package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.destination.Destination;
-import stroom.pipeline.server.stepping.Recorder;
+import stroom.pipeline.stepping.Recorder;
 import stroom.util.io.StreamUtil;
 
 import java.io.ByteArrayOutputStream;

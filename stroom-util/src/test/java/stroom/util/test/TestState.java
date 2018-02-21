@@ -60,7 +60,7 @@ public class TestState {
                     // Let tests update the database
 //                    StroomProperties.setOverrideProperty("stroom.jpaHbm2DdlAuto", "update", "test");
 //                    StroomProperties.setOverrideProperty("stroom.connectionTesterClassName",
-//                            "stroom.entity.server.util.StroomConnectionTesterOkOnException", "test");
+//                            "stroom.entity.util.StroomConnectionTesterOkOnException", "test");
                 }
             } catch (final Throwable t) {
                 t.printStackTrace(System.err);

@@ -15,9 +15,9 @@
  *
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
-import stroom.entity.server.FindService;
+import stroom.entity.FindService;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.StreamAttributeMap;
 

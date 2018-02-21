@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index.server;
+package stroom.index;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -24,15 +24,15 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
-import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.PipelineService;
 import stroom.index.shared.IndexShardKey;
-import stroom.pipeline.server.PipelineTestUtil;
-import stroom.pipeline.server.XSLTService;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.server.factory.Pipeline;
-import stroom.pipeline.server.factory.PipelineDataCache;
-import stroom.pipeline.server.factory.PipelineFactory;
+import stroom.pipeline.PipelineTestUtil;
+import stroom.pipeline.XSLTService;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.factory.Pipeline;
+import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineData;

@@ -18,7 +18,7 @@ package stroom.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.ConnectionUtil;
+import stroom.entity.util.ConnectionUtil;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

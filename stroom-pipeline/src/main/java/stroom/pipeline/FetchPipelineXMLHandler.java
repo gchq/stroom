@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 import stroom.pipeline.shared.FetchPipelineXMLAction;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedString;
 
 import javax.inject.Inject;

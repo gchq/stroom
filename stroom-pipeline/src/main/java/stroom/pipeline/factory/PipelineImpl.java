@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.factory;
+package stroom.pipeline.factory;
 
-import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;

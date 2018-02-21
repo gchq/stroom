@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.v1.TypeConverter;
-import stroom.dashboard.server.VisResult.Store;
+import stroom.dashboard.VisResult.Store;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.query.api.v2.Field;

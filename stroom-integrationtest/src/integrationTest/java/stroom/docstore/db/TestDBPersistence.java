@@ -1,8 +1,8 @@
-package stroom.docstore.server.db;
+package stroom.docstore.db;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.docstore.server.Persistence;
+import stroom.docstore.Persistence;
 import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.StreamUtil;

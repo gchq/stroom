@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import stroom.dashboard.shared.FetchTimeZonesAction;
 import stroom.dashboard.shared.TimeZoneData;
 import stroom.security.Insecure;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 
 import java.time.ZoneId;
 import java.util.ArrayList;

@@ -19,7 +19,7 @@ package stroom.pipeline.destination;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.server.writer.PathCreator;
+import stroom.pipeline.writer.PathCreator;
 import stroom.util.io.FileUtil;
 
 import java.io.BufferedOutputStream;

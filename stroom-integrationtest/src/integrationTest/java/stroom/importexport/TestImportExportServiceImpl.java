@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.importexport.server;
+package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,15 +23,15 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.shared.ImportState;
-import stroom.explorer.server.ExplorerNodeService;
-import stroom.explorer.server.ExplorerService;
+import stroom.explorer.ExplorerNodeService;
+import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.resource.server.ResourceStore;
+import stroom.resource.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;

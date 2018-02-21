@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;

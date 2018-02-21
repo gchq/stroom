@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.errorhandler;
+package stroom.pipeline.errorhandler;
 
 import org.xml.sax.Locator;
 import org.xml.sax.SAXParseException;

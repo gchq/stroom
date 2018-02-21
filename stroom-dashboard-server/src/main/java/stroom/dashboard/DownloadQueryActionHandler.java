@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.SearchRequest;
-import stroom.entity.server.util.EntityServiceExceptionUtil;
+import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.query.api.v2.ResultRequest;
 import stroom.servlet.SessionResourceStore;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;

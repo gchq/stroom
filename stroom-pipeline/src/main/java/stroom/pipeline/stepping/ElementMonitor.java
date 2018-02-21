@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.stepping;
+package stroom.pipeline.stepping;
 
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.server.factory.Element;
-import stroom.pipeline.server.writer.XMLWriter;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.factory.Element;
+import stroom.pipeline.writer.XMLWriter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.Indicators;
 

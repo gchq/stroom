@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server.fs.serializable;
+package stroom.streamstore.fs.serializable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.io.SeekableInputStream;
-import stroom.streamstore.server.StreamSource;
+import stroom.streamstore.StreamSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
 

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.errorhandler;
+package stroom.pipeline.errorhandler;
 
-import stroom.pipeline.server.ErrorWriterProxy;
+import stroom.pipeline.ErrorWriterProxy;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;

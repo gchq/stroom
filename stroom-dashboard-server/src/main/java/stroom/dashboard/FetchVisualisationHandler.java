@@ -15,14 +15,14 @@
  *
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
-import stroom.visualisation.server.VisualisationService;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
+import stroom.visualisation.VisualisationService;
 import stroom.visualisation.shared.Visualisation;
 
 import javax.inject.Inject;

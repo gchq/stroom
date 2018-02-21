@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import stroom.entity.server.util.XMLUtil;
-import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.entity.util.XMLUtil;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.CharBuffer;
 import stroom.xml.event.simple.StartElement;
 

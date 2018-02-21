@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.entity.server;
+package stroom.entity;
 
 import org.junit.Before;
 import org.junit.Test;

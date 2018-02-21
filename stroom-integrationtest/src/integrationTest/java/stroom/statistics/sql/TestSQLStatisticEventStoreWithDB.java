@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.statistics.server.sql;
+package stroom.statistics.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.entity.util.StroomDatabaseInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
-import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
-import stroom.statistics.server.sql.search.StatisticDataPoint;
-import stroom.statistics.server.sql.search.StatisticDataSet;
+import stroom.statistics.sql.exception.StatisticsEventValidationException;
+import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.sql.search.StatisticDataPoint;
+import stroom.statistics.sql.search.StatisticDataSet;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.common.StatisticRollUpType;
-import stroom.task.server.TaskMonitorImpl;
+import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 

@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.server;
+package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.ConnectionUtil;
-import stroom.entity.server.util.SqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.util.ConnectionUtil;
+import stroom.entity.util.SqlBuilder;
+import stroom.entity.util.StroomEntityManager;
 import stroom.feed.shared.Feed;
-import stroom.streamstore.server.OldFindStreamCriteria;
+import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;

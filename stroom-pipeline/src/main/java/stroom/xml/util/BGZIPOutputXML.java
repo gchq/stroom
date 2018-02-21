@@ -16,8 +16,8 @@
 
 package stroom.xml.util;
 
-import stroom.entity.server.util.XMLUtil;
-import stroom.streamstore.server.fs.BlockGZIPInputStream;
+import stroom.entity.util.XMLUtil;
+import stroom.streamstore.fs.BlockGZIPInputStream;
 
 import java.io.InputStream;
 import java.nio.file.Files;

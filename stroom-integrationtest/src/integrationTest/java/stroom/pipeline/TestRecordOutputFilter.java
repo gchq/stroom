@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.io.StreamCloser;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.server.factory.Pipeline;
-import stroom.pipeline.server.factory.PipelineDataCache;
-import stroom.pipeline.server.factory.PipelineFactory;
-import stroom.pipeline.server.filter.AbstractXMLFilter;
-import stroom.pipeline.server.filter.RecordOutputFilter;
-import stroom.pipeline.server.filter.TestSAXEventFilter;
-import stroom.pipeline.server.filter.XMLFilter;
-import stroom.pipeline.server.filter.XMLFilterFork;
-import stroom.pipeline.server.parser.CombinedParser;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.factory.Pipeline;
+import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.filter.AbstractXMLFilter;
+import stroom.pipeline.filter.RecordOutputFilter;
+import stroom.pipeline.filter.TestSAXEventFilter;
+import stroom.pipeline.filter.XMLFilter;
+import stroom.pipeline.filter.XMLFilterFork;
+import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;

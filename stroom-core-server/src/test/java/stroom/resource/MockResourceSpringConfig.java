@@ -19,7 +19,7 @@ package stroom.resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.resource.server.MockResourceStore;
+import stroom.resource.MockResourceStore;
 import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration

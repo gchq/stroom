@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
-import stroom.entity.server.util.SqlBuilder;
-import stroom.jobsystem.server.ClusterLockService;
-import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.entity.util.SqlBuilder;
+import stroom.jobsystem.ClusterLockService;
+import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.streamtask.server.AbstractBatchDeleteExecutor;
-import stroom.streamtask.server.BatchIdTransactionHelper;
+import stroom.streamtask.AbstractBatchDeleteExecutor;
+import stroom.streamtask.BatchIdTransactionHelper;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.task.TaskMonitor;
 

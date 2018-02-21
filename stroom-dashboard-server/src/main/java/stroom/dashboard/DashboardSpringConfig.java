@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.ResourceLoader;
-import stroom.dashboard.server.logging.SearchEventLog;
+import stroom.dashboard.logging.SearchEventLog;
 import stroom.dashboard.shared.Dashboard;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.explorer.server.ExplorerActionHandlers;
-import stroom.importexport.server.ImportExportActionHandlers;
-import stroom.importexport.server.ImportExportHelper;
+import stroom.entity.util.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandlers;
+import stroom.importexport.ImportExportActionHandlers;
+import stroom.importexport.ImportExportHelper;
 import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.servlet.SessionResourceStore;
@@ -35,7 +35,7 @@ import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskMonitor;
-import stroom.visualisation.server.VisualisationService;
+import stroom.visualisation.VisualisationService;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

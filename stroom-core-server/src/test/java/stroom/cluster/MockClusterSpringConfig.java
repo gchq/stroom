@@ -19,8 +19,8 @@ package stroom.cluster;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.cluster.server.MockClusterNodeManager;
-import stroom.node.server.NodeCache;
+import stroom.cluster.MockClusterNodeManager;
+import stroom.node.NodeCache;
 import stroom.util.spring.StroomSpringProfiles;
 
 

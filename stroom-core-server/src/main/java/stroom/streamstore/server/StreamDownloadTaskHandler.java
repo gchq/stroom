@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +24,13 @@ import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipOutputStream;
 import stroom.proxy.repo.StroomZipOutputStreamImpl;
-import stroom.streamstore.server.fs.serializable.NestedInputStream;
-import stroom.streamstore.server.fs.serializable.RANestedInputStream;
+import stroom.streamstore.fs.serializable.NestedInputStream;
+import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;

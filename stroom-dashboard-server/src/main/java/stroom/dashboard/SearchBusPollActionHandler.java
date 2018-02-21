@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.server.logging.SearchEventLog;
+import stroom.dashboard.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.dashboard.shared.Search;
@@ -33,8 +33,8 @@ import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

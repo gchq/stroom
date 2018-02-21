@@ -18,7 +18,7 @@
 package stroom.dashboard;
 
 import org.junit.Test;
-import stroom.dashboard.server.DashboardService;
+import stroom.dashboard.DashboardService;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
@@ -29,11 +29,11 @@ import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Res;
-import stroom.script.server.ScriptService;
+import stroom.script.ScriptService;
 import stroom.query.api.v2.DocRef;
 import stroom.script.shared.Script;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.visualisation.server.VisualisationService;
+import stroom.visualisation.VisualisationService;
 import stroom.visualisation.shared.Visualisation;
 
 import javax.annotation.Resource;

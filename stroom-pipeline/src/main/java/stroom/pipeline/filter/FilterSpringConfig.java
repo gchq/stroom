@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.pipeline.filter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
-import stroom.cache.server.SchemaPool;
-import stroom.cache.server.XSLTPool;
+import stroom.cache.SchemaPool;
+import stroom.cache.XSLTPool;
 import stroom.properties.StroomPropertyService;
 import stroom.node.shared.RecordCountService;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.XSLTService;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.writer.PathCreator;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.XSLTService;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.writer.PathCreator;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.StreamHolder;
@@ -35,7 +35,7 @@ import stroom.refdata.MapStoreHolder;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.xmlschema.server.XMLSchemaCache;
+import stroom.xmlschema.XMLSchemaCache;
 
 @Configuration
 public class FilterSpringConfig {

@@ -18,9 +18,9 @@ package stroom.logging;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.security.SecurityContext;
-import stroom.streamstore.server.StreamTypeService;
+import stroom.streamstore.StreamTypeService;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Named;

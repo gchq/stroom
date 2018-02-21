@@ -15,12 +15,12 @@
  *
  */
 
-package stroom.jobsystem.server;
+package stroom.jobsystem;
 
 import org.junit.Test;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
-import stroom.node.server.NodeCache;
+import stroom.node.NodeCache;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 

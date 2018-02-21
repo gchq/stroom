@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.errorhandler;
+package stroom.pipeline.errorhandler;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.pipeline.server.ErrorWriterProxy;
+import stroom.pipeline.ErrorWriterProxy;
 import stroom.util.spring.StroomScope;
 
 

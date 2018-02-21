@@ -20,7 +20,7 @@ package stroom.search;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
-import stroom.index.server.IndexService;
+import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.pipeline.shared.PipelineEntity;

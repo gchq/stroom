@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
-import stroom.pipeline.server.stepping.RecordDetector;
-import stroom.pipeline.server.stepping.SteppingController;
+import stroom.pipeline.stepping.RecordDetector;
+import stroom.pipeline.stepping.SteppingController;
 
 import java.io.Reader;
 
