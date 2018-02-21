@@ -34,6 +34,7 @@ import stroom.servlet.SessionListListener;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskHandlerBeanRegistry;
 import stroom.task.server.TaskManager;
+import stroom.util.logging.LambdaLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
 import stroom.security.UserTokenUtil;
@@ -171,6 +172,10 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
         String serializationPolicyFilePath = String.format(gwtRpcPath.get(), strongName);
 
         try (InputStream is = getClass().getResourceAsStream(serializationPolicyFilePath)) {
+            if (is == null) {
+                throw new RuntimeException(LambdaLogger.buildMessage(
+                        "Could not get InputStream for file path {}", serializationPolicyFilePath));
+            }
             return SerializationPolicyLoader.loadFromStream(is, null);
         } catch (ParseException | IOException e) {
             throw new RuntimeException(e);
