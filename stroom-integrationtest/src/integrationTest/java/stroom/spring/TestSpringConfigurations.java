@@ -11,6 +11,10 @@ import org.springframework.context.annotation.Import;
 import stroom.util.task.TaskScopeRunnable;
 
 import javax.swing.text.html.Option;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -58,7 +62,7 @@ public class TestSpringConfigurations {
     }
 
     @Test
-    public void printDependencies() {
+    public void printDependencies() throws IOException {
         // Check dependants first.
         final Map<Class<?>, Optional<List<Class<?>>>> dependencies = getDependencies();
         Map<Integer, Set<Class<?>>> dependencyDepths = new HashMap<>();
@@ -67,31 +71,37 @@ public class TestSpringConfigurations {
             dependencyDepths.computeIfAbsent(depth, d -> new HashSet<>()).add(k);
         });
 
+        try (final IuneraDependencyCsvWriter dependencyWriter = new IuneraDependencyCsvWriter(TestSpringConfigurations.class)) {
 
-        final StringBuilder sb = new StringBuilder("\n");
-        dependencyDepths
-                .keySet()
-                .stream()
-                .sorted(Comparator.reverseOrder())
-                .forEach(depth -> {
-                    final Set<Class<?>> configurations = dependencyDepths.get(depth);
-                    configurations
-                            .stream()
-                            .sorted(Comparator.comparing(Class::getName))
-                            .forEach(configuration -> {
-                                sb.append("------------------------------------------------------------------------\n");
-                                sb.append("DEPENDENCIES FOR ");
-                                sb.append(configuration.getName());
-                                sb.append("\n");
-                                printTree(sb, configuration, dependencies, 0);
-                                sb.append("------------------------------------------------------------------------");
-                            });
-                });
+            final StringBuilder sb = new StringBuilder("\n");
+            dependencyDepths
+                    .keySet()
+                    .stream()
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(depth -> {
+                        final Set<Class<?>> configurations = dependencyDepths.get(depth);
+                        configurations
+                                .stream()
+                                .sorted(Comparator.comparing(Class::getName))
+                                .forEach(configuration -> {
+                                    sb.append("------------------------------------------------------------------------\n");
+                                    sb.append("DEPENDENCIES FOR ");
+                                    sb.append(configuration.getName());
+                                    sb.append("\n");
+                                    printTree(sb, configuration, dependencies, 0, dependencyWriter);
+                                    sb.append("------------------------------------------------------------------------");
+                                });
+                    });
 
-        LOGGER.info(sb.toString());
+            LOGGER.info(sb.toString());
+        }
     }
 
-    private void printTree(final StringBuilder sb, final Class<?> configuration, final Map<Class<?>, Optional<List<Class<?>>>> dependencies, final int depth) {
+    private void printTree(final StringBuilder sb,
+                           final Class<?> configuration,
+                           final Map<Class<?>, Optional<List<Class<?>>>> dependencies,
+                           final int depth,
+                           final IuneraDependencyCsvWriter dependencyWriter) {
         final Optional<List<Class<?>>> deps = dependencies.get(configuration);
         for (int i = 0; i < depth; i++) {
             sb.append("\t");
@@ -99,12 +109,16 @@ public class TestSpringConfigurations {
         if (depth > 0) {
             sb.append("|__ ");
         }
+
         sb.append(configuration.getName());
         sb.append("\n");
         deps.ifPresent(list -> list
                 .stream()
                 .sorted(Comparator.comparing(Class::getName))
-                .forEach(dep -> printTree(sb, dep, dependencies, depth + 1)));
+                .forEach(dep -> {
+                    printTree(sb, dep, dependencies, depth + 1, dependencyWriter);
+                    dependencyWriter.write(configuration.getName(), dep.getName(), 1, 1);
+                }));
     }
 
     @Test
