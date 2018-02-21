@@ -18,7 +18,6 @@ package stroom.pipeline.destination;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.errorhandler.ProcessException;
@@ -32,7 +31,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class RollingDestinations {
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingDestinations.class);
 

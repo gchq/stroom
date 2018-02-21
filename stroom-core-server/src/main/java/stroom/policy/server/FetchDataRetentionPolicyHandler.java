@@ -17,18 +17,15 @@
 
 package stroom.policy.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.FetchDataRetentionPolicyAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchDataRetentionPolicyAction.class)
-@Scope(StroomScope.TASK)
-public class FetchDataRetentionPolicyHandler extends AbstractTaskHandler<FetchDataRetentionPolicyAction, DataRetentionPolicy> {
+class FetchDataRetentionPolicyHandler extends AbstractTaskHandler<FetchDataRetentionPolicyAction, DataRetentionPolicy> {
     private final DataRetentionService dataRetentionService;
 
 

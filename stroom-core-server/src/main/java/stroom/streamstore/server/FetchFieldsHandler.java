@@ -16,17 +16,14 @@
 
 package stroom.streamstore.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DataSourceFields;
 import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 @TaskHandlerBean(task = FetchFieldsAction.class)
-@Scope(StroomScope.TASK)
-public class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, DataSourceFields> {
+class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, DataSourceFields> {
     @Override
     public DataSourceFields exec(final FetchFieldsAction task) {
         return new DataSourceFields(StreamDataSource.getFields());

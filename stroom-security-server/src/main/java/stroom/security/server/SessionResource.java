@@ -27,7 +27,6 @@ import javax.ws.rs.core.Response;
         description = "Stroom Session API")
 @Path("/session/v1")
 @Produces(MediaType.APPLICATION_JSON)
-@Component
 public class SessionResource {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(SessionResource.class);
 

@@ -16,13 +16,6 @@
 
 package stroom.pipeline.server.factory;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-
-import org.springframework.stereotype.Component;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -33,10 +26,10 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.data.SourcePipeline;
 
 import javax.inject.Inject;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class PipelineDataValidator {
     private final ElementRegistryFactory pipelineElementRegistryFactory;
 
@@ -93,7 +86,7 @@ public class PipelineDataValidator {
     }
 
     private void validatePropertiesList(final ElementRegistry registry, final SourcePipeline source,
-            final List<PipelineProperty> propertiesList, final Map<String, PipelineElementType> elementMap) {
+                                        final List<PipelineProperty> propertiesList, final Map<String, PipelineElementType> elementMap) {
         final Iterator<PipelineProperty> iterator = propertiesList.iterator();
         while (iterator.hasNext()) {
             final PipelineProperty property = iterator.next();
@@ -125,7 +118,7 @@ public class PipelineDataValidator {
     }
 
     private void validatePipelineReferencesList(final ElementRegistry registry, final SourcePipeline source,
-            final List<PipelineReference> pipelineReferencesList, final Map<String, PipelineElementType> elementMap) {
+                                                final List<PipelineReference> pipelineReferencesList, final Map<String, PipelineElementType> elementMap) {
         final Iterator<PipelineReference> iterator = pipelineReferencesList.iterator();
         while (iterator.hasNext()) {
             final PipelineReference pipelineReference = iterator.next();
@@ -159,7 +152,7 @@ public class PipelineDataValidator {
     }
 
     private void validateLinksList(final SourcePipeline source, final List<PipelineLink> linksList,
-            final Map<String, PipelineElementType> elementMap) {
+                                   final Map<String, PipelineElementType> elementMap) {
         final Iterator<PipelineLink> iterator = linksList.iterator();
         while (iterator.hasNext()) {
             final PipelineLink link = iterator.next();

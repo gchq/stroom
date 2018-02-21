@@ -16,7 +16,6 @@
 
 package stroom.security.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.EntityServiceException;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
@@ -25,20 +24,19 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchAllDocumentPermissionsAction.class)
-@Scope(value = StroomScope.TASK)
 @Insecure
-public class FetchAllDocumentPermissionsHandler
+class FetchAllDocumentPermissionsHandler
         extends AbstractTaskHandler<FetchAllDocumentPermissionsAction, DocumentPermissions> {
     private final DocumentPermissionsCache documentPermissionsCache;
     private final SecurityContext securityContext;
 
     @Inject
-    public FetchAllDocumentPermissionsHandler(final DocumentPermissionsCache documentPermissionsCache, final SecurityContext securityContext) {
+    FetchAllDocumentPermissionsHandler(final DocumentPermissionsCache documentPermissionsCache,
+                                       final SecurityContext securityContext) {
         this.documentPermissionsCache = documentPermissionsCache;
         this.securityContext = securityContext;
     }

@@ -16,12 +16,10 @@
 
 package stroom.servlet;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportService;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.api.v2.DocRef;
 import stroom.resource.server.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
@@ -40,7 +38,6 @@ import java.util.ArrayList;
 /**
  * B2B Export of the config
  */
-@Component
 public class ExportConfigServlet extends HttpServlet {
     private static final long serialVersionUID = -4533441835216235920L;
     private static final String PROPERTY = "stroom.export.enabled";
@@ -50,9 +47,9 @@ public class ExportConfigServlet extends HttpServlet {
     private final transient StroomPropertyService propertyService;
 
     @Inject
-    public ExportConfigServlet(final ImportExportService importExportService,
-                               @Named("resourceStore") final ResourceStore resourceStore,
-                               final StroomPropertyService propertyService) {
+    ExportConfigServlet(final ImportExportService importExportService,
+                        @Named("resourceStore") final ResourceStore resourceStore,
+                        final StroomPropertyService propertyService) {
         this.importExportService = importExportService;
         this.resourceStore = resourceStore;
         this.propertyService = propertyService;

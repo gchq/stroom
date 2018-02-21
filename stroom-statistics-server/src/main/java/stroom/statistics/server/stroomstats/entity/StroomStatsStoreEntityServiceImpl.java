@@ -18,9 +18,7 @@ package stroom.statistics.server.stroomstats.entity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -32,10 +30,9 @@ import stroom.stats.shared.StroomStatsStoreEntity;
 
 import javax.inject.Inject;
 
-@Component
 @Transactional
 @AutoMarshal
-public class StroomStatsStoreEntityServiceImpl
+class StroomStatsStoreEntityServiceImpl
         extends DocumentEntityServiceImpl<StroomStatsStoreEntity, FindStroomStatsStoreEntityCriteria>
         implements StroomStatsStoreEntityService {
 

@@ -17,8 +17,6 @@
 package stroom.pipeline.server.filter;
 
 import org.apache.commons.lang.StringUtils;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
@@ -36,7 +34,6 @@ import stroom.pool.PoolItem;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.util.spring.StroomScope;
 import stroom.xmlschema.server.XMLSchemaCache;
 import stroom.xmlschema.server.XMLSchemaCache.SchemaSet;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
@@ -54,8 +51,6 @@ import java.util.regex.Pattern;
 /**
  * An XML filter for performing inline schema validation of XML.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class SchemaFilter extends AbstractXMLFilter implements Locator {
     private static final int INDENT = 2;
     private static final String SPACE = " ";

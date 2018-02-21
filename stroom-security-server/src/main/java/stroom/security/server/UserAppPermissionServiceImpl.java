@@ -43,9 +43,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Transactional
-@Component
-public class UserAppPermissionServiceImpl implements UserAppPermissionService {
-    public static final String LOCK_NAME = "UserAppPermissionService";
+class UserAppPermissionServiceImpl implements UserAppPermissionService {
+    private static final String LOCK_NAME = "UserAppPermissionService";
 
     private static final String SQL_INSERT_USER_PERMISSIONS;
     private static final String SQL_DELETE_USER_PERMISSIONS;
@@ -116,7 +115,8 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
     private final Map<String, Long> permissionIdMap = new HashMap<>();
 
     @Inject
-    UserAppPermissionServiceImpl(final StroomEntityManager entityManager, final ClusterLockService clusterLockService,
+    UserAppPermissionServiceImpl(final StroomEntityManager entityManager,
+                                 final ClusterLockService clusterLockService,
                                  final StroomBeanStore beanStore) {
         this.entityManager = entityManager;
         this.clusterLockService = clusterLockService;

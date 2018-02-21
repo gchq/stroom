@@ -18,7 +18,6 @@ package stroom.index.server;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.store.AlreadyClosedException;
-import org.springframework.stereotype.Component;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.logging.LambdaLogger;
@@ -30,7 +29,6 @@ import java.util.concurrent.locks.Lock;
 /**
  * Pool API into open index shards.
  */
-@Component("indexer")
 public class IndexerImpl implements Indexer {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexerImpl.class);
     private static final int MAX_ATTEMPTS = 10000;

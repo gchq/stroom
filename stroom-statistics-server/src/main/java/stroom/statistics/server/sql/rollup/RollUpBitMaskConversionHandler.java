@@ -16,7 +16,6 @@
 
 package stroom.statistics.server.sql.rollup;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.security.Insecure;
@@ -24,7 +23,6 @@ import stroom.statistics.shared.common.CustomRollUpMaskFields;
 import stroom.statistics.shared.common.RollUpBitMaskConversionAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,9 +30,8 @@ import java.util.List;
 import java.util.Set;
 
 @TaskHandlerBean(task = RollUpBitMaskConversionAction.class)
-@Scope(value = StroomScope.TASK)
 @Insecure
-public class RollUpBitMaskConversionHandler
+class RollUpBitMaskConversionHandler
         extends AbstractTaskHandler<RollUpBitMaskConversionAction, ResultList<CustomRollUpMaskFields>> {
     @Override
     public BaseResultList<CustomRollUpMaskFields> exec(final RollUpBitMaskConversionAction action) {

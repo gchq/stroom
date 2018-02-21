@@ -17,16 +17,11 @@
 
 package stroom.dashboard.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockDocumentEntityService;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.server.VisualisationService;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component("visualisationService")
 public class MockVisualisationService extends MockDocumentEntityService<Visualisation, FindVisualisationCriteria> implements VisualisationService {
     @Override
     public Class<Visualisation> getEntityClass() {

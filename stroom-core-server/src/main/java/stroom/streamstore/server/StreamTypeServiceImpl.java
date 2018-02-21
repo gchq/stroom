@@ -18,7 +18,6 @@
 package stroom.streamstore.server;
 
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -33,9 +32,8 @@ import javax.inject.Inject;
 import java.util.List;
 
 @Transactional
-@Component("streamTypeService")
 @Insecure
-public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria>
+class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria>
         implements StreamTypeService, InitializingBean {
     private final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper;
 

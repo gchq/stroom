@@ -43,8 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class ReferenceData {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
 
@@ -62,7 +60,12 @@ public class ReferenceData {
     private final DocumentPermissionCache documentPermissionCache;
 
     @Inject
-    ReferenceData(final EffectiveStreamCache effectiveStreamCache, final MapStoreCache mapStoreCache, final FeedHolder feedHolder, final StreamHolder streamHolder, final ContextDataLoader contextDataLoader, final DocumentPermissionCache documentPermissionCache) {
+    ReferenceData(final EffectiveStreamCache effectiveStreamCache,
+                  final MapStoreCache mapStoreCache,
+                  final FeedHolder feedHolder,
+                  final StreamHolder streamHolder,
+                  final ContextDataLoader contextDataLoader,
+                  final DocumentPermissionCache documentPermissionCache) {
         this.effectiveStreamCache = effectiveStreamCache;
         this.mapStoreCache = mapStoreCache;
         this.feedHolder = feedHolder;

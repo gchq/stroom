@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.springframework.stereotype.Component;
 import stroom.dashboard.server.vis.VisSettings;
 import stroom.dashboard.server.vis.VisSettings.Control;
 import stroom.dashboard.server.vis.VisSettings.Nest;
@@ -71,7 +70,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-@Component
 public class SearchRequestMapper {
     private final VisualisationService visualisationService;
 

@@ -19,9 +19,6 @@ package stroom.docstore.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.docstore.shared.Doc;
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.server.ExplorerActionHandler;
@@ -51,8 +48,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActionHandler<D>, ImportExportActionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(Store.class);
 

@@ -19,7 +19,6 @@ package stroom.security.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
-import org.springframework.stereotype.Component;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
@@ -29,8 +28,7 @@ import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 
-@Component
-public class AuthenticationServiceImpl implements AuthenticationService {
+class AuthenticationServiceImpl implements AuthenticationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
     private static final String ADMINISTRATORS = "Administrators";

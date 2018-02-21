@@ -16,7 +16,6 @@
 
 package stroom.dashboard.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.dashboard.server.download.DelimitedTarget;
 import stroom.dashboard.server.download.ExcelTarget;
 import stroom.dashboard.server.download.SearchResultWriter;
@@ -43,7 +42,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -55,7 +53,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 @TaskHandlerBean(task = DownloadSearchResultsAction.class)
-@Scope(StroomScope.PROTOTYPE)
 @Secured(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION)
 class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchResultsAction, ResourceGeneration> {
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");

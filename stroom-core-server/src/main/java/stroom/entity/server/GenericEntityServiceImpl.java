@@ -17,7 +17,6 @@
 
 package stroom.entity.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Entity;
@@ -29,13 +28,12 @@ import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
 
-@Component
-public class GenericEntityServiceImpl implements GenericEntityService {
+class GenericEntityServiceImpl implements GenericEntityService {
     private static final Set<String> NO_FETCH_SET = new HashSet<>();
     private final EntityServiceBeanRegistry entityServiceBeanRegistry;
 
     @Inject
-    public GenericEntityServiceImpl(final EntityServiceBeanRegistry entityServiceBeanRegistry) {
+    GenericEntityServiceImpl(final EntityServiceBeanRegistry entityServiceBeanRegistry) {
         this.entityServiceBeanRegistry = entityServiceBeanRegistry;
     }
 
@@ -98,7 +96,7 @@ public class GenericEntityServiceImpl implements GenericEntityService {
 //    @SuppressWarnings("unchecked")
 //    @Override
 //    public <E extends Entity> E loadByName(final String entityType, final DocRef folder, final String name,
-        //                                           final Set<String> fetchSet) {
+    //                                           final Set<String> fetchSet) {
 //        final EntityService<E> entityService = getEntityService(entityType);
 //        if (entityService instanceof HasLoadByName) {
 //            return ((HasLoadByName<E>) entityService).loadByName(name, fetchSet);
@@ -121,7 +119,7 @@ public class GenericEntityServiceImpl implements GenericEntityService {
 //    @SuppressWarnings("unchecked")
 //    @Override
 //    public <E extends Entity> E loadByName(final String entityType, final String name,
-        //                                           final Set<String> fetchSet) {
+    //                                           final Set<String> fetchSet) {
 //        final EntityService<E> entityService = getEntityService(entityType);
 //        if (!(entityService instanceof HasLoadByName)) {
 //            throw new EntityServiceException("Entity service is not an instance of HasLoadByName: " + entityType,

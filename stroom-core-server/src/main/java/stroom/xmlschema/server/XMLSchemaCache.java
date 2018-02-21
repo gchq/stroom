@@ -19,7 +19,6 @@ package stroom.xmlschema.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 @EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
 public class XMLSchemaCache implements EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(XMLSchemaCache.class);

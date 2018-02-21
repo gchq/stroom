@@ -16,7 +16,6 @@
 
 package stroom.feed.server;
 
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CachingEntityManager;
 import stroom.importexport.server.ImportExportHelper;
@@ -25,7 +24,6 @@ import stroom.security.SecurityContext;
 import javax.inject.Inject;
 
 @Transactional
-@Component("cachedFeedService")
 public class CachedFeedService extends FeedServiceImpl {
     @Inject
     CachedFeedService(final CachingEntityManager entityManager,

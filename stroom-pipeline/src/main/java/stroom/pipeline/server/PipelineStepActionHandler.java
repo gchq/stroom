@@ -16,20 +16,17 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.context.annotation.Scope;
-import stroom.pipeline.server.task.SteppingTask;
+import stroom.pipeline.server.stepping.SteppingTask;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = PipelineStepAction.class)
-@Scope(value = StroomScope.TASK)
-public class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, SteppingResult> {
+class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, SteppingResult> {
     private final TaskManager taskManager;
 
     @Inject

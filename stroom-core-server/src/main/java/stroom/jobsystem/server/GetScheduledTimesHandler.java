@@ -16,19 +16,15 @@
 
 package stroom.jobsystem.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.jobsystem.shared.GetScheduledTimesAction;
-import stroom.jobsystem.shared.ScheduleService;
 import stroom.jobsystem.shared.ScheduledTimes;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = GetScheduledTimesAction.class)
-@Scope(value = StroomScope.TASK)
-public class GetScheduledTimesHandler extends AbstractTaskHandler<GetScheduledTimesAction, ScheduledTimes> {
+class GetScheduledTimesHandler extends AbstractTaskHandler<GetScheduledTimesAction, ScheduledTimes> {
     private final ScheduleService scheduleService;
 
     @Inject

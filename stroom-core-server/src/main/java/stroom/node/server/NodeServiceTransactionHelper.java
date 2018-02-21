@@ -18,11 +18,9 @@ package stroom.node.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
@@ -35,17 +33,14 @@ import java.util.List;
  * NodeService.
  */
 @Transactional
-@Component
 public class NodeServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeServiceTransactionHelper.class);
 
     private final StroomEntityManager entityManager;
-    private final StroomDatabaseInfo stroomDatabaseInfo;
 
     @Inject
-    NodeServiceTransactionHelper(final StroomEntityManager entityManager, final StroomDatabaseInfo stroomDatabaseInfo) {
+    NodeServiceTransactionHelper(final StroomEntityManager entityManager) {
         this.entityManager = entityManager;
-        this.stroomDatabaseInfo = stroomDatabaseInfo;
     }
 
     @SuppressWarnings("unchecked")

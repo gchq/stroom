@@ -19,8 +19,6 @@ package stroom.pipeline.server.writer;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.SerializedString;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.io.IgnoreCloseWriter;
@@ -42,8 +40,6 @@ import java.util.Deque;
 /**
  * Writes out XML and records segment boundaries as it goes.
  */
-@Component
-@Scope("prototype")
 @ConfigurableElement(
         type = "JSONWriter",
         category = Category.WRITER,

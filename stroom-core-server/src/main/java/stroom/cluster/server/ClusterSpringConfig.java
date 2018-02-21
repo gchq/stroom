@@ -20,11 +20,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Scope;
 import stroom.cache.CacheSpringConfig;
 import stroom.node.server.NodeCache;
+import stroom.node.server.NodeService;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.task.server.TaskManager;
 import stroom.util.spring.StroomBeanStore;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;
 
@@ -57,5 +60,14 @@ public class ClusterSpringConfig {
                                                  final NodeCache nodeCache,
                                                  final TaskManager taskManager) {
         return new ClusterNodeManagerImpl(clientPropertiesService, nodeCache, taskManager);
+    }
+
+    @Bean
+    @Scope(StroomScope.TASK)
+    public UpdateClusterStateTaskHandler updateClusterStateTaskHandler(final NodeService nodeService,
+                                                                       final NodeCache nodeCache,
+                                                                       final ClusterCallServiceRemote clusterCallServiceRemote,
+                                                                       final TaskManager taskManager) {
+        return new UpdateClusterStateTaskHandler(nodeService, nodeCache, clusterCallServiceRemote, taskManager);
     }
 }

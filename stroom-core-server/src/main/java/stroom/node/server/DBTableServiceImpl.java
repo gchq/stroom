@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Secured(DBTableStatus.MANAGE_DB_PERMISSION)
-@Component("dbTableService")
 public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableServiceImpl.class);
     private final StroomDatabaseInfo stroomDatabaseInfo;

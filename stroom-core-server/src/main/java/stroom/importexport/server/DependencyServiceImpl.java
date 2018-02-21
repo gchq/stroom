@@ -1,6 +1,5 @@
 package stroom.importexport.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
@@ -16,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class DependencyServiceImpl implements DependencyService {
     private final ImportExportActionHandlersImpl importExportActionHandlers;
 

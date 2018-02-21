@@ -19,7 +19,6 @@ package stroom.streamstore.server;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.SystemEntityServiceImpl;
 import stroom.entity.server.util.FieldMap;
@@ -34,9 +33,8 @@ import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
 @Transactional
-@Component
 @Insecure
-public class StreamAttributeKeyServiceImpl
+class StreamAttributeKeyServiceImpl
         extends SystemEntityServiceImpl<StreamAttributeKey, FindStreamAttributeKeyCriteria>
         implements StreamAttributeKeyService {
     private static final int MAX_CACHE_ENTRIES = 1000;

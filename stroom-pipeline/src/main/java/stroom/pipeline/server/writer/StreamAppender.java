@@ -17,8 +17,6 @@
 
 package stroom.pipeline.server.writer;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
@@ -43,14 +41,11 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "StreamAppender", category = Category.DESTINATION, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
@@ -71,13 +66,13 @@ public class StreamAppender extends AbstractAppender {
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
-                          final StreamStore streamStore,
-                          final StreamHolder streamHolder,
-                          final FeedService feedService,
-                          final StreamTypeService streamTypeService,
-                          final StreamProcessorHolder streamProcessorHolder,
-                          final MetaData metaData,
-                          final StreamCloser streamCloser) {
+                   final StreamStore streamStore,
+                   final StreamHolder streamHolder,
+                   final FeedService feedService,
+                   final StreamTypeService streamTypeService,
+                   final StreamProcessorHolder streamProcessorHolder,
+                   final MetaData metaData,
+                   final StreamCloser streamCloser) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;

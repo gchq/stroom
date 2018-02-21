@@ -39,8 +39,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "HttpPostFilter", category = PipelineElementType.Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
         PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STREAM)

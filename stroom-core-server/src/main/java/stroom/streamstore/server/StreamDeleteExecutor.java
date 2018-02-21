@@ -16,8 +16,6 @@
 
 package stroom.streamstore.server;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.jobsystem.server.ClusterLockService;
@@ -30,14 +28,11 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.server.AbstractBatchDeleteExecutor;
 import stroom.streamtask.server.BatchIdTransactionHelper;
 import stroom.streamtask.shared.StreamTask;
-import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 
-@Component
-@Scope(value = StroomScope.TASK)
 public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     private static final String TASK_NAME = "Stream Delete Executor";
     private static final String LOCK_NAME = "StreamDeleteExecutor";
@@ -47,9 +42,10 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     private static final String TEMP_STRM_ID_TABLE = "TEMP_STRM_ID";
 
     @Inject
-    public StreamDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
-                                final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
-                                final TaskMonitor taskMonitor) {
+    StreamDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
+                         final ClusterLockService clusterLockService,
+                         final StroomPropertyService propertyService,
+                         final TaskMonitor taskMonitor) {
         super(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor, TASK_NAME, LOCK_NAME,
                 STREAM_DELETE_PURGE_AGE_PROPERTY, STREAM_DELETE_BATCH_SIZE_PROPERTY, DEFAULT_STREAM_DELETE_BATCH_SIZE,
                 TEMP_STRM_ID_TABLE);

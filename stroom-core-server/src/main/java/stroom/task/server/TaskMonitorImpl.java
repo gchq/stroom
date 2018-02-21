@@ -16,15 +16,10 @@
 
 package stroom.task.server;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
-@Component("taskMonitor")
-@Scope(value = StroomScope.TASK)
 public final class TaskMonitorImpl implements TaskMonitor {
     private static final long serialVersionUID = 482019617293759705L;
 

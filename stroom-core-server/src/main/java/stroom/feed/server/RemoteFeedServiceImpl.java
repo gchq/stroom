@@ -17,21 +17,24 @@
 
 package stroom.feed.server;
 
-import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
-import stroom.security.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 
-@Component("remoteFeedService")
 public class RemoteFeedServiceImpl implements RemoteFeedService {
-    @Resource
-    private SecurityContext securityContext;
-    @Resource(name = "cachedFeedService")
-    private FeedService feedService;
+    private final SecurityContext securityContext;
+    private final FeedService feedService;
+
+    @Inject
+    public RemoteFeedServiceImpl(final SecurityContext securityContext, @Named("cachedFeedService") final FeedService feedService) {
+        this.securityContext = securityContext;
+        this.feedService = feedService;
+    }
 
     @Override
     @Insecure

@@ -17,19 +17,16 @@
 
 package stroom.entity.cluster;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.server.FindDeleteService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindDeleteServiceClusterTask.class)
-@Scope(value = StroomScope.TASK)
-public class FindDeleteServiceClusterHandler extends AbstractTaskHandler<FindDeleteServiceClusterTask<?>, VoidResult> {
+class FindDeleteServiceClusterHandler extends AbstractTaskHandler<FindDeleteServiceClusterTask<?>, VoidResult> {
     private final StroomBeanStore stroomBeanStore;
 
     @Inject

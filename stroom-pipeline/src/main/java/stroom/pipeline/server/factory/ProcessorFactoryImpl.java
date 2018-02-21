@@ -19,8 +19,6 @@ package stroom.pipeline.server.factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ErrorStatistics;
@@ -32,7 +30,6 @@ import stroom.task.server.TaskManager;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskScopeContext;
 import stroom.util.task.TaskScopeContextHolder;
 
@@ -41,12 +38,11 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-@Component
-@Scope(StroomScope.TASK)
 class ProcessorFactoryImpl implements ProcessorFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
     private final TaskManager taskManager;
     private final ErrorReceiverProxy errorReceiverProxy;
+
     @Inject
     public ProcessorFactoryImpl(final TaskManager taskManager, final ErrorReceiverProxy errorReceiverProxy) {
         this.taskManager = taskManager;

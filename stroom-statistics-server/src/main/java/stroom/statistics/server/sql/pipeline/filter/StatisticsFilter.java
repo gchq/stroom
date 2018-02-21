@@ -18,8 +18,6 @@ package stroom.statistics.server.sql.pipeline.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -44,7 +42,6 @@ import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -55,8 +52,6 @@ import java.util.Map;
 /**
  * The statistic filter used to gather event based statistics.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "StatisticsFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
         PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STATISTICS)

@@ -16,7 +16,6 @@
 
 package stroom.security.server;
 
-import org.springframework.stereotype.Component;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 
@@ -25,13 +24,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Component
-public class UserAndPermissionsHelper {
+class UserAndPermissionsHelper {
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
 
     @Inject
-    public UserAndPermissionsHelper(final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache) {
+    UserAndPermissionsHelper(final UserGroupsCache userGroupsCache,
+                             final UserAppPermissionsCache userAppPermissionsCache) {
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
     }

@@ -18,30 +18,32 @@ package stroom.entity.server.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.EntityAction;
 import stroom.task.server.TaskManager;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class EntityEventBusImpl implements EntityEventBus {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityEventBusImpl.class);
     private final Map<String, Map<EntityAction, List<EntityEvent.Handler>>> handlers = new HashMap<>();
     private volatile boolean initialised;
 
-    @Resource
-    private StroomBeanStore stroomBeanStore;
-    @Resource
-    private TaskManager taskManager;
+    private final StroomBeanStore stroomBeanStore;
+    private final TaskManager taskManager;
 
     private volatile boolean started = false;
+
+    @Inject
+    public EntityEventBusImpl(final StroomBeanStore stroomBeanStore, final TaskManager taskManager) {
+        this.stroomBeanStore = stroomBeanStore;
+        this.taskManager = taskManager;
+    }
 
     @StroomStartup
     public void init() {

@@ -17,14 +17,10 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 
@@ -37,8 +33,6 @@ import javax.inject.Inject;
  * You can call clear at any point to clear everything down.
  * </p>
  */
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockXSLTService extends MockDocumentEntityService<XSLT, FindXSLTCriteria> implements XSLTService {
     @Inject
     public MockXSLTService(final ImportExportHelper importExportHelper) {

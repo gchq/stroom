@@ -17,19 +17,14 @@
 
 package stroom.volume.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.util.spring.StroomSpringProfiles;
 
 import java.util.Set;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component("volumeService")
 public class MockVolumeService extends MockEntityService<Volume, FindVolumeCriteria> implements VolumeService {
     @Override
     public Set<Volume> getStreamVolumeSet(final Node node) {

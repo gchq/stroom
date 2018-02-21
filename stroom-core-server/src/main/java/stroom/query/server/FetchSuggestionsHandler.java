@@ -17,7 +17,6 @@
 
 package stroom.query.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.server.FindService;
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
@@ -34,7 +33,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,7 +42,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchSuggestionsAction.class)
-@Scope(StroomScope.TASK)
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
     private final FeedService feedService;
     private final PipelineService pipelineService;

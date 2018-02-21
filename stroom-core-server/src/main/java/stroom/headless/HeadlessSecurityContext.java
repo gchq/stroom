@@ -16,10 +16,8 @@
 
 package stroom.headless;
 
-import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
 
-@Component
 public class HeadlessSecurityContext implements SecurityContext {
     @Override
     public void pushUser(final String name) {

@@ -17,7 +17,6 @@
 
 package stroom.node.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.cluster.server.ClusterNodeManager;
 import stroom.cluster.server.ClusterState;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
@@ -32,8 +31,6 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -42,14 +39,15 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @TaskHandlerBean(task = FetchNodeInfoAction.class)
-@Scope(StroomScope.TASK)
 class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, ResultList<NodeInfoResult>> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final ClusterNodeManager clusterNodeManager;
     private final NodeService nodeService;
 
     @Inject
-    FetchNodeInfoHandler(final ClusterDispatchAsyncHelper dispatchHelper, final ClusterNodeManager clusterNodeManager, final NodeService nodeService) {
+    FetchNodeInfoHandler(final ClusterDispatchAsyncHelper dispatchHelper,
+                         final ClusterNodeManager clusterNodeManager,
+                         final NodeService nodeService) {
         this.dispatchHelper = dispatchHelper;
         this.clusterNodeManager = clusterNodeManager;
         this.nodeService = nodeService;

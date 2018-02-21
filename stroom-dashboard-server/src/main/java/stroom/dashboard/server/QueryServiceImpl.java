@@ -18,8 +18,6 @@ package stroom.dashboard.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
@@ -31,15 +29,11 @@ import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.logging.DocumentEventLog;
 import stroom.security.SecurityContext;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 import java.util.List;
 
-@Profile(StroomSpringProfiles.PROD)
-@Component("queryService")
 @Transactional
 @AutoMarshal
 public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, FindQueryCriteria> implements QueryService {
@@ -48,9 +42,9 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
     private final SecurityContext securityContext;
 
     @Inject
-    QueryServiceImpl(final StroomEntityManager entityManager,
-                     final ImportExportHelper importExportHelper,
-                     final SecurityContext securityContext) {
+    public QueryServiceImpl(final StroomEntityManager entityManager,
+                            final ImportExportHelper importExportHelper,
+                            final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
         this.entityManager = entityManager;
         this.securityContext = securityContext;

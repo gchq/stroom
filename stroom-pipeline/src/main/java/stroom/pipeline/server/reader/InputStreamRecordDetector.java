@@ -18,19 +18,14 @@ package stroom.pipeline.server.reader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.task.RecordDetector;
-import stroom.pipeline.server.task.SteppingController;
-import stroom.util.spring.StroomScope;
+import stroom.pipeline.server.stepping.RecordDetector;
+import stroom.pipeline.server.stepping.SteppingController;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class InputStreamRecordDetector extends FilterInputStream implements RecordDetector {
     private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamRecordDetector.class);
 

@@ -17,18 +17,19 @@
 package stroom.util.spring;
 
 import org.junit.Assert;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
-@Component
-@Profile(StroomSpringProfiles.TEST)
 public class MockStroomBeanAllDeps extends MockStroomBeanLifeCycleBean {
-    @Resource
-    private MockStroomBeanNoDeps stroomBeanNoDeps;
-    @Resource
-    private MockStroomBeanSomeDeps stroomBeanSomeDeps;
+    private final MockStroomBeanNoDeps stroomBeanNoDeps;
+    private final MockStroomBeanSomeDeps stroomBeanSomeDeps;
+
+    @Inject
+    MockStroomBeanAllDeps(final MockStroomBeanNoDeps stroomBeanNoDeps,
+                          final MockStroomBeanSomeDeps stroomBeanSomeDeps) {
+        this.stroomBeanNoDeps = stroomBeanNoDeps;
+        this.stroomBeanSomeDeps = stroomBeanSomeDeps;
+    }
 
     @Override
     @StroomStartup

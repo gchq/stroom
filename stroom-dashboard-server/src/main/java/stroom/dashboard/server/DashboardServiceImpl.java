@@ -19,16 +19,15 @@ package stroom.dashboard.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.QueryEntity;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.FindDashboardCriteria;
-import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -51,9 +50,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Component
-@Transactional
 @AutoMarshal
+@Transactional
 public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, FindDashboardCriteria>
         implements DashboardService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardServiceImpl.class);
@@ -62,7 +60,7 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     private String xmlTemplate;
 
     @Inject
-    DashboardServiceImpl(final StroomEntityManager entityManager,
+    public DashboardServiceImpl(final StroomEntityManager entityManager,
                          final ImportExportHelper importExportHelper,
                          final SecurityContext securityContext,
                          final ResourceLoader resourceLoader) {

@@ -16,14 +16,9 @@
 
 package stroom.node.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.node.shared.RecordCountService;
 import stroom.node.shared.RecordCounter;
-import stroom.util.spring.StroomSpringProfiles;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockRecordCountService implements RecordCountService {
     @Override
     public long getAndResetRead() {

@@ -17,14 +17,13 @@
 
 package stroom.resource;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
 import stroom.util.io.StreamUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.xml.transform.Source;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.URIResolver;
@@ -41,13 +40,16 @@ import java.io.IOException;
  * We also allow standard common translation includes
  * </p>
  */
-@Component
 public class CustomURIResolver implements URIResolver {
     private static final String RESOURCE_NOT_FOUND = "Resource not found: \"";
     private static final String RESOURCE_NOT_FOUND_END = "\"";
 
-    @Resource
-    private XSLTService xsltService;
+    private final XSLTService xsltService;
+
+    @Inject
+    public CustomURIResolver(final XSLTService xsltService) {
+        this.xsltService = xsltService;
+    }
 
     /**
      * Called by the processor when it encounters an xsl:include, xsl:import, or

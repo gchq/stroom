@@ -18,7 +18,6 @@ package stroom.test;
 
 import org.junit.Assert;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
@@ -37,12 +36,11 @@ import java.util.stream.Collectors;
  * Class to help with testing.
  * </p>
  */
-@Component
 public class DatabaseCommonTestControlTransactionHelper {
     private final StroomEntityManager entityManager;
 
     @Inject
-    public DatabaseCommonTestControlTransactionHelper(final StroomEntityManager entityManager) {
+    DatabaseCommonTestControlTransactionHelper(final StroomEntityManager entityManager) {
         this.entityManager = entityManager;
     }
 

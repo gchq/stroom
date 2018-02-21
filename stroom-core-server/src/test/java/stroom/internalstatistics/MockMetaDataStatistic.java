@@ -16,14 +16,8 @@
 
 package stroom.internalstatistics;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
-import stroom.internalstatistics.MetaDataStatistic;
-import stroom.util.spring.StroomSpringProfiles;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockMetaDataStatistic implements MetaDataStatistic {
     @Override
     public void recordStatistics(MetaMap metaData) {

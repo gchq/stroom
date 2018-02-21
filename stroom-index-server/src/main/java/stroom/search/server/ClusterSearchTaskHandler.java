@@ -22,7 +22,6 @@ import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.index.server.IndexService;
@@ -31,7 +30,6 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
-import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
@@ -52,6 +50,7 @@ import stroom.search.server.shard.IndexShardSearchTaskProducer;
 import stroom.search.server.shard.IndexShardSearchTaskProperties;
 import stroom.search.server.shard.IndexShardSearcherCache;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskCallback;
@@ -64,7 +63,6 @@ import stroom.util.config.PropertyUtil;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.ThreadPool;
-import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -87,7 +85,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = ClusterSearchTask.class)
-@Scope(StroomScope.TASK)
 class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 

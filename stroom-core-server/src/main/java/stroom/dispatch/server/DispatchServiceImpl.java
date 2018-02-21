@@ -21,7 +21,6 @@ import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.dispatch.shared.DispatchService;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
@@ -29,6 +28,7 @@ import stroom.entity.shared.Action;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PermissionException;
 import stroom.security.SecurityContext;
+import stroom.security.UserTokenUtil;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.servlet.SessionListListener;
 import stroom.task.server.TaskHandlerBean;
@@ -36,7 +36,6 @@ import stroom.task.server.TaskHandlerBeanRegistry;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
-import stroom.security.UserTokenUtil;
 import stroom.util.task.TaskIdFactory;
 
 import javax.inject.Inject;
@@ -50,7 +49,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Component(DispatchServiceImpl.BEAN_NAME)
 public class DispatchServiceImpl extends RemoteServiceServlet implements DispatchService {
     public static final String BEAN_NAME = "dispatchService";
 

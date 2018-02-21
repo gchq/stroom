@@ -27,13 +27,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 
-@Component
 public class AuthenticationEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationEventLog.class);
 
-    @Resource
-    private StroomEventLoggingService eventLoggingService;
+    private final StroomEventLoggingService eventLoggingService;
+
+    @Inject
+    public AuthenticationEventLog(final StroomEventLoggingService eventLoggingService) {
+        this.eventLoggingService = eventLoggingService;
+    }
 
     public void logon(final String userName) {
         logon(userName, true, null, null);

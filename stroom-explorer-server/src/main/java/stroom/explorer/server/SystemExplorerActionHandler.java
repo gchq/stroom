@@ -1,6 +1,5 @@
 package stroom.explorer.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.v2.DocRef;
@@ -10,7 +9,6 @@ import stroom.security.shared.DocumentPermissionNames;
 
 import java.util.Map;
 
-@Component
 class SystemExplorerActionHandler implements ExplorerActionHandler {
     public static final String SYSTEM = ExplorerConstants.SYSTEM;
     public static final String FOLDER = ExplorerConstants.FOLDER;

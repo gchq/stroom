@@ -22,7 +22,6 @@ import event.logging.Object;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
@@ -36,7 +35,6 @@ import stroom.streamstore.shared.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Component
 public class BasicEventInfoProvider implements EventInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicEventInfoProvider.class);
 

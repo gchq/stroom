@@ -17,7 +17,6 @@
 
 package stroom.jobsystem.server;
 
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.FindJobNodeCriteria;
 import stroom.jobsystem.shared.Job;
@@ -26,7 +25,7 @@ import stroom.jobsystem.shared.JobNode;
 import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.node.shared.Node;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 /**
@@ -34,16 +33,19 @@ import java.util.List;
  * instances running on a cluster and to communicate commands to all job
  * instances across a cluster using values from the database.
  */
-@Component
 public class JobManagerImpl implements JobManager {
-    @Resource
-    private JobService jobService;
+    private final JobService jobService;
+    private final JobNodeService jobNodeService;
+    private final LifecycleServiceImpl lifecycleService;
 
-    @Resource
-    private JobNodeService jobNodeService;
-
-    @Resource
-    private LifecycleServiceImpl lifecycleService;
+    @Inject
+    public JobManagerImpl(final JobService jobService,
+                          final JobNodeService jobNodeService,
+                          final LifecycleServiceImpl lifecycleService) {
+        this.jobService = jobService;
+        this.jobNodeService = jobNodeService;
+        this.lifecycleService = lifecycleService;
+    }
 
     /**
      * Gets the enabled job status for a named job.

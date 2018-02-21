@@ -17,14 +17,11 @@
 
 package stroom.feed.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 
@@ -37,8 +34,6 @@ import javax.inject.Inject;
  * You can call clear at any point to clear everything down.
  * </p>
  */
-@Profile(StroomSpringProfiles.TEST)
-@Component("feedService")
 public class MockFeedService extends MockDocumentEntityService<Feed, FindFeedCriteria> implements FeedService {
     public MockFeedService() {
     }

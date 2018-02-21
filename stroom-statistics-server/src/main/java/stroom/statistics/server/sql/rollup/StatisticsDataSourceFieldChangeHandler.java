@@ -16,7 +16,6 @@
 
 package stroom.statistics.server.sql.rollup;
 
-import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
@@ -24,15 +23,13 @@ import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @TaskHandlerBean(task = StatisticsDataSourceFieldChangeAction.class)
-@Scope(value = StroomScope.TASK)
 @Insecure
-public class StatisticsDataSourceFieldChangeHandler
+class StatisticsDataSourceFieldChangeHandler
         extends AbstractTaskHandler<StatisticsDataSourceFieldChangeAction, StatisticsDataSourceData> {
     @Override
     public StatisticsDataSourceData exec(final StatisticsDataSourceFieldChangeAction action) {

@@ -16,9 +16,7 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.CachingEntityManager;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
@@ -26,7 +24,6 @@ import stroom.security.SecurityContext;
 import javax.inject.Inject;
 
 @Transactional
-@Component("cachedPipelineService")
 public class CachedPipelineService extends PipelineServiceImpl {
     @Inject
     CachedPipelineService(final CachingEntityManager entityManager,

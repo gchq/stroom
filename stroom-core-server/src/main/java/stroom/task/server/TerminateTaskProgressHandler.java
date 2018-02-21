@@ -18,18 +18,15 @@ package stroom.task.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.cluster.TerminateTaskClusterTask;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = TerminateTaskProgressAction.class)
-@Scope(value = StroomScope.TASK)
 class TerminateTaskProgressHandler extends AbstractTaskHandler<TerminateTaskProgressAction, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskProgressHandler.class);
 

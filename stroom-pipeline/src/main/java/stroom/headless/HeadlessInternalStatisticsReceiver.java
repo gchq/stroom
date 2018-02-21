@@ -16,13 +16,11 @@
 
 package stroom.headless;
 
-import org.springframework.stereotype.Component;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 
 import java.util.List;
 
-@Component
 public class HeadlessInternalStatisticsReceiver implements InternalStatisticsReceiver {
     @Override
     public void putEvent(final InternalStatisticEvent internalStatisticEvent) {

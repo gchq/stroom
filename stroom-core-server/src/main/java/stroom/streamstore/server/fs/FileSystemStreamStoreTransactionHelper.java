@@ -18,7 +18,6 @@ package stroom.streamstore.server.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
@@ -26,7 +25,6 @@ import stroom.entity.server.util.StroomEntityManager;
 import javax.inject.Inject;
 
 @Transactional
-@Component
 public class FileSystemStreamStoreTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreTransactionHelper.class);
 

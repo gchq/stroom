@@ -16,14 +16,9 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
-@Component
-@Scope(value = StroomScope.TASK)
 public class ErrorWriterProxy implements ErrorWriter {
     private ErrorWriter errorWriter;
 

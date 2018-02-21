@@ -19,8 +19,6 @@ package stroom.index.server;
 import org.apache.lucene.document.Document;
 import stroom.index.shared.IndexShardKey;
 
-//@Profile(StroomSpringProfiles.TEST)
-//@Component("indexer")
 public class MockIndexer implements Indexer {
     private final IndexShardWriterCache indexShardWriterCache;
 
@@ -28,7 +26,6 @@ public class MockIndexer implements Indexer {
         this.indexShardWriterCache = new MockIndexShardWriterCache();
     }
 
-    //    @Inject
     MockIndexer(final IndexShardWriterCache indexShardWriterCache) {
         this.indexShardWriterCache = indexShardWriterCache;
     }

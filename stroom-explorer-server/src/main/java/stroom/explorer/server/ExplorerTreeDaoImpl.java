@@ -21,7 +21,6 @@ import fri.util.database.jpa.tree.closuretable.ClosureTableTreeDao;
 import fri.util.database.jpa.tree.closuretable.ClosureTableTreeNode;
 import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationException;
 import fri.util.database.jpa.tree.uniqueconstraints.UniqueTreeConstraint;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
@@ -29,7 +28,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-@Component
 @Transactional
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private final DbSession session;

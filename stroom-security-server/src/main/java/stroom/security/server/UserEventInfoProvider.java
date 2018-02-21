@@ -21,15 +21,13 @@ import event.logging.BaseObject;
 import event.logging.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.logging.EventInfoProvider;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Entity;
+import stroom.logging.EventInfoProvider;
 import stroom.security.shared.FindUserCriteria;
 
-@Component
-public class UserEventInfoProvider implements EventInfoProvider {
+class UserEventInfoProvider implements EventInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserEventInfoProvider.class);
 
     @Override

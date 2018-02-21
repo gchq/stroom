@@ -2,21 +2,16 @@ package stroom.datasource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.Optional;
 
-@Component
-@Scope(StroomScope.SINGLETON)
 @SuppressWarnings("unused")
 public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistry {
 

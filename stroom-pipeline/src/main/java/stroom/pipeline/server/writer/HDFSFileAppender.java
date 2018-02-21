@@ -22,8 +22,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -31,7 +29,6 @@ import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.BufferedOutputStream;
@@ -48,8 +45,6 @@ import java.util.function.Consumer;
  * TODO Need to add in proper security so it can connect to a secured
  * (kerberos?) cluster
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
         type = "HDFSFileAppender",
         category = Category.DESTINATION,

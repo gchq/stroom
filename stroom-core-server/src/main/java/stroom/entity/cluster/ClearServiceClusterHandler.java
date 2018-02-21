@@ -18,18 +18,15 @@ package stroom.entity.cluster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.Clearable;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = ClearServiceClusterTask.class)
-@Scope(value = StroomScope.TASK)
 class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceClusterTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClearServiceClusterHandler.class);
 

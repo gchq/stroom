@@ -20,17 +20,12 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.state.FeedHolder;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 class FeedName extends StroomExtensionFunctionCall {
     private final FeedHolder feedHolder;
 

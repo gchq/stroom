@@ -19,7 +19,6 @@ package stroom.jobsystem.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -45,14 +44,14 @@ import java.util.Set;
 
 @Transactional
 @Secured(Job.MANAGE_JOBS_PERMISSION)
-@Component
 public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
     private final StroomBeanStore stroomBeanStore;
 
     @Inject
-    JobServiceImpl(final StroomEntityManager entityManager, final StroomBeanStore stroomBeanStore) {
+    JobServiceImpl(final StroomEntityManager entityManager,
+                   final StroomBeanStore stroomBeanStore) {
         super(entityManager);
         this.stroomBeanStore = stroomBeanStore;
     }

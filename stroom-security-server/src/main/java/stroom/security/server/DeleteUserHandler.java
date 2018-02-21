@@ -16,21 +16,18 @@
 
 package stroom.security.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.security.Secured;
 import stroom.security.shared.DeleteUserAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = DeleteUserAction.class)
-@Scope(value = StroomScope.TASK)
 @Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
-public class DeleteUserHandler extends AbstractTaskHandler<DeleteUserAction, VoidResult> {
+class DeleteUserHandler extends AbstractTaskHandler<DeleteUserAction, VoidResult> {
     private final UserService userService;
 
     @Inject

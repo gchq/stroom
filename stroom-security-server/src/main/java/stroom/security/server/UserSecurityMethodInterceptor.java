@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.entity.shared.PermissionException;
 import stroom.security.Insecure;
@@ -38,7 +37,6 @@ import java.lang.reflect.Method;
 
 @Aspect
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@Component
 public class UserSecurityMethodInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserSecurityMethodInterceptor.class);
 

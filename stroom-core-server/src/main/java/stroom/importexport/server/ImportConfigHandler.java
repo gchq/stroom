@@ -16,28 +16,28 @@
 
 package stroom.importexport.server;
 
-import stroom.logging.ImportExportEventLog;
-import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportConfigAction;
+import stroom.importexport.shared.ImportState;
+import stroom.logging.ImportExportEventLog;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.ResourceKey;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
 
 @TaskHandlerBean(task = ImportConfigAction.class)
-@org.springframework.context.annotation.Scope(value = StroomScope.TASK)
-public class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, ResourceKey> {
+class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, ResourceKey> {
     private final ImportExportService importExportService;
     private final ImportExportEventLog eventLog;
     private final SessionResourceStore sessionResourceStore;
 
     @Inject
-    ImportConfigHandler(final ImportExportService importExportService, final ImportExportEventLog eventLog, final SessionResourceStore sessionResourceStore) {
+    ImportConfigHandler(final ImportExportService importExportService,
+                        final ImportExportEventLog eventLog,
+                        final SessionResourceStore sessionResourceStore) {
         this.importExportService = importExportService;
         this.eventLog = eventLog;
         this.sessionResourceStore = sessionResourceStore;

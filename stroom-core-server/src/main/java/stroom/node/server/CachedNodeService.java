@@ -17,14 +17,12 @@
 package stroom.node.server;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CachingEntityManager;
 
 import javax.inject.Inject;
 
 @Transactional
-@Component("cachedNodeService")
 public class CachedNodeService extends NodeServiceImpl {
     @Inject
     CachedNodeService(final CachingEntityManager entityManager,

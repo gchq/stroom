@@ -16,6 +16,7 @@
 
 package stroom.headless;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -60,4 +61,8 @@ import stroom.connectors.ConnectorsSpringConfig;
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 @Import(ConnectorsSpringConfig.class)
 public class HeadlessConfiguration {
+    @Bean
+    public HeadlessSecurityContext headlessSecurityContext() {
+        return new HeadlessSecurityContext();
+    }
 }

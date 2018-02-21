@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server.parser;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.pipeline.server.LocationFactoryProxy;
@@ -26,19 +24,17 @@ import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.util.spring.StroomScope;
 import stroom.xml.converter.json.JSONParserFactory;
 
 import javax.inject.Inject;
 
-@Component
-@Scope(value = StroomScope.TASK)
 @ConfigurableElement(type = "JSONParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.JSON)
 public class JSONParser extends AbstractParser {
     @Inject
-    public JSONParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {
+    public JSONParser(final ErrorReceiverProxy errorReceiverProxy,
+                      final LocationFactoryProxy locationFactory) {
         super(errorReceiverProxy, locationFactory);
     }
 

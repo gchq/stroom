@@ -16,17 +16,12 @@
 
 package stroom.index.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.util.spring.StroomSpringProfiles;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component("indexShardWriterCache")
 public class MockIndexShardWriterCache implements IndexShardWriterCache {
     private final int maxDocumentCount;
 

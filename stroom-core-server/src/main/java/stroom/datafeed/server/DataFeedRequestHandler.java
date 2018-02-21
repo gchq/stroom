@@ -19,8 +19,6 @@ package stroom.datafeed.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
@@ -37,7 +35,6 @@ import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
-import stroom.util.spring.StroomScope;
 import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
@@ -54,8 +51,6 @@ import java.util.stream.Collectors;
  * Handle the incoming requests and stream them to disk checking a few things.
  * </p>
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class DataFeedRequestHandler implements RequestHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedRequestHandler.class);
 
@@ -69,12 +64,12 @@ public class DataFeedRequestHandler implements RequestHandler {
     private volatile MetaMapFilter metaMapFilter;
 
     @Inject
-    DataFeedRequestHandler(final SecurityContext securityContext,
-                           final StreamStore streamStore,
-                           @Named("cachedFeedService") final FeedService feedService,
-                           final MetaDataStatistic metaDataStatistics,
-                           final MetaMapFilterFactory metaMapFilterFactory,
-                           final StroomPropertyService stroomPropertyService) {
+    public DataFeedRequestHandler(final SecurityContext securityContext,
+                                  final StreamStore streamStore,
+                                  @Named("cachedFeedService") final FeedService feedService,
+                                  final MetaDataStatistic metaDataStatistics,
+                                  final MetaMapFilterFactory metaMapFilterFactory,
+                                  final StroomPropertyService stroomPropertyService) {
         this.securityContext = securityContext;
         this.streamStore = streamStore;
         this.feedService = feedService;

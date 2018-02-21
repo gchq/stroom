@@ -22,27 +22,29 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.Task;
 import stroom.util.spring.ApplicationContextUtil;
 import stroom.util.spring.StroomBeanStore;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class TaskHandlerBeanRegistry implements ApplicationContextAware, InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerBeanRegistry.class);
 
-    @Resource
-    private StroomBeanStore beanStore;
+    private final StroomBeanStore beanStore;
 
     private Map<Class<?>, String> handlerMap = new HashMap<>();
     private Map<Class<?>, TaskHandlerBean> taskHandlerMap = new HashMap<>();
     private ApplicationContext applicationContext;
+
+    @Inject
+    TaskHandlerBeanRegistry(final StroomBeanStore beanStore) {
+        this.beanStore = beanStore;
+    }
 
     @SuppressWarnings("unchecked")
     public <R, H extends TaskHandler<Task<R>, R>> H findHandler(final Task<R> task) {

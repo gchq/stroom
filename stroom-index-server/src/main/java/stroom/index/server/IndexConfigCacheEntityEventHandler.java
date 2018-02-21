@@ -17,7 +17,6 @@
 
 package stroom.index.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -30,7 +29,6 @@ import stroom.query.api.v2.DocRef;
 import javax.inject.Inject;
 import java.util.List;
 
-@Component
 @EntityEventHandler(type = Index.ENTITY_TYPE)
 public class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
     private final NodeCache nodeCache;

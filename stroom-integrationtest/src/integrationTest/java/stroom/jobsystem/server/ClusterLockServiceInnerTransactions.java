@@ -22,13 +22,17 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 @Transactional
-@Component
 public class ClusterLockServiceInnerTransactions {
-    @Resource
-    private ClusterLockService clusterLockService;
+    private final ClusterLockService clusterLockService;
+
+    @Inject
+    ClusterLockServiceInnerTransactions(final ClusterLockService clusterLockService) {
+        this.clusterLockService = clusterLockService;
+    }
 
     public void thread1(final String lock, final List<Integer> sequence) {
         // This thread should acquire the lock first stopping the second

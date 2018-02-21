@@ -16,14 +16,9 @@
 
 package stroom.pipeline.state;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
-import stroom.util.spring.StroomScope;
 
-@Component
-@Scope(value = StroomScope.TASK)
 public class StreamProcessorHolder implements Holder {
     private StreamProcessor streamProcessor;
     private StreamTask streamTask;

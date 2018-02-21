@@ -17,7 +17,6 @@
 
 package stroom.document.server;
 
-import org.springframework.stereotype.Component;
 import stroom.docstore.server.DocumentActionHandler;
 import stroom.entity.server.EntityServiceBeanRegistry;
 import stroom.entity.shared.EntityServiceException;
@@ -26,7 +25,6 @@ import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 
-@Component
 class DocumentServiceImpl implements DocumentService {
     private final DocumentEventLog documentEventLog;
     private final EntityServiceBeanRegistry beanRegistry;

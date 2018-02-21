@@ -18,7 +18,6 @@
 package stroom.node.server;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.util.StroomEntityManager;
@@ -36,7 +35,6 @@ import javax.inject.Inject;
  */
 @Transactional
 @Secured(Node.MANAGE_NODES_PERMISSION)
-@Component("nodeService")
 public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriteria>
         implements NodeService, NodeServiceGetDefaultNode {
     private final NodeServiceTransactionHelper nodeServiceUtil;

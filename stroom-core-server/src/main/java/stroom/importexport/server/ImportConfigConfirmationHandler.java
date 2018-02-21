@@ -16,27 +16,25 @@
 
 package stroom.importexport.server;
 
-import org.springframework.context.annotation.Scope;
-import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportConfigConfirmationAction;
+import stroom.importexport.shared.ImportState;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = ImportConfigConfirmationAction.class)
-@Scope(value = StroomScope.TASK)
-public class ImportConfigConfirmationHandler
+class ImportConfigConfirmationHandler
         extends AbstractTaskHandler<ImportConfigConfirmationAction, SharedList<ImportState>> {
     private final ImportExportService importExportService;
     private final SessionResourceStore sessionResourceStore;
 
     @Inject
-    public ImportConfigConfirmationHandler(final ImportExportService importExportService, final SessionResourceStore sessionResourceStore) {
+    ImportConfigConfirmationHandler(final ImportExportService importExportService,
+                                    final SessionResourceStore sessionResourceStore) {
         this.importExportService = importExportService;
         this.sessionResourceStore = sessionResourceStore;
     }

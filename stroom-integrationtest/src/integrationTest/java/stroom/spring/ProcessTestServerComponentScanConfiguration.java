@@ -27,7 +27,6 @@ import org.springframework.context.annotation.Import;
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.connectors.ConnectorsSpringConfig;
 import stroom.dashboard.server.QueryServiceImpl;
-import stroom.dictionary.server.DictionaryStoreImpl;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.externaldoc.server.ExternalDocumentEntityServiceImpl;
 import stroom.feed.server.FeedServiceImpl;
@@ -38,7 +37,6 @@ import stroom.jobsystem.server.ClusterLockServiceImpl;
 import stroom.jobsystem.server.JobManagerImpl;
 import stroom.jobsystem.server.JobNodeServiceImpl;
 import stroom.jobsystem.server.JobServiceImpl;
-import stroom.jobsystem.server.ScheduleServiceImpl;
 import stroom.node.server.GlobalPropertyServiceImpl;
 import stroom.node.server.NodeConfigImpl;
 import stroom.node.server.NodeServiceImpl;
@@ -55,14 +53,10 @@ import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
 import stroom.policy.server.DataRetentionExecutor;
 import stroom.resource.server.ResourceStoreImpl;
-import stroom.security.server.UserServiceImpl;
 import stroom.streamstore.server.MockStreamTypeService;
-import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
-import stroom.streamstore.server.StreamTypeServiceImpl;
 import stroom.streamstore.server.fs.FileSystemStreamStore;
 import stroom.streamtask.server.MockStreamProcessorFilterService;
 import stroom.streamtask.server.MockStreamProcessorService;
-import stroom.streamtask.server.StreamProcessorFilterServiceImpl;
 import stroom.streamtask.server.StreamProcessorServiceImpl;
 import stroom.streamtask.server.StreamProcessorTaskFactory;
 import stroom.streamtask.server.StreamTaskCreatorImpl;
@@ -70,7 +64,6 @@ import stroom.streamtask.server.StreamTaskServiceImpl;
 import stroom.test.DatabaseCommonTestControl;
 import stroom.volume.server.VolumeServiceImpl;
 import stroom.xmlschema.server.XMLSchemaService;
-import stroom.xmlschema.server.XMLSchemaServiceImpl;
 import stroom.xmlschema.shared.XMLSchema;
 
 /**
@@ -132,7 +125,7 @@ import stroom.xmlschema.shared.XMLSchema;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterLockServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DatabaseCommonTestControl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DictionaryStoreImpl.class),
+//        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DictionaryStoreImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ExternalDocumentEntityServiceImpl.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // EntityPathResolverImpl.class),
@@ -160,18 +153,18 @@ import stroom.xmlschema.shared.XMLSchema;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = QueryServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = RecordCountServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ResourceStoreImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ScheduleServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamAttributeKeyServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorFilterServiceImpl.class),
+//        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ScheduleServiceImpl.class),
+//        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamAttributeKeyServiceImpl.class),
+//        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorFilterServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorTaskFactory.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamTaskCreatorImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamTaskServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamTypeServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = UserServiceImpl.class),
+//        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamTypeServiceImpl.class),
+//        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = UserServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = TextConverterServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = VolumeServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = XMLSchemaServiceImpl.class),
+//        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = XMLSchemaServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = XSLTServiceImpl.class)})
 @Import({ConnectorsSpringConfig.class})
 public class ProcessTestServerComponentScanConfiguration {

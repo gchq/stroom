@@ -19,8 +19,6 @@ package stroom.streamtask.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.server.FeedService;
@@ -34,7 +32,6 @@ import stroom.util.config.PropertyUtil;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -54,9 +51,7 @@ import java.util.List;
  * into its own repo with its own lifecycle and a clearly defined API,
  * then both stroom-proxy and stroom can use it.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
-public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
+final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileProcessorImpl.class);
 
     private final ProxyFileHandler feedFileProcessorHelper = new ProxyFileHandler();
@@ -74,11 +69,11 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     private volatile boolean stop = false;
 
     @Inject
-    public ProxyFileProcessorImpl(final StreamStore streamStore,
-                                  @Named("cachedFeedService") final FeedService feedService,
-                                  final MetaDataStatistic metaDataStatistic,
-                                  @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
-                                  @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
+    ProxyFileProcessorImpl(final StreamStore streamStore,
+                           @Named("cachedFeedService") final FeedService feedService,
+                           final MetaDataStatistic metaDataStatistic,
+                           @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
+                           @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
         this(
                 streamStore,
                 feedService,

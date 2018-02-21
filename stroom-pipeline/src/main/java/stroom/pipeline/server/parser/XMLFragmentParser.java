@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server.parser;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -41,15 +39,12 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
 import stroom.query.api.v2.DocRef;
-import stroom.util.spring.StroomScope;
 import stroom.xml.converter.ParserFactory;
 
 import javax.inject.Inject;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 
-@Component
-@Scope(value = StroomScope.TASK)
 @ConfigurableElement(type = "XMLFragmentParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
@@ -153,7 +148,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     }
 
     @PipelineProperty(description = "The XML fragment wrapper that should be used to wrap the input XML.")
-    @PipelinePropertyDocRef(types=TextConverter.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = TextConverter.ENTITY_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

@@ -21,11 +21,10 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.Period;
 import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.security.SecurityHelper;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
@@ -38,7 +37,6 @@ import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
-@Component
 public class EffectiveStreamCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
 

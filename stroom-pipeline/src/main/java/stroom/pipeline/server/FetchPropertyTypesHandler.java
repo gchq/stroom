@@ -16,19 +16,16 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.pipeline.server.factory.ElementRegistryFactory;
 import stroom.pipeline.shared.FetchPropertyTypesAction;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchPropertyTypesAction.class)
-@Scope(value = StroomScope.TASK)
-public class FetchPropertyTypesHandler extends AbstractTaskHandler<FetchPropertyTypesAction, FetchPropertyTypesResult> {
+class FetchPropertyTypesHandler extends AbstractTaskHandler<FetchPropertyTypesAction, FetchPropertyTypesResult> {
     private final ElementRegistryFactory pipelineElementRegistryFactory;
 
     @Inject

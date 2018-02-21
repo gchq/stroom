@@ -1,14 +1,11 @@
 package stroom.pipeline.server.writer;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
@@ -16,8 +13,6 @@ import javax.inject.Inject;
  * A generic Kafka appender for sending messages to kafka with any key and topic
  */
 @SuppressWarnings("unused")
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
         type = "KafkaAppender",
         category = PipelineElementType.Category.DESTINATION,
@@ -35,9 +30,9 @@ public class KafkaAppender extends AbstractKafkaAppender {
 
     @SuppressWarnings("unused")
     @Inject
-    public KafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
-                         final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                         final PathCreator pathCreator) {
+    KafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
+                  final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+                  final PathCreator pathCreator) {
         super(errorReceiverProxy, stroomKafkaProducerFactoryService);
         this.pathCreator = pathCreator;
     }

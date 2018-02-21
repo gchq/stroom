@@ -16,26 +16,13 @@
 
 package stroom.servlet;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
-import stroom.util.io.CloseableUtil;
-import stroom.util.io.StreamUtil;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class StroomServlet extends AppServlet {
     @Inject
-    public StroomServlet(final StroomPropertyService stroomPropertyService) {
+    StroomServlet(final StroomPropertyService stroomPropertyService) {
         super(stroomPropertyService);
     }
 

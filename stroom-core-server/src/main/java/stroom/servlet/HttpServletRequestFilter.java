@@ -16,8 +16,6 @@
 
 package stroom.servlet;
 
-import org.springframework.stereotype.Component;
-
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -28,12 +26,11 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
-@Component
 public class HttpServletRequestFilter implements Filter {
     private final HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
-    public HttpServletRequestFilter(final HttpServletRequestHolder httpServletRequestHolder) {
+    HttpServletRequestFilter(final HttpServletRequestHolder httpServletRequestHolder) {
         this.httpServletRequestHolder = httpServletRequestHolder;
     }
 

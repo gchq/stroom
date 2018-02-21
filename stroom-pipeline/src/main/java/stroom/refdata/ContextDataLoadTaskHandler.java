@@ -19,7 +19,6 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.EncodingSelection;
@@ -38,31 +37,39 @@ import stroom.streamstore.shared.StreamType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 
 @TaskHandlerBean(task = ContextDataLoadTask.class)
-@Scope(value = StroomScope.TASK)
-public class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask, MapStore> {
+class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask, MapStore> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContextDataLoadTaskHandler.class);
 
-    @Resource
-    private PipelineFactory pipelineFactory;
-    @Resource
-    private MapStoreHolder mapStoreHolder;
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    @Resource(name = "cachedPipelineService")
-    private PipelineService pipelineService;
-    @Resource
-    private PipelineDataCache pipelineDataCache;
+    private final PipelineFactory pipelineFactory;
+    private final MapStoreHolder mapStoreHolder;
+    private final FeedHolder feedHolder;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final PipelineService pipelineService;
+    private final PipelineDataCache pipelineDataCache;
 
     private ErrorReceiverIdDecorator errorReceiver;
+
+    @Inject
+    ContextDataLoadTaskHandler(final PipelineFactory pipelineFactory,
+                               final MapStoreHolder mapStoreHolder,
+                               final FeedHolder feedHolder,
+                               final ErrorReceiverProxy errorReceiverProxy,
+                               @Named("cachedPipelineService") final PipelineService pipelineService,
+                               final PipelineDataCache pipelineDataCache) {
+        this.pipelineFactory = pipelineFactory;
+        this.mapStoreHolder = mapStoreHolder;
+        this.feedHolder = feedHolder;
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.pipelineService = pipelineService;
+        this.pipelineDataCache = pipelineDataCache;
+    }
 
     @Override
     public MapStore exec(final ContextDataLoadTask task) {

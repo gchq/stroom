@@ -18,14 +18,12 @@ package stroom.jobsystem.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.jobsystem.shared.JobNode;
 import stroom.node.shared.Node;
 import stroom.streamtask.server.TaskStatusTraceLog;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -34,8 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 @TaskHandlerBean(task = DistributedTaskRequestClusterTask.class)
-@Scope(value = StroomScope.TASK)
-public class DistributedTaskRequestClusterHandler
+class DistributedTaskRequestClusterHandler
         implements TaskHandler<DistributedTaskRequestClusterTask, DistributedTaskRequestResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskRequestClusterHandler.class);
 

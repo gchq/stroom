@@ -17,25 +17,23 @@
 
 package stroom.document.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.logging.DocumentEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedObject;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = DocumentServiceReadAction.class)
-@Scope(value = StroomScope.TASK)
 class DocumentServiceReadHandler
         extends AbstractTaskHandler<DocumentServiceReadAction<SharedObject>, SharedObject> {
     private final DocumentService documentService;
     private final DocumentEventLog documentEventLog;
 
     @Inject
-    DocumentServiceReadHandler(final DocumentService documentService, final DocumentEventLog documentEventLog) {
+    DocumentServiceReadHandler(final DocumentService documentService,
+                               final DocumentEventLog documentEventLog) {
         this.documentService = documentService;
         this.documentEventLog = documentEventLog;
     }

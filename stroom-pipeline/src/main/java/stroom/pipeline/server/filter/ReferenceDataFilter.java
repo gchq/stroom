@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server.filter;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.entity.shared.Range;
@@ -30,7 +28,6 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.refdata.MapStoreHolder;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
@@ -42,8 +39,6 @@ import javax.inject.Inject;
  * stored as reference data. The key, value map content is likely to have been
  * produced as the result of an XSL transformation of some reference data.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "ReferenceDataFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.REFERENCE_DATA)
 public class ReferenceDataFilter extends AbstractXMLFilter {

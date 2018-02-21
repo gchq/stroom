@@ -17,17 +17,15 @@
 package stroom.entity.server.util;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
 
-@Component
 public class StroomDatabaseInfo {
     private String driverClassName;
 
     @Inject
-    public StroomDatabaseInfo(@Value("#{propertyConfigurer.getProperty('stroom.jdbcDriverClassName')}") final String driverClassName) {
+    StroomDatabaseInfo(@Value("#{propertyConfigurer.getProperty('stroom.jdbcDriverClassName')}") final String driverClassName) {
         this.driverClassName = driverClassName;
     }
 

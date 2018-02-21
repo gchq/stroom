@@ -17,15 +17,10 @@
 
 package stroom.jobsystem.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockNamedEntityService;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
-import stroom.util.spring.StroomSpringProfiles;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockJobService extends MockNamedEntityService<Job, FindJobCriteria> implements JobService {
     @Override
     public void startup() {

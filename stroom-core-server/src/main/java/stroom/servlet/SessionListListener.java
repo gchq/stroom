@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.StroomHeaderArguments;
@@ -43,7 +42,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * There are 2 instances of this class as spring has no HttpSessionListener
  * functionality so we use 2 instances and some statics
  */
-@Component
 public class SessionListListener implements HttpSessionListener, SessionListService, BeanFactoryAware {
     private static final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, String> lastRequestUserAgent = new ConcurrentHashMap<>();

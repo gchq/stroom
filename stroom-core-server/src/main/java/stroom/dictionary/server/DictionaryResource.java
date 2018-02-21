@@ -21,7 +21,6 @@ import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.stereotype.Component;
 import stroom.importexport.server.DocRefs;
 import stroom.importexport.server.DocumentData;
 import stroom.importexport.shared.ImportState;
@@ -45,12 +44,11 @@ import java.util.Set;
         description = "Dictionary API")
 @Path("/dictionary/v1")
 @Produces(MediaType.APPLICATION_JSON)
-@Component
 public class DictionaryResource implements HasHealthCheck {
     private final DictionaryStore dictionaryStore;
 
     @Inject
-    public DictionaryResource(final DictionaryStore dictionaryStore) {
+    DictionaryResource(final DictionaryStore dictionaryStore) {
         this.dictionaryStore = dictionaryStore;
     }
 

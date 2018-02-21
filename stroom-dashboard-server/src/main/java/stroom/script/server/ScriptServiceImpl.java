@@ -42,7 +42,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Component("scriptService")
 @Transactional
 public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScriptCriteria> implements ScriptService {
     public static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);

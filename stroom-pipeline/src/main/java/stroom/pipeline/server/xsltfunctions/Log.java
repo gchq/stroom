@@ -19,13 +19,8 @@ package stroom.pipeline.server.xsltfunctions;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 class Log extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {

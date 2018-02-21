@@ -26,7 +26,6 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -40,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Component
 public class StroomBeanStore implements InitializingBean, BeanFactoryAware, ApplicationContextAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanStore.class);
 

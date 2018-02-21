@@ -22,8 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
@@ -55,8 +53,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Component
-@Primary
 @Transactional
 public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactoryAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEntityManagerImpl.class);
@@ -69,8 +65,8 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
     private BeanFactory beanFactory;
 
     @Inject
-    public StroomEntityManagerImpl(final Provider<EntityEventBus> eventBusProvider,
-                                   final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider) {
+    StroomEntityManagerImpl(final Provider<EntityEventBus> eventBusProvider,
+                            final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider) {
         this.eventBusProvider = eventBusProvider;
         this.stroomDatabaseInfoProvider = stroomDatabaseInfoProvider;
     }

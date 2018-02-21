@@ -1,13 +1,14 @@
 package stroom.security.server;
 
-import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
 
-@Component
-public class AuthorisationServiceImpl implements AuthorisationService {
-    private SecurityContext securityContext;
+import javax.inject.Inject;
 
-    public AuthorisationServiceImpl(SecurityContext securityContext) {
+class AuthorisationServiceImpl implements AuthorisationService {
+    private final SecurityContext securityContext;
+
+    @Inject
+    AuthorisationServiceImpl(final SecurityContext securityContext) {
         this.securityContext = securityContext;
     }
 

@@ -23,7 +23,6 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.logging.StreamEventLog;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -47,7 +46,6 @@ import java.util.Map;
 /**
  * Generic Import Service
  */
-@Component
 public final class ImportFileServlet extends HttpServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportFileServlet.class);
 
@@ -57,7 +55,8 @@ public final class ImportFileServlet extends HttpServlet {
     private final StreamEventLog streamEventLog;
 
     @Inject
-    ImportFileServlet(final SessionResourceStore sessionResourceStore, final StreamEventLog streamEventLog) {
+    ImportFileServlet(final SessionResourceStore sessionResourceStore,
+                      final StreamEventLog streamEventLog) {
         this.sessionResourceStore = sessionResourceStore;
         this.streamEventLog = streamEventLog;
     }

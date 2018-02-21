@@ -19,8 +19,6 @@ package stroom.streamtask.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
 import stroom.jobsystem.server.ClusterLockService;
@@ -33,16 +31,13 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Component
-@Scope(value = StroomScope.TASK)
-public class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
+class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskDeleteExecutor.class);
 
     private static final String TASK_NAME = "Stream Task Delete Executor";
@@ -56,10 +51,12 @@ public class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
     private final StreamProcessorFilterService streamProcessorFilterService;
 
     @Inject
-    public StreamTaskDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
-                                    final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
-                                    final TaskMonitor taskMonitor, final StreamTaskCreatorImpl streamTaskCreator,
-                                    final StreamProcessorFilterService streamProcessorFilterService) {
+    StreamTaskDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
+                             final ClusterLockService clusterLockService,
+                             final StroomPropertyService propertyService,
+                             final TaskMonitor taskMonitor,
+                             final StreamTaskCreatorImpl streamTaskCreator,
+                             final StreamProcessorFilterService streamProcessorFilterService) {
         super(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor, TASK_NAME, LOCK_NAME,
                 STREAM_TASKS_DELETE_AGE_PROPERTY, STREAM_TASKS_DELETE_BATCH_SIZE_PROPERTY,
                 DEFAULT_STREAM_TASK_DELETE_BATCH_SIZE, TEMP_STRM_TASK_ID_TABLE);

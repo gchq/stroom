@@ -19,7 +19,6 @@ package stroom.security.server;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.springframework.stereotype.Component;
 import stroom.security.shared.UserRef;
 import stroom.util.cache.CacheManager;
 
@@ -27,8 +26,7 @@ import javax.inject.Inject;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-@Component
-public class UserCache {
+class UserCache {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<String, Optional<UserRef>> cache;

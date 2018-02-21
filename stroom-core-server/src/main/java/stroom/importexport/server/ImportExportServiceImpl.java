@@ -18,7 +18,6 @@ package stroom.importexport.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.importexport.shared.ImportState;
@@ -37,7 +36,6 @@ import java.util.List;
  * Service to export standing data in and out from Stroom. It uses a ZIP format to
  * hold a HSQLDB database.
  */
-@Component
 public class ImportExportServiceImpl implements ImportExportService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportServiceImpl.class);
 

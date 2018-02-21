@@ -16,21 +16,17 @@
 
 package stroom.pipeline.server.source;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.Element;
 import stroom.pipeline.server.reader.AbstractInputElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 
-@Component
-@Scope("prototype")
 @ConfigurableElement(type = "Source",
         roles = {
-            PipelineElementType.ROLE_SOURCE,
-            PipelineElementType.ROLE_HAS_TARGETS,
-            PipelineElementType.VISABILITY_SIMPLE
+                PipelineElementType.ROLE_SOURCE,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE
         },
         icon = ElementIcons.STREAM)
 public class SourceElement extends AbstractInputElement implements Element {

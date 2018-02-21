@@ -23,16 +23,18 @@ import event.logging.Outcome;
 import event.logging.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
-@Component
 public class AuthorisationEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationEventLog.class);
 
-    @Resource
-    private StroomEventLoggingService eventLoggingService;
+    private final StroomEventLoggingService eventLoggingService;
+
+    @Inject
+    public AuthorisationEventLog(final StroomEventLoggingService eventLoggingService) {
+        this.eventLoggingService = eventLoggingService;
+    }
 
     public void addUserToGroup(final String userName, final String groupName, final boolean success, final String outcomeDescription) {
         final Event.EventDetail.Authorise.AddGroups addGroups = new Event.EventDetail.Authorise.AddGroups();

@@ -19,7 +19,6 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
@@ -47,10 +46,10 @@ import stroom.streamstore.shared.StreamType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 
 /**
@@ -60,38 +59,53 @@ import java.io.IOException;
  * substitutions when processing events data.
  */
 @TaskHandlerBean(task = ReferenceDataLoadTask.class)
-@Scope(value = StroomScope.TASK)
-public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoadTask, MapStore> {
+class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoadTask, MapStore> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
 
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private PipelineFactory pipelineFactory;
-    @Resource
-    private MapStoreHolder mapStoreHolder;
-    @Resource(name = "cachedFeedService")
-    private FeedService feedService;
-    @Resource(name = "cachedPipelineService")
-    private PipelineService pipelineService;
-    @Resource
-    private PipelineHolder pipelineHolder;
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private LocationFactoryProxy locationFactory;
-    @Resource
-    private StreamCloser streamCloser;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    @Resource
-    private TaskMonitor taskMonitor;
-    @Resource
-    private PipelineDataCache pipelineDataCache;
+    private final StreamStore streamStore;
+    private final PipelineFactory pipelineFactory;
+    private final MapStoreHolder mapStoreHolder;
+    private final FeedService feedService;
+    private final PipelineService pipelineService;
+    private final PipelineHolder pipelineHolder;
+    private final FeedHolder feedHolder;
+    private final StreamHolder streamHolder;
+    private final LocationFactoryProxy locationFactory;
+    private final StreamCloser streamCloser;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final TaskMonitor taskMonitor;
+    private final PipelineDataCache pipelineDataCache;
 
     private ErrorReceiverIdDecorator errorReceiver;
+
+    @Inject
+    ReferenceDataLoadTaskHandler(final StreamStore streamStore,
+                                 final PipelineFactory pipelineFactory,
+                                 final MapStoreHolder mapStoreHolder,
+                                 @Named("cachedFeedService") final FeedService feedService,
+                                 @Named("cachedPipelineService") final PipelineService pipelineService,
+                                 final PipelineHolder pipelineHolder,
+                                 final FeedHolder feedHolder,
+                                 final StreamHolder streamHolder,
+                                 final LocationFactoryProxy locationFactory,
+                                 final StreamCloser streamCloser,
+                                 final ErrorReceiverProxy errorReceiverProxy,
+                                 final TaskMonitor taskMonitor,
+                                 final PipelineDataCache pipelineDataCache) {
+        this.streamStore = streamStore;
+        this.pipelineFactory = pipelineFactory;
+        this.mapStoreHolder = mapStoreHolder;
+        this.feedService = feedService;
+        this.pipelineService = pipelineService;
+        this.pipelineHolder = pipelineHolder;
+        this.feedHolder = feedHolder;
+        this.streamHolder = streamHolder;
+        this.locationFactory = locationFactory;
+        this.streamCloser = streamCloser;
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.taskMonitor = taskMonitor;
+        this.pipelineDataCache = pipelineDataCache;
+    }
 
     /**
      * Loads reference data that meets the supplied criteria into the current

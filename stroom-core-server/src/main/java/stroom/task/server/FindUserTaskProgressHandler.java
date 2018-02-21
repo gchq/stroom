@@ -16,7 +16,6 @@
 
 package stroom.task.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.servlet.HttpServletRequestHolder;
@@ -24,18 +23,17 @@ import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TaskProgress;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindUserTaskProgressAction.class)
-@Scope(StroomScope.TASK)
 class FindUserTaskProgressHandler
         extends FindTaskProgressHandlerBase<FindUserTaskProgressAction, BaseResultList<TaskProgress>> {
     private final transient HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
-    FindUserTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper, final HttpServletRequestHolder httpServletRequestHolder) {
+    FindUserTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper,
+                                final HttpServletRequestHolder httpServletRequestHolder) {
         super(dispatchHelper);
         this.httpServletRequestHolder = httpServletRequestHolder;
     }

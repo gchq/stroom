@@ -19,8 +19,8 @@ package stroom.pipeline.server.reader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.task.RecordDetector;
-import stroom.pipeline.server.task.SteppingController;
+import stroom.pipeline.server.stepping.RecordDetector;
+import stroom.pipeline.server.stepping.SteppingController;
 
 import java.io.FilterReader;
 import java.io.IOException;

@@ -18,7 +18,6 @@ package stroom.node.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.node.shared.GlobalProperty;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-@Component
 public class GlobalProperties {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalProperties.class);
 

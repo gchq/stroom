@@ -22,15 +22,19 @@ import stroom.node.shared.Node;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.shared.VoidResult;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @DistributedTaskFactoryBean(jobName = StreamProcessorTask.JOB_NAME, description = "Job to process streams matching stream processor filters with their associated pipelines")
 public class StreamProcessorTaskFactory implements DistributedTaskFactory<StreamProcessorTask, VoidResult> {
-    @Resource
-    private StreamTaskCreator streamTaskCreator;
+    private final StreamTaskCreator streamTaskCreator;
+
+    @Inject
+    StreamProcessorTaskFactory(final StreamTaskCreator streamTaskCreator) {
+        this.streamTaskCreator = streamTaskCreator;
+    }
 
     @Override
     public List<StreamProcessorTask> fetch(final Node node, final int count) {

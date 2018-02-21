@@ -16,16 +16,11 @@
 
 package stroom.pipeline.server.filter;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.task.RecordDetector;
-import stroom.pipeline.server.task.SteppingController;
-import stroom.util.spring.StroomScope;
+import stroom.pipeline.server.stepping.RecordDetector;
+import stroom.pipeline.server.stepping.SteppingController;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class SAXRecordDetector extends AbstractXMLFilter implements RecordDetector {
     private SteppingController controller;
 

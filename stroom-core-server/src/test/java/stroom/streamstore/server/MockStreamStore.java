@@ -18,22 +18,17 @@ package stroom.streamstore.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
 import stroom.feed.MetaMap;
 import stroom.io.SeekableInputStream;
-import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.collections.TypedMap;
-import stroom.util.spring.StroomSpringProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -45,13 +40,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-@Component
-@Profile(StroomSpringProfiles.TEST)
 public class MockStreamStore implements StreamStore, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MockStreamStore.class);
 
@@ -278,7 +268,7 @@ public class MockStreamStore implements StreamStore, Clearable {
      * Open a existing stream source.
      * </p>
      *
-     * @param streamId        The stream id to open a stream source for.
+     * @param streamId  The stream id to open a stream source for.
      * @param anyStatus Used to specify if this method will return stream sources that
      *                  are logically deleted or locked. If false only unlocked stream
      *                  sources will be returned, null otherwise.

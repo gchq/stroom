@@ -16,7 +16,6 @@
 
 package stroom.dictionary.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DownloadDictionaryAction;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
@@ -28,7 +27,6 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.nio.file.Files;
@@ -36,16 +34,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 @TaskHandlerBean(task = DownloadDictionaryAction.class)
-@Scope(StroomScope.PROTOTYPE)
-public class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAction, ResourceGeneration> {
+class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAction, ResourceGeneration> {
     private final SessionResourceStore sessionResourceStore;
     private final DocumentEventLog documentEventLog;
     private final DictionaryStore dictionaryStore;
 
     @Inject
-    public DownloadDictionaryHandler(final SessionResourceStore sessionResourceStore,
-                                     final DocumentEventLog documentEventLog,
-                                     final DictionaryStore dictionaryStore) {
+    DownloadDictionaryHandler(final SessionResourceStore sessionResourceStore,
+                              final DocumentEventLog documentEventLog,
+                              final DictionaryStore dictionaryStore) {
         this.sessionResourceStore = sessionResourceStore;
         this.documentEventLog = documentEventLog;
         this.dictionaryStore = dictionaryStore;

@@ -8,7 +8,6 @@ import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
@@ -30,7 +29,6 @@ import java.util.stream.Collectors;
  * jmap is available on the filesystem and executable by this java process.
  */
 @SuppressWarnings("unused")
-@Component
 class HeapHistogramService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeapHistogramService.class);

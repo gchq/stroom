@@ -17,22 +17,17 @@
 
 package stroom.streamtask.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamTask;
-import stroom.util.spring.StroomSpringProfiles;
 
 /**
  * Mock object.
  * <p>
  * In memory simple process manager that also uses the mock stream store.
  */
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockStreamTaskService extends MockEntityService<StreamTask, FindStreamTaskCriteria>
         implements StreamTaskService {
     @Override

@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server.parser;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -28,7 +26,6 @@ import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.util.spring.StroomScope;
 import stroom.util.xml.SAXParserFactoryFactory;
 
 import javax.inject.Inject;
@@ -37,8 +34,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 
-@Component
-@Scope(value = StroomScope.TASK)
 @ConfigurableElement(type = "XMLParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.XML)
@@ -51,7 +46,8 @@ public class XMLParser extends AbstractParser {
     }
 
     @Inject
-    public XMLParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {
+    public XMLParser(final ErrorReceiverProxy errorReceiverProxy,
+                     final LocationFactoryProxy locationFactory) {
         super(errorReceiverProxy, locationFactory);
     }
 
@@ -67,7 +63,7 @@ public class XMLParser extends AbstractParser {
     }
 
     @Override
-    protected InputSource getInputSource(final InputSource inputSource) throws IOException {
+    protected InputSource getInputSource(final InputSource inputSource) {
         return inputSource;
     }
 }

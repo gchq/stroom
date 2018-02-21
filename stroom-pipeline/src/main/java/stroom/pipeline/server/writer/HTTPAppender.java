@@ -2,8 +2,6 @@ package stroom.pipeline.server.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
@@ -18,7 +16,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.net.ssl.HttpsURLConnection;
@@ -39,8 +36,6 @@ import java.util.zip.ZipOutputStream;
 /**
  * Handler class that forwards the request to a URL.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
         type = "HTTPAppender",
         category = Category.DESTINATION,
@@ -67,8 +62,8 @@ public class HTTPAppender extends AbstractAppender {
     private long count;
 
     @Inject
-    public HTTPAppender(final ErrorReceiverProxy errorReceiverProxy,
-                        final MetaDataHolder metaDataHolder) {
+    HTTPAppender(final ErrorReceiverProxy errorReceiverProxy,
+                 final MetaDataHolder metaDataHolder) {
         super(errorReceiverProxy);
         this.metaDataHolder = metaDataHolder;
     }

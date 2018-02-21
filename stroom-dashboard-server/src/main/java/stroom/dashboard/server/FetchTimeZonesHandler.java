@@ -16,13 +16,11 @@
 
 package stroom.dashboard.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.FetchTimeZonesAction;
 import stroom.dashboard.shared.TimeZoneData;
 import stroom.security.Insecure;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -30,9 +28,8 @@ import java.util.Collections;
 import java.util.List;
 
 @TaskHandlerBean(task = FetchTimeZonesAction.class)
-@Scope(StroomScope.TASK)
 @Insecure
-public class FetchTimeZonesHandler extends AbstractTaskHandler<FetchTimeZonesAction, TimeZoneData> {
+class FetchTimeZonesHandler extends AbstractTaskHandler<FetchTimeZonesAction, TimeZoneData> {
     @Override
     public TimeZoneData exec(final FetchTimeZonesAction action) {
         final List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());

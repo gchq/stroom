@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-@Component
 public class SearchResponseMapper {
     public SearchResponse mapResponse(final stroom.query.api.v2.SearchResponse searchResponse) {
         if (searchResponse == null) {

@@ -16,26 +16,23 @@
 
 package stroom.security.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.shared.CheckDocumentPermissionAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedBoolean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = CheckDocumentPermissionAction.class)
-@Scope(value = StroomScope.TASK)
 @Insecure
-public class CheckDocumentPermissionHandler
+class CheckDocumentPermissionHandler
         extends AbstractTaskHandler<CheckDocumentPermissionAction, SharedBoolean> {
     private final SecurityContext securityContext;
 
     @Inject
-    public CheckDocumentPermissionHandler(final SecurityContext securityContext) {
+    CheckDocumentPermissionHandler(final SecurityContext securityContext) {
         this.securityContext = securityContext;
     }
 

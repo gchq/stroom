@@ -19,8 +19,6 @@ package stroom.search.server.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineService;
@@ -39,10 +37,10 @@ import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.search.server.SearchException;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
@@ -50,7 +48,6 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
@@ -58,8 +55,6 @@ import javax.inject.Named;
 import java.io.InputStream;
 import java.util.List;
 
-@Component
-@Scope(value = StroomScope.TASK)
 public class ExtractionTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
 

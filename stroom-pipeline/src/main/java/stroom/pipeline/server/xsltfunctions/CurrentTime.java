@@ -20,14 +20,9 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 class CurrentTime extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {

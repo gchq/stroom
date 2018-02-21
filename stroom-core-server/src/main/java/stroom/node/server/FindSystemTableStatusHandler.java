@@ -16,7 +16,6 @@
 
 package stroom.node.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.node.shared.DBTableService;
@@ -24,12 +23,10 @@ import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindSystemTableStatusAction.class)
-@Scope(value = StroomScope.TASK)
 public class FindSystemTableStatusHandler
         extends AbstractTaskHandler<FindSystemTableStatusAction, ResultList<DBTableStatus>> {
     private final DBTableService dbTableService;

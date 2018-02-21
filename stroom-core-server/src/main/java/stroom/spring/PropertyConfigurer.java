@@ -16,7 +16,6 @@
 
 package stroom.spring;
 
-import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.util.spring.PropertyProvider;
 
@@ -28,12 +27,11 @@ import javax.inject.Inject;
  * property resolution to the <code>StroomPropertyService</code> bean that in turn
  * defers property resolution to <code>StroomProperties</code>
  */
-@Component("propertyConfigurer")
 public class PropertyConfigurer implements PropertyProvider {
     private final StroomPropertyService stroomPropertyService;
 
     @Inject
-    public PropertyConfigurer(final StroomPropertyService stroomPropertyService) {
+    PropertyConfigurer(final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 

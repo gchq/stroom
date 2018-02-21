@@ -16,7 +16,6 @@
 
 package stroom.dashboard.server;
 
-import org.springframework.stereotype.Component;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
@@ -31,7 +30,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.Map;
 
-@Component
 @Path("/dashboard")
 public class SearchBusPollResource {
     private final Provider<SearchBusPollActionHandler> searchBusPollActionHandler;

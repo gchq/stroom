@@ -19,7 +19,6 @@ package stroom.importexport.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.util.BaseEntityBeanWrapper;
@@ -29,16 +28,16 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityDependencyServiceException;
+import stroom.entity.shared.NamedEntity;
+import stroom.entity.shared.Res;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
-import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.Res;
-import stroom.util.shared.Severity;
 import stroom.query.api.v2.DocRef;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import java.io.StringReader;
@@ -53,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Component
 public class ImportExportHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportHelper.class);
 

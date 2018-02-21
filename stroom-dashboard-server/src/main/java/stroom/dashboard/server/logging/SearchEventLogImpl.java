@@ -28,7 +28,6 @@ import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.QueryDataLogUtil;
@@ -39,21 +38,17 @@ import stroom.security.Insecure;
 
 import javax.inject.Inject;
 
-@Component
 @Insecure
 public class SearchEventLogImpl implements SearchEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
-    private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final DictionaryStore dictionaryStore;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
-                              final DataSourceProviderRegistry dataSourceProviderRegistry,
                               final DictionaryStore dictionaryStore) {
         this.eventLoggingService = eventLoggingService;
-        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.dictionaryStore = dictionaryStore;
     }
 

@@ -17,8 +17,6 @@
 package stroom.streamstore.server.tools;
 
 import org.junit.Assert;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
@@ -52,7 +50,10 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.*;
+import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
@@ -62,9 +63,9 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,8 +80,6 @@ import java.util.Set;
 /**
  * A tool used to add data to a stream store.
  */
-@Component
-@Profile(StroomSpringProfiles.IT)
 public final class StoreCreationTool {
     private static final int OLD_YEAR = 2006;
     private static final Path eventDataPipeline = StroomCoreServerTestFileUtil
@@ -96,35 +95,49 @@ public final class StoreCreationTool {
     private static final Path searchExtractionPipeline = StroomCoreServerTestFileUtil
             .getFile("samples/config/Standard_Pipelines/Search_Extraction.Pipeline.3d9d60e9-61c2-4c88-a57b-7bc584dd970e.data.xml");
     private static long effectiveMsOffset = 0;
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private FeedService feedService;
-    @Resource
-    private TextConverterService textConverterService;
-    @Resource
-    private XSLTService xsltService;
-    @Resource
-    private PipelineService pipelineService;
-    @Resource
-    private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
-    private CommonTestControl commonTestControl;
-    @Resource
-    private StreamProcessorService streamProcessorService;
-    @Resource
-    private StreamProcessorFilterService streamProcessorFilterService;
-    @Resource
-    private IndexService indexService;
+
+    private final StreamStore streamStore;
+    private final FeedService feedService;
+    private final TextConverterService textConverterService;
+    private final XSLTService xsltService;
+    private final PipelineService pipelineService;
+    private final CommonTestScenarioCreator commonTestScenarioCreator;
+    private final CommonTestControl commonTestControl;
+    private final  StreamProcessorService streamProcessorService;
+    private final StreamProcessorFilterService streamProcessorFilterService;
+    private final IndexService indexService;
+
+    @Inject
+    public StoreCreationTool(final StreamStore streamStore,
+                             final FeedService feedService,
+                             final TextConverterService textConverterService,
+                             final XSLTService xsltService,
+                             final PipelineService pipelineService,
+                             final CommonTestScenarioCreator commonTestScenarioCreator,
+                             final CommonTestControl commonTestControl,
+                             final StreamProcessorService streamProcessorService,
+                             final StreamProcessorFilterService streamProcessorFilterService,
+                             final IndexService indexService) {
+        this.streamStore = streamStore;
+        this.feedService = feedService;
+        this.textConverterService = textConverterService;
+        this.xsltService = xsltService;
+        this.pipelineService = pipelineService;
+        this.commonTestScenarioCreator = commonTestScenarioCreator;
+        this.commonTestControl = commonTestControl;
+        this.streamProcessorService = streamProcessorService;
+        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.indexService = indexService;
+    }
 
     /**
      * Adds reference data to a stream store.
      *
-     * @param feedName          The feed name to use.
-     * @param textConverterType Type of text converter
+     * @param feedName              The feed name to use.
+     * @param textConverterType     Type of text converter
      * @param textConverterLocation The Text Converter location
-     * @param xsltLocation      The XSLT location
-     * @param dataLocation      The reference data location.
+     * @param xsltLocation          The XSLT location
+     * @param dataLocation          The reference data location.
      * @return A reference feed definition.
      * @throws IOException Thrown if files not found.
      */
@@ -200,9 +213,9 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, referenceFeed.getName())
-                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
-                        .build())
+                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, referenceFeed.getName())
+                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                            .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamQueryData);
         }
@@ -234,12 +247,12 @@ public final class StoreCreationTool {
     /**
      * Adds event data to a stream store.
      *
-     * @param feedName          The feed name to use.
-     * @param translationTextConverterType Type of text converter
+     * @param feedName                         The feed name to use.
+     * @param translationTextConverterType     Type of text converter
      * @param translationTextConverterLocation The Text Converter location
-     * @param translationXsltLocation  The XSLT location
-     * @param dataLocation      The event data location.
-     * @param referenceFeeds    The reference feeds used.
+     * @param translationXsltLocation          The XSLT location
+     * @param dataLocation                     The event data location.
+     * @param referenceFeeds                   The reference feeds used.
      * @return An event feed definition.
      * @throws IOException Thrown if files not found.
      */
@@ -256,12 +269,12 @@ public final class StoreCreationTool {
     /**
      * Adds event data to a stream store.
      *
-     * @param feedName          The feed name to use.
-     * @param translationTextConverterType Type of text converter
+     * @param feedName                         The feed name to use.
+     * @param translationTextConverterType     Type of text converter
      * @param translationTextConverterLocation The Text Converter location
-     * @param translationXsltLocation  The XSLT location
-     * @param dataLocation      The event data location.
-     * @param referenceFeeds    The reference feeds used.
+     * @param translationXsltLocation          The XSLT location
+     * @param dataLocation                     The event data location.
+     * @param referenceFeeds                   The reference feeds used.
      * @return An event feed definition.
      * @throws IOException Thrown if files not found.
      */
@@ -365,9 +378,9 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, eventFeed.getName())
-                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                        .build())
+                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, eventFeed.getName())
+                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                            .build())
                     .build();
 
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
@@ -567,7 +580,7 @@ public final class StoreCreationTool {
             return list.getFirst();
         }
 
-        return PipelineTestUtil.createTestPipeline(pipelineService,name, "Description " + name,
+        return PipelineTestUtil.createTestPipeline(pipelineService, name, "Description " + name,
                 data);
     }
 
@@ -597,8 +610,8 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
-                        .build())
+                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
+                            .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
         }

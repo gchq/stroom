@@ -21,7 +21,6 @@ import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.stereotype.Component;
 import stroom.importexport.server.DocRefs;
 import stroom.importexport.server.DocumentData;
 import stroom.importexport.shared.ImportState;
@@ -45,7 +44,6 @@ import java.util.Set;
         description = "Ruleset API")
 @Path("/ruleset/v1")
 @Produces(MediaType.APPLICATION_JSON)
-@Component
 public class RuleSetResource implements HasHealthCheck {
     private final RuleSetService ruleSetService;
 

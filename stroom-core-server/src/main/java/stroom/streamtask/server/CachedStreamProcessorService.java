@@ -16,15 +16,13 @@
 
 package stroom.streamtask.server;
 
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CachingEntityManager;
 
 import javax.inject.Inject;
 
 @Transactional
-@Component("cachedStreamProcessorService")
-public class CachedStreamProcessorService extends StreamProcessorServiceImpl {
+class CachedStreamProcessorService extends StreamProcessorServiceImpl {
     @Inject
     CachedStreamProcessorService(final CachingEntityManager entityManager) {
         super(entityManager);

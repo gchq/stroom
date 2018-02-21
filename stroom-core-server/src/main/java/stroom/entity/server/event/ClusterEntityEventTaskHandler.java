@@ -18,22 +18,23 @@ package stroom.entity.server.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = ClusterEntityEventTask.class)
-@Scope(StroomScope.TASK)
-public class ClusterEntityEventTaskHandler implements TaskHandler<ClusterEntityEventTask, VoidResult> {
+class ClusterEntityEventTaskHandler implements TaskHandler<ClusterEntityEventTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterEntityEventTaskHandler.class);
 
-    @Resource
-    private EntityEventBusImpl entityEventBusImpl;
+    private final EntityEventBusImpl entityEventBusImpl;
+
+    @Inject
+    ClusterEntityEventTaskHandler(final EntityEventBusImpl entityEventBusImpl) {
+        this.entityEventBusImpl = entityEventBusImpl;
+    }
 
     @Override
     public void exec(final ClusterEntityEventTask task, final TaskCallback<VoidResult> callback) {

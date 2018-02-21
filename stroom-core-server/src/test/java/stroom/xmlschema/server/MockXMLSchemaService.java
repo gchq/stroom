@@ -17,20 +17,15 @@
 
 package stroom.xmlschema.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.test.StroomCoreServerTestFileUtil;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockXMLSchemaService extends MockDocumentEntityService<XMLSchema, FindXMLSchemaCriteria>
         implements XMLSchemaService {
     private final Path xsdDir;

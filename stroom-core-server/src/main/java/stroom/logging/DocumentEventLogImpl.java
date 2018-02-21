@@ -33,9 +33,7 @@ import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
@@ -51,7 +49,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@Component
 @Insecure
 public class DocumentEventLogImpl implements DocumentEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentEventLogImpl.class);

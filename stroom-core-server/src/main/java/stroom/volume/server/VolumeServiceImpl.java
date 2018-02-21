@@ -77,7 +77,6 @@ import java.util.stream.Stream;
  * Implementation for the volume API.
  */
 @Transactional
-@Component("volumeService")
 @Secured(Volume.MANAGE_VOLUMES_PERMISSION)
 @EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolumeCriteria>
@@ -130,8 +129,10 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
 
     @Inject
-    VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
-                      final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
+    VolumeServiceImpl(final StroomEntityManager stroomEntityManager,
+                      final NodeCache nodeCache,
+                      final StroomPropertyService stroomPropertyService,
+                      final StroomBeanStore stroomBeanStore,
                       final InternalStatisticsReceiver internalStatisticsReceiver) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;

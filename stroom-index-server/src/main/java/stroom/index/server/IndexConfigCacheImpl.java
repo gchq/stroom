@@ -20,7 +20,6 @@ package stroom.index.server;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.springframework.stereotype.Component;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexFieldsMap;
@@ -30,7 +29,6 @@ import stroom.util.cache.CacheManager;
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
-@Component
 public class IndexConfigCacheImpl implements IndexConfigCache {
     private static final int MAX_CACHE_ENTRIES = 100;
 

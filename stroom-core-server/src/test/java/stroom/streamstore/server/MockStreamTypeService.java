@@ -17,15 +17,10 @@
 
 package stroom.streamstore.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockNamedEntityService;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.spring.StroomSpringProfiles;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component("streamTypeService")
 public class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStreamTypeCriteria>
         implements StreamTypeService {
     public MockStreamTypeService() {

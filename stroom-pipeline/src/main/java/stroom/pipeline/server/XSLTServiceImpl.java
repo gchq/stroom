@@ -17,7 +17,6 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.util.StroomEntityManager;
@@ -28,7 +27,6 @@ import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 
-@Component
 @Transactional
 public class XSLTServiceImpl extends DocumentEntityServiceImpl<XSLT, FindXSLTCriteria> implements XSLTService {
     @Inject

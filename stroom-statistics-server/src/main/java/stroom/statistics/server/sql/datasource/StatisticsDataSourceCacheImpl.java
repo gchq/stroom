@@ -22,7 +22,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.BaseResultList;
@@ -36,7 +35,6 @@ import javax.inject.Inject;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-@Component("statisticsDataSourceCache")
 @EntityEventHandler(
         type = StatisticStoreEntity.ENTITY_TYPE,
         action = {
@@ -57,7 +55,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
     @Inject
     StatisticsDataSourceCacheImpl(final StatisticStoreEntityService statisticsDataSourceService,
-                                  final CacheManager cacheManager) {
+                                         final CacheManager cacheManager) {
         this.statisticsDataSourceService = statisticsDataSourceService;
         this.cacheManager = cacheManager;
     }

@@ -21,9 +21,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.security.SecurityHelper;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
@@ -34,7 +33,6 @@ import java.util.concurrent.TimeUnit;
  * Implementation class that stores reference data from reference data feeds.
  * </p>
  */
-@Component
 public final class MapStoreCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapStoreCache.class);
 

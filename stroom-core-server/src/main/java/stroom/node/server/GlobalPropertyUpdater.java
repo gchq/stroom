@@ -19,7 +19,6 @@ package stroom.node.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.shared.FindGlobalPropertyCriteria;
 import stroom.node.shared.GlobalProperty;
@@ -35,7 +34,6 @@ import java.util.List;
  * get current settings for global properties and updating both the current
  * GlobalProperties instance and StroomProperties.
  */
-@Component
 public class GlobalPropertyUpdater {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalPropertyUpdater.class);
 

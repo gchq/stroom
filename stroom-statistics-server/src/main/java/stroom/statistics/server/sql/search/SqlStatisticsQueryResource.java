@@ -24,14 +24,13 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.datasource.api.v2.DataSource;
-import stroom.util.HasHealthCheck;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.statistics.server.sql.StatisticsQueryService;
+import stroom.util.HasHealthCheck;
 import stroom.util.json.JsonUtil;
 
 import javax.inject.Inject;
@@ -46,7 +45,6 @@ import javax.ws.rs.core.MediaType;
         description = "Stroom SQL Statistics Query API")
 @Path("/sqlstatistics/v2")
 @Produces(MediaType.APPLICATION_JSON)
-@Component
 public class SqlStatisticsQueryResource implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResource.class);
 

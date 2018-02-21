@@ -20,7 +20,6 @@ package stroom.search.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.index.server.IndexService;
 import stroom.index.server.LuceneVersionUtil;
@@ -39,10 +38,10 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreSize;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
+import stroom.security.UserTokenUtil;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
 import stroom.util.config.PropertyUtil;
-import stroom.security.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -51,8 +50,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
-@Component
 public class LuceneSearchStoreFactory {
     public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);

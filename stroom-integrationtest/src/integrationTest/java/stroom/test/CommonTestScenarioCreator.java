@@ -18,7 +18,6 @@
 package stroom.test;
 
 import org.junit.Assert;
-import org.springframework.stereotype.Component;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
@@ -38,7 +37,10 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.*;
+import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
@@ -54,7 +56,6 @@ import java.util.List;
 /**
  * Help class to create some basic scenarios for testing.
  */
-@Component
 public class CommonTestScenarioCreator {
     private final FeedService feedService;
     private final StreamStore streamStore;
@@ -65,7 +66,13 @@ public class CommonTestScenarioCreator {
     private final NodeCache nodeCache;
 
     @Inject
-    CommonTestScenarioCreator(final FeedService feedService, final StreamStore streamStore, final StreamProcessorService streamProcessorService, final StreamProcessorFilterService streamProcessorFilterService, final IndexService indexService, final VolumeService volumeService, final NodeCache nodeCache) {
+    CommonTestScenarioCreator(final FeedService feedService,
+                              final StreamStore streamStore,
+                              final StreamProcessorService streamProcessorService,
+                              final StreamProcessorFilterService streamProcessorFilterService,
+                              final IndexService indexService,
+                              final VolumeService volumeService,
+                              final NodeCache nodeCache) {
         this.feedService = feedService;
         this.streamStore = streamStore;
         this.streamProcessorService = streamProcessorService;
@@ -119,9 +126,9 @@ public class CommonTestScenarioCreator {
         final QueryData findStreamQueryData = new QueryData.Builder()
                 .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                    .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
-                    .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                    .build())
+                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                        .build())
                 .build();
 
         createStreamProcessor(findStreamQueryData);

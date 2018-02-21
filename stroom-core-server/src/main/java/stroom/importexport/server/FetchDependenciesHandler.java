@@ -16,23 +16,20 @@
 
 package stroom.importexport.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.ResultList;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.FetchDependenciesAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchDependenciesAction.class)
-@Scope(value = StroomScope.PROTOTYPE)
 public class FetchDependenciesHandler extends AbstractTaskHandler<FetchDependenciesAction, ResultList<Dependency>> {
     private final DependencyService dependencyService;
 
     @Inject
-    public FetchDependenciesHandler(final DependencyService dependencyService) {
+    FetchDependenciesHandler(final DependencyService dependencyService) {
         this.dependencyService = dependencyService;
     }
 

@@ -16,8 +16,6 @@
 
 package stroom.connectors.kafka.filter;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -26,8 +24,6 @@ import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 
@@ -42,8 +38,6 @@ import javax.inject.Inject;
  * containing a batch of events
  */
 @SuppressWarnings("unused")
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
         type = "GenericKafkaProducerFilter",
         category = PipelineElementType.Category.FILTER,

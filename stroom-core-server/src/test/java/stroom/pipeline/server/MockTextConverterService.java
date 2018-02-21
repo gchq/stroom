@@ -17,13 +17,10 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.TextConverter;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 
@@ -36,8 +33,6 @@ import javax.inject.Inject;
  * You can call clear at any point to clear everything down.
  * </p>
  */
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockTextConverterService extends MockDocumentEntityService<TextConverter, FindTextConverterCriteria>
         implements TextConverterService {
     @Inject

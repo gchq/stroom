@@ -16,26 +16,24 @@
 
 package stroom.dashboard.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.FetchDataSourceFieldsAction;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.entity.shared.DataSourceFields;
-import stroom.security.SecurityHelper;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchDataSourceFieldsAction.class)
-@Scope(value = StroomScope.TASK)
 class FetchExpressionFieldsHandler extends AbstractTaskHandler<FetchDataSourceFieldsAction, DataSourceFields> {
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final SecurityContext securityContext;
 
     @Inject
-    FetchExpressionFieldsHandler(final DataSourceProviderRegistry dataSourceProviderRegistry, final SecurityContext securityContext) {
+    FetchExpressionFieldsHandler(final DataSourceProviderRegistry dataSourceProviderRegistry,
+                                 final SecurityContext securityContext) {
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.securityContext = securityContext;
     }

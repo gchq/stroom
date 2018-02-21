@@ -19,7 +19,6 @@ package stroom.streamstore.server;
 import org.hsqldb.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.util.logging.LogExecutionTime;
@@ -30,8 +29,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.List;
 
-@Component
-public class StreamAttributeValueServiceTransactionHelper {
+class StreamAttributeValueServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueServiceTransactionHelper.class);
 
     private static final String INSERT_SQL = "INSERT INTO " + StreamAttributeValue.TABLE_NAME + " ("
@@ -41,13 +39,10 @@ public class StreamAttributeValueServiceTransactionHelper {
             + ") VALUES (?, ?, ?, ?, ?, ?)";
 
     private final DataSource dataSource;
-    private final StroomDatabaseInfo stroomDatabaseInfo;
 
     @Inject
-    public StreamAttributeValueServiceTransactionHelper(final DataSource dataSource,
-                                                        final StroomDatabaseInfo stroomDatabaseInfo) {
+    StreamAttributeValueServiceTransactionHelper(final DataSource dataSource) {
         this.dataSource = dataSource;
-        this.stroomDatabaseInfo = stroomDatabaseInfo;
     }
 
     public void saveBatch(final List<StreamAttributeValue> list) {

@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server.filter;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -25,7 +23,6 @@ import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.util.spring.StroomScope;
 import stroom.xml.event.Event;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
@@ -36,8 +33,6 @@ import stroom.xml.event.simple.StartPrefixMapping;
  * for all split out instances. A split instance will fire start and end
  * document SAX events before and after a split out instance.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "SplitFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SPLIT)
 public class SplitFilter extends AbstractXMLFilter {

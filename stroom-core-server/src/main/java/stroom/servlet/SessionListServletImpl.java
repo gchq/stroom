@@ -16,15 +16,12 @@
 
 package stroom.servlet;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.security.Insecure;
 import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskIdFactory;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -37,13 +34,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class SessionListServletImpl extends HttpServlet implements SessionListServlet {
     private static final long serialVersionUID = 8723931558071593017L;
 
-    @Resource
-    private transient TaskManager taskManager;
+    private final TaskManager taskManager;
+
+    @Inject
+    SessionListServletImpl(final TaskManager taskManager) {
+        this.taskManager = taskManager;
+    }
 
     /**
      * Method interceptor needs to go on public API By-pass authentication / authorisation checks.

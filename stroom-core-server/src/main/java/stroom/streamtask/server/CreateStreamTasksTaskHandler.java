@@ -16,22 +16,24 @@
 
 package stroom.streamtask.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = CreateStreamTasksTask.class)
-@Scope(value = StroomScope.TASK)
-public class CreateStreamTasksTaskHandler extends AbstractTaskHandler<CreateStreamTasksTask, VoidResult> {
-    @Resource
-    private StreamTaskCreator streamTaskCreator;
-    @Resource
-    private TaskMonitor taskMonitor;
+class CreateStreamTasksTaskHandler extends AbstractTaskHandler<CreateStreamTasksTask, VoidResult> {
+    private final StreamTaskCreator streamTaskCreator;
+    private final TaskMonitor taskMonitor;
+
+    @Inject
+    CreateStreamTasksTaskHandler(final StreamTaskCreator streamTaskCreator,
+                                 final TaskMonitor taskMonitor) {
+        this.streamTaskCreator = streamTaskCreator;
+        this.taskMonitor = taskMonitor;
+    }
 
     @Override
     public VoidResult exec(final CreateStreamTasksTask task) {

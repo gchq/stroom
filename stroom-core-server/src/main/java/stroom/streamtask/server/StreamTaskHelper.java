@@ -19,7 +19,6 @@ package stroom.streamtask.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.node.shared.Node;
@@ -27,16 +26,19 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.persistence.EntityNotFoundException;
 
-@Component
 @Transactional(propagation = Propagation.NEVER)
-public class StreamTaskHelper {
+class StreamTaskHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskHelper.class);
 
-    @Resource
-    private StreamTaskService streamTaskService;
+    private final StreamTaskService streamTaskService;
+
+    @Inject
+    StreamTaskHelper(final StreamTaskService streamTaskService) {
+        this.streamTaskService = streamTaskService;
+    }
 
     StreamTask changeTaskStatus(final StreamTask streamTask, final Node node, final TaskStatus status,
                                 final Long startTime, final Long endTime) {

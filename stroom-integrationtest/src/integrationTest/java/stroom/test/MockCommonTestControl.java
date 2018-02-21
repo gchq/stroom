@@ -19,16 +19,11 @@ package stroom.test;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.Clearable;
-import stroom.util.spring.StroomSpringProfiles;
 
 /**
  * Version of the test control used with the mocks.
  */
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockCommonTestControl implements CommonTestControl, ApplicationContextAware {
     private ApplicationContext applicationContext;
 

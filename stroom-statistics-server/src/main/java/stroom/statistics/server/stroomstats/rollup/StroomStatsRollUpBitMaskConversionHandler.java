@@ -31,7 +31,7 @@ import java.util.Set;
 
 @TaskHandlerBean(task = StroomStatsRollUpBitMaskConversionAction.class)
 @Insecure
-public class StroomStatsRollUpBitMaskConversionHandler
+class StroomStatsRollUpBitMaskConversionHandler
         extends AbstractTaskHandler<StroomStatsRollUpBitMaskConversionAction, ResultList<CustomRollUpMaskFields>> {
     @Override
     public BaseResultList<CustomRollUpMaskFields> exec(final StroomStatsRollUpBitMaskConversionAction action) {

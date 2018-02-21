@@ -18,21 +18,24 @@ package stroom.jobsystem.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@Component
-public class DistributedTaskFactoryBeanRegistry {
+class DistributedTaskFactoryBeanRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFactoryBeanRegistry.class);
-    private Map<String, String> factoryMap = new HashMap<>();
-    @Resource
-    private StroomBeanStore stroomBeanStore;
+    private final Map<String, String> factoryMap = new HashMap<>();
+
+    private final StroomBeanStore stroomBeanStore;
+
+    @Inject
+    DistributedTaskFactoryBeanRegistry(final StroomBeanStore stroomBeanStore) {
+        this.stroomBeanStore = stroomBeanStore;
+    }
 
     @SuppressWarnings("unchecked")
     public DistributedTaskFactory<DistributedTask<?>, ?> findFactory(final String jobName) {
@@ -68,7 +71,7 @@ public class DistributedTaskFactoryBeanRegistry {
         }
     }
 
-    public void setTaskFactoryMap(final Map<String, String> taskFactoryMap) {
-        this.factoryMap = taskFactoryMap;
-    }
+//    public void setTaskFactoryMap(final Map<String, String> taskFactoryMap) {
+//        this.factoryMap = taskFactoryMap;
+//    }
 }

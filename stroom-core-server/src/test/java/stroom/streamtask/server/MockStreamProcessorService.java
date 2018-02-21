@@ -17,20 +17,15 @@
 
 package stroom.streamtask.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.util.spring.StroomSpringProfiles;
 
 /**
  * Mock object.
  * <p>
  * In memory simple process manager that also uses the mock stream store.
  */
-@Profile(StroomSpringProfiles.TEST)
-@Component("streamProcessorService")
 public class MockStreamProcessorService extends MockEntityService<StreamProcessor, FindStreamProcessorCriteria>
         implements StreamProcessorService {
     @Override

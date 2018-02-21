@@ -17,12 +17,11 @@
 
 package stroom.streamtask.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.BaseEntityUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.node.shared.Node;
+import stroom.streamstore.server.ExpressionToFindCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
@@ -31,23 +30,26 @@ import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private StreamProcessorFilterService streamProcessorFilterService;
-    @Resource
-    private ExpressionToFindCriteria expressionToFindCriteria;
+    private final StreamStore streamStore;
+    private final StreamProcessorFilterService streamProcessorFilterService;
+    private final ExpressionToFindCriteria expressionToFindCriteria;
+
+    @Inject
+    MockStreamTaskCreator(final StreamStore streamStore,
+                          final StreamProcessorFilterService streamProcessorFilterService,
+                          final ExpressionToFindCriteria expressionToFindCriteria) {
+        this.streamStore = streamStore;
+        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.expressionToFindCriteria = expressionToFindCriteria;
+    }
 
     @Override
     public void clear() {

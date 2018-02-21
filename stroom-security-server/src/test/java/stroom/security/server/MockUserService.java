@@ -16,12 +16,9 @@
 
 package stroom.security.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
-import stroom.util.spring.StroomSpringProfiles;
 
 import java.util.List;
 import java.util.Set;
@@ -32,8 +29,6 @@ import java.util.UUID;
  * Very simple mock user manager with just one user.
  * </p>
  */
-@Profile(StroomSpringProfiles.TEST)
-@Component("userService")
 public class MockUserService extends MockEntityService<User, FindUserCriteria> implements UserService {
     @Override
     public User loadByUuid(final String uuid) throws RuntimeException {

@@ -19,7 +19,6 @@ package stroom.policy.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.FindPolicyCriteria;
@@ -30,7 +29,6 @@ import javax.xml.bind.JAXBContext;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public class DataRetentionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionService.class);
 

@@ -17,7 +17,6 @@
 
 package stroom.script.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.query.api.v2.DocRef;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;
@@ -26,7 +25,6 @@ import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -35,7 +33,6 @@ import java.util.List;
 import java.util.Set;
 
 @TaskHandlerBean(task = FetchScriptAction.class)
-@Scope(value = StroomScope.TASK)
 /**
  * For now we deliberately require visualisation view permissions to access
  * scripts.
@@ -45,7 +42,8 @@ class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedLi
     private final SecurityContext securityContext;
 
     @Inject
-    FetchScriptHandler(final ScriptService scriptService, final SecurityContext securityContext) {
+    FetchScriptHandler(final ScriptService scriptService,
+                       final SecurityContext securityContext) {
         this.scriptService = scriptService;
         this.securityContext = securityContext;
     }

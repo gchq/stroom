@@ -19,12 +19,33 @@ package stroom.cache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Scope;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheManagerSpringConfig;
+import stroom.util.spring.StroomScope;
 
 @Configuration
 @Import({CacheManagerSpringConfig.class})
 public class CacheSpringConfig {
+    @Bean
+    @Scope(StroomScope.TASK)
+    public CacheClearHandler cacheClearHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+        return new CacheClearHandler(dispatchHelper);
+    }
+
+    @Bean
+    @Scope(StroomScope.TASK)
+    public FetchCacheNodeRowHandler fetchCacheNodeRowHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+        return new FetchCacheNodeRowHandler(dispatchHelper);
+    }
+
+    @Bean
+    @Scope(StroomScope.TASK)
+    public FetchCacheRowHandler fetchCacheRowHandler(final CacheManager cacheManager) {
+        return new FetchCacheRowHandler(cacheManager);
+    }
+
     @Bean
     public StroomCacheManager stroomCacheManager(final CacheManager cacheManager) {
         return new StroomCacheManagerImpl(cacheManager);

@@ -22,12 +22,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
 import stroom.document.server.DocumentStore;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceException;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class EntityServiceBeanRegistry implements ApplicationContextAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityServiceBeanRegistry.class);
     private final Map<Class<?>, String> entityServiceClassMap = new HashMap<>();
@@ -53,7 +52,8 @@ public class EntityServiceBeanRegistry implements ApplicationContextAware {
     /**
      * Used to register services that are instantiations of a generic class. These are services that cannot
      * be found using Spring Bean reflection.
-     * @param type The doc ref type this service will manage
+     *
+     * @param type    The doc ref type this service will manage
      * @param service An instance of the service to use.
      */
     public void addExternal(final String type, final Object service) {

@@ -18,7 +18,6 @@ package stroom.statistics.server.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.SqlUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
@@ -39,7 +38,6 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 
-@Component
 public class SQLStatisticAggregationTransactionHelper {
     public static final long NEWEST_SENSIBLE_STAT_AGE = DateUtil.parseNormalDateTimeString("9999-01-01T00:00:00.000Z");
     // /**
@@ -252,7 +250,9 @@ public class SQLStatisticAggregationTransactionHelper {
     };
 
     @Inject
-    public SQLStatisticAggregationTransactionHelper(@Named("statisticsDataSource") final DataSource statisticsDataSource, final StroomDatabaseInfo stroomDatabaseInfo, final StroomPropertyService stroomPropertyService) {
+    SQLStatisticAggregationTransactionHelper(@Named("statisticsDataSource") final DataSource statisticsDataSource,
+                                             final StroomDatabaseInfo stroomDatabaseInfo,
+                                             final StroomPropertyService stroomPropertyService) {
         this.statisticsDataSource = statisticsDataSource;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.stroomPropertyService = stroomPropertyService;

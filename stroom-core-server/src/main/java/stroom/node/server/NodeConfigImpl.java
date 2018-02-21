@@ -16,9 +16,6 @@
 
 package stroom.node.server;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public class NodeConfigImpl implements NodeConfig {
     @Override
     public void setup() {

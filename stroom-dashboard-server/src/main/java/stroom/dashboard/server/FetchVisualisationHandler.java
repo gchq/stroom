@@ -17,26 +17,24 @@
 
 package stroom.dashboard.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 import stroom.visualisation.server.VisualisationService;
 import stroom.visualisation.shared.Visualisation;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchVisualisationAction.class)
-@Scope(value = StroomScope.TASK)
 class FetchVisualisationHandler extends AbstractTaskHandler<FetchVisualisationAction, Visualisation> {
     private final VisualisationService visualisationService;
     private final SecurityContext securityContext;
 
     @Inject
-    FetchVisualisationHandler(final VisualisationService visualisationService, final SecurityContext securityContext) {
+    FetchVisualisationHandler(final VisualisationService visualisationService,
+                              final SecurityContext securityContext) {
         this.visualisationService = visualisationService;
         this.securityContext = securityContext;
     }

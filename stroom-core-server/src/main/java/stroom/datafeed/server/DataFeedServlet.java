@@ -36,7 +36,6 @@ import java.util.Enumeration;
  * Servlet that streams files to disk based on meta input arguments.
  * </p>
  */
-@Component
 public class DataFeedServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
@@ -45,7 +44,7 @@ public class DataFeedServlet extends HttpServlet {
     private final Provider<RequestHandler> requestHandlerProvider;
 
     @Inject
-    DataFeedServlet(final Provider<RequestHandler> requestHandlerProvider) {
+    public DataFeedServlet(final Provider<RequestHandler> requestHandlerProvider) {
         this.requestHandlerProvider = requestHandlerProvider;
     }
 

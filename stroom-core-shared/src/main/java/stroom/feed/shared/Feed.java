@@ -48,11 +48,11 @@ public class Feed extends DocumentEntity {
     public static final String FOREIGN_KEY_REFERENCE_FEED = FK_PREFIX + SQLNameConstants.REFERENCE + SEP
             + SQLNameConstants.FEED + ID_SUFFIX;
     public static final String CLASSIFICATION = SQLNameConstants.CLASSIFICATION;
-    public static final String ENCODING = SQLNameConstants.ENCODING;
-    public static final String CONTEXT_ENCODING = SQLNameConstants.CONTEXT + SEP + SQLNameConstants.ENCODING;
+    private static final String ENCODING = SQLNameConstants.ENCODING;
+    private static final String CONTEXT_ENCODING = SQLNameConstants.CONTEXT + SEP + SQLNameConstants.ENCODING;
     public static final String STATUS = SQLNameConstants.STATUS;
     public static final String REFERENCE = SQLNameConstants.REFERENCE;
-    public static final String RETENTION_DAY_AGE = SQLNameConstants.RETENTION + SEP + SQLNameConstants.DAY + SEP
+    private static final String RETENTION_DAY_AGE = SQLNameConstants.RETENTION + SEP + SQLNameConstants.DAY + SEP
             + SQLNameConstants.AGE;
     public static final String ENTITY_TYPE = "Feed";
 

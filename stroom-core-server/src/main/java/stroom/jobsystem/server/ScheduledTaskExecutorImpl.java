@@ -19,7 +19,6 @@ package stroom.jobsystem.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
 import stroom.lifecycle.LifecycleTask;
@@ -34,24 +33,31 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Component
 public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutorImpl.class);
     private final ConcurrentHashMap<StroomBeanMethod, AtomicBoolean> runningMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<StroomBeanMethod, Scheduler> schedulerMap = new ConcurrentHashMap<>();
-    @Resource
-    private StroomBeanStore stroomBeanStore;
-    @Resource
-    private JobNodeTrackerCache jobNodeTrackerCache;
-    @Resource
-    private TaskManager taskManager;
+
+    private final StroomBeanStore stroomBeanStore;
+    private final JobNodeTrackerCache jobNodeTrackerCache;
+    private final TaskManager taskManager;
+
     private volatile Set<StroomBeanMethod> scheduledMethods;
+
+    @Inject
+    ScheduledTaskExecutorImpl(final StroomBeanStore stroomBeanStore,
+                              final JobNodeTrackerCache jobNodeTrackerCache,
+                              final TaskManager taskManager) {
+        this.stroomBeanStore = stroomBeanStore;
+        this.jobNodeTrackerCache = jobNodeTrackerCache;
+        this.taskManager = taskManager;
+    }
 
     @Override
     public void execute() {

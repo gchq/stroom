@@ -19,7 +19,6 @@ package stroom.jobsystem.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.shared.FindJobNodeCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
@@ -30,27 +29,33 @@ import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
-@Component
 public class JobNodeTrackerCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackerCache.class);
     // Default refresh interval is 10 seconds.
     private static final long DEFAULT_REFRESH_INTERVAL = 10000;
     private final long refreshInterval = DEFAULT_REFRESH_INTERVAL;
     private final ReentrantLock refreshLock = new ReentrantLock();
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private JobNodeService jobNodeService;
+
+    private final NodeCache nodeCache;
+    private final JobNodeService jobNodeService;
+
     private volatile Node node;
     private volatile Trackers trackers;
     private volatile long lastRefreshMs;
+
+    @Inject
+    JobNodeTrackerCache(final NodeCache nodeCache,
+                        final JobNodeService jobNodeService) {
+        this.nodeCache = nodeCache;
+        this.jobNodeService = jobNodeService;
+    }
 
     public Trackers getTrackers() {
         if (trackers == null) {

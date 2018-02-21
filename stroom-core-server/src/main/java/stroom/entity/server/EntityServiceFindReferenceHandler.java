@@ -16,19 +16,16 @@
 
 package stroom.entity.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceFindReferenceAction;
 import stroom.entity.shared.ResultList;
 import stroom.query.api.v2.DocRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = EntityServiceFindReferenceAction.class)
-@Scope(value = StroomScope.TASK)
 class EntityServiceFindReferenceHandler
         extends AbstractTaskHandler<EntityServiceFindReferenceAction<BaseEntity>, ResultList<DocRef>> {
     private final EntityServiceBeanRegistry beanRegistry;

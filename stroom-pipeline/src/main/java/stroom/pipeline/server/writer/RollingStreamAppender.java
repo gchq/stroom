@@ -17,8 +17,6 @@
 
 package stroom.pipeline.server.writer;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.node.server.NodeCache;
@@ -40,7 +38,6 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -48,8 +45,6 @@ import java.io.IOException;
 /**
  * Joins text instances into a single text instance.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "RollingStreamAppender", category = Category.DESTINATION, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
@@ -69,7 +64,11 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private StreamKey key;
 
     @Inject
-    RollingStreamAppender(final StreamStore streamStore, final StreamHolder streamHolder, final FeedService feedService, final StreamTypeService streamTypeService, final NodeCache nodeCache) {
+    RollingStreamAppender(final StreamStore streamStore,
+                          final StreamHolder streamHolder,
+                          final FeedService feedService,
+                          final StreamTypeService streamTypeService,
+                          final NodeCache nodeCache) {
         this.streamStore = streamStore;
         this.streamHolder = streamHolder;
         this.feedService = feedService;
@@ -134,7 +133,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
-    @PipelinePropertyDocRef(types=Feed.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = Feed.ENTITY_TYPE)
     public void setFeed(final DocRef feedRef) {
         this.feedRef = feedRef;
     }

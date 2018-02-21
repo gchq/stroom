@@ -19,7 +19,6 @@ package stroom.cluster.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.node.server.NodeCache;
 import stroom.node.server.NodeService;
 import stroom.node.shared.FindNodeCriteria;
@@ -29,7 +28,6 @@ import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -38,7 +36,6 @@ import java.util.List;
 import java.util.Set;
 
 @TaskHandlerBean(task = UpdateClusterStateTask.class)
-@Scope(StroomScope.TASK)
 class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterStateTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(UpdateClusterStateTaskHandler.class);
 
@@ -48,7 +45,10 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
     private final TaskManager taskManager;
 
     @Inject
-    UpdateClusterStateTaskHandler(final NodeService nodeService, final NodeCache nodeCache, final ClusterCallServiceRemote clusterCallServiceRemote, final TaskManager taskManager) {
+    UpdateClusterStateTaskHandler(final NodeService nodeService,
+                                  final NodeCache nodeCache,
+                                  final ClusterCallServiceRemote clusterCallServiceRemote,
+                                  final TaskManager taskManager) {
         this.nodeService = nodeService;
         this.nodeCache = nodeCache;
         this.clusterCallServiceRemote = clusterCallServiceRemote;

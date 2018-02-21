@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server.writer;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -26,7 +24,6 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.BufferedOutputStream;
@@ -39,8 +36,6 @@ import java.nio.file.Paths;
 /**
  * Joins text instances into a single text instance.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
         type = "FileAppender",
         category = Category.DESTINATION,
@@ -57,7 +52,7 @@ public class FileAppender extends AbstractAppender {
 
     @Inject
     public FileAppender(final ErrorReceiverProxy errorReceiverProxy,
-                        final PathCreator pathCreator) {
+                 final PathCreator pathCreator) {
         super(errorReceiverProxy);
         this.pathCreator = pathCreator;
     }

@@ -20,7 +20,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
@@ -40,7 +39,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-@Component
 public class CachingEntityManager implements StroomEntityManager, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CachingEntityManager.class);
 
@@ -50,7 +48,8 @@ public class CachingEntityManager implements StroomEntityManager, Clearable {
 
     @Inject
     @SuppressWarnings("unchecked")
-    public CachingEntityManager(final StroomEntityManager stroomEntityManager, final CacheManager cacheManager) {
+    CachingEntityManager(final StroomEntityManager stroomEntityManager,
+                         final CacheManager cacheManager) {
         this.stroomEntityManager = stroomEntityManager;
 
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()

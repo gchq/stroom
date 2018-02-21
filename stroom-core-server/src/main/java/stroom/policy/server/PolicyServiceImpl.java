@@ -17,7 +17,6 @@
 
 package stroom.policy.server;
 
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -32,7 +31,6 @@ import javax.inject.Inject;
 import java.util.List;
 
 @Transactional
-@Component("policyService")
 @Secured(Policy.MANAGE_POLICIES_PERMISSION)
 public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicyCriteria>
         implements PolicyService {

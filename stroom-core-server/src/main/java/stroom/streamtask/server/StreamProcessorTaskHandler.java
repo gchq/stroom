@@ -19,7 +19,6 @@ package stroom.streamtask.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.server.StreamSource;
@@ -34,34 +33,43 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 @TaskHandlerBean(task = StreamProcessorTask.class)
-@Scope(value = StroomScope.TASK)
-public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask, VoidResult> {
+class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskHandler.class);
     private static final Set<String> FETCH_SET = new HashSet<>(
             Arrays.asList(StreamProcessor.ENTITY_TYPE, StreamProcessorFilter.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE));
-    @Resource
-    private StroomBeanStore beanStore;
-    @Resource(name = "cachedStreamProcessorService")
-    private StreamProcessorService streamProcessorService;
-    @Resource(name = "cachedStreamProcessorFilterService")
-    private StreamProcessorFilterService streamProcessorFilterService;
-    @Resource
-    private StreamTaskHelper streamTaskHelper;
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private TaskMonitor taskMonitor;
+    private final StroomBeanStore beanStore;
+    private final StreamProcessorService streamProcessorService;
+    private final StreamProcessorFilterService streamProcessorFilterService;
+    private final StreamTaskHelper streamTaskHelper;
+    private final StreamStore streamStore;
+    private final NodeCache nodeCache;
+    private final TaskMonitor taskMonitor;
+
+    @Inject
+    StreamProcessorTaskHandler(final StroomBeanStore beanStore,
+                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
+                               @Named("cachedStreamProcessorFilterService") final StreamProcessorFilterService streamProcessorFilterService,
+                               final StreamTaskHelper streamTaskHelper,
+                               final StreamStore streamStore,
+                               final NodeCache nodeCache,
+                               final TaskMonitor taskMonitor) {
+        this.beanStore = beanStore;
+        this.streamProcessorService = streamProcessorService;
+        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.streamTaskHelper = streamTaskHelper;
+        this.streamStore = streamStore;
+        this.nodeCache = nodeCache;
+        this.taskMonitor = taskMonitor;
+    }
 
     @Override
     public VoidResult exec(final StreamProcessorTask task) {

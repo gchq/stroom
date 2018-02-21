@@ -20,7 +20,6 @@ import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.shared.BaseResultList;
@@ -64,7 +63,6 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * NB: we also define this in Spring XML so we can set some of the properties.
  */
-@Component("taskManager")
 class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskManagerImpl.class);
 
@@ -80,7 +78,10 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
     private final ReentrantLock poolCreationLock = new ReentrantLock();
 
     @Inject
-    TaskManagerImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry, final NodeCache nodeCache, final StroomBeanStore beanStore, final SecurityContext securityContext) {
+    TaskManagerImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
+                    final NodeCache nodeCache,
+                    final StroomBeanStore beanStore,
+                    final SecurityContext securityContext) {
         this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
         this.nodeCache = nodeCache;
         this.beanStore = beanStore;

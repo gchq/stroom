@@ -1,7 +1,5 @@
 package stroom.statistics.server.stroomstats.pipeline.filter;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.filter.AbstractKafkaProducerFilter;
 import stroom.node.server.StroomPropertyService;
@@ -18,13 +16,10 @@ import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService
 import stroom.statistics.server.stroomstats.kafka.TopicNameFactory;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @SuppressWarnings("unused")
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
         type = "StroomStatsFilter",
         category = PipelineElementType.Category.FILTER,

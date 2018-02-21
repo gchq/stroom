@@ -19,7 +19,6 @@ package stroom.importexport.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
@@ -61,7 +60,6 @@ import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Component
 class ImportExportSerializerImpl implements ImportExportSerializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
 

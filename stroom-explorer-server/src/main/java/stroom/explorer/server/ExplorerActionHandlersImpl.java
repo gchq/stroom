@@ -16,7 +16,6 @@
 
 package stroom.explorer.server;
 
-import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 
@@ -28,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-@Component
 class ExplorerActionHandlersImpl implements ExplorerActionHandlers {
     private final Map<String, ExplorerActionHandler> allHandlers = new ConcurrentHashMap<>();
     private final Map<String, DocumentType> allTypes = new ConcurrentHashMap<>();

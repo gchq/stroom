@@ -16,16 +16,17 @@
 
 package stroom.util.spring;
 
-import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public class BeanListFactory {
-    @Resource
-    private StroomBeanStore stroomBeanStore;
+    private final StroomBeanStore stroomBeanStore;
+
+    @Inject
+    BeanListFactory(final StroomBeanStore stroomBeanStore) {
+        this.stroomBeanStore = stroomBeanStore;
+    }
 
     private List<String> beanList;
 

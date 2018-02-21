@@ -18,16 +18,13 @@ package stroom.util.spring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-@Component
 public class StroomBeanLifeCycle {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanLifeCycle.class);
 
@@ -40,7 +37,7 @@ public class StroomBeanLifeCycle {
     private volatile List<StroomBeanMethod> stopPendingBeans = null;
 
     @Inject
-    public StroomBeanLifeCycle(final StroomBeanStore stroomBeanStore) {
+    StroomBeanLifeCycle(final StroomBeanStore stroomBeanStore) {
         this.stroomBeanStore = stroomBeanStore;
     }
 

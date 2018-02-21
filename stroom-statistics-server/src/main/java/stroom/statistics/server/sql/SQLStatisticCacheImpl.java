@@ -19,7 +19,6 @@ package stroom.statistics.server.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
@@ -27,11 +26,10 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
-@Component
 public class SQLStatisticCacheImpl implements SQLStatisticCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 
@@ -41,8 +39,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
      */
     private static final int DEFAULT_MAX_SIZE = 1000000;
 
-    @Resource
-    private TaskManager taskManager;
+    private final TaskManager taskManager;
 
     private volatile SQLStatisticAggregateMap map = new SQLStatisticAggregateMap();
     private final ReentrantLock mapLock = new ReentrantLock();
@@ -51,12 +48,19 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
 
     private final int maxSize;
 
+    @Inject
+    public SQLStatisticCacheImpl(final TaskManager taskManager) {
+        this.maxSize = DEFAULT_MAX_SIZE;
+        this.taskManager = taskManager;
+    }
+
     public SQLStatisticCacheImpl() {
         this(DEFAULT_MAX_SIZE);
     }
 
     public SQLStatisticCacheImpl(final int maxSize) {
         this.maxSize = maxSize;
+        this.taskManager = null;
     }
 
     @Override

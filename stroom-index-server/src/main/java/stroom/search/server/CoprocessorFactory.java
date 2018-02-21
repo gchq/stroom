@@ -16,7 +16,6 @@
 
 package stroom.search.server;
 
-import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
@@ -26,7 +25,6 @@ import stroom.util.shared.HasTerminate;
 
 import java.util.Map;
 
-@Component
 public class CoprocessorFactory {
     public Coprocessor create(final CoprocessorSettings settings,
                               final FieldIndexMap fieldIndexMap, final Map<String, String> paramMap, final HasTerminate monitor) {

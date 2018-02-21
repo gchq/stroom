@@ -24,8 +24,6 @@ import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
@@ -33,7 +31,6 @@ import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.concurrent.CompletableFuture;
@@ -41,8 +38,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-@Component
-@Scope(StroomScope.TASK)
 public class IndexShardSearchTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
 

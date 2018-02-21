@@ -17,8 +17,6 @@
 package stroom.pipeline.server.writer;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
@@ -27,7 +25,6 @@ import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -35,8 +32,6 @@ import java.io.IOException;
 /**
  * Joins text instances into a single text instance.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "TextWriter", category = Category.WRITER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.TEXT)

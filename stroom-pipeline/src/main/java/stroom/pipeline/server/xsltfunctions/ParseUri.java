@@ -10,17 +10,12 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.util.spring.StroomScope;
 
 import java.net.URI;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
-public class ParseUri extends StroomExtensionFunctionCall {
+class ParseUri extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseUri.class);
 
     private static final String EMPTY_STRING = "";

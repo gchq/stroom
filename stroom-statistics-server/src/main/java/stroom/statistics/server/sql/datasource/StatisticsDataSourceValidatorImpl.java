@@ -22,8 +22,7 @@ import org.springframework.stereotype.Component;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 
-@Component
-public class StatisticsDataSourceValidatorImpl implements StatisticStoreValidator {
+class StatisticsDataSourceValidatorImpl implements StatisticStoreValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceValidatorImpl.class);
 
     @Override

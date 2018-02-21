@@ -18,12 +18,6 @@ package stroom.pipeline.server.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.entity.server.GenericEntityService;
-import stroom.entity.shared.BaseEntity;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.server.SupportsCodeInjection;
 import stroom.pipeline.server.errorhandler.TerminatedException;
@@ -32,15 +26,14 @@ import stroom.pipeline.server.filter.SAXRecordDetector;
 import stroom.pipeline.server.filter.SplitFilter;
 import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.server.parser.AbstractParser;
-import stroom.pipeline.server.reader.InputStreamElement;
 import stroom.pipeline.server.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.server.reader.ReaderRecordDetectorElement;
 import stroom.pipeline.server.source.SourceElement;
-import stroom.pipeline.server.task.ElementMonitor;
-import stroom.pipeline.server.task.Recorder;
-import stroom.pipeline.server.task.SteppingController;
-import stroom.pipeline.server.task.SteppingFilter;
-import stroom.pipeline.server.task.SteppingTask;
+import stroom.pipeline.server.stepping.ElementMonitor;
+import stroom.pipeline.server.stepping.Recorder;
+import stroom.pipeline.server.stepping.SteppingController;
+import stroom.pipeline.server.stepping.SteppingFilter;
+import stroom.pipeline.server.stepping.SteppingTask;
 import stroom.pipeline.server.writer.OutputRecorder;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.data.PipelineData;
@@ -51,7 +44,6 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.DocRef;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
@@ -65,8 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Component
-@Scope(StroomScope.TASK)
 public class PipelineFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineFactory.class);
     private final ElementRegistryFactory pipelineElementRegistryFactory;

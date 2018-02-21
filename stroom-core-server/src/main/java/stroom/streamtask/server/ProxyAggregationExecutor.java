@@ -20,8 +20,6 @@ package stroom.streamtask.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.proxy.repo.StroomZipRepository;
@@ -33,7 +31,6 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
-import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
@@ -45,9 +42,7 @@ import java.util.concurrent.Executor;
  * Task read a proxy repository and sent it to the stream store.
  * </p>
  */
-@Component
-@Scope(value = StroomScope.PROTOTYPE)
-public class ProxyAggregationExecutor {
+class ProxyAggregationExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
     private final static int DEFAULT_MAX_AGGREGATION = 10000;
@@ -61,14 +56,14 @@ public class ProxyAggregationExecutor {
     private final long maxStreamSize;
 
     @Inject
-    public ProxyAggregationExecutor(final ProxyFileProcessorImpl proxyFileProcessor,
-                                    final TaskMonitor taskMonitor,
-                                    final ExecutorProvider executorProvider,
-                                    @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
-                                    @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}") final String threadCount,
-                                    @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
-                                    @Value("#{propertyConfigurer.getProperty('stroom.maxAggregationScan')}") final String maxFileScan,
-                                    @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
+    ProxyAggregationExecutor(final ProxyFileProcessorImpl proxyFileProcessor,
+                             final TaskMonitor taskMonitor,
+                             final ExecutorProvider executorProvider,
+                             @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
+                             @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}") final String threadCount,
+                             @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
+                             @Value("#{propertyConfigurer.getProperty('stroom.maxAggregationScan')}") final String maxFileScan,
+                             @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
         this(
                 proxyFileProcessor,
                 taskMonitor,

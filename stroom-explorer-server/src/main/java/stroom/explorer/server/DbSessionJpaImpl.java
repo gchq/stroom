@@ -25,10 +25,12 @@ import javax.persistence.Query;
 import java.io.Serializable;
 import java.util.List;
 
-@Component
 class DbSessionJpaImpl implements DbSession {
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
+
+    DbSessionJpaImpl(final EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
 
     @Override
     public Object get(Class<?> entityClass, Serializable id) {

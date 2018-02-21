@@ -16,8 +16,6 @@
 
 package stroom.datafeed.server;
 
-import org.springframework.stereotype.Component;
-
 import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
 import javax.servlet.ReadListener;
@@ -46,7 +44,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
 
-@Component
 public class MockHttpServletRequest implements HttpServletRequest {
     private Map<String, String> headers = new HashMap<>();
     private byte[] inputStreamData;

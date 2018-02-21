@@ -24,8 +24,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
-@Primary
 @Transactional
 public class DBPersistence implements Persistence {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBPersistence.class);

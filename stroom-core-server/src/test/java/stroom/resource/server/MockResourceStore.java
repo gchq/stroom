@@ -16,15 +16,10 @@
 
 package stroom.resource.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.util.shared.ResourceKey;
-import stroom.util.spring.StroomSpringProfiles;
 
 import java.nio.file.Path;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component("resourceStore")
 public class MockResourceStore implements ResourceStore {
     @Override
     public ResourceKey createTempFile(String name) {

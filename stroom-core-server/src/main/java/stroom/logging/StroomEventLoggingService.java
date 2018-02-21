@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.BuildInfoUtil;
@@ -43,7 +42,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 
-@Component
 public class StroomEventLoggingService extends DefaultEventLoggingService implements EventLoggingService, BeanFactoryAware {
     /**
      * Logger - should not be used for event logs

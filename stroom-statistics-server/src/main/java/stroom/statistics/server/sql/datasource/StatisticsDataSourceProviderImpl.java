@@ -16,15 +16,14 @@
 
 package stroom.statistics.server.sql.datasource;
 
-import org.springframework.stereotype.Component;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
-import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.statistics.server.sql.Statistics;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
@@ -35,8 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Component
-public class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
+class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
     private final StatisticStoreCache statisticStoreCache;
     private final Statistics statistics;
     private final SecurityContext securityContext;

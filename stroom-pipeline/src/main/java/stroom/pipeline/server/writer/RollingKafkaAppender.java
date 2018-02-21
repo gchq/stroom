@@ -1,7 +1,5 @@
 package stroom.pipeline.server.writer;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.destination.RollingDestination;
@@ -12,13 +10,10 @@ import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.IOException;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
         type = "RollingKafkaAppender",
         category = PipelineElementType.Category.DESTINATION,
@@ -40,9 +35,9 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     private String key;
 
     @Inject
-    public RollingKafkaAppender(final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                                final PathCreator pathCreator,
-                                final ErrorReceiverProxy errorReceiverProxy) {
+    RollingKafkaAppender(final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+                         final PathCreator pathCreator,
+                         final ErrorReceiverProxy errorReceiverProxy) {
         this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
         this.pathCreator = pathCreator;
         this.errorReceiverProxy = errorReceiverProxy;

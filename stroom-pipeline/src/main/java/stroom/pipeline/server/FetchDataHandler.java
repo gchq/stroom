@@ -17,9 +17,8 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.context.annotation.Scope;
-import stroom.logging.StreamEventLog;
 import stroom.feed.server.FeedService;
+import stroom.logging.StreamEventLog;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
@@ -33,17 +32,35 @@ import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchDataAction.class)
-@Scope(StroomScope.TASK)
 @Secured(Stream.VIEW_DATA_PERMISSION)
-public class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
+class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
     @Inject
-    FetchDataHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineService pipelineService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
-        super(streamStore, feedService, feedHolder, pipelineHolder, streamHolder, pipelineService, pipelineFactory, errorReceiverProxy, pipelineDataCache, streamEventLog, securityContext);
+    FetchDataHandler(final StreamStore streamStore,
+                     final FeedService feedService,
+                     final FeedHolder feedHolder,
+                     final PipelineHolder pipelineHolder,
+                     final StreamHolder streamHolder,
+                     final PipelineService pipelineService,
+                     final PipelineFactory pipelineFactory,
+                     final ErrorReceiverProxy errorReceiverProxy,
+                     final PipelineDataCache pipelineDataCache,
+                     final StreamEventLog streamEventLog,
+                     final SecurityContext securityContext) {
+        super(streamStore,
+                feedService,
+                feedHolder,
+                pipelineHolder,
+                streamHolder,
+                pipelineService,
+                pipelineFactory,
+                errorReceiverProxy,
+                pipelineDataCache,
+                streamEventLog,
+                securityContext);
     }
 
     @Override

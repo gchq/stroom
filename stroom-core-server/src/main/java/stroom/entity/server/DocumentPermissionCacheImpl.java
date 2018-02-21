@@ -19,7 +19,6 @@ package stroom.entity.server;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.springframework.stereotype.Component;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
@@ -28,8 +27,7 @@ import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
 @Insecure
-@Component
-public class DocumentPermissionCacheImpl implements DocumentPermissionCache {
+class DocumentPermissionCacheImpl implements DocumentPermissionCache {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final SecurityContext securityContext;
@@ -37,8 +35,8 @@ public class DocumentPermissionCacheImpl implements DocumentPermissionCache {
 
     @Inject
     @SuppressWarnings("unchecked")
-    public DocumentPermissionCacheImpl(final CacheManager cacheManager,
-                                       final SecurityContext securityContext) {
+    DocumentPermissionCacheImpl(final CacheManager cacheManager,
+                                final SecurityContext securityContext) {
         this.securityContext = securityContext;
 
         final CacheLoader<DocumentPermission, Boolean> cacheLoader = CacheLoader.from(k -> securityContext.hasDocumentPermission(k.documentType, k.documentUuid, k.permission));

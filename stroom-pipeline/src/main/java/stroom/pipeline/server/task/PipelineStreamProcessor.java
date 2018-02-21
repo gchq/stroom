@@ -21,8 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
@@ -78,7 +76,6 @@ import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
@@ -90,8 +87,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineStreamProcessor.class);
     private static final String PROCESSING = "Processing:";
@@ -129,26 +124,26 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private ProcessInfoOutputStreamProvider processInfoOutputStreamProvider;
 
     @Inject
-    public PipelineStreamProcessor(final PipelineFactory pipelineFactory,
-                                   final StreamStore streamStore,
-                                   @Named("cachedFeedService") final FeedService feedService,
-                                   @Named("cachedPipelineService") final PipelineService pipelineService,
-                                   final TaskMonitor taskMonitor,
-                                   final PipelineHolder pipelineHolder,
-                                   final FeedHolder feedHolder,
-                                   final StreamHolder streamHolder,
-                                   final SearchIdHolder searchIdHolder,
-                                   final LocationFactoryProxy locationFactory,
-                                   final StreamProcessorHolder streamProcessorHolder,
-                                   final ErrorReceiverProxy errorReceiverProxy,
-                                   final ErrorWriterProxy errorWriterProxy,
-                                   final MetaData metaData,
-                                   final RecordCount recordCount,
-                                   final StreamCloser streamCloser,
-                                   final RecordErrorReceiver recordErrorReceiver,
-                                   final NodeCache nodeCache,
-                                   final PipelineDataCache pipelineDataCache,
-                                   final InternalStatisticsReceiver internalStatisticsReceiver) {
+    PipelineStreamProcessor(final PipelineFactory pipelineFactory,
+                            final StreamStore streamStore,
+                            @Named("cachedFeedService") final FeedService feedService,
+                            @Named("cachedPipelineService") final PipelineService pipelineService,
+                            final TaskMonitor taskMonitor,
+                            final PipelineHolder pipelineHolder,
+                            final FeedHolder feedHolder,
+                            final StreamHolder streamHolder,
+                            final SearchIdHolder searchIdHolder,
+                            final LocationFactoryProxy locationFactory,
+                            final StreamProcessorHolder streamProcessorHolder,
+                            final ErrorReceiverProxy errorReceiverProxy,
+                            final ErrorWriterProxy errorWriterProxy,
+                            final MetaData metaData,
+                            final RecordCount recordCount,
+                            final StreamCloser streamCloser,
+                            final RecordErrorReceiver recordErrorReceiver,
+                            final NodeCache nodeCache,
+                            final PipelineDataCache pipelineDataCache,
+                            final InternalStatisticsReceiver internalStatisticsReceiver) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = streamStore;
         this.feedService = feedService;

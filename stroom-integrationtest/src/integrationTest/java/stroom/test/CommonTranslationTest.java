@@ -17,8 +17,6 @@
 package stroom.test;
 
 import org.junit.Assert;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
@@ -30,9 +28,8 @@ import stroom.streamtask.server.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
-import stroom.util.spring.StroomSpringProfiles;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -40,8 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Component
-@Profile(StroomSpringProfiles.IT)
 public class CommonTranslationTest {
     public static final String FEED_NAME = "TEST_FEED";
     private static final String DIR = "CommonTranslationTest/";
@@ -71,16 +66,24 @@ public class CommonTranslationTest {
     private static final Path EMPLOYEE_REFERENCE_CSV = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "EmployeeReference.in");
 
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private StreamTaskCreator streamTaskCreator;
-    @Resource
-    private StoreCreationTool storeCreationTool;
-    @Resource
-    private TaskManager taskManager;
-    @Resource
-    private StreamStore streamStore;
+    private final NodeCache nodeCache;
+    private final StreamTaskCreator streamTaskCreator;
+    private final StoreCreationTool storeCreationTool;
+    private final TaskManager taskManager;
+    private final StreamStore streamStore;
+
+    @Inject
+    CommonTranslationTest(final NodeCache nodeCache,
+                          final StreamTaskCreator streamTaskCreator,
+                          final StoreCreationTool storeCreationTool,
+                          final TaskManager taskManager,
+                          final StreamStore streamStore) {
+        this.nodeCache = nodeCache;
+        this.streamTaskCreator = streamTaskCreator;
+        this.storeCreationTool = storeCreationTool;
+        this.taskManager = taskManager;
+        this.streamStore = streamStore;
+    }
 
     public List<StreamProcessorTaskExecutor> processAll() throws Exception {
         // Force creation of stream tasks.

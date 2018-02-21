@@ -35,8 +35,6 @@ import java.util.List;
 /**
  * Task to clean out old query history items.
  */
-@Component
-@Scope(value = StroomScope.TASK)
 public class QueryHistoryCleanExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryHistoryCleanExecutor.class);
 

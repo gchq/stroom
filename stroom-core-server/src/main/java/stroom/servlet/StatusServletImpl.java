@@ -17,7 +17,6 @@
 
 package stroom.servlet;
 
-import org.springframework.stereotype.Component;
 import stroom.node.server.NodeService;
 import stroom.node.server.VolumeService;
 import stroom.node.shared.ClientProperties;
@@ -28,9 +27,9 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
-import stroom.security.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -48,7 +47,6 @@ import java.util.List;
  * SERVLET that reports status of Stroom for scripting purposes.
  * </p>
  */
-@Component(StatusServletImpl.BEAN_NAME)
 public class StatusServletImpl extends HttpServlet implements StatusServlet {
     public static final String BEAN_NAME = "statusServlet";
 
@@ -68,7 +66,10 @@ public class StatusServletImpl extends HttpServlet implements StatusServlet {
     private transient SecurityContext securityContext;
 
     @Inject
-    StatusServletImpl(final NodeService nodeService, final ClientPropertiesService clientPropertiesService, final VolumeService volumeService, final SecurityContext securityContext) {
+    StatusServletImpl(final NodeService nodeService,
+                      final ClientPropertiesService clientPropertiesService,
+                      final VolumeService volumeService,
+                      final SecurityContext securityContext) {
         this.nodeService = nodeService;
         this.clientPropertiesService = clientPropertiesService;
         this.volumeService = volumeService;

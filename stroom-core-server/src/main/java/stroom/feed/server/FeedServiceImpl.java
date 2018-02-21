@@ -17,7 +17,6 @@
 
 package stroom.feed.server;
 
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -41,7 +40,6 @@ import java.util.List;
 import java.util.Set;
 
 @Transactional
-@Component("feedService")
 public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCriteria> implements FeedService {
     private static final String FEED_NAME_PATTERN_PROPERTY = "stroom.feedNamePattern";
     private static final String FEED_NAME_PATTERN_VALUE = "^[A-Z0-9_\\-]{3,}$";

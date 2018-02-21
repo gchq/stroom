@@ -19,7 +19,6 @@ package stroom.dictionary.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.server.JsonSerialiser;
 import stroom.docstore.server.Persistence;
@@ -37,8 +36,6 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.HashSet;
@@ -49,9 +46,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Component
-@Singleton
-public class DictionaryStoreImpl implements DictionaryStore {
+class DictionaryStoreImpl implements DictionaryStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryStoreImpl.class);
 
     private final Store<DictionaryDoc> store;
@@ -60,7 +55,7 @@ public class DictionaryStoreImpl implements DictionaryStore {
     private final Serialiser<DictionaryDoc> serialiser = new JsonSerialiser<>();
 
     @Inject
-    public DictionaryStoreImpl(final Store<DictionaryDoc> store, final SecurityContext securityContext, final Persistence persistence) throws IOException {
+    DictionaryStoreImpl(final Store<DictionaryDoc> store, final SecurityContext securityContext, final Persistence persistence) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;

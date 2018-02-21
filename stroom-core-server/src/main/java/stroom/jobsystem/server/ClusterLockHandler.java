@@ -18,7 +18,6 @@ package stroom.jobsystem.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
@@ -26,13 +25,11 @@ import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedBoolean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.net.MalformedURLException;
 
 @TaskHandlerBean(task = ClusterLockTask.class)
-@Scope(StroomScope.TASK)
 class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, SharedBoolean> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockHandler.class);
 

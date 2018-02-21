@@ -31,6 +31,7 @@ import stroom.importexport.server.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.server.stepping.SteppingTask;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.SharedElementData;

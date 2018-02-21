@@ -16,7 +16,6 @@
 
 package stroom.servlet;
 
-import org.springframework.stereotype.Component;
 import stroom.resource.server.ResourceStore;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
@@ -36,7 +35,6 @@ import java.util.UUID;
  * Wrapper for the ResourceStore that makes sure the user can only access stuff
  * in the session.
  */
-@Component
 public class SessionResourceStoreImpl extends HttpServlet implements SessionResourceStore {
     private static final long serialVersionUID = -4533441835216235920L;
     private static final String UUID_ARG = "UUID";
@@ -45,7 +43,8 @@ public class SessionResourceStoreImpl extends HttpServlet implements SessionReso
     private final HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
-    SessionResourceStoreImpl(final ResourceStore resourceStore, final HttpServletRequestHolder httpServletRequestHolder) {
+    SessionResourceStoreImpl(final ResourceStore resourceStore,
+                             final HttpServletRequestHolder httpServletRequestHolder) {
         this.resourceStore = resourceStore;
         this.httpServletRequestHolder = httpServletRequestHolder;
     }

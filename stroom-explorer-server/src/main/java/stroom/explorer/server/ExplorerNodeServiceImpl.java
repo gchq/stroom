@@ -2,7 +2,6 @@ package stroom.explorer.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -10,7 +9,6 @@ import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +17,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Component
 class ExplorerNodeServiceImpl implements ExplorerNodeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerNodeServiceImpl.class);
 
@@ -236,7 +233,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     /**
      * General form a function that returns a list of explorer nodes from the tree DAO
      *
-     * @param folderDocRef The root doc ref of the query
+     * @param folderDocRef  The root doc ref of the query
      * @param fetchFunction The function to call to get the list of ExplorerTreeNodes given a root ExplorerTreeNode
      * @return The list of converted ExplorerNodes
      */

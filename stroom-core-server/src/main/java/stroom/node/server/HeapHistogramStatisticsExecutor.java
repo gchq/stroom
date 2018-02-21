@@ -5,12 +5,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
@@ -25,13 +22,11 @@ import java.util.stream.Collectors;
  * Class for running scheduled jobs to execute a jmap heap histogram and load the results into
  * the {@link InternalStatisticsReceiver}. This is for use in identifying memory issues at run time
  * by capturing a regular snapshot of both the number of instances of classes and the bytes in use.
- *
+ * <p>
  * As with all internal statistics it is reliant on the stat key being configured in stroom properties
  * (i.e. stroomCoreServerPropertyContext
  */
 @SuppressWarnings("unused")
-@Component
-@Scope(StroomScope.TASK)
 public class HeapHistogramStatisticsExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeapHistogramStatisticsExecutor.class);
@@ -131,9 +126,9 @@ public class HeapHistogramStatisticsExecutor {
     }
 
     private static Map<String, String> buildTags(final Map.Entry<String, String> nodeTag,
-                                                final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
+                                                 final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
 
-      return ImmutableMap.<String, String>builder()
+        return ImmutableMap.<String, String>builder()
                 .put(nodeTag)
                 .put(TAG_NAME_CLASS_NAME, heapHistogramEntry.getClassName())
                 .build();

@@ -1,6 +1,5 @@
 package stroom.explorer.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.server.NameValidationUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.shared.ExplorerConstants;
@@ -12,7 +11,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import java.util.Map;
 import java.util.UUID;
 
-@Component
 class FolderExplorerActionHandler implements ExplorerActionHandler {
     public static final String FOLDER = ExplorerConstants.FOLDER;
     private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";

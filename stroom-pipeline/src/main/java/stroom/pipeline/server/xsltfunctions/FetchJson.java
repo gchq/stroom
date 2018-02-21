@@ -7,11 +7,8 @@ import net.sf.saxon.trans.XPathException;
 import org.mortbay.jetty.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.BufferedReader;
@@ -20,8 +17,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 class FetchJson extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchJson.class);
 

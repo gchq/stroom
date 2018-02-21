@@ -17,17 +17,14 @@
 
 package stroom.explorer.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerServiceCopyAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = ExplorerServiceCopyAction.class)
-@Scope(value = StroomScope.TASK)
 class ExplorerServiceCopyHandler
         extends AbstractTaskHandler<ExplorerServiceCopyAction, BulkActionResult> {
     private final ExplorerService explorerService;

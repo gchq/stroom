@@ -36,6 +36,7 @@ import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,24 +44,31 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-@Component
-public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
+class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
 
     public static final int BATCH_SIZE = 1000;
 
-    @Resource
-    private StreamAttributeKeyService streamAttributeKeyService;
-    @Resource
-    private StreamAttributeValueService streamAttributeValueService;
-    @Resource
-    private StreamAttributeValueServiceTransactionHelper streamAttributeValueServiceTransactionHelper;
-    @Resource
-    private StroomPropertyService stroomPropertyService;
-    @Resource
-    private ClusterLockService clusterLockService;
+    private final StreamAttributeKeyService streamAttributeKeyService;
+    private final StreamAttributeValueService streamAttributeValueService;
+    private final StreamAttributeValueServiceTransactionHelper streamAttributeValueServiceTransactionHelper;
+    private final StroomPropertyService stroomPropertyService;
+    private final ClusterLockService clusterLockService;
 
     private final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
+
+    @Inject
+    StreamAttributeValueFlushImpl(final StreamAttributeKeyService streamAttributeKeyService,
+                                  final StreamAttributeValueService streamAttributeValueService,
+                                  final StreamAttributeValueServiceTransactionHelper streamAttributeValueServiceTransactionHelper,
+                                  final StroomPropertyService stroomPropertyService,
+                                  final ClusterLockService clusterLockService) {
+        this.streamAttributeKeyService = streamAttributeKeyService;
+        this.streamAttributeValueService = streamAttributeValueService;
+        this.streamAttributeValueServiceTransactionHelper = streamAttributeValueServiceTransactionHelper;
+        this.stroomPropertyService = stroomPropertyService;
+        this.clusterLockService = clusterLockService;
+    }
 
     @Override
     public void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap) {

@@ -20,7 +20,6 @@ package stroom.streamstore.server.fs;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -29,7 +28,6 @@ import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.server.FeedService;
 import stroom.node.shared.Volume;
 import stroom.security.Secured;
 import stroom.streamstore.server.FileArrayList;
@@ -42,7 +40,8 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.util.io.FileUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -60,7 +59,6 @@ import java.util.Map.Entry;
  */
 @Transactional
 @Secured(Stream.DELETE_DATA_PERMISSION)
-@Component
 public class FileSystemStreamMaintenanceService
         implements StreamMaintenanceService, SupportsCriteriaLogging<FindStreamVolumeCriteria> {
     /**
@@ -76,12 +74,15 @@ public class FileSystemStreamMaintenanceService
     public static final String PREFIX_FEED = "Feed - ";
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamMaintenanceService.class);
 
-    @Resource
-    private StroomEntityManager entityManager;
-    @Resource
-    private FeedService feedService;
-    @Resource(name = "cachedStreamTypeService")
-    private StreamTypeService streamTypeService;
+    private final StroomEntityManager entityManager;
+    private final StreamTypeService streamTypeService;
+
+    @Inject
+    public FileSystemStreamMaintenanceService(final StroomEntityManager entityManager,
+                                              @Named("cachedStreamTypeService") final StreamTypeService streamTypeService) {
+        this.entityManager = entityManager;
+        this.streamTypeService = streamTypeService;
+    }
 
     @Override
     public Long deleteStreamVolume(final StreamVolume streamVolume) {

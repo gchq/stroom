@@ -20,23 +20,21 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
-import org.springframework.stereotype.Component;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
-@Component
-public class ActiveQueriesManager {
+class ActiveQueriesManager {
     private static final int MAX_ACTIVE_QUERIES = 100;
 
     private final LoadingCache<String, ActiveQueries> cache;
 
     @Inject
     @SuppressWarnings("unchecked")
-    public ActiveQueriesManager(final CacheManager cacheManager,
-                                final DataSourceProviderRegistry dataSourceProviderRegistry) {
+    ActiveQueriesManager(final CacheManager cacheManager,
+                         final DataSourceProviderRegistry dataSourceProviderRegistry) {
         final RemovalListener<String, ActiveQueries> removalListener = notification -> notification.getValue().destroy();
 
         final CacheLoader<String, ActiveQueries> cacheLoader = CacheLoader.from(k -> new ActiveQueries(dataSourceProviderRegistry));

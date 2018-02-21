@@ -16,13 +16,10 @@
 
 package stroom.streamstore.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.logging.StreamEventLog;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
-import stroom.streamstore.server.udload.StreamDownloadSettings;
-import stroom.streamstore.server.udload.StreamDownloadTask;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.Stream;
 import stroom.task.server.AbstractTaskHandler;
@@ -30,22 +27,22 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
 @TaskHandlerBean(task = DownloadDataAction.class)
-@Scope(StroomScope.TASK)
 @Secured(Stream.EXPORT_DATA_PERMISSION)
-public class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, ResourceGeneration> {
+class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, ResourceGeneration> {
     private final SessionResourceStore sessionResourceStore;
     private final TaskManager taskManager;
     private final StreamEventLog streamEventLog;
 
     @Inject
-    DownloadDataHandler(final SessionResourceStore sessionResourceStore, final TaskManager taskManager, final StreamEventLog streamEventLog) {
+    DownloadDataHandler(final SessionResourceStore sessionResourceStore,
+                        final TaskManager taskManager,
+                        final StreamEventLog streamEventLog) {
         this.sessionResourceStore = sessionResourceStore;
         this.taskManager = taskManager;
         this.streamEventLog = streamEventLog;

@@ -37,24 +37,15 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.content.ContentSyncService;
 import stroom.content.ProxySecurityFilter;
-import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServlet;
 import stroom.dictionary.server.DictionaryResource;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
-import stroom.elastic.spring.ElasticIndexConfiguration;
-import stroom.entity.server.SpringRequestFactoryServlet;
-import stroom.explorer.server.ExplorerConfiguration;
-import stroom.externaldoc.spring.ExternalDocRefConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
 import stroom.importexport.server.ImportExportActionHandler;
 import stroom.index.server.StroomIndexQueryResource;
-import stroom.index.spring.IndexConfiguration;
 import stroom.lifecycle.LifecycleService;
-import stroom.logging.spring.EventLoggingConfiguration;
-import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
@@ -63,14 +54,11 @@ import stroom.proxy.servlet.ProxyWelcomeServlet;
 import stroom.ruleset.server.RuleSetResource;
 import stroom.ruleset.server.RuleSetService;
 import stroom.ruleset.shared.RuleSet;
-import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.server.ScriptServlet;
-import stroom.script.spring.ScriptConfiguration;
-import stroom.search.spring.SearchConfiguration;
 import stroom.security.server.AuthorisationResource;
 import stroom.security.server.SecurityFilter;
+import stroom.security.server.SecuritySpringConfig;
 import stroom.security.server.SessionResource;
-import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
@@ -86,17 +74,11 @@ import stroom.servlet.RejectPostFilter;
 import stroom.servlet.SessionListListener;
 import stroom.servlet.SessionListServlet;
 import stroom.servlet.SessionResourceStoreImpl;
+import stroom.servlet.SpringRequestFactoryServlet;
 import stroom.servlet.StatusServlet;
 import stroom.servlet.StroomServlet;
-import stroom.spring.MetaDataStatisticConfiguration;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ServerComponentScanConfiguration;
-import stroom.spring.ServerConfiguration;
 import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
-import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -250,30 +232,10 @@ public class App extends Application<Config> {
 
     private ApplicationContext loadApplcationContext(final Configuration configuration, final Environment environment) {
         final AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
-        applicationContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD, SecurityConfiguration.PROD_SECURITY);
+        applicationContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD, SecuritySpringConfig.PROD_SECURITY);
         applicationContext.getBeanFactory().registerSingleton("dwConfiguration", configuration);
         applicationContext.getBeanFactory().registerSingleton("dwEnvironment", environment);
-        applicationContext.register(
-                ScopeConfiguration.class,
-                PersistenceConfiguration.class,
-                ServerComponentScanConfiguration.class,
-                ServerConfiguration.class,
-                EventLoggingConfiguration.class,
-                DictionaryConfiguration.class,
-                PipelineConfiguration.class,
-                ExplorerConfiguration.class,
-                IndexConfiguration.class,
-                SearchConfiguration.class,
-                ScriptConfiguration.class,
-                VisualisationConfiguration.class,
-                DashboardConfiguration.class,
-                MetaDataStatisticConfiguration.class,
-                StatisticsConfiguration.class,
-                SecurityConfiguration.class,
-                ExternalDocRefConfiguration.class,
-                ElasticIndexConfiguration.class,
-                RuleSetConfiguration.class
-        );
+        applicationContext.register(AppSpringConfig.class);
         applicationContext.refresh();
         return applicationContext;
     }

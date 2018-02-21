@@ -16,8 +16,6 @@
 
 package stroom.streamstore.server;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -26,14 +24,11 @@ import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamtask.server.AbstractBatchDeleteExecutor;
 import stroom.streamtask.server.BatchIdTransactionHelper;
 import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 
-@Component
-@Scope(value = StroomScope.TASK)
-public class StreamAttributeValueDeleteExecutor extends AbstractBatchDeleteExecutor {
+class StreamAttributeValueDeleteExecutor extends AbstractBatchDeleteExecutor {
     private static final String TASK_NAME = "Stream Attribute Delete Executor";
     private static final String LOCK_NAME = "StreamAttributeDeleteExecutor";
     private static final String STREAM_ATTRIBUTE_DELETE_AGE_PROPERTY = "stroom.streamAttribute.deleteAge";
@@ -42,9 +37,10 @@ public class StreamAttributeValueDeleteExecutor extends AbstractBatchDeleteExecu
     private static final String TEMP_STRM_ATTRIBUTE_ID_TABLE = "TEMP_STRM_ATTRIBUTE_ID";
 
     @Inject
-    public StreamAttributeValueDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
-                                              final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
-                                              final TaskMonitor taskMonitor) {
+    StreamAttributeValueDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
+                                       final ClusterLockService clusterLockService,
+                                       final StroomPropertyService propertyService,
+                                       final TaskMonitor taskMonitor) {
         super(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor, TASK_NAME, LOCK_NAME,
                 STREAM_ATTRIBUTE_DELETE_AGE_PROPERTY, STREAM_ATTRIBUTE_DELETE_BATCH_SIZE_PROPERTY,
                 DEFAULT_STREAM_ATTRIBUTE_DELETE_BATCH_SIZE, TEMP_STRM_ATTRIBUTE_ID_TABLE);

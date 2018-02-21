@@ -16,7 +16,6 @@
 
 package stroom.security.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
@@ -28,14 +27,12 @@ import stroom.security.shared.UserRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.config.StroomProperties;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchUserAndPermissionsAction.class)
-@Scope(value = StroomScope.TASK)
 @Insecure
-public class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPermissionsAction, UserAndPermissions> {
+class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPermissionsAction, UserAndPermissions> {
     private static final String PREVENT_LOGIN_PROPERTY = "stroom.maintenance.preventLogin";
 
     private final SecurityContext securityContext;

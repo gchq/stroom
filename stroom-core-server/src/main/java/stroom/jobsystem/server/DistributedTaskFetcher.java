@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
@@ -44,6 +43,7 @@ import stroom.util.spring.StroomShutdown;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.util.Collection;
@@ -60,7 +60,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * class may execute many tasks concurrently if required, e.g. using separate
  * threads for transforming multiple XML files.
  */
-@Component
 public class DistributedTaskFetcher implements BeanFactoryAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
     private static final long ONE_MINUTE = 60 * 1000;
@@ -72,14 +71,20 @@ public class DistributedTaskFetcher implements BeanFactoryAware {
     private final AtomicBoolean fetchingTasks = new AtomicBoolean();
     private final AtomicBoolean waitingToFetchTasks = new AtomicBoolean();
     private final Set<Task<?>> runningTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    @Resource
-    private TaskManager taskManager;
-    @Resource
-    private JobNodeTrackerCache jobNodeTrackerCache;
-    @Resource
-    private NodeCache nodeCache;
+
+    private final TaskManager taskManager;
+    private final JobNodeTrackerCache jobNodeTrackerCache;
+    private final NodeCache nodeCache;
+
     private BeanFactory beanFactory;
     private long lastFetch;
+
+    @Inject
+    DistributedTaskFetcher(final TaskManager taskManager, final JobNodeTrackerCache jobNodeTrackerCache, final NodeCache nodeCache) {
+        this.taskManager = taskManager;
+        this.jobNodeTrackerCache = jobNodeTrackerCache;
+        this.nodeCache = nodeCache;
+    }
 
     /**
      * Tells tasks to stop and waits for all tasks to stop before cleaning up

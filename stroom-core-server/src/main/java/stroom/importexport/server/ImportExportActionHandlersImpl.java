@@ -16,12 +16,9 @@
 
 package stroom.importexport.server;
 
-import org.springframework.stereotype.Component;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 class ImportExportActionHandlersImpl implements ImportExportActionHandlers {
     private final Map<String, ImportExportActionHandler> allHandlers = new ConcurrentHashMap<>();
 

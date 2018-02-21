@@ -17,15 +17,10 @@
 
 package stroom.node.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockNamedEntityService;
 import stroom.node.shared.FindGlobalPropertyCriteria;
 import stroom.node.shared.GlobalProperty;
-import stroom.util.spring.StroomSpringProfiles;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockGlobalPropertyService extends MockNamedEntityService<GlobalProperty, FindGlobalPropertyCriteria>
         implements GlobalPropertyService {
     @Override

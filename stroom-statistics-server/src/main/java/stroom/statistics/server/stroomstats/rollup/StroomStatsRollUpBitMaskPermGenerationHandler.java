@@ -30,7 +30,7 @@ import java.util.Set;
 
 @TaskHandlerBean(task = StroomStatsRollUpBitMaskPermGenerationAction.class)
 @Insecure
-public class StroomStatsRollUpBitMaskPermGenerationHandler
+class StroomStatsRollUpBitMaskPermGenerationHandler
         extends AbstractTaskHandler<StroomStatsRollUpBitMaskPermGenerationAction, ResultList<CustomRollUpMask>> {
     @Override
     public BaseResultList<CustomRollUpMask> exec(final StroomStatsRollUpBitMaskPermGenerationAction action) {

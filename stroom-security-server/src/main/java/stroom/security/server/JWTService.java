@@ -23,8 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
-@Component
-public class JWTService {
+class JWTService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTService.class);
 
     private static final String BEARER = "Bearer ";
@@ -36,7 +35,7 @@ public class JWTService {
     private final boolean checkTokenRevocation;
 
     @Inject
-    public JWTService(
+    JWTService(
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authenticationServiceUrl,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String authJwtIssuer,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}") final boolean enableTokenRevocationCheck,

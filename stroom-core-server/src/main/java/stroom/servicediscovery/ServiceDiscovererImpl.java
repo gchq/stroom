@@ -8,7 +8,6 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Inject;
@@ -22,7 +21,6 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-@Component
 public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
@@ -35,7 +33,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
 
     @Inject
-    public ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
+    ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
         //create the service providers once service discovery has started up
         serviceDiscoveryManager.registerStartupListener(this::initProviders);
     }

@@ -17,8 +17,6 @@
 package stroom.pipeline.server.writer;
 
 import org.apache.commons.lang.StringUtils;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
@@ -26,9 +24,8 @@ import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.util.SystemPropertyUtil;
 import stroom.util.config.StroomProperties;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -41,8 +38,6 @@ import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class PathCreator {
     private static final String[] NON_ENV_VARS = {
             "feed",
@@ -67,16 +62,24 @@ public class PathCreator {
     private static final Set<String> NON_ENV_VARS_SET = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(NON_ENV_VARS)));
 
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private PipelineHolder pipelineHolder;
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private SearchIdHolder searchIdHolder;
-    @Resource
-    private NodeCache nodeCache;
+    private final FeedHolder feedHolder;
+    private final PipelineHolder pipelineHolder;
+    private final StreamHolder streamHolder;
+    private final SearchIdHolder searchIdHolder;
+    private final NodeCache nodeCache;
+
+    @Inject
+    PathCreator(final FeedHolder feedHolder,
+                final PipelineHolder pipelineHolder,
+                final StreamHolder streamHolder,
+                final SearchIdHolder searchIdHolder,
+                final NodeCache nodeCache) {
+        this.feedHolder = feedHolder;
+        this.pipelineHolder = pipelineHolder;
+        this.streamHolder = streamHolder;
+        this.searchIdHolder = searchIdHolder;
+        this.nodeCache = nodeCache;
+    }
 
     public static String replaceTimeVars(String path) {
         // Replace some of the path elements with system variables.

@@ -1,19 +1,15 @@
 package stroom.explorer.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.SharedDocRefInfo;
 import stroom.explorer.shared.ExplorerServiceInfoAction;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = ExplorerServiceInfoAction.class)
-@Scope(value = StroomScope.TASK)
-public class ExplorerServiceInfoHandler
-        extends AbstractTaskHandler<ExplorerServiceInfoAction, SharedDocRefInfo> {
+class ExplorerServiceInfoHandler extends AbstractTaskHandler<ExplorerServiceInfoAction, SharedDocRefInfo> {
 
     private final ExplorerService explorerService;
 

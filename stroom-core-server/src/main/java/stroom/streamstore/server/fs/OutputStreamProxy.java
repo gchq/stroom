@@ -18,9 +18,6 @@ package stroom.streamstore.server.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.util.spring.StroomScope;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,8 +25,6 @@ import java.io.OutputStream;
 /**
  * Proxy class to aid AOP timings.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class OutputStreamProxy extends OutputStream {
     private static final Logger LOGGER = LoggerFactory.getLogger(OutputStreamProxy.class);
 

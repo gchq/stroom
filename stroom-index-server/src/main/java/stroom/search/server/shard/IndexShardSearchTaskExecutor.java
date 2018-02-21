@@ -16,15 +16,13 @@
 
 package stroom.search.server.shard;
 
-import org.springframework.stereotype.Component;
 import stroom.search.server.taskqueue.TaskExecutor;
 
-import javax.inject.Singleton;
+import javax.inject.Inject;
 
-@Component
-@Singleton
 public class IndexShardSearchTaskExecutor extends TaskExecutor {
-    public IndexShardSearchTaskExecutor() {
+    @Inject
+    IndexShardSearchTaskExecutor() {
         super("Stroom Search Index Shard Task Executor");
     }
 }

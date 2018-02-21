@@ -16,15 +16,12 @@
 
 package stroom.pipeline.server.filter;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.security.SecurityContext;
-import stroom.util.spring.StroomScope;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
 import javax.inject.Inject;
@@ -33,8 +30,6 @@ import javax.xml.XMLConstants;
 /**
  * An XML filter for performing inline schema validation of XML.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "SchemaFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
         PipelineElementType.ROLE_VALIDATOR}, icon = ElementIcons.XSD)

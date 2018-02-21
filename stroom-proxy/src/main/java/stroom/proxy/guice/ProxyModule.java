@@ -7,9 +7,7 @@ import stroom.content.ContentSyncConfig;
 import stroom.datafeed.server.MetaMapFilterFactory;
 import stroom.datafeed.server.RequestHandler;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.dictionary.server.DictionaryStoreImpl;
 import stroom.docstore.server.Persistence;
-import stroom.docstore.server.Store;
 import stroom.docstore.server.fs.FSPersistence;
 import stroom.proxy.handler.ForwardStreamConfig;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
@@ -54,11 +52,12 @@ public class ProxyModule extends AbstractModule {
 
         bind(MetaMapFilterFactory.class).to(MetaMapFilterFactoryImpl.class);
         bind(RuleSetService.class).to(RuleSetServiceImpl.class).in(Singleton.class);
-        bind(DictionaryStore.class).to(DictionaryStoreImpl.class).in(Singleton.class);
+//        bind(DictionaryStore.class).to(DictionaryStoreImpl.class).in(Singleton.class);
         bind(SecurityContext.class).to(NoSecurityContext.class);
     }
 
-    @Provides @Singleton
+    @Provides
+    @Singleton
     Persistence providePersistence() {
         return new FSPersistence(Paths.get("/Users/stroomdev66/tmp/proxy-conf"));
     }

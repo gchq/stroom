@@ -17,7 +17,6 @@
 
 package stroom.search.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.Sort.Direction;
 import stroom.index.server.IndexService;
 import stroom.index.server.IndexShardService;
@@ -27,10 +26,10 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
-import stroom.security.SecurityHelper;
-import stroom.query.common.v2.ResultHandler;
 import stroom.query.api.v2.Query;
+import stroom.query.common.v2.ResultHandler;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.cluster.ClusterDispatchAsync;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.ClusterResultCollectorCache;
@@ -43,7 +42,6 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
 
@@ -57,7 +55,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 @TaskHandlerBean(task = AsyncSearchTask.class)
-@Scope(value = StroomScope.TASK)
 class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidResult> {
     private final TaskMonitor taskMonitor;
     private final TargetNodeSetFactory targetNodeSetFactory;
@@ -70,10 +67,15 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
     private final SecurityContext securityContext;
 
     @Inject
-    AsyncSearchTaskHandler(final TaskMonitor taskMonitor, final TargetNodeSetFactory targetNodeSetFactory,
-                           final ClusterDispatchAsync dispatcher, final ClusterDispatchAsyncHelper dispatchHelper,
-                           final ClusterResultCollectorCache clusterResultCollectorCache, final IndexService indexService,
-                           final IndexShardService indexShardService, final TaskManager taskManager, final SecurityContext securityContext) {
+    AsyncSearchTaskHandler(final TaskMonitor taskMonitor,
+                           final TargetNodeSetFactory targetNodeSetFactory,
+                           final ClusterDispatchAsync dispatcher,
+                           final ClusterDispatchAsyncHelper dispatchHelper,
+                           final ClusterResultCollectorCache clusterResultCollectorCache,
+                           final IndexService indexService,
+                           final IndexShardService indexShardService,
+                           final TaskManager taskManager,
+                           final SecurityContext securityContext) {
         this.taskMonitor = taskMonitor;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.dispatcher = dispatcher;

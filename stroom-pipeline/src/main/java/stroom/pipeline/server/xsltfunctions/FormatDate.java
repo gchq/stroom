@@ -21,11 +21,8 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -33,8 +30,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 class FormatDate extends StroomExtensionFunctionCall {
     private static final String GMT_BST_GUESS = "GMT/BST";
     private static final ZoneId EUROPE_LONDON_TIME_ZONE = ZoneId.of("Europe/London");

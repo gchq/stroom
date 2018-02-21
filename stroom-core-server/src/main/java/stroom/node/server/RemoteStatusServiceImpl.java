@@ -17,9 +17,7 @@
 package stroom.node.server;
 
 import com.caucho.hessian.server.HessianServlet;
-import org.springframework.stereotype.Component;
 
-@Component("remoteStatusService")
 public class RemoteStatusServiceImpl extends HessianServlet implements RemoteStatusService {
     @Override
     public GetStatusResponse getStatus(final GetStatusRequest request) {

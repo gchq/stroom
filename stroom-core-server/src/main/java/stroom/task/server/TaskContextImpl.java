@@ -16,9 +16,6 @@
 
 package stroom.task.server;
 
-import org.springframework.stereotype.Component;
-
-@Component
 class TaskContextImpl implements TaskContext {
     @Override
     public void setName(final String name) {

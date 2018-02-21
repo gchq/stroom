@@ -16,7 +16,6 @@
 
 package stroom.task.server;
 
-import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
 import stroom.security.UserTokenUtil;
 import stroom.util.shared.Task;
@@ -25,13 +24,13 @@ import stroom.util.shared.ThreadPool;
 import javax.inject.Inject;
 import java.util.concurrent.Executor;
 
-@Component
 class ExecutorProviderImpl implements ExecutorProvider {
     private final TaskManager taskManager;
     private final SecurityContext securityContext;
 
     @Inject
-    ExecutorProviderImpl(final TaskManager taskManager, final SecurityContext securityContext) {
+    ExecutorProviderImpl(final TaskManager taskManager,
+                         final SecurityContext securityContext) {
         this.taskManager = taskManager;
         this.securityContext = securityContext;
     }

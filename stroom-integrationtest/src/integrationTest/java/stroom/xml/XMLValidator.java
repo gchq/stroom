@@ -17,8 +17,6 @@
 package stroom.xml;
 
 import org.apache.commons.lang.StringUtils;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.PipelineTestUtil;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -29,25 +27,29 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 
 /**
  * Helper class to validate XML based resources are valid.
  */
-@Component
-@Scope(StroomScope.TASK)
 public class XMLValidator {
     private static final String NO_RESOURCE_PROVIDED = "No resource provided";
-    @Resource
-    private PipelineFactory pipelineFactory;
-    @Resource
-    private PipelineService pipelineService;
-    @Resource
-    private ErrorReceiverProxy errorReceiver;
+
+    private final PipelineFactory pipelineFactory;
+    private final PipelineService pipelineService;
+    private final ErrorReceiverProxy errorReceiver;
+
+    @Inject
+    XMLValidator(final PipelineFactory pipelineFactory,
+                 final PipelineService pipelineService,
+                 final ErrorReceiverProxy errorReceiver) {
+        this.pipelineFactory = pipelineFactory;
+        this.pipelineService = pipelineService;
+        this.errorReceiver = errorReceiver;
+    }
 
     /**
      * Pull back the error message regarding this XML based resource.

@@ -18,17 +18,12 @@ package stroom.node.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 
-@Component
-@Scope(value = StroomScope.TASK)
 public class NodeStatusExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeStatusExecutor.class);
 

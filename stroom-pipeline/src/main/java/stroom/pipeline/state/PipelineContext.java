@@ -16,12 +16,6 @@
 
 package stroom.pipeline.state;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.util.spring.StroomScope;
-
-@Component
-@Scope(value = StroomScope.TASK)
 public class PipelineContext {
     private boolean stepping;
 

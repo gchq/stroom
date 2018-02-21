@@ -20,8 +20,6 @@ package stroom.node.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.BaseEntityUtil;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.node.shared.FindVolumeCriteria;
@@ -30,7 +28,6 @@ import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
 import stroom.util.config.StroomProperties;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 import java.nio.file.Files;
@@ -38,8 +35,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
-@Profile(StroomSpringProfiles.IT)
 public class NodeConfigForTesting implements NodeConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeConfigForTesting.class);
 
@@ -53,7 +48,8 @@ public class NodeConfigForTesting implements NodeConfig {
     private final StroomEntityManager stroomEntityManager;
 
     @Inject
-    public NodeConfigForTesting(final NodeService nodeService, final VolumeService volumeService,
+    public NodeConfigForTesting(final NodeService nodeService,
+                                final VolumeService volumeService,
                                 final StroomEntityManager stroomEntityManager) {
         this.nodeService = nodeService;
         this.volumeService = volumeService;

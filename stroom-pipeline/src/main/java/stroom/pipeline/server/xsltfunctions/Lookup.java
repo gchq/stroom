@@ -19,20 +19,16 @@ package stroom.pipeline.server.xsltfunctions;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
-import stroom.util.spring.StroomScope;
 import stroom.xml.event.np.NPEventList;
 
 import javax.inject.Inject;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 class Lookup extends AbstractLookup {
     @Inject
-    Lookup(final ReferenceData referenceData, final StreamHolder streamHolder) {
+    Lookup(final ReferenceData referenceData,
+           final StreamHolder streamHolder) {
         super(referenceData, streamHolder);
     }
 

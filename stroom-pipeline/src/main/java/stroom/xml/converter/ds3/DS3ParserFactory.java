@@ -16,15 +16,12 @@
 
 package stroom.xml.converter.ds3;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.filter.SchemaFilter;
-import stroom.util.spring.StroomScope;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.ds3.ref.VarMap;
@@ -36,8 +33,6 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.Reader;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class DS3ParserFactory implements ParserFactory {
     public static final String SCHEMA_NAME = "data-splitter-v3.0";
     public static final String NAMESPACE_URI = "data-splitter:3";

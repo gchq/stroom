@@ -19,8 +19,6 @@ package stroom.streamstore.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.PeriodUtil;
 import stroom.entity.shared.Period;
 import stroom.feed.server.FeedService;
@@ -36,7 +34,6 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
@@ -46,8 +43,6 @@ import java.util.List;
 /**
  * Factory for creating stream clean tasks.
  */
-@Component
-@Scope(value = StroomScope.TASK)
 public class StreamRetentionExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamRetentionExecutor.class);
 
@@ -60,7 +55,10 @@ public class StreamRetentionExecutor {
     private final ClusterLockService clusterLockService;
 
     @Inject
-    StreamRetentionExecutor(final FeedService feedService, final StreamStore streamStore, final TaskMonitor taskMonitor, final ClusterLockService clusterLockService) {
+    StreamRetentionExecutor(final FeedService feedService,
+                            final StreamStore streamStore,
+                            final TaskMonitor taskMonitor,
+                            final ClusterLockService clusterLockService) {
         this.feedService = feedService;
         this.streamStore = streamStore;
         this.taskMonitor = taskMonitor;

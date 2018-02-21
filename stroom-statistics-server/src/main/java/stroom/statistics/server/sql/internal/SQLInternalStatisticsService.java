@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
@@ -19,7 +18,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
-@Component
 class SQLInternalStatisticsService implements InternalStatisticsService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLInternalStatisticsService.class);

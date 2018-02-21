@@ -25,17 +25,21 @@ import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 @Transactional
-@Component
 public class EntityServiceImplTestTransactionHelper {
-    @Resource
-    FeedService feedService;
+    private final FeedService feedService;
+    private final FeedService cachedFeedService;
 
-    @Resource(name = "cachedFeedService")
-    FeedService cachedFeedService;
+    private Feed feed;
 
-    Feed feed;
+    @Inject
+    public EntityServiceImplTestTransactionHelper(@Named("cachedFeedService")final FeedService feedService, final FeedService cachedFeedService) {
+        this.feedService = feedService;
+        this.cachedFeedService = cachedFeedService;
+    }
 
     public void init() {
         feed = feedService.create("FEED_" + System.currentTimeMillis());

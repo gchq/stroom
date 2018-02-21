@@ -16,15 +16,17 @@
 
 package stroom.refdata;
 
-import org.springframework.stereotype.Component;
 import stroom.task.server.TaskManager;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
-@Component
 public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
-    @Resource
-    private TaskManager taskManager;
+    private final TaskManager taskManager;
+
+    @Inject
+    ReferenceDataLoaderImpl(final TaskManager taskManager) {
+        this.taskManager = taskManager;
+    }
 
     @Override
     public MapStore load(final MapStoreCacheKey effectiveFeed) {

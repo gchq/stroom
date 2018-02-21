@@ -19,7 +19,6 @@ package stroom.streamtask.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
@@ -34,6 +33,7 @@ import stroom.security.SecurityHelper;
 import stroom.security.UserTokenUtil;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.streamstore.server.ExpressionToFindCriteria;
 import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Limits;
@@ -41,7 +41,7 @@ import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamtask.server.ExpressionToFindCriteria.Context;
+import stroom.streamstore.server.ExpressionToFindCriteria.Context;
 import stroom.streamtask.server.StreamTaskCreatorTransactionHelper.CreatedTasks;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -81,7 +81,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>
  * Fill up our pool if we are below our low water mark (FILL_LOW_SIZE).
  */
-@Component
 public class StreamTaskCreatorImpl implements StreamTaskCreator {
     public static final String STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY = "stroom.streamTask.fillTaskQueue";
     public static final String STREAM_TASKS_CREATE_TASKS_PROPERTY = "stroom.streamTask.createTasks";

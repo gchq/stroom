@@ -19,7 +19,6 @@ package stroom.security.server;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
@@ -34,9 +33,8 @@ import javax.inject.Provider;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Component
 @EntityEventHandler(type = User.ENTITY_TYPE, action = EntityAction.CLEAR_CACHE)
-public class UserGroupsCache implements EntityEvent.Handler {
+class UserGroupsCache implements EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final Provider<EntityEventBus> eventBusProvider;

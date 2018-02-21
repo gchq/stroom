@@ -17,8 +17,6 @@
 package stroom.xml;
 
 import org.junit.Assert;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineTestUtil;
 import stroom.pipeline.server.TextConverterService;
@@ -41,9 +39,8 @@ import stroom.pipeline.state.RecordCount;
 import stroom.streamstore.server.StreamStore;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
@@ -53,23 +50,31 @@ import java.util.List;
  * Reusable Functions for the tests.
  * </p>
  */
-@Component
-@Scope(StroomScope.TASK)
 public class F2XTestUtil {
-    @Resource
-    private PipelineFactory pipelineFactory;
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private TextConverterService textConverterService;
-    @Resource
-    private XSLTService xsltService;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    @Resource
-    private RecordCount recordCount;
-    @Resource
-    private StreamStore streamStore;
+    private final PipelineFactory pipelineFactory;
+    private final FeedHolder feedHolder;
+    private final TextConverterService textConverterService;
+    private final XSLTService xsltService;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final RecordCount recordCount;
+    private final StreamStore streamStore;
+
+    @Inject
+    F2XTestUtil(final PipelineFactory pipelineFactory,
+                final FeedHolder feedHolder,
+                final TextConverterService textConverterService,
+                final XSLTService xsltService,
+                final ErrorReceiverProxy errorReceiverProxy,
+                final RecordCount recordCount,
+                final StreamStore streamStore) {
+        this.pipelineFactory = pipelineFactory;
+        this.feedHolder = feedHolder;
+        this.textConverterService = textConverterService;
+        this.xsltService = xsltService;
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.recordCount = recordCount;
+        this.streamStore = streamStore;
+    }
 
     /**
      * Run a XML and XSLT transform.

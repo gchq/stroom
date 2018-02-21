@@ -17,7 +17,6 @@
 package stroom.node.server;
 
 import com.google.common.collect.ImmutableMap;
-import org.springframework.stereotype.Component;
 import stroom.node.shared.RecordCountService;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.util.io.StreamUtil;
@@ -38,7 +37,6 @@ import java.util.regex.Pattern;
  * Utility class to split out the query of the node status in a separate read
  * only transaction so it queries the slave node.
  */
-@Component
 public class NodeStatusServiceUtil {
     private static final String INTERNAL_STAT_KEY_MEMORY = "memory";
     private static final String INTERNAL_STAT_KEY_CPU = "cpu";
@@ -52,7 +50,8 @@ public class NodeStatusServiceUtil {
     private CPUStats previousCPUStats;
 
     @Inject
-    public NodeStatusServiceUtil(final NodeCache nodeCache, final RecordCountService recordCountService) {
+    public NodeStatusServiceUtil(final NodeCache nodeCache,
+                                 final RecordCountService recordCountService) {
         this.nodeCache = nodeCache;
         this.recordCountService = recordCountService;
     }

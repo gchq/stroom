@@ -17,7 +17,6 @@
 
 package stroom.xmlschema.server;
 
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -30,9 +29,8 @@ import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
 
-@Component
 @Transactional
-public class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, FindXMLSchemaCriteria>
+class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, FindXMLSchemaCriteria>
         implements XMLSchemaService {
     @Inject
     XMLSchemaServiceImpl(final StroomEntityManager entityManager,

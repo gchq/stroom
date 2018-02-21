@@ -16,17 +16,14 @@
 
 package stroom.node.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.node.shared.NodeInfoResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = NodeInfoClusterTask.class)
-@Scope(value = StroomScope.TASK)
-public class NodeInfoClusterHandler extends AbstractTaskHandler<NodeInfoClusterTask, NodeInfoResult> {
+class NodeInfoClusterHandler extends AbstractTaskHandler<NodeInfoClusterTask, NodeInfoResult> {
     private final NodeCache nodeCache;
 
     @Inject

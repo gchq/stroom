@@ -20,7 +20,6 @@ package stroom.streamtask.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.ConnectionUtil;
@@ -67,9 +66,8 @@ import java.util.Map.Entry;
 /**
  * Class used to do the transactional aspects of stream task creation
  */
-@Component
 @Transactional(propagation = Propagation.REQUIRES_NEW)
-public class StreamTaskCreatorTransactionHelper {
+class StreamTaskCreatorTransactionHelper {
     public static final int RECENT_STREAM_ID_LIMIT = 10000;
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskCreatorTransactionHelper.class);
 

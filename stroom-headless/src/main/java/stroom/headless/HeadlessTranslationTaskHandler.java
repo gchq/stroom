@@ -17,12 +17,11 @@
 
 package stroom.headless;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.StringCriteria;
 import stroom.feed.MetaMap;
-import stroom.feed.server.FeedService;
 import stroom.feed.StroomHeaderArguments;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.pipeline.server.ErrorWriterProxy;
@@ -47,8 +46,6 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.refdata.ContextDataLoader;
-import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
@@ -60,42 +57,51 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
-@Scope(StroomScope.TASK)
 public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTranslationTask, VoidResult> {
-    @Resource
-    private PipelineFactory pipelineFactory;
-    @Resource
-    private StreamStore streamStore;
-    @Resource(name = "cachedFeedService")
-    private FeedService feedService;
-    @Resource(name = "cachedPipelineService")
-    private PipelineService pipelineService;
-    @Resource
-    private ContextDataLoader contextDataLoader;
-    @Resource
-    private MetaData metaData;
-    @Resource
-    private PipelineHolder pipelineHolder;
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    @Resource
-    private ErrorWriterProxy errorWriterProxy;
-    @Resource
-    private RecordErrorReceiver recordErrorReceiver;
-    @Resource
-    private PipelineDataCache pipelineDataCache;
-    @Resource
-    private StreamHolder streamHolder;
+    private final PipelineFactory pipelineFactory;
+    private final FeedService feedService;
+    private final PipelineService pipelineService;
+    private final MetaData metaData;
+    private final PipelineHolder pipelineHolder;
+    private final FeedHolder feedHolder;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final ErrorWriterProxy errorWriterProxy;
+    private final RecordErrorReceiver recordErrorReceiver;
+    private final PipelineDataCache pipelineDataCache;
+    private final StreamHolder streamHolder;
+
+    @Inject
+    HeadlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
+                                   @Named("cachedFeedService") final FeedService feedService,
+                                   @Named("cachedPipelineService") final PipelineService pipelineService,
+                                   final MetaData metaData,
+                                   final PipelineHolder pipelineHolder,
+                                   final FeedHolder feedHolder,
+                                   final ErrorReceiverProxy errorReceiverProxy,
+                                   final ErrorWriterProxy errorWriterProxy,
+                                   final RecordErrorReceiver recordErrorReceiver,
+                                   final PipelineDataCache pipelineDataCache,
+                                   final StreamHolder streamHolder) {
+        this.pipelineFactory = pipelineFactory;
+        this.feedService = feedService;
+        this.pipelineService = pipelineService;
+        this.metaData = metaData;
+        this.pipelineHolder = pipelineHolder;
+        this.feedHolder = feedHolder;
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.errorWriterProxy = errorWriterProxy;
+        this.recordErrorReceiver = recordErrorReceiver;
+        this.pipelineDataCache = pipelineDataCache;
+        this.streamHolder = streamHolder;
+    }
 
     @Override
     public VoidResult exec(final HeadlessTranslationTask task) {

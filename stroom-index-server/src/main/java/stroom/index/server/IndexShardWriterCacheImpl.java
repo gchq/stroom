@@ -17,8 +17,6 @@
 package stroom.index.server;
 
 import org.apache.lucene.store.LockObtainFailedException;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
@@ -39,7 +37,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ThreadPool;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
@@ -63,8 +60,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-@Component
-@Profile(StroomSpringProfiles.PROD)
 public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
 

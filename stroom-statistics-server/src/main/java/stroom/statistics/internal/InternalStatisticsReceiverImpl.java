@@ -3,7 +3,6 @@ package stroom.statistics.internal;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-@Component
 public class InternalStatisticsReceiverImpl implements InternalStatisticsReceiver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticsReceiverImpl.class);

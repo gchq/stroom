@@ -21,24 +21,27 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class ElementRegistryFactoryImpl implements ElementRegistryFactory, ElementFactory, ApplicationContextAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElementRegistryFactoryImpl.class);
 
-    @Resource
-    private StroomBeanStore beanStore;
+    private final StroomBeanStore beanStore;
 
     private ApplicationContext applicationContext;
     private volatile ElementRegistry registry;
+
+    @Inject
+    ElementRegistryFactoryImpl(final StroomBeanStore beanStore) {
+        this.beanStore = beanStore;
+    }
 
     /**
      * Implements an idiom to prevent double checked locking.

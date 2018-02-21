@@ -18,48 +18,13 @@ package stroom.test;
 
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.logging.spring.EventLoggingConfiguration;
-import stroom.dashboard.spring.DashboardConfiguration;
-import stroom.dictionary.spring.DictionaryConfiguration;
-import stroom.explorer.server.ExplorerConfiguration;
-import stroom.index.spring.IndexConfiguration;
-import stroom.pipeline.spring.PipelineConfiguration;
-import stroom.ruleset.spring.RuleSetConfiguration;
-import stroom.script.spring.ScriptConfiguration;
-import stroom.search.spring.SearchConfiguration;
-import stroom.security.spring.SecurityConfiguration;
-import stroom.spring.MetaDataStatisticConfiguration;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ScopeTestConfiguration;
-import stroom.spring.ServerComponentScanTestConfiguration;
-import stroom.spring.ServerConfiguration;
-import stroom.statistics.spring.StatisticsConfiguration;
+import stroom.security.server.SecuritySpringConfig;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.visualisation.spring.VisualisationConfiguration;
 
 @ActiveProfiles(value = {
         StroomSpringProfiles.PROD,
         StroomSpringProfiles.IT,
-        SecurityConfiguration.MOCK_SECURITY})
-@ContextConfiguration(classes = {
-        DashboardConfiguration.class,
-        EventLoggingConfiguration.class,
-        IndexConfiguration.class,
-        MetaDataStatisticConfiguration.class,
-        PersistenceConfiguration.class,
-        DictionaryConfiguration.class,
-        PipelineConfiguration.class,
-        RuleSetConfiguration.class,
-        ScopeConfiguration.class,
-        ScopeTestConfiguration.class,
-        ScriptConfiguration.class,
-        SearchConfiguration.class,
-        SecurityConfiguration.class,
-        ExplorerConfiguration.class,
-        ServerComponentScanTestConfiguration.class,
-        ServerConfiguration.class,
-        StatisticsConfiguration.class,
-        VisualisationConfiguration.class})
+        SecuritySpringConfig.MOCK_SECURITY})
+@ContextConfiguration(classes = {AbstractCoreIntegrationTestSpringConfig.class})
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
 }

@@ -20,23 +20,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.entity.server.util.XMLUtil;
-import stroom.explorer.server.ExplorerConfiguration;
 import stroom.importexport.server.ImportExportService;
 import stroom.node.server.NodeCache;
 import stroom.node.server.VolumeService;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.pipeline.server.filter.SafeXMLFilter;
-import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ServerConfiguration;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
 import stroom.util.AbstractCommandLineTool;
@@ -294,23 +288,7 @@ public class Headless extends AbstractCommandLineTool {
 
     private ApplicationContext buildAppContext() {
         System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
-        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-//                DashboardConfiguration.class,
-//                EventLoggingConfiguration.class,
-//                IndexConfiguration.class,
-//                MetaDataStatisticConfiguration.class,
-                PersistenceConfiguration.class,
-                DictionaryConfiguration.class,
-                PipelineConfiguration.class,
-                ScopeConfiguration.class,
-//                ScriptConfiguration.class,
-//                SearchConfiguration.class,
-//                SecurityConfiguration.class,
-                ExplorerConfiguration.class,
-                ServerConfiguration.class,
-//                StatisticsConfiguration.class,
-//                VisualisationConfiguration.class,
-                HeadlessConfiguration.class);
+        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(HeadlessSpringConfig.class);
         return context;
     }
 }

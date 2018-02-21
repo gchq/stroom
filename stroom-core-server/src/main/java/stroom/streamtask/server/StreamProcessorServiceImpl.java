@@ -18,7 +18,6 @@
 package stroom.streamtask.server;
 
 import event.logging.BaseAdvancedQueryItem;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
@@ -36,7 +35,6 @@ import java.util.List;
 import java.util.Set;
 
 @Transactional
-@Component("streamProcessorService")
 @Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamProcessor, FindStreamProcessorCriteria>
         implements StreamProcessorService {

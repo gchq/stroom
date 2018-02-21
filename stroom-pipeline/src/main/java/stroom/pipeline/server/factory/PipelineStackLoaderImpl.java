@@ -19,21 +19,23 @@ package stroom.pipeline.server.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public class PipelineStackLoaderImpl implements PipelineStackLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineStackLoaderImpl.class);
 
-    @Resource
-    private PipelineService pipelineService;
+    private final PipelineService pipelineService;
+
+    @Inject
+    public PipelineStackLoaderImpl(final PipelineService pipelineService) {
+        this.pipelineService = pipelineService;
+    }
 
     /**
      * Loads and returns a stack of pipelines representing the inheritance

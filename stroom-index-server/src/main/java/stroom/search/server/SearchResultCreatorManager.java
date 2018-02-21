@@ -20,7 +20,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
-import org.springframework.stereotype.Component;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.SearchResponseCreator;
@@ -31,7 +30,6 @@ import stroom.util.spring.StroomFrequencySchedule;
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
-@Component
 public class SearchResultCreatorManager {
     private static final int MAX_ACTIVE_QUERIES = 10000;
 

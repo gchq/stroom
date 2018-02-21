@@ -16,26 +16,13 @@
 
 package stroom.node.server;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.security.Insecure;
-import stroom.util.cache.CacheManager;
 import stroom.util.config.StroomProperties;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A service that can be injected with spring that caches and delegates property
  * lookups to StroomProperties.
  */
-@Component
 public class StroomPropertyServiceImpl implements StroomPropertyService {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(StroomPropertyServiceImpl.class);
 //

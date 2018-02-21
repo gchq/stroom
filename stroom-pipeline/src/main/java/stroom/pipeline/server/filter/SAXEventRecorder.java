@@ -19,17 +19,14 @@ package stroom.pipeline.server.filter;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.xpath.XPathEvaluator;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.task.NodeInfoSerializer;
-import stroom.pipeline.server.task.Recorder;
-import stroom.pipeline.server.task.SteppingFilter;
+import stroom.pipeline.server.stepping.Recorder;
+import stroom.pipeline.server.stepping.SteppingFilter;
 import stroom.pipeline.shared.Record;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.XPathFilter;
@@ -37,7 +34,6 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.xml.namespace.NamespaceContext;
@@ -48,8 +44,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, SteppingFilter {
     private final NamespaceContextImpl namespaceContext = new NamespaceContextImpl();
 

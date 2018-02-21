@@ -17,7 +17,6 @@
 
 package stroom.script.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
@@ -41,7 +40,6 @@ import java.util.Set;
  * SERVLET that reports status of Stroom for scripting purposes.
  * </p>
  */
-@Component(ScriptServlet.BEAN_NAME)
 public class ScriptServlet extends HttpServlet {
     public static final String BEAN_NAME = "scriptServlet";
 
@@ -53,7 +51,8 @@ public class ScriptServlet extends HttpServlet {
     private final SecurityContext securityContext;
 
     @Inject
-    ScriptServlet(final ScriptService scriptService, final SecurityContext securityContext) {
+    ScriptServlet(final ScriptService scriptService,
+                  final SecurityContext securityContext) {
         this.scriptService = scriptService;
         this.securityContext = securityContext;
     }

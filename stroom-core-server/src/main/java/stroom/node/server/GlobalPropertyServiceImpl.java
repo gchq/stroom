@@ -17,7 +17,6 @@
 
 package stroom.node.server;
 
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -40,7 +39,6 @@ import java.util.stream.Collectors;
 
 @Transactional
 @Secured(GlobalProperty.MANAGE_PROPERTIES_PERMISSION)
-@Component
 public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProperty, FindGlobalPropertyCriteria>
         implements GlobalPropertyService {
 

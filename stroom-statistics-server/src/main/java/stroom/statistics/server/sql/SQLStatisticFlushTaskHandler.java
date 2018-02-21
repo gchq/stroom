@@ -19,14 +19,12 @@ package stroom.statistics.server.sql;
 import org.apache.commons.lang.mutable.MutableLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.statistics.shared.StatisticType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
@@ -36,8 +34,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 @TaskHandlerBean(task = SQLStatisticFlushTask.class)
-@Scope(value = StroomScope.TASK)
-public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlushTask, VoidResult> {
+class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlushTask, VoidResult> {
     /**
      * The number of records to flush to the DB in one go.
      */
@@ -52,8 +49,8 @@ public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatist
     private int total;
 
     @Inject
-    public SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
-                                        final TaskMonitor taskMonitor) {
+    SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
+                                 final TaskMonitor taskMonitor) {
         this.sqlStatisticValueBatchSaveService = sqlStatisticValueBatchSaveService;
         this.taskMonitor = taskMonitor;
     }

@@ -17,7 +17,6 @@
 package stroom.streamtask.server;
 
 import event.logging.BaseAdvancedQueryItem;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.CriteriaLoggingUtil;
@@ -28,7 +27,6 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Secured;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
@@ -41,18 +39,17 @@ import java.util.List;
 import java.util.Set;
 
 @Transactional
-@Component("streamProcessorFilterService")
 @AutoMarshal
 @Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
-public class StreamProcessorFilterServiceImpl
+class StreamProcessorFilterServiceImpl
         extends SystemEntityServiceImpl<StreamProcessorFilter, FindStreamProcessorFilterCriteria>
         implements StreamProcessorFilterService {
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterMarshaller marshaller;
 
     @Inject
-    public StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
-                                            final StreamProcessorService streamProcessorService) {
+    StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
+                                     final StreamProcessorService streamProcessorService) {
         super(entityManager);
         this.streamProcessorService = streamProcessorService;
         this.marshaller = new StreamProcessorFilterMarshaller();

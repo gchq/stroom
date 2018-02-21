@@ -3,13 +3,11 @@ package stroom.statistics.server.stroomstats.kafka;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.statistics.shared.StatisticType;
 
 import javax.inject.Inject;
 
-@Component
 public class TopicNameFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TopicNameFactory.class);
@@ -18,7 +16,7 @@ public class TopicNameFactory {
     final StroomPropertyService stroomPropertyService;
 
     @Inject
-    public TopicNameFactory(final StroomPropertyService stroomPropertyService) {
+    TopicNameFactory(final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 

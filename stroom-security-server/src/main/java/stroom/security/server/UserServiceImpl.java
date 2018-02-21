@@ -18,8 +18,6 @@ package stroom.security.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.EntityServiceHelper;
 import stroom.entity.server.QueryAppender;
@@ -38,7 +36,6 @@ import stroom.security.Secured;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.util.config.StroomProperties;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
@@ -50,10 +47,8 @@ import java.util.Set;
 import java.util.UUID;
 
 @Transactional
-@Profile(StroomSpringProfiles.PROD)
 @Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
-@Component("userService")
-public class UserServiceImpl implements UserService {
+class UserServiceImpl implements UserService {
     private static final String USER_NAME_PATTERN_PROPERTY = "stroom.security.userNamePattern";
     private static final String USER_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_-]{3,}$";
 

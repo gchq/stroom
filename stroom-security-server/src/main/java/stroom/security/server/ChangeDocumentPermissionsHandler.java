@@ -19,11 +19,9 @@ package stroom.security.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.EntityServiceException;
-import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.server.ExplorerNodeService;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
@@ -37,7 +35,6 @@ import stroom.security.shared.UserRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.HashSet;
@@ -46,9 +43,8 @@ import java.util.Map;
 import java.util.Set;
 
 @TaskHandlerBean(task = ChangeDocumentPermissionsAction.class)
-@Scope(value = StroomScope.TASK)
 @Insecure
-public class ChangeDocumentPermissionsHandler
+class ChangeDocumentPermissionsHandler
         extends AbstractTaskHandler<ChangeDocumentPermissionsAction, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangeDocumentPermissionsHandler.class);
 
@@ -58,7 +54,10 @@ public class ChangeDocumentPermissionsHandler
     private final ExplorerNodeService explorerNodeService;
 
     @Inject
-    ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService, final DocumentPermissionsCache documentPermissionsCache, final SecurityContext securityContext, final ExplorerNodeService explorerNodeService) {
+    ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService,
+                                     final DocumentPermissionsCache documentPermissionsCache,
+                                     final SecurityContext securityContext,
+                                     final ExplorerNodeService explorerNodeService) {
         this.documentPermissionService = documentPermissionService;
         this.documentPermissionsCache = documentPermissionsCache;
         this.securityContext = securityContext;

@@ -16,10 +16,7 @@
 
 package stroom.index.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -28,12 +25,9 @@ import stroom.importexport.server.ImportExportHelper;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.security.SecurityContext;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 
-@Profile(StroomSpringProfiles.PROD)
-@Component("indexService")
 @Transactional
 @AutoMarshal
 public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndexCriteria> implements IndexService {

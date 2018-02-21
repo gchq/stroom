@@ -19,11 +19,10 @@ package stroom.lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.server.ScheduledTaskExecutor;
-import stroom.security.SecurityHelper;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.StroomThreadGroup;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
@@ -45,7 +44,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
-@Component
 public class LifecycleServiceImpl implements LifecycleService {
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleServiceImpl.class);
     private static final String STROOM_LIFECYCLE_THREAD_POOL = "Stroom Lifecycle#";
@@ -63,8 +61,8 @@ public class LifecycleServiceImpl implements LifecycleService {
     // The scheduled executor that executes executable beans.
     private final AtomicReference<ScheduledExecutorService> scheduledExecutorService = new AtomicReference<>();
     private final AtomicBoolean startingUp = new AtomicBoolean();
-    private final AtomicBoolean  running = new AtomicBoolean();
-    private final AtomicBoolean  enabled = new AtomicBoolean();
+    private final AtomicBoolean running = new AtomicBoolean();
+    private final AtomicBoolean enabled = new AtomicBoolean();
     private final long executionInterval;
 
     @Inject
@@ -138,25 +136,24 @@ public class LifecycleServiceImpl implements LifecycleService {
 
             // Create the runnable object that will perform execution on all
             // scheduled services.
-            final  ReentrantLock lock = new ReentrantLock();
+            final ReentrantLock lock = new ReentrantLock();
 
-                final Runnable runnable =() ->{
-                    if (lock.tryLock()) {
+            final Runnable runnable = () -> {
+                if (lock.tryLock()) {
 
-                        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
-                            Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
-                            scheduledTaskExecutor.execute();
-                        } catch (final Throwable t) {
-                            LOGGER.error(t.getMessage(), t);
-                        } finally {
+                    try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+                        Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
+                        scheduledTaskExecutor.execute();
+                    } catch (final Throwable t) {
+                        LOGGER.error(t.getMessage(), t);
+                    } finally {
 
-                            lock.unlock();
-                        }
-                    } else {
-                        LOGGER.warn("Still trying to execute tasks");
+                        lock.unlock();
                     }
+                } else {
+                    LOGGER.warn("Still trying to execute tasks");
                 }
-            ;
+            };
 
             // Create the thread pool that we will use to startup, shutdown and
             // execute lifecycle beans asynchronously.

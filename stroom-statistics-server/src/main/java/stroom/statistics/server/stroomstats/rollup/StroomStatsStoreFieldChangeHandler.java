@@ -29,7 +29,7 @@ import java.util.Map;
 
 @TaskHandlerBean(task = StroomStatsStoreFieldChangeAction.class)
 @Insecure
-public class StroomStatsStoreFieldChangeHandler
+class StroomStatsStoreFieldChangeHandler
         extends AbstractTaskHandler<StroomStatsStoreFieldChangeAction, StroomStatsStoreEntityData> {
     @Override
     public StroomStatsStoreEntityData exec(final StroomStatsStoreFieldChangeAction action) {

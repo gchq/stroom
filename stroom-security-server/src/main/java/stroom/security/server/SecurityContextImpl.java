@@ -19,10 +19,6 @@ package stroom.security.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionException;
 import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
@@ -33,8 +29,6 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.security.spring.SecurityConfiguration;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.persistence.RollbackException;
@@ -43,9 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-@Component
-@Profile(SecurityConfiguration.PROD_SECURITY)
-@Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
     private static final String INTERNAL = "INTERNAL";

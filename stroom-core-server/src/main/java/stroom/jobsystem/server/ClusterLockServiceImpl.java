@@ -18,7 +18,6 @@ package stroom.jobsystem.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.SqlBuilder;
@@ -32,25 +31,33 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;
 import stroom.util.spring.StroomFrequencySchedule;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class ClusterLockServiceImpl implements ClusterLockService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
     private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
-    @Resource
-    private StroomEntityManager entityManager;
-    @Resource
-    private StroomDatabaseInfo stroomDatabaseInfo;
-    @Resource
-    private ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper;
-    @Resource
-    private TaskManager taskManager;
-    @Resource
-    private NodeCache nodeCache;
+
+    private final StroomEntityManager entityManager;
+    private final StroomDatabaseInfo stroomDatabaseInfo;
+    private final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper;
+    private final TaskManager taskManager;
+    private final NodeCache nodeCache;
+
+    @Inject
+    public ClusterLockServiceImpl(final StroomEntityManager entityManager,
+                                  final StroomDatabaseInfo stroomDatabaseInfo,
+                                  final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper,
+                                  final TaskManager taskManager,
+                                  final NodeCache nodeCache) {
+        this.entityManager = entityManager;
+        this.stroomDatabaseInfo = stroomDatabaseInfo;
+        this.clusterLockServiceTransactionHelper = clusterLockServiceTransactionHelper;
+        this.taskManager = taskManager;
+        this.nodeCache = nodeCache;
+    }
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)

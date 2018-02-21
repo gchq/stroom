@@ -16,8 +16,6 @@
 
 package stroom.datafeed.server;
 
-import org.springframework.stereotype.Component;
-
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -26,7 +24,6 @@ import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Locale;
 
-@Component
 public class MockHttpServletResponse implements HttpServletResponse {
     private int resposeCode;
     private String sendErrorMessage;

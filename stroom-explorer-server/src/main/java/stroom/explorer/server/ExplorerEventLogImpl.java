@@ -27,7 +27,6 @@ import event.logging.ObjectOutcome;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.logging.StroomEventLoggingService;
 import stroom.query.api.v2.DocRef;
@@ -35,7 +34,6 @@ import stroom.security.Insecure;
 
 import javax.inject.Inject;
 
-@Component
 @Insecure
 class ExplorerEventLogImpl implements ExplorerEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerEventLogImpl.class);

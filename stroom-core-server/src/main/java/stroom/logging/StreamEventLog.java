@@ -49,7 +49,6 @@ import javax.inject.Inject;
 import java.util.Date;
 import java.util.List;
 
-@Component
 @Insecure
 public class StreamEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamEventLog.class);

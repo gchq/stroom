@@ -16,16 +16,11 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Locator;
 import stroom.util.shared.Location;
-import stroom.util.spring.StroomScope;
 
 import javax.xml.transform.SourceLocator;
 
-@Component
-@Scope(value = StroomScope.TASK)
 public class LocationFactoryProxy implements LocationFactory {
     private LocationFactory locationFactory;
 

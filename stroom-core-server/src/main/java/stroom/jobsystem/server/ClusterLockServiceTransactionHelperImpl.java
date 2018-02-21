@@ -18,7 +18,6 @@ package stroom.jobsystem.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.HqlBuilder;
@@ -31,7 +30,6 @@ import java.util.List;
 import java.util.Set;
 
 @Transactional
-@Component
 public class ClusterLockServiceTransactionHelperImpl implements ClusterLockServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceTransactionHelper.class);
 

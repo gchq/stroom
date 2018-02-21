@@ -16,14 +16,11 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -38,8 +35,6 @@ import java.util.List;
  * You can call clear at any point to clear everything down.
  * </p>
  */
-@Component("pipelineService")
-@Profile(StroomSpringProfiles.TEST)
 public class MockPipelineService extends MockDocumentEntityService<PipelineEntity, FindPipelineEntityCriteria>
         implements PipelineService {
     public MockPipelineService() {

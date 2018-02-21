@@ -20,7 +20,6 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import stroom.auth.service.ApiClient;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
@@ -43,14 +42,13 @@ import java.util.Optional;
  * <p>
  * If a logged-in user's API token is ever needed elsewhere then this class should be refactored accordingly.
  */
-@Component
-public class AuthenticationServiceClients {
+class AuthenticationServiceClients {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceClients.class);
     private final ApiClient authServiceClient;
     private final boolean enableAuth;
 
     @Inject
-    public AuthenticationServiceClients(
+    AuthenticationServiceClients(
             @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}") final String ourApiToken,
             @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authServiceUrl,
             @Value("#{propertyConfigurer.getProperty('stroom.authentication.required')}") final String authRequired) {

@@ -19,7 +19,6 @@ package stroom.pipeline.server.factory;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.DocumentPermissionCache;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.PermissionException;
@@ -27,10 +26,10 @@ import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.security.SecurityHelper;
 import stroom.pool.VersionedEntityDecorator;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheManager;
 
@@ -40,7 +39,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Insecure
-@Component
 public class PipelineDataCacheImpl implements PipelineDataCache {
     private static final int MAX_CACHE_ENTRIES = 1000;
 

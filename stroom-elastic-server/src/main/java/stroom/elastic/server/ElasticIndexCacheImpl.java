@@ -4,7 +4,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.http.HttpStatus;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
@@ -19,7 +18,6 @@ import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.util.concurrent.TimeUnit;
 
-@Component
 public class ElasticIndexCacheImpl implements ElasticIndexCache {
     private static final int MAX_CACHE_ENTRIES = 100;
 

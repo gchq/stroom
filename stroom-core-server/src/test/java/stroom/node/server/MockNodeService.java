@@ -17,13 +17,10 @@
 
 package stroom.node.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockNamedEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.util.spring.StroomSpringProfiles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +28,6 @@ import java.util.List;
 /**
  * Mock class that manages one node.
  */
-@Profile(StroomSpringProfiles.TEST)
-@Component("nodeService")
 public class MockNodeService extends MockNamedEntityService<Node, FindNodeCriteria>
         implements NodeService, NodeServiceGetDefaultNode {
     private Node node = null;

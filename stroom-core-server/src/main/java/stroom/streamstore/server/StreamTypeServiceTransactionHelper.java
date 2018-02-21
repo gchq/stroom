@@ -18,22 +18,24 @@ package stroom.streamstore.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.streamstore.shared.StreamType;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
-@Component
 @Transactional
-public class StreamTypeServiceTransactionHelper {
+class StreamTypeServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypeServiceTransactionHelper.class);
 
-    @Resource
-    private StroomEntityManager stroomEntityManager;
+    private final StroomEntityManager stroomEntityManager;
+
+    @Inject
+    StreamTypeServiceTransactionHelper(final StroomEntityManager stroomEntityManager) {
+        this.stroomEntityManager = stroomEntityManager;
+    }
 
     public void doInserts() {
         final long now = System.currentTimeMillis();

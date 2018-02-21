@@ -16,7 +16,6 @@
 
 package stroom.streamtask.server;
 
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +27,13 @@ import stroom.streamstore.shared.Stream;
 import javax.inject.Inject;
 
 @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
-@Component
 public class BatchIdTransactionHelper {
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final StroomEntityManager stroomEntityManager;
 
     @Inject
-    public BatchIdTransactionHelper(final StroomDatabaseInfo stroomDatabaseInfo, final StroomEntityManager stroomEntityManager) {
+    BatchIdTransactionHelper(final StroomDatabaseInfo stroomDatabaseInfo,
+                             final StroomEntityManager stroomEntityManager) {
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.stroomEntityManager = stroomEntityManager;
     }

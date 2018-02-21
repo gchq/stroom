@@ -16,7 +16,6 @@
 
 package stroom.explorer.server;
 
-import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.Insecure;
@@ -27,7 +26,6 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Component
 class ExplorerTreeModel {
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerActionHandlersImpl explorerActionHandlers;

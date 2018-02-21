@@ -16,7 +16,6 @@
 
 package stroom.jobsystem.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.jobsystem.server.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeInfo;
@@ -24,14 +23,12 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.shared.SharedMap;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.Collection;
 
 @TaskHandlerBean(task = JobNodeInfoClusterTask.class)
-@Scope(value = StroomScope.TASK)
-public class JobNodeInfoClusterHandler
+class JobNodeInfoClusterHandler
         extends AbstractTaskHandler<JobNodeInfoClusterTask, SharedMap<JobNode, JobNodeInfo>> {
     private final JobNodeTrackerCache jobNodeTrackerCache;
 

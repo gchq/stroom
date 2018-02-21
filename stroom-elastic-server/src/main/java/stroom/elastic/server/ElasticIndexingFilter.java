@@ -2,8 +2,6 @@ package stroom.elastic.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -25,7 +23,6 @@ import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.security.UserTokenUtil;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -34,8 +31,6 @@ import java.util.Map;
 /**
  * The index filter... takes the index XML and builds the LUCENE documents
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
         type = "ElasticIndexingFilter",
         category = PipelineElementType.Category.FILTER,

@@ -19,50 +19,15 @@ package stroom.test;
 import org.junit.Before;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.cluster.server.ClusterSpringConfig;
-import stroom.dictionary.spring.DictionaryConfiguration;
-import stroom.logging.spring.EventLoggingConfiguration;
-import stroom.dashboard.spring.DashboardConfiguration;
-import stroom.explorer.server.ExplorerConfiguration;
-import stroom.index.spring.IndexConfiguration;
-import stroom.script.spring.ScriptConfiguration;
-import stroom.search.spring.SearchConfiguration;
-import stroom.security.spring.SecurityConfiguration;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ProcessTestServerComponentScanConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ScopeTestConfiguration;
-import stroom.spring.ServerConfiguration;
-import stroom.statistics.spring.StatisticsConfiguration;
-import stroom.task.cluster.ClusterTaskSpringConfig;
-import stroom.util.cache.CacheManagerSpringConfig;
+import stroom.security.server.SecuritySpringConfig;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.visualisation.spring.VisualisationConfiguration;
 
 @ActiveProfiles(value = {
         StroomSpringProfiles.TEST,
         StroomSpringProfiles.IT,
-        SecurityConfiguration.MOCK_SECURITY})
-@ContextConfiguration(classes = {
-        ClusterSpringConfig.class,
-        ClusterTaskSpringConfig.class,
-        ScopeConfiguration.class,
-        PersistenceConfiguration.class,
-        ProcessTestServerComponentScanConfiguration.class,
-        ServerConfiguration.class,
-        SecurityConfiguration.class,
-        ExplorerConfiguration.class,
-        DictionaryConfiguration.class,
-        ScopeTestConfiguration.class,
-        EventLoggingConfiguration.class,
-        IndexConfiguration.class,
-        SearchConfiguration.class,
-        ScriptConfiguration.class,
-        VisualisationConfiguration.class,
-        DashboardConfiguration.class,
-        StatisticsConfiguration.class})
+        SecuritySpringConfig.MOCK_SECURITY})
+@ContextConfiguration(classes = {AbstractProcessIntegrationTestSpringConfig.class})
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
-
     @Before
     public void beforeTest() {
         super.importSchemas(true);

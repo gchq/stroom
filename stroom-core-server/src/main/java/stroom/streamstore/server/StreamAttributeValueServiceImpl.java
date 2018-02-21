@@ -17,7 +17,6 @@
 package stroom.streamstore.server;
 
 import event.logging.BaseAdvancedQueryItem;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
@@ -31,14 +30,13 @@ import javax.inject.Inject;
 import java.util.List;
 
 @Transactional
-@Component
-public class StreamAttributeValueServiceImpl
+class StreamAttributeValueServiceImpl
         extends SystemEntityServiceImpl<StreamAttributeValue, FindStreamAttributeValueCriteria>
         implements StreamAttributeValueService {
     private final StroomEntityManager entityManager;
 
     @Inject
-    public StreamAttributeValueServiceImpl(final StroomEntityManager entityManager) {
+    StreamAttributeValueServiceImpl(final StroomEntityManager entityManager) {
         super(entityManager);
         this.entityManager = entityManager;
     }

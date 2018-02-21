@@ -19,8 +19,6 @@ package stroom.statistics.server.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.jobsystem.server.ClusterLockService;
@@ -28,7 +26,6 @@ import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
@@ -36,8 +33,6 @@ import javax.inject.Inject;
 import java.sql.SQLException;
 import java.util.concurrent.locks.ReentrantLock;
 
-@Component
-@Scope(value = StroomScope.TASK)
 public class SQLStatisticAggregationManager {
     /**
      * The number of records to add to the aggregate from the aggregate source
@@ -58,11 +53,11 @@ public class SQLStatisticAggregationManager {
     private int batchSize;
 
     @Inject
-    public SQLStatisticAggregationManager(final ClusterLockService clusterLockService,
-                                          final SQLStatisticAggregationTransactionHelper helper,
-                                          final TaskMonitor taskMonitor,
-                                          final StroomDatabaseInfo stroomDatabaseInfo,
-                                          @Value("#{propertyConfigurer.getProperty('stroom.statistics.sql.statisticAggregationBatchSize')}") String batchSizeString) {
+    SQLStatisticAggregationManager(final ClusterLockService clusterLockService,
+                                   final SQLStatisticAggregationTransactionHelper helper,
+                                   final TaskMonitor taskMonitor,
+                                   final StroomDatabaseInfo stroomDatabaseInfo,
+                                   @Value("#{propertyConfigurer.getProperty('stroom.statistics.sql.statisticAggregationBatchSize')}") String batchSizeString) {
         this.clusterLockService = clusterLockService;
         this.helper = helper;
         this.taskMonitor = taskMonitor;

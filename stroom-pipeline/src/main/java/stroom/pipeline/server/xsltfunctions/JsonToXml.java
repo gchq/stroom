@@ -24,19 +24,14 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.tree.tiny.TinyBuilder;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 import stroom.xml.converter.json.JSONParser;
 
 import java.io.IOException;
 import java.io.StringReader;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 class JsonToXml extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {

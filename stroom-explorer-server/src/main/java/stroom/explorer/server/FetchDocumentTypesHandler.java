@@ -16,17 +16,14 @@
 
 package stroom.explorer.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchDocumentTypesAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchDocumentTypesAction.class)
-@Scope(value = StroomScope.TASK)
 class FetchDocumentTypesHandler extends AbstractTaskHandler<FetchDocumentTypesAction, DocumentTypes> {
     private final ExplorerService explorerService;
 

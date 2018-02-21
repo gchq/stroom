@@ -16,15 +16,9 @@
 
 package stroom.jobsystem.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.shared.JobNode.JobType;
-import stroom.jobsystem.shared.ScheduleService;
 import stroom.jobsystem.shared.ScheduledTimes;
-import stroom.util.spring.StroomSpringProfiles;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component
 public class MockScheduleService implements ScheduleService {
     @Override
     public ScheduledTimes getScheduledTimes(final JobType jobType, final Long scheduleReferenceTime,

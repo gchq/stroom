@@ -16,15 +16,12 @@
 
 package stroom.pipeline.server.errorhandler;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.ErrorWriterProxy;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -34,13 +31,16 @@ import java.util.TreeMap;
  * Flags records that contain errors so that the RecordOutputFilter can exclude
  * them from the output.
  */
-@Component
-@Scope(value = StroomScope.TASK)
 public class RecordErrorReceiver implements ErrorReceiver, ErrorStatistics {
-    public static final int MAX_TOTAL_WRITTEN_MARKERS = 1000;
+    private static final int MAX_TOTAL_WRITTEN_MARKERS = 1000;
+
     private Map<Severity, StoredErrorStats> statsMap = new TreeMap<>();
-    @Resource
-    private ErrorWriterProxy errorWriter;
+    private final ErrorWriterProxy errorWriter;
+
+    @Inject
+    public RecordErrorReceiver(final ErrorWriterProxy errorWriter) {
+        this.errorWriter = errorWriter;
+    }
 
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,

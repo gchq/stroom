@@ -20,7 +20,6 @@ package stroom.jobsystem.server;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
@@ -55,7 +54,6 @@ import java.util.Set;
 
 @Transactional
 @Secured(Job.MANAGE_JOBS_PERMISSION)
-@Component
 public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCriteria> implements JobNodeService {
     public static final String DELETE_ORPHAN_JOBS_MYSQL = "DELETE JB FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN "
             + JobNode.TABLE_NAME + " JB_ND ON (JB." + Job.ID + " = JB_ND." + Job.FOREIGN_KEY + ") WHERE JB_ND."
@@ -75,8 +73,11 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
 
     @Inject
-    JobNodeServiceImpl(final StroomEntityManager entityManager, final ClusterLockService clusterLockService,
-                       final NodeCache nodeCache, final JobService jobService, final StroomBeanStore stroomBeanStore,
+    JobNodeServiceImpl(final StroomEntityManager entityManager,
+                       final ClusterLockService clusterLockService,
+                       final NodeCache nodeCache,
+                       final JobService jobService,
+                       final StroomBeanStore stroomBeanStore,
                        final StroomDatabaseInfo stroomDatabaseInfo) {
         super(entityManager);
         this.entityManager = entityManager;

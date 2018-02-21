@@ -1,6 +1,5 @@
 package stroom.test;
 
-import org.springframework.stereotype.Component;
 import stroom.importexport.server.ImportExportService;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
@@ -17,7 +16,6 @@ import java.util.List;
  * task that is part of the setupSampleData task should be used when you need stroom content for manual testing
  * inside stroom
  */
-@Component
 public class ContentImportService {
 
     public static final String CONTENT_PACK_IMPORT_DIR = "transientContentPacks";
@@ -29,7 +27,7 @@ public class ContentImportService {
     private ImportExportService importExportService;
 
     @Inject
-    public ContentImportService(final ImportExportService importExportService) {
+    ContentImportService(final ImportExportService importExportService) {
         this.importExportService = importExportService;
     }
 

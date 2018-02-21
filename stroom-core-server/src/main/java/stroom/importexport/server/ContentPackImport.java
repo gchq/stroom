@@ -38,20 +38,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
-@Component
 public class ContentPackImport {
-
     static final String AUTO_IMPORT_ENABLED_PROP_KEY = "stroom.contentPackImportEnabled";
     static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
     static final String FAILED_DIR = "failed";
     static final String IMPORTED_DIR = "imported";
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackImport.class);
-    private ImportExportService importExportService;
-    private StroomPropertyService stroomPropertyService;
+
+    private final ImportExportService importExportService;
+    private final StroomPropertyService stroomPropertyService;
 
     @SuppressWarnings("unused")
     @Inject
-    ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService) {
+    ContentPackImport(final ImportExportService importExportService, final StroomPropertyService stroomPropertyService) {
         this.importExportService = importExportService;
         this.stroomPropertyService = stroomPropertyService;
     }

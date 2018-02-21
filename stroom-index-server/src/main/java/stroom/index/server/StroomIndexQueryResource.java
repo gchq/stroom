@@ -22,7 +22,6 @@ import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.stereotype.Component;
 import stroom.datasource.api.v2.DataSource;
 import stroom.index.shared.Index;
 import stroom.query.api.v2.DocRef;
@@ -49,7 +48,6 @@ import javax.ws.rs.core.MediaType;
         description = "Stroom Index Query API")
 @Path("/stroom-index/v2")
 @Produces(MediaType.APPLICATION_JSON)
-@Component
 public class StroomIndexQueryResource implements HasHealthCheck {
     private final SearchResultCreatorManager searchResultCreatorManager;
     private final IndexService indexService;

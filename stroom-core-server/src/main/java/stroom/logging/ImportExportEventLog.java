@@ -37,15 +37,19 @@ import stroom.importexport.shared.ImportConfigAction;
 import stroom.security.Insecure;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
-@Component
 @Insecure
 public class ImportExportEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportEventLog.class);
 
-    @Resource
-    private StroomEventLoggingService eventLoggingService;
+    private final StroomEventLoggingService eventLoggingService;
+
+    @Inject
+    public ImportExportEventLog(final StroomEventLoggingService eventLoggingService) {
+        this.eventLoggingService = eventLoggingService;
+    }
 
     public void export(final ExportConfigAction exportDataAction) {
         try {

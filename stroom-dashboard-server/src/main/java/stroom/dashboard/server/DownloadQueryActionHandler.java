@@ -18,7 +18,6 @@ package stroom.dashboard.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
@@ -30,7 +29,6 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -39,7 +37,6 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 @TaskHandlerBean(task = DownloadQueryAction.class)
-@Scope(value = StroomScope.TASK)
 class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction, ResourceGeneration> {
 
     private transient static final Logger LOGGER = LoggerFactory.getLogger(DownloadQueryActionHandler.class);

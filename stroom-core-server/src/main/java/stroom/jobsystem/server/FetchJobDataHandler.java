@@ -19,7 +19,6 @@ package stroom.jobsystem.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.jobsystem.shared.FetchJobDataAction;
@@ -36,7 +35,6 @@ import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedMap;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -46,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 
 @TaskHandlerBean(task = FetchJobDataAction.class)
-@Scope(StroomScope.TASK)
 class FetchJobDataHandler extends AbstractTaskHandler<FetchJobDataAction, ResultList<JobNodeRow>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchJobDataHandler.class);
 
@@ -55,7 +52,9 @@ class FetchJobDataHandler extends AbstractTaskHandler<FetchJobDataAction, Result
     private final ClusterDispatchAsyncHelper dispatchHelper;
 
     @Inject
-    FetchJobDataHandler(final JobService jobService, final JobNodeService jobNodeService, final ClusterDispatchAsyncHelper dispatchHelper) {
+    FetchJobDataHandler(final JobService jobService,
+                        final JobNodeService jobNodeService,
+                        final ClusterDispatchAsyncHelper dispatchHelper) {
         this.jobService = jobService;
         this.jobNodeService = jobNodeService;
         this.dispatchHelper = dispatchHelper;

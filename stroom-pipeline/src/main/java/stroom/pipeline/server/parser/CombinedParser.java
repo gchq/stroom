@@ -17,8 +17,6 @@
 
 package stroom.pipeline.server.parser;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -44,7 +42,6 @@ import stroom.pool.PoolItem;
 import stroom.query.api.v2.DocRef;
 import stroom.resource.server.BOMRemovalInputStream;
 import stroom.util.io.StreamUtil;
-import stroom.util.spring.StroomScope;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.json.JSONParserFactory;
@@ -58,8 +55,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-@Component
-@Scope(value = StroomScope.TASK)
 @ConfigurableElement(type = "CombinedParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
@@ -236,7 +231,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.")
-    @PipelinePropertyDocRef(types=TextConverter.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = TextConverter.ENTITY_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

@@ -19,8 +19,6 @@ package stroom.policy.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.Period;
@@ -39,7 +37,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
@@ -73,8 +70,6 @@ import java.util.stream.Collectors;
 /**
  * Factory for creating stream clean tasks.
  */
-@Component
-@Scope(value = StroomScope.TASK)
 public class DataRetentionExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionExecutor.class);
 

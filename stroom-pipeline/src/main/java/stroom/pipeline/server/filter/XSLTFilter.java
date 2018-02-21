@@ -23,8 +23,6 @@ import net.sf.saxon.jaxp.TransformerImpl;
 import net.sf.saxon.s9api.XsltExecutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -58,7 +56,6 @@ import stroom.query.api.v2.DocRef;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.xml.transform.ErrorListener;
@@ -71,8 +68,6 @@ import java.util.List;
 /**
  * An XML filter for performing inline XSLT transformation of XML.
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "XSLTFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,

@@ -16,13 +16,8 @@
 
 package stroom.search.server.extraction;
 
-import org.springframework.stereotype.Component;
 import stroom.search.server.taskqueue.TaskExecutor;
 
-import javax.inject.Singleton;
-
-@Component
-@Singleton
 public class ExtractionTaskExecutor extends TaskExecutor {
     public ExtractionTaskExecutor() {
         super("Extraction Task Executor");

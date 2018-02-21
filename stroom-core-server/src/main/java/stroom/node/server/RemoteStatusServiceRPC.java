@@ -7,7 +7,6 @@ import com.caucho.hessian.server.HessianServlet;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-//@Component("remoteStatusServiceRPC")
 class RemoteStatusServiceRPC extends HessianServlet implements RemoteStatusService {
     private RemoteStatusService remoteStatusService;
 

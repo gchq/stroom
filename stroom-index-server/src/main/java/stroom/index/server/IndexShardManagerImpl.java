@@ -16,7 +16,6 @@
 
 package stroom.index.server;
 
-import org.springframework.stereotype.Component;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
@@ -61,7 +60,6 @@ import java.util.concurrent.locks.Lock;
 /**
  * Pool API into open index shards.
  */
-@Component
 @Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
 public class IndexShardManagerImpl implements IndexShardManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardManagerImpl.class);

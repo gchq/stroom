@@ -16,7 +16,6 @@
 
 package stroom.servlet;
 
-import org.springframework.stereotype.Component;
 import stroom.streamstore.server.fs.BlockGZIPInputStream;
 import stroom.util.io.StreamUtil;
 
@@ -27,7 +26,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Component
 public class EchoServlet extends HttpServlet {
     private static final long serialVersionUID = -2569496543022536282L;
 

@@ -18,25 +18,25 @@ package stroom.task.cluster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = TerminateTaskClusterTask.class)
-@Scope(value = StroomScope.TASK)
-public class TerminateTaskClusterHandler
-        extends AbstractTaskHandler<TerminateTaskClusterTask, BaseResultList<TaskProgress>> {
+class TerminateTaskClusterHandler extends AbstractTaskHandler<TerminateTaskClusterTask, BaseResultList<TaskProgress>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskClusterHandler.class);
 
-    @Resource
-    private TaskManager taskManager;
+    private final TaskManager taskManager;
+
+    @Inject
+    TerminateTaskClusterHandler(final TaskManager taskManager) {
+        this.taskManager = taskManager;
+    }
 
     @Override
     public BaseResultList<TaskProgress> exec(final TerminateTaskClusterTask task) {

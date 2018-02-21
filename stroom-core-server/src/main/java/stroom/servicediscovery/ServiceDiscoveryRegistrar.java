@@ -9,9 +9,8 @@ import org.apache.curator.x.discovery.ServiceType;
 import org.apache.curator.x.discovery.UriSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.util.HasHealthCheck;
 import stroom.node.server.StroomPropertyService;
+import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import java.net.InetAddress;
@@ -23,7 +22,6 @@ import java.util.TreeMap;
 /**
  * Responsible for registering stroom's various externally exposed services with service discovery
  */
-@Component
 public class ServiceDiscoveryRegistrar implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryRegistrar.class);
 
@@ -36,8 +34,8 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
     private HealthCheck.Result health;
 
     @Inject
-    public ServiceDiscoveryRegistrar(final ServiceDiscoveryManager serviceDiscoveryManager,
-                                     final StroomPropertyService stroomPropertyService) {
+    ServiceDiscoveryRegistrar(final ServiceDiscoveryManager serviceDiscoveryManager,
+                              final StroomPropertyService stroomPropertyService) {
         this.serviceDiscoveryManager = serviceDiscoveryManager;
         this.hostNameOrIpAddress = getHostOrIp(stroomPropertyService);
         this.servicePort = stroomPropertyService.getIntProperty(PROP_KEY_SERVICE_PORT, 8080);

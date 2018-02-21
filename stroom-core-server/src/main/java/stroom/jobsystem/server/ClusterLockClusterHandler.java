@@ -18,19 +18,16 @@ package stroom.jobsystem.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedBoolean;
 import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomScope;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 @TaskHandlerBean(task = ClusterLockClusterTask.class)
-@Scope(value = StroomScope.SINGLETON)
-public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, SharedBoolean> {
+class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, SharedBoolean> {
     // 10 min
     public static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);

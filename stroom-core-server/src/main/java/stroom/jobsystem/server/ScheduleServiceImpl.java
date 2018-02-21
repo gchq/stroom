@@ -16,16 +16,13 @@
 
 package stroom.jobsystem.server;
 
-import org.springframework.stereotype.Component;
 import stroom.jobsystem.shared.JobNode.JobType;
-import stroom.jobsystem.shared.ScheduleService;
 import stroom.jobsystem.shared.ScheduledTimes;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
-@Component
-public class ScheduleServiceImpl implements ScheduleService {
+class ScheduleServiceImpl implements ScheduleService {
     /**
      * Gets a scheduled time object for a given schedule based on the current
      * time. The scheduled time object holds the reference time, last scheduled
@@ -36,8 +33,10 @@ public class ScheduleServiceImpl implements ScheduleService {
      * @throws RuntimeException Could be thrown.
      */
     @Override
-    public ScheduledTimes getScheduledTimes(final JobType jobType, final Long scheduleReferenceTime,
-                                            final Long lastExecutedTime, final String expression) throws RuntimeException {
+    public ScheduledTimes getScheduledTimes(final JobType jobType,
+                                            final Long scheduleReferenceTime,
+                                            final Long lastExecutedTime,
+                                            final String expression) throws RuntimeException {
         ScheduledTimes scheduledTimes = null;
 
         if (JobType.CRON.equals(jobType)) {

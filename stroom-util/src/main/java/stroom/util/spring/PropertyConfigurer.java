@@ -16,15 +16,10 @@
 
 package stroom.util.spring;
 
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.stereotype.Component;
-import stroom.util.web.ServletContextUtil;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -33,7 +28,6 @@ import java.util.Properties;
 /**
  * Our own PropertyPlaceholderConfigurer that allows access to the properties.
  */
-@Component("propertyFileProvider")
 public class PropertyConfigurer extends PropertyPlaceholderConfigurer
         implements PropertyProvider, ResourceLoaderAware {
     private static Properties overrideProperties;

@@ -17,8 +17,6 @@
 
 package stroom.index.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
@@ -28,15 +26,11 @@ import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
-import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomSpringProfiles;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@Profile(StroomSpringProfiles.TEST)
-@Component("indexShardService")
 public class MockIndexShardService extends MockEntityService<IndexShard, FindIndexShardCriteria>
         implements IndexShardService {
     @Override

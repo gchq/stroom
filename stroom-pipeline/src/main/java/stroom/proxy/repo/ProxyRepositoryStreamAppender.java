@@ -21,7 +21,6 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 
-//@Component
 //@Scope(StroomScope.PROTOTYPE)
 //@ConfigurableElement(
 //        type = "ProxyRepositoryStreamAppender",

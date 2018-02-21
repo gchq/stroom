@@ -17,19 +17,16 @@
 
 package stroom.entity.cluster;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.server.FindFlushService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindFlushServiceClusterTask.class)
-@Scope(value = StroomScope.TASK)
-public class FindFlushServiceClusterHandler extends AbstractTaskHandler<FindFlushServiceClusterTask<?>, VoidResult> {
+class FindFlushServiceClusterHandler extends AbstractTaskHandler<FindFlushServiceClusterTask<?>, VoidResult> {
     private final StroomBeanStore stroomBeanStore;
 
     @Inject

@@ -16,21 +16,18 @@
 
 package stroom.security.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.security.Secured;
 import stroom.security.shared.CreateUserAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = CreateUserAction.class)
-@Scope(value = StroomScope.TASK)
 @Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
-public class CreateUserHandler extends AbstractTaskHandler<CreateUserAction, UserRef> {
+class CreateUserHandler extends AbstractTaskHandler<CreateUserAction, UserRef> {
     private final UserService userService;
 
     @Inject

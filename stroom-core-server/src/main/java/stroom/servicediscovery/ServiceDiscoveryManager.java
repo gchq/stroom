@@ -9,11 +9,10 @@ import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.util.spring.StroomShutdown;
 
-import javax.inject.Singleton;
+import javax.inject.Inject;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -23,8 +22,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-@Component
-@Singleton
 public class ServiceDiscoveryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
@@ -47,8 +44,8 @@ public class ServiceDiscoveryManager {
     private final Deque<Closeable> closeables = new LinkedList<>();
 
     @SuppressWarnings("unused")
-    public ServiceDiscoveryManager(final StroomPropertyService stroomPropertyService) {
-
+    @Inject
+    ServiceDiscoveryManager(final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
         this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
 

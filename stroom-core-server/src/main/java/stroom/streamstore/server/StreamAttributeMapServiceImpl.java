@@ -19,7 +19,6 @@ package stroom.streamstore.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
@@ -67,8 +66,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-@Component
-public class StreamAttributeMapServiceImpl implements StreamAttributeMapService {
+class StreamAttributeMapServiceImpl implements StreamAttributeMapService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
     private final FeedService feedService;

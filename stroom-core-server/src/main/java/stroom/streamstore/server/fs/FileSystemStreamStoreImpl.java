@@ -20,7 +20,6 @@ package stroom.streamstore.server.fs;
 import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,8 +70,8 @@ import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.streamtask.server.ExpressionToFindCriteria;
-import stroom.streamtask.server.ExpressionToFindCriteria.Context;
+import stroom.streamstore.server.ExpressionToFindCriteria;
+import stroom.streamstore.server.ExpressionToFindCriteria.Context;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.logging.LogExecutionTime;
@@ -100,8 +99,6 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Transactional
-//@Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.READ)
-@Component
 public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private static final String MYSQL_INDEX_STRM_CRT_MS_IDX = "STRM_CRT_MS_IDX";
     private static final String MYSQL_INDEX_STRM_FK_FD_ID_CRT_MS_IDX = "STRM_FK_FD_ID_CRT_MS_IDX";
@@ -828,9 +825,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             feeds.setMatchAll(Boolean.FALSE);
             final List<Feed> restrictedFeeds = getRestrictedFeeds(requiredPermission);
 
-        if (feeds.size() > 0) {
-            final Set<Long> restrictedFeedIds =
-            restrictedFeeds.stream().map(Feed::getId).collect(Collectors.toSet());
+            if (feeds.size() > 0) {
+                final Set<Long> restrictedFeedIds =
+                        restrictedFeeds.stream().map(Feed::getId).collect(Collectors.toSet());
 
                 // Retain only the feeds that the user has the required permission on.
                 feeds.getSet().retainAll(restrictedFeedIds);

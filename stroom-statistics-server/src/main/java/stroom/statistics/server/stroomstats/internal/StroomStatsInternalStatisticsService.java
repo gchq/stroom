@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
@@ -36,7 +35,6 @@ import java.util.TimeZone;
 import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
-@Component
 class StroomStatsInternalStatisticsService implements InternalStatisticsService {
 
     static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.stroomStats.docRefType";

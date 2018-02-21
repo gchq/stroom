@@ -16,15 +16,11 @@
 
 package stroom.pipeline.server.reader;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.pipeline.server.task.RecordDetector;
-import stroom.pipeline.server.task.SteppingController;
+import stroom.pipeline.server.stepping.RecordDetector;
+import stroom.pipeline.server.stepping.SteppingController;
 
 import java.io.Reader;
 
-@Component
-@Scope("prototype")
 public class ReaderRecordDetectorElement extends AbstractReaderElement implements RecordDetector {
     private ReaderRecordDetector recordDetector;
     private SteppingController controller;

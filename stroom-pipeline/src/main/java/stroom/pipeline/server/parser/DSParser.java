@@ -17,8 +17,6 @@
 
 package stroom.pipeline.server.parser;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.cache.server.ParserFactoryPool;
@@ -40,13 +38,10 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
 import stroom.query.api.v2.DocRef;
-import stroom.util.spring.StroomScope;
 import stroom.xml.converter.ParserFactory;
 
 import javax.inject.Inject;
 
-@Component
-@Scope(value = StroomScope.TASK)
 @ConfigurableElement(type = "DSParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
@@ -135,7 +130,7 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
     }
 
     @PipelineProperty(description = "The data splitter configuration that should be used to parse the input data.")
-    @PipelinePropertyDocRef(types=TextConverter.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = TextConverter.ENTITY_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

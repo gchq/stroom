@@ -20,8 +20,6 @@ package stroom.index.server;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
@@ -41,14 +39,11 @@ import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Set;
 
-@Component
-@Profile(StroomSpringProfiles.PROD)
 @Insecure
 @Transactional
 public class IndexShardServiceImpl

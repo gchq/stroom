@@ -16,11 +16,6 @@
 
 package stroom.util.spring;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-
-@Component
-@Profile(StroomSpringProfiles.TEST)
 public class MockStroomBeanNoDeps extends MockStroomBeanLifeCycleBean {
     @Override
     @StroomStartup(priority = 100)

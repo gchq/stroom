@@ -2,7 +2,6 @@ package stroom.security.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.explorer.server.ExplorerService;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Component
 class DocumentTypePermissions {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTypePermissions.class);
     private static final String[] STANDARD_PERMISSIONS = DocumentPermissionNames.DOCUMENT_PERMISSIONS;

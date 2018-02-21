@@ -16,8 +16,6 @@
 
 package stroom.resource.server;
 
-import org.springframework.stereotype.Component;
-import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -36,7 +34,6 @@ import java.util.Set;
  * Simple Store that gives you 1 hour to use your temp file and then it deletes
  * it.
  */
-@Component("resourceStore")
 public class ResourceStoreImpl implements ResourceStore {
     private Set<ResourceKey> currentFiles = new HashSet<>();
     private Set<ResourceKey> oldFiles = new HashSet<>();

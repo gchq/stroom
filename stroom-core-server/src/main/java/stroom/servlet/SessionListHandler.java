@@ -16,7 +16,6 @@
 
 package stroom.servlet;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.cluster.FindServiceClusterTask;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
@@ -30,14 +29,12 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
 @TaskHandlerBean(task = SessionListAction.class)
-@Scope(value = StroomScope.TASK)
 @Insecure
 class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultList<SessionDetails>> {
     private final ClusterDispatchAsyncHelper dispatchHelper;

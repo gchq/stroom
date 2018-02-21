@@ -16,18 +16,15 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.SavePipelineXMLAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = SavePipelineXMLAction.class)
-@Scope(value = StroomScope.TASK)
 class SavePipelineXMLHandler extends AbstractTaskHandler<SavePipelineXMLAction, VoidResult> {
     private final PipelineService pipelineService;
 

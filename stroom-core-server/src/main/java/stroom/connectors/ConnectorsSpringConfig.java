@@ -18,7 +18,11 @@ package stroom.connectors;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+import stroom.connectors.elastic.StroomElasticProducerFactoryService;
+import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.node.server.StroomPropertyService;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Singleton;
 

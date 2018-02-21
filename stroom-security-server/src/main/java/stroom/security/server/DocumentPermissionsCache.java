@@ -19,7 +19,6 @@ package stroom.security.server;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
@@ -33,9 +32,8 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.concurrent.TimeUnit;
 
-@Component
 @EntityEventHandler(action = EntityAction.CLEAR_CACHE)
-public class DocumentPermissionsCache implements EntityEvent.Handler {
+class DocumentPermissionsCache implements EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 10000;
 
     private final Provider<EntityEventBus> eventBusProvider;
@@ -44,9 +42,9 @@ public class DocumentPermissionsCache implements EntityEvent.Handler {
 
     @Inject
     @SuppressWarnings("unchecked")
-    public DocumentPermissionsCache(final CacheManager cacheManager,
-                                    final DocumentPermissionService documentPermissionService,
-                                    final Provider<EntityEventBus> eventBusProvider) {
+    DocumentPermissionsCache(final CacheManager cacheManager,
+                             final DocumentPermissionService documentPermissionService,
+                             final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
 
         final CacheLoader<DocRef, DocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionService::getPermissionsForDocument);

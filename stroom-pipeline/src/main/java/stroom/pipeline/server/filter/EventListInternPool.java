@@ -16,10 +16,8 @@
 
 package stroom.pipeline.server.filter;
 
-import org.springframework.stereotype.Component;
 import stroom.pool.InternPool;
 import stroom.xml.event.EventList;
 
-@Component
 public class EventListInternPool extends InternPool<EventList> {
 }

@@ -6,12 +6,7 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.util.spring.StroomScope;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class GenerateURL extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateURL.class);
 

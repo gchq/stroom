@@ -17,20 +17,19 @@
 
 package stroom.ruleset.server;
 
-import org.springframework.stereotype.Component;
 import stroom.datafeed.server.MetaMapFilter;
 import stroom.datafeed.server.MetaMapFilterFactory;
 import stroom.dictionary.server.DictionaryStore;
 
 import javax.inject.Inject;
 
-@Component
 public class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
     private final RuleSetService ruleSetService;
     private final DictionaryStore dictionaryStore;
 
     @Inject
-    public MetaMapFilterFactoryImpl(final RuleSetService ruleSetService, final DictionaryStore dictionaryStore) {
+    public MetaMapFilterFactoryImpl(final RuleSetService ruleSetService,
+                                    final DictionaryStore dictionaryStore) {
         this.ruleSetService = ruleSetService;
         this.dictionaryStore = dictionaryStore;
     }

@@ -18,7 +18,6 @@ package stroom.statistics.server.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.sql.SQLSafe;
@@ -37,7 +36,6 @@ import java.util.List;
  * Table
  */
 @Transactional
-@Component
 public class SQLStatisticValueBatchSaveService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveService.class);
     public static final String SAVE_CALL;
@@ -61,7 +59,7 @@ public class SQLStatisticValueBatchSaveService {
     private final DataSource statisticsDataSource;
 
     @Inject
-    public SQLStatisticValueBatchSaveService(@Named("statisticsDataSource") final DataSource statisticsDataSource) {
+    SQLStatisticValueBatchSaveService(@Named("statisticsDataSource") final DataSource statisticsDataSource) {
         this.statisticsDataSource = statisticsDataSource;
     }
 

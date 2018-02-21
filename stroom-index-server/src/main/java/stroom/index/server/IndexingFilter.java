@@ -20,8 +20,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -46,15 +44,12 @@ import stroom.query.api.v2.DocRef;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 /**
  * The index filter... takes the index XML and builds the LUCENE documents
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "IndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.INDEX)
 class IndexingFilter extends AbstractXMLFilter {
@@ -249,7 +244,7 @@ class IndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(description = "The index to send records to.")
-    @PipelinePropertyDocRef(types=Index.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = Index.ENTITY_TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }

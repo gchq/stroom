@@ -16,29 +16,31 @@
 
 package stroom.pipeline.state;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.io.StreamCloser;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProviderImpl;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
-@Scope(StroomScope.TASK)
 public class StreamHolder implements Holder {
     private final Map<StreamType, StreamSourceInputStreamProvider> streamProviders = new HashMap<>();
-    @Resource
-    private StreamCloser streamCloser;
+
+    private final StreamCloser streamCloser;
+
     private Stream stream;
     private long streamNo;
+
+    @Inject
+    public StreamHolder(final StreamCloser streamCloser) {
+        this.streamCloser = streamCloser;
+    }
 
     public Stream getStream() {
         return stream;

@@ -18,8 +18,6 @@ package stroom.pipeline.server.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -49,8 +47,6 @@ import java.io.IOException;
 /**
  * Writes out XML and records segment boundaries as it goes.
  */
-@Component
-@Scope("prototype")
 @ConfigurableElement(
         type = "XMLWriter",
         category = Category.WRITER,
@@ -90,7 +86,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @Inject
     public XMLWriter(final ErrorReceiverProxy errorReceiverProxy,
-                     final LocationFactory locationFactory) {
+              final LocationFactory locationFactory) {
         super(errorReceiverProxy);
         this.locationFactory = locationFactory;
     }

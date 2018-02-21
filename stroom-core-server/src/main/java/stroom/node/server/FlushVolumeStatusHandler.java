@@ -17,7 +17,6 @@
 
 package stroom.node.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.cluster.FlushServiceClusterTask;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
@@ -25,15 +24,17 @@ import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = FlushVolumeStatusAction.class)
-@Scope(StroomScope.TASK)
-public class FlushVolumeStatusHandler extends AbstractTaskHandler<FlushVolumeStatusAction, VoidResult> {
-    @Resource
-    private ClusterDispatchAsyncHelper dispatchHelper;
+class FlushVolumeStatusHandler extends AbstractTaskHandler<FlushVolumeStatusAction, VoidResult> {
+    private final ClusterDispatchAsyncHelper dispatchHelper;
+
+    @Inject
+    FlushVolumeStatusHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+        this.dispatchHelper = dispatchHelper;
+    }
 
     @Override
     public VoidResult exec(final FlushVolumeStatusAction action) {

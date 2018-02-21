@@ -16,7 +16,6 @@
 
 package stroom.index.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.cluster.FindDeleteServiceClusterTask;
 import stroom.index.shared.DeleteIndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -25,12 +24,10 @@ import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = DeleteIndexShardAction.class)
-@Scope(StroomScope.TASK)
 class DeleteIndexShardActionHandler extends AbstractTaskHandler<DeleteIndexShardAction, VoidResult> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
 

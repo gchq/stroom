@@ -17,7 +17,6 @@
 
 package stroom.pipeline.server.stepping;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.SharedDocRef;
 import stroom.feed.server.FeedService;
@@ -35,14 +34,12 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.List;
 
 @TaskHandlerBean(task = GetPipelineForStreamAction.class)
-@Scope(value = StroomScope.TASK)
-public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
+class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
     private final StreamStore streamStore;
     private final PipelineService pipelineService;
     private final FeedService feedService;

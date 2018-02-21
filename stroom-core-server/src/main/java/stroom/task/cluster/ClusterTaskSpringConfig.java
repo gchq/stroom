@@ -30,7 +30,6 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;
 
-
 @Configuration
 public class ClusterTaskSpringConfig {
     @Bean
@@ -68,5 +67,11 @@ public class ClusterTaskSpringConfig {
     public TargetNodeSetFactory targetNodeSetFactory(final NodeCache nodeCache,
                                                      final ClusterNodeManager clusterNodeManager) {
         return new TargetNodeSetFactory(nodeCache, clusterNodeManager);
+    }
+
+    @Bean
+    @Scope(value = StroomScope.TASK)
+    public TerminateTaskClusterHandler terminateTaskClusterHandler(final TaskManager taskManager) {
+        return new TerminateTaskClusterHandler(taskManager);
     }
 }

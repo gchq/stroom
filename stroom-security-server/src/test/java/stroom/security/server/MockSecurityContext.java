@@ -16,13 +16,8 @@
 
 package stroom.security.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
-import stroom.security.spring.SecurityConfiguration;
 
-@Component
-@Profile(SecurityConfiguration.MOCK_SECURITY)
 public class MockSecurityContext implements SecurityContext {
     @Override
     public void pushUser(final String name) {

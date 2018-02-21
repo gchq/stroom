@@ -19,7 +19,6 @@ package stroom.security.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.SqlBuilder;
@@ -38,8 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Transactional(propagation = Propagation.REQUIRES_NEW)
-@Component
-public class DocumentPermissionServiceImpl implements DocumentPermissionService {
+class DocumentPermissionServiceImpl implements DocumentPermissionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 
     private static final String SQL_INSERT_PERMISSION;
@@ -178,7 +176,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         SQL_GET_PERMISSION_KEYSET_FOR_USER = sql.toString();
     }
 
-    protected final StroomEntityManager entityManager;
+    private final StroomEntityManager entityManager;
     private final DocumentTypePermissions documentTypePermissions;
 
     @Inject
@@ -204,7 +202,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 final String permission = (String) arr[4];
 
                 final UserRef userRef = new UserRef(User.ENTITY_TYPE, uuid, name, group,
-                    UserStatus.ENABLED.getPrimitiveValue() == status);
+                        UserStatus.ENABLED.getPrimitiveValue() == status);
 
                 userPermissions.computeIfAbsent(userRef, k -> new HashSet<>()).add(permission);
             });
