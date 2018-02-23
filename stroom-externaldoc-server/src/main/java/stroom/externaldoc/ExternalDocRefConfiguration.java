@@ -5,17 +5,13 @@ import stroom.entity.EntityServiceBeanRegistry;
 import stroom.explorer.ExplorerActionHandlers;
 import stroom.importexport.ImportExportActionHandlers;
 import stroom.logging.DocumentEventLog;
-import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 
 @Configuration
-//@ComponentScan(basePackages = {"stroom.externaldoc.server"}, excludeFilters = {
-//        // Exclude other configurations that might be found accidentally during
-//        // a component scan as configurations should be specified explicitly.
-//        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class ExternalDocRefConfiguration {
     @Inject
     public ExternalDocRefConfiguration(final EntityServiceBeanRegistry entityServiceBeanRegistry,
