@@ -16,18 +16,14 @@
 
 package stroom.entity;
 
-import javassist.Modifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.entity.util.XMLMarshallerUtil;
 import stroom.entity.shared.BaseEntity;
+import stroom.entity.util.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.util.Collection;
 
 public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marshaller<E, O> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityMarshaller.class);
