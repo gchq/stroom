@@ -102,23 +102,23 @@ public class TestSqlStatisticsSearchResponseCreator {
                 .addFields(
                         new Field.Builder()
                                 .name(StatisticStoreEntity.FIELD_NAME_DATE_TIME)
-                                .expression("roundDay(" + nameToExpression(StatisticStoreEntity.FIELD_NAME_DATE_TIME) + ")")
+                                .expression("roundDay(" + fieldNameToExpression(StatisticStoreEntity.FIELD_NAME_DATE_TIME) + ")")
                                 .group(1)
                                 .build(),
                         new Field.Builder()
                                 .name(StatisticStoreEntity.FIELD_NAME_COUNT)
-                                .expression("sum(" + nameToExpression(StatisticStoreEntity.FIELD_NAME_COUNT) + ")")
+                                .expression("sum(" + fieldNameToExpression(StatisticStoreEntity.FIELD_NAME_COUNT) + ")")
                                 .build(),
                         new Field.Builder()
                                 .name(FIELD_DATE_TIME_STR)
-                                .expression(nameToExpression(FIELD_DATE_TIME_STR))
+                                .expression(fieldNameToExpression(FIELD_DATE_TIME_STR))
                                 .group(1)
                                 .build())
                 .extractValues(false)
                 .showDetail(false)
                 .build();
 
-        SearchRequest searchRequest = buildSearchRequest(docRef, Optional.empty(), Optional.of(tableSettings));
+        SearchRequest searchRequest = buildSearchRequest(docRef, Optional.of(query), Optional.of(tableSettings));
 
         StatisticDataSet statisticDataSet = buildStatisticDataSet();
 
@@ -163,15 +163,15 @@ public class TestSqlStatisticsSearchResponseCreator {
                                         .addFields(
                                                 new Field.Builder()
                                                         .name(StatisticStoreEntity.FIELD_NAME_DATE_TIME)
-                                                        .expression(nameToExpression(StatisticStoreEntity.FIELD_NAME_DATE_TIME))
+                                                        .expression(fieldNameToExpression(StatisticStoreEntity.FIELD_NAME_DATE_TIME))
                                                         .build(),
                                                 new Field.Builder()
                                                         .name(StatisticStoreEntity.FIELD_NAME_COUNT)
-                                                        .expression(nameToExpression(StatisticStoreEntity.FIELD_NAME_COUNT))
+                                                        .expression(fieldNameToExpression(StatisticStoreEntity.FIELD_NAME_COUNT))
                                                         .build(),
                                                 new Field.Builder()
                                                         .name(FIELD_DATE_TIME_STR)
-                                                        .expression(nameToExpression(FIELD_DATE_TIME_STR))
+                                                        .expression(fieldNameToExpression(FIELD_DATE_TIME_STR))
                                                         .build())
                                         .extractValues(false)
                                         .showDetail(false)
@@ -228,7 +228,7 @@ public class TestSqlStatisticsSearchResponseCreator {
         return sds;
     }
 
-    private String nameToExpression(final String fieldName) {
+    private String fieldNameToExpression(final String fieldName) {
         return "${" + fieldName + "}";
     }
 }
