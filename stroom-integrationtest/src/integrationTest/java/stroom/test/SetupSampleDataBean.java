@@ -101,7 +101,7 @@ public final class SetupSampleDataBean {
     private static final int STATS_ITERATIONS_LARGE = 52_000;
     // 1,000 is just over 1hr at 5000ms intervals
     private static final int STATS_ITERATIONS_SMALL = 1_000;
-    private static final int STATS_ITERATIONS_LONG_PERIOD = 500;
+    private static final int STATS_ITERATIONS_LONG_PERIOD = 1_000;
     private static final String STATS_COUNT_API_FEED_NAME = "COUNT_V3";
     private static final String STATS_COUNT_API_DATA_FILE = "./stroom-integrationtest/src/integrationTest/resources/SetupSampleDataBean_COUNT_V3.xml";
 
@@ -416,7 +416,7 @@ public final class SetupSampleDataBean {
         Instant startOfAWeekAgo = startOfToday.minus(7, ChronoUnit.DAYS);
         Instant fiveHundredDaysAgo = Instant.now().minus(500, ChronoUnit.DAYS);
         Duration fiveSeconds = Duration.ofSeconds(5);
-        Duration fiveHundredDays = Duration.ofDays(500);
+        Duration twelveHours = Duration.ofHours(12);
 
         loadStatsData(
                 dataLoader,
@@ -439,7 +439,7 @@ public final class SetupSampleDataBean {
                 STATS_COUNT_FEED_LONG_PERIOD_NAME,
                 STATS_ITERATIONS_LONG_PERIOD,
                 fiveHundredDaysAgo,
-                fiveHundredDays,
+                twelveHours,
                 GenerateSampleStatisticsData::generateCountData);
 
         loadStatsData(
@@ -463,7 +463,7 @@ public final class SetupSampleDataBean {
                 STATS_VALUE_FEED_LONG_PERIOD_NAME,
                 STATS_ITERATIONS_LONG_PERIOD,
                 fiveHundredDaysAgo,
-                fiveHundredDays,
+                twelveHours,
                 GenerateSampleStatisticsData::generateValueData);
 
         try {
