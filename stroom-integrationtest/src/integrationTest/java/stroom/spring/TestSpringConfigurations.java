@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,7 +34,12 @@ public class TestSpringConfigurations {
         final Map<Class<?>, Optional<List<Class<?>>>> dependencies = getDependencies();
 
         // Test we don't import by more than one route.
-        dependencies.forEach((configuration, deps) -> {
+        dependencies.entrySet()
+        .stream()
+        .sorted(Map.Entry.comparingByKey(Comparator.comparing(Class::getName)))
+        .forEachOrdered(entry -> {
+            final Class<?> configuration = entry.getKey();
+            final Optional<List<Class<?>>> deps = entry.getValue();
             LOGGER.info("Checking dependencies for " + configuration.getName());
             traverseDeps(configuration, configuration, deps, dependencies, new HashMap<>());
         });
