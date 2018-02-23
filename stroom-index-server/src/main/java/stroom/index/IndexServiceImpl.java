@@ -17,7 +17,6 @@
 package stroom.index;
 
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.AutoMarshal;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.util.StroomEntityManager;
@@ -29,7 +28,6 @@ import stroom.security.SecurityContext;
 import javax.inject.Inject;
 
 @Transactional
-@AutoMarshal
 public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndexCriteria> implements IndexService {
     @Inject
     IndexServiceImpl(final StroomEntityManager entityManager,

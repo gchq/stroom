@@ -17,9 +17,6 @@
 package stroom.entity;
 
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.util.FieldMap;
-import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
@@ -32,6 +29,9 @@ import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.ProvidesNamePattern;
+import stroom.entity.util.FieldMap;
+import stroom.entity.util.HqlBuilder;
+import stroom.entity.util.StroomEntityManager;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.ImportExportHelper;
 import stroom.importexport.shared.ImportState;
@@ -51,13 +51,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Transactional
-@AutoMarshal
 public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, ProvidesNamePattern {
     public static final String FOLDER = ExplorerConstants.FOLDER;
     private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
@@ -319,15 +316,15 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     /**
      * This function is used when doing batch document copy operations.
-     *
+     * <p>
      * It can be used by any entities which serialize themselves into a single string field.
      * If that string field contains all the UUID's of dependant entities, then it is simple a case of
      * string replacing the original UUID's with the UUID's of the copies being made.
      *
-     * @param copyDocRef The Doc Ref of the new copy
+     * @param copyDocRef                The Doc Ref of the new copy
      * @param otherCopiesByOriginalUuid The map of copies of other documents, by their original UUID
-     * @param dataSupplier The getter
-     * @param dataReceiver The setter
+     * @param dataSupplier              The getter
+     * @param dataReceiver              The setter
      */
     protected DocRef makeCopyUuidReplacements(final DocRef copyDocRef,
                                               final Map<String, String> otherCopiesByOriginalUuid,

@@ -28,12 +28,11 @@ import stroom.dashboard.shared.QueryEntity;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.entity.AutoMarshal;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.util.StroomEntityManager;
-import stroom.entity.shared.DocRefUtil;
 import stroom.importexport.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
@@ -50,7 +49,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@AutoMarshal
 @Transactional
 public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, FindDashboardCriteria>
         implements DashboardService {
@@ -61,9 +59,9 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
 
     @Inject
     public DashboardServiceImpl(final StroomEntityManager entityManager,
-                         final ImportExportHelper importExportHelper,
-                         final SecurityContext securityContext,
-                         final ResourceLoader resourceLoader) {
+                                final ImportExportHelper importExportHelper,
+                                final SecurityContext securityContext,
+                                final ResourceLoader resourceLoader) {
         super(entityManager, importExportHelper, securityContext);
         this.resourceLoader = resourceLoader;
     }

@@ -18,7 +18,6 @@ package stroom.streamtask;
 
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.AutoMarshal;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.SystemEntityServiceImpl;
@@ -39,7 +38,6 @@ import java.util.List;
 import java.util.Set;
 
 @Transactional
-@AutoMarshal
 @Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 class StreamProcessorFilterServiceImpl
         extends SystemEntityServiceImpl<StreamProcessorFilter, FindStreamProcessorFilterCriteria>

@@ -19,7 +19,6 @@ package stroom.pipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.AutoMarshal;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.ObjectMarshaller;
 import stroom.entity.QueryAppender;
@@ -42,7 +41,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Transactional
-@AutoMarshal
 public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntity, FindPipelineEntityCriteria>
         implements PipelineService {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineServiceImpl.class);

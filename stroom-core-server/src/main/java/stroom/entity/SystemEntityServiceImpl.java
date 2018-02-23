@@ -18,12 +18,12 @@ package stroom.entity;
 
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.util.FieldMap;
-import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Entity;
+import stroom.entity.util.FieldMap;
+import stroom.entity.util.StroomEntityManager;
 import stroom.security.Secured;
 import stroom.security.shared.PermissionNames;
 
@@ -34,7 +34,6 @@ import java.util.Set;
 @Secured(PermissionNames.ADMINISTRATOR)
 // Ensures you must be an administrator to perform any action unless specifically overridden.
 @Transactional
-@AutoMarshal
 public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCriteria> implements BaseEntityService<E>, FindService<E, C>, SupportsCriteriaLogging<C> {
     private final StroomEntityManager entityManager;
     private final QueryAppender<E, C> queryAppender;
