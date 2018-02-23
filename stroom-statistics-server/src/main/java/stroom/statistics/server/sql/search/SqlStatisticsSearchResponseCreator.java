@@ -1,0 +1,173 @@
+package stroom.statistics.server.sql.search;
+
+import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.ClientProperties;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.Payload;
+import stroom.query.common.v2.SearchResponseCreator;
+import stroom.query.common.v2.StoreSize;
+import stroom.query.common.v2.TableCoprocessor;
+import stroom.query.common.v2.TableCoprocessorSettings;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.util.shared.HasTerminate;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+class SqlStatisticsSearchResponseCreator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsSearchResponseCreator.class);
+
+    private static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
+
+    static SearchResponse buildResponse(final SearchRequest searchRequest,
+                                        final StatisticStoreEntity statisticStoreEntity,
+                                        final StatisticDataSet statisticDataSet,
+                                        final StroomPropertyService stroomPropertyService) {
+
+        Preconditions.checkNotNull(searchRequest);
+        Preconditions.checkNotNull(statisticStoreEntity);
+        Preconditions.checkNotNull(statisticDataSet);
+        Preconditions.checkArgument(!statisticDataSet.isEmpty());
+
+        // TODO: possibly the mapping from the componentId to the coprocessorsettings map is a bit odd.
+        final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
+
+        Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap = new HashMap<>();
+        // TODO: Mapping to this is complicated! it'd be nice not to have to do this.
+        final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
+
+        // Compile all of the result component options to optimise pattern matching etc.
+        if (coprocessorSettingsMap.getMap() != null) {
+            for (final Map.Entry<CoprocessorSettingsMap.CoprocessorKey, CoprocessorSettings> entry : coprocessorSettingsMap.getMap().entrySet()) {
+                final CoprocessorSettingsMap.CoprocessorKey coprocessorId = entry.getKey();
+                final CoprocessorSettings coprocessorSettings = entry.getValue();
+
+                // Create a parameter map.
+                final Map<String, String> paramMap;
+                if (searchRequest.getQuery().getParams() != null) {
+                    paramMap = searchRequest.getQuery().getParams().stream()
+                            .collect(Collectors.toMap(Param::getKey, Param::getValue));
+                } else {
+                    paramMap = Collections.emptyMap();
+                }
+
+                final Coprocessor coprocessor = createCoprocessor(
+                        coprocessorSettings, fieldIndexMap, paramMap, new HasTerminate() {
+                            //TODO do something about this
+                            @Override
+                            public void terminate() {
+                                System.out.println("terminating");
+                            }
+
+                            @Override
+                            public boolean isTerminated() {
+                                return false;
+                            }
+                        });
+
+                if (coprocessor != null) {
+                    coprocessorMap.put(coprocessorId, coprocessor);
+                }
+            }
+        }
+
+        Function<StatisticDataPoint, String[]> dataPointMapper = buildDataPointMapper(
+                fieldIndexMap, statisticStoreEntity);
+
+        statisticDataSet.stream()
+                .map(dataPointMapper)
+                .forEach(dataArray ->
+                        coprocessorMap.forEach(
+                                (key, value) -> value.receive(dataArray)));
+
+        Map<CoprocessorSettingsMap.CoprocessorKey, Payload> payloadMap = coprocessorMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().createPayload()));
+
+        StoreSize storeSize = new StoreSize(getStoreSizes(stroomPropertyService));
+        List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes(stroomPropertyService);
+
+        SqlStatisticsStore store = new SqlStatisticsStore(
+                defaultMaxResultsSizes,
+                storeSize,
+                coprocessorSettingsMap,
+                coprocessorMap,
+                payloadMap);
+
+        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);
+        SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
+
+        return searchResponse;
+    }
+
+    private static  Function<StatisticDataPoint, String[]> buildDataPointMapper(final FieldIndexMap fieldIndexMap,
+                                                                        final StatisticStoreEntity statisticStoreEntity) {
+        return statisticDataPoint -> {
+            String[] dataArray = new String[fieldIndexMap.size()];
+
+            //TODO should probably drive this off a new fieldIndexMap.getEntries() method or similar
+            //then we only loop round fields we car about
+            statisticStoreEntity.getAllFieldNames().forEach(fieldName -> {
+                int posInDataArray = fieldIndexMap.get(fieldName);
+                //if the fieldIndexMap returns -1 the field has not been requested
+                if (posInDataArray != -1) {
+                    dataArray[posInDataArray] = statisticDataPoint.getFieldValue(fieldName);
+                }
+            });
+            return dataArray;
+        };
+    }
+
+    private static Coprocessor createCoprocessor(final CoprocessorSettings settings,
+                                                 final FieldIndexMap fieldIndexMap,
+                                                 final Map<String, String> paramMap,
+                                                 final HasTerminate taskMonitor) {
+        if (settings instanceof TableCoprocessorSettings) {
+            final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
+            final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
+                    fieldIndexMap, taskMonitor, paramMap);
+            return tableCoprocessor;
+        }
+        return null;
+    }
+
+    private static List<Integer> getDefaultMaxResultsSizes(final StroomPropertyService stroomPropertyService) {
+        final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
+        return extractValues(value);
+    }
+
+    private static List<Integer> getStoreSizes(final StroomPropertyService stroomPropertyService) {
+        final String value = stroomPropertyService.getProperty(PROP_KEY_STORE_SIZE);
+        return extractValues(value);
+    }
+
+    private static List<Integer> extractValues(String value) {
+        if (value != null) {
+            try {
+                return Arrays.stream(value.split(","))
+                        .map(String::trim)
+                        .map(Integer::valueOf)
+                        .collect(Collectors.toList());
+            } catch (Exception e) {
+                LOGGER.warn(e.getMessage());
+            }
+        }
+        return Collections.emptyList();
+    }
+}
