@@ -19,9 +19,7 @@ package stroom.cluster;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
-import stroom.cache.CacheSpringConfig;
 import stroom.node.NodeCache;
 import stroom.node.NodeService;
 import stroom.node.shared.ClientPropertiesService;
@@ -31,9 +29,7 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;
 
-
 @Configuration
-@Import({CacheSpringConfig.class})
 public class ClusterSpringConfig {
 
     @Bean("clusterCallServiceLocal")

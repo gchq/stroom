@@ -18,15 +18,12 @@ package stroom.cache;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheManagerSpringConfig;
 import stroom.util.spring.StroomScope;
 
 @Configuration
-@Import({CacheManagerSpringConfig.class})
 public class CacheSpringConfig {
     @Bean
     @Scope(StroomScope.TASK)

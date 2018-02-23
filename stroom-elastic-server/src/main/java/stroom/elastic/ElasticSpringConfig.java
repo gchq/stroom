@@ -18,20 +18,17 @@ package stroom.elastic;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
 import stroom.connectors.elastic.StroomElasticProducerFactoryService;
-import stroom.properties.StroomPropertyService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.state.PipelineHolder;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheManagerSpringConfig;
 import stroom.util.spring.StroomScope;
 
 @Configuration
-@Import(CacheManagerSpringConfig.class)
 public class ElasticSpringConfig {
     @Bean
     public ElasticIndexCache elasticIndexCache(final CacheManager cacheManager,
