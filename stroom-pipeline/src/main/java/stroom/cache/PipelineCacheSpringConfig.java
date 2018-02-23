@@ -18,8 +18,6 @@ package stroom.cache;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import stroom.cache.CacheSpringConfig;
 import stroom.entity.DocumentPermissionCache;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
@@ -31,7 +29,6 @@ import javax.inject.Provider;
 import javax.xml.transform.URIResolver;
 
 @Configuration
-@Import({CacheSpringConfig.class})
 public class PipelineCacheSpringConfig {
     @Bean
     public DSChooser dSChooser(final Provider<DS3ParserFactory> parserFactoryProvider) {
