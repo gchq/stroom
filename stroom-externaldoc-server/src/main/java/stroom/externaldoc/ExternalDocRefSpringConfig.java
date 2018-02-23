@@ -12,14 +12,14 @@ import stroom.security.SecurityContext;
 import javax.inject.Inject;
 
 @Configuration
-public class ExternalDocRefConfiguration {
+public class ExternalDocRefSpringConfig {
     @Inject
-    public ExternalDocRefConfiguration(final EntityServiceBeanRegistry entityServiceBeanRegistry,
-                                       final ExplorerActionHandlers explorerActionHandlers,
-                                       final ImportExportActionHandlers importExportActionHandlers,
-                                       final SecurityContext securityContext,
-                                       final DocumentEventLog documentEventLog,
-                                       final StroomPropertyService propertyService) {
+    public ExternalDocRefSpringConfig(final EntityServiceBeanRegistry entityServiceBeanRegistry,
+                                      final ExplorerActionHandlers explorerActionHandlers,
+                                      final ImportExportActionHandlers importExportActionHandlers,
+                                      final SecurityContext securityContext,
+                                      final DocumentEventLog documentEventLog,
+                                      final StroomPropertyService propertyService) {
 
         propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES).stream()
                 .map(type -> new ExternalDocumentEntityServiceImpl(type,
