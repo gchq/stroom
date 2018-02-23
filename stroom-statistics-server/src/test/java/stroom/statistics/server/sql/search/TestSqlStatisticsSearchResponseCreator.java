@@ -4,8 +4,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.query.api.v2.DocRef;
@@ -19,10 +17,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.statistics.server.sql.SQLStatisticEventStore;
 import stroom.statistics.server.sql.StatisticTag;
-import stroom.statistics.server.sql.StatisticsQueryService;
-import stroom.statistics.server.sql.datasource.StatisticStoreCache;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
@@ -39,17 +34,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TestStatisticsQueryServiceImpl {
+public class TestSqlStatisticsSearchResponseCreator {
 
     private static final String FIELD_DATE_TIME_STR = "dateTimeStr";
     private static final String STAT_NAME = "MyStat";
     private static final String QUERY_ID = UUID.randomUUID().toString();
 
-    @Mock
-    private StatisticStoreCache mockStatisticStoreCache;
+//    @Mock
+//    private StatisticStoreCache mockStatisticStoreCache;
 
-    @Mock
-    private SQLStatisticEventStore mockSqlStatisticEventStore;
+//    @Mock
+//    private SQLStatisticEventStore mockSqlStatisticEventStore;
 
     private MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
 
@@ -61,27 +56,23 @@ public class TestStatisticsQueryServiceImpl {
     public void setup() {
         mockStroomPropertyService.loadDefaults();
         StatisticStoreEntity statisticStoreEntity = buildStatisticsDataSource(true);
-        Mockito.when(mockStatisticStoreCache.getStatisticsDataSource(Mockito.any(DocRef.class)))
-                .thenReturn(statisticStoreEntity);
-
-        StatisticDataSet statisticDataSet = buildStatisticDataSet();
-        Mockito.when(mockSqlStatisticEventStore.searchStatisticsData(Mockito.any(), Mockito.any()))
-                .thenReturn(statisticDataSet);
+//        Mockito.when(mockStatisticStoreCache.getStatisticsDataSource(Mockito.any(DocRef.class)))
+//                .thenReturn(statisticStoreEntity);
+//
+//        StatisticDataSet statisticDataSet = buildStatisticDataSet();
+//        Mockito.when(mockSqlStatisticEventStore.searchStatisticsData(Mockito.any(), Mockito.any()))
+//                .thenReturn(statisticDataSet);
     }
 
     @Test
     public void search_allDataNoGrouping() {
 
-
-
-        StatisticsQueryService statisticsQueryService = new StatisticsQueryServiceImpl(
-                null,
-                mockStatisticStoreCache,
-                mockSqlStatisticEventStore,
-                mockStroomPropertyService);
-
         SearchRequest searchRequest = buildSearchRequest(docRef, Optional.empty(), Optional.empty());
-        SearchResponse searchResponse = statisticsQueryService.search(searchRequest);
+        SearchResponse searchResponse = SqlStatisticsSearchResponseCreator.buildResponse(
+                searchRequest,
+                buildStatisticsDataSource(true),
+                buildStatisticDataSet(),
+                mockStroomPropertyService);
 
         Assertions.assertThat(searchResponse).isNotNull();
         Assertions.assertThat(searchResponse.getResults()).isNotNull();
@@ -90,6 +81,64 @@ public class TestStatisticsQueryServiceImpl {
         Assertions.assertThat(tableResult.getRows()).hasSize(500);
     }
 
+    @Test
+    public void search_groupOnTruncatedDates() {
+
+
+
+        final Query query = new Query.Builder()
+                .dataSource(docRef)
+                .expression(
+                        new ExpressionOperator.Builder()
+                                .addTerm(
+                                        StatisticStoreEntity.FIELD_NAME_DATE_TIME,
+                                        ExpressionTerm.Condition.BETWEEN,
+                                        "year()-1y,year()")
+                                .build())
+                .build();
+
+        final TableSettings tableSettings = new TableSettings.Builder()
+                .queryId(QUERY_ID)
+                .addFields(
+                        new Field.Builder()
+                                .name(StatisticStoreEntity.FIELD_NAME_DATE_TIME)
+                                .expression("roundDay(" + nameToExpression(StatisticStoreEntity.FIELD_NAME_DATE_TIME) + ")")
+                                .group(1)
+                                .build(),
+                        new Field.Builder()
+                                .name(StatisticStoreEntity.FIELD_NAME_COUNT)
+                                .expression("sum(" + nameToExpression(StatisticStoreEntity.FIELD_NAME_COUNT) + ")")
+                                .build(),
+                        new Field.Builder()
+                                .name(FIELD_DATE_TIME_STR)
+                                .expression(nameToExpression(FIELD_DATE_TIME_STR))
+                                .group(1)
+                                .build())
+                .extractValues(false)
+                .showDetail(false)
+                .build();
+
+        SearchRequest searchRequest = buildSearchRequest(docRef, Optional.empty(), Optional.of(tableSettings));
+
+        StatisticDataSet statisticDataSet = buildStatisticDataSet();
+
+        SearchResponse searchResponse = SqlStatisticsSearchResponseCreator.buildResponse(
+                searchRequest,
+                buildStatisticsDataSource(true),
+                statisticDataSet,
+                mockStroomPropertyService);
+
+
+        Assertions.assertThat(searchResponse)
+                .isNotNull();
+        Assertions.assertThat(searchResponse.getResults())
+                .isNotNull();
+        TableResult tableResult = (TableResult) searchResponse.getResults().get(0);
+
+        Assertions.assertThat(tableResult.getRows())
+                .filteredOn(row -> row.getGroupKey() != null)
+                .hasSize(statisticDataSet.size());
+    }
 
     private SearchRequest buildSearchRequest(final DocRef docRef,
                                              final Optional<Query> queryOveride,
