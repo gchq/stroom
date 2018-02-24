@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#659** : Made format-date XSLT function default year if none specified to the year the data was received unless this would make the date later then the received time in which case a year is subtracted.
+
 * Issue **#658** : Added a hashing function for XSLT translations.
 
 ## [v5.1.0] - 2018-02-07
