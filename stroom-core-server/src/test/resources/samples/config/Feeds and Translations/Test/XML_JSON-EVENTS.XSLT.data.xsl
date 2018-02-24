@@ -91,6 +91,12 @@
         <Data Name="MD5HashWithSalt">
           <xsl:attribute name="Value" select="stroom:hash($user, 'MD5', 'mysalt')" />
         </Data>
+        <Data Name="TestDateMissingYear">
+          <xsl:attribute name="Value" select="stroom:format-date('12/03', 'dd/MM')" />
+        </Data>
+        <Data Name="TestDateMissingYearAndMonth">
+          <xsl:attribute name="Value" select="stroom:format-date('12', 'dd')" />
+        </Data>
       </User>
     </EventSource>
   </xsl:template>
