@@ -26,7 +26,7 @@ import stroom.util.test.StroomUnitTest;
 public class TestHash extends StroomUnitTest {
     @Test
     public void testHashWithSalt() throws Exception {
-        Hash hash = new Hash();
+        final Hash hash = new Hash();
 
         String result = hash.hash("test", "SHA-512", "salt");
         Assert.assertEquals("7e007fe5f99ee5851dd519bf6163a0d2dda54d45e6fe0127824f5b45a5ec59183a08aaa270979deb2f048815d05066c306e3694473d84d6aca0825c3dccd559", result);
@@ -43,7 +43,7 @@ public class TestHash extends StroomUnitTest {
 
     @Test
     public void testHashNoSalt() throws Exception {
-        Hash hash = new Hash();
+        final Hash hash = new Hash();
 
         String result = hash.hash("test", "SHA-512", null);
         Assert.assertEquals("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", result);
