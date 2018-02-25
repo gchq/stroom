@@ -27,6 +27,7 @@ import stroom.util.spring.StroomScope;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -54,18 +55,7 @@ class Hash extends StroomExtensionFunctionCall {
                     salt = getSafeString(functionName, context, arguments, 2);
                 }
 
-                // Create MessageDigest object.
-                final MessageDigest digest = MessageDigest.getInstance(algorithm);
-                digest.reset();
-
-                if (salt != null) {
-                    digest.update(salt.getBytes());
-                }
-
-                final byte[] arr = digest.digest(value.getBytes());
-                // Converts message digest value in base 16 (hex)
-                result = new BigInteger(1, arr).toString(16);
-
+                result = hash(value, algorithm, salt);
             }
         } catch (final Exception e) {
             log(context, Severity.ERROR, e.getMessage(), e);
@@ -75,5 +65,19 @@ class Hash extends StroomExtensionFunctionCall {
             return EmptyAtomicSequence.getInstance();
         }
         return StringValue.makeStringValue(result);
+    }
+
+    String hash(final String value, final String algorithm, final String salt) throws NoSuchAlgorithmException {
+        // Create MessageDigest object.
+        final MessageDigest digest = MessageDigest.getInstance(algorithm);
+        digest.reset();
+
+        if (salt != null) {
+            digest.update(salt.getBytes());
+        }
+
+        final byte[] arr = digest.digest(value.getBytes());
+        // Converts message digest value in base 16 (hex)
+        return new BigInteger(1, arr).toString(16);
     }
 }
