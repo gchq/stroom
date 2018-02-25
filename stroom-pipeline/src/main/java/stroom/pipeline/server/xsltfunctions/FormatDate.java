@@ -222,7 +222,7 @@ class FormatDate extends StroomExtensionFunctionCall {
         return dateTimeZone;
     }
 
-    private long parseDateWithoutYear(final XPathContext context, final String timeZone, final String pattern, final String date) {
+    long parseDateWithoutYear(final XPathContext context, final String timeZone, final String pattern, final String date) {
         final ZoneId zoneId = getTimeZone(context, timeZone);
         final ZonedDateTime referenceDateTime = getBaseTime().atZone(zoneId);
         final DateTimeFormatter parseFormatter = new DateTimeFormatterBuilder()
@@ -245,7 +245,11 @@ class FormatDate extends StroomExtensionFunctionCall {
 
         // Subtract a year if the date appears to be after our reference time.
         if (dateTime.isAfter(referenceDateTime)) {
-            dateTime = dateTime.minusYears(1);
+            if (!pattern.contains("M")) {
+                dateTime = dateTime.minusMonths(1);
+            } else {
+                dateTime = dateTime.minusYears(1);
+            }
         }
         return dateTime.toInstant().toEpochMilli();
     }
