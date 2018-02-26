@@ -2,6 +2,5 @@
 <pipeline>
    <description/>
    <name>COUNT_FEED to external API</name>
-   <pipelineType>Event Data</pipelineType>
    <uuid>0eb23206-28f9-418c-9a7f-441e0e5a1a60</uuid>
 </pipeline>

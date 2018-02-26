@@ -4,7 +4,6 @@
    <createUser>admin</createUser>
    <description/>
    <name>CountStatisticsStroomStats</name>
-   <pipelineType>Event Data</pipelineType>
    <updateTime>1506330831417</updateTime>
    <updateUser>admin</updateUser>
    <uuid>a26508d9-7632-44bd-ac98-6b3fb04c824c</uuid>

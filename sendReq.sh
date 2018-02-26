@@ -1,23 +1,109 @@
 #!/bin/bash
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Script to send an API request to stroom
+#
+# To work with the json request most recently downloaded from a stroom dashboard you can do stuff like:
+#
+# #Edit the file in vim
+# vim "$(ls -1tr ~/Downloads/DashboardQuery* | tail -n 1 | grep -oP '/home/.*\.json')"
+# 
+# #Send the request to stroom
+# ./sendReq.sh "$(ls -1tr ~/Downloads/DashboardQuery* | tail -n 1 | grep -oP '/home/.*\.json')" /api/stroom-index/v2/search
+# 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 set -e
+
+#Shell Colour constants for use in 'echo -e'
+#e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+NC='\033[0m' # No Colour 
 
 #IMPORTANT - This script requires HTTPie so please install it.
 
-#Script to send an API request to stroom
+if ! [ -x "$(command -v http)" ]; then
+  echo -e "${RED}ERROR${NC} - ${GREEN}httpie${NC} is not installed, please install it." >&2
+  exit 1
+fi
 
-requestFile=$1
-path=$2
+if ! [ -x "$(command -v jq)" ]; then
+  echo -e "${RED}ERROR${NC} - ${GREEN}jq${NC} is not installed, please install it." >&2
+  exit 1
+fi
 
 if [ "x" == "x${TOKEN}" ]; then
-    echo "Error - TOKEN is not set, set it like 'export TOKEN=\".....\"' where ..... is the JWT token from 'Tools->API' Keys in stroom" 
+    echo -e "${RED}ERROR${NC} - TOKEN is not set, set it like '${BLUE}export TOKEN=\".....\"${NC}' where ..... is the JWT token from 'Tools->API' Keys in stroom" 
     exit 1
 fi
+
+uuid=""
+showInfo=false
+
+optspec="gu:i"
+while getopts "$optspec" optchar; do
+    #echo "Parsing $optchar"
+    case "${optchar}" in
+        g)
+            uuid="$(uuidgen)"
+            ;;
+        u)
+            if [ "x${OPTARG}" = "x" ]; then
+                echo -e "${RED}-u argument requires a uuid to be specified, e.g. '${GREEN}-u 382765e6-8aaf-4c44-97a7-40372050ba45${NC}'${NC}" >&2
+                echo
+                showUsage
+                exit 1
+            fi
+            uuid="${OPTARG}"
+            ;;
+        i)
+            showInfo=true
+            ;;
+        *)
+            echo -e "${RED}ERROR${NC} Unknown argument: '-${OPTARG}'" >&2
+            echo
+            showUsage
+            exit 1
+            ;;
+    esac
+done
+
+
+#discard the args parsed so far
+shift $((OPTIND -1))
+#echo "Remaining args [${@}]"
+
+requestFile="$1"
+path=$2
 
 if [ "x" == "x${requestFile}" ] || [ "x" == "x${path}" ]; then
-    echo "Error - Usage: ./sendReq.sh file path"
-    echo "          e.g: ./sendReq.sh ~/req.json /api/sqlstatistics/v2/search"
-    echo "          e.g: ./sendReq.sh ~/req.json /api/stroom-index/v2/search"
+    echo -e "${RED}ERROR${NC} - Invalid arguments"
+    echo -e "Usage: ${BLUE}$0${GREEN} [-g] [-u UUID] [-i] file path"
+    echo -e "e.g:   ${BLUE}$0${GREEN} -g ~/req.json /api/sqlstatistics/v2/search"
+    echo -e "e.g:   ${BLUE}$0${GREEN} -u query-123456 ~/req.json /api/stroom-index/v2/search"
+    echo -e "${GREEN}-g${NC}:      Replace key.uuid with an auto-generated uuid using ${BLUE}uuidgen${NC}"
+    echo -e "${GREEN}-u UUID${NC}: Replace key.uuid with the user supplied UUID string"
+    echo -e "${GREEN}-i${NC}:      Show info (uuid used, request content, file name, etc)"
     exit 1
 fi
 
-cat $requestFile | http POST http://localhost:8080${path} "Authorization:Bearer ${TOKEN}" 
+if [ "x" == "x${uuid}" ]; then
+    uuid="$(cat "${requestFile}" | jq -r '.key.uuid')"
+fi
+req="$(cat "$requestFile" | jq ".key.uuid = \"${uuid}\"")"
+if ${showInfo}; then
+    echo -e "Using uuid [${GREEN}${uuid}${NC}] for the request"
+    echo -e "Request file [${GREEN}${requestFile}${NC}]"
+
+    echo -e "Request content:"
+    #cat "$requestFile" | jq ".key.uuid = \"${uuid}\"" 
+    #Use jq to it is sytax highlighted and pretty printed
+    echo -e "${req}" | jq '.'
+    echo
+    echo -e "Response content:"
+fi
+
+echo -e "${req}" | jq -r ".key.uuid = \"${uuid}\"" | http POST http://localhost:8080${path} "Authorization:Bearer ${TOKEN}" 

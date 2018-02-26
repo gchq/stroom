@@ -16,16 +16,10 @@
 
 package stroom.pipeline.shared;
 
-import stroom.entity.shared.EntityMatcher;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 
-import java.util.HashSet;
-import java.util.Set;
-
-public class FindPipelineEntityCriteria extends FindDocumentEntityCriteria implements EntityMatcher<PipelineEntity> {
+public class FindPipelineEntityCriteria extends FindDocumentEntityCriteria {
     private static final long serialVersionUID = 1L;
-
-    private Set<String> types;
 
     public FindPipelineEntityCriteria() {
         // Default constructor necessary for GWT serialisation.
@@ -33,29 +27,5 @@ public class FindPipelineEntityCriteria extends FindDocumentEntityCriteria imple
 
     public FindPipelineEntityCriteria(final String name) {
         super(name);
-    }
-
-    public void addType(final String type) {
-        if (types == null) {
-            types = new HashSet<>();
-        }
-        types.add(type);
-    }
-
-    public Set<String> getTypes() {
-        return types;
-    }
-
-    public void setTypes(final Set<String> types) {
-        this.types = types;
-    }
-
-    @Override
-    public boolean isMatch(final PipelineEntity entity) {
-        if (types == null) {
-            return true;
-        }
-
-        return types.contains(entity.getPipelineType());
     }
 }

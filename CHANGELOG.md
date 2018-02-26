@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#651** : Removed the redundant concept of Pipeline Types, it's half implementation prevented certain picker dialogs from working.
+
+* Issue **#481** : Fix handling of non-incremental index queries on the query API. Adds timeout option in request and blocking code to wait for the query to complete. Exit early from wait loops in index/event search.
+
 * Issue **#626** : Fixed issue with document settings not being persisted
 
 * Issue **#621** : Changed the document info to prevent requests for multi selections
@@ -15,6 +19,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#546** : Fixed race conditions with the Explorer Tree, it was causing odd delays to population of the explorer in various places.
 
 * Issue **#495** : Fixed the temporary expansion of the Explorer Tree caused by filtering
+
+* Issue **#376** : Welcome tab details fixed since move to gradle
+
+
+## [v6.0-alpha.10]
 
 * Issue **#523** : Changed permission behaviours for copy and move to support `None`, `Source`, `Destination` and `Combined` behaviours. Creating new items now allows for `None` and `Destination` permission behaviours. Also imported items now receive permissions from the destination folder. Event logging now indicates the permission behaviour used during copy, move and create operations.
 
@@ -28,7 +37,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#568** : Fixed filtering streams by pipeline in the pipeline screen.
 
-* Issue **#376** : Welcome tab details fixed since move to gradle
+* Issue **#565** : Fixed authorisation issue on dashboards.
 
 ## [v6.0-alpha.9]
 
@@ -781,7 +790,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.10...HEAD
+[v6.0-alpha.10]: https://github.com/gchq/stroom/compare/v6.0-alpha.9...v6.0-alpha.10
+[v6.0-alpha.9]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...v6.0-alpha.9
 [v6.0-alpha.8]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...v6.0-alpha.8
 [v6.0-alpha.7]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...v6.0-alpha.7
 [v6.0-alpha.4]: https://github.com/gchq/stroom/commits/v6.0-alpha.4

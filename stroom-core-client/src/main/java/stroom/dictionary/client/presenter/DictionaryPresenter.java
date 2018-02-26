@@ -97,6 +97,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
 
     @Override
     public void onRead(final DocRef docRef, final DictionaryDoc doc) {
+        super.onRead(docRef, doc);
         this.doc = doc;
         downloadButton.setEnabled(true);
         settingsPresenter.read(docRef, doc);

@@ -9,6 +9,5 @@
       &lt;name&gt;Search Extraction&lt;/name&gt;
       &lt;/doc&gt;
    </parentPipelineXML>
-   <pipelineType>Search Extraction</pipelineType>
    <uuid>e5ecdf99-d433-45ac-b14a-1f77f16ae4f7</uuid>
 </pipeline>

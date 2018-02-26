@@ -2,6 +2,8 @@ package stroom.util.logging;
 
 import org.slf4j.Logger;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.function.Supplier;
 
 public final class BasicLambdaLogger implements LambdaLogger {
@@ -119,6 +121,42 @@ public final class BasicLambdaLogger implements LambdaLogger {
             }
         } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork, final String workDescription) {
+        if (logger.isTraceEnabled()) {
+            final Instant startTime = Instant.now();
+            T result = timedWork.get();
+            logger.trace("Completed [{}] in {}", workDescription, Duration.between(startTime, Instant.now()));
+            return result;
+        } else {
+            return timedWork.get();
+        }
+    }
+
+    @Override
+    public <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork, final String workDescription) {
+        if (logger.isDebugEnabled()) {
+            final Instant startTime = Instant.now();
+            T result = timedWork.get();
+            logger.debug("Completed [{}] in {}", workDescription, Duration.between(startTime, Instant.now()));
+            return result;
+        } else {
+            return timedWork.get();
+        }
+    }
+
+    @Override
+    public <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork, final String workDescription) {
+        if (logger.isInfoEnabled()) {
+            final Instant startTime = Instant.now();
+            T result = timedWork.get();
+            logger.info("Completed [{}] in {}", workDescription, Duration.between(startTime, Instant.now()));
+            return result;
+        } else {
+            return timedWork.get();
         }
     }
 }

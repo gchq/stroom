@@ -66,6 +66,7 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
 
     @Override
     public void onRead(final DocRef docRef, final Index index) {
+        super.onRead(docRef, index);
         tabContentProvider.read(docRef, index);
     }
 

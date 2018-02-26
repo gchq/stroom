@@ -45,7 +45,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class ExtractionTaskProducer extends TaskProducer {
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Extraction", 5, 0, Integer.MAX_VALUE);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Extraction",
+            5,
+            0,
+            Integer.MAX_VALUE);
 
     private final ClusterSearchTask clusterSearchTask;
     private final FieldIndexMap extractionFieldIndexMap;

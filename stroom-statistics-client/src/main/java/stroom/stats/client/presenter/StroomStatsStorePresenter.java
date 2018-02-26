@@ -70,6 +70,7 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
 
     @Override
     public void onRead(final DocRef docRef, final StroomStatsStoreEntity stroomStatsStoreEntity) {
+        super.onRead(docRef, stroomStatsStoreEntity);
         if (stroomStatsStoreEntity != null) {
             if (stroomStatsStoreEntity.getDataObject() == null) {
                 stroomStatsStoreEntity.setDataObject(new StroomStatsStoreEntityData());

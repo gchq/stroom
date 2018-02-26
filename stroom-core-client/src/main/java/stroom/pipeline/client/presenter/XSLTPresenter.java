@@ -72,6 +72,7 @@ public class XSLTPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XS
 
     @Override
     public void onRead(final DocRef docRef, final XSLT xslt) {
+        super.onRead(docRef, xslt);
         settingsPresenter.read(docRef, xslt);
 
         if (codePresenter != null) {
