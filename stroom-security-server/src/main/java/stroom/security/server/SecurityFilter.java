@@ -116,10 +116,14 @@ public class SecurityFilter implements Filter {
 
         } else {
             // We need to distinguish between requests from an API client and from the UI.
-            // If a request is from the UI and fails authentication then we need to redirect to the login page.
-            // If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
-            final String servletPath = request.getServletPath();
+            // - If a request is from the UI and fails authentication then we need to redirect to the login page.
+            // - If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
+            // - If a request is for clustercall.rpc then it's a back-channel stroom-to-stroom request and we want to
+            //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
+            //   blocks requests that look like '.*clustercall.rpc$'.
+            final String servletPath = request.getServletPath().toLowerCase();
             final boolean isApiRequest = servletPath.contains("/api");
+            final boolean isClusterCallRequest = servletPath.contains("clustercall.rpc");
 
             if (isApiRequest) {
                 if (!config.isAuthenticationRequired()) {
@@ -130,6 +134,8 @@ public class SecurityFilter implements Filter {
                     continueAsUser(request, response, chain, userRef);
                 }
 
+            } if (isClusterCallRequest) {
+                bypassAuthentication(request, response, chain, false);
             } else {
                 // Authenticate requests from the UI.
 
