@@ -125,7 +125,7 @@ public class StroomProperties {
     }
 
     private static void ensureStroomTempEstablished() {
-        String v = doGetProperty(STROOM_TEMP, false);
+        String v = doGetProperty(STROOM_TEMP, false, false);
 
         if (v == null) {
             v = System.getProperty(STROOM_TMP_ENV);
@@ -149,7 +149,7 @@ public class StroomProperties {
             }
         }
 
-        doGetProperty(STROOM_TEMP, true);
+        doGetProperty(STROOM_TEMP, true, false);
     }
 
     public static String getProperty(final String key) {
@@ -211,7 +211,10 @@ public class StroomProperties {
     /**
      * Precedence: environment variables override ~/.stroom/stroom.conf which overrides stroom.properties.
      */
-    private static String getProperty(final String propertyName, final String name, final boolean replaceNestedProperties, final Set<String> cyclicCheckSet) {
+    private static String getProperty(final String propertyName,
+                                      final String name,
+                                      final boolean replaceNestedProperties,
+                                      final Set<String> cyclicCheckSet) {
         // Ensure properties are initialised.
         init();
 
@@ -237,7 +240,7 @@ public class StroomProperties {
 
         // Get property if one exists.
         if (value == null) {
-            value = doGetProperty(name, false);
+            value = doGetProperty(name, false, trace);
         }
 
         // Replace any nested properties.
@@ -361,7 +364,9 @@ public class StroomProperties {
         override.clear();
     }
 
-    private static String doGetProperty(final String name, final boolean log) {
+    private static String doGetProperty(final String name,
+                                        final boolean log,
+                                        final boolean trace) {
         StroomProperty property = null;
         boolean overridden = false;
 
@@ -388,7 +393,7 @@ public class StroomProperties {
 
             // If the property is null or we can find an environment property instead then try and override.
             if (property == null || property.getSource().getPriority() < Source.ENV.getPriority()) {
-                String value = getEnv(name);
+                String value = getEnv(name, trace);
                 if (value != null) {
                     setProperty(name, value, Source.ENV);
                     property = properties.get(name);
@@ -412,12 +417,17 @@ public class StroomProperties {
     }
 
 
-    private static String getEnv(final String propertyName) {
+    private static String getEnv(final String propertyName, final boolean trace) {
         // Environment variable names are transformations of property names.
         // E.g. stroom.temp => STROOM_TEMP.
         // E.g. stroom.jdbcDriverUsername => STROOM_JDBC_DRIVER_USERNAME
         String environmentVariableName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, propertyName.replace('.', '_'));
         String environmentVariable = System.getenv(environmentVariableName);
+
+        if (trace) {
+            LOGGER.info(String.format("Get Env %s -> %s: %s", propertyName, environmentVariableName, environmentVariable));
+        }
+
         if (StringUtils.isNotBlank(environmentVariable)) {
             return environmentVariable;
         }

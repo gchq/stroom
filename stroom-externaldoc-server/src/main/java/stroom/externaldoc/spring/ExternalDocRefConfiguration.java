@@ -28,7 +28,7 @@ public class ExternalDocRefConfiguration {
                                        final DocumentEventLog documentEventLog,
                                        final StroomPropertyService propertyService) {
 
-        propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES).stream()
+        propertyService.getCsvProperty(String.format("%s|trace", ClientProperties.EXTERNAL_DOC_REF_TYPES)).stream()
                 .map(type -> new ExternalDocumentEntityServiceImpl(type,
                         securityContext,
                         documentEventLog,
