@@ -36,9 +36,10 @@ RUN echo "http_proxy: $http_proxy" && \
 #This is where stroom will run from and any local data will be
 WORKDIR /stroom
 
-#Copy the content packs in so they get imported on first run of Stroom
+#Copy all the fat jars for the application and connectors
 ADD ./build/stroom-app-all.jar /stroom/stroom-app-all.jar
 ADD ./build/stroom-kafka-client-impl_0_10_0_1-all.jar /stroom/plugins/stroom-kafka-client-impl_0_10_0_1-all.jar
+ADD ./build/stroom-elastic-client-impl_5_6_4-all.jar /stroom/plugins/stroom-elastic-client-impl_5_6_4-all.jar
 ADD ./build/prod.yml /stroom/config.yml
 ADD docker-entrypoint.sh /usr/local/bin/
 

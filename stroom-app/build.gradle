@@ -141,6 +141,7 @@ clean{
 task copyFilesForDockerBuild() {
     dependsOn shadowJar
     dependsOn tasks.getByPath(':stroom-kafka-client-impl_0_10_0_1:shadowJar')
+    dependsOn tasks.getByPath(':stroom-elastic-client-impl_5_6_4:shadowJar')
     doFirst {
         new File(stroomPluginsDir).mkdirs()
 
@@ -153,6 +154,12 @@ task copyFilesForDockerBuild() {
         //Copy the kafka client fat jar
         copy {
             from project(':stroom-kafka-client-impl_0_10_0_1').file('build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar')
+            into dockerBuildDir
+        }
+
+        //Copy the elastic client fat jar
+        copy {
+            from project(':stroom-elastic-client-impl_5_6_4').file('build/libs/stroom-elastic-client-impl_5_6_4-all.jar')
             into dockerBuildDir
         }
 
