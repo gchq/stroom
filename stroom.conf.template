@@ -83,12 +83,12 @@ stroom.url.dashboard=http://IP_ADDRESS/stroom/dashboard.jsp
 
 # External Doc Ref
 #~~~~~~~~~~~~~~~~~
-stroom.doc-ref.types=AnnotationsIndex,ElasticIndex
-stroom.url.doc-ref.service.AnnotationsIndex=http://IP_ADDRESS/annotationsService
-stroom.url.doc-ref.service.ElasticIndex=http://IP_ADDRESS/queryElasticService
+stroom.docref.types=AnnotationsIndex,ElasticIndex
+stroom.docref.url.service.AnnotationsIndex=http://IP_ADDRESS/annotationsService
+stroom.docref.url.service.ElasticIndex=http://IP_ADDRESS/queryElasticService
 ## Must use direct HTTP's otherwise GWT blocks the attempt to load the iframe
-stroom.url.doc-ref.ui.AnnotationsIndex=https://IP_ADDRESS:9444
-stroom.url.doc-ref.ui.ElasticIndex=https://IP_ADDRESS:9445
+stroom.docref.url.ui.AnnotationsIndex=https://IP_ADDRESS:9444
+stroom.docref.url.ui.ElasticIndex=https://IP_ADDRESS:9445
 
 # Internal statistic definitions
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -39,6 +39,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -61,7 +62,8 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         this.documentEventLog = documentEventLog;
 
         final String urlPropKey = ClientProperties.URL_DOC_REF_SERVICE_BASE + type;
-        this.docRefHttpClient = new DocRefResourceHttpClient(propertyService.getProperty(urlPropKey));
+        final String serviceUrl = propertyService.getProperty(String.format("%s|trace", urlPropKey));
+        this.docRefHttpClient = new DocRefResourceHttpClient(serviceUrl);
     }
 
     private ServiceUser serviceUser() {
