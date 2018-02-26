@@ -19,6 +19,7 @@ package stroom.ruleset;
 
 import stroom.docstore.JsonSerialiser;
 import stroom.docstore.Store;
+import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
@@ -76,6 +77,11 @@ public class RuleSetServiceImpl implements RuleSetService {
     @Override
     public DocRefInfo info(final String uuid) {
         return store.info(uuid);
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(100, RuleSet.DOCUMENT_TYPE, "Rule Set");
     }
 
     ////////////////////////////////////////////////////////////////////////

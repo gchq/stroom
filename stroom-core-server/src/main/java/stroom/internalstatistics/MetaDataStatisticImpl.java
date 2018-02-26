@@ -26,23 +26,40 @@ import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * This is deliberately not declared as a component as the {@link stroom.spring.MetaDataStatisticConfiguration} creates the bean.
- */
 public class MetaDataStatisticImpl implements MetaDataStatistic {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataStatisticImpl.class);
 
-    private final InternalStatisticsReceiver internalStatisticsReceiver;
+    private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
 
     private List<MetaDataStatisticTemplate> templates;
 
     @Inject
-    public MetaDataStatisticImpl(final InternalStatisticsReceiver internalStatisticsReceiver) {
-        this.internalStatisticsReceiver = internalStatisticsReceiver;
+    public MetaDataStatisticImpl(final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
+        this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
+    }
+
+    @Override
+    public void recordStatistics(final MetaMap metaData) {
+        final InternalStatisticsReceiver receiver = internalStatisticsReceiverProvider.get();
+        if (receiver != null) {
+            for (final MetaDataStatisticTemplate template : templates) {
+                try {
+                    final InternalStatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
+                    if (statisticEvent != null) {
+                        receiver.putEvent(statisticEvent);
+                    } else {
+                        LOGGER.trace("recordStatistics() - abort {} {}", metaData, template);
+                    }
+                } catch (final Exception ex) {
+                    LOGGER.error("recordStatistics() - abort {} {}", metaData, template, ex);
+                }
+            }
+        }
     }
 
     /**
@@ -98,22 +115,6 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
             }
         }
         return InternalStatisticEvent.createPlusNCountStat(template.getKey(), timeMs, statisticTags, increment);
-    }
-
-    @Override
-    public void recordStatistics(final MetaMap metaData) {
-        for (final MetaDataStatisticTemplate template : templates) {
-            try {
-                final InternalStatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
-                if (statisticEvent != null) {
-                    internalStatisticsReceiver.putEvent(statisticEvent);
-                } else {
-                    LOGGER.trace("recordStatistics() - abort {} {}", metaData, template);
-                }
-            } catch (final Exception ex) {
-                LOGGER.error("recordStatistics() - abort {} {}", metaData, template, ex);
-            }
-        }
     }
 
     public void setTemplates(final List<MetaDataStatisticTemplate> templates) {

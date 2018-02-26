@@ -21,8 +21,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.CachingEntityManager;
-import stroom.entity.util.StroomDatabaseInfo;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomDatabaseInfo;
+import stroom.entity.StroomEntityManager;
 import stroom.feed.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.jobsystem.ClusterLockService;
@@ -41,6 +41,7 @@ import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.sql.DataSource;
 
 @Configuration
@@ -156,11 +157,11 @@ public class StreamTaskSpringConfig {
                                                final StreamTaskService streamTaskService,
                                                final StreamTaskHelper streamTaskHelper,
                                                final StroomPropertyService propertyService,
-                                               final InternalStatisticsReceiver internalStatisticsReceiver,
+                                               final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
                                                final StreamStore streamStore,
                                                final SecurityContext securityContext,
                                                final ExpressionToFindCriteria expressionToFindCriteria) {
-        return new StreamTaskCreatorImpl(streamProcessorFilterService, streamTaskTransactionHelper, taskManager, nodeCache, streamTaskService, streamTaskHelper, propertyService, internalStatisticsReceiver, streamStore, securityContext, expressionToFindCriteria);
+        return new StreamTaskCreatorImpl(streamProcessorFilterService, streamTaskTransactionHelper, taskManager, nodeCache, streamTaskService, streamTaskHelper, propertyService, internalStatisticsReceiverProvider, streamStore, securityContext, expressionToFindCriteria);
     }
 
     @Bean

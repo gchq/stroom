@@ -24,49 +24,31 @@ import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Scope;
-import stroom.explorer.ExplorerActionHandlers;
-import stroom.importexport.ImportExportActionHandlers;
-import stroom.node.GlobalProperties;
+import stroom.properties.GlobalProperties;
 import stroom.properties.StroomPropertyService;
 import stroom.spring.C3P0Config;
-import stroom.statistics.sql.datasource.StatisticStoreEntityService;
-import stroom.statistics.stroomstats.entity.StroomStatsStoreEntityService;
 import stroom.statistics.stroomstats.pipeline.appender.StroomStatsAppender;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
 import stroom.util.spring.StroomScope;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+@ComponentScan("ignore")
 @Configuration
-@ComponentScan(basePackages = {
-        "stroom.statistics"
-}, excludeFilters = {
-        // Exclude other configurations that might be found accidentally during
-        // a component scan as configurations should be specified explicitly.
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
+//@OldScan(basePackages = {
+//        "stroom.statistics"
+//}, excludeFilters = {
+//        // Exclude other configurations that might be found accidentally during
+//        // a component scan as configurations should be specified explicitly.
+//        @OldFilter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class StatisticsConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsConfiguration.class);
-
-    @Inject
-    public StatisticsConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                                   final ImportExportActionHandlers importExportActionHandlers,
-                                   final StatisticStoreEntityService statisticStoreEntityService,
-                                   final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
-        explorerActionHandlers.add(11, StatisticStoreEntity.ENTITY_TYPE, StatisticStoreEntity.ENTITY_TYPE_FOR_DISPLAY, statisticStoreEntityService);
-        explorerActionHandlers.add(12, StroomStatsStoreEntity.ENTITY_TYPE, StroomStatsStoreEntity.ENTITY_TYPE_FOR_DISPLAY, stroomStatsStoreEntityService);
-        importExportActionHandlers.add(StatisticStoreEntity.ENTITY_TYPE, statisticStoreEntityService);
-        importExportActionHandlers.add(StroomStatsStoreEntity.ENTITY_TYPE, stroomStatsStoreEntityService);
-    }
 
     @Bean
     public ComboPooledDataSource statisticsDataSource(final GlobalProperties globalProperties, final StroomPropertyService stroomPropertyService) throws PropertyVetoException {

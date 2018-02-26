@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.util.StroomDatabaseInfo;
+import stroom.entity.StroomDatabaseInfo;
 import stroom.jobsystem.ClusterLockService;
 import stroom.properties.StroomPropertyService;
 import stroom.statistics.sql.datasource.StatisticStoreCache;

@@ -26,7 +26,7 @@ import stroom.xmlschema.MockXMLSchemaService;
 @Configuration
 public class MockXmlSchemaSpringConfig {
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockXMLSchemaService mockXMLSchemaService(final ImportExportHelper importExportHelper) {
         return new MockXMLSchemaService(importExportHelper);
     }

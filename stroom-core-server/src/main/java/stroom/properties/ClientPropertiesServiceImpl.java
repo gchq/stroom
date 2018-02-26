@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.node;
+package stroom.properties;
 
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.ClientPropertiesService;

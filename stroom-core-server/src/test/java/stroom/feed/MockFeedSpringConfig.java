@@ -18,16 +18,17 @@ package stroom.feed;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import stroom.feed.MockFeedService;
 import stroom.importexport.ImportExportHelper;
-import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration
 public class MockFeedSpringConfig {
     @Bean("feedService")
-    @Profile(StroomSpringProfiles.TEST)
-    public MockFeedService mockFeedService(final ImportExportHelper importExportHelper) {
+    public FeedService feedService(final ImportExportHelper importExportHelper) {
         return new MockFeedService(importExportHelper);
+    }
+
+    @Bean("cachedFeedService")
+    public FeedService cachedFeedService(final FeedService feedService) {
+        return feedService;
     }
 }

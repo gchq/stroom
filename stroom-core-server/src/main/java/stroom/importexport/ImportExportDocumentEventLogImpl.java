@@ -32,13 +32,13 @@ import stroom.security.Insecure;
 import javax.inject.Inject;
 
 @Insecure
-class ImportExportEventLogImpl implements ImportExportEventLog {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportEventLogImpl.class);
+class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportDocumentEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
 
     @Inject
-    ImportExportEventLogImpl(final StroomEventLoggingService eventLoggingService) {
+    ImportExportDocumentEventLogImpl(final StroomEventLoggingService eventLoggingService) {
         this.eventLoggingService = eventLoggingService;
     }
 

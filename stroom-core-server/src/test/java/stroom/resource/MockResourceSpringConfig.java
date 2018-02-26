@@ -25,7 +25,7 @@ import stroom.util.spring.StroomSpringProfiles;
 @Configuration
 public class MockResourceSpringConfig {
     @Bean("resourceStore")
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockResourceStore mockResourceStore() {
         return new MockResourceStore();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.headless;
+package stroom.security;
 
-import stroom.security.SecurityContext;
-
-public class HeadlessSecurityContext implements SecurityContext {
+public class MockSecurityContext implements SecurityContext {
     @Override
     public void pushUser(final String name) {
         // Do nothing.

@@ -16,6 +16,7 @@
 
 package stroom.test;
 
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import stroom.cluster.ClusterSpringConfig;
@@ -30,6 +31,7 @@ import stroom.spring.ServerConfiguration;
 import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.task.cluster.ClusterTaskSpringConfig;
 
+@ComponentScan("ignore")
 @Configuration
 @Import({
         ClusterSpringConfig.class,

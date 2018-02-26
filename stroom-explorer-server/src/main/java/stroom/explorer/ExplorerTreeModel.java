@@ -28,11 +28,11 @@ import java.util.concurrent.TimeUnit;
 
 class ExplorerTreeModel {
     private final ExplorerTreeDao explorerTreeDao;
-    private final ExplorerActionHandlersImpl explorerActionHandlers;
+    private final ExplorerActionHandlers explorerActionHandlers;
     private final ModelCache<TreeModel> modelCache;
 
     @Inject
-    ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlersImpl explorerActionHandlers) {
+    ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlers explorerActionHandlers) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerActionHandlers = explorerActionHandlers;
         this.modelCache = new ModelCache.Builder<TreeModel>()

@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.util.FieldMap;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.jobsystem.shared.FindJobCriteria;

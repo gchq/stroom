@@ -28,8 +28,8 @@ public class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
     private final DictionaryStore dictionaryStore;
 
     @Inject
-    public MetaMapFilterFactoryImpl(final RuleSetService ruleSetService,
-                                    final DictionaryStore dictionaryStore) {
+    MetaMapFilterFactoryImpl(final RuleSetService ruleSetService,
+                             final DictionaryStore dictionaryStore) {
         this.ruleSetService = ruleSetService;
         this.dictionaryStore = dictionaryStore;
     }

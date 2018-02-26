@@ -21,9 +21,9 @@ import stroom.entity.MockNamedEntityService;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
 
-public class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStreamTypeCriteria>
+class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStreamTypeCriteria>
         implements StreamTypeService {
-    public MockStreamTypeService() {
+    MockStreamTypeService() {
         for (final StreamType streamType : StreamType.initialValues()) {
             save(streamType);
         }

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.node;
+package stroom.properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.ConnectionUtil;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.entity.util.ConnectionUtil;
 import stroom.node.shared.GlobalProperty;
 import stroom.util.config.StroomProperties;
 
@@ -40,7 +40,7 @@ public class GlobalProperties {
     private static GlobalProperties instance;
     private final Map<String, GlobalProperty> globalProperties = new HashMap<>();
 
-    public GlobalProperties() {
+    GlobalProperties() {
         if (instance == null) {
             loadDefaultProperties();
             loadDBProperties();

@@ -26,28 +26,29 @@ import stroom.util.spring.StroomSpringProfiles;
 @Configuration
 public class MockStreamTaskSpringConfig {
     @Bean("streamProcessorFilterService")
-    @Profile(StroomSpringProfiles.TEST)
-    public MockStreamProcessorFilterService mockStreamProcessorFilterService() {
+    public StreamProcessorFilterService streamProcessorFilterService() {
         return new MockStreamProcessorFilterService();
     }
 
     @Bean("streamProcessorService")
-    @Profile(StroomSpringProfiles.TEST)
-    public MockStreamProcessorService mockStreamProcessorService() {
+    public StreamProcessorService streamProcessorService() {
         return new MockStreamProcessorService();
     }
 
+    @Bean(name = "cachedStreamProcessorService")
+    public StreamProcessorService cachedStreamProcessorService(final StreamProcessorService streamProcessorService) {
+        return streamProcessorService;
+    }
+
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
-    public MockStreamTaskCreator mockStreamTaskCreator(final StreamStore streamStore,
+    public StreamTaskCreator streamTaskCreator(final StreamStore streamStore,
                                                        final StreamProcessorFilterService streamProcessorFilterService,
                                                        final ExpressionToFindCriteria expressionToFindCriteria) {
         return new MockStreamTaskCreator(streamStore, streamProcessorFilterService, expressionToFindCriteria);
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
-    public MockStreamTaskService mockStreamTaskService() {
+    public StreamTaskService streamTaskService() {
         return new MockStreamTaskService();
     }
 }

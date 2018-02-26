@@ -24,7 +24,7 @@ import stroom.security.SecurityContext;
 import javax.inject.Inject;
 
 @Transactional
-public class CachedPipelineService extends PipelineServiceImpl {
+class CachedPipelineService extends PipelineServiceImpl {
     @Inject
     CachedPipelineService(final CachingEntityManager entityManager,
                           final ImportExportHelper importExportHelper,

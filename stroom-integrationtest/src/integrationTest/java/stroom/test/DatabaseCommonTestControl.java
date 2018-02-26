@@ -55,7 +55,6 @@ import stroom.security.UserGroupUser;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.StreamAttributeKeyService;
-import stroom.streamstore.StreamAttributeValueFlush;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.Stream;
@@ -132,7 +131,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     private final VolumeService volumeService;
     private final ContentImportService contentImportService;
     private final StreamAttributeKeyService streamAttributeKeyService;
-    private final StreamAttributeValueFlush streamAttributeValueFlush;
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
     private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
@@ -146,7 +144,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     DatabaseCommonTestControl(final VolumeService volumeService,
                               final ContentImportService contentImportService,
                               final StreamAttributeKeyService streamAttributeKeyService,
-                              final StreamAttributeValueFlush streamAttributeValueFlush,
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
@@ -156,7 +153,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         this.volumeService = volumeService;
         this.contentImportService = contentImportService;
         this.streamAttributeKeyService = streamAttributeKeyService;
-        this.streamAttributeValueFlush = streamAttributeValueFlush;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
         this.databaseCommonTestControlTransactionHelper = databaseCommonTestControlTransactionHelper;
@@ -203,9 +199,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             // store)
             FileUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParent());
         }
-
-        //Clear any un-flushed stream attributes
-        streamAttributeValueFlush.clear();
 
         //ensure any hibernate entities are flushed down before we clear the tables
         databaseCommonTestControlTransactionHelper.clearContext();

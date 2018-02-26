@@ -358,19 +358,16 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //    }
 
 
-    @Override
     public Set<DocRef> listDocuments() {
         final List<E> list = find(createCriteria());
         return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
     }
 
-    @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
         final List<E> list = find(createCriteria());
         return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
-    @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         if (importExportHelper == null) {
             throw new RuntimeException("Import not supported for this test");
@@ -409,7 +406,6 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         return DocRefUtil.create(entity);
     }
 
-    @Override
     public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
         return null;
     }
@@ -424,12 +420,10 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    @Override
     public final DocRef createDocument(final String name, final String parentFolderUUID) {
         return DocRefUtil.create(create(name));
     }
 
-    @Override
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
                                final Map<String, String> otherCopiesByOriginalUuid,
@@ -444,7 +438,6 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         return DocRefUtil.create(result);
     }
 
-    @Override
     public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
         final E entity = loadByUuid(uuid);
 
@@ -452,7 +445,6 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         return DocRefUtil.create(result);
     }
 
-    @Override
     public DocRef renameDocument(final String uuid, final String name) {
         final E entity = loadByUuid(uuid);
 
@@ -497,7 +489,6 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //        }
 //    }
 
-    @Override
     public void deleteDocument(final String uuid) {
         E entity = loadByUuid(uuid);
         if (entity != null) {
@@ -505,7 +496,6 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         }
     }
 
-    @Override
     public DocRefInfo info(final String uuid) {
         final E entity = loadByUuid(uuid);
         if (entity == null) {

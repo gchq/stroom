@@ -6,22 +6,19 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import stroom.datafeed.TestDataFeedServiceImplConfiguration;
 import stroom.util.task.TaskScopeRunnable;
 
-import javax.swing.text.html.Option;
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,14 +32,14 @@ public class TestSpringConfigurations {
 
         // Test we don't import by more than one route.
         dependencies.entrySet()
-        .stream()
-        .sorted(Map.Entry.comparingByKey(Comparator.comparing(Class::getName)))
-        .forEachOrdered(entry -> {
-            final Class<?> configuration = entry.getKey();
-            final Optional<List<Class<?>>> deps = entry.getValue();
-            LOGGER.info("Checking dependencies for " + configuration.getName());
-            traverseDeps(configuration, configuration, deps, dependencies, new HashMap<>());
-        });
+                .stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.comparing(Class::getName)))
+                .forEachOrdered(entry -> {
+                    final Class<?> configuration = entry.getKey();
+                    final Optional<List<Class<?>>> deps = entry.getValue();
+                    LOGGER.info("Checking dependencies for " + configuration.getName());
+                    traverseDeps(configuration, configuration, deps, dependencies, new HashMap<>());
+                });
     }
 
     private void traverseDeps(final Class<?> configuration, final Class<?> owner, final Optional<List<Class<?>>> deps, final Map<Class<?>, Optional<List<Class<?>>>> dependencies, final Map<Class<?>, Class<?>> allDeps) {
@@ -51,20 +48,20 @@ public class TestSpringConfigurations {
                 .stream()
                 .sorted((Comparator.comparing(Class::getName)))
                 .forEach(dep -> {
-            if (!allDeps.containsKey(dep)) {
-                allDeps.put(dep, owner);
-            } else {
-                Assert.fail("Duplicate dependency for " + configuration.getName() + " -> " + dep.getName() + " via " + allDeps.get(dep).getName());
-            }
-        }));
+                    if (!allDeps.containsKey(dep)) {
+                        allDeps.put(dep, owner);
+                    } else {
+                        Assert.fail("Duplicate dependency for " + configuration.getName() + " -> " + dep.getName() + " via " + allDeps.get(dep).getName());
+                    }
+                }));
 
         // Now traverse into each dep.
         deps.ifPresent(set -> set
                 .stream()
                 .sorted((Comparator.comparing(Class::getName)))
                 .forEach(dep -> {
-            traverseDeps(configuration, dep, dependencies.get(dep), dependencies, new HashMap<>(allDeps));
-        }));
+                    traverseDeps(configuration, dep, dependencies.get(dep), dependencies, new HashMap<>(allDeps));
+                }));
     }
 
     @Test
@@ -125,6 +122,46 @@ public class TestSpringConfigurations {
                     printTree(sb, dep, dependencies, depth + 1, dependencyWriter);
                     dependencyWriter.write(configuration.getName(), dep.getName(), 1, 1);
                 }));
+    }
+
+    @Test
+    public void testRootConstruction() {
+        final Set<Class<?>> roots = new HashSet<>();
+        new FastClasspathScanner("stroom")
+                .matchClassesWithAnnotation(ComponentScan.class, c -> {
+                    roots.add(c);
+                })
+                .scan();
+
+        roots
+                .stream()
+                .sorted(Comparator.comparing(Class::getName))
+                .forEachOrdered(configuration -> {
+
+                    if (TestDataFeedServiceImplConfiguration.class.isAssignableFrom(configuration)) {
+
+                        final TaskScopeRunnable taskScopeRunnable = new TaskScopeRunnable(null) {
+                            @Override
+                            protected void exec() {
+                                try {
+                                    String message = "\n---------------------------------------------------\n" +
+                                            " Testing configuration " + configuration.getName() + "\n" +
+                                            "---------------------------------------------------";
+                                    LOGGER.info(message);
+
+//                    System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
+                                    final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configuration);
+                                    context.destroy();
+                                    LOGGER.info("Configuration OK " + configuration.getName());
+                                } catch (final Exception e) {
+                                    LOGGER.error(e.getMessage(), e);
+                                    Assert.fail("Error with configuration " + configuration.getName());
+                                }
+                            }
+                        };
+                        taskScopeRunnable.run();
+                    }
+                });
     }
 
     @Test
@@ -197,24 +234,24 @@ public class TestSpringConfigurations {
                             .sorted(Comparator.comparing(Class::getName))
                             .forEach(configuration -> {
 
-                        final TaskScopeRunnable taskScopeRunnable = new TaskScopeRunnable(null) {
-                            @Override
-                            protected void exec() {
-                                try {
+                                final TaskScopeRunnable taskScopeRunnable = new TaskScopeRunnable(null) {
+                                    @Override
+                                    protected void exec() {
+                                        try {
 //                    System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
-                                    final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configuration);
-                                    context.destroy();
+                                            final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configuration);
+                                            context.destroy();
 
-                                    statusString.append("\nOK    " + configuration.getName());
-                                } catch (final Exception e) {
-                                    exceptions.put(configuration, e);
-                                    LOGGER.debug(e.getMessage(), e);
-                                    statusString.append("\nERROR  " + configuration.getName());
-                                }
-                            }
-                        };
-                        taskScopeRunnable.run();
-                    });
+                                            statusString.append("\nOK    " + configuration.getName());
+                                        } catch (final Exception e) {
+                                            exceptions.put(configuration, e);
+                                            LOGGER.debug(e.getMessage(), e);
+                                            statusString.append("\nERROR  " + configuration.getName());
+                                        }
+                                    }
+                                };
+                                taskScopeRunnable.run();
+                            });
                 });
 
 
@@ -253,6 +290,6 @@ public class TestSpringConfigurations {
                     dependencies.computeIfAbsent(c, k -> Optional.empty());
                 })
                 .scan();
-                return dependencies;
+        return dependencies;
     }
 }

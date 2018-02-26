@@ -19,26 +19,13 @@ package stroom.script;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.util.StroomEntityManager;
-import stroom.explorer.ExplorerActionHandlers;
-import stroom.importexport.ImportExportActionHandlers;
+import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
-import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
 
-import javax.inject.Inject;
-
 @Configuration
 public class ScriptSpringConfig {
-    @Inject
-    public ScriptSpringConfig(final ExplorerActionHandlers explorerActionHandlers,
-                              final ImportExportActionHandlers importExportActionHandlers,
-                              final ScriptService scriptService) {
-        explorerActionHandlers.add(99, Script.ENTITY_TYPE, Script.ENTITY_TYPE, scriptService);
-        importExportActionHandlers.add(Script.ENTITY_TYPE, scriptService);
-    }
-
     @Bean
     @Scope(value = StroomScope.TASK)
     public FetchScriptHandler fetchScriptHandler(final ScriptService scriptService,

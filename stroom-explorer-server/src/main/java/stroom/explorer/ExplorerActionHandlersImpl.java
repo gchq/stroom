@@ -18,58 +18,72 @@ package stroom.explorer;
 
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.util.spring.StroomBeanStore;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-class ExplorerActionHandlersImpl implements ExplorerActionHandlers {
-    private final Map<String, ExplorerActionHandler> allHandlers = new ConcurrentHashMap<>();
-    private final Map<String, DocumentType> allTypes = new ConcurrentHashMap<>();
+class ExplorerActionHandlers {
+    private final StroomBeanStore beanStore;
 
-    private final AtomicBoolean rebuild = new AtomicBoolean();
-    private volatile List<DocumentType> documentTypes;
+    private volatile Handlers handlers;
 
-    @Override
-    public void add(final int priority, final String type, final String displayType, final ExplorerActionHandler explorerActionHandler) {
-        allHandlers.put(type, explorerActionHandler);
-
-        final DocumentType documentType = new DocumentType(priority, type, displayType, getIconUrl(type));
-        allTypes.put(type, documentType);
-
-        rebuild.set(true);
-    }
-
-    private String getIconUrl(final String type) {
-        return DocumentType.DOC_IMAGE_URL + type + ".svg";
+    @Inject
+    ExplorerActionHandlers(final StroomBeanStore beanStore) {
+        this.beanStore = beanStore;
     }
 
     List<DocumentType> getNonSystemTypes() {
-        if (rebuild.compareAndSet(true, false)) {
+        return getHandlers().documentTypes;
+    }
+
+    DocumentType getType(final String type) {
+        return getHandlers().allTypes.get(type);
+    }
+
+    ExplorerActionHandler getHandler(final String type) {
+        final ExplorerActionHandler explorerActionHandler = getHandlers().allHandlers.get(type);
+        if (explorerActionHandler == null) {
+            throw new RuntimeException("No handler can be found for '" + type + "'");
+        }
+
+        return explorerActionHandler;
+    }
+
+    private Handlers getHandlers() {
+        if (handlers == null) {
+            handlers = new Handlers(beanStore);
+        }
+        return handlers;
+    }
+
+    private static class Handlers {
+        private final Map<String, ExplorerActionHandler> allHandlers = new ConcurrentHashMap<>();
+        private final Map<String, DocumentType> allTypes = new ConcurrentHashMap<>();
+        private final List<DocumentType> documentTypes;
+
+        Handlers(final StroomBeanStore beanStore) {
+            final Set<String> set = beanStore.getStroomBeanByType(ExplorerActionHandler.class);
+            set.forEach(name -> {
+                final Object object = beanStore.getBean(name);
+                if (object != null && object instanceof ExplorerActionHandler) {
+                    final ExplorerActionHandler explorerActionHandler = (ExplorerActionHandler) object;
+                    allHandlers.put(explorerActionHandler.getDocumentType().getType(), explorerActionHandler);
+                    allTypes.put(explorerActionHandler.getDocumentType().getType(), explorerActionHandler.getDocumentType());
+                }
+            });
+
             final List<DocumentType> list = new ArrayList<>(allTypes.values().stream()
                     .filter(type -> !DocumentTypes.isSystem(type.getType()))
                     .sorted(Comparator.comparingInt(DocumentType::getPriority))
                     .collect(Collectors.toList()));
             this.documentTypes = list;
         }
-
-        return documentTypes;
-    }
-
-    DocumentType getType(final String type) {
-        return allTypes.get(type);
-    }
-
-    ExplorerActionHandler getHandler(final String type) {
-        final ExplorerActionHandler explorerActionHandler = allHandlers.get(type);
-        if (explorerActionHandler == null) {
-            throw new RuntimeException("No handler can be found for '" + type + "'");
-        }
-
-        return explorerActionHandler;
     }
 }

@@ -50,14 +50,14 @@ import java.util.stream.Stream;
 class ExplorerServiceImpl implements ExplorerService {
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
-    private final ExplorerActionHandlersImpl explorerActionHandlers;
+    private final ExplorerActionHandlers explorerActionHandlers;
     private final SecurityContext securityContext;
     private final ExplorerEventLog explorerEventLog;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
                         final ExplorerTreeModel explorerTreeModel,
-                        final ExplorerActionHandlersImpl explorerActionHandlers,
+                        final ExplorerActionHandlers explorerActionHandlers,
                         final SecurityContext securityContext,
                         final ExplorerEventLog explorerEventLog) {
         this.explorerNodeService = explorerNodeService;

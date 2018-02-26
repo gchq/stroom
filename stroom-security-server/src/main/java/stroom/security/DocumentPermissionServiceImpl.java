@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.util.SqlBuilder;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissions;

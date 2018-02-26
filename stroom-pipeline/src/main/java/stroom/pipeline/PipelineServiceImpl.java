@@ -22,7 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.ObjectMarshaller;
 import stroom.entity.QueryAppender;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
@@ -42,7 +45,7 @@ import java.util.stream.Collectors;
 
 @Transactional
 public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntity, FindPipelineEntityCriteria>
-        implements PipelineService {
+        implements PipelineService, ExplorerActionHandler, ImportExportActionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineServiceImpl.class);
 
     @Inject
@@ -142,6 +145,11 @@ public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntit
     @Override
     protected QueryAppender<PipelineEntity, FindPipelineEntityCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new PipelineEntityQueryAppender(entityManager);
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(6, PipelineEntity.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE);
     }
 
     private static class PipelineEntityQueryAppender extends QueryAppender<PipelineEntity, FindPipelineEntityCriteria> {

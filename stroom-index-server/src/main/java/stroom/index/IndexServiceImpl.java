@@ -19,7 +19,10 @@ package stroom.index;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
@@ -28,7 +31,7 @@ import stroom.security.SecurityContext;
 import javax.inject.Inject;
 
 @Transactional
-public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndexCriteria> implements IndexService {
+public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndexCriteria> implements IndexService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     IndexServiceImpl(final StroomEntityManager entityManager,
                      final ImportExportHelper importExportHelper,
@@ -49,6 +52,11 @@ public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndex
     @Override
     protected QueryAppender<Index, FindIndexCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new IndexQueryAppender(entityManager);
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(10, Index.ENTITY_TYPE, Index.ENTITY_TYPE);
     }
 
     private static class IndexQueryAppender extends QueryAppender<Index, FindIndexCriteria> {

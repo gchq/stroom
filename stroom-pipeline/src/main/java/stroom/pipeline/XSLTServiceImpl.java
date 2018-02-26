@@ -19,7 +19,10 @@ package stroom.pipeline;
 
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
@@ -28,7 +31,7 @@ import stroom.security.SecurityContext;
 import javax.inject.Inject;
 
 @Transactional
-public class XSLTServiceImpl extends DocumentEntityServiceImpl<XSLT, FindXSLTCriteria> implements XSLTService {
+public class XSLTServiceImpl extends DocumentEntityServiceImpl<XSLT, FindXSLTCriteria> implements XSLTService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     XSLTServiceImpl(final StroomEntityManager entityManager,
                     final ImportExportHelper importExportHelper,
@@ -68,5 +71,10 @@ public class XSLTServiceImpl extends DocumentEntityServiceImpl<XSLT, FindXSLTCri
     @Override
     public FindXSLTCriteria createCriteria() {
         return new FindXSLTCriteria();
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(5, XSLT.ENTITY_TYPE, XSLT.ENTITY_TYPE);
     }
 }

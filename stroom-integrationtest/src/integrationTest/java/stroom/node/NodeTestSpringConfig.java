@@ -19,16 +19,17 @@ package stroom.node;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.entity.util.StroomEntityManager;
-import stroom.node.NodeConfigForTesting;
-import stroom.node.NodeService;
-import stroom.node.VolumeService;
+import stroom.entity.StroomEntityManager;
 import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration
 public class NodeTestSpringConfig {
     @Bean
-    @Profile(StroomSpringProfiles.IT)
+    public NodeCache nodeCache() {
+        return new NodeCache();
+    }
+
+    @Bean
     public NodeConfigForTesting nodeConfigForTesting(final NodeService nodeService,
                                                      final VolumeService volumeService,
                                                      final StroomEntityManager stroomEntityManager) {

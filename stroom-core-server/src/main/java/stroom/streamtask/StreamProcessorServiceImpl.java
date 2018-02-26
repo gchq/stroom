@@ -23,7 +23,7 @@ import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Insecure;
 import stroom.security.Secured;

@@ -41,7 +41,7 @@ import stroom.util.spring.StroomSpringProfiles;
 import java.util.ArrayList;
 import java.util.List;
 
-@Profile(StroomSpringProfiles.TEST)
+// @Profile(StroomSpringProfiles.TEST)
 public class MockPipelineElementRegistryFactory implements ElementRegistryFactory, ElementFactory {
     private final ElementRegistry registry;
 

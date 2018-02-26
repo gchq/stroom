@@ -15,13 +15,16 @@
  *
  */
 
-package stroom.node;
+package stroom.properties;
 
-import stroom.entity.FindService;
-import stroom.entity.NamedEntityService;
+import stroom.entity.MockNamedEntityService;
 import stroom.node.shared.FindGlobalPropertyCriteria;
 import stroom.node.shared.GlobalProperty;
 
-public interface GlobalPropertyService
-        extends NamedEntityService<GlobalProperty>, FindService<GlobalProperty, FindGlobalPropertyCriteria> {
+public class MockGlobalPropertyService extends MockNamedEntityService<GlobalProperty, FindGlobalPropertyCriteria>
+        implements GlobalPropertyService {
+    @Override
+    public Class<GlobalProperty> getEntityClass() {
+        return GlobalProperty.class;
+    }
 }

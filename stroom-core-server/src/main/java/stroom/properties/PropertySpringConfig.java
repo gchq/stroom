@@ -18,9 +18,36 @@ package stroom.properties;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import stroom.entity.StroomEntityManager;
+import stroom.node.shared.ClientPropertiesService;
 
 @Configuration
 public class PropertySpringConfig {
+    @Bean
+    public ClientPropertiesService clientPropertiesService() {
+        return new ClientPropertiesServiceImpl();
+    }
+
+    @Bean
+    public GlobalProperties globalProperties() {
+        return new GlobalProperties();
+    }
+
+    @Bean
+    public GlobalPropertyService globalPropertyService(final StroomEntityManager entityManager) {
+        return new GlobalPropertyServiceImpl(entityManager);
+    }
+
+    @Bean
+    public GlobalPropertyUpdater globalPropertyUpdater(final GlobalPropertyService globalPropertyService) {
+        return new GlobalPropertyUpdater(globalPropertyService);
+    }
+
+    @Bean("propertyConfigurer")
+    public PropertyConfigurer propertyConfigurer(final StroomPropertyService stroomPropertyService) {
+        return new PropertyConfigurer(stroomPropertyService);
+    }
+
     @Bean
     public StroomPropertyService stroomPropertyService() {
         return new StroomPropertyServiceImpl();

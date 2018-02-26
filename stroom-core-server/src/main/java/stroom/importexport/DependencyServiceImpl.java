@@ -16,10 +16,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DependencyServiceImpl implements DependencyService {
-    private final ImportExportActionHandlersImpl importExportActionHandlers;
+    private final ImportExportActionHandlers importExportActionHandlers;
 
     @Inject
-    public DependencyServiceImpl(final ImportExportActionHandlersImpl importExportActionHandlers) {
+    public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers) {
         this.importExportActionHandlers = importExportActionHandlers;
     }
 

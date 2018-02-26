@@ -19,14 +19,15 @@ package stroom.script;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.ObjectMarshaller;
 import stroom.entity.QueryAppender;
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.DocRefs;
 import stroom.importexport.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
@@ -43,7 +44,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Transactional
-public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScriptCriteria> implements ScriptService {
+public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScriptCriteria> implements ScriptService, ExplorerActionHandler, ImportExportActionHandler {
     public static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ScriptServiceImpl.class);
@@ -112,6 +113,11 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     @Override
     protected QueryAppender<Script, FindScriptCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new ScriptQueryAppender(entityManager);
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(99, Script.ENTITY_TYPE, Script.ENTITY_TYPE);
     }
 
     private static class ScriptQueryAppender extends QueryAppender<Script, FindScriptCriteria> {

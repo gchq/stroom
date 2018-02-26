@@ -18,7 +18,6 @@ package stroom.streamstore.tools;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import stroom.feed.FeedService;
 import stroom.index.IndexService;
 import stroom.pipeline.PipelineService;
@@ -29,12 +28,10 @@ import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
-import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration
 public class ToolsSpringConfig {
     @Bean
-    @Profile(StroomSpringProfiles.IT)
     public StoreCreationTool storeCreationTool(final StreamStore streamStore,
                                                final FeedService feedService,
                                                final TextConverterService textConverterService,

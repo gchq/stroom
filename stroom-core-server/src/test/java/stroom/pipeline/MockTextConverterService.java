@@ -17,7 +17,9 @@
 
 package stroom.pipeline;
 
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.TextConverter;

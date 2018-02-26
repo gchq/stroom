@@ -22,29 +22,25 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.logging.StroomEventLoggingService;
 import stroom.security.SecurityContext;
+import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
-import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 @Configuration
 public class ExplorerSpringConfig {
-    @Inject
-    public ExplorerSpringConfig(final ExplorerActionHandlers explorerActionHandlers,
-                                final SystemExplorerActionHandler systemExplorerActionHandler,
-                                final FolderExplorerActionHandler folderExplorerActionHandler) {
-        explorerActionHandlers.add(0, SystemExplorerActionHandler.SYSTEM, SystemExplorerActionHandler.SYSTEM, systemExplorerActionHandler);
-        explorerActionHandlers.add(1, FolderExplorerActionHandler.FOLDER, FolderExplorerActionHandler.FOLDER, folderExplorerActionHandler);
-    }
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Bean
-    public DbSession dbSessionJpa(final EntityManager entityManager) {
+    public DbSession dbSessionJpa() {
         return new DbSessionJpaImpl(entityManager);
     }
 
     @Bean
-    public ExplorerActionHandlers explorerActionHandlers() {
-        return new ExplorerActionHandlersImpl();
+    public ExplorerActionHandlers explorerActionHandlers(final StroomBeanStore beanStore) {
+        return new ExplorerActionHandlers(beanStore);
     }
 
     @Bean
@@ -62,7 +58,7 @@ public class ExplorerSpringConfig {
     @Scope(StroomScope.PROTOTYPE)
     public ExplorerService explorerService(final ExplorerNodeService explorerNodeService,
                                            final ExplorerTreeModel explorerTreeModel,
-                                           final ExplorerActionHandlersImpl explorerActionHandlers,
+                                           final ExplorerActionHandlers explorerActionHandlers,
                                            final SecurityContext securityContext,
                                            final ExplorerEventLog explorerEventLog) {
         return new ExplorerServiceImpl(explorerNodeService, explorerTreeModel, explorerActionHandlers, securityContext, explorerEventLog);
@@ -109,7 +105,7 @@ public class ExplorerSpringConfig {
     }
 
     @Bean
-    public ExplorerTreeModel explorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlersImpl explorerActionHandlers) {
+    public ExplorerTreeModel explorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlers explorerActionHandlers) {
         return new ExplorerTreeModel(explorerTreeDao, explorerActionHandlers);
     }
 

@@ -22,11 +22,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.ResourceLoader;
 import stroom.dashboard.logging.SearchEventLog;
-import stroom.dashboard.shared.Dashboard;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.entity.util.StroomEntityManager;
-import stroom.explorer.ExplorerActionHandlers;
-import stroom.importexport.ImportExportActionHandlers;
+import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
 import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
@@ -37,19 +34,10 @@ import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskMonitor;
 import stroom.visualisation.VisualisationService;
 
-import javax.inject.Inject;
 import javax.inject.Provider;
 
 @Configuration
 public class DashboardSpringConfig {
-    @Inject
-    public DashboardSpringConfig(final ExplorerActionHandlers explorerActionHandlers,
-                                 final ImportExportActionHandlers importExportActionHandlers,
-                                 final DashboardService dashboardService) {
-        explorerActionHandlers.add(7, Dashboard.ENTITY_TYPE, Dashboard.ENTITY_TYPE, dashboardService);
-        importExportActionHandlers.add(Dashboard.ENTITY_TYPE, dashboardService);
-    }
-
     @Bean
     public ActiveQueriesManager activeQueriesManager(final CacheManager cacheManager,
                                                      final DataSourceProviderRegistry dataSourceProviderRegistry) {
@@ -110,7 +98,7 @@ public class DashboardSpringConfig {
     }
 
     @Bean("queryService")
-    @Profile(StroomSpringProfiles.PROD)
+//    @Profile(StroomSpringProfiles.PROD)
     public QueryService queryService(final StroomEntityManager entityManager,
                                      final ImportExportHelper importExportHelper,
                                      final SecurityContext securityContext) {

@@ -43,7 +43,7 @@ public final class SqlUtil {
     /**
      * Prime a query with the list of parameters.
      */
-    static void setParameters(final Query query, final CoreSqlBuilder sql) {
+    public static void setParameters(final Query query, final CoreSqlBuilder sql) {
         if (sql != null) {
             int pos = 1;
             for (final Object arg : sql.getArgs()) {

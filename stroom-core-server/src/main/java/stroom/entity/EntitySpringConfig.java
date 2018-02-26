@@ -16,20 +16,36 @@
 
 package stroom.entity;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.event.EntityEventBus;
 import stroom.logging.DocumentEventLog;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
 
+import javax.inject.Named;
+import javax.inject.Provider;
 
 @Configuration
 public class EntitySpringConfig {
     @Bean
-    public CachingEntityManager cachingEntityManager(final StroomEntityManager stroomEntityManager, final CacheManager cacheManager) {
+    public StroomDatabaseInfo stroomDatabaseInfo(@Value("#{propertyConfigurer.getProperty('stroom.jdbcDriverClassName')}") final String driverClassName) {
+        return new StroomDatabaseInfo(driverClassName);
+    }
+
+    @Bean("stroomEntityManager")
+    @Primary
+    public StroomEntityManager stroomEntityManager(final Provider<EntityEventBus> eventBusProvider,
+                                                   final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider) {
+        return new StroomEntityManagerImpl(eventBusProvider, stroomDatabaseInfoProvider);
+    }
+
+    @Bean("cachingEntityManager")
+    public CachingEntityManager cachingEntityManager(@Named("stroomEntityManager") final StroomEntityManager stroomEntityManager, final CacheManager cacheManager) {
         return new CachingEntityManager(stroomEntityManager, cacheManager);
     }
 

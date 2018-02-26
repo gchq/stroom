@@ -18,9 +18,8 @@ package stroom.test;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import stroom.cache.StroomCacheManager;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.feed.FeedService;
 import stroom.importexport.ImportExportService;
 import stroom.index.IndexService;
@@ -30,17 +29,15 @@ import stroom.node.NodeCache;
 import stroom.node.NodeConfig;
 import stroom.node.VolumeService;
 import stroom.streamstore.StreamAttributeKeyService;
-import stroom.streamstore.StreamAttributeValueFlush;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.task.TaskManager;
-import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration
-public class TestSpringConfig {
+public class DatabaseTestControlSpringConfig {
     @Bean
     public CommonTestScenarioCreator commonTestScenarioCreator(final FeedService feedService,
                                                                final StreamStore streamStore,
@@ -53,7 +50,7 @@ public class TestSpringConfig {
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.IT)
+//    @Profile(StroomSpringProfiles.IT)
     public CommonTranslationTest commonTranslationTest(final NodeCache nodeCache,
                                                        final StreamTaskCreator streamTaskCreator,
                                                        final StoreCreationTool storeCreationTool,
@@ -68,27 +65,20 @@ public class TestSpringConfig {
     }
 
     @Bean
-    public DatabaseCommonTestControl databaseCommonTestControl(final VolumeService volumeService,
+    public CommonTestControl commonTestControl(final VolumeService volumeService,
                                                                final ContentImportService contentImportService,
                                                                final StreamAttributeKeyService streamAttributeKeyService,
-                                                               final StreamAttributeValueFlush streamAttributeValueFlush,
                                                                final IndexShardManager indexShardManager,
                                                                final IndexShardWriterCache indexShardWriterCache,
                                                                final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
                                                                final NodeConfig nodeConfig,
                                                                final StreamTaskCreator streamTaskCreator,
                                                                final StroomCacheManager stroomCacheManager) {
-        return new DatabaseCommonTestControl(volumeService, contentImportService, streamAttributeKeyService, streamAttributeValueFlush, indexShardManager, indexShardWriterCache, databaseCommonTestControlTransactionHelper, nodeConfig, streamTaskCreator, stroomCacheManager);
+        return new DatabaseCommonTestControl(volumeService, contentImportService, streamAttributeKeyService, indexShardManager, indexShardWriterCache, databaseCommonTestControlTransactionHelper, nodeConfig, streamTaskCreator, stroomCacheManager);
     }
 
     @Bean
     public DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper(final StroomEntityManager entityManager) {
         return new DatabaseCommonTestControlTransactionHelper(entityManager);
-    }
-
-    @Bean
-    @Profile(StroomSpringProfiles.TEST)
-    public MockCommonTestControl mockCommonTestControl() {
-        return new MockCommonTestControl();
     }
 }

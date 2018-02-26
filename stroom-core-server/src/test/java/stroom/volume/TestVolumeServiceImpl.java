@@ -22,17 +22,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.node.MockStroomPropertyService;
 import stroom.node.NodeCache;
-import stroom.properties.StroomPropertyService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeState;
+import stroom.properties.StroomPropertyService;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
@@ -40,6 +40,7 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
+import javax.inject.Provider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,7 +59,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     private static final Path DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
     private static final Path DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
-    final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+
+    private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
     private final Rack rack1 = Rack.create("rack1");
     private final Rack rack2 = Rack.create("rack2");
     private final Node node1a = Node.create(rack1, "1a");
@@ -193,22 +195,23 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         Assert.assertTrue(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
     }
 
-    private void deleteDefaultVolumesDir() throws IOException {
+    private void deleteDefaultVolumesDir() {
         FileUtil.deleteDir(DEFAULT_INDEX_VOLUME_PATH);
         FileUtil.deleteDir(DEFAULT_STREAM_VOLUME_PATH);
         FileUtil.deleteDir(DEFAULT_VOLUMES_PATH);
     }
 
     private static class MockVolumeService extends VolumeServiceImpl {
+        private List<Volume> volumeList = null;
+        private boolean saveCalled;
+        private List<Volume> savedVolumes = new ArrayList<>();
 
-        public List<Volume> volumeList = null;
-        public boolean saveCalled;
-        public List<Volume> savedVolumes = new ArrayList<>();
-
-        public MockVolumeService(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
-                                 final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                                 final InternalStatisticsReceiver internalStatisticsReceiver) {
-            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsReceiver);
+        MockVolumeService(final StroomEntityManager stroomEntityManager,
+                          final NodeCache nodeCache,
+                          final StroomPropertyService stroomPropertyService,
+                          final StroomBeanStore stroomBeanStore,
+                          final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
+            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsReceiverProvider);
         }
 
         @Override
@@ -229,8 +232,4 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
             return entity;
         }
     }
-
-    ;
-
-
 }

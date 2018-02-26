@@ -28,7 +28,7 @@ import stroom.util.spring.StroomSpringProfiles;
 public class MockClusterSpringConfig {
 
     @Bean
-    @Profile(StroomSpringProfiles.IT)
+//    @Profile(StroomSpringProfiles.IT)
     public MockClusterNodeManager mockClusterNodeManager(final NodeCache nodeCache) {
         return new MockClusterNodeManager(nodeCache);
     }

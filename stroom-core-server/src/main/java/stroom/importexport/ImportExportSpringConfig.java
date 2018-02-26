@@ -26,6 +26,7 @@ import stroom.logging.StroomEventLoggingService;
 import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.servlet.SessionResourceStore;
+import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 @Configuration
@@ -36,7 +37,7 @@ public class ImportExportSpringConfig {
     }
 
     @Bean
-    public DependencyService dependencyService(final ImportExportActionHandlersImpl importExportActionHandlers) {
+    public DependencyService dependencyService(final ImportExportActionHandlers importExportActionHandlers) {
         return new DependencyServiceImpl(importExportActionHandlers);
     }
 
@@ -70,13 +71,13 @@ public class ImportExportSpringConfig {
     }
 
     @Bean
-    public ImportExportActionHandlers importExportActionHandlers() {
-        return new ImportExportActionHandlersImpl();
+    public ImportExportActionHandlers importExportActionHandlers(final StroomBeanStore beanStore) {
+        return new ImportExportActionHandlers(beanStore);
     }
 
     @Bean
-    public ImportExportEventLog importExportEventLog(final StroomEventLoggingService eventLoggingService) {
-        return new ImportExportEventLogImpl(eventLoggingService);
+    public ImportExportDocumentEventLog importExportDocumentEventLog(final StroomEventLoggingService eventLoggingService) {
+        return new ImportExportDocumentEventLogImpl(eventLoggingService);
     }
 
     @Bean
@@ -87,9 +88,9 @@ public class ImportExportSpringConfig {
     @Bean
     public ImportExportSerializer importExportSerializer(final ExplorerService explorerService,
                                                          final ExplorerNodeService explorerNodeService,
-                                                         final ImportExportActionHandlersImpl importExportActionHandlers,
+                                                         final ImportExportActionHandlers importExportActionHandlers,
                                                          final SecurityContext securityContext,
-                                                         final ImportExportEventLog importExportEventLog) {
+                                                         final ImportExportDocumentEventLog importExportEventLog) {
         return new ImportExportSerializerImpl(explorerService, explorerNodeService, importExportActionHandlers, securityContext, importExportEventLog);
     }
 

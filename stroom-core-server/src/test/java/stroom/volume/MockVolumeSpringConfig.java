@@ -18,16 +18,13 @@ package stroom.volume;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import stroom.util.spring.StroomSpringProfiles;
-import stroom.volume.MockVolumeService;
+import stroom.node.VolumeService;
 
 
 @Configuration
 public class MockVolumeSpringConfig {
     @Bean("volumeService")
-    @Profile(StroomSpringProfiles.TEST)
-    public MockVolumeService mockVolumeService() {
+    public VolumeService volumeService() {
         return new MockVolumeService();
     }
 }

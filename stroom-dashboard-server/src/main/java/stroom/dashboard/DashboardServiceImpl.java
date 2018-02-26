@@ -32,7 +32,10 @@ import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
@@ -51,7 +54,7 @@ import java.util.stream.Collectors;
 
 @Transactional
 public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, FindDashboardCriteria>
-        implements DashboardService {
+        implements DashboardService, ExplorerActionHandler, ImportExportActionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardServiceImpl.class);
 
     private final ResourceLoader resourceLoader;
@@ -211,6 +214,11 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
         }
 
         return xmlTemplate;
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(7, Dashboard.ENTITY_TYPE, Dashboard.ENTITY_TYPE);
     }
 
     @Override

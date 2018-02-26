@@ -18,29 +18,39 @@ package stroom.streamstore;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import stroom.streamstore.MockStreamAttributeKeyService;
-import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.MockStreamTypeService;
-import stroom.util.spring.StroomSpringProfiles;
+import stroom.dictionary.DictionaryStore;
+import stroom.feed.FeedService;
+import stroom.pipeline.PipelineService;
+
+import javax.inject.Named;
 
 @Configuration
 public class MockStreamStoreSpringConfig {
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
-    public MockStreamAttributeKeyService mockStreamAttributeKeyService() {
+    public ExpressionToFindCriteria expressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
+                                                             @Named("cachedPipelineService") final PipelineService pipelineService,
+                                                             final DictionaryStore dictionaryStore,
+                                                             final StreamAttributeKeyService streamAttributeKeyService) {
+        return new ExpressionToFindCriteria(feedService, pipelineService, dictionaryStore, streamAttributeKeyService);
+    }
+
+    @Bean
+    public StreamAttributeKeyService streamAttributeKeyService() {
         return new MockStreamAttributeKeyService();
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
-    public MockStreamStore mockStreamStore() {
+    public StreamStore streamStore() {
         return new MockStreamStore();
     }
 
-    @Bean("streamTypeService")
-    @Profile(StroomSpringProfiles.TEST)
-    public MockStreamTypeService mockStreamTypeService() {
+    @Bean
+    public StreamTypeService streamTypeService() {
         return new MockStreamTypeService();
+    }
+
+    @Bean("cachedStreamTypeService")
+    public StreamTypeService cachedStreamTypeService(final StreamTypeService streamTypeService) {
+        return streamTypeService;
     }
 }

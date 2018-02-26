@@ -25,20 +25,17 @@ import stroom.util.spring.StroomSpringProfiles;
 @Configuration
 public class MockIndexSpringConfig {
     @Bean("indexService")
-    @Profile(StroomSpringProfiles.TEST)
-    public MockIndexService mockIndexService(final ImportExportHelper importExportHelper) {
+    public IndexService indexService(final ImportExportHelper importExportHelper) {
         return new MockIndexService(importExportHelper);
     }
 
     @Bean("indexShardService")
-    @Profile(StroomSpringProfiles.TEST)
-    public MockIndexShardService mockIndexShardService() {
+    public IndexShardService indexShardService() {
         return new MockIndexShardService();
     }
 
     @Bean("indexShardWriterCache")
-    @Profile(StroomSpringProfiles.TEST)
-    public MockIndexShardWriterCache mockIndexShardWriterCache() {
+    public IndexShardWriterCache indexShardWriterCache() {
         return new MockIndexShardWriterCache();
     }
 

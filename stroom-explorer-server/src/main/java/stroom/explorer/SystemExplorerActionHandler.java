@@ -1,6 +1,7 @@
 package stroom.explorer;
 
 import stroom.entity.shared.PermissionException;
+import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
@@ -62,5 +63,10 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     @Override
     public DocRefInfo info(final String uuid) {
         throw new PermissionException(securityContext.getUserId(), "You cannot get info about the System node");
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(0, SystemExplorerActionHandler.SYSTEM, SystemExplorerActionHandler.SYSTEM);
     }
 }

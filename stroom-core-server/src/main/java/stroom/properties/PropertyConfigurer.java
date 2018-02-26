@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.spring;
+package stroom.properties;
 
-import stroom.properties.StroomPropertyService;
 import stroom.util.spring.PropertyProvider;
 
 import javax.inject.Inject;

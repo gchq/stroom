@@ -23,7 +23,6 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Entity;
 import stroom.entity.util.FieldMap;
-import stroom.entity.util.StroomEntityManager;
 import stroom.security.Secured;
 import stroom.security.shared.PermissionNames;
 

@@ -26,7 +26,7 @@ import stroom.entity.QueryAppender;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.PermissionException;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;

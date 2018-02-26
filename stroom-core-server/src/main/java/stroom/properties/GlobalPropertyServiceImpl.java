@@ -15,14 +15,14 @@
  *
  */
 
-package stroom.node;
+package stroom.properties;
 
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
-import stroom.entity.util.BaseEntityUtil;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.util.BaseEntityUtil;
 import stroom.node.shared.FindGlobalPropertyCriteria;
 import stroom.node.shared.GlobalProperty;
 import stroom.security.Secured;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 @Transactional
 @Secured(GlobalProperty.MANAGE_PROPERTIES_PERMISSION)
-public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProperty, FindGlobalPropertyCriteria>
+class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProperty, FindGlobalPropertyCriteria>
         implements GlobalPropertyService {
 
     @Inject

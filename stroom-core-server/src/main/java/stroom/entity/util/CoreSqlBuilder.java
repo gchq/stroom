@@ -127,7 +127,7 @@ public abstract class CoreSqlBuilder {
         return null;
     }
 
-    String toTraceString() {
+    public String toTraceString() {
         final StringBuilder trace = new StringBuilder(sql.length());
         int pos = 0;
         for (int i = 0; i < sql.length(); i++) {

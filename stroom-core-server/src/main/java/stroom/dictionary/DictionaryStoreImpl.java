@@ -26,6 +26,8 @@ import stroom.docstore.RWLock;
 import stroom.docstore.Serialiser;
 import stroom.docstore.Store;
 import stroom.entity.shared.PermissionException;
+import stroom.explorer.shared.DocumentType;
+import stroom.feed.shared.Feed;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
@@ -117,6 +119,11 @@ class DictionaryStoreImpl implements DictionaryStore {
     @Override
     public DocRefInfo info(String uuid) {
         return store.info(uuid);
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(9, DictionaryDoc.ENTITY_TYPE, DictionaryDoc.ENTITY_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////

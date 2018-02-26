@@ -17,7 +17,6 @@
 package stroom.entity;
 
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.HasUuid;

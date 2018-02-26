@@ -21,9 +21,7 @@ import stroom.docstore.DocumentActionHandler;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.HasLoadByUuid;
 import stroom.entity.shared.ProvidesNamePattern;
-import stroom.explorer.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
 
-public interface DocumentEntityService<E extends DocumentEntity> extends BaseEntityService<E>, HasLoadByUuid<E>, ProvidesNamePattern, ExplorerActionHandler, ImportExportActionHandler, DocumentActionHandler<E> {
+public interface DocumentEntityService<E extends DocumentEntity> extends BaseEntityService<E>, HasLoadByUuid<E>, ProvidesNamePattern, DocumentActionHandler<E> {
     E create(String name) throws RuntimeException;
 }

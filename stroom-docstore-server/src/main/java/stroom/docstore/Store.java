@@ -21,8 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docstore.shared.Doc;
 import stroom.entity.shared.PermissionException;
-import stroom.explorer.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
@@ -48,7 +46,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActionHandler<D>, ImportExportActionHandler {
+public class Store<D extends Doc> implements DocumentActionHandler<D> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Store.class);
 
     private static final String FOLDER = "Folder";
@@ -81,7 +79,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    @Override
     public final DocRef createDocument(final String name, final String parentFolderUUID) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
@@ -97,7 +94,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         return createDocRef(created);
     }
 
-    @Override
     public final DocRef copyDocument(final String originalUuid,
                                      final String copyUuid,
                                      final Map<String, String> otherCopiesByOriginalUuid,
@@ -119,7 +115,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         return createDocRef(created);
     }
 
-    @Override
     public final DocRef moveDocument(final String uuid, final String parentFolderUUID) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
@@ -139,7 +134,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         return createDocRef(updated);
     }
 
-    @Override
     public DocRef renameDocument(final String uuid, final String name) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
@@ -155,7 +149,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         return createDocRef(updated);
     }
 
-    @Override
     public final void deleteDocument(final String uuid) {
         // Check that the user has permission to delete this item.
         if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.DELETE)) {
@@ -167,7 +160,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         }
     }
 
-    @Override
     public DocRefInfo info(final String uuid) {
         final D document = read(uuid);
         return new DocRefInfo.Builder()
@@ -211,7 +203,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
     ////////////////////////////////////////////////////////////////////////
 
 
-    @Override
     public Set<DocRef> listDocuments() {
         final List<DocRef> list = list();
         return list.stream()
@@ -219,7 +210,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
                 .collect(Collectors.toSet());
     }
 
-    @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
         final List<DocRef> list = list();
         return list.stream()
@@ -240,7 +230,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
                 .collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
-    @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         final String uuid = docRef.getUuid();
         try {
@@ -266,7 +255,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         return docRef;
     }
 
-    @Override
     public Map<String, String> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.entity.util;
+package stroom.internalstatistics;
 
-import org.springframework.beans.factory.annotation.Value;
-import stroom.util.io.StreamUtil;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import stroom.util.spring.StroomSpringProfiles;
 
-import javax.inject.Inject;
 
-public class StroomDatabaseInfo {
-    private String driverClassName;
-
-    @Inject
-    StroomDatabaseInfo(@Value("#{propertyConfigurer.getProperty('stroom.jdbcDriverClassName')}") final String driverClassName) {
-        this.driverClassName = driverClassName;
-    }
-
-    public boolean isMysql() {
-        return driverClassName.toLowerCase(StreamUtil.DEFAULT_LOCALE).contains("mysql");
+@Configuration
+public class MockMetaDataStatisticSpringConfig {
+    @Bean
+//    @Profile(StroomSpringProfiles.TEST)
+    public MetaDataStatistic metaDataStatistic() {
+        return new MockMetaDataStatistic();
     }
 }

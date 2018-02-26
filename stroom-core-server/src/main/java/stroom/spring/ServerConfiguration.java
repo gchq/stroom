@@ -19,13 +19,7 @@ package stroom.spring;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import stroom.explorer.ExplorerActionHandlers;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
-import stroom.importexport.ImportExportActionHandlers;
 import stroom.util.spring.StroomBeanStore;
-
-import javax.inject.Inject;
 
 /**
  * Defines the application context configuration for the server module.
@@ -33,14 +27,6 @@ import javax.inject.Inject;
 @Configuration
 @EnableAspectJAutoProxy
 public class ServerConfiguration {
-    @Inject
-    public ServerConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                               final ImportExportActionHandlers importExportActionHandlers,
-                               final FeedService feedService) {
-        explorerActionHandlers.add(3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE, feedService);
-        importExportActionHandlers.add(Feed.ENTITY_TYPE, feedService);
-    }
-
     @Bean
     public StroomBeanStore stroomBeanStore() {
         return new StroomBeanStore();

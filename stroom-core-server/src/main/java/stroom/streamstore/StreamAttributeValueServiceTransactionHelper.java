@@ -19,7 +19,6 @@ package stroom.streamstore;
 import org.hsqldb.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.StroomDatabaseInfo;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.util.logging.LogExecutionTime;
 

@@ -18,21 +18,6 @@ package stroom.pipeline.spring;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
-import stroom.cache.PipelineCacheSpringConfig;
-import stroom.explorer.ExplorerActionHandlers;
-import stroom.importexport.ImportExportActionHandlers;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.TextConverterService;
-import stroom.pipeline.XSLTService;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.XSLT;
-import stroom.xmlschema.XMLSchemaService;
-import stroom.xmlschema.shared.XMLSchema;
-
-import javax.inject.Inject;
 
 /**
  * Defines the component scanning required for the server module.
@@ -40,34 +25,19 @@ import javax.inject.Inject;
  * Defined separately from the main configuration so it can be easily
  * overridden.
  */
+@ComponentScan("ignore")
 @Configuration
-@ComponentScan(basePackages = {
-        "stroom.pipeline",
-        "stroom.refdata",
-        "stroom.resource",
-        "stroom.xml",
-        "stroom.benchmark",
-        "stroom.connectors.kafka"}, excludeFilters = {
-        // Exclude other configurations that might be found accidentally
-        // during a component scan as configurations should be specified
-        // explicitly.
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
-@Import({PipelineCacheSpringConfig.class})
+//@OldScan(basePackages = {
+//        "stroom.pipeline",
+//        "stroom.refdata",
+//        "stroom.resource",
+//        "stroom.xml",
+//        "stroom.benchmark",
+//        "stroom.connectors.kafka"}, excludeFilters = {
+//        // Exclude other configurations that might be found accidentally
+//        // during a component scan as configurations should be specified
+//        // explicitly.
+//        @OldFilter(type = FilterType.ANNOTATION, value = Configuration.class),})
+//@Import({PipelineCacheSpringConfig.class})
 public class PipelineConfiguration {
-    @Inject
-    public PipelineConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                                 final ImportExportActionHandlers importExportActionHandlers,
-                                 final TextConverterService textConverterService,
-                                 final XSLTService xsltService,
-                                 final PipelineService pipelineService,
-                                 final XMLSchemaService xmlSchemaService) {
-        explorerActionHandlers.add(4, TextConverter.ENTITY_TYPE, "Text Converter", textConverterService);
-        explorerActionHandlers.add(5, XSLT.ENTITY_TYPE, XSLT.ENTITY_TYPE, xsltService);
-        explorerActionHandlers.add(6, PipelineEntity.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE, pipelineService);
-        explorerActionHandlers.add(13, XMLSchema.ENTITY_TYPE, "XML Schema", xmlSchemaService);
-        importExportActionHandlers.add(TextConverter.ENTITY_TYPE, textConverterService);
-        importExportActionHandlers.add(XSLT.ENTITY_TYPE, xsltService);
-        importExportActionHandlers.add(PipelineEntity.ENTITY_TYPE, pipelineService);
-        importExportActionHandlers.add(XMLSchema.ENTITY_TYPE, xmlSchemaService);
-    }
 }

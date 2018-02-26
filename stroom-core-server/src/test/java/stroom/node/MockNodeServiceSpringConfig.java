@@ -18,29 +18,29 @@ package stroom.node;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import stroom.node.MockGlobalPropertyService;
-import stroom.node.MockNodeService;
-import stroom.node.MockRecordCountService;
-import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration
-public class MockNodeSpringConfig {
-    @Bean
-    @Profile(StroomSpringProfiles.TEST)
-    public MockGlobalPropertyService mockGlobalPropertyService() {
-        return new MockGlobalPropertyService();
-    }
+public class MockNodeServiceSpringConfig {
+//    @Bean
+////    @Profile(StroomSpringProfiles.TEST)
+//    public MockGlobalPropertyService mockGlobalPropertyService() {
+//        return new MockGlobalPropertyService();
+//    }
+
 
     @Bean("nodeService")
-    @Profile(StroomSpringProfiles.TEST)
-    public MockNodeService mockNodeService() {
+    public NodeService nodeService() {
         return new MockNodeService();
     }
 
-    @Bean
-    @Profile(StroomSpringProfiles.TEST)
-    public MockRecordCountService mockRecordCountService() {
-        return new MockRecordCountService();
+    @Bean("cachedNodeService")
+    public NodeService cachedNodeService(final NodeService nodeService) {
+        return nodeService;
     }
+
+//    @Bean
+////    @Profile(StroomSpringProfiles.TEST)
+//    public MockRecordCountService mockRecordCountService() {
+//        return new MockRecordCountService();
+//    }
 }

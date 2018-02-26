@@ -27,13 +27,13 @@ import stroom.util.spring.StroomSpringProfiles;
 @Configuration
 public class MockDashboardSpringConfig {
     @Bean("queryService")
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockQueryService mockQueryService(final ImportExportHelper importExportHelper) {
         return new MockQueryService(importExportHelper);
     }
 
     @Bean("visualisationService")
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockVisualisationService mockVisualisationService() {
         return new MockVisualisationService();
     }

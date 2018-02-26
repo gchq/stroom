@@ -23,7 +23,7 @@ import stroom.entity.QueryAppender;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.streamstore.shared.StreamAttributeValue;
 
 import javax.inject.Inject;

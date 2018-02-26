@@ -16,8 +16,6 @@
 
 package stroom.security;
 
-import stroom.security.SecurityContext;
-
 public class MockSecurityContext implements SecurityContext {
     @Override
     public void pushUser(final String name) {

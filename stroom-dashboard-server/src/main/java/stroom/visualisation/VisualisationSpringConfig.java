@@ -19,30 +19,15 @@ package stroom.visualisation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import stroom.entity.util.StroomEntityManager;
-import stroom.explorer.ExplorerActionHandlers;
-import stroom.importexport.ImportExportActionHandlers;
+import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.visualisation.VisualisationService;
-import stroom.visualisation.VisualisationServiceImpl;
-import stroom.visualisation.shared.Visualisation;
-
-import javax.inject.Inject;
 
 @Configuration
 public class VisualisationSpringConfig {
-    @Inject
-    public VisualisationSpringConfig(final ExplorerActionHandlers explorerActionHandlers,
-                                     final ImportExportActionHandlers importExportActionHandlers,
-                                     final VisualisationService visualisationService) {
-        explorerActionHandlers.add(9, Visualisation.ENTITY_TYPE, Visualisation.ENTITY_TYPE, visualisationService);
-        importExportActionHandlers.add(Visualisation.ENTITY_TYPE, visualisationService);
-    }
-
     @Bean("visualisationService")
-    @Profile(StroomSpringProfiles.PROD)
+//    @Profile(StroomSpringProfiles.PROD)
     public VisualisationService visualisationService(final StroomEntityManager entityManager,
                                                      final ImportExportHelper importExportHelper,
                                                      final SecurityContext securityContext) {

@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.ScheduledTaskExecutor;
 import stroom.security.SecurityContext;
 import stroom.task.TaskManager;
@@ -30,7 +30,7 @@ import stroom.util.spring.StroomScope;
 @Configuration
 public class LifecycleSpringConfig {
     @Bean
-    public LifecycleService lifecycleService(final TaskManager taskManager,
+    public LifecycleServiceImpl lifecycleService(final TaskManager taskManager,
                                              final StroomBeanLifeCycle stroomBeanLifeCycle,
                                              final StroomEntityManager entityManager,
                                              final ScheduledTaskExecutor scheduledTaskExecutor,

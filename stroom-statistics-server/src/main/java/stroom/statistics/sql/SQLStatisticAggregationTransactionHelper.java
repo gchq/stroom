@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlUtil;
-import stroom.entity.util.StroomDatabaseInfo;
+import stroom.entity.StroomDatabaseInfo;
 import stroom.properties.StroomPropertyService;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;

@@ -22,7 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.stats.shared.StroomStatsStoreEntity;
@@ -32,7 +35,7 @@ import javax.inject.Inject;
 @Transactional
 class StroomStatsStoreEntityServiceImpl
         extends DocumentEntityServiceImpl<StroomStatsStoreEntity, FindStroomStatsStoreEntityCriteria>
-        implements StroomStatsStoreEntityService {
+        implements StroomStatsStoreEntityService, ExplorerActionHandler, ImportExportActionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsStoreEntityServiceImpl.class);
 
@@ -57,6 +60,11 @@ class StroomStatsStoreEntityServiceImpl
     @Override
     protected QueryAppender<StroomStatsStoreEntity, FindStroomStatsStoreEntityCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new StroomStatsStoreEntityQueryAppender(entityManager);
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(12, StroomStatsStoreEntity.ENTITY_TYPE, StroomStatsStoreEntity.ENTITY_TYPE_FOR_DISPLAY);
     }
 
     private static class StroomStatsStoreEntityQueryAppender extends

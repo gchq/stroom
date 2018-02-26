@@ -22,7 +22,7 @@ import com.google.common.cache.LoadingCache;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.FieldMap;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.security.Insecure;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;

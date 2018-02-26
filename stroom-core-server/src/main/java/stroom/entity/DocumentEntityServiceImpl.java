@@ -31,7 +31,6 @@ import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.ProvidesNamePattern;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.ImportExportHelper;
 import stroom.importexport.shared.ImportState;
@@ -427,19 +426,16 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return list.stream().filter(e -> securityContext.hasDocumentPermission(e.getType(), e.getUuid(), permission)).collect(Collectors.toList());
     }
 
-    @Override
     public Set<DocRef> listDocuments() {
         final List<E> list = find(createCriteria());
         return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
     }
 
-    @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
         final List<E> list = find(createCriteria());
         return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
-    @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         E entity = null;
 
@@ -468,7 +464,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entityManager.saveEntity(entity);
     }
 
-    @Override
     public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
         if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
             final E entity = entityServiceHelper.loadByUuid(docRef.getUuid(), Collections.emptySet(), queryAppender);
@@ -510,12 +505,10 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    @Override
     public final DocRef createDocument(final String name, final String parentFolderUUID) {
         return DocRefUtil.create(create(name, parentFolderUUID));
     }
 
-    @Override
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
                                final Map<String, String> otherCopiesByOriginalUuid,
@@ -528,7 +521,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return DocRefUtil.create(copy);
     }
 
-    @Override
     public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
         final E entity = loadByUuid(uuid);
         if (entity == null) {
@@ -537,7 +529,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return DocRefUtil.create(move(entity, parentFolderUUID));
     }
 
-    @Override
     public DocRef renameDocument(final String uuid, final String name) {
         final E entity = loadByUuid(uuid);
         if (entity == null) {
@@ -546,7 +537,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return DocRefUtil.create(rename(entity, name));
     }
 
-    @Override
     public void deleteDocument(final String uuid) {
         final E entity = loadByUuid(uuid);
         if (entity == null) {
@@ -555,7 +545,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         delete(entity);
     }
 
-    @Override
     public DocRefInfo info(final String uuid) {
         final E entity = loadByUuid(uuid);
         if (entity == null) {

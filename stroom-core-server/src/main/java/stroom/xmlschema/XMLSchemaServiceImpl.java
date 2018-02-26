@@ -21,7 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
@@ -31,7 +34,7 @@ import javax.inject.Inject;
 
 @Transactional
 class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, FindXMLSchemaCriteria>
-        implements XMLSchemaService {
+        implements XMLSchemaService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     XMLSchemaServiceImpl(final StroomEntityManager entityManager,
                          final ImportExportHelper importExportHelper,
@@ -52,6 +55,11 @@ class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, FindXMLS
     @Override
     protected QueryAppender<XMLSchema, FindXMLSchemaCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new XMLSchemaQueryAppender(entityManager);
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(13, XMLSchema.ENTITY_TYPE, "XML Schema");
     }
 
     private static class XMLSchemaQueryAppender extends QueryAppender<XMLSchema, FindXMLSchemaCriteria> {

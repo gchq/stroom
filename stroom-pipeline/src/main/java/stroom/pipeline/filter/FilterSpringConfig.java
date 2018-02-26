@@ -18,12 +18,11 @@ package stroom.pipeline.filter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import stroom.cache.SchemaPool;
 import stroom.cache.XSLTPool;
-import stroom.properties.StroomPropertyService;
 import stroom.node.shared.RecordCountService;
+import stroom.properties.StroomPropertyService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.XSLTService;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -34,7 +33,6 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.MapStoreHolder;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.xmlschema.XMLSchemaCache;
 
 @Configuration
@@ -117,7 +115,7 @@ public class FilterSpringConfig {
 
     @Bean
     @Scope(StroomScope.TASK)
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public TestFilter testFilter(final ErrorReceiverProxy errorReceiverProxy,
                                  final LocationFactoryProxy locationFactory) {
         return new TestFilter(errorReceiverProxy, locationFactory);

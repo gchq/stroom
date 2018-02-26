@@ -188,7 +188,7 @@ public final class StoreCreationTool {
 
         if (referenceFeed == null) {
             // Setup the feeds in mock feed configuration manager.
-            referenceFeed = feedService.readDocument(feedService.createDocument(feedName, null));
+            referenceFeed = feedService.create(feedName);
             referenceFeed.setReference(true);
             referenceFeed.setDescription("Description " + feedName);
             referenceFeed.setStatus(FeedStatus.RECEIVE);

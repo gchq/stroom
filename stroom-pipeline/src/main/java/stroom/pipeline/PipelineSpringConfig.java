@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.CachingEntityManager;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.feed.FeedService;
 import stroom.importexport.ImportExportHelper;
 import stroom.logging.StreamEventLog;

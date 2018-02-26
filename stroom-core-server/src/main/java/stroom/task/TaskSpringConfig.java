@@ -74,7 +74,7 @@ public class TaskSpringConfig {
 
     @Bean("taskMonitor")
     @Scope(value = StroomScope.TASK)
-    public TaskMonitor taskMonitor() {
+    public TaskMonitorImpl taskMonitor() {
         return new TaskMonitorImpl();
     }
 

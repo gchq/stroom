@@ -46,7 +46,7 @@ public abstract class AbstractSqlBuilder extends CoreSqlBuilder {
     /**
      * Utility to restrict the results in the query.
      */
-    void applyRestrictionCriteria(final Query query, final BaseCriteria criteria) {
+    public void applyRestrictionCriteria(final Query query, final BaseCriteria criteria) {
         if (criteria.getPageRequest() != null) {
             final PageRequest pageRequest = criteria.getPageRequest();
             if (pageRequest.getOffset() != null) {

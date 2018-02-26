@@ -62,6 +62,7 @@ import stroom.util.spring.StroomStartup;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -102,7 +103,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StreamTaskService streamTaskService;
     private final StreamTaskHelper streamTaskHelper;
     private final StroomPropertyService propertyService;
-    private final InternalStatisticsReceiver internalStatisticsReceiver;
+    private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
     private final ExpressionToFindCriteria expressionToFindCriteria;
@@ -154,7 +155,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final StreamTaskService streamTaskService,
                           final StreamTaskHelper streamTaskHelper,
                           final StroomPropertyService propertyService,
-                          final InternalStatisticsReceiver internalStatisticsReceiver,
+                          final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
                           final StreamStore streamStore,
                           final SecurityContext securityContext,
                           final ExpressionToFindCriteria expressionToFindCriteria) {
@@ -166,7 +167,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.streamTaskService = streamTaskService;
         this.streamTaskHelper = streamTaskHelper;
         this.propertyService = propertyService;
-        this.internalStatisticsReceiver = internalStatisticsReceiver;
+        this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
         this.expressionToFindCriteria = expressionToFindCriteria;
@@ -921,12 +922,15 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             final int queueSize = getStreamTaskQueueSize();
             if (queueSize != lastQueueSizeForStats) {
                 try {
-                    // Value type event as the queue size is not additive
-                    internalStatisticsReceiver.putEvent(InternalStatisticEvent.createValueStat(
-                            INTERNAL_STAT_KEY_STREAM_TASK_QUEUE_SIZE,
-                            System.currentTimeMillis(),
-                            null,
-                            queueSize));
+                    final InternalStatisticsReceiver internalStatisticsReceiver = internalStatisticsReceiverProvider.get();
+                    if (internalStatisticsReceiver != null) {
+                        // Value type event as the queue size is not additive
+                        internalStatisticsReceiver.putEvent(InternalStatisticEvent.createValueStat(
+                                INTERNAL_STAT_KEY_STREAM_TASK_QUEUE_SIZE,
+                                System.currentTimeMillis(),
+                                null,
+                                queueSize));
+                    }
                 } catch (final Throwable t) {
                     LOGGER.error(t.getMessage(), t);
                 }

@@ -19,7 +19,6 @@ package stroom.entity;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Entity;

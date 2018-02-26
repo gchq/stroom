@@ -18,7 +18,7 @@ package stroom.jobsystem;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.util.StroomDatabaseInfo;
+import stroom.entity.StroomDatabaseInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 

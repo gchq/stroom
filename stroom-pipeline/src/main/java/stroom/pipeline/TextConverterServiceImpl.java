@@ -19,7 +19,10 @@ package stroom.pipeline;
 
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.TextConverter;
@@ -29,7 +32,7 @@ import javax.inject.Inject;
 
 @Transactional
 public class TextConverterServiceImpl extends DocumentEntityServiceImpl<TextConverter, FindTextConverterCriteria>
-        implements TextConverterService {
+        implements TextConverterService, ExplorerActionHandler, ImportExportActionHandler {
 
     @Inject
     TextConverterServiceImpl(final StroomEntityManager entityManager,
@@ -66,5 +69,10 @@ public class TextConverterServiceImpl extends DocumentEntityServiceImpl<TextConv
     @Override
     public FindTextConverterCriteria createCriteria() {
         return new FindTextConverterCriteria();
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(4, TextConverter.ENTITY_TYPE, "Text Converter");
     }
 }

@@ -2,8 +2,6 @@ package stroom.externaldoc;
 
 import org.springframework.context.annotation.Configuration;
 import stroom.entity.EntityServiceBeanRegistry;
-import stroom.explorer.ExplorerActionHandlers;
-import stroom.importexport.ImportExportActionHandlers;
 import stroom.logging.DocumentEventLog;
 import stroom.node.shared.ClientProperties;
 import stroom.properties.StroomPropertyService;
@@ -15,8 +13,6 @@ import javax.inject.Inject;
 public class ExternalDocRefSpringConfig {
     @Inject
     public ExternalDocRefSpringConfig(final EntityServiceBeanRegistry entityServiceBeanRegistry,
-                                      final ExplorerActionHandlers explorerActionHandlers,
-                                      final ImportExportActionHandlers importExportActionHandlers,
                                       final SecurityContext securityContext,
                                       final DocumentEventLog documentEventLog,
                                       final StroomPropertyService propertyService) {
@@ -28,8 +24,6 @@ public class ExternalDocRefSpringConfig {
                         propertyService)
                 ).forEach(service -> {
             entityServiceBeanRegistry.addExternal(service.getType(), service);
-            explorerActionHandlers.add(30, service.getType(), service.getType(), service);
-            importExportActionHandlers.add(service.getType(), service);
         });
     }
 }

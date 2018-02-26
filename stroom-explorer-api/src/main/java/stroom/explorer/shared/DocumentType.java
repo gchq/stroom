@@ -33,11 +33,22 @@ public class DocumentType implements SharedObject {
         // Default constructor necessary for GWT serialisation.
     }
 
+    public DocumentType(final int priority, final String type, final String displayType) {
+        this.priority = priority;
+        this.type = type;
+        this.displayType = displayType;
+        this.iconUrl = getIconUrl(type);
+    }
+
     public DocumentType(final int priority, final String type, final String displayType, final String iconUrl) {
         this.priority = priority;
         this.type = type;
         this.displayType = displayType;
         this.iconUrl = iconUrl;
+    }
+
+    private String getIconUrl(final String type) {
+        return DocumentType.DOC_IMAGE_URL + type + ".svg";
     }
 
     public int getPriority() {

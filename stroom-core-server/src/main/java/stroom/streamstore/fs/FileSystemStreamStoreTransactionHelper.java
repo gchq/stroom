@@ -19,8 +19,8 @@ package stroom.streamstore.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.util.StroomDatabaseInfo;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomDatabaseInfo;
+import stroom.entity.StroomEntityManager;
 
 import javax.inject.Inject;
 

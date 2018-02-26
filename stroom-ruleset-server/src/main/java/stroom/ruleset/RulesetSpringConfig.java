@@ -21,23 +21,12 @@ import org.springframework.context.annotation.Configuration;
 import stroom.datafeed.MetaMapFilterFactory;
 import stroom.dictionary.DictionaryStore;
 import stroom.docstore.Store;
-import stroom.explorer.ExplorerActionHandlers;
-import stroom.importexport.ImportExportActionHandlers;
 import stroom.ruleset.shared.RuleSet;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Configuration
 public class RulesetSpringConfig {
-    @Inject
-    public RulesetSpringConfig(final ExplorerActionHandlers explorerActionHandlers,
-                               final ImportExportActionHandlers importExportActionHandlers,
-                               final RuleSetService ruleSetService) {
-        explorerActionHandlers.add(100, RuleSet.DOCUMENT_TYPE, "Rule Set", ruleSetService);
-        importExportActionHandlers.add(RuleSet.DOCUMENT_TYPE, ruleSetService);
-    }
-
     @Bean
     public MetaMapFilterFactory metaMapFilterFactory(final RuleSetService ruleSetService,
                                                      final DictionaryStore dictionaryStore) {

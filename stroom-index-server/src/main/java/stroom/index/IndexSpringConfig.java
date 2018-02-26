@@ -20,40 +20,28 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.util.StroomEntityManager;
-import stroom.explorer.ExplorerActionHandlers;
-import stroom.importexport.ImportExportActionHandlers;
+import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
-import stroom.index.shared.Index;
 import stroom.node.NodeCache;
-import stroom.properties.StroomPropertyService;
 import stroom.node.VolumeService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.state.StreamHolder;
+import stroom.properties.StroomPropertyService;
 import stroom.search.SearchResultCreatorManager;
 import stroom.security.SecurityContext;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
 import stroom.task.TaskManager;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSpringProfiles;
 
-import javax.inject.Inject;
 import javax.inject.Provider;
 
 @Configuration
 public class IndexSpringConfig {
-    @Inject
-    public IndexSpringConfig(final ExplorerActionHandlers explorerActionHandlers,
-                              final ImportExportActionHandlers importExportActionHandlers,
-                              final IndexService indexService) {
-        explorerActionHandlers.add(10, Index.ENTITY_TYPE, Index.ENTITY_TYPE, indexService);
-        importExportActionHandlers.add(Index.ENTITY_TYPE, indexService);
-    }
-
     @Bean
     @Scope(StroomScope.TASK)
     public CloseIndexShardActionHandler closeIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
@@ -87,7 +75,7 @@ public class IndexSpringConfig {
     }
 
     @Bean("indexService")
-    @Profile(StroomSpringProfiles.PROD)
+//    @Profile(StroomSpringProfiles.PROD)
     public IndexService indexService(final StroomEntityManager entityManager,
                                      final ImportExportHelper importExportHelper,
                                      final SecurityContext securityContext) {
@@ -100,13 +88,13 @@ public class IndexSpringConfig {
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.PROD)
+//    @Profile(StroomSpringProfiles.PROD)
     public IndexShardService indexShardService(final StroomEntityManager entityManager, final VolumeService volumeService, final SecurityContext securityContext) {
         return new IndexShardServiceImpl(entityManager, volumeService, securityContext);
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.PROD)
+//    @Profile(StroomSpringProfiles.PROD)
     public IndexShardWriterCache indexShardWriterCache(final NodeCache nodeCache,
                                                        final IndexShardService indexShardService,
                                                        final StroomPropertyService stroomPropertyService,

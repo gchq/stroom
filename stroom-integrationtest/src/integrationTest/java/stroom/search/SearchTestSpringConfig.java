@@ -27,7 +27,7 @@ import stroom.util.spring.StroomSpringProfiles;
 @Configuration
 public class SearchTestSpringConfig {
     @Bean
-    @Profile(StroomSpringProfiles.IT)
+//    @Profile(StroomSpringProfiles.IT)
     public CommonIndexingTest commonIndexingTest(final IndexShardManager indexShardManager,
                                                  final CommonTranslationTest commonTranslationTest,
                                                  final StoreCreationTool storeCreationTool) {

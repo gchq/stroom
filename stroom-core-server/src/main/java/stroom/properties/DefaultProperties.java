@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package stroom.node;
+package stroom.properties;
 
 import stroom.node.shared.GlobalProperty;
 

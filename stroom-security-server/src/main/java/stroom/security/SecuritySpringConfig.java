@@ -23,14 +23,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import stroom.entity.event.EntityEventBus;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;
 import stroom.jobsystem.ClusterLockService;
 import stroom.logging.AuthenticationEventLog;
 import stroom.logging.AuthorisationEventLog;
 import stroom.properties.StroomPropertyService;
-import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomBeanStore;
@@ -169,7 +168,7 @@ public class SecuritySpringConfig {
     }
 
     @Bean
-    @Profile(PROD_SECURITY)
+//    @Profile(PROD_SECURITY)
     @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
     public SecurityContext securityContext(final DocumentPermissionsCache documentPermissionsCache,
                                            final UserGroupsCache userGroupsCache,
@@ -230,7 +229,7 @@ public class SecuritySpringConfig {
     }
 
     @Bean("userService")
-    @Profile(StroomSpringProfiles.PROD)
+//    @Profile(StroomSpringProfiles.PROD)
     public UserService userService(final StroomEntityManager entityManager,
                                    final DocumentPermissionService documentPermissionService) {
         return new UserServiceImpl(entityManager, documentPermissionService);

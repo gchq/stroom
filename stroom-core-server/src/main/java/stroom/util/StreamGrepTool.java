@@ -23,13 +23,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.headless.HeadlessConfiguration;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ServerConfiguration;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTypeService;
@@ -176,9 +172,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
     private ApplicationContext buildAppContext() {
         System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
-        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-                ScopeConfiguration.class, PersistenceConfiguration.class,
-                ServerConfiguration.class, HeadlessConfiguration.class);
+        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ToolSpringConfiguration.class);
         return context;
     }
 

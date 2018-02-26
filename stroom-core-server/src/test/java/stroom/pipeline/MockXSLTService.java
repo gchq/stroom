@@ -18,6 +18,7 @@
 package stroom.pipeline;
 
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;

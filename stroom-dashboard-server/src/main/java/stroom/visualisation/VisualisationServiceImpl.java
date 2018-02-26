@@ -23,7 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.ObjectMarshaller;
 import stroom.entity.QueryAppender;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
@@ -39,7 +42,7 @@ import java.util.stream.Collectors;
 
 @Transactional
 public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualisation, FindVisualisationCriteria>
-        implements VisualisationService {
+        implements VisualisationService, ExplorerActionHandler, ImportExportActionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(VisualisationServiceImpl.class);
 
     @Inject
@@ -97,6 +100,11 @@ public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualis
         }
 
         return Collections.emptySet();
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(9, Visualisation.ENTITY_TYPE, Visualisation.ENTITY_TYPE);
     }
 
     private static class VisualisationQueryAppender extends QueryAppender<Visualisation, FindVisualisationCriteria> {

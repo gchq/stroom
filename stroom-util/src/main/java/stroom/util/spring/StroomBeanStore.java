@@ -205,10 +205,10 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
                             beanClass.getName());
                 }
 
-                if (beanClass.isInterface()) {
-                    LOGGER.error("init() - EXPECTED CLASS BUT RECEIVED INTERFACE .... %s",
-                            beanClass.getName());
-                }
+//                if (beanClass.isInterface()) {
+//                    LOGGER.error("init() - EXPECTED CLASS BUT RECEIVED INTERFACE .... {}",
+//                            beanClass.getName());
+//                }
 
                 addAnnotatedMethods(beanClass, beanName);
             }

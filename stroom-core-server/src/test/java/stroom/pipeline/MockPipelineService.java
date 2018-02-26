@@ -17,6 +17,7 @@
 package stroom.pipeline;
 
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;

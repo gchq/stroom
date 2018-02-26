@@ -29,31 +29,31 @@ import stroom.util.spring.StroomSpringProfiles;
 @Configuration
 public class MockJobSystemSpringConfig {
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockClusterLockService mockClusterLockService() {
         return new MockClusterLockService();
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockJobManager mockJobManager() {
         return new MockJobManager();
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockJobNodeService mockJobNodeService() {
         return new MockJobNodeService();
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockJobService mockJobService() {
         return new MockJobService();
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockScheduleService mockScheduleService() {
         return new MockScheduleService();
     }

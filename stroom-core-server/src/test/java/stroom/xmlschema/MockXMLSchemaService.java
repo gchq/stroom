@@ -18,6 +18,7 @@
 package stroom.xmlschema;
 
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportHelper;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;

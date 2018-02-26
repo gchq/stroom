@@ -19,7 +19,7 @@ package stroom.importexport;
 
 import stroom.query.api.v2.DocRef;
 
-interface ImportExportEventLog {
+interface ImportExportDocumentEventLog {
     void importDocument(String type, String uuid, String name, Exception ex);
 
     void exportDocument(DocRef document, Exception ex);

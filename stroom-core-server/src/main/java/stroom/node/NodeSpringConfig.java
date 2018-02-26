@@ -16,15 +16,13 @@
 
 package stroom.node;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.cluster.ClusterCallService;
 import stroom.cluster.ClusterNodeManager;
-import stroom.entity.CachingEntityManager;
-import stroom.entity.util.StroomDatabaseInfo;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomDatabaseInfo;
+import stroom.entity.StroomEntityManager;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.RecordCountService;
@@ -43,19 +41,6 @@ public class NodeSpringConfig {
                                                          final NodeCache nodeCache,
                                                          final NodeService nodeService) {
         return new ClusterNodeInfoHandler(clusterCallService, nodeCache, nodeService);
-    }
-
-    @Bean("cachedNodeService")
-    public CachedNodeService cachedNodeService(final CachingEntityManager entityManager,
-                                               final NodeServiceTransactionHelper nodeServiceUtil,
-                                               @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
-                                               @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
-        return new CachedNodeService(entityManager, nodeServiceUtil, nodeName, rackName);
-    }
-
-    @Bean
-    public ClientPropertiesService clientPropertiesService() {
-        return new ClientPropertiesServiceImpl();
     }
 
     @Bean("dbTableService")
@@ -90,21 +75,6 @@ public class NodeSpringConfig {
     }
 
     @Bean
-    public GlobalProperties globalProperties() {
-        return new GlobalProperties();
-    }
-
-    @Bean
-    public GlobalPropertyService globalPropertyService(final StroomEntityManager entityManager) {
-        return new GlobalPropertyServiceImpl(entityManager);
-    }
-
-    @Bean
-    public GlobalPropertyUpdater globalPropertyUpdater(final GlobalPropertyService globalPropertyService) {
-        return new GlobalPropertyUpdater(globalPropertyService);
-    }
-
-    @Bean
     public HeapHistogramService heapHistogramService(final StroomPropertyService stroomPropertyService) {
         return new HeapHistogramService(stroomPropertyService);
     }
@@ -131,14 +101,6 @@ public class NodeSpringConfig {
     @Scope(value = StroomScope.TASK)
     public NodeInfoClusterHandler nodeInfoClusterHandler(final NodeCache nodeCache) {
         return new NodeInfoClusterHandler(nodeCache);
-    }
-
-    @Bean("nodeService")
-    public NodeService nodeService(final StroomEntityManager entityManager,
-                                   final NodeServiceTransactionHelper nodeServiceUtil,
-                                   @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
-                                   @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
-        return new NodeServiceImpl(entityManager, nodeServiceUtil, nodeName, rackName);
     }
 
     @Bean

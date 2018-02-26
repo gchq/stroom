@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.node;
+package stroom.properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +34,13 @@ import java.util.List;
  * get current settings for global properties and updating both the current
  * GlobalProperties instance and StroomProperties.
  */
-public class GlobalPropertyUpdater {
+class GlobalPropertyUpdater {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalPropertyUpdater.class);
 
     private final GlobalPropertyService globalPropertyService;
 
     @Inject
-    public GlobalPropertyUpdater(final GlobalPropertyService globalPropertyService) {
+    GlobalPropertyUpdater(final GlobalPropertyService globalPropertyService) {
         this.globalPropertyService = globalPropertyService;
     }
 

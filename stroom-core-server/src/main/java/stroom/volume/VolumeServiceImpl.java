@@ -24,17 +24,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
-import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.Sort.Direction;
+import stroom.entity.util.HqlBuilder;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
-import stroom.properties.StroomPropertyService;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
@@ -42,6 +41,7 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
+import stroom.properties.StroomPropertyService;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.statistics.internal.InternalStatisticEvent;
@@ -53,6 +53,7 @@ import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -124,7 +125,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
     private final StroomBeanStore stroomBeanStore;
-    private final InternalStatisticsReceiver internalStatisticsReceiver;
+    private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
 
     @Inject
@@ -132,13 +133,13 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                       final NodeCache nodeCache,
                       final StroomPropertyService stroomPropertyService,
                       final StroomBeanStore stroomBeanStore,
-                      final InternalStatisticsReceiver internalStatisticsReceiver) {
+                      final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;
         this.nodeCache = nodeCache;
         this.stroomPropertyService = stroomPropertyService;
         this.stroomBeanStore = stroomBeanStore;
-        this.internalStatisticsReceiver = internalStatisticsReceiver;
+        this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
     }
 
     private static void registerVolumeSelector(final VolumeSelector volumeSelector) {
@@ -349,19 +350,22 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private void recordStats(final Volume volume) {
-        try {
-            final VolumeState volumeState = volume.getVolumeState();
+        final InternalStatisticsReceiver receiver = internalStatisticsReceiverProvider.get();
+        if (receiver != null) {
+            try {
+                final VolumeState volumeState = volume.getVolumeState();
 
-            final long now = System.currentTimeMillis();
-            final List<InternalStatisticEvent> events = new ArrayList<>();
-            addStatisticEvent(events, now, volume, "Limit", volume.getBytesLimit());
-            addStatisticEvent(events, now, volume, "Used", volumeState.getBytesUsed());
-            addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
-            addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
-            internalStatisticsReceiver.putEvents(events);
-        } catch (final Throwable t) {
-            LOGGER.warn(t.getMessage());
-            LOGGER.debug(t.getMessage(), t);
+                final long now = System.currentTimeMillis();
+                final List<InternalStatisticEvent> events = new ArrayList<>();
+                addStatisticEvent(events, now, volume, "Limit", volume.getBytesLimit());
+                addStatisticEvent(events, now, volume, "Used", volumeState.getBytesUsed());
+                addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
+                addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
+                receiver.putEvents(events);
+            } catch (final Throwable t) {
+                LOGGER.warn(t.getMessage());
+                LOGGER.debug(t.getMessage(), t);
+            }
         }
     }
 

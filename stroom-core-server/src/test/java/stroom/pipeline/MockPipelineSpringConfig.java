@@ -18,30 +18,27 @@ package stroom.pipeline;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import stroom.importexport.ImportExportHelper;
-import stroom.pipeline.MockPipelineService;
-import stroom.pipeline.MockTextConverterService;
-import stroom.pipeline.MockXSLTService;
-import stroom.util.spring.StroomSpringProfiles;
 
 @Configuration
 public class MockPipelineSpringConfig {
     @Bean("pipelineService")
-    @Profile(StroomSpringProfiles.TEST)
-    public MockPipelineService mockPipelineService() {
+    public PipelineService pipelineService() {
         return new MockPipelineService();
     }
 
+    @Bean("cachedPipelineService")
+    public PipelineService cachedPipelineService(final PipelineService pipelineService) {
+        return pipelineService;
+    }
+
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
-    public MockTextConverterService mockTextConverterService(final ImportExportHelper importExportHelper) {
+    public TextConverterService textConverterService(final ImportExportHelper importExportHelper) {
         return new MockTextConverterService(importExportHelper);
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
-    public MockXSLTService mockXSLTService(final ImportExportHelper importExportHelper) {
+    public XSLTService xSLTService(final ImportExportHelper importExportHelper) {
         return new MockXSLTService(importExportHelper);
     }
 }

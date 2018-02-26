@@ -19,12 +19,8 @@ package stroom.spring;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
-import stroom.cluster.ClusterSpringConfig;
-import stroom.connectors.ConnectorsSpringConfig;
+import stroom.properties.PropertyConfigurer;
 import stroom.properties.StroomPropertyService;
-import stroom.task.cluster.ClusterTaskSpringConfig;
 
 /**
  * Defines the component scanning required for the server module.
@@ -32,51 +28,48 @@ import stroom.task.cluster.ClusterTaskSpringConfig;
  * Defined separately from the main configuration so it can be easily
  * overridden.
  */
+@ComponentScan("ignore")
 @Configuration
-@ComponentScan(basePackages = {
-        "stroom.datafeed",
-        "stroom.datasource",
-        "stroom.db",
-        "stroom.dispatch",
-        "stroom.document.server",
-        "stroom.docstore.server",
-        "stroom.entity",
-        "stroom.feed.server",
-        "stroom.folder",
-        "stroom.importexport",
-        "stroom.internalstatistics",
-        "stroom.io",
-        "stroom.jobsystem",
-        "stroom.connectors.kafka",
-        "stroom.lifecycle",
-        "stroom.logging",
-        "stroom.node",
-        "stroom.pipeline",
-        "stroom.policy",
-        "stroom.pool",
-        "stroom.process",
-        "stroom.proxy",
-        "stroom.query",
-        "stroom.resource",
-        "stroom.servicediscovery",
-        "stroom.servlet",
-        "stroom.spring",
-        "stroom.streamstore",
-        "stroom.streamtask",
-        "stroom.task",
-        "stroom.test",
-        "stroom.upgrade",
-        "stroom.util",
-        "stroom.volume",
-        "stroom.xmlschema"
-}, excludeFilters = {
-        // Exclude other configurations that might be found accidentally during
-        // a component scan as configurations should be specified explicitly.
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
-@Import({ClusterSpringConfig.class, ClusterTaskSpringConfig.class, ConnectorsSpringConfig.class})
+//@OldScan(basePackages = {
+//        "stroom.datafeed",
+//        "stroom.datasource",
+//        "stroom.db",
+//        "stroom.dispatch",
+//        "stroom.document.server",
+//        "stroom.docstore.server",
+//        "stroom.entity",
+//        "stroom.feed.server",
+//        "stroom.folder",
+//        "stroom.importexport",
+//        "stroom.internalstatistics",
+//        "stroom.io",
+//        "stroom.jobsystem",
+//        "stroom.connectors.kafka",
+//        "stroom.lifecycle",
+//        "stroom.logging",
+//        "stroom.node",
+//        "stroom.pipeline",
+//        "stroom.policy",
+//        "stroom.pool",
+//        "stroom.process",
+//        "stroom.proxy",
+//        "stroom.query",
+//        "stroom.resource",
+//        "stroom.servicediscovery",
+//        "stroom.servlet",
+//        "stroom.spring",
+//        "stroom.streamstore",
+//        "stroom.streamtask",
+//        "stroom.task",
+//        "stroom.test",
+//        "stroom.upgrade",
+//        "stroom.util",
+//        "stroom.volume",
+//        "stroom.xmlschema"
+//}, excludeFilters = {
+//        // Exclude other configurations that might be found accidentally during
+//        // a component scan as configurations should be specified explicitly.
+//        @OldFilter(type = FilterType.ANNOTATION, value = Configuration.class),})
+//@Import({ClusterSpringConfig.class, ClusterTaskSpringConfig.class, ConnectorsSpringConfig.class})
 public class ServerComponentScanConfiguration {
-    @Bean("propertyConfigurer")
-    public PropertyConfigurer propertyConfigurer(final StroomPropertyService stroomPropertyService) {
-        return new PropertyConfigurer(stroomPropertyService);
-    }
 }

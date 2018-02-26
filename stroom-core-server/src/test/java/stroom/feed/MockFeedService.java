@@ -19,6 +19,7 @@ package stroom.feed;
 
 import stroom.entity.MockDocumentEntityService;
 import stroom.entity.shared.BaseResultList;
+import stroom.explorer.shared.DocumentType;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.ImportExportHelper;

@@ -30,7 +30,7 @@ import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
 
-@Profile(StroomSpringProfiles.TEST)
+//@Profile(StroomSpringProfiles.TEST)
 public class MockReferenceDataLoader implements ReferenceDataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(MockReferenceDataLoader.class);
 

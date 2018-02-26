@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.eclipse.jetty.http.HttpStatus;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.logging.DocumentEventLog;
 import stroom.properties.StroomPropertyService;
@@ -176,6 +177,11 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         }
 
         return response.readEntity(DocRefInfo.class);
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(30, getType(), getType());
     }
 
     ////////////////////////////////////////////////////////////////////////

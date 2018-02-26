@@ -43,50 +43,50 @@ import stroom.task.cluster.ClusterTaskSpringConfig;
  * Exclude other configurations that might be found accidentally during a
  * component scan as configurations should be specified explicitly.
  */
+@ComponentScan("ignore")
 @Configuration
-@ComponentScan(basePackages = {
-        "stroom.datafeed",
-        "stroom.datasource",
-        "stroom.docstore.server",
-        "stroom.db",
-        "stroom.dispatch",
-        "stroom.entity",
-        "stroom.feed",
-        "stroom.folder",
-        "stroom.importexport",
-        "stroom.internalstatistics",
-        "stroom.io",
-        "stroom.jobsystem",
-        "stroom.connectors.kafka",
-        "stroom.lifecycle",
-        "stroom.logging",
-        "stroom.node",
-        "stroom.policy",
-        "stroom.pool",
-        "stroom.process",
-        "stroom.proxy",
-        "stroom.query",
-        "stroom.resource",
-        "stroom.search",
-        "stroom.servicediscovery",
-        "stroom.servlet",
-        "stroom.spring",
-        "stroom.streamstore",
-        "stroom.streamtask",
-        "stroom.task",
-        "stroom.test",
-        "stroom.upgrade",
-        "stroom.util",
-        "stroom.volume",
-        "stroom.xmlschema"
-}, excludeFilters = {
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),
-
-        // Exclude these so we get the mocks instead.
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = NodeConfigImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorTaskFactory.class)})
-@Import({ClusterSpringConfig.class, PipelineCacheSpringConfig.class, ClusterTaskSpringConfig.class, ConnectorsSpringConfig.class})
+//@OldScan(basePackages = {
+//        "stroom.datafeed",
+//        "stroom.datasource",
+//        "stroom.docstore.server",
+//        "stroom.db",
+//        "stroom.dispatch",
+//        "stroom.entity",
+//        "stroom.feed",
+//        "stroom.folder",
+//        "stroom.importexport",
+//        "stroom.internalstatistics",
+//        "stroom.io",
+//        "stroom.jobsystem",
+//        "stroom.connectors.kafka",
+//        "stroom.lifecycle",
+//        "stroom.logging",
+//        "stroom.node",
+//        "stroom.policy",
+//        "stroom.pool",
+//        "stroom.process",
+//        "stroom.proxy",
+//        "stroom.query",
+//        "stroom.resource",
+//        "stroom.search",
+//        "stroom.servicediscovery",
+//        "stroom.servlet",
+//        "stroom.spring",
+//        "stroom.streamstore",
+//        "stroom.streamtask",
+//        "stroom.task",
+//        "stroom.test",
+//        "stroom.upgrade",
+//        "stroom.util",
+//        "stroom.volume",
+//        "stroom.xmlschema"
+//}, excludeFilters = {
+//        @OldFilter(type = FilterType.ANNOTATION, value = Configuration.class),
+//
+//        // Exclude these so we get the mocks instead.
+//        @OldFilter(type = FilterType.ASSIGNABLE_TYPE, value = NodeConfigImpl.class),
+//        @OldFilter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
+//        @OldFilter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorTaskFactory.class)})
 public class ServerComponentScanTestConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerComponentScanTestConfiguration.class);
 

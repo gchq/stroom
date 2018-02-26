@@ -68,21 +68,21 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     private final ExplorerService explorerService;
     private final ExplorerNodeService explorerNodeService;
-    private final ImportExportActionHandlersImpl importExportActionHandlers;
+    private final ImportExportActionHandlers importExportActionHandlers;
     private final SecurityContext securityContext;
-    private final ImportExportEventLog importExportEventLog;
+    private final ImportExportDocumentEventLog importExportDocumentEventLog;
 
     @Inject
     ImportExportSerializerImpl(final ExplorerService explorerService,
                                final ExplorerNodeService explorerNodeService,
-                               final ImportExportActionHandlersImpl importExportActionHandlers,
+                               final ImportExportActionHandlers importExportActionHandlers,
                                final SecurityContext securityContext,
-                               final ImportExportEventLog importExportEventLog) {
+                               final ImportExportDocumentEventLog importExportDocumentEventLog) {
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
         this.importExportActionHandlers = importExportActionHandlers;
         this.securityContext = securityContext;
-        this.importExportEventLog = importExportEventLog;
+        this.importExportDocumentEventLog = importExportDocumentEventLog;
     }
 
     /**
@@ -232,11 +232,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         // Add explorer node afterwards on successful import as they won't be controlled by doc service.
                         if (!existingNode.isPresent() && !ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
                             explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
-                            importExportEventLog.importDocument(type, imported.getUuid(), name, null);
+                            importExportDocumentEventLog.importDocument(type, imported.getUuid(), name, null);
                         }
                     }
                 } catch (final RuntimeException e) {
-                    importExportEventLog.importDocument(docRef.getType(), docRef.getUuid(), docRef.getName(), e);
+                    importExportDocumentEventLog.importDocument(docRef.getType(), docRef.getUuid(), docRef.getName(), e);
                     throw e;
                 }
 
@@ -380,7 +380,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     }
                 });
 
-                importExportEventLog.exportDocument(docRef, null);
+                importExportDocumentEventLog.exportDocument(docRef, null);
             }
         }
     }

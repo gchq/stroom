@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.dictionary.DictionaryStore;
 import stroom.entity.CachingEntityManager;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.feed.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.jobsystem.ClusterLockService;
@@ -44,12 +44,6 @@ import javax.sql.DataSource;
 
 @Configuration
 public class StreamStoreSpringConfig {
-    @Bean("cachedStreamTypeService")
-    public CachedStreamTypeService cachedStreamTypeService(final CachingEntityManager entityManager,
-                                                           final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper) {
-        return new CachedStreamTypeService(entityManager, streamTypeServiceTransactionHelper);
-    }
-
     @Bean
     public ExpressionToFindCriteria expressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
                                                              @Named("cachedPipelineService") final PipelineService pipelineService,
@@ -150,6 +144,12 @@ public class StreamStoreSpringConfig {
     public StreamTypeService streamTypeService(final StroomEntityManager entityManager,
                                                final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper) {
         return new StreamTypeServiceImpl(entityManager, streamTypeServiceTransactionHelper);
+    }
+
+    @Bean("cachedStreamTypeService")
+    public CachedStreamTypeService cachedStreamTypeService(final CachingEntityManager entityManager,
+                                                           final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper) {
+        return new CachedStreamTypeService(entityManager, streamTypeServiceTransactionHelper);
     }
 
     @Bean

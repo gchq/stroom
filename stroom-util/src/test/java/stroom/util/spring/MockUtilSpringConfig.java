@@ -23,20 +23,20 @@ import org.springframework.context.annotation.Profile;
 @Configuration
 public class MockUtilSpringConfig {
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockStroomBeanAllDeps mockStroomBeanAllDeps(final MockStroomBeanNoDeps stroomBeanNoDeps,
                                                        final MockStroomBeanSomeDeps stroomBeanSomeDeps) {
         return new MockStroomBeanAllDeps(stroomBeanNoDeps, stroomBeanSomeDeps);
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockStroomBeanNoDeps mockStroomBeanNoDeps() {
         return new MockStroomBeanNoDeps();
     }
 
     @Bean
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public MockStroomBeanSomeDeps mockStroomBeanSomeDeps(final MockStroomBeanNoDeps stroomBeanNoDeps) {
         return new MockStroomBeanSomeDeps(stroomBeanNoDeps);
     }

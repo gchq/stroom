@@ -22,26 +22,15 @@ import org.springframework.context.annotation.Scope;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
-import stroom.explorer.ExplorerActionHandlers;
-import stroom.importexport.ImportExportActionHandlers;
 import stroom.logging.DocumentEventLog;
 import stroom.security.SecurityContext;
 import stroom.servlet.SessionResourceStore;
 import stroom.util.spring.StroomScope;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Configuration
 public class DictionarySpringConfig {
-    @Inject
-    public DictionarySpringConfig(final ExplorerActionHandlers explorerActionHandlers,
-                                  final ImportExportActionHandlers importExportActionHandlers,
-                                  final DictionaryStore dictionaryStore) {
-        explorerActionHandlers.add(9, DictionaryDoc.ENTITY_TYPE, DictionaryDoc.ENTITY_TYPE, dictionaryStore);
-        importExportActionHandlers.add(DictionaryDoc.ENTITY_TYPE, dictionaryStore);
-    }
-
     @Bean
     public DictionaryResource dictionaryResource(final DictionaryStore dictionaryStore) {
         return new DictionaryResource(dictionaryStore);

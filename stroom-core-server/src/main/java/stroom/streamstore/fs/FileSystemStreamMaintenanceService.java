@@ -26,7 +26,7 @@ import org.springframework.util.StringUtils;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.SupportsCriteriaLogging;
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.node.shared.Volume;
 import stroom.security.Secured;

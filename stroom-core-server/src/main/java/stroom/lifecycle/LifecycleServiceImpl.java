@@ -19,7 +19,7 @@ package stroom.lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.ScheduledTaskExecutor;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
@@ -104,7 +104,7 @@ public class LifecycleServiceImpl implements LifecycleService {
             new Thread(() -> {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 LOGGER.info("init() - Starting up in background");
-                startup();
+                doStart();
                 LOGGER.info("init() - Started in {}", logExecutionTime);
             }).start();
         }
@@ -117,11 +117,11 @@ public class LifecycleServiceImpl implements LifecycleService {
     public void stop() throws Exception {
         LOGGER.debug("contextDestroyed()");
         if (enabled.get()) {
-            shutdown();
+            doStop();
         }
     }
 
-    public void startup() {
+    private void doStart() {
         LOGGER.info("Starting Stroom Lifecycle service");
         try {
             startingUp.set(true);
@@ -187,7 +187,7 @@ public class LifecycleServiceImpl implements LifecycleService {
         }
     }
 
-    public void shutdown() {
+    private void doStop() {
         try {
             // Wait for startup to finish.
             while (startingUp.get()) {

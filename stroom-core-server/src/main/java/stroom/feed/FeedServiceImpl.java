@@ -20,13 +20,16 @@ package stroom.feed;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
-import stroom.entity.util.FieldMap;
-import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.StroomEntityManager;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.util.FieldMap;
+import stroom.entity.util.HqlBuilder;
+import stroom.entity.StroomEntityManager;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
@@ -40,7 +43,7 @@ import java.util.List;
 import java.util.Set;
 
 @Transactional
-public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCriteria> implements FeedService {
+public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCriteria> implements FeedService, ExplorerActionHandler, ImportExportActionHandler {
     private static final String FEED_NAME_PATTERN_PROPERTY = "stroom.feedNamePattern";
     private static final String FEED_NAME_PATTERN_VALUE = "^[A-Z0-9_\\-]{3,}$";
     private static final Set<String> FETCH_SET = Collections.singleton(StreamType.ENTITY_TYPE);
@@ -143,6 +146,11 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
         return super.createFieldMap()
                 .add(FindFeedCriteria.FIELD_TYPE, Feed.REFERENCE, "reference")
                 .add(FindFeedCriteria.FIELD_CLASSIFICATION, Feed.CLASSIFICATION, "classification");
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE);
     }
 
     private static class FeedQueryAppender extends QueryAppender<Feed, FindFeedCriteria> {

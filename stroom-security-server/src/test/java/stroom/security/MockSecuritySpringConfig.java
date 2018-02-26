@@ -25,13 +25,13 @@ import stroom.util.spring.StroomSpringProfiles;
 @Configuration
 public class MockSecuritySpringConfig {
     @Bean
-    @Profile(SecuritySpringConfig.MOCK_SECURITY)
+//    @Profile(SecuritySpringConfig.MOCK_SECURITY)
     public SecurityContext securityContext() {
         return new MockSecurityContext();
     }
 
     @Bean("userService")
-    @Profile(StroomSpringProfiles.TEST)
+//    @Profile(StroomSpringProfiles.TEST)
     public UserService userService() {
         return new MockUserService();
     }

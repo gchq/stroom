@@ -18,12 +18,14 @@ package stroom.volume;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.entity.util.StroomEntityManager;
+import stroom.entity.StroomEntityManager;
 import stroom.node.NodeCache;
 import stroom.properties.StroomPropertyService;
 import stroom.node.VolumeService;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.spring.StroomBeanStore;
+
+import javax.inject.Provider;
 
 @Configuration
 public class VolumeSpringConfig {
@@ -32,7 +34,7 @@ public class VolumeSpringConfig {
                                        final NodeCache nodeCache,
                                        final StroomPropertyService stroomPropertyService,
                                        final StroomBeanStore stroomBeanStore,
-                                       final InternalStatisticsReceiver internalStatisticsReceiver) {
-        return new VolumeServiceImpl(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsReceiver);
+                                       final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
+        return new VolumeServiceImpl(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsReceiverProvider);
     }
 }

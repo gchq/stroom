@@ -18,6 +18,7 @@
 package stroom.dashboard;
 
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.shared.DocumentType;
 import stroom.visualisation.VisualisationService;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;

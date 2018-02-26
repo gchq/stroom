@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.StroomDatabaseInfo;
+import stroom.entity.StroomDatabaseInfo;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
 import stroom.task.TaskMonitorImpl;
