@@ -35,6 +35,7 @@ stroom.statistics.sql.jdbcDriverPassword=stroompassword1
 
 stroom.security.apiToken=eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDQ4NjMwNDMsInN1YiI6InN0cm9vbVNlcnZpY2VVc2VyIiwiaXNzIjoic3Ryb29tIn0.gHJkpxeW5CjU_hBzuLhQd8Ot8XkLvhu45_-Ql4gOX96iNbl0AnKEwKu2QmMY3uVerGjYBHDczgKJlLVF_RQtFiwFLorT2P_Mv-9ShcCL0Ml-Tq-1i-_UnHMYHP5Nv-rP3ajUz-vTHwIYqi_WU-IEpIF56MCYBqeDkgQfe-I03VyfsLkWt-3f8L3AKESZirmqjPUB_SPi4vWGpyN28FuJe1KyqdCPo5QVKnrM_dpguE_aIj1Dy1sovmgO5WxFm3-hE7asW3WrnokSopNXQ1bJ3W77v4k1CnMpYDw5schQAKqUffPVGxNE6UxNunZTlRQJQqYihKkhpeiTiZMo9XCHGg
 
+# Change this to HTTP and visit directly if you want to run GWT Super Dev Mode
 stroom.advertisedUrl=https://IP_ADDRESS/stroom/ui
 
 stroom.auth.jwt.issuer=stroom
@@ -83,10 +84,11 @@ stroom.url.dashboard=http://IP_ADDRESS/stroom/dashboard.jsp
 # External Doc Ref
 #~~~~~~~~~~~~~~~~~
 stroom.doc-ref.types=AnnotationsIndex,ElasticIndex
-stroom.url.doc-ref.service.AnnotationsIndex=http://IP_ADDRESS:8199
-stroom.url.doc-ref.service.ElasticIndex=http://IP_ADDRESS:8299
-stroom.url.doc-ref.ui.AnnotationsIndex=http://IP_ADDRESS:5001
-stroom.url.doc-ref.ui.ElasticIndex=http://IP_ADDRESS:5002
+stroom.url.doc-ref.service.AnnotationsIndex=http://IP_ADDRESS/annotationsService
+stroom.url.doc-ref.service.ElasticIndex=http://IP_ADDRESS/queryElasticService
+## Must use direct HTTP's otherwise GWT blocks the attempt to load the iframe
+stroom.url.doc-ref.ui.AnnotationsIndex=https://IP_ADDRESS:9444
+stroom.url.doc-ref.ui.ElasticIndex=https://IP_ADDRESS:9445
 
 # Internal statistic definitions
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,3 +103,5 @@ stroom.url.doc-ref.ui.ElasticIndex=http://IP_ADDRESS:5002
 #stroom.internalstatistics.streamTaskQueueSize.docRefs=docRef(StatisticStore,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size)
 #stroom.internalstatistics.volumes.docRefs=docRef(StatisticStore,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes)
 #stroom.internalstatistics.memory.docRefs=docRef(StatisticStore,77c09ccb-e251-4ca5-bca0-56a842654397,Memory)
+#stroom.internalstatistics.heapHistogramInstances.docRefs=docRef(StatisticStore,e4f243b8-2c70-4d6e-9d5a-16466bf8764f,Heap Histogram Instances)
+#stroom.internalstatistics.heapHistogramBytes.docRefs=docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)

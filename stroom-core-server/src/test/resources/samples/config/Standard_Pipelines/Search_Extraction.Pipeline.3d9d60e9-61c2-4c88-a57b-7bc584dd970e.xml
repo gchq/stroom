@@ -3,6 +3,5 @@
    <description/>
    <name>Search Extraction</name>
    <parentPipelineXML/>
-   <pipelineType>Search Extraction</pipelineType>
    <uuid>3d9d60e9-61c2-4c88-a57b-7bc584dd970e</uuid>
 </pipeline>

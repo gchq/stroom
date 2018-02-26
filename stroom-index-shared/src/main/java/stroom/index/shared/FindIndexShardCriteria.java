@@ -20,7 +20,6 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.EntityMatcher;
 import stroom.entity.shared.Range;
 import stroom.entity.shared.StringCriteria;
 import stroom.index.shared.IndexShard.IndexShardStatus;
@@ -28,7 +27,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.query.api.v2.DocRef;
 
-public class FindIndexShardCriteria extends BaseCriteria implements EntityMatcher<IndexShard> {
+public class FindIndexShardCriteria extends BaseCriteria {
     public static final String FIELD_PARTITION = "Partition";
     private static final long serialVersionUID = 3552286394659242683L;
     private Range<Integer> documentCountRange = new Range<>();
@@ -92,25 +91,5 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         sb.append("indexSet=");
         sb.append(indexSet);
         return sb.toString();
-    }
-
-    @Override
-    public boolean isMatch(final IndexShard indexShard) {
-        if (!nodeIdSet.isMatch(indexShard.getNode())) {
-            return false;
-        }
-        if (!volumeIdSet.isMatch(indexShard.getVolume())) {
-            return false;
-        }
-        if (!indexSet.isMatch(DocRefUtil.create(indexShard.getIndex()))) {
-            return false;
-        }
-        if (!indexShardSet.isMatch(indexShard)) {
-            return false;
-        }
-        if (!indexShardStatusSet.isMatch(indexShard.getStatus())) {
-            return false;
-        }
-        return partition.isMatch(indexShard.getPartition());
     }
 }

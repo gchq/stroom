@@ -1,10 +1,11 @@
 package stroom.explorer.client.presenter;
 
 import java.util.HashSet;
+import java.util.Set;
 
 public class OpenItems<T> {
-    private final HashSet<T> openItems = new HashSet<>();
-    private HashSet<T> temporaryOpenItems = new HashSet<>();
+    private final Set<T> openItems = new HashSet<>();
+    private Set<T> temporaryOpenItems = new HashSet<>();
 
     public void open(final T item) {
         openItems.add(item);
@@ -34,7 +35,7 @@ public class OpenItems<T> {
         }
     }
 
-    HashSet<T> getAllOpenItems() {
+    Set<T> getAllOpenItems() {
         // Ensure that we always get a new set returned so that changes to the open items after this set is returned are
         // not reflected in the returned set.
         final HashSet<T> combined = new HashSet<>();
@@ -43,7 +44,15 @@ public class OpenItems<T> {
         return combined;
     }
 
-    void setTemporaryOpenItems(final HashSet<T> temporaryOpenItems) {
+    Set<T> getOpenItems() {
+        return new HashSet<>(this.openItems);
+    }
+
+    Set<T> getTemporaryOpenItems() {
+        return new HashSet<>(this.temporaryOpenItems);
+    }
+
+    void setTemporaryOpenItems(final Set<T> temporaryOpenItems) {
         this.temporaryOpenItems = temporaryOpenItems;
     }
 }
