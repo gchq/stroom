@@ -134,7 +134,7 @@ public class SecurityFilter implements Filter {
                     continueAsUser(request, response, chain, userRef);
                 }
 
-            } if (isClusterCallRequest) {
+            } else if (isClusterCallRequest) {
                 bypassAuthentication(request, response, chain, false);
             } else {
                 // Authenticate requests from the UI.
