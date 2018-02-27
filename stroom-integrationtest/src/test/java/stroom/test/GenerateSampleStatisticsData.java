@@ -97,7 +97,7 @@ public class GenerateSampleStatisticsData {
 
         stringBuilder.append("<data>\n");
 
-        for (int i = 0; i <= ITERATION_COUNT; i++) {
+        for (int i = 0; i < ITERATION_COUNT; i++) {
             for (final String user : users) {
                 for (final String colour : COLOURS) {
                     for (final String state : STATES) {
