@@ -200,7 +200,7 @@ import javax.inject.Named;
 //        stroom.search.SearchTestSpringConfig.class,
 //        stroom.search.extraction.ExtractionSpringConfig.class,
 //        stroom.search.shard.ShardSpringConfig.class,
-//        stroom.security.MockSecuritySpringConfig.class,
+        stroom.security.MockSecurityContextSpringConfig.class,
 //        stroom.security.SecuritySpringConfig.class,
 //        stroom.servicediscovery.ServiceDiscoverySpringConfig.class,
 //        stroom.servlet.ServletSpringConfig.class,
@@ -333,11 +333,6 @@ public class HeadlessSpringConfig {
                 recordErrorReceiver,
                 pipelineDataCache,
                 streamHolder);
-    }
-
-    @Bean
-    public SecurityContext securityContext() {
-        return new HeadlessSecurityContext();
     }
 
     @Bean

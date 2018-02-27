@@ -25,7 +25,6 @@ import stroom.properties.StroomPropertyService;
 import javax.inject.Singleton;
 
 @Configuration
-@Import({PropertySpringConfig.class})
 public class ConnectorsSpringConfig {
     @Bean
     @Singleton

@@ -24,6 +24,11 @@ import stroom.node.shared.ClientPropertiesService;
 @Configuration
 public class MockPropertySpringConfig {
     @Bean
+    public ClientPropertiesService clientPropertiesService() {
+        return new ClientPropertiesServiceImpl();
+    }
+
+    @Bean
     public GlobalProperties globalProperties() {
         return new GlobalProperties();
     }
