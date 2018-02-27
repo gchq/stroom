@@ -267,6 +267,7 @@ import stroom.kafka.KafkaSpringConfig;
         stroom.search.shard.ShardSpringConfig.class,
 //        stroom.security.MockSecuritySpringConfig.class,
         stroom.security.SecuritySpringConfig.class,
+        stroom.security.SecurityContextSpringConfig.class,
         stroom.servicediscovery.ServiceDiscoverySpringConfig.class,
         stroom.servlet.ServletSpringConfig.class,
         stroom.spring.MetaDataStatisticConfiguration.class,

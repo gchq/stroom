@@ -18,18 +18,43 @@ package stroom.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import stroom.entity.StroomEntityManager;
+import stroom.entity.event.EntityEventBus;
+import stroom.explorer.ExplorerService;
+import stroom.util.cache.CacheManager;
+
+import javax.inject.Provider;
 
 @Configuration
 public class MockSecuritySpringConfig {
-    @Bean
-//    @Profile(SecuritySpringConfig.MOCK_SECURITY)
-    public SecurityContext securityContext() {
-        return new MockSecurityContext();
-    }
-
     @Bean("userService")
 //    @Profile(StroomSpringProfiles.TEST)
     public UserService userService() {
         return new MockUserService();
+    }
+
+    @Bean
+    public UserGroupsCache userGroupsCache(final CacheManager cacheManager,
+                                           final UserService userService,
+                                           final Provider<EntityEventBus> eventBusProvider) {
+        return new UserGroupsCache(cacheManager, userService, eventBusProvider);
+    }
+
+    @Bean
+    public DocumentPermissionsCache documentPermissionsCache(final CacheManager cacheManager,
+                                                             final DocumentPermissionService documentPermissionService,
+                                                             final Provider<EntityEventBus> eventBusProvider) {
+        return new DocumentPermissionsCache(cacheManager, documentPermissionService, eventBusProvider);
+    }
+
+    @Bean
+    public DocumentPermissionService documentPermissionService(final StroomEntityManager entityManager,
+                                                               final DocumentTypePermissions documentTypePermissions) {
+        return new DocumentPermissionServiceImpl(entityManager, documentTypePermissions);
+    }
+
+    @Bean
+    public DocumentTypePermissions documentTypePermissions(final ExplorerService explorerService) {
+        return new DocumentTypePermissions(explorerService);
     }
 }

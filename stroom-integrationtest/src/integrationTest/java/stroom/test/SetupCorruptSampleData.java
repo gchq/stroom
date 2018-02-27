@@ -56,7 +56,6 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
         FileUtil.deleteContents(FileUtil.getTempDir());
 
         @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
-        appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD, SecuritySpringConfig.MOCK_SECURITY);
         appContext.register(SetupSampleDataSpringConfig.class);
         appContext.refresh();
 

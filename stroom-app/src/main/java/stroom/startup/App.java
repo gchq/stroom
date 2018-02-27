@@ -232,7 +232,6 @@ public class App extends Application<Config> {
 
     private ApplicationContext loadApplcationContext(final Configuration configuration, final Environment environment) {
         final AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
-        applicationContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD, SecuritySpringConfig.PROD_SECURITY);
         applicationContext.getBeanFactory().registerSingleton("dwConfiguration", configuration);
         applicationContext.getBeanFactory().registerSingleton("dwEnvironment", environment);
         applicationContext.register(AppSpringConfig.class);

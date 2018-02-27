@@ -22,10 +22,6 @@ import org.springframework.test.context.ContextConfiguration;
 import stroom.security.SecuritySpringConfig;
 import stroom.util.spring.StroomSpringProfiles;
 
-@ActiveProfiles(value = {
-        StroomSpringProfiles.TEST,
-        StroomSpringProfiles.IT,
-        SecuritySpringConfig.MOCK_SECURITY})
 @ContextConfiguration(classes = {AbstractProcessIntegrationTestSpringConfig.class})
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
     @Before

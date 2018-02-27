@@ -34,8 +34,6 @@ public final class SetupSampleData {
         TaskScopeContextHolder.addContext();
         try {
             @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
-            appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,
-                    SecuritySpringConfig.MOCK_SECURITY);
             appContext.register(SetupSampleDataSpringConfig.class);
             appContext.refresh();
             final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);

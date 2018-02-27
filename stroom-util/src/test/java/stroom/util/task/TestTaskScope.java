@@ -32,7 +32,6 @@ import javax.annotation.Resource;
 import java.util.ArrayDeque;
 
 @Category(ComponentTest.class)
-@ActiveProfiles(StroomSpringProfiles.TEST)
 @RunWith(StroomSpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TaskScopeTestConfiguration.class)
 public class TestTaskScope {

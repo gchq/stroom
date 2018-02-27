@@ -45,7 +45,6 @@ import java.util.zip.ZipOutputStream;
  * The combination of mock and prod classes means this test needs its own
  * context.
  */
-//@ActiveProfiles(value = {StroomSpringProfiles.TEST, StroomSpringProfiles.IT})
 @ContextConfiguration(classes = {TestDataFeedServiceImplConfiguration.class})
 @Ignore("TODO 2015-11-18: These tests have interdependencies: they pass individually but fail when run together. Ignoring so the test may be fixed later.")
 public class TestDataFeedServiceImpl extends StroomIntegrationTest {

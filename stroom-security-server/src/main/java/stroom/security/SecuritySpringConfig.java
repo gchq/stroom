@@ -19,11 +19,10 @@ package stroom.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
-import stroom.entity.event.EntityEventBus;
 import stroom.entity.StroomEntityManager;
+import stroom.entity.event.EntityEventBus;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;
 import stroom.jobsystem.ClusterLockService;
@@ -34,16 +33,12 @@ import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Provider;
 import javax.validation.constraints.NotNull;
 
 @Configuration
 public class SecuritySpringConfig {
-    public static final String PROD_SECURITY = "PROD_SECURITY";
-    public static final String MOCK_SECURITY = "MOCK_SECURITY";
-
     @Bean
     public AuthenticationServiceClients authenticationServiceClients(
             @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}") final String ourApiToken,
@@ -165,19 +160,6 @@ public class SecuritySpringConfig {
     public LogoutHandler logoutHandler(final HttpServletRequestHolder httpServletRequestHolder,
                                        final AuthenticationEventLog eventLog) {
         return new LogoutHandler(httpServletRequestHolder, eventLog);
-    }
-
-    @Bean
-//    @Profile(PROD_SECURITY)
-    @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
-    public SecurityContext securityContext(final DocumentPermissionsCache documentPermissionsCache,
-                                           final UserGroupsCache userGroupsCache,
-                                           final UserAppPermissionsCache userAppPermissionsCache,
-                                           final UserCache userCache,
-                                           final DocumentPermissionService documentPermissionService,
-                                           final DocumentTypePermissions documentTypePermissions,
-                                           final AuthenticationServiceClients authenticationServiceClients) {
-        return new SecurityContextImpl(documentPermissionsCache, userGroupsCache, userAppPermissionsCache, userCache, documentPermissionService, documentTypePermissions, authenticationServiceClients);
     }
 
     @Bean

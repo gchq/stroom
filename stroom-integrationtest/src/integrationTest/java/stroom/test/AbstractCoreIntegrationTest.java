@@ -16,15 +16,8 @@
 
 package stroom.test;
 
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.security.SecuritySpringConfig;
-import stroom.util.spring.StroomSpringProfiles;
 
-@ActiveProfiles(value = {
-        StroomSpringProfiles.PROD,
-        StroomSpringProfiles.IT,
-        SecuritySpringConfig.MOCK_SECURITY})
 @ContextConfiguration(classes = {AbstractCoreIntegrationTestSpringConfig.class})
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
 }
