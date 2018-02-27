@@ -49,10 +49,16 @@ class ImportExportActionHandlers {
         final Map<String, ImportExportActionHandler> handlerMap = new HashMap<>();
         final Set<String> set = beanStore.getStroomBeanByType(ImportExportActionHandler.class);
         set.forEach(name -> {
-            final Object object = beanStore.getBean(name);
-            if (object != null && object instanceof ImportExportActionHandler) {
-                final ImportExportActionHandler importExportActionHandler = (ImportExportActionHandler) object;
-                handlerMap.put(importExportActionHandler.getDocumentType().getType(), importExportActionHandler);
+            if (!name.toLowerCase().contains("cache")) {
+                final Object object = beanStore.getBean(name);
+                if (object != null && object instanceof ImportExportActionHandler) {
+                    final ImportExportActionHandler importExportActionHandler = (ImportExportActionHandler) object;
+                    final String type = importExportActionHandler.getDocumentType().getType();
+                    final ImportExportActionHandler existing = handlerMap.putIfAbsent(type, importExportActionHandler);
+                    if (existing != null) {
+                        throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existing + "} new {" + importExportActionHandler + "}");
+                    }
+                }
             }
         });
         return handlerMap;

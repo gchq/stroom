@@ -71,11 +71,22 @@ class ExplorerActionHandlers {
         Handlers(final StroomBeanStore beanStore) {
             final Set<String> set = beanStore.getStroomBeanByType(ExplorerActionHandler.class);
             set.forEach(name -> {
-                final Object object = beanStore.getBean(name);
-                if (object != null && object instanceof ExplorerActionHandler) {
-                    final ExplorerActionHandler explorerActionHandler = (ExplorerActionHandler) object;
-                    allHandlers.put(explorerActionHandler.getDocumentType().getType(), explorerActionHandler);
-                    allTypes.put(explorerActionHandler.getDocumentType().getType(), explorerActionHandler.getDocumentType());
+                if (!name.toLowerCase().contains("cache")) {
+                    final Object object = beanStore.getBean(name);
+                    if (object != null && object instanceof ExplorerActionHandler) {
+                        final ExplorerActionHandler explorerActionHandler = (ExplorerActionHandler) object;
+                        final String type = explorerActionHandler.getDocumentType().getType();
+
+                        final ExplorerActionHandler existingActionHandler = allHandlers.putIfAbsent(type, explorerActionHandler);
+                        if (existingActionHandler != null) {
+                            throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + explorerActionHandler + "}");
+                        }
+
+                        final DocumentType existingDocumentType = allTypes.putIfAbsent(type, explorerActionHandler.getDocumentType());
+                        if (existingDocumentType != null) {
+                            throw new RuntimeException("A document type already exists for '" + type + "' existing {" + existingDocumentType + "} new {" + explorerActionHandler.getDocumentType() + "}");
+                        }
+                    }
                 }
             });
 
