@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.security;
+package stroom.headless;
 
-public class MockSecurityContext implements SecurityContext {
+import stroom.security.SecurityContext;
+
+public class HeadlessSecurityContext implements SecurityContext {
     @Override
     public void pushUser(final String name) {
         // Do nothing.

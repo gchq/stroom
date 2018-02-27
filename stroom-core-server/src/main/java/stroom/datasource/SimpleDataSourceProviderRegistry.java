@@ -74,7 +74,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
                             .sorted()
                             .collect(Collectors.joining("\n"))
             );
-            LOGGER.info("Stroom-stats is not available when servcie discovery is disabled");
+            LOGGER.info("Stroom-stats is not available when service discovery is disabled");
         } else {
             LOGGER.error("Property value for {} is null or empty, local service lookup will not function",
                     PROP_KEY_BASE_PATH);

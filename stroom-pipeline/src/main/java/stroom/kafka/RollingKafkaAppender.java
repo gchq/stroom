@@ -1,8 +1,8 @@
-package stroom.pipeline.writer;
+package stroom.kafka;
 
 import stroom.connectors.kafka.StroomKafkaProducer;
-import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.destination.RollingDestination;
+import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.destination.RollingKafkaDestination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -10,9 +10,11 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.writer.AbstractRollingAppender;
+import stroom.pipeline.writer.PathCreator;
+import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 @ConfigurableElement(
         type = "RollingKafkaAppender",
@@ -22,8 +24,7 @@ import java.io.IOException;
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.KAFKA)
-public class RollingKafkaAppender extends AbstractRollingAppender {
-
+class RollingKafkaAppender extends AbstractRollingAppender {
     private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
     private final PathCreator pathCreator;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -35,16 +36,19 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     private String key;
 
     @Inject
-    RollingKafkaAppender(final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+    RollingKafkaAppender(final RollingDestinations destinations,
+                         final TaskMonitor taskMonitor,
+                         final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
                          final PathCreator pathCreator,
                          final ErrorReceiverProxy errorReceiverProxy) {
+        super(destinations, taskMonitor);
         this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
         this.pathCreator = pathCreator;
         this.errorReceiverProxy = errorReceiverProxy;
     }
 
     @Override
-    void validateSpecificSettings() {
+    protected void validateSpecificSettings() {
         if (recordKey == null || recordKey.length() == 0) {
             throw new ProcessException("No recordKey has been specified");
         }
@@ -55,7 +59,7 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     }
 
     @Override
-    Object getKey() throws IOException {
+    protected Object getKey() {
         if (key == null) {
             //this allows us to have two destinations for the same key and topic but with different
             //flush semantics
@@ -65,7 +69,7 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     }
 
     @Override
-    public RollingDestination createDestination() throws IOException {
+    public RollingDestination createDestination() {
         StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector()
                 .orElseThrow(() -> new ProcessException("No kafka producer available to use"));
 

@@ -27,8 +27,8 @@ import stroom.feed.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.jobsystem.ClusterLockService;
 import stroom.node.NodeCache;
-import stroom.properties.StroomPropertyService;
 import stroom.pipeline.PipelineService;
+import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.security.SecurityContext;
 import stroom.statistics.internal.InternalStatisticsReceiver;
@@ -50,17 +50,6 @@ public class StreamTaskSpringConfig {
     public BatchIdTransactionHelper batchIdTransactionHelper(final StroomDatabaseInfo stroomDatabaseInfo,
                                                              final StroomEntityManager stroomEntityManager) {
         return new BatchIdTransactionHelper(stroomDatabaseInfo, stroomEntityManager);
-    }
-
-    @Bean("cachedStreamProcessorFilterService")
-    public CachedStreamProcessorFilterService cachedStreamProcessorFilterService(final CachingEntityManager entityManager,
-                                                                                 final StreamProcessorService streamProcessorService) {
-        return new CachedStreamProcessorFilterService(entityManager, streamProcessorService);
-    }
-
-    @Bean("cachedStreamProcessorService")
-    public CachedStreamProcessorService cachedStreamProcessorService(final CachingEntityManager entityManager) {
-        return new CachedStreamProcessorService(entityManager);
     }
 
     @Bean
@@ -100,12 +89,18 @@ public class StreamTaskSpringConfig {
 
     @Bean
     @Scope(StroomScope.PROTOTYPE)
-    public ProxyFileProcessor proxyFileProcessor(final StreamStore streamStore,
+    public ProxyFileProcessorImpl proxyFileProcessorImpl(final StreamStore streamStore,
                                                  @Named("cachedFeedService") final FeedService feedService,
                                                  final MetaDataStatistic metaDataStatistic,
                                                  @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
                                                  @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
         return new ProxyFileProcessorImpl(streamStore, feedService, metaDataStatistic, maxAggregation, maxStreamSize);
+    }
+
+    @Bean
+    @Scope(StroomScope.PROTOTYPE)
+    public ProxyFileProcessor proxyFileProcessor(final ProxyFileProcessorImpl proxyFileProcessor) {
+        return proxyFileProcessor;
     }
 
     @Bean
@@ -121,8 +116,19 @@ public class StreamTaskSpringConfig {
         return new StreamProcessorFilterServiceImpl(entityManager, streamProcessorService);
     }
 
+    @Bean("cachedStreamProcessorFilterService")
+    public StreamProcessorFilterService cachedStreamProcessorFilterService(final CachingEntityManager entityManager,
+                                                                           final StreamProcessorService streamProcessorService) {
+        return new StreamProcessorFilterServiceImpl(entityManager, streamProcessorService);
+    }
+
     @Bean("streamProcessorService")
     public StreamProcessorService streamProcessorService(final StroomEntityManager entityManager) {
+        return new StreamProcessorServiceImpl(entityManager);
+    }
+
+    @Bean("cachedStreamProcessorService")
+    public StreamProcessorService cachedStreamProcessorService(final CachingEntityManager entityManager) {
         return new StreamProcessorServiceImpl(entityManager);
     }
 

@@ -56,7 +56,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     private String receiveResult;
 
     @Inject
-    public ClusterDispatchAsyncImpl(final TaskManager taskManager, final ClusterResultCollectorCache collectorCache,
+    ClusterDispatchAsyncImpl(final TaskManager taskManager, final ClusterResultCollectorCache collectorCache,
                                     @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
         this.taskManager = taskManager;
         this.collectorCache = collectorCache;

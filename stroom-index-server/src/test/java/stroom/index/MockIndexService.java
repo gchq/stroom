@@ -18,13 +18,16 @@
 package stroom.index;
 
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 
 import javax.inject.Inject;
 
-public class MockIndexService extends MockDocumentEntityService<Index, FindIndexCriteria> implements IndexService {
+public class MockIndexService extends MockDocumentEntityService<Index, FindIndexCriteria> implements IndexService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     public MockIndexService(final ImportExportHelper importExportHelper) {
         super(importExportHelper);
@@ -33,5 +36,10 @@ public class MockIndexService extends MockDocumentEntityService<Index, FindIndex
     @Override
     public Class<Index> getEntityClass() {
         return Index.class;
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(10, Index.ENTITY_TYPE, Index.ENTITY_TYPE);
     }
 }

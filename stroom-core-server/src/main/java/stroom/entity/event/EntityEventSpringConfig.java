@@ -39,9 +39,4 @@ public class EntityEventSpringConfig {
                                                                          final TargetNodeSetFactory targetNodeSetFactory) {
         return new DispatchEntityEventTaskHandler(dispatchHelper, targetNodeSetFactory);
     }
-
-    @Bean
-    public EntityEventBus entityEventBus(final StroomBeanStore stroomBeanStore, final TaskManager taskManager) {
-        return new EntityEventBusImpl(stroomBeanStore, taskManager);
-    }
 }

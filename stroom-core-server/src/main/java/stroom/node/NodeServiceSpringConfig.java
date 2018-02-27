@@ -24,19 +24,24 @@ import stroom.entity.StroomEntityManager;
 
 @Configuration
 public class NodeServiceSpringConfig {
-    @Bean("cachedNodeService")
-    public CachedNodeService cachedNodeService(final CachingEntityManager entityManager,
-                                               final NodeServiceTransactionHelper nodeServiceUtil,
-                                               @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
-                                               @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
-        return new CachedNodeService(entityManager, nodeServiceUtil, nodeName, rackName);
-    }
-
     @Bean("nodeService")
     public NodeService nodeService(final StroomEntityManager entityManager,
-                                   final NodeServiceTransactionHelper nodeServiceUtil,
+                                   final NodeServiceTransactionHelper nodeServiceTransactionHelper,
                                    @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
                                    @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
-        return new NodeServiceImpl(entityManager, nodeServiceUtil, nodeName, rackName);
+        return new NodeServiceImpl(entityManager, nodeServiceTransactionHelper, nodeName, rackName);
+    }
+
+    @Bean("cachedNodeService")
+    public NodeService cachedNodeService(final CachingEntityManager entityManager,
+                                         final NodeServiceTransactionHelper nodeServiceTransactionHelper,
+                                         @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
+                                         @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
+        return new NodeServiceImpl(entityManager, nodeServiceTransactionHelper, nodeName, rackName);
+    }
+
+    @Bean
+    public NodeServiceTransactionHelper nodeServiceTransactionHelper(final StroomEntityManager entityManager) {
+        return new NodeServiceTransactionHelper(entityManager);
     }
 }

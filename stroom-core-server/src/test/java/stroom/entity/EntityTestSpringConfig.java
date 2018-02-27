@@ -26,7 +26,7 @@ import javax.inject.Named;
 @Configuration
 public class EntityTestSpringConfig {
     @Bean
-    public EntityServiceImplTestTransactionHelper entityServiceImplTestTransactionHelper(@Named("cachedFeedService") final FeedService feedService, final FeedService cachedFeedService) {
+    public EntityServiceImplTestTransactionHelper entityServiceImplTestTransactionHelper(final FeedService feedService, @Named("cachedFeedService") final FeedService cachedFeedService) {
         return new EntityServiceImplTestTransactionHelper(feedService, cachedFeedService);
     }
 }

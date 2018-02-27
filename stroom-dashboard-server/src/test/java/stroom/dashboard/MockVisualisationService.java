@@ -18,14 +18,21 @@
 package stroom.dashboard;
 
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.visualisation.VisualisationService;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 
-public class MockVisualisationService extends MockDocumentEntityService<Visualisation, FindVisualisationCriteria> implements VisualisationService {
+public class MockVisualisationService extends MockDocumentEntityService<Visualisation, FindVisualisationCriteria> implements VisualisationService, ExplorerActionHandler, ImportExportActionHandler {
     @Override
     public Class<Visualisation> getEntityClass() {
         return Visualisation.class;
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(9, Visualisation.ENTITY_TYPE, Visualisation.ENTITY_TYPE);
     }
 }

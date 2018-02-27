@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.writer;
+package stroom.kafka;
 
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
-import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.connectors.kafka.StroomKafkaRecordMetaData;
 import stroom.pipeline.destination.Destination;
@@ -29,6 +28,7 @@ import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.writer.AbstractDestinationProvider;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
@@ -41,7 +41,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractKafkaAppender extends AbstractDestinationProvider implements Destination {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKafkaAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;

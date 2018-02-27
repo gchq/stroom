@@ -1,10 +1,14 @@
-package stroom.connectors.kafka;
+package stroom.kafka;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import stroom.connectors.ExternalLibService;
+import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.connectors.kafka.StroomKafkaRecordMetaData;
+import stroom.kafka.StroomKafkaProducerFactoryService;
 import stroom.node.MockStroomPropertyService;
 import stroom.properties.StroomPropertyService;
 

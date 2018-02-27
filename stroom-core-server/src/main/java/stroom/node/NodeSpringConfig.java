@@ -93,19 +93,9 @@ public class NodeSpringConfig {
     }
 
     @Bean
-    public NodeConfig nodeConfig() {
-        return new NodeConfigImpl();
-    }
-
-    @Bean
     @Scope(value = StroomScope.TASK)
     public NodeInfoClusterHandler nodeInfoClusterHandler(final NodeCache nodeCache) {
         return new NodeInfoClusterHandler(nodeCache);
-    }
-
-    @Bean
-    public NodeServiceTransactionHelper nodeServiceTransactionHelper(final StroomEntityManager entityManager) {
-        return new NodeServiceTransactionHelper(entityManager);
     }
 
     @Bean

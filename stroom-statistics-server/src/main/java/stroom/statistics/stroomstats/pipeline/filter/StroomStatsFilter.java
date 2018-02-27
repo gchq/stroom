@@ -1,7 +1,7 @@
 package stroom.statistics.stroomstats.pipeline.filter;
 
-import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
-import stroom.connectors.kafka.filter.AbstractKafkaProducerFilter;
+import stroom.kafka.StroomKafkaProducerFactoryService;
+import stroom.kafka.AbstractKafkaProducerFilter;
 import stroom.properties.StroomPropertyService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -27,7 +27,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.STROOM_STATS)
-public class StroomStatsFilter extends AbstractKafkaProducerFilter {
+class StroomStatsFilter extends AbstractKafkaProducerFilter {
 
     private final TopicNameFactory topicNameFactory;
     private final StroomStatsStoreEntityService stroomStatsStoreEntityService;
@@ -37,13 +37,12 @@ public class StroomStatsFilter extends AbstractKafkaProducerFilter {
     private DocRef stroomStatStoreRef;
 
     @Inject
-    public StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
+    StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
                              final LocationFactoryProxy locationFactory,
                              final StroomPropertyService stroomPropertyService,
                              final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
                              final TopicNameFactory topicNameFactory,
                              final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
-
         super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
         this.topicNameFactory = topicNameFactory;
         this.stroomStatsStoreEntityService = stroomStatsStoreEntityService;

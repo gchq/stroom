@@ -1,4 +1,4 @@
-package stroom.connectors.kafka.filter;
+package stroom.kafka;
 
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.connectors.kafka.StroomKafkaProducer;
-import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -19,7 +18,6 @@ import stroom.util.shared.Severity;
 import java.util.Collections;
 
 public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKafkaProducerFilter.class);
 
     private boolean flushOnSend;
@@ -31,7 +29,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     private Locator locator;
 
-    public AbstractKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
+    protected AbstractKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
                                        final LocationFactoryProxy locationFactory,
                                        final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
 

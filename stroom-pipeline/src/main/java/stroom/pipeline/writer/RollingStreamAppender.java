@@ -22,6 +22,7 @@ import stroom.feed.shared.Feed;
 import stroom.node.NodeCache;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinationFactory;
+import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.destination.RollingStreamDestination;
 import stroom.pipeline.destination.StreamKey;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -38,6 +39,7 @@ import stroom.streamstore.StreamTarget;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -64,11 +66,14 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private StreamKey key;
 
     @Inject
-    RollingStreamAppender(final StreamStore streamStore,
+    RollingStreamAppender(final RollingDestinations destinations,
+                          final TaskMonitor taskMonitor,
+                          final StreamStore streamStore,
                           final StreamHolder streamHolder,
                           final FeedService feedService,
                           final StreamTypeService streamTypeService,
                           final NodeCache nodeCache) {
+        super(destinations, taskMonitor);
         this.streamStore = streamStore;
         this.streamHolder = streamHolder;
         this.feedService = feedService;
@@ -103,7 +108,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @Override
-    Object getKey() throws IOException {
+    protected Object getKey() {
         if (key == null) {
             key = new StreamKey(feed, streamType, segmentOutput);
         }
@@ -112,7 +117,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @Override
-    void validateSpecificSettings() {
+    protected void validateSpecificSettings() {
         if (feed == null) {
             if (feedRef != null) {
                 feed = feedService.loadByUuid(feedRef.getUuid());

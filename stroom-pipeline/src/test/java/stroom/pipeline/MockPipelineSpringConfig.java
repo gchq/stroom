@@ -18,7 +18,9 @@ package stroom.pipeline;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 import stroom.importexport.ImportExportHelper;
+import stroom.util.spring.StroomScope;
 
 @Configuration
 public class MockPipelineSpringConfig {
@@ -40,5 +42,28 @@ public class MockPipelineSpringConfig {
     @Bean
     public XSLTService xSLTService(final ImportExportHelper importExportHelper) {
         return new MockXSLTService(importExportHelper);
+    }
+
+    @Bean
+    public CustomURIResolver customURIResolver(final XSLTService xsltService) {
+        return new CustomURIResolver(xsltService);
+    }
+
+    @Bean
+    @Scope(value = StroomScope.TASK)
+    public LocationFactoryProxy locationFactoryProxy() {
+        return new LocationFactoryProxy();
+    }
+
+    @Bean
+    @Scope(value = StroomScope.TASK)
+    public DefaultErrorWriter defaultErrorWriter() {
+        return new DefaultErrorWriter();
+    }
+
+    @Bean
+    @Scope(value = StroomScope.TASK)
+    public ErrorWriterProxy errorWriterProxy() {
+        return new ErrorWriterProxy();
     }
 }

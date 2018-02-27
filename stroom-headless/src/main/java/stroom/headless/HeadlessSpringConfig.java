@@ -32,7 +32,6 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.security.MockSecurityContext;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
 
@@ -128,7 +127,7 @@ import javax.inject.Named;
 
 //        stroom.benchmark.BenchmarkSpringConfig.class,
 //        stroom.cache.CacheSpringConfig.class,
-//        stroom.cache.PipelineCacheSpringConfig.class,
+        stroom.cache.PipelineCacheSpringConfig.class,
 //        stroom.cluster.ClusterSpringConfig.class,
 //        stroom.cluster.MockClusterSpringConfig.class,
 //        stroom.connectors.ConnectorsSpringConfig.class,
@@ -170,7 +169,9 @@ import javax.inject.Named;
         stroom.lifecycle.LifecycleSpringConfig.class,
         stroom.logging.LoggingSpringConfig.class,
 //        stroom.node.MockNodeSpringConfig.class,
+        stroom.node.NodeServiceSpringConfig.class,
         stroom.node.NodeSpringConfig.class,
+        stroom.node.NodeProdSpringConfig.class,
 //        stroom.node.NodeTestSpringConfig.class,
 //        stroom.pipeline.MockPipelineSpringConfig.class,
         stroom.pipeline.PipelineSpringConfig.class,
@@ -181,7 +182,6 @@ import javax.inject.Named;
         stroom.pipeline.parser.ParserSpringConfig.class,
         stroom.pipeline.reader.ReaderSpringConfig.class,
         stroom.pipeline.source.SourceSpringConfig.class,
-        stroom.pipeline.spring.PipelineConfiguration.class,
         stroom.pipeline.state.PipelineStateSpringConfig.class,
         stroom.pipeline.stepping.PipelineSteppingSpringConfig.class,
         stroom.pipeline.task.PipelineStreamTaskSpringConfig.class,
@@ -191,7 +191,7 @@ import javax.inject.Named;
         stroom.properties.PropertySpringConfig.class,
 //        stroom.proxy.repo.RepoSpringConfig.class,
 //        stroom.query.QuerySpringConfig.class,
-//        stroom.refdata.ReferenceDataSpringConfig.class,
+        stroom.refdata.ReferenceDataSpringConfig.class,
 //        stroom.resource.MockResourceSpringConfig.class,
         stroom.resource.ResourceSpringConfig.class,
 //        stroom.ruleset.RulesetSpringConfig.class,
@@ -209,8 +209,6 @@ import javax.inject.Named;
 //        stroom.spring.ProcessTestServerComponentScanConfiguration.class,
         stroom.spring.ScopeConfiguration.class,
 //        stroom.spring.ScopeTestConfiguration.class,
-        stroom.spring.ServerComponentScanConfiguration.class,
-//        stroom.spring.ServerComponentScanTestConfiguration.class,
         stroom.spring.ServerConfiguration.class,
 //        stroom.startup.AppSpringConfig.class,
 //        stroom.statistics.internal.InternalStatisticsSpringConfig.class,
@@ -249,13 +247,65 @@ import javax.inject.Named;
 //        stroom.volume.MockVolumeSpringConfig.class,
         stroom.volume.VolumeSpringConfig.class,
 //        stroom.xml.XmlSpringConfig.class,
-//        stroom.xml.converter.ds3.DS3SpringConfig.class,
-//        stroom.xml.converter.json.JsonSpringConfig.class,
+        stroom.xml.converter.ds3.DS3SpringConfig.class,
+        stroom.xml.converter.json.JsonSpringConfig.class,
 //        stroom.xmlschema.MockXmlSchemaSpringConfig.class,
         stroom.xmlschema.XmlSchemaSpringConfig.class
 
 
 })
+
+
+///**
+// * Defines the component scanning required for the server module.
+// * <p>
+// * Defined separately from the main configuration so it can be easily
+// * overridden.
+// */
+//@Configuration
+////@OldScan(basePackages = {
+////        "stroom.datafeed",
+////        "stroom.datasource",
+////        "stroom.db",
+////        "stroom.dispatch",
+////        "stroom.document.server",
+////        "stroom.docstore.server",
+////        "stroom.entity",
+////        "stroom.feed.server",
+////        "stroom.folder",
+////        "stroom.importexport",
+////        "stroom.internalstatistics",
+////        "stroom.io",
+////        "stroom.jobsystem",
+////        "stroom.connectors.kafka",
+////        "stroom.lifecycle",
+////        "stroom.logging",
+////        "stroom.node",
+////        "stroom.pipeline",
+////        "stroom.policy",
+////        "stroom.pool",
+////        "stroom.process",
+////        "stroom.proxy",
+////        "stroom.query",
+////        "stroom.resource",
+////        "stroom.servicediscovery",
+////        "stroom.servlet",
+////        "stroom.spring",
+////        "stroom.streamstore",
+////        "stroom.streamtask",
+////        "stroom.task",
+////        "stroom.test",
+////        "stroom.upgrade",
+////        "stroom.util",
+////        "stroom.volume",
+////        "stroom.xmlschema"
+////}, excludeFilters = {
+////        // Exclude other configurations that might be found accidentally during
+////        // a component scan as configurations should be specified explicitly.
+////        @OldFilter(type = FilterType.ANNOTATION, value = Configuration.class),})
+////@Import({ClusterSpringConfig.class, ClusterTaskSpringConfig.class, ConnectorsSpringConfig.class})
+//public class ServerComponentScanConfiguration {
+//}
 
 
 public class HeadlessSpringConfig {
@@ -287,6 +337,11 @@ public class HeadlessSpringConfig {
 
     @Bean
     public SecurityContext securityContext() {
-        return new MockSecurityContext();
+        return new HeadlessSecurityContext();
+    }
+
+    @Bean
+    public HeadlessInternalStatisticsReceiver headlessInternalStatisticsReceiver() {
+        return new HeadlessInternalStatisticsReceiver();
     }
 }

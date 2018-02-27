@@ -145,6 +145,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
                 }
 
             } else {
+                beanMethod.setAccessible(true);
                 beanMethod.invoke(bean, args);
             }
         }

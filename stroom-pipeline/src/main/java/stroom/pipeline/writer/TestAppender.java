@@ -31,14 +31,12 @@ public class TestAppender extends AbstractAppender {
     private OutputStream outputStream;
 
     @Inject
-    public TestAppender(final ErrorReceiverProxy errorReceiverProxy,
-                        final OutputStream outputStream) {
+    public TestAppender(final ErrorReceiverProxy errorReceiverProxy) {
         super(errorReceiverProxy);
-        this.outputStream = outputStream;
     }
 
     @Override
-    protected OutputStream createOutputStream() throws IOException {
+    protected OutputStream createOutputStream() {
         return outputStream;
     }
 

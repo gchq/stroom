@@ -26,9 +26,9 @@ import stroom.feed.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.jobsystem.ClusterLockService;
 import stroom.logging.StreamEventLog;
-import stroom.properties.StroomPropertyService;
 import stroom.pipeline.PipelineService;
 import stroom.policy.DataRetentionService;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.servlet.SessionResourceStore;
 import stroom.streamtask.BatchIdTransactionHelper;
@@ -147,9 +147,9 @@ public class StreamStoreSpringConfig {
     }
 
     @Bean("cachedStreamTypeService")
-    public CachedStreamTypeService cachedStreamTypeService(final CachingEntityManager entityManager,
-                                                           final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper) {
-        return new CachedStreamTypeService(entityManager, streamTypeServiceTransactionHelper);
+    public StreamTypeService cachedStreamTypeService(final CachingEntityManager entityManager,
+                                                     final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper) {
+        return new StreamTypeServiceImpl(entityManager, streamTypeServiceTransactionHelper);
     }
 
     @Bean

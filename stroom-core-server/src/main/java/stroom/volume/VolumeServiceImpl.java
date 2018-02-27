@@ -350,21 +350,23 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private void recordStats(final Volume volume) {
-        final InternalStatisticsReceiver receiver = internalStatisticsReceiverProvider.get();
-        if (receiver != null) {
-            try {
-                final VolumeState volumeState = volume.getVolumeState();
+        if (internalStatisticsReceiverProvider != null) {
+            final InternalStatisticsReceiver receiver = internalStatisticsReceiverProvider.get();
+            if (receiver != null) {
+                try {
+                    final VolumeState volumeState = volume.getVolumeState();
 
-                final long now = System.currentTimeMillis();
-                final List<InternalStatisticEvent> events = new ArrayList<>();
-                addStatisticEvent(events, now, volume, "Limit", volume.getBytesLimit());
-                addStatisticEvent(events, now, volume, "Used", volumeState.getBytesUsed());
-                addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
-                addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
-                receiver.putEvents(events);
-            } catch (final Throwable t) {
-                LOGGER.warn(t.getMessage());
-                LOGGER.debug(t.getMessage(), t);
+                    final long now = System.currentTimeMillis();
+                    final List<InternalStatisticEvent> events = new ArrayList<>();
+                    addStatisticEvent(events, now, volume, "Limit", volume.getBytesLimit());
+                    addStatisticEvent(events, now, volume, "Used", volumeState.getBytesUsed());
+                    addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
+                    addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
+                    receiver.putEvents(events);
+                } catch (final Throwable t) {
+                    LOGGER.warn(t.getMessage());
+                    LOGGER.debug(t.getMessage(), t);
+                }
             }
         }
     }

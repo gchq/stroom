@@ -18,34 +18,24 @@
 package stroom.xmlschema;
 
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
-import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
 
 public class MockXMLSchemaService extends MockDocumentEntityService<XMLSchema, FindXMLSchemaCriteria>
-        implements XMLSchemaService {
-    private final Path xsdDir;
-    //    private final FolderService folderService;
-//    private final ImportExportSerializerImpl importExportSerializer;
-    private boolean loaded;
+        implements XMLSchemaService, ExplorerActionHandler, ImportExportActionHandler {
 
     public MockXMLSchemaService() {
-//        this.folderService = null;
-//        this.importExportSerializer = null;
-        xsdDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config/XML Schemas");
     }
 
     @Inject
-    public MockXMLSchemaService(final ImportExportHelper importExportHelper) {
+    MockXMLSchemaService(final ImportExportHelper importExportHelper) {
         super(importExportHelper);
-//        this.folderService = folderService;
-//        this.importExportSerializer = importExportSerializer;
-        xsdDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config/XML Schemas");
     }
 
     @Override
@@ -65,27 +55,13 @@ public class MockXMLSchemaService extends MockDocumentEntityService<XMLSchema, F
         return !(criteria.getNamespaceURI() != null && !criteria.getNamespaceURI().equals(xmlSchema.getNamespaceURI()));
     }
 
-//    @Override
-//    public BaseResultList<XMLSchema> find(final FindXMLSchemaCriteria criteria) {
-////        if (!loaded && xsdDir != null && folderService != null) {
-////            loaded = true;
-////            importExportSerializer.performImport(xsdDir, Folder.ENTITY_TYPE, new HashMap<>(),
-////                    ImportMode.IGNORE_CONFIRMATION);
-////            importExportSerializer.performImport(xsdDir, XMLSchema.ENTITY_TYPE, new HashMap<>(),
-////                    ImportMode.IGNORE_CONFIRMATION);
-////        }
-//
-//        return super.find(criteria);
-//    }
-
-    @Override
-    public void clear() {
-        super.clear();
-        loaded = false;
-    }
-
     @Override
     public Class<XMLSchema> getEntityClass() {
         return XMLSchema.class;
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(13, XMLSchema.ENTITY_TYPE, "XML Schema");
     }
 }

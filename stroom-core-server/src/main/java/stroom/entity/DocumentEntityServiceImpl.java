@@ -426,53 +426,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return list.stream().filter(e -> securityContext.hasDocumentPermission(e.getType(), e.getUuid(), permission)).collect(Collectors.toList());
     }
 
-    public Set<DocRef> listDocuments() {
-        final List<E> list = find(createCriteria());
-        return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
-    }
-
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        final List<E> list = find(createCriteria());
-        return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
-    }
-
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
-        E entity = null;
-
-        try {
-            // See if a document already exists with this uuid.
-            entity = loadByUuid(docRef.getUuid(), Collections.singleton("all"));
-            if (entity == null) {
-                entity = getEntityClass().newInstance();
-            }
-
-            importExportHelper.performImport(entity, dataMap, importState, importMode);
-
-            // Save directly so there is no marshalling of objects that would destroy imported data.
-            if (importState.ok(importMode)) {
-                entity = internalSave(entity);
-            }
-
-        } catch (final Exception e) {
-            importState.addMessage(Severity.ERROR, e.getMessage());
-        }
-
-        return DocRefUtil.create(entity);
-    }
-
     protected E internalSave(final E entity) {
         return entityManager.saveEntity(entity);
-    }
-
-    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
-        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
-            final E entity = entityServiceHelper.loadByUuid(docRef.getUuid(), Collections.emptySet(), queryAppender);
-            if (entity != null) {
-                return importExportHelper.performExport(entity, omitAuditFields, messageList);
-            }
-        }
-
-        return Collections.emptyMap();
     }
 
     @Transient
@@ -500,6 +455,59 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
         return entityType;
     }
+
+    ////////////////////////////////////////////////////////////////////////
+    // START OF ImportExportActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+        E entity = null;
+
+        try {
+            // See if a document already exists with this uuid.
+            entity = loadByUuid(docRef.getUuid(), Collections.singleton("all"));
+            if (entity == null) {
+                entity = getEntityClass().newInstance();
+            }
+
+            importExportHelper.performImport(entity, dataMap, importState, importMode);
+
+            // Save directly so there is no marshalling of objects that would destroy imported data.
+            if (importState.ok(importMode)) {
+                entity = internalSave(entity);
+            }
+
+        } catch (final Exception e) {
+            importState.addMessage(Severity.ERROR, e.getMessage());
+        }
+
+        return DocRefUtil.create(entity);
+    }
+
+    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
+            final E entity = entityServiceHelper.loadByUuid(docRef.getUuid(), Collections.emptySet(), queryAppender);
+            if (entity != null) {
+                return importExportHelper.performExport(entity, omitAuditFields, messageList);
+            }
+        }
+
+        return Collections.emptyMap();
+    }
+
+    public Set<DocRef> listDocuments() {
+        final List<E> list = find(createCriteria());
+        return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
+    }
+
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final List<E> list = find(createCriteria());
+        return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF ImportExportActionHandler
+    ////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler

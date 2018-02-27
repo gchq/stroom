@@ -237,6 +237,7 @@ def projectsToBePublished = subprojects.findAll { project ->
 def projectsWithSharedTestJars = subprojects.findAll { project ->
     project.path in [
         ':stroom-core-server',
+        ':stroom-pipeline',
         ':stroom-dashboard-server',
         ':stroom-entity-shared',
         ':stroom-index-server',

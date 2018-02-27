@@ -18,25 +18,24 @@
 package stroom.entity;
 
 import org.junit.Assert;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 @Transactional
-public class EntityServiceImplTestTransactionHelper {
+class EntityServiceImplTestTransactionHelper {
     private final FeedService feedService;
     private final FeedService cachedFeedService;
 
     private Feed feed;
 
     @Inject
-    public EntityServiceImplTestTransactionHelper(@Named("cachedFeedService")final FeedService feedService, final FeedService cachedFeedService) {
+    EntityServiceImplTestTransactionHelper(final FeedService feedService,
+                                           @Named("cachedFeedService") final FeedService cachedFeedService) {
         this.feedService = feedService;
         this.cachedFeedService = cachedFeedService;
     }

@@ -1,9 +1,11 @@
-package stroom.connectors.kafka;
+package stroom.kafka;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.connectors.ExternalLibService;
 import stroom.connectors.StroomAbstractConnectorFactoryService;
+import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerFactory;
 import stroom.properties.StroomPropertyService;
 import stroom.util.spring.StroomShutdown;
 
@@ -19,8 +21,7 @@ import java.util.ServiceLoader;
  * It uses {@link ServiceLoader} to iterate through all {@link StroomKafkaProducerFactory} and find one
  * that can create a {@link StroomKafkaProducer} for the requested version.
  */
-public class StroomKafkaProducerFactoryService
-        extends StroomAbstractConnectorFactoryService<StroomKafkaProducer, StroomKafkaProducerFactory> {
+public class StroomKafkaProducerFactoryService extends StroomAbstractConnectorFactoryService<StroomKafkaProducer, StroomKafkaProducerFactory> {
 
     // Can register server/version pairs for specific roles within the system
     private static final String PROP_PREFIX = "stroom.connectors.kafka.%s.";
@@ -28,8 +29,8 @@ public class StroomKafkaProducerFactoryService
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducerFactoryService.class);
 
     @Inject
-    public StroomKafkaProducerFactoryService(final StroomPropertyService propertyService,
-                                             final ExternalLibService externalLibService) {
+    StroomKafkaProducerFactoryService(final StroomPropertyService propertyService,
+                                      final ExternalLibService externalLibService) {
         super(propertyService,
                 externalLibService,
                 PROP_PREFIX,

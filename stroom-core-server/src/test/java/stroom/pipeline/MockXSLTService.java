@@ -18,7 +18,9 @@
 package stroom.pipeline;
 
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
@@ -34,7 +36,7 @@ import javax.inject.Inject;
  * You can call clear at any point to clear everything down.
  * </p>
  */
-public class MockXSLTService extends MockDocumentEntityService<XSLT, FindXSLTCriteria> implements XSLTService {
+public class MockXSLTService extends MockDocumentEntityService<XSLT, FindXSLTCriteria> implements XSLTService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     public MockXSLTService(final ImportExportHelper importExportHelper) {
         super(importExportHelper);
@@ -43,5 +45,10 @@ public class MockXSLTService extends MockDocumentEntityService<XSLT, FindXSLTCri
     @Override
     public Class<XSLT> getEntityClass() {
         return XSLT.class;
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(5, XSLT.ENTITY_TYPE, XSLT.ENTITY_TYPE);
     }
 }

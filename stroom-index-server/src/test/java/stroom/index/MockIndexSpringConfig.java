@@ -18,12 +18,58 @@ package stroom.index;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Scope;
 import stroom.importexport.ImportExportHelper;
-import stroom.util.spring.StroomSpringProfiles;
+import stroom.node.NodeCache;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.state.StreamHolder;
+import stroom.task.TaskManager;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
+import stroom.util.cache.CacheManager;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Provider;
 
 @Configuration
 public class MockIndexSpringConfig {
+    @Bean
+    @Scope(StroomScope.TASK)
+    public CloseIndexShardActionHandler closeIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+        return new CloseIndexShardActionHandler(dispatchHelper);
+    }
+
+    @Bean
+    @Scope(StroomScope.TASK)
+    public DeleteIndexShardActionHandler deleteIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+        return new DeleteIndexShardActionHandler(dispatchHelper);
+    }
+
+    @Bean
+    @Scope(StroomScope.TASK)
+    public FlushIndexShardActionHandler flushIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+        return new FlushIndexShardActionHandler(dispatchHelper);
+    }
+
+    @Bean
+    public IndexConfigCacheEntityEventHandler indexConfigCacheEntityEventHandler(final NodeCache nodeCache,
+                                                                                 final IndexConfigCacheImpl indexConfigCache,
+                                                                                 final IndexShardService indexShardService,
+                                                                                 final IndexShardWriterCache indexShardWriterCache) {
+        return new IndexConfigCacheEntityEventHandler(nodeCache, indexConfigCache, indexShardService, indexShardWriterCache);
+    }
+
+    @Bean
+    public IndexConfigCache indexConfigCache(final IndexConfigCacheImpl indexConfigCacheImpl) {
+        return indexConfigCacheImpl;
+    }
+
+    @Bean
+    public IndexConfigCacheImpl indexConfigCacheImpl(final CacheManager cacheManager,
+                                                     final IndexService indexService) {
+        return new IndexConfigCacheImpl(cacheManager, indexService);
+    }
+
     @Bean("indexService")
     public IndexService indexService(final ImportExportHelper importExportHelper) {
         return new MockIndexService(importExportHelper);
@@ -39,10 +85,23 @@ public class MockIndexSpringConfig {
         return new MockIndexShardWriterCache();
     }
 
-//    @Bean
-//    public MockIndexer mockIndexer() {
-//        return new MockIndexer();
-//    }
+    @Bean
+    public IndexShardManager indexShardManager(final IndexShardService indexShardService, final Provider<IndexShardWriterCache> indexShardWriterCacheProvider, final NodeCache nodeCache, final TaskManager taskManager) {
+        return new IndexShardManagerImpl(indexShardService, indexShardWriterCacheProvider, nodeCache, taskManager);
+    }
 
+    @Bean("indexer")
+    public Indexer indexer(final IndexShardWriterCache indexShardWriterCache) {
+        return new MockIndexer(indexShardWriterCache);
+    }
 
+    @Bean
+    @Scope(StroomScope.PROTOTYPE)
+    public IndexingFilter indexingFilter(final StreamHolder streamHolder,
+                                         final LocationFactoryProxy locationFactory,
+                                         final Indexer indexer,
+                                         final ErrorReceiverProxy errorReceiverProxy,
+                                         final IndexConfigCache indexConfigCache) {
+        return new IndexingFilter(streamHolder, locationFactory, indexer, errorReceiverProxy, indexConfigCache);
+    }
 }

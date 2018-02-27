@@ -24,6 +24,9 @@ import org.junit.runner.RunWith;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.MockDocumentEntityService;
 import stroom.entity.shared.DocRefUtil;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
@@ -437,11 +440,16 @@ public class TestStatisticsFilter implements Statistics {
 
     private static class MockStatisticsDataSourceService
             extends MockDocumentEntityService<StatisticStoreEntity, FindStatisticsEntityCriteria>
-            implements StatisticStoreEntityService {
+            implements StatisticStoreEntityService, ExplorerActionHandler, ImportExportActionHandler {
 
         @Override
         public Class<StatisticStoreEntity> getEntityClass() {
             return StatisticStoreEntity.class;
+        }
+
+        @Override
+        public DocumentType getDocumentType() {
+            return new DocumentType(11, StatisticStoreEntity.ENTITY_TYPE, StatisticStoreEntity.ENTITY_TYPE_FOR_DISPLAY);
         }
     }
 }

@@ -26,7 +26,6 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
 import java.io.IOException;
 
 public abstract class AbstractRollingAppender extends AbstractDestinationProvider implements RollingDestinationFactory {
@@ -42,13 +41,13 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
 
     private boolean validatedSettings;
 
-    @Resource
-    private RollingDestinations destinations;
+    private final RollingDestinations destinations;
+    private final TaskMonitor taskMonitor;
 
-    @Resource
-    private TaskMonitor taskMonitor;
-
-    public AbstractRollingAppender() {
+    public AbstractRollingAppender(final RollingDestinations destinations,
+                                   final TaskMonitor taskMonitor) {
+        this.destinations = destinations;
+        this.taskMonitor = taskMonitor;
         this.validatedSettings = false;
     }
 
@@ -84,11 +83,11 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         }
     }
 
-    long getFrequency() {
+    protected long getFrequency() {
         return frequency;
     }
 
-    long getMaxSize() {
+    protected long getMaxSize() {
         return maxSize;
     }
 
@@ -96,14 +95,15 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
      * Child classes can add checks for their specific fields, the child class can assume
      * this is only being called once.
      */
-    abstract void validateSpecificSettings();
+    protected abstract void validateSpecificSettings();
 
     /**
      * Child classes will have their own schemes for generating a key.
+     *
      * @return The key to refer to the appender.
      * @throws IOException If anything goes wrong during key construction, it can call out to external property services
      */
-    abstract Object getKey() throws IOException;
+    protected abstract Object getKey() throws IOException;
 
     @PipelineProperty(description = "Choose how frequently files are rolled.", defaultValue = "1h")
     public void setFrequency(final String frequency) {

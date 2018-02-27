@@ -19,7 +19,7 @@ package stroom.statistics.stroomstats.pipeline.filter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
+import stroom.kafka.StroomKafkaProducerFactoryService;
 import stroom.properties.StroomPropertyService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;

@@ -16,20 +16,42 @@
 
 package stroom.cluster;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import stroom.cluster.MockClusterNodeManager;
 import stroom.node.NodeCache;
+import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomSpringProfiles;
+
+import javax.inject.Named;
 
 
 @Configuration
 public class MockClusterSpringConfig {
+    @Bean("clusterCallServiceLocal")
+    public ClusterCallServiceLocal clusterCallServiceLocal(final StroomBeanStore beanStore, final NodeCache nodeCache) {
+        return new ClusterCallServiceLocal(beanStore, nodeCache);
+    }
+
+    @Bean
+    public ClusterCallServiceRPC clusterCallServiceRPC(@Named("clusterCallServiceLocal") final ClusterCallService clusterCallService) {
+        return new ClusterCallServiceRPC(clusterCallService);
+    }
+
+    @Bean("clusterCallServiceRemote")
+    public ClusterCallServiceRemote clusterCallServiceRemote(final NodeCache nodeCache,
+                                                             final StroomBeanStore beanStore,
+                                                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallUseLocal')}") final boolean clusterCallUseLocal,
+                                                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallReadTimeout')}") final String clusterCallReadTimeout,
+                                                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallIgnoreSSLHostnameVerifier')}") final boolean ignoreSSLHostnameVerifier) {
+        return new ClusterCallServiceRemote(nodeCache, beanStore, clusterCallUseLocal, clusterCallReadTimeout, ignoreSSLHostnameVerifier);
+    }
 
     @Bean
 //    @Profile(StroomSpringProfiles.IT)
-    public MockClusterNodeManager mockClusterNodeManager(final NodeCache nodeCache) {
+    public ClusterNodeManager clusterNodeManager(final NodeCache nodeCache) {
         return new MockClusterNodeManager(nodeCache);
     }
 

@@ -15,10 +15,9 @@
  *
  */
 
-package stroom.resource;
+package stroom.pipeline;
 
 import stroom.entity.shared.BaseResultList;
-import stroom.pipeline.XSLTService;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
 import stroom.util.io.StreamUtil;
@@ -40,14 +39,14 @@ import java.io.IOException;
  * We also allow standard common translation includes
  * </p>
  */
-public class CustomURIResolver implements URIResolver {
+class CustomURIResolver implements URIResolver {
     private static final String RESOURCE_NOT_FOUND = "Resource not found: \"";
     private static final String RESOURCE_NOT_FOUND_END = "\"";
 
     private final XSLTService xsltService;
 
     @Inject
-    public CustomURIResolver(final XSLTService xsltService) {
+    CustomURIResolver(final XSLTService xsltService) {
         this.xsltService = xsltService;
     }
 

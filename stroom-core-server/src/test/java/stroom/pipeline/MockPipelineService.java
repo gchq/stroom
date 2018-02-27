@@ -17,7 +17,9 @@
 package stroom.pipeline;
 
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
@@ -37,7 +39,7 @@ import java.util.List;
  * </p>
  */
 public class MockPipelineService extends MockDocumentEntityService<PipelineEntity, FindPipelineEntityCriteria>
-        implements PipelineService {
+        implements PipelineService, ExplorerActionHandler, ImportExportActionHandler {
     public MockPipelineService() {
     }
 
@@ -81,5 +83,10 @@ public class MockPipelineService extends MockDocumentEntityService<PipelineEntit
     @Override
     public Class<PipelineEntity> getEntityClass() {
         return PipelineEntity.class;
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(6, PipelineEntity.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE);
     }
 }

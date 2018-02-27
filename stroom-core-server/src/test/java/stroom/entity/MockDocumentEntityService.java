@@ -358,15 +358,9 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //    }
 
 
-    public Set<DocRef> listDocuments() {
-        final List<E> list = find(createCriteria());
-        return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
-    }
-
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        final List<E> list = find(createCriteria());
-        return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
-    }
+    ////////////////////////////////////////////////////////////////////////
+    // START OF ImportExportActionHandler
+    ////////////////////////////////////////////////////////////////////////
 
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         if (importExportHelper == null) {
@@ -410,11 +404,20 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         return null;
     }
 
-    @Override
-    public void clear() {
-        map.clear();
-        currentId.set(0);
+    public Set<DocRef> listDocuments() {
+        final List<E> list = find(createCriteria());
+        return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
     }
+
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final List<E> list = find(createCriteria());
+        return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF ImportExportActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
@@ -552,5 +555,11 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     @Override
     public String getNamePattern() {
         return null;
+    }
+
+    @Override
+    public void clear() {
+        map.clear();
+        currentId.set(0);
     }
 }

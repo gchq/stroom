@@ -19,9 +19,11 @@ package stroom.feed;
 
 import stroom.entity.MockDocumentEntityService;
 import stroom.entity.shared.BaseResultList;
+import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 
 import javax.inject.Inject;
@@ -35,7 +37,7 @@ import javax.inject.Inject;
  * You can call clear at any point to clear everything down.
  * </p>
  */
-public class MockFeedService extends MockDocumentEntityService<Feed, FindFeedCriteria> implements FeedService {
+public class MockFeedService extends MockDocumentEntityService<Feed, FindFeedCriteria> implements FeedService, ExplorerActionHandler, ImportExportActionHandler {
     public MockFeedService() {
     }
 
@@ -47,6 +49,11 @@ public class MockFeedService extends MockDocumentEntityService<Feed, FindFeedCri
     @Override
     public Class<Feed> getEntityClass() {
         return Feed.class;
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE);
     }
 
     @Override

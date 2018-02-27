@@ -21,9 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.Dashboard;
 import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
-import stroom.entity.util.ConnectionUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.NamedEntity;
+import stroom.entity.util.ConnectionUtil;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
@@ -33,8 +33,6 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.jobsystem.JobNodeService;
-import stroom.jobsystem.JobService;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
@@ -46,12 +44,12 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.AuthenticationService;
 import stroom.security.AuthenticationToken;
+import stroom.statistics.shared.StatisticStore;
+import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.sql.datasource.FindStatisticsEntityCriteria;
 import stroom.statistics.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreEntityService;
-import stroom.statistics.shared.StatisticStore;
-import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.StreamAttributeKeyService;
 import stroom.streamstore.StreamStore;
@@ -62,11 +60,10 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorFilterService;
-import stroom.streamtask.StreamProcessorService;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -103,40 +100,41 @@ public final class SetupSampleDataBean {
 
     private static final int LOAD_CYCLES = 10;
 
-    @Resource
-    private AuthenticationService authenticationService;
-    @Resource
-    private FeedService feedService;
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private StreamAttributeKeyService streamAttributeKeyService;
-    @Resource
-    private CommonTestControl commonTestControl;
-    @Resource
-    private ImportExportSerializer importExportSerializer;
-    @Resource
-    private StreamProcessorFilterService streamProcessorFilterService;
-    @Resource
-    private StreamProcessorService streamProcessorService;
-    @Resource
-    private PipelineService pipelineService;
-    @Resource
-    private VolumeService volumeService;
-    @Resource
-    private IndexService indexService;
-    @Resource
-    private JobService jobService;
-    @Resource
-    private JobNodeService jobNodeService;
-    @Resource
-    private ContentImportService contentImportService;
-    @Resource
-    private StatisticStoreEntityService statisticsDataSourceService;
-    @Resource
-    private StroomStatsStoreEntityService stroomStatsStoreEntityService;
+    private final FeedService feedService;
+    private final StreamStore streamStore;
+    private final StreamAttributeKeyService streamAttributeKeyService;
+    private final CommonTestControl commonTestControl;
+    private final ImportExportSerializer importExportSerializer;
+    private final StreamProcessorFilterService streamProcessorFilterService;
+    private final PipelineService pipelineService;
+    private final VolumeService volumeService;
+    private final IndexService indexService;
+    private final StatisticStoreEntityService statisticsDataSourceService;
+    private final StroomStatsStoreEntityService stroomStatsStoreEntityService;
 
-    public SetupSampleDataBean() {
+    @Inject
+    SetupSampleDataBean(final FeedService feedService,
+                        final StreamStore streamStore,
+                        final StreamAttributeKeyService streamAttributeKeyService,
+                        final CommonTestControl commonTestControl,
+                        final ImportExportSerializer importExportSerializer,
+                        final StreamProcessorFilterService streamProcessorFilterService,
+                        final PipelineService pipelineService,
+                        final VolumeService volumeService,
+                        final IndexService indexService,
+                        final StatisticStoreEntityService statisticsDataSourceService,
+                        final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
+        this.feedService = feedService;
+        this.streamStore = streamStore;
+        this.streamAttributeKeyService = streamAttributeKeyService;
+        this.commonTestControl = commonTestControl;
+        this.importExportSerializer = importExportSerializer;
+        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.pipelineService = pipelineService;
+        this.volumeService = volumeService;
+        this.indexService = indexService;
+        this.statisticsDataSourceService = statisticsDataSourceService;
+        this.stroomStatsStoreEntityService = stroomStatsStoreEntityService;
     }
 
     private void createStreamAttributes() {
@@ -160,8 +158,8 @@ public final class SetupSampleDataBean {
 
     public void run(final boolean shutdown) throws IOException {
         // Ensure admin user exists.
-        LOGGER.info("Creating admin user");
-        authenticationService.getUserRef(new AuthenticationToken("admin", null));
+//        LOGGER.info("Creating admin user");
+//        authenticationService.getUserRef(new AuthenticationToken("admin", null));
 
 //        createRandomExplorerNode(null, "", 0, 2);
 

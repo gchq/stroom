@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.connectors.kafka.filter;
+package stroom.kafka;
 
-import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
+import stroom.kafka.AbstractKafkaProducerFilter;
+import stroom.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -45,7 +46,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.KAFKA)
-public class GenericKafkaProducerFilter extends AbstractKafkaProducerFilter {
+class GenericKafkaProducerFilter extends AbstractKafkaProducerFilter {
 
     private final PathCreator pathCreator;
 
@@ -53,7 +54,7 @@ public class GenericKafkaProducerFilter extends AbstractKafkaProducerFilter {
     private String recordKey;
 
     @Inject
-    public GenericKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
+    GenericKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
                                       final LocationFactoryProxy locationFactory,
                                       final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
                                       final PathCreator pathCreator) {

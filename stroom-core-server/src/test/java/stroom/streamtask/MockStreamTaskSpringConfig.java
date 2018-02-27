@@ -19,15 +19,27 @@ package stroom.streamtask;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Scope;
+import stroom.node.NodeCache;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.StreamStore;
+import stroom.util.spring.StroomBeanStore;
+import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSpringProfiles;
+import stroom.util.task.TaskMonitor;
+
+import javax.inject.Named;
 
 @Configuration
 public class MockStreamTaskSpringConfig {
     @Bean("streamProcessorFilterService")
     public StreamProcessorFilterService streamProcessorFilterService() {
         return new MockStreamProcessorFilterService();
+    }
+
+    @Bean("cachedStreamProcessorFilterService")
+    public StreamProcessorFilterService cachedStreamProcessorFilterService(final StreamProcessorFilterService streamProcessorFilterService) {
+        return streamProcessorFilterService;
     }
 
     @Bean("streamProcessorService")
@@ -51,4 +63,22 @@ public class MockStreamTaskSpringConfig {
     public StreamTaskService streamTaskService() {
         return new MockStreamTaskService();
     }
+
+    @Bean
+    @Scope(value = StroomScope.TASK)
+    public StreamProcessorTaskHandler streamProcessorTaskHandler(final StroomBeanStore beanStore,
+                                                                 @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
+                                                                 @Named("cachedStreamProcessorFilterService") final StreamProcessorFilterService streamProcessorFilterService,
+                                                                 final StreamTaskHelper streamTaskHelper,
+                                                                 final StreamStore streamStore,
+                                                                 final NodeCache nodeCache,
+                                                                 final TaskMonitor taskMonitor) {
+        return new StreamProcessorTaskHandler(beanStore, streamProcessorService, streamProcessorFilterService, streamTaskHelper, streamStore, nodeCache, taskMonitor);
+    }
+
+    @Bean
+    public StreamTaskHelper streamTaskHelper(final StreamTaskService streamTaskService) {
+        return new StreamTaskHelper(streamTaskService);
+    }
+
 }

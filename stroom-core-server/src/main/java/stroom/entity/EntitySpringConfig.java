@@ -22,9 +22,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.event.EntityEventBus;
+import stroom.entity.event.EntityEventBusImpl;
 import stroom.logging.DocumentEventLog;
 import stroom.security.SecurityContext;
+import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
+import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;
@@ -115,5 +118,10 @@ public class EntitySpringConfig {
     @Bean
     public GenericEntityService genericEntityService(final EntityServiceBeanRegistry entityServiceBeanRegistry) {
         return new GenericEntityServiceImpl(entityServiceBeanRegistry);
+    }
+
+    @Bean
+    public EntityEventBus entityEventBus(final StroomBeanStore stroomBeanStore, final TaskManager taskManager) {
+        return new EntityEventBusImpl(stroomBeanStore, taskManager);
     }
 }

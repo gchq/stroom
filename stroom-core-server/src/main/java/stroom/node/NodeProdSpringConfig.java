@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.streamtask;
+package stroom.node;
 
-import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.CachingEntityManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-import javax.inject.Inject;
-
-@Transactional
-class CachedStreamProcessorService extends StreamProcessorServiceImpl {
-    @Inject
-    CachedStreamProcessorService(final CachingEntityManager entityManager) {
-        super(entityManager);
+@Configuration
+public class NodeProdSpringConfig {
+    @Bean
+    public NodeConfig nodeConfig() {
+        return new NodeConfigImpl();
     }
 }

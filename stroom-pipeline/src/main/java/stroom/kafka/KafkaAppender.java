@@ -1,11 +1,11 @@
-package stroom.pipeline.writer;
+package stroom.kafka;
 
-import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.writer.PathCreator;
 
 import javax.inject.Inject;
 
@@ -21,8 +21,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.KAFKA)
-public class KafkaAppender extends AbstractKafkaAppender {
-
+class KafkaAppender extends AbstractKafkaAppender {
     private final PathCreator pathCreator;
 
     private String topic;

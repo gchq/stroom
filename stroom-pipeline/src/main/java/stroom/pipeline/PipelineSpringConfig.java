@@ -40,13 +40,6 @@ import stroom.util.spring.StroomScope;
 
 @Configuration
 public class PipelineSpringConfig {
-    @Bean("cachedPipelineService")
-    public CachedPipelineService cachedPipelineService(final CachingEntityManager entityManager,
-                                                       final ImportExportHelper importExportHelper,
-                                                       final SecurityContext securityContext) {
-        return new CachedPipelineService(entityManager, importExportHelper, securityContext);
-    }
-
     @Bean
     @Scope(value = StroomScope.TASK)
     public DefaultErrorWriter defaultErrorWriter() {
@@ -144,6 +137,13 @@ public class PipelineSpringConfig {
         return new PipelineServiceImpl(entityManager, importExportHelper, securityContext);
     }
 
+    @Bean("cachedPipelineService")
+    public PipelineService cachedPipelineService(final CachingEntityManager entityManager,
+                                                 final ImportExportHelper importExportHelper,
+                                                 final SecurityContext securityContext) {
+        return new PipelineServiceImpl(entityManager, importExportHelper, securityContext);
+    }
+
     @Bean
     @Scope(value = StroomScope.TASK)
     public PipelineStepActionHandler pipelineStepActionHandler(final TaskManager taskManager) {
@@ -168,5 +168,10 @@ public class PipelineSpringConfig {
                                    final ImportExportHelper importExportHelper,
                                    final SecurityContext securityContext) {
         return new XSLTServiceImpl(entityManager, importExportHelper, securityContext);
+    }
+
+    @Bean
+    public CustomURIResolver customURIResolver(final XSLTService xsltService) {
+        return new CustomURIResolver(xsltService);
     }
 }

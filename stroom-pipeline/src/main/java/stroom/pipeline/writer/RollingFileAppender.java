@@ -17,6 +17,7 @@
 package stroom.pipeline.writer;
 
 import stroom.pipeline.destination.RollingDestination;
+import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.destination.RollingFileDestination;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -25,6 +26,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.FileUtil;
+import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -56,7 +58,10 @@ class RollingFileAppender extends AbstractRollingAppender {
     private String key;
 
     @Inject
-    RollingFileAppender(final PathCreator pathCreator) {
+    RollingFileAppender(final RollingDestinations destinations,
+                        final TaskMonitor taskMonitor,
+                        final PathCreator pathCreator) {
+        super(destinations, taskMonitor);
         this.pathCreator = pathCreator;
     }
 
@@ -95,7 +100,7 @@ class RollingFileAppender extends AbstractRollingAppender {
     }
 
     @Override
-    Object getKey() throws IOException {
+    protected Object getKey() throws IOException {
         try {
             // Create the current file name if one isn't set.
             if (key == null) {
@@ -140,7 +145,7 @@ class RollingFileAppender extends AbstractRollingAppender {
     }
 
     @Override
-    void validateSpecificSettings() {
+    protected void validateSpecificSettings() {
         if (outputPaths == null || outputPaths.length == 0) {
             throw new ProcessException("No output paths have been specified");
         }

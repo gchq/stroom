@@ -19,11 +19,11 @@ package stroom.pipeline.writer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.feed.FeedService;
 import stroom.io.StreamCloser;
 import stroom.node.NodeCache;
 import stroom.pipeline.LocationFactory;
+import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
@@ -35,6 +35,7 @@ import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTypeService;
 import stroom.util.spring.StroomScope;
+import stroom.util.task.TaskMonitor;
 
 import java.io.OutputStream;
 
@@ -69,14 +70,6 @@ public class WriterSpringConfig {
 
     @Bean
     @Scope(StroomScope.PROTOTYPE)
-    public KafkaAppender kafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
-                                       final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                                       final PathCreator pathCreator) {
-        return new KafkaAppender(errorReceiverProxy, stroomKafkaProducerFactoryService, pathCreator);
-    }
-
-    @Bean
-    @Scope(StroomScope.PROTOTYPE)
     public OutputRecorder outputRecorder() {
         return new OutputRecorder();
     }
@@ -93,26 +86,22 @@ public class WriterSpringConfig {
 
     @Bean
     @Scope(StroomScope.PROTOTYPE)
-    public RollingFileAppender rollingFileAppender(final PathCreator pathCreator) {
-        return new RollingFileAppender(pathCreator);
+    public RollingFileAppender rollingFileAppender(final RollingDestinations destinations,
+                                                   final TaskMonitor taskMonitor,
+                                                   final PathCreator pathCreator) {
+        return new RollingFileAppender(destinations, taskMonitor, pathCreator);
     }
 
     @Bean
     @Scope(StroomScope.PROTOTYPE)
-    public RollingKafkaAppender rollingKafkaAppender(final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                                                     final PathCreator pathCreator,
-                                                     final ErrorReceiverProxy errorReceiverProxy) {
-        return new RollingKafkaAppender(stroomKafkaProducerFactoryService, pathCreator, errorReceiverProxy);
-    }
-
-    @Bean
-    @Scope(StroomScope.PROTOTYPE)
-    public RollingStreamAppender rollingStreamAppender(final StreamStore streamStore,
+    public RollingStreamAppender rollingStreamAppender(final RollingDestinations destinations,
+                                                       final TaskMonitor taskMonitor,
+                                                       final StreamStore streamStore,
                                                        final StreamHolder streamHolder,
                                                        final FeedService feedService,
                                                        final StreamTypeService streamTypeService,
                                                        final NodeCache nodeCache) {
-        return new RollingStreamAppender(streamStore, streamHolder, feedService, streamTypeService, nodeCache);
+        return new RollingStreamAppender(destinations, taskMonitor, streamStore, streamHolder, feedService, streamTypeService, nodeCache);
     }
 
     @Bean
@@ -130,9 +119,8 @@ public class WriterSpringConfig {
 
     @Bean
     @Scope(StroomScope.PROTOTYPE)
-    public TestAppender testAppender(final ErrorReceiverProxy errorReceiverProxy,
-                                     final OutputStream outputStream) {
-        return new TestAppender(errorReceiverProxy, outputStream);
+    public TestAppender testAppender(final ErrorReceiverProxy errorReceiverProxy) {
+        return new TestAppender(errorReceiverProxy);
     }
 
     @Bean

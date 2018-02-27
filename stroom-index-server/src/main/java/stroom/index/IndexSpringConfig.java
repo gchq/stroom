@@ -69,7 +69,12 @@ public class IndexSpringConfig {
     }
 
     @Bean
-    public IndexConfigCache indexConfigCache(final CacheManager cacheManager,
+    public IndexConfigCache indexConfigCache(final IndexConfigCacheImpl indexConfigCacheImpl) {
+        return indexConfigCacheImpl;
+    }
+
+    @Bean
+    public IndexConfigCacheImpl indexConfigCacheImpl(final CacheManager cacheManager,
                                              final IndexService indexService) {
         return new IndexConfigCacheImpl(cacheManager, indexService);
     }

@@ -138,7 +138,7 @@ public class TestSpringConfigurations {
                 .sorted(Comparator.comparing(Class::getName))
                 .forEachOrdered(configuration -> {
 
-                    if (TestDataFeedServiceImplConfiguration.class.isAssignableFrom(configuration)) {
+//                    if (TestDataFeedServiceImplConfiguration.class.isAssignableFrom(configuration)) {
 
                         final TaskScopeRunnable taskScopeRunnable = new TaskScopeRunnable(null) {
                             @Override
@@ -160,7 +160,7 @@ public class TestSpringConfigurations {
                             }
                         };
                         taskScopeRunnable.run();
-                    }
+//                    }
                 });
     }
 

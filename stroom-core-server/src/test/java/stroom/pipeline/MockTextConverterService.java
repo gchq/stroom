@@ -19,7 +19,9 @@ package stroom.pipeline;
 
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.MockDocumentEntityService;
+import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.TextConverter;
@@ -36,7 +38,7 @@ import javax.inject.Inject;
  * </p>
  */
 public class MockTextConverterService extends MockDocumentEntityService<TextConverter, FindTextConverterCriteria>
-        implements TextConverterService {
+        implements TextConverterService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     public MockTextConverterService(final ImportExportHelper importExportHelper) {
         super(importExportHelper);
@@ -45,5 +47,10 @@ public class MockTextConverterService extends MockDocumentEntityService<TextConv
     @Override
     public Class<TextConverter> getEntityClass() {
         return TextConverter.class;
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(4, TextConverter.ENTITY_TYPE, "Text Converter");
     }
 }

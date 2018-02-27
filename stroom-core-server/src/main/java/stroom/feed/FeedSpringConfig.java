@@ -30,17 +30,17 @@ import javax.inject.Named;
 
 @Configuration
 public class FeedSpringConfig {
-    @Bean("cachedFeedService")
-    public CachedFeedService cachedFeedService(final CachingEntityManager entityManager,
-                                               final ImportExportHelper importExportHelper,
-                                               final SecurityContext securityContext) {
-        return new CachedFeedService(entityManager, importExportHelper, securityContext);
-    }
-
     @Bean("feedService")
     public FeedService feedService(final StroomEntityManager entityManager,
                                    final ImportExportHelper importExportHelper,
                                    final SecurityContext securityContext) {
+        return new FeedServiceImpl(entityManager, importExportHelper, securityContext);
+    }
+
+    @Bean("cachedFeedService")
+    public FeedService cachedFeedService(final CachingEntityManager entityManager,
+                                         final ImportExportHelper importExportHelper,
+                                         final SecurityContext securityContext) {
         return new FeedServiceImpl(entityManager, importExportHelper, securityContext);
     }
 
