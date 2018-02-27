@@ -100,6 +100,8 @@
 
     <guava.version>23.3-jre</guava.version>
 
+    <rxjava.version>2.1.10</rxjava.version>
+
     <!-- ************** -->
     <!-- Build Settings -->
     <!-- ************** -->
@@ -749,6 +751,12 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>io.reactivex.rxjava2</groupId>
+        <artifactId>rxjava</artifactId>
+        <version>${rxjava.version}</version>
       </dependency>
 
       <dependency>
