@@ -63,7 +63,8 @@ dependencies {
     permitUnusedDeclared project(':stroom-entity-shared') //not clear why it thinks this is unused
     compile project(':stroom-index-shared')
     permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
-//    compile project(':stroom-util')
+    compile project(':stroom-util')
+    compile project(':stroom-docstore-server')
     compile project(':stroom-pipeline')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-statistics-server')
@@ -73,13 +74,13 @@ dependencies {
 
     compile libs.stroomQueryApi
 
+    compile libs.commons_lang
     compile libs.dropwizard_lifecycle
     compile libs.guava
     compile libs.guice3
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jetty_servlet
-    compile libs.spring_core
     compile libs.spring_beans
     compile libs.spring_context
     permitUnusedDeclared libs.spring_aspects

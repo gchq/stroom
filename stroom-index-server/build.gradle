@@ -23,6 +23,7 @@ dependencies {
     compile project(':stroom-security-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+    compile project(':stroom-explorer-api')
 
     compile libs.stroomQueryApi
     compile libs.stroomQueryCommon

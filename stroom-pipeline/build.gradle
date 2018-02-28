@@ -8,6 +8,7 @@ dependencies {
     //permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+    compile project(':stroom-explorer-api')
 
     compile project(':stroom-connectors')
     permitUnusedDeclared project(':stroom-connectors')

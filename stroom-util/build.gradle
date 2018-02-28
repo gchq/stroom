@@ -20,7 +20,6 @@ dependencies {
     compile libs.spring_context
     compile libs.spring_core
     compile libs.spring_test
-    compile libs.fast_classpath_scanner
     permitUnusedDeclared libs.spring_test
 
     testCompile libs.junit
