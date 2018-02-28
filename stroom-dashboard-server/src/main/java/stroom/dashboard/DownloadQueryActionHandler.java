@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.SearchRequest;
-import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.query.api.v2.ResultRequest;
-import stroom.servlet.SessionResourceStore;
+import stroom.resource.ResourceStore;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.json.JsonUtil;
@@ -45,13 +45,13 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
 
     private final SearchRequestMapper searchRequestMapper;
-    private final SessionResourceStore sessionResourceStore;
+    private final ResourceStore resourceStore;
 
     @Inject
     DownloadQueryActionHandler(final SearchRequestMapper searchRequestMapper,
-                               final SessionResourceStore sessionResourceStore) {
+                               final ResourceStore resourceStore) {
         this.searchRequestMapper = searchRequestMapper;
-        this.sessionResourceStore = sessionResourceStore;
+        this.resourceStore = resourceStore;
     }
 
     @Override
@@ -85,8 +85,8 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
             fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
             fileName = fileName + ".json";
 
-            final ResourceKey resourceKey = sessionResourceStore.createTempFile(fileName);
-            final Path outputFile = sessionResourceStore.getTempFile(resourceKey);
+            final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
+            final Path outputFile = resourceStore.getTempFile(resourceKey);
 
             JsonUtil.writeValue(outputFile, apiSearchRequest);
 

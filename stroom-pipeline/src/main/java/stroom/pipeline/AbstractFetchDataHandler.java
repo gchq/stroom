@@ -44,7 +44,7 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
-import stroom.resource.BOMRemovalInputStream;
+import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.security.SecurityContext;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;

@@ -24,8 +24,8 @@ import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;
 import stroom.logging.StroomEventLoggingService;
 import stroom.properties.StroomPropertyService;
+import stroom.resource.ResourceStore;
 import stroom.security.SecurityContext;
-import stroom.servlet.SessionResourceStore;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
@@ -68,5 +68,34 @@ public class ImportExportSpringConfig {
     @Bean
     public ImportExportService importExportService(final ImportExportSerializer importExportSerializer) {
         return new ImportExportServiceImpl(importExportSerializer);
+    }
+
+    @Bean
+    @Scope(value = StroomScope.TASK)
+    public ExportConfigHandler exportConfigHandler(final ImportExportService importExportService,
+                                                   final stroom.logging.ImportExportEventLog eventLog,
+                                                   final ResourceStore resourceStore) {
+        return new ExportConfigHandler(importExportService, eventLog, resourceStore);
+    }
+
+    @Bean
+    @Scope(value = StroomScope.PROTOTYPE)
+    public FetchDependenciesHandler fetchDependenciesHandler(final DependencyService dependencyService) {
+        return new FetchDependenciesHandler(dependencyService);
+    }
+
+    @Bean
+    @Scope(value = StroomScope.TASK)
+    public ImportConfigConfirmationHandler importConfigConfirmationHandler(final ImportExportService importExportService,
+                                                                           final ResourceStore resourceStore) {
+        return new ImportConfigConfirmationHandler(importExportService, resourceStore);
+    }
+
+    @Bean
+    @Scope(value = StroomScope.TASK)
+    public ImportConfigHandler importConfigHandler(final ImportExportService importExportService,
+                                                   final stroom.logging.ImportExportEventLog eventLog,
+                                                   final ResourceStore resourceStore) {
+        return new ImportConfigHandler(importExportService, eventLog, resourceStore);
     }
 }

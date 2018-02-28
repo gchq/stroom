@@ -18,8 +18,8 @@ package stroom.importexport;
 
 import stroom.importexport.shared.ImportConfigConfirmationAction;
 import stroom.importexport.shared.ImportState;
+import stroom.resource.ResourceStore;
 import stroom.security.Secured;
-import stroom.servlet.SessionResourceStore;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -30,23 +30,23 @@ import javax.inject.Inject;
 class ImportConfigConfirmationHandler
         extends AbstractTaskHandler<ImportConfigConfirmationAction, SharedList<ImportState>> {
     private final ImportExportService importExportService;
-    private final SessionResourceStore sessionResourceStore;
+    private final ResourceStore resourceStore;
 
     @Inject
     ImportConfigConfirmationHandler(final ImportExportService importExportService,
-                                    final SessionResourceStore sessionResourceStore) {
+                                    final ResourceStore resourceStore) {
         this.importExportService = importExportService;
-        this.sessionResourceStore = sessionResourceStore;
+        this.resourceStore = resourceStore;
     }
 
     @Override
     @Secured("Import Configuration")
     public SharedList<ImportState> exec(final ImportConfigConfirmationAction task) {
         try {
-            return importExportService.createImportConfirmationList(sessionResourceStore.getTempFile(task.getKey()));
+            return importExportService.createImportConfirmationList(resourceStore.getTempFile(task.getKey()));
         } catch (final RuntimeException rex) {
             // In case of error delete the temp file
-            sessionResourceStore.deleteTempFile(task.getKey());
+            resourceStore.deleteTempFile(task.getKey());
             throw rex;
         }
     }

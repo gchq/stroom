@@ -18,8 +18,8 @@ package stroom.importexport;
 
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.logging.ImportExportEventLog;
+import stroom.resource.ResourceStore;
 import stroom.security.Secured;
-import stroom.servlet.SessionResourceStore;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Message;
@@ -35,15 +35,15 @@ import java.util.List;
 class ExportConfigHandler extends AbstractTaskHandler<ExportConfigAction, ResourceGeneration> {
     private final ImportExportService importExportService;
     private final ImportExportEventLog eventLog;
-    private final SessionResourceStore sessionResourceStore;
+    private final ResourceStore resourceStore;
 
     @Inject
     ExportConfigHandler(final ImportExportService importExportService,
                         final ImportExportEventLog eventLog,
-                        final SessionResourceStore sessionResourceStore) {
+                        final ResourceStore resourceStore) {
         this.importExportService = importExportService;
         this.eventLog = eventLog;
-        this.sessionResourceStore = sessionResourceStore;
+        this.resourceStore = resourceStore;
     }
 
     @Override
@@ -53,8 +53,8 @@ class ExportConfigHandler extends AbstractTaskHandler<ExportConfigAction, Resour
         eventLog.export(action);
         final List<Message> messageList = new ArrayList<>();
 
-        final ResourceKey guiKey = sessionResourceStore.createTempFile("StroomConfig.zip");
-        final Path file = sessionResourceStore.getTempFile(guiKey);
+        final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
+        final Path file = resourceStore.getTempFile(guiKey);
         importExportService.exportConfig(action.getDocRefs(), file, messageList);
 
         return new ResourceGeneration(guiKey, messageList);

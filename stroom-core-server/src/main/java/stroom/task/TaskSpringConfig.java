@@ -27,6 +27,8 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
+import javax.inject.Provider;
+
 @Configuration
 public class TaskSpringConfig {
     @Bean
@@ -44,7 +46,14 @@ public class TaskSpringConfig {
     @Bean
     @Scope(StroomScope.TASK)
     public FindUserTaskProgressHandler findUserTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-                                                                   final HttpServletRequestHolder httpServletRequestHolder) {
+                                                                   final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider) {
+        HttpServletRequestHolder httpServletRequestHolder = null;
+        try {
+            httpServletRequestHolder = httpServletRequestHolderProvider.get();
+        } catch (final Exception e) {
+            // Ignore
+        }
+
         return new FindUserTaskProgressHandler(dispatchHelper, httpServletRequestHolder);
     }
 

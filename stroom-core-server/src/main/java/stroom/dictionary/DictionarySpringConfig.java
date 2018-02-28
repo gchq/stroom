@@ -23,8 +23,8 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
 import stroom.logging.DocumentEventLog;
+import stroom.resource.ResourceStore;
 import stroom.security.SecurityContext;
-import stroom.servlet.SessionResourceStore;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Singleton;
@@ -44,9 +44,9 @@ public class DictionarySpringConfig {
 
     @Bean
     @Scope(StroomScope.PROTOTYPE)
-    public DownloadDictionaryHandler downloadDictionaryHandler(final SessionResourceStore sessionResourceStore,
+    public DownloadDictionaryHandler downloadDictionaryHandler(final ResourceStore resourceStore,
                                                                final DocumentEventLog documentEventLog,
                                                                final DictionaryStore dictionaryStore) {
-        return new DownloadDictionaryHandler(sessionResourceStore, documentEventLog, dictionaryStore);
+        return new DownloadDictionaryHandler(resourceStore, documentEventLog, dictionaryStore);
     }
 }

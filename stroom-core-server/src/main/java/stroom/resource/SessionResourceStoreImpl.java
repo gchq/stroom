@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.servlet;
+package stroom.resource;
 
-import stroom.resource.ResourceStore;
+import stroom.servlet.HttpServletRequestHolder;
+import stroom.servlet.ResourceMap;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
 
@@ -35,7 +36,7 @@ import java.util.UUID;
  * Wrapper for the ResourceStore that makes sure the user can only access stuff
  * in the session.
  */
-public class SessionResourceStoreImpl extends HttpServlet implements SessionResourceStore {
+public class SessionResourceStoreImpl extends HttpServlet implements ResourceStore {
     private static final long serialVersionUID = -4533441835216235920L;
     private static final String UUID_ARG = "UUID";
 

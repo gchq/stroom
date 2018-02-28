@@ -18,8 +18,8 @@ package stroom.streamstore;
 
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.logging.StreamEventLog;
+import stroom.resource.ResourceStore;
 import stroom.security.Secured;
-import stroom.servlet.SessionResourceStore;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.Stream;
 import stroom.task.AbstractTaskHandler;
@@ -35,15 +35,15 @@ import java.util.ArrayList;
 @TaskHandlerBean(task = DownloadDataAction.class)
 @Secured(Stream.EXPORT_DATA_PERMISSION)
 class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, ResourceGeneration> {
-    private final SessionResourceStore sessionResourceStore;
+    private final ResourceStore resourceStore;
     private final TaskManager taskManager;
     private final StreamEventLog streamEventLog;
 
     @Inject
-    DownloadDataHandler(final SessionResourceStore sessionResourceStore,
+    DownloadDataHandler(final ResourceStore resourceStore,
                         final TaskManager taskManager,
                         final StreamEventLog streamEventLog) {
-        this.sessionResourceStore = sessionResourceStore;
+        this.resourceStore = resourceStore;
         this.taskManager = taskManager;
         this.streamEventLog = streamEventLog;
     }
@@ -53,8 +53,8 @@ class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, Resour
         ResourceKey resourceKey;
         try {
             // Import file.
-            resourceKey = sessionResourceStore.createTempFile("StroomData.zip");
-            final Path file = sessionResourceStore.getTempFile(resourceKey);
+            resourceKey = resourceStore.createTempFile("StroomData.zip");
+            final Path file = resourceStore.getTempFile(resourceKey);
 
             final StreamDownloadSettings settings = new StreamDownloadSettings();
             taskManager.exec(new StreamDownloadTask(action.getUserToken(), action.getCriteria(), file, settings));

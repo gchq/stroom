@@ -18,10 +18,10 @@ package stroom.dictionary;
 
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DownloadDictionaryAction;
-import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.logging.DocumentEventLog;
-import stroom.servlet.SessionResourceStore;
+import stroom.resource.ResourceStore;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.io.StreamUtil;
@@ -35,15 +35,15 @@ import java.util.ArrayList;
 
 @TaskHandlerBean(task = DownloadDictionaryAction.class)
 class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAction, ResourceGeneration> {
-    private final SessionResourceStore sessionResourceStore;
+    private final ResourceStore resourceStore;
     private final DocumentEventLog documentEventLog;
     private final DictionaryStore dictionaryStore;
 
     @Inject
-    DownloadDictionaryHandler(final SessionResourceStore sessionResourceStore,
+    DownloadDictionaryHandler(final ResourceStore resourceStore,
                               final DocumentEventLog documentEventLog,
                               final DictionaryStore dictionaryStore) {
-        this.sessionResourceStore = sessionResourceStore;
+        this.resourceStore = resourceStore;
         this.documentEventLog = documentEventLog;
         this.dictionaryStore = dictionaryStore;
     }
@@ -57,8 +57,8 @@ class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAc
         }
 
         try {
-            final ResourceKey resourceKey = sessionResourceStore.createTempFile("dictionary.txt");
-            final Path file = sessionResourceStore.getTempFile(resourceKey);
+            final ResourceKey resourceKey = resourceStore.createTempFile("dictionary.txt");
+            final Path file = resourceStore.getTempFile(resourceKey);
             Files.write(file, dictionary.getData().getBytes(StreamUtil.DEFAULT_CHARSET));
             documentEventLog.download(dictionary, null);
             return new ResourceGeneration(resourceKey, new ArrayList<>());

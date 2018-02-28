@@ -22,13 +22,13 @@ import org.springframework.context.annotation.Scope;
 import stroom.importexport.ImportExportService;
 import stroom.logging.StreamEventLog;
 import stroom.node.NodeService;
-import stroom.properties.StroomPropertyService;
 import stroom.node.VolumeService;
 import stroom.node.shared.ClientPropertiesService;
+import stroom.properties.StroomPropertyService;
 import stroom.resource.ResourceStore;
 import stroom.security.SecurityContext;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.TaskManager;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
@@ -75,9 +75,9 @@ public class ServletSpringConfig {
     }
 
     @Bean
-    public ImportFileServlet importFileServlet(final SessionResourceStore sessionResourceStore,
+    public ImportFileServlet importFileServlet(final ResourceStore resourceStore,
                                                final StreamEventLog streamEventLog) {
-        return new ImportFileServlet(sessionResourceStore, streamEventLog);
+        return new ImportFileServlet(resourceStore, streamEventLog);
     }
 
     @Bean
@@ -95,12 +95,6 @@ public class ServletSpringConfig {
     @Scope(StroomScope.PROTOTYPE)
     public SessionListServlet sessionListServlet(final TaskManager taskManager) {
         return new SessionListServletImpl(taskManager);
-    }
-
-    @Bean
-    public SessionResourceStore sessionResourceStore(final ResourceStore resourceStore,
-                                                     final HttpServletRequestHolder httpServletRequestHolder) {
-        return new SessionResourceStoreImpl(resourceStore, httpServletRequestHolder);
     }
 
     @Bean(SpringRequestFactoryServlet.BEAN_NAME)

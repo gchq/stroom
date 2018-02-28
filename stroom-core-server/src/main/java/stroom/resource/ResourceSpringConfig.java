@@ -23,7 +23,7 @@ import stroom.resource.ResourceStoreImpl;
 
 @Configuration
 public class ResourceSpringConfig {
-    @Bean("resourceStore")
+    @Bean
     public ResourceStore resourceStore() {
         return new ResourceStoreImpl();
     }

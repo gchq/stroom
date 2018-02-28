@@ -29,8 +29,8 @@ import stroom.logging.StreamEventLog;
 import stroom.pipeline.PipelineService;
 import stroom.policy.DataRetentionService;
 import stroom.properties.StroomPropertyService;
+import stroom.resource.ResourceStore;
 import stroom.security.SecurityContext;
-import stroom.servlet.SessionResourceStore;
 import stroom.streamtask.BatchIdTransactionHelper;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.TaskManager;
@@ -50,14 +50,6 @@ public class StreamStoreSpringConfig {
                                                              final DictionaryStore dictionaryStore,
                                                              final StreamAttributeKeyService streamAttributeKeyService) {
         return new ExpressionToFindCriteria(feedService, pipelineService, dictionaryStore, streamAttributeKeyService);
-    }
-
-    @Bean
-    @Scope(StroomScope.TASK)
-    public DownloadDataHandler downloadDataHandler(final SessionResourceStore sessionResourceStore,
-                                                   final TaskManager taskManager,
-                                                   final StreamEventLog streamEventLog) {
-        return new DownloadDataHandler(sessionResourceStore, taskManager, streamEventLog);
     }
 
     @Bean
@@ -126,13 +118,6 @@ public class StreamStoreSpringConfig {
 
     @Bean
     @Scope(value = StroomScope.TASK)
-    public StreamDownloadTaskHandler streamDownloadTaskHandler(final TaskMonitor taskMonitor,
-                                                               final StreamStore streamStore) {
-        return new StreamDownloadTaskHandler(taskMonitor, streamStore);
-    }
-
-    @Bean
-    @Scope(value = StroomScope.TASK)
     public StreamRetentionExecutor streamRetentionExecutor(final FeedService feedService,
                                                            final StreamStore streamStore,
                                                            final TaskMonitor taskMonitor,
@@ -151,6 +136,28 @@ public class StreamStoreSpringConfig {
     }
 
     @Bean
+    @Scope(StroomScope.TASK)
+    public DownloadDataHandler downloadDataHandler(final ResourceStore sessionResourceStore,
+                                                   final TaskManager taskManager,
+                                                   final StreamEventLog streamEventLog) {
+        return new DownloadDataHandler(sessionResourceStore, taskManager, streamEventLog);
+    }
+
+    @Bean
+    @Scope(value = StroomScope.TASK)
+    public StreamDownloadTaskHandler streamDownloadTaskHandler(final TaskMonitor taskMonitor,
+                                                               final StreamStore streamStore) {
+        return new StreamDownloadTaskHandler(taskMonitor, streamStore);
+    }
+
+    @Bean
+    @Scope(StroomScope.TASK)
+    public UploadDataHandler uploadDataHandler(final ResourceStore sessionResourceStore,
+                                               final TaskManager taskManager) {
+        return new UploadDataHandler(sessionResourceStore, taskManager);
+    }
+
+    @Bean
     @Scope(value = StroomScope.TASK)
     public StreamUploadTaskHandler streamUploadTaskHandler(final TaskMonitor taskMonitor,
                                                            final StreamStore streamStore,
@@ -158,12 +165,5 @@ public class StreamStoreSpringConfig {
                                                            @Named("cachedFeedService") final FeedService feedService,
                                                            final MetaDataStatistic metaDataStatistics) {
         return new StreamUploadTaskHandler(taskMonitor, streamStore, streamTypeService, feedService, metaDataStatistics);
-    }
-
-    @Bean
-    @Scope(StroomScope.TASK)
-    public UploadDataHandler uploadDataHandler(final SessionResourceStore sessionResourceStore,
-                                               final TaskManager taskManager) {
-        return new UploadDataHandler(sessionResourceStore, taskManager);
     }
 }

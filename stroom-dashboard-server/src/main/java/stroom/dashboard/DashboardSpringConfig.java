@@ -18,7 +18,6 @@ package stroom.dashboard;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.ResourceLoader;
 import stroom.dashboard.logging.SearchEventLog;
@@ -26,11 +25,10 @@ import stroom.datasource.DataSourceProviderRegistry;
 import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
 import stroom.properties.StroomPropertyService;
+import stroom.resource.ResourceStore;
 import stroom.security.SecurityContext;
-import stroom.servlet.SessionResourceStore;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskMonitor;
 import stroom.visualisation.VisualisationService;
 
@@ -55,18 +53,18 @@ public class DashboardSpringConfig {
     @Bean
     @Scope(value = StroomScope.TASK)
     public DownloadQueryActionHandler downloadQueryActionHandler(final SearchRequestMapper searchRequestMapper,
-                                                                 final SessionResourceStore sessionResourceStore) {
-        return new DownloadQueryActionHandler(searchRequestMapper, sessionResourceStore);
+                                                                 final ResourceStore resourceStore) {
+        return new DownloadQueryActionHandler(searchRequestMapper, resourceStore);
     }
 
     @Bean
     @Scope(StroomScope.PROTOTYPE)
-    public DownloadSearchResultsHandler downloadSearchResultsHandler(final SessionResourceStore sessionResourceStore,
+    public DownloadSearchResultsHandler downloadSearchResultsHandler(final ResourceStore resourceStore,
                                                                      final SearchEventLog searchEventLog,
                                                                      final ActiveQueriesManager activeQueriesManager,
                                                                      final DataSourceProviderRegistry searchDataSourceProviderRegistry,
                                                                      final SearchRequestMapper searchRequestMapper) {
-        return new DownloadSearchResultsHandler(sessionResourceStore, searchEventLog, activeQueriesManager, searchDataSourceProviderRegistry, searchRequestMapper);
+        return new DownloadSearchResultsHandler(resourceStore, searchEventLog, activeQueriesManager, searchDataSourceProviderRegistry, searchRequestMapper);
     }
 
     @Bean

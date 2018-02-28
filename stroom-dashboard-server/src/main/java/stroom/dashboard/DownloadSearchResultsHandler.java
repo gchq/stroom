@@ -31,13 +31,13 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.datasource.DataSourceProvider;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
+import stroom.resource.ResourceStore;
 import stroom.security.Secured;
-import stroom.servlet.SessionResourceStore;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.ResourceGeneration;
@@ -58,19 +58,19 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
 
-    private final SessionResourceStore sessionResourceStore;
+    private final ResourceStore resourceStore;
     private final SearchEventLog searchEventLog;
     private final ActiveQueriesManager activeQueriesManager;
     private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final SearchRequestMapper searchRequestMapper;
 
     @Inject
-    DownloadSearchResultsHandler(final SessionResourceStore sessionResourceStore,
+    DownloadSearchResultsHandler(final ResourceStore resourceStore,
                                  final SearchEventLog searchEventLog,
                                  final ActiveQueriesManager activeQueriesManager,
                                  final DataSourceProviderRegistry searchDataSourceProviderRegistry,
                                  final SearchRequestMapper searchRequestMapper) {
-        this.sessionResourceStore = sessionResourceStore;
+        this.resourceStore = resourceStore;
         this.searchEventLog = searchEventLog;
         this.activeQueriesManager = activeQueriesManager;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
@@ -140,8 +140,8 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
             fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
             fileName = fileName + "." + action.getFileType().getExtension();
 
-            resourceKey = sessionResourceStore.createTempFile(fileName);
-            final Path file = sessionResourceStore.getTempFile(resourceKey);
+            resourceKey = resourceStore.createTempFile(fileName);
+            final Path file = resourceStore.getTempFile(resourceKey);
 
             final ComponentResultRequest componentResultRequest = searchRequest.getComponentResultRequests().get(action.getComponentId());
             if (componentResultRequest == null) {

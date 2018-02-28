@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.resource;
+package stroom.pipeline.reader;
 
 import org.junit.Assert;
 import org.junit.ClassRule;

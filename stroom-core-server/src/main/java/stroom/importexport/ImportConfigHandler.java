@@ -19,8 +19,8 @@ package stroom.importexport;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.importexport.shared.ImportState;
 import stroom.logging.ImportExportEventLog;
+import stroom.resource.ResourceStore;
 import stroom.security.Secured;
-import stroom.servlet.SessionResourceStore;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.ResourceKey;
@@ -32,22 +32,22 @@ import java.nio.file.Path;
 class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, ResourceKey> {
     private final ImportExportService importExportService;
     private final ImportExportEventLog eventLog;
-    private final SessionResourceStore sessionResourceStore;
+    private final ResourceStore resourceStore;
 
     @Inject
     ImportConfigHandler(final ImportExportService importExportService,
                         final ImportExportEventLog eventLog,
-                        final SessionResourceStore sessionResourceStore) {
+                        final ResourceStore resourceStore) {
         this.importExportService = importExportService;
         this.eventLog = eventLog;
-        this.sessionResourceStore = sessionResourceStore;
+        this.resourceStore = resourceStore;
     }
 
     @Override
     @Secured("Import Configuration")
     public ResourceKey exec(final ImportConfigAction action) {
         // Import file.
-        final Path file = sessionResourceStore.getTempFile(action.getKey());
+        final Path file = resourceStore.getTempFile(action.getKey());
 
         // Log the import.
         eventLog._import(action);
@@ -66,7 +66,7 @@ class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, Resour
         importExportService.performImportWithConfirmation(file, action.getConfirmList());
 
         // Delete the import if it was successful
-        sessionResourceStore.deleteTempFile(action.getKey());
+        resourceStore.deleteTempFile(action.getKey());
 
         return action.getKey();
     }

@@ -19,7 +19,7 @@ package stroom.service.resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.resource.BOMRemovalInputStream;
+import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;

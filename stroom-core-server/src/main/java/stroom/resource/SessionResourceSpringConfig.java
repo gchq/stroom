@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.servlet;
+package stroom.resource;
 
-import stroom.util.shared.ResourceKey;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import stroom.servlet.HttpServletRequestHolder;
 
-import java.nio.file.Path;
-
-public interface SessionResourceStore {
-    ResourceKey createTempFile(final String name);
-
-    void deleteTempFile(ResourceKey key);
-
-    Path getTempFile(ResourceKey key);
+@Configuration
+public class SessionResourceSpringConfig {
+    @Bean
+    public ResourceStore resourceStore(final HttpServletRequestHolder httpServletRequestHolder) {
+        return new SessionResourceStoreImpl(new ResourceStoreImpl(), httpServletRequestHolder);
+    }
 }

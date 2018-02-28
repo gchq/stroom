@@ -24,6 +24,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.logging.StreamEventLog;
+import stroom.resource.ResourceStore;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.PropertyMap;
@@ -51,13 +52,13 @@ public final class ImportFileServlet extends HttpServlet {
 
     private static final long serialVersionUID = 487567988479000995L;
 
-    private final SessionResourceStore sessionResourceStore;
+    private final ResourceStore resourceStore;
     private final StreamEventLog streamEventLog;
 
     @Inject
-    ImportFileServlet(final SessionResourceStore sessionResourceStore,
+    ImportFileServlet(final ResourceStore resourceStore,
                       final StreamEventLog streamEventLog) {
-        this.sessionResourceStore = sessionResourceStore;
+        this.resourceStore = resourceStore;
         this.streamEventLog = streamEventLog;
     }
 
@@ -80,8 +81,8 @@ public final class ImportFileServlet extends HttpServlet {
             final FileItem fileItem = items.get("fileUpload");
             final InputStream inputStream = fileItem.getInputStream();
 
-            final ResourceKey uuid = sessionResourceStore.createTempFile(fileItem.getName());
-            final Path file = sessionResourceStore.getTempFile(uuid);
+            final ResourceKey uuid = resourceStore.createTempFile(fileItem.getName());
+            final Path file = resourceStore.getTempFile(uuid);
             streamEventLog.importStream(new Date(), "Import", FileUtil.getCanonicalPath(file), null);
 
             StreamUtil.streamToStream(inputStream, Files.newOutputStream(file));
