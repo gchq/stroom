@@ -792,7 +792,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.11...HEAD
+[v6.0-alpha.11]: https://github.com/gchq/stroom/compare/v6.0-alpha.10...v6.0-alpha.11
 [v6.0-alpha.10]: https://github.com/gchq/stroom/compare/v6.0-alpha.9...v6.0-alpha.10
 [v6.0-alpha.9]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...v6.0-alpha.9
 [v6.0-alpha.8]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...v6.0-alpha.8
