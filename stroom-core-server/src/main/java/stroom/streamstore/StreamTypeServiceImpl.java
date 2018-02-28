@@ -17,13 +17,12 @@
 
 package stroom.streamstore;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
-import stroom.entity.util.HqlBuilder;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.util.HqlBuilder;
 import stroom.security.Insecure;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
@@ -33,23 +32,10 @@ import java.util.List;
 
 @Transactional
 @Insecure
-class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria>
-        implements StreamTypeService, InitializingBean {
-    private final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper;
-
+class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria> implements StreamTypeService {
     @Inject
-    StreamTypeServiceImpl(final StroomEntityManager entityManager,
-                          final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper) {
+    StreamTypeServiceImpl(final StroomEntityManager entityManager) {
         super(entityManager);
-        this.streamTypeServiceTransactionHelper = streamTypeServiceTransactionHelper;
-    }
-
-    /**
-     * Ensure all standard stream types exist.
-     */
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        streamTypeServiceTransactionHelper.doInserts();
     }
 
     /**

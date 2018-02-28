@@ -18,28 +18,20 @@ package stroom.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.Task;
-import stroom.util.spring.ApplicationContextUtil;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-public class TaskHandlerBeanRegistry implements ApplicationContextAware, InitializingBean {
+public class TaskHandlerBeanRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerBeanRegistry.class);
 
     private final StroomBeanStore beanStore;
-
-    private Map<Class<?>, String> handlerMap = new HashMap<>();
-    private Map<Class<?>, TaskHandlerBean> taskHandlerMap = new HashMap<>();
-    private ApplicationContext applicationContext;
+    private volatile Handlers handlers;
 
     @Inject
     TaskHandlerBeanRegistry(final StroomBeanStore beanStore) {
@@ -48,7 +40,7 @@ public class TaskHandlerBeanRegistry implements ApplicationContextAware, Initial
 
     @SuppressWarnings("unchecked")
     public <R, H extends TaskHandler<Task<R>, R>> H findHandler(final Task<R> task) {
-        final String handlerName = handlerMap.get(task.getClass());
+        final String handlerName = getHandlers().getHandlerMap().get(task.getClass());
 
         if (handlerName == null) {
             throw new RuntimeException("No handler for " + task.getClass().getName());
@@ -58,38 +50,53 @@ public class TaskHandlerBeanRegistry implements ApplicationContextAware, Initial
     }
 
     public TaskHandlerBean getTaskHandlerBean(final Task<? extends SharedObject> task) {
-        return taskHandlerMap.get(task.getClass());
+        return getHandlers().getTaskHandlerMap().get(task.getClass());
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        final List<String> beanList = ApplicationContextUtil.getBeanNamesWithAnnotation(applicationContext,
-                TaskHandlerBean.class);
-
-        for (final String handlerName : beanList) {
-            Class<?> handlerClass = applicationContext.getType(handlerName);
-
-            final TaskHandlerBean handlerBean = handlerClass.getAnnotation(TaskHandlerBean.class);
-            final Class<?> taskClass = handlerBean.task();
-
-            final Object previousHandler = handlerMap.put(taskClass, handlerName);
-
-            taskHandlerMap.put(taskClass, handlerBean);
-
-            // Check that there isn't a handler already associated
-            // with the task.
-            if (previousHandler != null) {
-                throw new RuntimeException("TaskHandler \"" + previousHandler + "\" has already been registered for \""
-                        + taskClass + "\"");
+    private Handlers getHandlers() {
+        if (handlers == null) {
+            synchronized (this) {
+                if (handlers == null) {
+                    handlers = new Handlers(beanStore);
+                }
             }
-
-            LOGGER.debug("postProcessAfterInitialization() - registering {} for action {}", handlerName,
-                    taskClass.getSimpleName());
         }
+        return handlers;
     }
 
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+    private static class Handlers {
+        private final Map<Class<?>, String> handlerMap = new HashMap<>();
+        private final Map<Class<?>, TaskHandlerBean> taskHandlerMap = new HashMap<>();
+
+        Handlers(final StroomBeanStore beanStore) {
+            final Set<String> beanList = beanStore.getAnnotatedStroomBeans(TaskHandlerBean.class);
+
+            for (final String handlerName : beanList) {
+                final TaskHandlerBean handlerBean = beanStore.findAnnotationOnBean(handlerName, TaskHandlerBean.class);
+                final Class<?> taskClass = handlerBean.task();
+
+                final Object previousHandler = handlerMap.put(taskClass, handlerName);
+
+                taskHandlerMap.put(taskClass, handlerBean);
+
+                // Check that there isn't a handler already associated
+                // with the task.
+                if (previousHandler != null) {
+                    throw new RuntimeException("TaskHandler \"" + previousHandler + "\" has already been registered for \""
+                            + taskClass + "\"");
+                }
+
+                LOGGER.debug("postProcessAfterInitialization() - registering {} for action {}", handlerName,
+                        taskClass.getSimpleName());
+            }
+        }
+
+        Map<Class<?>, String> getHandlerMap() {
+            return handlerMap;
+        }
+
+        Map<Class<?>, TaskHandlerBean> getTaskHandlerMap() {
+            return taskHandlerMap;
+        }
     }
 }

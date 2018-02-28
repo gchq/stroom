@@ -83,7 +83,7 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
         LOGGER.info("startup()");
 
         final JobQueryAppender queryAppender = (JobQueryAppender) getQueryAppender();
-        for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore.getStroomBeanMethod(JobTrackedSchedule.class)) {
+        for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore.getAnnotatedStroomBeanMethods(JobTrackedSchedule.class)) {
             final JobTrackedSchedule jobScheduleDescriptor = stroomBeanMethod.getBeanMethod()
                     .getAnnotation(JobTrackedSchedule.class);
             queryAppender.getJobDescriptionMap().put(jobScheduleDescriptor.jobName(), jobScheduleDescriptor.description());
@@ -92,7 +92,7 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
             }
         }
         // Distributed Jobs done a different way
-        for (final String beanFactory : stroomBeanStore.getStroomBean(DistributedTaskFactoryBean.class)) {
+        for (final String beanFactory : stroomBeanStore.getAnnotatedStroomBeans(DistributedTaskFactoryBean.class)) {
             final DistributedTaskFactoryBean distributedTaskFactoryBean = stroomBeanStore.findAnnotationOnBean(beanFactory,
                     DistributedTaskFactoryBean.class);
 

@@ -433,7 +433,7 @@ import stroom.streamtask.StreamProcessorFilterService;
 //        stroom.spring.ScopeTestConfiguration.class,
 //        stroom.spring.ServerComponentScanConfiguration.class,
 //        stroom.spring.ServerComponentScanTestConfiguration.class,
-        stroom.spring.ServerConfiguration.class,
+//        stroom.spring.ServerConfiguration.class,
 //        stroom.startup.AppSpringConfig.class,
         stroom.statistics.internal.InternalStatisticsSpringConfig.class,
         stroom.statistics.spring.StatisticsConfiguration.class,

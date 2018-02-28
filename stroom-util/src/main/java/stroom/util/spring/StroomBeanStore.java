@@ -22,11 +22,9 @@ import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 
+import javax.inject.Inject;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -38,55 +36,164 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class StroomBeanStore implements InitializingBean, BeanFactoryAware, ApplicationContextAware {
+public class StroomBeanStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanStore.class);
 
     private static final String STROOM_CLASSES = "stroom.";
-    private final Map<Class<?>, List<StroomBeanMethod>> stroomBeanMethodMap = new HashMap<>();
-    private boolean initialised = false;
-    private ApplicationContext applicationContext;
-    private BeanFactory beanFactory;
 
-    public List<StroomBeanMethod> getStroomBeanMethod(final Class<?> annotation) {
-        List<StroomBeanMethod> list = stroomBeanMethodMap.get(annotation);
-        if (list == null) {
-            list = new ArrayList<>();
-        }
-        return list;
+    private final ApplicationContext applicationContext;
+    private final BeanFactory beanFactory;
+
+    private volatile AnnotatedBeanStore annotatedBeanStore;
+
+    @Inject
+    public StroomBeanStore(final ApplicationContext applicationContext, final BeanFactory beanFactory) {
+        this.applicationContext = applicationContext;
+        this.beanFactory = beanFactory;
     }
 
-    public Set<String> getStroomBean(final Class<? extends Annotation> annotationType) {
-        final Set<String> results = new HashSet<>();
-
-        final Set<String> beanNames = new HashSet<>();
-        beanNames.addAll(Arrays.asList(applicationContext.getBeanDefinitionNames()));
-
-        for (final String beanName : beanNames) {
-            if (applicationContext.findAnnotationOnBean(beanName, annotationType) != null) {
-                results.add(beanName);
-            }
+    public Set<StroomBeanMethod> getAnnotatedStroomBeanMethods(final Class<? extends Annotation> annotation) {
+        Set<StroomBeanMethod> set = getAnnotatedBeanStore().getStroomBeanMethodMap().get(annotation);
+        if (set == null) {
+            set = Collections.emptySet();
         }
-        return results;
+        return set;
     }
 
-    public Set<String> getStroomBeanByType(final Class<?> type) {
-        final Set<String> results = new HashSet<>();
-
-        final Set<String> beanNames = new HashSet<>();
-        beanNames.addAll(Arrays.asList(applicationContext.getBeanDefinitionNames()));
-
-        for (final String beanName : beanNames) {
-            if (applicationContext.isTypeMatch(beanName, type)) {
-                results.add(beanName);
-            }
+    public Set<String> getAnnotatedStroomBeans(final Class<? extends Annotation> annotation) {
+        Set<StroomBean> set = getAnnotatedBeanStore().getStroomBeanMap().get(annotation);
+        if (set == null) {
+            set = Collections.emptySet();
         }
-        return results;
+        return set.stream().map(StroomBean::getBeanName).collect(Collectors.toSet());
+
+//        final Set<String> results = new HashSet<>();
+//        final String[] names = applicationContext.getBeanDefinitionNames();
+//        for (final String name : names) {
+//            try {
+//                final Object bean = applicationContext.getBean(name);
+//                final Class<?> targetClass = AopUtils.getTargetClass(bean);
+//                if (targetClass.isAnnotationPresent(annotationType)) {
+//                    results.add(name);
+//                } else {
+//                    for (final Method method : targetClass.getMethods()) {
+//                        if (method.isAnnotationPresent(annotationType)) {
+//                            results.add(name);
+//                        }
+//                    }
+//                }
+//            } catch (final Exception e) {
+//                LOGGER.error(e.getMessage(), e);
+//            }
+//        }
+
+
+//        final Set<String> results = new HashSet<>();
+//        new FastClasspathScanner("stroom")
+//                .matchClassesWithAnnotation(annotationType, c -> {
+//                    final String[] names = applicationContext.getBeanNamesForType(c);
+//                    if (names.length > 0) {
+//                        results.addAll(Arrays.asList(names));
+//                    } else {
+//                        addBeansByInterface(results, c, annotationType);
+//                    }
+//                })
+//                .scan();
+//
+//        new FastClasspathScanner("stroom")
+//                .matchClassesWithMethodAnnotation(annotationType, c -> {
+//                    final String[] names = applicationContext.getBeanNamesForType(c);
+//                    if (names.length > 0) {
+//                        results.addAll(Arrays.asList(names));
+//                    } else {
+//                        addBeansByInterface(results, c, annotationType);
+//                    }
+//                })
+//                .scan();
+
+
+//        final Set<String> beanNames = new HashSet<>();
+//        beanNames.addAll(Arrays.asList(applicationContext.getBeanDefinitionNames()));
+//
+//        for (final String beanName : beanNames) {
+//            if (applicationContext.findAnnotationOnBean(beanName, annotationType) != null) {
+//                results.add(beanName);
+//            }
+//        }
+//        return results;
+    }
+
+//    private void addBeansByInterface(final Set<String> results, final Class<?> c, final Class<? extends Annotation> annotationType) {
+//        final Class<?>[] interfaces = c.getInterfaces();
+//
+//        for (final Class<?> anInterface : interfaces) {
+//            final String[] otherNames = applicationContext.getBeanNamesForType(anInterface);
+//            for (final String otherName : otherNames) {
+//                try {
+//                    final Object bean = applicationContext.getBean(otherName);
+//                    final Class<?> targetClass = AopUtils.getTargetClass(bean);
+//                    if (targetClass.isAnnotationPresent(annotationType)) {
+//                        results.add(otherName);
+//                    } else {
+//                        for (final Method method : targetClass.getMethods()) {
+//                            if (method.isAnnotationPresent(annotationType)) {
+//                                results.add(otherName);
+//                            }
+//                        }
+//                    }
+//                } catch (final Exception e) {
+//                    LOGGER.error(e.getMessage(), e);
+//                }
+//            }
+//        }
+//    }
+
+//    public Set<String> getStroomBeanByType(final Class<?> type) {
+////        final Set<String> results = getAnnotatedBeanStore()
+////                .getStroomBeanMap()
+////                .values()
+////                .stream()
+////                .flatMap(Collection::stream)
+////                .filter(bean -> type.isAssignableFrom(bean.getBeanClass()))
+////                .map(StroomBean::getBeanName)
+////                .collect(Collectors.toSet());
+//
+//
+//        final Set<String> results = new HashSet<>();
+//        final Set<String> beanNames = new HashSet<>();
+//        beanNames.addAll(Arrays.asList(applicationContext.getBeanDefinitionNames()));
+//
+//        for (final String beanName : beanNames) {
+//            if (applicationContext.isTypeMatch(beanName, type)) {
+//                results.add(beanName);
+//            }
+//        }
+//        return results;
+//    }
+
+    public <T> Map<String, T> getBeansOfType(Class<T> type, boolean includeNonSingletons, boolean allowEagerInit)
+            throws BeansException {
+        return applicationContext.getBeansOfType(type, includeNonSingletons, allowEagerInit);
     }
 
     public <A extends Annotation> A findAnnotationOnBean(final String beanName, final Class<A> annotationType) {
-        return applicationContext.findAnnotationOnBean(beanName, annotationType);
+        final Object bean = beanFactory.getBean(beanName);
+        final Class<?> targetClass = AopUtils.getTargetClass(bean);
+        if (targetClass.isAnnotationPresent(annotationType)) {
+            return targetClass.getAnnotation(annotationType);
+        } else {
+            for (final Method method : targetClass.getMethods()) {
+                if (method.isAnnotationPresent(annotationType)) {
+                    return method.getAnnotation(annotationType);
+                }
+            }
+        }
 
+
+//        return applicationContext.findAnnotationOnBean(beanName, annotationType);
+        throw new RuntimeException("Annotation " + annotationType + " not found on bean '" + beanName + "'");
     }
 
     public Object getBean(final String name) {
@@ -104,8 +211,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
         return o;
     }
 
-    public Object invoke(final StroomBeanMethod stroomBeanMethod, final Object... args)
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public Object invoke(final StroomBeanMethod stroomBeanMethod, final Object... args) throws InvocationTargetException, IllegalAccessException {
         // Get the bean.
         final Object bean = getBean(stroomBeanMethod.getBeanName());
         final Method beanMethod = stroomBeanMethod.getBeanMethod();
@@ -172,89 +278,120 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
         return bean;
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        init();
+    private AnnotatedBeanStore getAnnotatedBeanStore() {
+        if (annotatedBeanStore == null) {
+            synchronized (this) {
+                if (annotatedBeanStore == null) {
+                    annotatedBeanStore = new AnnotatedBeanStore(applicationContext);
+                }
+            }
+        }
+        return annotatedBeanStore;
     }
 
-    private synchronized void init() {
-        if (initialised) {
-            return;
-        }
+    private static class AnnotatedBeanStore {
+        private final Map<Class<?>, Set<StroomBeanMethod>> stroomBeanMethodMap = new HashMap<>();
+        private final Map<Class<?>, Set<StroomBean>> stroomBeanMap = new HashMap<>();
 
-        final String[] allBeans = applicationContext.getBeanDefinitionNames();
+        AnnotatedBeanStore(final ApplicationContext applicationContext) {
+            final String[] allBeans = applicationContext.getBeanDefinitionNames();
 
-        for (final String beanName : allBeans) {
-            Class<?> beanClass = applicationContext.getType(beanName);
-            if (beanClass != null) {
-                // Here we need to get the real class if we have be given a
-                // CGLIB Proxy.
-                if (beanClass.getName().contains("CGLIB")) {
-                    beanClass = beanClass.getSuperclass();
-                } else if (beanClass.getName().contains("$")) {
-                    Object bean = applicationContext.getBean(beanName);
-                    beanClass = AopUtils.getTargetClass(bean);
-                }
+            for (final String beanName : allBeans) {
+                Class<?> beanClass = applicationContext.getType(beanName);
+                if (beanClass != null) {
+                    // Here we need to get the real class if we have be given a
+                    // CGLIB Proxy.
+                    if (beanClass.getName().contains("CGLIB")) {
+                        beanClass = beanClass.getSuperclass();
+                    } else if (beanClass.getName().contains("$")) {
+                        Object bean = applicationContext.getBean(beanName);
+                        beanClass = AopUtils.getTargetClass(bean);
+                    }
 
-                // Only bother with our own code
-                if (!beanClass.getName().contains(STROOM_CLASSES)) {
-                    continue;
-                }
+                    // Only bother with our own code
+                    if (!beanClass.getName().contains(STROOM_CLASSES)) {
+                        continue;
+                    }
 
-                if (beanClass.getName().contains("$")) {
-                    LOGGER.error("init() - UNABLE TO RESOLVE BEAN CLASS ?? MAYBE SPRING IS NO LONGER USING CGLIB .... {}",
-                            beanClass.getName());
-                }
+                    if (beanClass.getName().contains("$")) {
+                        LOGGER.error("init() - UNABLE TO RESOLVE BEAN CLASS ?? MAYBE SPRING IS NO LONGER USING CGLIB .... {}",
+                                beanClass.getName());
+                    }
 
 //                if (beanClass.isInterface()) {
 //                    LOGGER.error("init() - EXPECTED CLASS BUT RECEIVED INTERFACE .... {}",
 //                            beanClass.getName());
 //                }
 
-                addAnnotatedMethods(beanClass, beanName);
-            }
-        }
 
-        if (LOGGER.isDebugEnabled()) {
-            final List<String> beanMethodList = new ArrayList<>();
-            for (final List<StroomBeanMethod> methods : stroomBeanMethodMap.values()) {
-                for (final StroomBeanMethod method : methods) {
-                    beanMethodList.add(method.toString());
+                    addClass(beanClass, beanName);
+                    addAnnotatedMethods(beanClass, beanName);
+
+//                // Add from instance.
+//                try {
+//                    final Object bean = applicationContext.getBean(beanName);
+//                    final Class<?> targetClass = AopUtils.getTargetClass(bean);
+//                    addClass(targetClass, beanName);
+//                    addAnnotatedMethods(targetClass, beanName);
+//                } catch (final Exception e) {
+//                    LOGGER.error(e.getMessage(), e);
+//                }
                 }
             }
-            Collections.sort(beanMethodList);
-            for (final String string : beanMethodList) {
-                LOGGER.debug("init() - {}", string);
+
+            if (LOGGER.isDebugEnabled()) {
+                final List<String> beanMethodList = new ArrayList<>();
+                for (final Set<StroomBeanMethod> methods : stroomBeanMethodMap.values()) {
+                    for (final StroomBeanMethod method : methods) {
+                        beanMethodList.add(method.toString());
+                    }
+                }
+                Collections.sort(beanMethodList);
+                for (final String string : beanMethodList) {
+                    LOGGER.debug("init() - {}", string);
+                }
             }
         }
-        initialised = true;
-    }
 
-    private void addAnnotatedMethods(final Class<?> clazz, final String beanName) {
-        if (clazz != null) {
-            final Method[] methodList = clazz.getMethods();
-            for (final Method method : methodList) {
-                final Annotation[] allAnnotation = method.getAnnotations();
+        private void addClass(final Class<?> clazz, final String beanName) {
+            if (clazz != null) {
+                final Annotation[] allAnnotation = clazz.getAnnotations();
                 for (final Annotation annotation : allAnnotation) {
                     final Class<?> annotationType = annotation.annotationType();
                     if (annotationType.getName().contains(STROOM_CLASSES)) {
-                        stroomBeanMethodMap.computeIfAbsent(annotationType, k -> new ArrayList<>()).add(new StroomBeanMethod(beanName, method));
+                        stroomBeanMap.computeIfAbsent(annotationType, k -> new HashSet<>()).add(new StroomBean(beanName, clazz));
                     }
                 }
+
+                // Recurse to add annotated methods from superclass.
+                addClass(clazz.getSuperclass(), beanName);
             }
-
-            // Recurse to add annotated methods from superclass.
-            addAnnotatedMethods(clazz.getSuperclass(), beanName);
         }
-    }
 
-    @Override
-    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
-    }
+        private void addAnnotatedMethods(final Class<?> clazz, final String beanName) {
+            if (clazz != null) {
+                final Method[] methodList = clazz.getMethods();
+                for (final Method method : methodList) {
+                    final Annotation[] allAnnotation = method.getAnnotations();
+                    for (final Annotation annotation : allAnnotation) {
+                        final Class<?> annotationType = annotation.annotationType();
+                        if (annotationType.getName().contains(STROOM_CLASSES)) {
+                            stroomBeanMethodMap.computeIfAbsent(annotationType, k -> new HashSet<>()).add(new StroomBeanMethod(beanName, method));
+                        }
+                    }
+                }
 
-    @Override
-    public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+                // Recurse to add annotated methods from superclass.
+                addAnnotatedMethods(clazz.getSuperclass(), beanName);
+            }
+        }
+
+        Map<Class<?>, Set<StroomBean>> getStroomBeanMap() {
+            return stroomBeanMap;
+        }
+
+        Map<Class<?>, Set<StroomBeanMethod>> getStroomBeanMethodMap() {
+            return stroomBeanMethodMap;
+        }
     }
 }

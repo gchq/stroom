@@ -18,9 +18,6 @@ package stroom.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.StroomHeaderArguments;
@@ -31,6 +28,7 @@ import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskIdFactory;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
@@ -42,12 +40,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * There are 2 instances of this class as spring has no HttpSessionListener
  * functionality so we use 2 instances and some statics
  */
-public class SessionListListener implements HttpSessionListener, SessionListService, BeanFactoryAware {
+public class SessionListListener implements HttpSessionListener, SessionListService {
     private static final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, String> lastRequestUserAgent = new ConcurrentHashMap<>();
     private static transient Logger logger;
 
-    private static transient volatile BeanFactory beanFactory;
+    private final StroomBeanStore beanStore;
+
+    @Inject
+    SessionListListener(final StroomBeanStore beanStore) {
+        this.beanStore = beanStore;
+    }
 
     public static void setLastRequest(final HttpServletRequest lastRequest) {
         final HttpSession httpSession = lastRequest.getSession(false);
@@ -145,22 +148,13 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
     }
 
     private TaskManager getTaskManager() {
-        if (beanFactory != null) {
-            final StroomBeanStore stroomBeanStore = beanFactory.getBean(StroomBeanStore.class);
+        if (beanStore != null) {
+            final StroomBeanStore stroomBeanStore = beanStore.getBean(StroomBeanStore.class);
             if (stroomBeanStore != null) {
                 return stroomBeanStore.getBean(TaskManager.class);
             }
         }
 
         return null;
-    }
-
-    @Override
-    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-        synchronized (SessionListListener.class) {
-            if (beanFactory != null) {
-                SessionListListener.beanFactory = beanFactory;
-            }
-        }
     }
 }

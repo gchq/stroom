@@ -7,7 +7,6 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,23 +31,17 @@ public class InternalStatisticsReceiverImpl implements InternalStatisticsReceive
     @SuppressWarnings("unused")
     @StroomStartup(priority = 100)
     public void initStatisticEventStoreBeanNames() {
-        final List<String> allBeans = new ArrayList<>(
-                stroomBeanStore.getStroomBeanByType(InternalStatisticsService.class));
+        final Map<String, InternalStatisticsService> allBeans = stroomBeanStore.getBeansOfType(InternalStatisticsService.class, false, false);
 
         final Map<String, InternalStatisticsService> docRefTypeToServiceMap = new HashMap<>();
-        for (final String beanName : allBeans) {
-            final InternalStatisticsService internalStatisticsService = (InternalStatisticsService) stroomBeanStore.getBean(beanName);
+        allBeans.forEach((name, service) -> {
+            LOGGER.debug("Registering internal statistics service for docRefType {}",
+                    service.getDocRefType());
 
-            // only add stores that are spring beans and are enabled
-            if (internalStatisticsService != null) {
-                LOGGER.debug("Registering internal statistics service for docRefType {}",
-                        internalStatisticsService.getDocRefType());
-
-                docRefTypeToServiceMap.put(
-                        Preconditions.checkNotNull(internalStatisticsService.getDocRefType()),
-                        internalStatisticsService);
-            }
-        }
+            docRefTypeToServiceMap.put(
+                    Preconditions.checkNotNull(service.getDocRefType()),
+                    service);
+        });
 
         internalStatisticsReceiver = new MultiServiceInternalStatisticsReceiver(internalStatisticDocRefCache, docRefTypeToServiceMap);
     }

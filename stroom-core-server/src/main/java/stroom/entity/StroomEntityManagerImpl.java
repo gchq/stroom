@@ -19,9 +19,6 @@ package stroom.entity;
 import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventBus;
@@ -41,6 +38,7 @@ import stroom.entity.util.SqlUtil;
 import stroom.security.SecurityContext;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -59,26 +57,28 @@ import java.util.List;
 import java.util.Set;
 
 @Transactional
-public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactoryAware {
+public class StroomEntityManagerImpl implements StroomEntityManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEntityManagerImpl.class);
 
+    private final StroomBeanStore beanStore;
     private final Provider<EntityEventBus> eventBusProvider;
     private final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider;
 
     @PersistenceContext
     private EntityManager entityManager;
-    private BeanFactory beanFactory;
 
     @Inject
-    StroomEntityManagerImpl(final Provider<EntityEventBus> eventBusProvider,
+    StroomEntityManagerImpl(final StroomBeanStore beanStore,
+                            final Provider<EntityEventBus> eventBusProvider,
                             final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider) {
+        this.beanStore = beanStore;
         this.eventBusProvider = eventBusProvider;
         this.stroomDatabaseInfoProvider = stroomDatabaseInfoProvider;
     }
 
     private String getCurrentUser() {
         try {
-            final SecurityContext securityContext = beanFactory.getBean(SecurityContext.class);
+            final SecurityContext securityContext = beanStore.getBean(SecurityContext.class);
             if (securityContext != null) {
                 return securityContext.getUserId();
             }
@@ -438,11 +438,6 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
                 | IllegalAccessException irEx) {
             throw new RuntimeException(irEx);
         }
-    }
-
-    @Override
-    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
     }
 
     @Override

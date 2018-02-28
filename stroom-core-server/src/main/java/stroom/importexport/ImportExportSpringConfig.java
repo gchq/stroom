@@ -42,35 +42,6 @@ public class ImportExportSpringConfig {
     }
 
     @Bean
-    @Scope(value = StroomScope.TASK)
-    public ExportConfigHandler exportConfigHandler(final ImportExportService importExportService,
-                                                   final stroom.logging.ImportExportEventLog eventLog,
-                                                   final SessionResourceStore sessionResourceStore) {
-        return new ExportConfigHandler(importExportService, eventLog, sessionResourceStore);
-    }
-
-    @Bean
-    @Scope(value = StroomScope.PROTOTYPE)
-    public FetchDependenciesHandler fetchDependenciesHandler(final DependencyService dependencyService) {
-        return new FetchDependenciesHandler(dependencyService);
-    }
-
-    @Bean
-    @Scope(value = StroomScope.TASK)
-    public ImportConfigConfirmationHandler importConfigConfirmationHandler(final ImportExportService importExportService,
-                                                                           final SessionResourceStore sessionResourceStore) {
-        return new ImportConfigConfirmationHandler(importExportService, sessionResourceStore);
-    }
-
-    @Bean
-    @Scope(value = StroomScope.TASK)
-    public ImportConfigHandler importConfigHandler(final ImportExportService importExportService,
-                                                   final stroom.logging.ImportExportEventLog eventLog,
-                                                   final SessionResourceStore sessionResourceStore) {
-        return new ImportConfigHandler(importExportService, eventLog, sessionResourceStore);
-    }
-
-    @Bean
     public ImportExportActionHandlers importExportActionHandlers(final StroomBeanStore beanStore) {
         return new ImportExportActionHandlers(beanStore);
     }

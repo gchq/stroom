@@ -69,11 +69,11 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                         // Find all methods that are annotated with a cron or
                         // frequency schedule.
                         for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore
-                                .getStroomBeanMethod(StroomSimpleCronSchedule.class)) {
+                                .getAnnotatedStroomBeanMethods(StroomSimpleCronSchedule.class)) {
                             set.add(stroomBeanMethod);
                         }
                         for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore
-                                .getStroomBeanMethod(StroomFrequencySchedule.class)) {
+                                .getAnnotatedStroomBeanMethods(StroomFrequencySchedule.class)) {
                             set.add(stroomBeanMethod);
                         }
                     } catch (final Throwable t) {

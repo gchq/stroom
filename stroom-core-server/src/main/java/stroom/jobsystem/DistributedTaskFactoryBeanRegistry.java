@@ -50,7 +50,7 @@ class DistributedTaskFactoryBeanRegistry {
 
     @StroomStartup
     public void afterPropertiesSet() throws Exception {
-        Set<String> beanNames = stroomBeanStore.getStroomBean(DistributedTaskFactoryBean.class);
+        Set<String> beanNames = stroomBeanStore.getAnnotatedStroomBeans(DistributedTaskFactoryBean.class);
         for (final String beanName : beanNames) {
             DistributedTaskFactoryBean annotation = stroomBeanStore.findAnnotationOnBean(beanName,
                     DistributedTaskFactoryBean.class);

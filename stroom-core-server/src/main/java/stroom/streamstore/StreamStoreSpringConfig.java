@@ -141,20 +141,13 @@ public class StreamStoreSpringConfig {
     }
 
     @Bean("streamTypeService")
-    public StreamTypeService streamTypeService(final StroomEntityManager entityManager,
-                                               final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper) {
-        return new StreamTypeServiceImpl(entityManager, streamTypeServiceTransactionHelper);
+    public StreamTypeService streamTypeService(final StroomEntityManager entityManager) {
+        return new StreamTypeServiceImpl(entityManager);
     }
 
     @Bean("cachedStreamTypeService")
-    public StreamTypeService cachedStreamTypeService(final CachingEntityManager entityManager,
-                                                     final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper) {
-        return new StreamTypeServiceImpl(entityManager, streamTypeServiceTransactionHelper);
-    }
-
-    @Bean
-    public StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper(final StroomEntityManager stroomEntityManager) {
-        return new StreamTypeServiceTransactionHelper(stroomEntityManager);
+    public StreamTypeService cachedStreamTypeService(final CachingEntityManager entityManager) {
+        return new StreamTypeServiceImpl(entityManager);
     }
 
     @Bean

@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -69,32 +68,28 @@ class ExplorerActionHandlers {
         private final List<DocumentType> documentTypes;
 
         Handlers(final StroomBeanStore beanStore) {
-            final Set<String> set = beanStore.getStroomBeanByType(ExplorerActionHandler.class);
-            set.forEach(name -> {
+            final Map<String, ExplorerActionHandler> map = beanStore.getBeansOfType(ExplorerActionHandler.class, false, false);
+            map.forEach((name, handler) -> {
                 if (!name.toLowerCase().contains("cache")) {
-                    final Object object = beanStore.getBean(name);
-                    if (object != null && object instanceof ExplorerActionHandler) {
-                        final ExplorerActionHandler explorerActionHandler = (ExplorerActionHandler) object;
-                        final String type = explorerActionHandler.getDocumentType().getType();
+                    final String type = handler.getDocumentType().getType();
 
-                        final ExplorerActionHandler existingActionHandler = allHandlers.putIfAbsent(type, explorerActionHandler);
-                        if (existingActionHandler != null) {
-                            throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + explorerActionHandler + "}");
-                        }
+                    final ExplorerActionHandler existingActionHandler = allHandlers.putIfAbsent(type, handler);
+                    if (existingActionHandler != null) {
+                        throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
+                    }
 
-                        final DocumentType existingDocumentType = allTypes.putIfAbsent(type, explorerActionHandler.getDocumentType());
-                        if (existingDocumentType != null) {
-                            throw new RuntimeException("A document type already exists for '" + type + "' existing {" + existingDocumentType + "} new {" + explorerActionHandler.getDocumentType() + "}");
-                        }
+                    final DocumentType existingDocumentType = allTypes.putIfAbsent(type, handler.getDocumentType());
+                    if (existingDocumentType != null) {
+                        throw new RuntimeException("A document type already exists for '" + type + "' existing {" + existingDocumentType + "} new {" + handler.getDocumentType() + "}");
                     }
                 }
             });
 
-            final List<DocumentType> list = new ArrayList<>(allTypes.values().stream()
+            final List<DocumentType> list = allTypes.values().stream()
                     .filter(type -> !DocumentTypes.isSystem(type.getType()))
                     .sorted(Comparator.comparingInt(DocumentType::getPriority))
-                    .collect(Collectors.toList()));
-            this.documentTypes = list;
+                    .collect(Collectors.toList());
+            this.documentTypes = new ArrayList<>(list);
         }
     }
 }

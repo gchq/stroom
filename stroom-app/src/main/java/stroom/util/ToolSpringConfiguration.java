@@ -3,9 +3,6 @@ package stroom.util;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import stroom.kafka.KafkaSpringConfig;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ServerConfiguration;
 
 @Configuration
 @Import({
@@ -95,7 +92,7 @@ import stroom.spring.ServerConfiguration;
 //        stroom.spring.ScopeTestConfiguration.class,
 //        stroom.spring.ServerComponentScanConfiguration.class,
 //        stroom.spring.ServerComponentScanTestConfiguration.class,
-        stroom.spring.ServerConfiguration.class,
+//        stroom.spring.ServerConfiguration.class,
 //        stroom.startup.AppSpringConfig.class,
         stroom.statistics.internal.InternalStatisticsSpringConfig.class,
         stroom.statistics.spring.StatisticsConfiguration.class,

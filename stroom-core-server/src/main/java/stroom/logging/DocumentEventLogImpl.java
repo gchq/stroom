@@ -47,7 +47,6 @@ import javax.inject.Provider;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @Insecure
 public class DocumentEventLogImpl implements DocumentEventLog {
@@ -70,14 +69,10 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 if (objectInfoAppenders == null) {
                     final StroomBeanStore stroomBeanStore = stroomBeanStoreProvider.get();
                     final Map<Class<?>, EventInfoProvider> appenders = new HashMap<>();
-                    final Set<String> beanNames = stroomBeanStore.getStroomBeanByType(EventInfoProvider.class);
-                    for (final String beanName : beanNames) {
-                        final java.lang.Object bean = stroomBeanStore.getBean(beanName);
-                        if (bean instanceof EventInfoProvider) {
-                            final EventInfoProvider objectInfoAppender = (EventInfoProvider) bean;
-                            appenders.put(objectInfoAppender.getType(), objectInfoAppender);
-                        }
-                    }
+                    final Map<String, EventInfoProvider> map = stroomBeanStore.getBeansOfType(EventInfoProvider.class, false, false);
+                    map.forEach((name, provider) -> {
+                        appenders.put(provider.getType(), provider);
+                    });
                     objectInfoAppenders = appenders;
                 }
             }

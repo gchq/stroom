@@ -173,7 +173,7 @@ public class EntityEventBusImpl implements EntityEventBus {
     private synchronized void initialise() {
         if (!initialised) {
             try {
-                for (final String bean : stroomBeanStore.getStroomBean(EntityEventHandler.class)) {
+                for (final String bean : stroomBeanStore.getAnnotatedStroomBeans(EntityEventHandler.class)) {
                     final EntityEventHandler annotation = stroomBeanStore.findAnnotationOnBean(bean,
                             EntityEventHandler.class);
                     if (annotation != null) {

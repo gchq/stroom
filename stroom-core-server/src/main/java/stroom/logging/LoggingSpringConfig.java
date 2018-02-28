@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import stroom.feed.FeedService;
 import stroom.security.SecurityContext;
+import stroom.servlet.HttpServletRequestHolder;
 import stroom.streamstore.StreamTypeService;
 import stroom.util.spring.StroomBeanStore;
 
@@ -60,7 +61,15 @@ public class LoggingSpringConfig {
     }
 
     @Bean
-    public StroomEventLoggingService stroomEventLoggingService(final SecurityContext security) {
-        return new StroomEventLoggingService(security);
+    public StroomEventLoggingService stroomEventLoggingService(final SecurityContext security,
+                                                               final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider) {
+        HttpServletRequestHolder httpServletRequestHolder = null;
+        try {
+            httpServletRequestHolder = httpServletRequestHolderProvider.get();
+        } catch (final Exception e) {
+            // Ignore
+        }
+
+        return new StroomEventLoggingService(security, httpServletRequestHolder);
     }
 }

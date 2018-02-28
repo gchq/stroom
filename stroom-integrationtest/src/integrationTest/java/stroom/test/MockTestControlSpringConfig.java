@@ -35,12 +35,13 @@ import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.task.TaskManager;
+import stroom.util.spring.StroomBeanStore;
 
 @Configuration
 public class MockTestControlSpringConfig {
     @Bean
-    public CommonTestControl commonTestControl() {
-        return new MockCommonTestControl();
+    public CommonTestControl commonTestControl(final StroomBeanStore beanStore) {
+        return new MockCommonTestControl(beanStore);
     }
 
     @Bean

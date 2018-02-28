@@ -18,9 +18,6 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryEntity;
@@ -68,6 +65,7 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.io.FileUtil;
+import stroom.util.spring.StroomBeanStore;
 import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 
@@ -84,7 +82,7 @@ import java.util.Map;
  * Class to help with testing.
  * </p>
  */
-public class DatabaseCommonTestControl implements CommonTestControl, ApplicationContextAware {
+public class DatabaseCommonTestControl implements CommonTestControl {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
     private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
@@ -137,8 +135,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     private final NodeConfig nodeConfig;
     private final StreamTaskCreator streamTaskCreator;
     private final StroomCacheManager stroomCacheManager;
-
-    private ApplicationContext applicationContext;
+    private final StroomBeanStore beanStore;
 
     @Inject
     DatabaseCommonTestControl(final VolumeService volumeService,
@@ -149,7 +146,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
                               final NodeConfig nodeConfig,
                               final StreamTaskCreator streamTaskCreator,
-                              final StroomCacheManager stroomCacheManager) {
+                              final StroomCacheManager stroomCacheManager,
+                              final StroomBeanStore beanStore) {
         this.volumeService = volumeService;
         this.contentImportService = contentImportService;
         this.streamAttributeKeyService = streamAttributeKeyService;
@@ -159,11 +157,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         this.nodeConfig = nodeConfig;
         this.streamTaskCreator = streamTaskCreator;
         this.stroomCacheManager = stroomCacheManager;
-    }
-
-    @Override
-    public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+        this.beanStore = beanStore;
     }
 
     @Override
@@ -211,11 +205,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         //ensure all the caches are empty
         stroomCacheManager.clear();
 
-        final Map<String, Clearable> clearableBeanMap = applicationContext.getBeansOfType(Clearable.class, false,
-                false);
-        for (final Clearable clearable : clearableBeanMap.values()) {
-            clearable.clear();
-        }
+        final Map<String, Clearable> clearableBeanMap = beanStore.getBeansOfType(Clearable.class, false, false);
+        clearableBeanMap.values().forEach(Clearable::clear);
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
     }
 

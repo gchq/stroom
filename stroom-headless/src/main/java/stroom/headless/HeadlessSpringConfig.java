@@ -21,6 +21,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
+import stroom.entity.StroomEntityManager;
 import stroom.feed.FeedService;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineService;
@@ -209,7 +210,7 @@ import javax.inject.Named;
 //        stroom.spring.ProcessTestServerComponentScanConfiguration.class,
         stroom.spring.ScopeConfiguration.class,
 //        stroom.spring.ScopeTestConfiguration.class,
-        stroom.spring.ServerConfiguration.class,
+//        stroom.spring.ServerConfiguration.class,
 //        stroom.startup.AppSpringConfig.class,
 //        stroom.statistics.internal.InternalStatisticsSpringConfig.class,
 //        stroom.statistics.spring.StatisticsConfiguration.class,
@@ -231,7 +232,7 @@ import javax.inject.Named;
 //        stroom.streamtask.MockStreamTaskSpringConfig.class,
         stroom.streamtask.StreamTaskSpringConfig.class,
         stroom.task.TaskSpringConfig.class,
-        stroom.task.cluster.ClusterTaskSpringConfig.class,
+//        stroom.task.cluster.ClusterTaskSpringConfig.class,
 //        stroom.test.AbstractCoreIntegrationTestSpringConfig.class,
 //        stroom.test.AbstractProcessIntegrationTestSpringConfig.class,
 //        stroom.test.SetupSampleDataComponentScanConfiguration.class,
@@ -338,5 +339,10 @@ public class HeadlessSpringConfig {
     @Bean
     public HeadlessInternalStatisticsReceiver headlessInternalStatisticsReceiver() {
         return new HeadlessInternalStatisticsReceiver();
+    }
+
+    @Bean
+    public StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper(final StroomEntityManager stroomEntityManager) {
+        return new StreamTypeServiceTransactionHelper(stroomEntityManager);
     }
 }

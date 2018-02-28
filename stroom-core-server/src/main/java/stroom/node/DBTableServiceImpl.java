@@ -18,9 +18,6 @@ package stroom.node;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
@@ -29,6 +26,7 @@ import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.Secured;
 import stroom.util.shared.CompareUtil;
+import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -40,13 +38,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Secured(DBTableStatus.MANAGE_DB_PERMISSION)
-public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
+public class DBTableServiceImpl implements DBTableService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableServiceImpl.class);
+
+    private final StroomBeanStore beanStore;
     private final StroomDatabaseInfo stroomDatabaseInfo;
-    private BeanFactory beanFactory;
 
     @Inject
-    DBTableServiceImpl(final StroomDatabaseInfo stroomDatabaseInfo) {
+    DBTableServiceImpl(final StroomBeanStore beanStore,
+                       final StroomDatabaseInfo stroomDatabaseInfo) {
+        this.beanStore = beanStore;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
     }
 
@@ -54,9 +55,9 @@ public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
     public List<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
         final List<DBTableStatus> rtnList = new ArrayList<>();
 
-        if (beanFactory != null) {
-            final Object dataSource = beanFactory.getBean("dataSource");
-            final Object statisticsDataSource = beanFactory.getBean("statisticsDataSource");
+        if (beanStore != null) {
+            final Object dataSource = beanStore.getBean("dataSource");
+            final Object statisticsDataSource = beanStore.getBean("statisticsDataSource");
 
             addTableStatus(dataSource, rtnList);
             addTableStatus(statisticsDataSource, rtnList);
@@ -144,10 +145,5 @@ public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
         } catch (final Exception ex) {
             LOGGER.error("findSystemTableStatus()", ex);
         }
-    }
-
-    @Override
-    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
     }
 }

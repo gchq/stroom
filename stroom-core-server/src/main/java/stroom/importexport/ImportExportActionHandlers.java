@@ -21,7 +21,6 @@ import stroom.util.spring.StroomBeanStore;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 class ImportExportActionHandlers {
     private final StroomBeanStore beanStore;
@@ -47,17 +46,13 @@ class ImportExportActionHandlers {
 
     private Map<String, ImportExportActionHandler> findHandlers() {
         final Map<String, ImportExportActionHandler> handlerMap = new HashMap<>();
-        final Set<String> set = beanStore.getStroomBeanByType(ImportExportActionHandler.class);
-        set.forEach(name -> {
+        final Map<String, ImportExportActionHandler> map = beanStore.getBeansOfType(ImportExportActionHandler.class, false, false);
+        map.forEach((name, handler) -> {
             if (!name.toLowerCase().contains("cache")) {
-                final Object object = beanStore.getBean(name);
-                if (object != null && object instanceof ImportExportActionHandler) {
-                    final ImportExportActionHandler importExportActionHandler = (ImportExportActionHandler) object;
-                    final String type = importExportActionHandler.getDocumentType().getType();
-                    final ImportExportActionHandler existing = handlerMap.putIfAbsent(type, importExportActionHandler);
-                    if (existing != null) {
-                        throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existing + "} new {" + importExportActionHandler + "}");
-                    }
+                final String type = handler.getDocumentType().getType();
+                final ImportExportActionHandler existing = handlerMap.putIfAbsent(type, handler);
+                if (existing != null) {
+                    throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existing + "} new {" + handler + "}");
                 }
             }
         });

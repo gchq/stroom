@@ -146,7 +146,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
         final Set<String> validJobNames = new HashSet<>();
 
-        for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore.getStroomBeanMethod(JobTrackedSchedule.class)) {
+        for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore.getAnnotatedStroomBeanMethods(JobTrackedSchedule.class)) {
             final JobTrackedSchedule jobScheduleDescriptor = stroomBeanMethod.getBeanMethod()
                     .getAnnotation(JobTrackedSchedule.class);
             final StroomSimpleCronSchedule stroomSimpleCronSchedule = stroomBeanMethod.getBeanMethod()
@@ -197,7 +197,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         }
 
         // Distributed Jobs done a different way
-        for (final String beanFactory : stroomBeanStore.getStroomBean(DistributedTaskFactoryBean.class)) {
+        for (final String beanFactory : stroomBeanStore.getAnnotatedStroomBeans(DistributedTaskFactoryBean.class)) {
             final DistributedTaskFactoryBean distributedTaskFactoryBean = stroomBeanStore.findAnnotationOnBean(beanFactory,
                     DistributedTaskFactoryBean.class);
             validJobNames.add(distributedTaskFactoryBean.jobName());

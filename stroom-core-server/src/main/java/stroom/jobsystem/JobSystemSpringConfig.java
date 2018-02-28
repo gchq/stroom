@@ -63,10 +63,11 @@ public class JobSystemSpringConfig {
     }
 
     @Bean
-    public DistributedTaskFetcher distributedTaskFetcher(final TaskManager taskManager,
+    public DistributedTaskFetcher distributedTaskFetcher(final StroomBeanStore beanStore,
+                                                         final TaskManager taskManager,
                                                          final JobNodeTrackerCache jobNodeTrackerCache,
                                                          final NodeCache nodeCache) {
-        return new DistributedTaskFetcher(taskManager, jobNodeTrackerCache, nodeCache);
+        return new DistributedTaskFetcher(beanStore, taskManager, jobNodeTrackerCache, nodeCache);
     }
 
     @Bean

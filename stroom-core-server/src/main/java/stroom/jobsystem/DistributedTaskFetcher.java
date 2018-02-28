@@ -19,9 +19,6 @@ package stroom.jobsystem;
 import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
@@ -29,20 +26,20 @@ import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.streamtask.TaskStatusTraceLog;
+import stroom.task.GenericServerTask;
+import stroom.task.TaskCallbackAdaptor;
+import stroom.task.TaskManager;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
-import stroom.task.GenericServerTask;
-import stroom.task.TaskCallbackAdaptor;
-import stroom.task.TaskManager;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
+import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
@@ -60,7 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * class may execute many tasks concurrently if required, e.g. using separate
  * threads for transforming multiple XML files.
  */
-public class DistributedTaskFetcher implements BeanFactoryAware {
+public class DistributedTaskFetcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
     private static final long ONE_MINUTE = 60 * 1000;
     // Wait time for master to return tasks (5 minutes)
@@ -72,15 +69,19 @@ public class DistributedTaskFetcher implements BeanFactoryAware {
     private final AtomicBoolean waitingToFetchTasks = new AtomicBoolean();
     private final Set<Task<?>> runningTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
+    private final StroomBeanStore beanStore;
     private final TaskManager taskManager;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final NodeCache nodeCache;
 
-    private BeanFactory beanFactory;
     private long lastFetch;
 
     @Inject
-    DistributedTaskFetcher(final TaskManager taskManager, final JobNodeTrackerCache jobNodeTrackerCache, final NodeCache nodeCache) {
+    DistributedTaskFetcher(final StroomBeanStore beanStore,
+                           final TaskManager taskManager,
+                           final JobNodeTrackerCache jobNodeTrackerCache,
+                           final NodeCache nodeCache) {
+        this.beanStore = beanStore;
         this.taskManager = taskManager;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.nodeCache = nodeCache;
@@ -174,7 +175,7 @@ public class DistributedTaskFetcher implements BeanFactoryAware {
                                     lastFetch = now;
 
                                     // Perform a fetch from the master node.
-                                    final ClusterDispatchAsyncHelper dispatchHelper = beanFactory.getBean(ClusterDispatchAsyncHelper.class);
+                                    final ClusterDispatchAsyncHelper dispatchHelper = beanStore.getBean(ClusterDispatchAsyncHelper.class);
                                     if (dispatchHelper.isClusterStateInitialised()) {
                                         final DefaultClusterResultCollector<DistributedTaskRequestResult> collector = dispatchHelper
                                                 .execAsync(request, WAIT_TIME, TimeUnit.MINUTES, TargetType.MASTER);
@@ -345,10 +346,5 @@ public class DistributedTaskFetcher implements BeanFactoryAware {
         requiredTasks = tmp;
 
         return requiredTasks;
-    }
-
-    @Override
-    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
     }
 }

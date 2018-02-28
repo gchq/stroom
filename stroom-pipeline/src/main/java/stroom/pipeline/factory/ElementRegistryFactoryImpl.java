@@ -18,24 +18,18 @@ package stroom.pipeline.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
-public class ElementRegistryFactoryImpl implements ElementRegistryFactory, ElementFactory, ApplicationContextAware {
+public class ElementRegistryFactoryImpl implements ElementRegistryFactory, ElementFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElementRegistryFactoryImpl.class);
 
     private final StroomBeanStore beanStore;
-
-    private ApplicationContext applicationContext;
     private volatile ElementRegistry registry;
 
     @Inject
@@ -62,21 +56,22 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
     }
 
     private ElementRegistry create() {
-        ElementRegistry registry = null;
+        ElementRegistry registry;
 
         // Fudge a task scope context as many of the beans require one before
         // they can be created.
         TaskScopeContextHolder.addContext(null);
         try {
             LOGGER.info("Initialising pipeline element registry.");
-            final Map<String, Object> beanMap = applicationContext.getBeansWithAnnotation(ConfigurableElement.class);
+            final Set<String> beans = beanStore.getAnnotatedStroomBeans(ConfigurableElement.class);
             final List<Class<?>> elementClasses = new ArrayList<>();
-            for (final Object element : beanMap.values()) {
-                elementClasses.add(element.getClass());
+            for (final String beanName : beans) {
+                final Object bean = beanStore.getBean(beanName);
+                final Class<?> clazz = bean.getClass();
+                elementClasses.add(clazz);
 
                 if (LOGGER.isDebugEnabled()) {
-                    final ConfigurableElement pipelineElement = element.getClass()
-                            .getAnnotation(ConfigurableElement.class);
+                    final ConfigurableElement pipelineElement = clazz.getAnnotation(ConfigurableElement.class);
                     LOGGER.debug("Registering pipeline element " + pipelineElement.type());
                 }
             }
@@ -98,10 +93,5 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
             LOGGER.error("Failed to load {}", elementClass, rex);
             throw rex;
         }
-    }
-
-    @Override
-    public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
     }
 }

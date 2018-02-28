@@ -29,6 +29,7 @@ import stroom.node.shared.RecordCountService;
 import stroom.properties.StroomPropertyService;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
+import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;
@@ -44,8 +45,8 @@ public class NodeSpringConfig {
     }
 
     @Bean("dbTableService")
-    public DBTableService dBTableService(final StroomDatabaseInfo stroomDatabaseInfo) {
-        return new DBTableServiceImpl(stroomDatabaseInfo);
+    public DBTableService dBTableService(final StroomBeanStore beanStore, final StroomDatabaseInfo stroomDatabaseInfo) {
+        return new DBTableServiceImpl(beanStore, stroomDatabaseInfo);
     }
 
     @Bean

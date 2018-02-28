@@ -266,14 +266,14 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         final Set<String> requiredPermissionSet = new HashSet<>();
 
         // Add class level permissions
-        final Set<String> securityBeans = beanStore.getStroomBean(Secured.class);
+        final Set<String> securityBeans = beanStore.getAnnotatedStroomBeans(Secured.class);
 
         for (final String securityBean : securityBeans) {
             requiredPermissionSet.addAll(buildAppPermissionKey(securityBean));
         }
 
         // Add all method level permissions
-        final List<StroomBeanMethod> securityMethods = beanStore.getStroomBeanMethod(Secured.class);
+        final Set<StroomBeanMethod> securityMethods = beanStore.getAnnotatedStroomBeanMethods(Secured.class);
 
         for (final StroomBeanMethod stroomBeanMethod : securityMethods) {
             requiredPermissionSet.addAll(buildAppPermissionKey(stroomBeanMethod));

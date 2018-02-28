@@ -29,9 +29,6 @@ import event.logging.util.DeviceUtil;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.BuildInfoUtil;
@@ -42,7 +39,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 
-public class StroomEventLoggingService extends DefaultEventLoggingService implements EventLoggingService, BeanFactoryAware {
+public class StroomEventLoggingService extends DefaultEventLoggingService implements EventLoggingService {
     /**
      * Logger - should not be used for event logs
      */
@@ -55,12 +52,14 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
     private volatile boolean obtainedDevice;
     private volatile Device storedDevice;
 
-    private BeanFactory beanFactory;
     private final SecurityContext security;
+    private final HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
-    StroomEventLoggingService(final SecurityContext security) {
+    StroomEventLoggingService(final SecurityContext security,
+                              final HttpServletRequestHolder httpServletRequestHolder) {
         this.security = security;
+        this.httpServletRequestHolder = httpServletRequestHolder;
     }
 
     @Override
@@ -221,21 +220,9 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
     }
 
     private HttpServletRequest getRequest() {
-        if (beanFactory != null) {
-            try {
-                final HttpServletRequestHolder holder = beanFactory.getBean(HttpServletRequestHolder.class);
-                if (holder != null) {
-                    return holder.get();
-                }
-            } catch (final RuntimeException e) {
-                // Ignore.
-            }
+        if (httpServletRequestHolder != null) {
+            return httpServletRequestHolder.get();
         }
         return null;
-    }
-
-    @Override
-    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
     }
 }

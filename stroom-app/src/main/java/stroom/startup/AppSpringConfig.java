@@ -173,25 +173,7 @@ import stroom.kafka.KafkaSpringConfig;
 ////        RuleSetConfiguration.class
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                stroom.benchmark.BenchmarkSpringConfig.class,
+        stroom.benchmark.BenchmarkSpringConfig.class,
         stroom.cache.CacheSpringConfig.class,
         stroom.cache.PipelineCacheSpringConfig.class,
         stroom.cluster.ClusterSpringConfig.class,
@@ -224,6 +206,7 @@ import stroom.kafka.KafkaSpringConfig;
 //        stroom.headless.HeadlessConfiguration.class,
 //        stroom.headless.HeadlessSpringConfig.class,
         stroom.importexport.ImportExportSpringConfig.class,
+        stroom.importexport.ImportExportClientSpringConfig.class,
         stroom.index.IndexSpringConfig.class,
 //        stroom.index.MockIndexSpringConfig.class,
 //        stroom.internalstatistics.MockInternalStatisticsSpringConfig.class,
@@ -277,7 +260,7 @@ import stroom.kafka.KafkaSpringConfig;
 //        stroom.spring.ScopeTestConfiguration.class,
 //        stroom.spring.ServerComponentScanConfiguration.class,
 //        stroom.spring.ServerComponentScanTestConfiguration.class,
-        stroom.spring.ServerConfiguration.class,
+//        stroom.spring.ServerConfiguration.class,
 //        stroom.startup.AppSpringConfig.class,
         stroom.statistics.internal.InternalStatisticsSpringConfig.class,
         stroom.statistics.spring.StatisticsConfiguration.class,

@@ -42,9 +42,10 @@ public class EntitySpringConfig {
 
     @Bean("stroomEntityManager")
     @Primary
-    public StroomEntityManager stroomEntityManager(final Provider<EntityEventBus> eventBusProvider,
+    public StroomEntityManager stroomEntityManager(final StroomBeanStore beanStore,
+                                                   final Provider<EntityEventBus> eventBusProvider,
                                                    final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider) {
-        return new StroomEntityManagerImpl(eventBusProvider, stroomDatabaseInfoProvider);
+        return new StroomEntityManagerImpl(beanStore, eventBusProvider, stroomDatabaseInfoProvider);
     }
 
     @Bean("cachingEntityManager")
@@ -66,8 +67,8 @@ public class EntitySpringConfig {
     }
 
     @Bean
-    public EntityServiceBeanRegistry entityServiceBeanRegistry() {
-        return new EntityServiceBeanRegistry();
+    public EntityServiceBeanRegistry entityServiceBeanRegistry(final StroomBeanStore beanStore) {
+        return new EntityServiceBeanRegistry(beanStore);
     }
 
     @Bean

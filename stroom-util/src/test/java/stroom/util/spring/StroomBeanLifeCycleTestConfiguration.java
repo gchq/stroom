@@ -18,6 +18,8 @@ package stroom.util.spring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -43,13 +45,13 @@ class StroomBeanLifeCycleTestConfiguration {
     }
 
     @Bean
-    public StroomBeanLifeCycle stroomBeanLifeCycle() {
-        return new StroomBeanLifeCycle(stroomBeanStore());
+    public StroomBeanLifeCycle stroomBeanLifeCycle(final StroomBeanStore stroomBeanStore) {
+        return new StroomBeanLifeCycle(stroomBeanStore);
     }
 
     @Bean
-    StroomBeanStore stroomBeanStore() {
-        return new StroomBeanStore();
+    StroomBeanStore stroomBeanStore(final ApplicationContext applicationContext, final BeanFactory beanFactory) {
+        return new StroomBeanStore(applicationContext, beanFactory);
     }
 
     @Bean

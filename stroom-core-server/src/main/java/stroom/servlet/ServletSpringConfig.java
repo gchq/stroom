@@ -29,6 +29,7 @@ import stroom.resource.ResourceStore;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.TaskManager;
+import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;
@@ -86,8 +87,8 @@ public class ServletSpringConfig {
     }
 
     @Bean
-    public SessionListListener sessionListListener() {
-        return new SessionListListener();
+    public SessionListListener sessionListListener(final StroomBeanStore stroomBeanStore) {
+        return new SessionListListener(stroomBeanStore);
     }
 
     @Bean
