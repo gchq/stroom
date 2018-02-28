@@ -75,7 +75,6 @@ dependencies {
     runtime libs.lucene_analyzers_common
     runtime libs.lucene_queryparser
 
-    testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
     testCompile libs.junit
