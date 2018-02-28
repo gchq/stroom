@@ -83,7 +83,7 @@ public class PersistenceConfiguration {
     }
 
     @Bean
-    public Flyway flyway(final ComboPooledDataSource dataSource) throws PropertyVetoException {
+    public Flyway flyway(final ComboPooledDataSource dataSource) {
         final String jpaHbm2DdlAuto = StroomProperties.getProperty("stroom.jpaHbm2DdlAuto", "validate");
         if (!"update".equals(jpaHbm2DdlAuto)) {
             final Flyway flyway = new Flyway();
@@ -214,7 +214,7 @@ public class PersistenceConfiguration {
 
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(
-            final ComboPooledDataSource dataSource, final Flyway flyway) throws PropertyVetoException {
+            final ComboPooledDataSource dataSource, final Flyway flyway) {
         final LocalContainerEntityManagerFactoryBean entityManagerFactory = new LocalContainerEntityManagerFactoryBean();
         entityManagerFactory.setDataSource(dataSource);
         entityManagerFactory.setPersistenceUnitName("StroomPersistenceUnit");

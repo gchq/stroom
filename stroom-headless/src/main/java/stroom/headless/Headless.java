@@ -180,6 +180,10 @@ public class Headless extends AbstractCommandLineTool {
         // Initialise some variables.
         init();
 
+        // Because we use HSQLDB for headless we need to insert stream types this way for now.
+        final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper = getAppContext().getBean(StreamTypeServiceTransactionHelper.class);
+        streamTypeServiceTransactionHelper.doInserts();
+
         // Read the configuration.
         readConfig();
 
@@ -277,10 +281,6 @@ public class Headless extends AbstractCommandLineTool {
         final VolumeService volumeService = getAppContext().getBean(VolumeService.class);
         volumeService
                 .save(Volume.create(nodeCache.getDefaultNode(), FileUtil.getCanonicalPath(tmpDir) + "/cvol", VolumeType.PUBLIC));
-
-        // Because we use HSQLDB for headless we need to insert stream types this way for now.
-        final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper = getAppContext().getBean(StreamTypeServiceTransactionHelper.class);
-        streamTypeServiceTransactionHelper.doInserts();
     }
 
     private ApplicationContext getAppContext() {
