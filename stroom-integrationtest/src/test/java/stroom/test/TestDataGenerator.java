@@ -13,10 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.IntSupplier;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -32,14 +29,26 @@ public class TestDataGenerator {
         return stringStream -> stringStream.forEach(System.out::println);
     }
 
+    public static Consumer<Stream<String>> fileOutputConsumer() {
+        return stringStream -> stringStream.forEach(System.out::println);
+    }
 
-    //    private TestDataGenerator(final List<Field> fieldDefinitions,
-//                              final Consumer<Stream<String>> rowStreamConsumer,
-//                              final int rowCount,
-//                              final boolean isHeaderIncluded) {
-//
-//
-//    }
+    /**
+     * Allows you to wrap a {@link Field} object with xml tags, e.g.
+     * <fieldName>fieldValue</fieldName>
+     * @param name The name of the field
+     * @param wrappedField The {@link Field} object to wrap in xml tags
+     */
+    public static Field asXmlTag(final String name,
+                                 final Field wrappedField) {
+        return new Field(name, () ->
+                String.format("<%s>%s</%s>", name, wrappedField.getNext(), name));
+    }
+
+    /**
+     * Stateful value supplier that supplies a value from values in sequential order
+     * looping back to the beginning when it gets to the end.
+     */
     public static Field sequentialValueField(final String name, final List<String> values) {
         Preconditions.checkNotNull(values);
         Preconditions.checkArgument(!values.isEmpty());
@@ -54,6 +63,9 @@ public class TestDataGenerator {
         return new Field(name, supplier);
     }
 
+    /**
+     * {@link Field} that supplies a random value from values on each call to getNext()
+     */
     public static Field randomValueField(final String name, final List<String> values) {
         Preconditions.checkNotNull(values);
         Preconditions.checkArgument(!values.isEmpty());
@@ -205,7 +217,7 @@ public class TestDataGenerator {
 
     /**
      * A field populated with a random number (between minCount and maxCount) of
-     * words separated by ' '.
+     * words separated by ' ' as picked randomly from wordList
      */
     public static Field randomWords(final String name,
                                     final int minCount,
@@ -266,20 +278,12 @@ public class TestDataGenerator {
         private String delimiter = ",";
         private Optional<String> optEnclosingChars = Optional.empty();
 
-//        private Builder(final List<Field> fieldDefinitions,
-//                        final Consumer<Stream<String>> rowStreamConsumer,
-//                        final int rowCount,
-//                        final boolean isHeaderIncluded,
-//                        final String delimiter) {
-//
-//            this.fieldDefinitions = fieldDefinitions;
-//            this.rowStreamConsumer = rowStreamConsumer;
-//            this.rowCount = rowCount;
-//            this.isHeaderIncluded = isHeaderIncluded;
-//            this.delimiter = delimiter;
-//        }
-
         public Builder addFieldDefinition(final Field fieldDefinition) {
+            boolean isNamedAlreadyUsed = fieldDefinitions.stream()
+                    .map(Field::getName)
+                    .anyMatch(Predicate.isEqual(fieldDefinition.getName()));
+            Preconditions.checkArgument(!isNamedAlreadyUsed, "Name is already in use");
+
             fieldDefinitions.add(Preconditions.checkNotNull(fieldDefinition));
             return this;
         }
@@ -372,6 +376,10 @@ public class TestDataGenerator {
         private final String name;
         private final Supplier<String> valueFunction;
 
+        /**
+         * @param name          The name of the field
+         * @param valueSupplier A supplier of values for the field
+         */
         public Field(final String name,
                      final Supplier<String> valueSupplier) {
 
@@ -379,14 +387,22 @@ public class TestDataGenerator {
             this.valueFunction = Preconditions.checkNotNull(valueSupplier);
         }
 
+        /**
+         * @return The next value for this field from the value supplier.
+         * The value supplier may either be stateful, i.e. the next value is
+         * dependant on values that cam before it or stateless, i.e. the next
+         * value has no relation to previous values.
+         */
         public String getNext() {
             return valueFunction.get();
         }
 
+        /**
+         * @return The name of the field
+         */
         public String getName() {
             return name;
         }
-
 
     }
 }
