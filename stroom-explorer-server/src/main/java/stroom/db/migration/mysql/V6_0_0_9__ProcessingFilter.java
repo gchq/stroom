@@ -48,6 +48,8 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
     }
 
     public V6_0_0_9__ProcessingFilter(final boolean writeUpdates) {
+        System.setProperty("javax.xml.transform.TransformerFactory",
+                "net.sf.saxon.TransformerFactoryImpl");
         this.writeUpdates = writeUpdates;
         try {
             findStreamCriteriaJaxb = JAXBContext.newInstance(OldFindStreamCriteria.class);
