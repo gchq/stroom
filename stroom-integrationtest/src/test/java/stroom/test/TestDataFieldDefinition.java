@@ -20,15 +20,17 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * Class to hold the definition of a field in a set of flat test data records.
+ * Multiple static factory methods exist for creating various pre-canned types
+ * of test data field, e.g. a random IP address
+ */
 public class TestDataFieldDefinition {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataFieldDefinition.class);
 
     private final String name;
     private final Supplier<String> valueFunction;
-
-    //Date, Time, EventType, Device, UserName, ID, ErrorCode, IPAddress, Server, Message
-    //18/12/2007,13:21:48,authorisationFailed,device4,user5,192.168.0.2,E0567,192.168.0.3,server4,Another message that I made up 2
 
     public TestDataFieldDefinition(final String name,
                                    final Supplier<String> valueSupplier) {
@@ -133,15 +135,16 @@ public class TestDataFieldDefinition {
 
     public static TestDataFieldDefinition randomIpV4Field(final String name) {
 
-
-        final Random random = new Random();
         final IntSupplier intSupplier = buildRandomNumberSupplier(0, 256);
 
         final Supplier<String> supplier = () ->
-                String.format("%03d", intSupplier.getAsInt());
+                String.format("%d.%d.%d.%d",
+                        intSupplier.getAsInt(),
+                        intSupplier.getAsInt(),
+                        intSupplier.getAsInt(),
+                        intSupplier.getAsInt());
         return new TestDataFieldDefinition(name, supplier);
     }
-
 
     public static TestDataFieldDefinition randomDateTime(final String name,
                                                          final LocalDateTime startDateInc,
