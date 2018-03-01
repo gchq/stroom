@@ -67,20 +67,25 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
 
             try (final ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    final long id = rs.getLong(1);
-                    final Blob datBlob = rs.getBlob(2);
+                    try {
+                        final long id = rs.getLong(1);
+                        final Blob datBlob = rs.getBlob(2);
 
-                    int blobLength = (int) datBlob.length();
-                    byte[] blobAsBytes = datBlob.getBytes(1, blobLength);
+                        int blobLength = (int) datBlob.length();
+                        byte[] blobAsBytes = datBlob.getBytes(1, blobLength);
 
-                    datBlob.free();
+                        datBlob.free();
 
-                    final String datAsString = new String(blobAsBytes);
+                        final String datAsString = new String(blobAsBytes);
 
-                    final OldFindStreamCriteria streamCriteria = unmarshalCriteria(datAsString);
+                        final OldFindStreamCriteria streamCriteria = unmarshalCriteria(datAsString);
 
-                    findStreamCriteriaStrById.put(id, datAsString);
-                    findStreamCriteriaById.put(id, streamCriteria);
+                        findStreamCriteriaStrById.put(id, datAsString);
+                        findStreamCriteriaById.put(id, streamCriteria);
+                    } catch (final Exception e) {
+                        LOGGER.error(String.format("Could not get old stream criteria %s", e.getLocalizedMessage()));
+                        throw e;
+                    }
                 }
             }
         }
@@ -106,8 +111,14 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     stmt.setLong(2, entry.getKey());
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected != 1) {
+                        LOGGER.error(String.format("Could not update filter %s with %s, wrong number rows affected ",
+                                entry.getKey(),
+                                new String(queryDataBytes)));
                         throw new Exception(String.format("Wrong number of rows affected by update %d", rowsAffected));
                     }
+                } catch (final Exception e) {
+                    LOGGER.error(String.format("Could not update filter: %s", e.getLocalizedMessage()));
+                    throw e;
                 }
             }
         } else {
