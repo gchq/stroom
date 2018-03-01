@@ -193,20 +193,42 @@ public class TestDataFieldDefinition {
         return new TestDataFieldDefinition(name, () -> UUID.randomUUID().toString());
     }
 
-    public static TestDataFieldDefinition randomWords(final String name,
-                                                      final int minCount,
-                                                      final int maxCount) {
+    /**
+     * A field populated with a random number (between minCount and maxCount) of
+     * words separated by ' '. The words are picked at random from all the class
+     * names in the 'stroom' package on the classpath
+     */
+    public static TestDataFieldDefinition randomClassNames(final String name,
+                                                           final int minCount,
+                                                           final int maxCount) {
         Preconditions.checkArgument(minCount >= 0);
         Preconditions.checkArgument(maxCount >= minCount);
 
         final Random random = new Random();
         final List<String> classNames = ClassNamesListHolder.getClassNames();
 
+        return randomWords(name, minCount, maxCount, classNames);
+    }
+
+    /**
+     * A field populated with a random number (between minCount and maxCount) of
+     * words separated by ' '.
+     */
+    public static TestDataFieldDefinition randomWords(final String name,
+                                                      final int minCount,
+                                                      final int maxCount,
+                                                      final List<String> wordList) {
+        Preconditions.checkArgument(minCount >= 0);
+        Preconditions.checkArgument(maxCount >= minCount);
+
+        final Random random = new Random();
+//        System.out.println("ClassNames size: " + wordList.size());
+
         Supplier<String> supplier = () -> {
             int wordCount = random.nextInt(maxCount - minCount + 1) + minCount;
             return IntStream.rangeClosed(0, wordCount)
                     .boxed()
-                    .map(i -> classNames.get(random.nextInt(classNames.size())))
+                    .map(i -> wordList.get(random.nextInt(wordList.size())))
                     .collect(Collectors.joining(" "))
                     .replaceAll("(^\\s+|\\s+$)", "") //remove leading/trailing spaces
                     .replaceAll("\\s\\s+", " "); //replace multiple spaces with one
