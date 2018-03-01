@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-alpha.14]
+
+* Minor fix to migrations
+
+## [v6.0-alpha.13]
+
+* Add logging to migrations
+
+## [v6.0-alpha.12]
+
+* Add logging to migrations
+
 ## [v6.0-alpha.11]
 
 * Issue **#651** : Removed the redundant concept of Pipeline Types, it's half implementation prevented certain picker dialogs from working.
@@ -792,7 +804,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.14...HEAD
+[v6.0-alpha.14]: https://github.com/gchq/stroom/compare/v6.0-alpha.13...v6.0-alpha.14
+[v6.0-alpha.13]: https://github.com/gchq/stroom/compare/v6.0-alpha.12...v6.0-alpha.13
+[v6.0-alpha.12]: https://github.com/gchq/stroom/compare/v6.0-alpha.11...v6.0-alpha.12
 [v6.0-alpha.11]: https://github.com/gchq/stroom/compare/v6.0-alpha.10...v6.0-alpha.11
 [v6.0-alpha.10]: https://github.com/gchq/stroom/compare/v6.0-alpha.9...v6.0-alpha.10
 [v6.0-alpha.9]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...v6.0-alpha.9
