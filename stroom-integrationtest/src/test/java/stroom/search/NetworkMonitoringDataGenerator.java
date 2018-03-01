@@ -54,9 +54,11 @@ public class NetworkMonitoringDataGenerator {
                         "Message",
                         0,
                         3))
-                .outputHeaderRow(true)
+                .setDataWriter(TestDataGenerator.FlatDataWriterBuilder.builder()
+                        .outputHeaderRow(true)
+                        .delimitedBy(",")
+                        .build())
                 .rowCount(50)
-                .delimitedBy(",")
                 .consumedBy(TestDataGenerator.systemOutConsumer())
                 .generate();
     }

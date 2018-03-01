@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -20,8 +22,8 @@ import java.util.stream.Stream;
 
 public class TestDataGenerator {
 
-    public static Builder buildDefinition() {
-        return new Builder();
+    public static DefinitionBuilder buildDefinition() {
+        return new DefinitionBuilder();
     }
 
 
@@ -29,14 +31,25 @@ public class TestDataGenerator {
         return stringStream -> stringStream.forEach(System.out::println);
     }
 
-    public static Consumer<Stream<String>> fileOutputConsumer() {
-        return stringStream -> stringStream.forEach(System.out::println);
+    public static Consumer<Stream<String>> fileOutputConsumer(final Path filePath) {
+
+        Preconditions.checkNotNull(filePath);
+
+        return stringStream -> {
+            try {
+                Files.write(filePath, (Iterable<String>) stringStream::iterator);
+            } catch (IOException e) {
+                throw new RuntimeException(String.format("Error writing to file %s",
+                        filePath.toAbsolutePath().toString()), e);
+            }
+        };
     }
 
     /**
      * Allows you to wrap a {@link Field} object with xml tags, e.g.
      * <fieldName>fieldValue</fieldName>
-     * @param name The name of the field
+     *
+     * @param name         The name of the field
      * @param wrappedField The {@link Field} object to wrap in xml tags
      */
     public static Field asXmlTag(final String name,
@@ -242,6 +255,7 @@ public class TestDataGenerator {
         return new Field(name, supplier);
     }
 
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     private static class ClassNamesListHolder {
         private static List<String> classNames;
@@ -270,15 +284,144 @@ public class TestDataGenerator {
         }
     }
 
-    public static class Builder {
-        private List<Field> fieldDefinitions = new ArrayList<>();
-        private Consumer<Stream<String>> rowStreamConsumer;
-        private int rowCount = 1;
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public interface DataWriter {
+        Stream<String> mapRecords(final List<Field> fieldDefinitions,
+                                  final Stream<Record> recordStream);
+    }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static class FlatDataWriterBuilder {
         private boolean isHeaderIncluded = true;
         private String delimiter = ",";
         private Optional<String> optEnclosingChars = Optional.empty();
 
-        public Builder addFieldDefinition(final Field fieldDefinition) {
+        public static FlatDataWriterBuilder builder() {
+            return new FlatDataWriterBuilder();
+        }
+
+        public FlatDataWriterBuilder outputHeaderRow(final boolean isHeaderIncluded) {
+            this.isHeaderIncluded = isHeaderIncluded;
+            return this;
+        }
+
+        public FlatDataWriterBuilder delimitedBy(final String delimiter) {
+            this.delimiter = delimiter;
+            return this;
+        }
+
+        public FlatDataWriterBuilder enclosedBy(final String enclosingChars) {
+            this.optEnclosingChars = Optional.of(enclosingChars);
+            return this;
+        }
+
+        private Function<Record, String> getDataMapper() {
+            final Function<String, String> enclosureMapper = getEnclosureMapper();
+
+            return record ->
+                    record.getValues().stream()
+                            .map(enclosureMapper)
+                            .collect(Collectors.joining(delimiter));
+        }
+
+        public DataWriter build() {
+            return this::mapRecords;
+        }
+
+        public Stream<String> mapRecords(List<Field> fieldDefinitions, Stream<Record> recordStream) {
+            Function<Record, String> dataMapper = getDataMapper();
+
+            Stream<String> dataStream = recordStream.map(dataMapper);
+            if (isHeaderIncluded) {
+                return Stream.concat(generateHeaderRow(fieldDefinitions), dataStream);
+            } else {
+                return dataStream;
+            }
+        }
+
+        private Stream<String> generateHeaderRow(final List<Field> fieldDefinitions) {
+
+            final Function<String, String> enclosureMapper = getEnclosureMapper();
+            String header = fieldDefinitions.stream()
+                    .map(Field::getName)
+                    .map(enclosureMapper)
+                    .collect(Collectors.joining(delimiter));
+            return Stream.of(header);
+        }
+
+        private Function<String, String> getEnclosureMapper() {
+            return optEnclosingChars.map(chars ->
+                    (Function<String, String>) str ->
+                            (chars + str + chars))
+                    .orElse(Function.identity());
+        }
+
+    }
+
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+//    public static class XmlDataWriterBuilder {
+//
+//        public static XmlDataWriterBuilder builder() {
+//            return new XmlDataWriterBuilder();
+//        }
+//
+//
+//        private Function<Record, String> getDataMapper() {
+//            final Function<String, String> enclosureMapper = getEnclosureMapper();
+//
+//            return record ->
+//                    record.getValues().stream()
+//                            .map(enclosureMapper)
+//                            .collect(Collectors.joining(delimiter));
+//        }
+//
+//        public DataWriter build() {
+//            return this::mapRecords;
+//        }
+//
+//        public Stream<String> mapRecords(List<Field> fieldDefinitions, Stream<Record> recordStream) {
+//            Function<Record, String> dataMapper = getDataMapper();
+//
+//            Stream<String> dataStream = recordStream.map(dataMapper);
+//            if (isHeaderIncluded) {
+//                return Stream.concat(generateHeaderRow(fieldDefinitions), dataStream);
+//            } else {
+//                return dataStream;
+//            }
+//        }
+//
+//        private Stream<String> generateHeaderRow(final List<Field> fieldDefinitions) {
+//
+//            final Function<String, String> enclosureMapper = getEnclosureMapper();
+//            String header = fieldDefinitions.stream()
+//                    .map(Field::getName)
+//                    .map(enclosureMapper)
+//                    .collect(Collectors.joining(delimiter));
+//            return Stream.of(header);
+//        }
+//
+//        private Function<String, String> getEnclosureMapper() {
+//            return optEnclosingChars.map(chars ->
+//                    (Function<String, String>) str ->
+//                            (chars + str + chars))
+//                    .orElse(Function.identity());
+//        }
+//
+//    }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static class DefinitionBuilder {
+        private List<Field> fieldDefinitions = new ArrayList<>();
+        private Consumer<Stream<String>> rowStreamConsumer;
+        private int rowCount = 1;
+        private DataWriter dataWriter;
+
+        public DefinitionBuilder addFieldDefinition(final Field fieldDefinition) {
             boolean isNamedAlreadyUsed = fieldDefinitions.stream()
                     .map(Field::getName)
                     .anyMatch(Predicate.isEqual(fieldDefinition.getName()));
@@ -288,29 +431,19 @@ public class TestDataGenerator {
             return this;
         }
 
-        public Builder consumedBy(Consumer<Stream<String>> rowStreamConsumer) {
+        public DefinitionBuilder consumedBy(final Consumer<Stream<String>> rowStreamConsumer) {
             this.rowStreamConsumer = Preconditions.checkNotNull(rowStreamConsumer);
             return this;
         }
 
-        public Builder rowCount(final int rowCount) {
+        public DefinitionBuilder setDataWriter(final DataWriter dataWriter) {
+            this.dataWriter = Preconditions.checkNotNull(dataWriter);
+            return this;
+        }
+
+        public DefinitionBuilder rowCount(final int rowCount) {
             Preconditions.checkArgument(rowCount > 0, "rowCount must be > 0");
             this.rowCount = rowCount;
-            return this;
-        }
-
-        public Builder outputHeaderRow(final boolean isHeaderIncluded) {
-            this.isHeaderIncluded = isHeaderIncluded;
-            return this;
-        }
-
-        public Builder delimitedBy(final String delimiter) {
-            this.delimiter = delimiter;
-            return this;
-        }
-
-        public Builder enclosedBy(final String enclosingChars) {
-            this.optEnclosingChars = Optional.of(enclosingChars);
             return this;
         }
 
@@ -321,48 +454,45 @@ public class TestDataGenerator {
             if (rowStreamConsumer == null) {
                 throw new RuntimeException("No consumer defined");
             }
+            if (dataWriter == null) {
+                dataWriter = FlatDataWriterBuilder.builder()
+                        .outputHeaderRow(true)
+                        .delimitedBy(",")
+                        .build();
 
-            Stream<String> rowStream;
-            if (isHeaderIncluded) {
-                rowStreamConsumer.accept(Stream.concat(generateHeaderRow(), generateDataRows()));
-            } else {
-                rowStreamConsumer.accept(generateDataRows());
             }
+
+//            if (isHeaderIncluded) {
+//                rowStreamConsumer.accept(Stream.concat(generateHeaderRow(), generateDataRows()));
+//            } else {
+
+//            }
+
+            //convert our stream of data records into a stream of strings that possibly
+            //includes adding things like header/footer rows, tags, delimiters, etc.
+            final Stream<String> rowStream = dataWriter.mapRecords(fieldDefinitions, generateDataRows());
+            rowStreamConsumer.accept(rowStream);
         }
 
-        private Function<String, String> getEnclosureMapper() {
-            return optEnclosingChars.map(chars ->
-                    (Function<String, String>) str ->
-                            (chars + str + chars))
-                    .orElse(Function.identity());
-        }
 
-        private Stream<String> generateHeaderRow() {
+        private Stream<Record> generateDataRows() {
 
-            final Function<String, String> enclosureMapper = getEnclosureMapper();
-            String header = fieldDefinitions.stream()
-                    .map(Field::getName)
-                    .map(enclosureMapper)
-                    .collect(Collectors.joining(delimiter));
-            return Stream.of(header);
-        }
-
-        private Stream<String> generateDataRows() {
-
-            final Function<String, String> enclosureMapper = getEnclosureMapper();
-            Function<Integer, String> mapper = integer ->
-                    fieldDefinitions.stream()
-                            .map(Field::getNext)
-                            .map(enclosureMapper)
-                            .collect(Collectors.joining(delimiter));
+            Function<Integer, Record> toRecordMapper = integer -> {
+                List<String> values = fieldDefinitions.stream()
+                        .map(Field::getNext)
+                        .collect(Collectors.toList());
+                return new Record(fieldDefinitions, values);
+            };
 
             return IntStream.rangeClosed(0, rowCount)
                     .sequential()
                     .boxed()
-                    .map(mapper);
+                    .map(toRecordMapper);
         }
 
     }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Class to hold the definition of a field in a set of flat test data records.
@@ -405,4 +535,25 @@ public class TestDataGenerator {
         }
 
     }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static class Record {
+        final List<Field> fieldDefinitions;
+        final List<String> values;
+
+        public Record(List<Field> fieldDefinitions, List<String> values) {
+            this.fieldDefinitions = fieldDefinitions;
+            this.values = values;
+        }
+
+        public List<Field> getFieldDefinitions() {
+            return fieldDefinitions;
+        }
+
+        public List<String> getValues() {
+            return values;
+        }
+    }
 }
+
