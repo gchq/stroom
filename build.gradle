@@ -156,7 +156,6 @@ ext.libs = [
     jackson_databind: "com.fasterxml.jackson.core:jackson-databind:$versions.jackson", //was 2.8.5, now 2.8.6
     java_jwt: "com.auth0:java-jwt:3.1.0",
     javassist: "org.javassist:javassist:3.18.1-GA",
-    javax_annotation_api: "javax.annotation:javax.annotation-api:1.2",
     javax_el: "org.glassfish:javax.el:3.0.1-b08",
     javax_el_api: "javax.el:javax.el-api:3.0.0",
     javax_inject: "javax.inject:javax.inject:1",

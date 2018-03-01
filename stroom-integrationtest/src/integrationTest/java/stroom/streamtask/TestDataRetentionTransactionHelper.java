@@ -36,7 +36,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -46,15 +46,15 @@ import java.util.concurrent.TimeUnit;
 public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionTransactionHelper.class);
 
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private StreamMaintenanceService streamMaintenanceService;
-    @Resource
+    @Inject
     private DictionaryStore dictionaryStore;
-    @Resource
+    @Inject
     private DataSource dataSource;
 
     private static final int RETENTION_PERIOD_DAYS = 1;

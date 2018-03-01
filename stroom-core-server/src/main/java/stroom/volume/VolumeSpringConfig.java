@@ -20,8 +20,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import stroom.entity.StroomEntityManager;
 import stroom.node.NodeCache;
-import stroom.properties.StroomPropertyService;
 import stroom.node.VolumeService;
+import stroom.properties.StroomPropertyService;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.spring.StroomBeanStore;
 

@@ -29,7 +29,7 @@ public class MockNodeServiceSpringConfig {
 
 
     @Bean("nodeService")
-    public NodeService nodeService() {
+    public MockNodeService nodeService() {
         return new MockNodeService();
     }
 

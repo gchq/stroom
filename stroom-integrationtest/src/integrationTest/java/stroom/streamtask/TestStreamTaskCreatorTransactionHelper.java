@@ -21,9 +21,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.entity.StroomEntityManager;
 import stroom.feed.shared.Feed;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.shared.StreamType;
@@ -32,7 +32,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
@@ -46,15 +46,15 @@ import java.util.stream.StreamSupport;
 public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest {
     public static final Logger LOGGER = LoggerFactory.getLogger(TestStreamTaskCreatorTransactionHelper.class);
 
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
-    @Resource
+    @Inject
     private StreamTaskCreatorTransactionHelper streamTaskCreatorTransactionHelper;
-    @Resource
+    @Inject
     private StreamTaskDeleteExecutor streamTaskDeleteExecutor;
-    @Resource
+    @Inject
     private StroomEntityManager stroomEntityManager;
 
     @Test

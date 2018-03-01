@@ -20,15 +20,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.test.ComponentTest;
 import stroom.util.test.StroomSpringJUnit4ClassRunner;
 import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayDeque;
 
 @Category(ComponentTest.class)
@@ -39,9 +37,9 @@ public class TestTaskScope {
     TaskScopeTestSingleton singleton2;
     Integer num1;
     Integer num2;
-    @Resource
+    @Inject
     private TaskScopeTestSingleton scopeTestSingleton;
-    @Resource
+    @Inject
     private StroomBeanStore stroomBeanStore;
 
     @Test

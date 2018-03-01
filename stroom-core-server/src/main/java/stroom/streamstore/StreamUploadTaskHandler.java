@@ -19,11 +19,11 @@ package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.util.EntityServiceExceptionUtil;
+import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.proxy.repo.StroomStreamProcessor;

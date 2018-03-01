@@ -26,13 +26,24 @@ import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.*;
-
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Format;
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.Row;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,9 +54,9 @@ import java.util.UUID;
 public class TestTagCloudSearch extends AbstractSearchTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTagCloudSearch.class);
     private static boolean doneSetup;
-    @Resource
+    @Inject
     private CommonIndexingTest commonIndexingTest;
-    @Resource
+    @Inject
     private IndexService indexService;
 
     @Override

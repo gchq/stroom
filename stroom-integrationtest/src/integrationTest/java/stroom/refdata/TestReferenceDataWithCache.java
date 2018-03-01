@@ -40,7 +40,7 @@ import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
@@ -50,11 +50,11 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private static volatile DocRef folder;
     private final EventListBuilder builder = EventListBuilderFactory.createBuilder();
 
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private StroomBeanStore beanStore;
 
     /**

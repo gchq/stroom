@@ -22,19 +22,22 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.node.shared.Node;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeCache implements Clearable, EntityEvent.Handler {
-    private volatile NodeServiceGetDefaultNode nodeService;
+    private final NodeServiceGetDefaultNode nodeService;
 
     private volatile Node defaultNode;
 
-    public NodeCache() {
+    @Inject
+    public NodeCache(final NodeServiceGetDefaultNode nodeService) {
+        this.nodeService = nodeService;
     }
 
-    public NodeCache(final Node aDefault) {
-        defaultNode = aDefault;
+    public NodeCache(final Node defaultNode) {
+        this.nodeService = null;
+        this.defaultNode = defaultNode;
     }
 
     @Override
@@ -45,7 +48,7 @@ public class NodeCache implements Clearable, EntityEvent.Handler {
     public Node getDefaultNode() {
         if (defaultNode == null) {
             synchronized (this) {
-                if (defaultNode == null) {
+                if (defaultNode == null && nodeService != null) {
                     defaultNode = nodeService.getDefaultNode();
                 }
 
@@ -61,10 +64,5 @@ public class NodeCache implements Clearable, EntityEvent.Handler {
     @Override
     public void onChange(final EntityEvent event) {
         defaultNode = null;
-    }
-
-    @Resource
-    public void setNodeService(final NodeServiceGetDefaultNode nodeService) {
-        this.nodeService = nodeService;
     }
 }

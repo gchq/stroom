@@ -63,7 +63,7 @@ import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
 import stroom.volume.VolumeServiceImpl;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -77,19 +77,19 @@ import java.util.Set;
 public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private static final int N1 = 1;
     private static final int N13 = 13;
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private StreamMaintenanceService streamMaintenanceService;
-    @Resource
+    @Inject
     private StreamAttributeValueService streamAttributeValueService;
-    @Resource
+    @Inject
     private StreamAttributeValueFlush streamAttributeValueFlush;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private StreamTaskCreator streamTaskCreator;
-    @Resource
+    @Inject
     private StreamAttributeMapService streamMDService;
 
     private Feed feed1;

@@ -24,7 +24,7 @@ import stroom.streamstore.tools.StoreCreationTool;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @Ignore("TODO: uncomment and update tests or delete")
 public class TestTranslationStepping extends AbstractCoreIntegrationTest {
@@ -36,11 +36,11 @@ public class TestTranslationStepping extends AbstractCoreIntegrationTest {
 
     private static final String XMLFRAGMENT_FORMAT_DEFINITION = DIR + "TranslationTestService_fragment_wrapper.xml";
 
-    @Resource
+    @Inject
     private StoreCreationTool storeCreationTool;
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private TaskManager taskManager;
 
     @Test

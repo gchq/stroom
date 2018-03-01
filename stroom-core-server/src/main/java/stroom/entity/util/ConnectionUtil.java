@@ -16,23 +16,17 @@
 
 package stroom.entity.util;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.PrimitiveValueConverter;
-import stroom.entity.shared.SummaryDataRow;
 import stroom.util.collections.BatchingIterator;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;

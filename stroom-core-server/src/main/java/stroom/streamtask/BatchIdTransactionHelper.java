@@ -19,9 +19,9 @@ package stroom.streamtask;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.util.SqlBuilder;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
+import stroom.entity.util.SqlBuilder;
 import stroom.streamstore.shared.Stream;
 
 import javax.inject.Inject;

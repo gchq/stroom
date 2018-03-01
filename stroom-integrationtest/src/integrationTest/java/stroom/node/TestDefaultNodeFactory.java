@@ -20,10 +20,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 public class TestDefaultNodeFactory extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private NodeCache nodeCache;
 
     @Test

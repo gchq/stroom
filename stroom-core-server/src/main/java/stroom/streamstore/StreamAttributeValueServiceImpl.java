@@ -20,10 +20,10 @@ import event.logging.BaseAdvancedQueryItem;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.entity.StroomEntityManager;
 import stroom.streamstore.shared.StreamAttributeValue;
 
 import javax.inject.Inject;

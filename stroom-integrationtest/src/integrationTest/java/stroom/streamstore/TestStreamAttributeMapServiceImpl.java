@@ -30,15 +30,15 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 
 public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private StreamAttributeValueFlush streamAttributeValueFlush;
-    @Resource
+    @Inject
     private StreamAttributeMapService streamAttributeMapService;
 
     @Test

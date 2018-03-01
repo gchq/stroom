@@ -25,11 +25,11 @@ import stroom.streamstore.shared.StreamType.Purpose;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 
 public class TestStreamTypeServiceImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private StreamTypeService streamTypeService;
 
     @Test

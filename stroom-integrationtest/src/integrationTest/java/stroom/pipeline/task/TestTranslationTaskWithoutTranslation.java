@@ -20,9 +20,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.node.NodeCache;
 import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
@@ -33,7 +33,7 @@ import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -45,15 +45,15 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
     private static final String FEED_NAME = "TEST_FEED";
     private static final Path RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "TestTask.out");
 
-    @Resource
+    @Inject
     private MockStreamStore streamStore;
-    @Resource
+    @Inject
     private NodeCache nodeCache;
-    @Resource
+    @Inject
     private StreamTaskCreator streamTaskCreator;
-    @Resource
+    @Inject
     private StoreCreationTool storeCreationTool;
-    @Resource
+    @Inject
     private TaskManager taskManager;
 
     /**

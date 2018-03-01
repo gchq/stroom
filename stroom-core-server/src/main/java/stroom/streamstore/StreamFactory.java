@@ -16,8 +16,8 @@
 
 package stroom.streamstore;
 
-import stroom.util.date.DateUtil;
 import stroom.feed.StroomHeaderArguments;
+import stroom.util.date.DateUtil;
 
 import java.util.Map;
 

@@ -40,7 +40,7 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
@@ -54,17 +54,17 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
     private static Logger LOGGER = LoggerFactory.getLogger(TestFileSystemCleanTask.class);
 
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private StreamMaintenanceService streamMaintenanceService;
-    @Resource
+    @Inject
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
-    @Resource
+    @Inject
     private TaskManager taskManager;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private NodeService nodeService;
 
     @Test

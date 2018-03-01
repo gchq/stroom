@@ -43,15 +43,12 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
-import stroom.search.EventRef;
-import stroom.search.EventRefs;
-import stroom.search.EventSearchTask;
 import stroom.security.UserTokenUtil;
 import stroom.task.TaskCallback;
 import stroom.task.TaskManager;
 import stroom.util.config.StroomProperties;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,13 +61,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TestInteractiveSearch extends AbstractSearchTest {
-    @Resource
+    @Inject
     private CommonIndexingTest commonIndexingTest;
-    @Resource
+    @Inject
     private IndexService indexService;
-    @Resource
+    @Inject
     private DictionaryStore dictionaryStore;
-    @Resource
+    @Inject
     private TaskManager taskManager;
 
     @Override

@@ -26,7 +26,7 @@ import stroom.util.test.StroomSpringJUnit4ClassRunner;
         "classpath:META-INF/spring/stroomProcessContext.xml", "classpath:META-INF/spring/stroomStatisticsContext.xml",
         "classpath:META-INF/spring/stroomStatisticsTestContext.xml"})
 public abstract class StroomStatisticsIntegationTest extends StroomIntegrationTest {
-    // @Resource
+    // @Inject
     // protected CommonTestControl commonTestControl;
     //
     // static Set<Class<?>> doneClearDown = new HashSet<Class<?>>();

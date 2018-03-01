@@ -23,16 +23,16 @@ import stroom.node.NodeCache;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 public class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private StreamTaskService streamTaskService;
-    @Resource
+    @Inject
     private StroomEntityManager entityManager;
-    @Resource
+    @Inject
     private NodeCache nodeCache;
 
     private int failedCount = 0;

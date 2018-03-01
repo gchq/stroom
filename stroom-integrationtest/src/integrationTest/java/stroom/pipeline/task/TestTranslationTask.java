@@ -28,7 +28,7 @@ import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
@@ -39,9 +39,9 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
 
     private static final String DIR = "TestTranslationTask/";
 
-    @Resource
+    @Inject
     private MockStreamStore streamStore;
-    @Resource
+    @Inject
     private CommonTranslationTest commonPipelineTest;
 
     /**

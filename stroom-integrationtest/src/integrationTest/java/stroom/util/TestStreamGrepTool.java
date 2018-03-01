@@ -26,12 +26,12 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private StreamStore streamStore;
 
     @Test

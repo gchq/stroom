@@ -27,7 +27,7 @@ import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.ds3.ref.VarMap;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
@@ -48,14 +48,19 @@ public class DS3ParserFactory implements ParserFactory {
         PARSER_FACTORY.setValidating(false);
     }
 
-    private RootFactory factory;
-    private SchemaFilter schemaFilter;
+    private final SchemaFilter schemaFilter;
+    private final RootFactory factory;
+
+    @Inject
+    DS3ParserFactory(final SchemaFilter schemaFilter) {
+        this.schemaFilter = schemaFilter;
+        this.factory = new RootFactory();
+    }
 
     public void configure(final Reader inputStream, final ErrorHandler errorHandler) {
         try {
             final long time = System.currentTimeMillis();
 
-            factory = new RootFactory();
             final ConfigFilter filter = new ConfigFilter(factory);
 
             final FindXMLSchemaCriteria schemaConstraint = new FindXMLSchemaCriteria();
@@ -95,10 +100,5 @@ public class DS3ParserFactory implements ParserFactory {
     @Override
     public XMLReader getParser() {
         return new DS3Parser(factory.newInstance(new VarMap()), RootFactory.MIN_BUFFER_SIZE, factory.getBufferSize());
-    }
-
-    @Resource
-    public void setSchemaFilter(final SchemaFilter schemaFilter) {
-        this.schemaFilter = schemaFilter;
     }
 }

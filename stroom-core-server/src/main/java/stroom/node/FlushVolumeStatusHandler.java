@@ -19,10 +19,10 @@ package stroom.node;
 
 import stroom.entity.cluster.FlushServiceClusterTask;
 import stroom.node.shared.FlushVolumeStatusAction;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;

@@ -23,11 +23,11 @@ import stroom.security.shared.UserRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 public class TestUserServiceImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private UserService userService;
 
     @Test

@@ -31,21 +31,21 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 
 public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private IndexShardService indexShardService;
-    @Resource
+    @Inject
     private IndexShardManager indexShardManager;
-    @Resource
+    @Inject
     private IndexShardWriterCache indexShardWriterCache;
-    @Resource
+    @Inject
     private Indexer indexer;
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
 
     @Override

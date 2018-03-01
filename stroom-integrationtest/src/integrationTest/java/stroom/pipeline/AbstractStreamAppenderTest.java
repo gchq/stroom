@@ -23,17 +23,15 @@ import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
-import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 
 public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
-    @Resource
+    @Inject
     private StreamStore streamStore;
 
     void test(final PipelineEntity pipelineEntity,

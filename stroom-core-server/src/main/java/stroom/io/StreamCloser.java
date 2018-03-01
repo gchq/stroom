@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;

@@ -29,14 +29,12 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRefs;
-import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.importexport.shared.ImportConfigAction;
+import stroom.importexport.shared.ImportState;
 import stroom.security.Insecure;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.util.List;
 

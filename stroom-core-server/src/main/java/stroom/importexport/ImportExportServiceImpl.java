@@ -18,8 +18,8 @@ package stroom.importexport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.DocRefs;
+import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.io.FileUtil;

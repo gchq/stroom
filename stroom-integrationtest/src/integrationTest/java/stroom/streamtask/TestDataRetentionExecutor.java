@@ -40,24 +40,24 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionExecutor.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private StreamMaintenanceService streamMaintenanceService;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private DataRetentionExecutor dataRetentionExecutor;
-    @Resource
+    @Inject
     private DataRetentionService dataRetentionService;
 
     @Test

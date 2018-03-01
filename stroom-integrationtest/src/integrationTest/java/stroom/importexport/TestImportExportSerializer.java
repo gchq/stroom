@@ -45,7 +45,7 @@ import stroom.xmlschema.XMLSchemaService;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,19 +55,19 @@ import java.util.List;
 import java.util.Map;
 
 public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private XMLSchemaService xmlSchemaService;
-    @Resource
+    @Inject
     private ImportExportSerializer importExportSerializer;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private ExplorerService explorerService;
 
     private DocRefs buildFindFolderCriteria() {

@@ -26,21 +26,21 @@ import stroom.task.TaskManager;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTranslationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @Ignore("TODO: uncomment and update tests or delete")
 public class TestPipelineStatistics {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPipelineStatistics.class);
 
-    @Resource
+    @Inject
     private CommonTranslationTest commonPipelineTest;
-    @Resource
+    @Inject
     private StoreCreationTool storeCreationTool;
-    @Resource
+    @Inject
     private TaskManager taskManager;
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
-    @Resource
+    @Inject
     private StreamTaskCreator streamTaskCreator;
 
     // FIXME : Sort out pipeline statistics.

@@ -19,18 +19,18 @@ package stroom.index;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 public class TestIndexServiceImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private IndexService indexService;
 
     private Index testIndex;

@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
-import stroom.util.io.FileUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Monitor;

@@ -18,12 +18,12 @@ package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedBoolean;
 
 import javax.inject.Inject;

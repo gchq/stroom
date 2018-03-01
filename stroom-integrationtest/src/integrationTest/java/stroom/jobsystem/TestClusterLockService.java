@@ -22,14 +22,14 @@ import stroom.entity.StroomDatabaseInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TestClusterLockService extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private ClusterLockServiceInnerTransactions testClusterLockServiceTransaction;
-    @Resource
+    @Inject
     private StroomDatabaseInfo stroomDatabaseInfo;
 
     @Test

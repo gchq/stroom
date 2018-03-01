@@ -44,9 +44,8 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -54,25 +53,23 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
-    @Resource
+    @Inject
     private PipelineFactory pipelineFactory;
-    @Resource
+    @Inject
     private ErrorReceiverProxy errorReceiver;
-    @Resource
+    @Inject
     private RecordCount recordCount;
-    @Resource
+    @Inject
     private XSLTService xsltService;
-    @Resource
+    @Inject
     private TextConverterService textConverterService;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private PipelineDataCache pipelineDataCache;
-    @Resource
+    @Inject
     private StreamCloser streamCloser;
 
     @Test

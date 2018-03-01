@@ -26,7 +26,7 @@ import stroom.util.io.ByteSlice;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
@@ -34,7 +34,7 @@ import java.util.List;
 public class TextRecordEmitter extends XMLFilterAdaptor {
     private final List<DestinationProvider> destinationProviders;
     private final StringBuilder builder = new StringBuilder();
-    @Resource
+    @Inject
     private ErrorReceiverProxy errorReceiverProxy;
     private int depth;
 

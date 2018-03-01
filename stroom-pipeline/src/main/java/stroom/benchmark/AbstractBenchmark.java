@@ -18,8 +18,8 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.XMLUtil;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.util.XMLUtil;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -37,7 +37,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -49,9 +49,9 @@ public abstract class AbstractBenchmark {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmark.class);
 
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private TaskMonitor taskMonitor;
 
     public static int getRandomSkewed() {

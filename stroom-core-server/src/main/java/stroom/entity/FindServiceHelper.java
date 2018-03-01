@@ -17,11 +17,11 @@
 package stroom.entity;
 
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.util.FieldMap;
-import stroom.entity.util.HqlBuilder;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Entity;
+import stroom.entity.util.FieldMap;
+import stroom.entity.util.HqlBuilder;
 
 import java.util.List;
 

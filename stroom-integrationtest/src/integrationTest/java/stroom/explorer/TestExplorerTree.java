@@ -19,11 +19,11 @@ package stroom.explorer;
 import org.junit.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.UUID;
 
 public class TestExplorerTree extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private ExplorerTreeDao explorerTreeDao;
 
     @Test

@@ -21,7 +21,7 @@ import org.junit.Test;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.util.spring.StroomBeanStore;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 // FIXME : Fix this test.
 @Ignore("Create a new test")
@@ -30,7 +30,7 @@ public class ComplexTest extends AbstractProcessIntegrationTest {
     private static final String OUTPUT = "ComplexTest/ComplexTestOutput.xml";
     private static final String SPLITTER = "ComplexTest/ComplexTestSplitter.xml";
 
-    @Resource
+    @Inject
     private StroomBeanStore beanStore;
 
     @Test

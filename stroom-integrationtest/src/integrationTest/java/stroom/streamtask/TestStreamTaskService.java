@@ -24,7 +24,6 @@ import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.StreamStore;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -35,18 +34,18 @@ import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
 public class TestStreamTaskService extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private StreamTaskService streamTaskService;
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private StreamTaskCreator streamTaskCreator;
 
     @Test

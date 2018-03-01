@@ -24,9 +24,7 @@ import event.logging.Event.EventDetail.Authenticate;
 import event.logging.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 
 public class AuthenticationEventLog {

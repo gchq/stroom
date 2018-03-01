@@ -20,10 +20,10 @@ import org.junit.Before;
 import org.junit.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 public class TestEntityServiceImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private EntityServiceImplTestTransactionHelper helper;
 
     @Before

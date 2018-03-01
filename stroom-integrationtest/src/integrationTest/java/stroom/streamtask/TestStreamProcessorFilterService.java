@@ -26,8 +26,8 @@ import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
@@ -36,17 +36,17 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private StreamProcessorService streamProcessorService;
-    @Resource
+    @Inject
     private StreamProcessorFilterService streamProcessorFilterService;
 
     @Override

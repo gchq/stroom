@@ -25,17 +25,17 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.sql.search.StatisticDataPoint;
 import stroom.statistics.sql.search.StatisticDataSet;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -57,19 +57,19 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     private static final String TAG2_OTHER_VALUE_2 = "Tag2OtherValue2";
     private static final String DATE_RANGE = "2000-01-01T00:00:00.000Z,3000-01-01T00:00:00.000Z";
 
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
-    @Resource
+    @Inject
     private DataSource statisticsDataSource;
-    @Resource
+    @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
-    @Resource
+    @Inject
     private SQLStatisticAggregationManager sqlStatisticAggregationManager;
-    @Resource
+    @Inject
     private SQLStatisticAggregationTransactionHelper sqlStatisticAggregationTransactionHelper;
-    @Resource
+    @Inject
     private SQLStatisticEventStore sqlStatisticEventStore;
-    @Resource
+    @Inject
     private StroomDatabaseInfo stroomDatabaseInfo;
     private boolean ignoreAllTests = false;
 

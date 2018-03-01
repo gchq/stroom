@@ -21,15 +21,15 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefs;
-import stroom.importexport.shared.ImportState;
 import stroom.explorer.ExplorerService;
 import stroom.importexport.ImportExportSerializer;
+import stroom.importexport.shared.ImportState;
 import stroom.query.api.v2.DocRef;
+import stroom.statistics.shared.StatisticStore;
+import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.datasource.StatisticsDataSourceProvider;
 import stroom.statistics.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreEntityService;
-import stroom.statistics.shared.StatisticStore;
-import stroom.statistics.shared.StatisticType;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntityData;
@@ -37,17 +37,17 @@ import stroom.streamstore.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.nio.file.Path;
 
 public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private ImportExportSerializer importExportSerializer;
-    @Resource
+    @Inject
     private StroomStatsStoreEntityService stroomStatsStoreEntityService;
-    @Resource
+    @Inject
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
-    @Resource
+    @Inject
     private ExplorerService explorerService;
 
     private DocRefs buildFindFolderCriteria(DocRef folderDocRef) {

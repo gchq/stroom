@@ -268,8 +268,7 @@ public class TestDS3 extends StroomUnitTest {
 
         final SchemaFilter schemaFilter = schemaFilterFactory.getSchemaFilter(DS3ParserFactory.NAMESPACE_URI,
                 errorReceiverProxy);
-        final DS3ParserFactory factory = new DS3ParserFactory();
-        factory.setSchemaFilter(schemaFilter);
+        final DS3ParserFactory factory = new DS3ParserFactory(schemaFilter);
 
         final LocationFactory locationFactory = new DefaultLocationFactory();
         factory.configure(Files.newBufferedReader(config),

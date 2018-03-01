@@ -32,7 +32,6 @@ dependencies {
     compile libs.commons_compress
     compile libs.commons_io
     compile libs.jackson_annotations
-    compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.validation_api

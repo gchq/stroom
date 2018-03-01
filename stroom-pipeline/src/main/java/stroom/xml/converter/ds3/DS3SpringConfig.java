@@ -19,13 +19,14 @@ package stroom.xml.converter.ds3;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import stroom.pipeline.filter.SchemaFilter;
 import stroom.util.spring.StroomScope;
 
 @Configuration
 public class DS3SpringConfig {
     @Bean
     @Scope(StroomScope.PROTOTYPE)
-    public DS3ParserFactory dS3ParserFactory() {
-        return new DS3ParserFactory();
+    public DS3ParserFactory dS3ParserFactory(final SchemaFilter schemaFilter) {
+        return new DS3ParserFactory(schemaFilter);
     }
 }

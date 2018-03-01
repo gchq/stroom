@@ -27,6 +27,7 @@ import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.filter.SchemaFilter;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.xml.converter.SchemaFilterFactory;
@@ -138,9 +139,8 @@ public class DS3PerformanceTest {
         final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(errorReceiver);
 
-        ds3ParserFactory = new DS3ParserFactory();
-        ds3ParserFactory.setSchemaFilter(
-                schemaFilterFactory.getSchemaFilter(DS3ParserFactory.NAMESPACE_URI, errorReceiverProxy));
+        final SchemaFilter schemaFilter = schemaFilterFactory.getSchemaFilter(DS3ParserFactory.NAMESPACE_URI, errorReceiverProxy);
+        ds3ParserFactory = new DS3ParserFactory(schemaFilter);
 
         final LocationFactory locationFactory = new DefaultLocationFactory();
         ds3ParserFactory.configure(Files.newBufferedReader(config),

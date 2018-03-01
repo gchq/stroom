@@ -30,7 +30,6 @@ dependencies {
     compile libs.stax_api
     compile libs.javax_inject
     compile libs.ws_rs_api
-    compile libs.javax_annotation_api
 
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

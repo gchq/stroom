@@ -19,8 +19,9 @@ package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.MetaMap;
 import stroom.feed.FeedService;
+import stroom.feed.MetaMap;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
@@ -28,15 +29,14 @@ import stroom.streamstore.MockStreamStore;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.feed.StroomHeaderArguments;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 
 public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest {
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private FeedService feedService;
 
     /**

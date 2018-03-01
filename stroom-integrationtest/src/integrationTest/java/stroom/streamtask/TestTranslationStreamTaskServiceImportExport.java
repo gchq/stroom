@@ -25,17 +25,17 @@ public class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIn
     @Test
     public void test() {
     }
-    // @Resource
+    // @Inject
     // private CommonTestControl commonTestControl;
-    // @Resource
+    // @Inject
     // private CommonTestScenarioCreator commonTestScenarioCreator;
-    // @Resource
+    // @Inject
     // private TranslationStreamTaskService translationStreamTaskService;
-    // @Resource
+    // @Inject
     // private StreamTaskCreator streamTaskCreator;
-    // @Resource
+    // @Inject
     // private FeedService feedService;
-    // @Resource
+    // @Inject
     // private TaskManager taskManager;
     //
     // /**

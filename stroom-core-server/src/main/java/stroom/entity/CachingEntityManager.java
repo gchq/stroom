@@ -20,13 +20,13 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.SqlBuilder;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.SummaryDataRow;
+import stroom.entity.util.HqlBuilder;
+import stroom.entity.util.SqlBuilder;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 

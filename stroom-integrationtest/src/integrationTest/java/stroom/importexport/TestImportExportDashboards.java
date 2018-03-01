@@ -59,34 +59,34 @@ import stroom.visualisation.VisualisationService;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private ImportExportService importExportService;
-    @Resource
+    @Inject
     private ResourceStore resourceStore;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private VisualisationService visualisationService;
-    @Resource
+    @Inject
     private ScriptService scriptService;
-    @Resource
+    @Inject
     private IndexService indexService;
-    @Resource
+    @Inject
     private DictionaryStore dictionaryStore;
-    @Resource
+    @Inject
     private DashboardService dashboardService;
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
-    @Resource
+    @Inject
     private ExplorerService explorerService;
-    @Resource
+    @Inject
     private ExplorerNodeService explorerNodeService;
 
     @Test

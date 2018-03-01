@@ -24,16 +24,16 @@ import stroom.node.NodeCache;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 public class TestJobNodeService extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private JobService jobService;
-    @Resource
+    @Inject
     private JobNodeService jobNodeService;
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
-    @Resource
+    @Inject
     private NodeCache nodeCache;
 
     @Test

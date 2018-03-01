@@ -43,7 +43,7 @@ import stroom.util.task.TaskMonitor;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -60,17 +60,17 @@ import java.util.zip.ZipOutputStream;
 public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private MetaDataStatistic metaDataStatistic;
-    @Resource
+    @Inject
     private TaskMonitor taskMonitor;
-    @Resource
+    @Inject
     private ExecutorProvider executorProvider;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 
     private void aggregate(final String proxyDir,

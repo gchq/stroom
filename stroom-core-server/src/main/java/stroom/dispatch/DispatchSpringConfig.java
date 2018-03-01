@@ -18,7 +18,6 @@ package stroom.dispatch;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.dispatch.DispatchServiceImpl;
 import stroom.dispatch.shared.DispatchService;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;

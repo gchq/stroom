@@ -24,7 +24,7 @@ import stroom.streamstore.tools.StoreCreationTool;
 import stroom.task.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @Ignore("TODO 2015-10-21: Restore tests or delete the class.")
 public class TestTranslationTaskContextAndFlattening extends AbstractProcessIntegrationTest {
@@ -38,13 +38,13 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
     private static final String INPUT_RESOURCE_NAME = DIR + "TestTaskContext.in";
     private static final String CONTEXT_RESOURCE_NAME = DIR + "TestTaskContext.ctx";
 
-    @Resource
+    @Inject
     private MockStreamStore streamStore;
-    @Resource
+    @Inject
     private NodeCache nodeCache;
-    @Resource
+    @Inject
     private StoreCreationTool storeCreationTool;
-    @Resource
+    @Inject
     private TaskManager taskManager;
 
     /**

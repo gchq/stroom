@@ -23,11 +23,11 @@ import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 public class TestVolumeService extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private VolumeService volumeService;
 
     @Test

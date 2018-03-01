@@ -16,8 +16,8 @@
 
 package stroom.streamstore;
 
-import stroom.entity.util.SqlBuilder;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;

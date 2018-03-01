@@ -22,22 +22,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
+import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.node.NodeCache;
 import stroom.pipeline.PipelineService;
-import stroom.pipeline.stepping.SteppingTask;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SharedStepData;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
+import stroom.pipeline.stepping.SteppingTask;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -72,7 +72,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -96,27 +96,27 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private static final int OLD_YEAR = 2006;
 
-    @Resource
+    @Inject
     private NodeCache nodeCache;
-    @Resource
+    @Inject
     private StreamTaskCreator streamTaskCreator;
-    @Resource
+    @Inject
     private TaskManager taskManager;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private StreamProcessorService streamProcessorService;
-    @Resource
+    @Inject
     private StreamProcessorFilterService streamProcessorFilterService;
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private StreamTypeService streamTypeService;
-    @Resource
+    @Inject
     private ImportExportSerializer importExportSerializer;
-    @Resource
+    @Inject
     private ContentImportService contentImportService;
 
     protected void testTranslationTask(final boolean translate, final boolean compareOutput) {

@@ -19,12 +19,12 @@ package stroom.entity.event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.NodeNotFoundException;
 import stroom.task.cluster.NullClusterStateException;
 import stroom.task.cluster.TargetNodeSetFactory;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;

@@ -40,7 +40,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,25 +54,25 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
     private static final String FORMAT = "XMLWithErrorsInTransform/HttpSplitter.xml";
     private static final String XSLT_LOCATION = "XMLWithErrorsInTransform/HttpProblem.xsl";
 
-    @Resource
+    @Inject
     private PipelineFactory pipelineFactory;
-    @Resource
+    @Inject
     private ErrorReceiverProxy errorReceiver;
-    @Resource
+    @Inject
     private RecordCount recordCount;
-    @Resource
+    @Inject
     private RecordErrorReceiver recordErrorReceiver;
-    @Resource
+    @Inject
     private FeedHolder feedHolder;
-    @Resource
+    @Inject
     private TextConverterService textConverterService;
-    @Resource
+    @Inject
     private XSLTService xsltService;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private PipelineMarshaller pipelineMarshaller;
-    @Resource
+    @Inject
     private PipelineDataCache pipelineDataCache;
 
     /**

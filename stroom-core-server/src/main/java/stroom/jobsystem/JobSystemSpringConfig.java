@@ -24,8 +24,8 @@ import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.shared.JobManager;
 import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.node.NodeCache;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.TaskManager;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 

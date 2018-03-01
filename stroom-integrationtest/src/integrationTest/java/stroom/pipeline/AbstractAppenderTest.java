@@ -38,7 +38,7 @@ import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,25 +51,25 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
-    @Resource
+    @Inject
     private PipelineFactory pipelineFactory;
-    @Resource
+    @Inject
     private ErrorReceiverProxy errorReceiver;
-    @Resource
+    @Inject
     private RecordCount recordCount;
-    @Resource
+    @Inject
     private XSLTService xsltService;
-    @Resource
+    @Inject
     private TextConverterService textConverterService;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private PipelineDataCache pipelineDataCache;
-    @Resource
+    @Inject
     private RollingDestinations destinations;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private StreamCloser streamCloser;
 
     void test(final String name, final String type) throws Exception {

@@ -25,8 +25,8 @@ import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.TaskMonitorImpl;
@@ -35,19 +35,19 @@ import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.config.StroomProperties;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStreamTaskCreator.class);
 
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
-    @Resource
+    @Inject
     private StreamTaskCreator streamTaskCreator;
-    @Resource
+    @Inject
     private NodeCache nodeCache;
 
     @Test

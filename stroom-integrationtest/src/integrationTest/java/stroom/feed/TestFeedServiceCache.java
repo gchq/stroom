@@ -24,12 +24,14 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 public class TestFeedServiceCache extends AbstractCoreIntegrationTest {
-    @Resource(name = "cachedFeedService")
+    @Inject
+    @Named("cachedFeedService")
     private FeedService cachedFeedService;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 
     @Test

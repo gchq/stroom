@@ -8,7 +8,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.shared.ThreadPool;
 import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -21,7 +21,7 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTaskManagerImpl.class);
 
-    @Resource
+    @Inject
     ExecutorProvider executorProvider;
 
     @Test

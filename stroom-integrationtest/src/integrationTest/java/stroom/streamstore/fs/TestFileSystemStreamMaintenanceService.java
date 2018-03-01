@@ -29,18 +29,18 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private StreamMaintenanceService streamMaintenanceService;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
 
     @Test

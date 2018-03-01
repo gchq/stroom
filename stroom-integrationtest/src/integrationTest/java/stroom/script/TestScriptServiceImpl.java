@@ -23,14 +23,14 @@ import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Set;
 
 public class TestScriptServiceImpl extends AbstractCoreIntegrationTest {
     private static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
 
-    @Resource
+    @Inject
     private ScriptService scriptService;
 
     @Test

@@ -21,8 +21,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory;
-import stroom.task.TaskManager;
-import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 @Configuration

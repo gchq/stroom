@@ -27,14 +27,13 @@ import stroom.dashboard.QueryService;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Sort.Direction;
+import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.index.IndexService;
 import stroom.index.shared.Index;
 import stroom.query.api.v2.DocRef;
-
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -43,21 +42,21 @@ import stroom.security.UserService;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.Collections;
 
 public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     private static final String QUERY_COMPONENT = "Test Component";
     private static Logger LOGGER = LoggerFactory.getLogger(TestQueryServiceImpl.class);
-    @Resource
+    @Inject
     private DashboardService dashboardService;
-    @Resource
+    @Inject
     private QueryService queryService;
-    @Resource
+    @Inject
     private IndexService indexService;
-    @Resource
+    @Inject
     private UserService userService;
-    @Resource
+    @Inject
     private QueryHistoryCleanExecutor queryHistoryCleanExecutor;
 
     private Dashboard dashboard;

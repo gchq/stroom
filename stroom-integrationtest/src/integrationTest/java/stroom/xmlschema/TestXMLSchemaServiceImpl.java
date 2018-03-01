@@ -24,13 +24,13 @@ import stroom.test.CommonTestControl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private XMLSchemaService xmlSchemaService;
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
 
     @Test

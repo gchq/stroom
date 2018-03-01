@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.util.HqlBuilder;
 import stroom.entity.StroomEntityManager;
+import stroom.entity.util.HqlBuilder;
 import stroom.jobsystem.shared.ClusterLock;
 
 import javax.inject.Inject;

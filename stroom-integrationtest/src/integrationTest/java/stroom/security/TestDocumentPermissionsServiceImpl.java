@@ -34,7 +34,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
 import java.util.HashSet;
@@ -51,9 +50,9 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
     private IndexService indexService;
     @Inject
     private DocumentPermissionService documentPermissionService;
-    @Resource
+    @Inject
     private UserGroupsCache userGroupsCache;
-    @Resource
+    @Inject
     private DocumentPermissionsCache documentPermissionsCache;
 
     @Test

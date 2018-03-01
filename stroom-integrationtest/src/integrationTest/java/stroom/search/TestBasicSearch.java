@@ -40,24 +40,23 @@ import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.search.MaxHitCollector;
 import stroom.search.shard.IndexShardSearcher;
 import stroom.search.shard.IndexShardSearcherImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 
 public class TestBasicSearch extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private Indexer indexer;
-    @Resource
+    @Inject
     private IndexShardWriterCache indexShardWriterCache;
-    @Resource
+    @Inject
     private IndexShardService indexShardService;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 
     @Test

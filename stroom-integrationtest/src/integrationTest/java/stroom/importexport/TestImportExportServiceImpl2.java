@@ -19,15 +19,15 @@ package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.importexport.shared.ImportState;
 import stroom.feed.FeedService;
+import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineService;
 import stroom.resource.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.zip.ZipUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -35,13 +35,13 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private ImportExportService importExportService;
-    @Resource
+    @Inject
     private ResourceStore resourceStore;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private FeedService feedService;
 
     @Test

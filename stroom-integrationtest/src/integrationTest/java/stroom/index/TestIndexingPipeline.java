@@ -24,8 +24,8 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
-import stroom.pipeline.PipelineService;
 import stroom.index.shared.IndexShardKey;
+import stroom.pipeline.PipelineService;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.XSLTService;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -43,7 +43,7 @@ import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.InputStream;
 import java.util.Map;
 
@@ -53,21 +53,21 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
     private static final String SAMPLE_INDEX_XSLT = "TestIndexingPipeline/Indexes.xsl";
 
-    @Resource
+    @Inject
     private XSLTService xsltService;
-    @Resource
+    @Inject
     private IndexService indexService;
-    @Resource
+    @Inject
     private PipelineFactory pipelineFactory;
-    @Resource
+    @Inject
     private ErrorReceiverProxy errorReceiver;
-    @Resource
+    @Inject
     private MockIndexShardWriterCache indexShardWriterCache;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private StreamHolder streamHolder;
-    @Resource
+    @Inject
     private PipelineDataCache pipelineDataCache;
 
     @Before

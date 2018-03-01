@@ -27,7 +27,7 @@ import stroom.security.shared.UserRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.persistence.PersistenceException;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,13 +35,13 @@ import java.util.Set;
 public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppPermissionServiceImpl.class);
 
-    @Resource
+    @Inject
     private UserService userService;
-    @Resource
+    @Inject
     private UserAppPermissionService userAppPermissionService;
-    @Resource
+    @Inject
     private UserGroupsCache userGroupsCache;
-    @Resource
+    @Inject
     private UserAppPermissionsCache userAppPermissionsCache;
 
     @Test

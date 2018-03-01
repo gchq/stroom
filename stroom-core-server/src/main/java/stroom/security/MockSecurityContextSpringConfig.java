@@ -18,12 +18,6 @@ package stroom.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.entity.StroomEntityManager;
-import stroom.entity.event.EntityEventBus;
-import stroom.explorer.ExplorerService;
-import stroom.util.cache.CacheManager;
-
-import javax.inject.Provider;
 
 @Configuration
 public class MockSecurityContextSpringConfig {

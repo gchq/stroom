@@ -44,7 +44,7 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.util.config.StroomProperties;
 import stroom.volume.VolumeServiceImpl;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -60,29 +60,29 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     private static final int FIFTY_FIVE = 55;
     private static final int FIFTY = 50;
 
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private StreamMaintenanceService streamMaintenanceService;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
-    @Resource
+    @Inject
     private TaskManager taskManager;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
-    @Resource
+    @Inject
     private NodeCache nodeCache;
-    @Resource
+    @Inject
     private NodeService nodeService;
-    @Resource
+    @Inject
     private StreamTaskCreatorImpl streamTaskCreator;
-    @Resource
+    @Inject
     private StreamRetentionExecutor streamRetentionExecutor;
-    @Resource
+    @Inject
     private StreamDeleteExecutor streamDeleteExecutor;
 
     private int initialReplicationCount = 1;

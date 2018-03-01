@@ -64,7 +64,6 @@ import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

@@ -21,10 +21,10 @@ import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.cluster.FindClearServiceClusterTask;
 import stroom.security.Secured;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;

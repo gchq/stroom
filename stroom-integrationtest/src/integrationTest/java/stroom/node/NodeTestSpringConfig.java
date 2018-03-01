@@ -25,8 +25,8 @@ import stroom.util.spring.StroomSpringProfiles;
 @Configuration
 public class NodeTestSpringConfig {
     @Bean
-    public NodeCache nodeCache() {
-        return new NodeCache();
+    public NodeCache nodeCache(final NodeServiceGetDefaultNode nodeService) {
+        return new NodeCache(nodeService);
     }
 
     @Bean

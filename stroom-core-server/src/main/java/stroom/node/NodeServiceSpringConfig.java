@@ -24,8 +24,18 @@ import stroom.entity.StroomEntityManager;
 
 @Configuration
 public class NodeServiceSpringConfig {
+//    @Bean("nodeService")
+//    public NodeService nodeService(final NodeServiceImpl nodeService) {
+//        return nodeService;
+//    }
+//
+//    @Bean("nodeServiceGetDefaultNode")
+//    public NodeServiceGetDefaultNode nodeServiceGetDefaultNode(final NodeServiceImpl nodeService) {
+//        return nodeService;
+//    }
+
     @Bean("nodeService")
-    public NodeService nodeService(final StroomEntityManager entityManager,
+    public NodeServiceImpl nodeServiceImpl(final StroomEntityManager entityManager,
                                    final NodeServiceTransactionHelper nodeServiceTransactionHelper,
                                    @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
                                    @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {

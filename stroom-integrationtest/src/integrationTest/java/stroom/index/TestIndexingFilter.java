@@ -47,7 +47,7 @@ import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,19 +57,19 @@ import java.util.List;
 public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     private static final String PIPELINE = "TestIndexingFilter/TestIndexingFilter.Pipeline.data.xml";
 
-    @Resource
+    @Inject
     private PipelineFactory pipelineFactory;
-    @Resource
+    @Inject
     private ErrorReceiverProxy errorReceiver;
-    @Resource
+    @Inject
     private FeedHolder feedHolder;
-    @Resource
+    @Inject
     private MockIndexShardWriterCache indexShardWriterCache;
-    @Resource
+    @Inject
     private IndexService indexService;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private PipelineDataCache pipelineDataCache;
 
     @Before

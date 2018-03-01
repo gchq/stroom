@@ -35,7 +35,7 @@ import stroom.util.test.StroomTest;
 import stroom.util.test.TestState;
 import stroom.util.test.TestState.State;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -60,10 +60,10 @@ public abstract class StroomIntegrationTest implements StroomTest {
         }
     };
 
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
 
-    @Resource
+    @Inject
     private ContentImportService contentImportService;
 
     @BeforeClass

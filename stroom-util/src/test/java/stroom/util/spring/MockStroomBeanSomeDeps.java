@@ -18,7 +18,6 @@ package stroom.util.spring;
 
 import org.junit.Assert;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 
 public class MockStroomBeanSomeDeps extends MockStroomBeanLifeCycleBean {

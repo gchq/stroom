@@ -19,8 +19,9 @@ package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.MetaMap;
 import stroom.feed.FeedService;
+import stroom.feed.MetaMap;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
@@ -30,9 +31,8 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
-import stroom.feed.StroomHeaderArguments;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,13 +46,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private StreamMaintenanceService streamMaintenanceService;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 
     @Test

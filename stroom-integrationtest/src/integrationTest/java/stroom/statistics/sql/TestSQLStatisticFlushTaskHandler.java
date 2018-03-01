@@ -26,7 +26,7 @@ import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
 import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,13 +36,13 @@ import java.sql.SQLException;
 public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
 
-    @Resource
+    @Inject
     private DataSource statisticsDataSource;
-    @Resource
+    @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
-    @Resource
+    @Inject
     private SQLStatisticAggregationManager sqlStatisticAggregationManager;
-    @Resource
+    @Inject
     private StroomDatabaseInfo stroomDatabaseInfo;
 
     @Test(expected = StatisticsEventValidationException.class)

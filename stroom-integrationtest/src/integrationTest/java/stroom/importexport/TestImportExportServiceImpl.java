@@ -21,13 +21,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.importexport.shared.ImportState;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
@@ -37,23 +37,23 @@ import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
 import stroom.util.test.FileSystemTestUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private ImportExportService importExportService;
-    @Resource
+    @Inject
     private ResourceStore resourceStore;
-    @Resource
+    @Inject
     private PipelineService pipelineService;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
-    @Resource
+    @Inject
     private ExplorerService explorerService;
-    @Resource
+    @Inject
     private ExplorerNodeService explorerNodeService;
 
     @Test

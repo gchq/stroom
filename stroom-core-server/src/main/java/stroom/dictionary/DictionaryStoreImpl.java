@@ -27,7 +27,6 @@ import stroom.docstore.Serialiser;
 import stroom.docstore.Store;
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.shared.DocumentType;
-import stroom.feed.shared.Feed;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;

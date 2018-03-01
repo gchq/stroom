@@ -22,7 +22,6 @@ import org.springframework.context.annotation.Scope;
 import stroom.cluster.ClusterCallService;
 import stroom.cluster.ClusterNodeManager;
 import stroom.entity.StroomDatabaseInfo;
-import stroom.entity.StroomEntityManager;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.RecordCountService;
@@ -89,8 +88,8 @@ public class NodeSpringConfig {
     }
 
     @Bean
-    public NodeCache nodeCache() {
-        return new NodeCache();
+    public NodeCache nodeCache(final NodeServiceGetDefaultNode nodeService) {
+        return new NodeCache(nodeService);
     }
 
     @Bean

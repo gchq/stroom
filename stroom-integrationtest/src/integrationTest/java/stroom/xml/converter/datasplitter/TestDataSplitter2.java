@@ -25,12 +25,12 @@ import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 public class TestDataSplitter2 extends AbstractProcessIntegrationTest {
-    @Resource
+    @Inject
     private StroomBeanStore beanStore;
 
     /**

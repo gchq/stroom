@@ -24,11 +24,11 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.Collections;
 
 public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private DictionaryStore dictionaryStore;
 
     @Test

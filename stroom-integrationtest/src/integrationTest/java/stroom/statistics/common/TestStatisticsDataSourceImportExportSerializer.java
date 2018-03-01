@@ -23,34 +23,34 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.ImportExportSerializer;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
-import stroom.statistics.sql.datasource.FindStatisticsEntityCriteria;
-import stroom.statistics.sql.datasource.StatisticStoreEntityService;
-import stroom.statistics.sql.datasource.StatisticsDataSourceProvider;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.sql.datasource.FindStatisticsEntityCriteria;
+import stroom.statistics.sql.datasource.StatisticStoreEntityService;
+import stroom.statistics.sql.datasource.StatisticsDataSourceProvider;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.nio.file.Path;
 
 public class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private ImportExportSerializer importExportSerializer;
-    @Resource
+    @Inject
     private StatisticStoreEntityService statisticsDataSourceService;
-    @Resource
+    @Inject
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
-    @Resource
+    @Inject
     private ExplorerService explorerService;
 
     private DocRefs buildFindFolderCriteria() {

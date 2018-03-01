@@ -29,22 +29,20 @@ import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
-
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.search.IndexDataSourceFieldUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private IndexService indexService;
-    @Resource
+    @Inject
     private IndexShardService indexShardService;
-    @Resource
+    @Inject
     private CommonIndexingTest commonIndexingTest;
 
     @Override

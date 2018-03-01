@@ -24,13 +24,13 @@ import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.security.UserTokenUtil;
 import stroom.streamstore.StreamAttributeValueFlush;
+import stroom.streamstore.StreamDownloadSettings;
+import stroom.streamstore.StreamDownloadTask;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
-import stroom.streamstore.fs.serializable.NestedStreamTarget;
-import stroom.streamstore.StreamDownloadSettings;
-import stroom.streamstore.StreamDownloadTask;
 import stroom.streamstore.StreamUploadTask;
+import stroom.streamstore.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -41,20 +41,20 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private StreamAttributeValueFlush streamAttributeValueFlush;
-    @Resource
+    @Inject
     private TaskManager taskManager;
 
     @Test

@@ -7,7 +7,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.StreamUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -16,7 +16,7 @@ import java.util.UUID;
 
 
 public class TestDBPersistence extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private Persistence persistence;
 
     @Test

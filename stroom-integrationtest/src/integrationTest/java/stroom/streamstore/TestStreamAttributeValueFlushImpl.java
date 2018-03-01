@@ -19,10 +19,10 @@ package stroom.streamstore;
 import org.junit.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 public class TestStreamAttributeValueFlushImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private StreamAttributeValueDeleteExecutor streamAttributeValueDeleteExecutor;
 
     @Test

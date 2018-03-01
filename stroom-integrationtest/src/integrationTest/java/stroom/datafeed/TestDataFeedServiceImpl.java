@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import stroom.feed.FeedService;
 import stroom.feed.StroomHeaderArguments;
@@ -31,9 +30,8 @@ import stroom.streamstore.MockStreamStore;
 import stroom.test.StroomIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.spring.StroomSpringProfiles;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,15 +46,15 @@ import java.util.zip.ZipOutputStream;
 @ContextConfiguration(classes = {TestDataFeedServiceImplConfiguration.class})
 @Ignore("TODO 2015-11-18: These tests have interdependencies: they pass individually but fail when run together. Ignoring so the test may be fixed later.")
 public class TestDataFeedServiceImpl extends StroomIntegrationTest {
-    @Resource
+    @Inject
     private DataFeedServlet dataFeedService;
-    @Resource
+    @Inject
     private FeedService feedService;
-    @Resource
+    @Inject
     private MockHttpServletRequest request;
-    @Resource
+    @Inject
     private MockHttpServletResponse response;
-    @Resource
+    @Inject
     private MockStreamStore streamStore;
 
     @Before

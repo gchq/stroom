@@ -19,8 +19,8 @@ package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.PeriodUtil;
 import stroom.entity.shared.Period;
+import stroom.entity.util.PeriodUtil;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;

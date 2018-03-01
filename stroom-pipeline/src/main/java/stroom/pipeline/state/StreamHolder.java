@@ -23,7 +23,6 @@ import stroom.streamstore.fs.serializable.StreamSourceInputStreamProviderImpl;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.HashMap;

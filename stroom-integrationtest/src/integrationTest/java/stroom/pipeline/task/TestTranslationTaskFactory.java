@@ -27,10 +27,10 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.XSLT;
 import stroom.streamstore.StreamStore;
-import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
@@ -43,7 +43,7 @@ import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -76,19 +76,19 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     private static final int NO_OF_REFERENCE_FILES = 3;
     private static final int NO_OF_EVENT_FILES = 10;
 
-    @Resource
+    @Inject
     private TaskManager taskManager;
-    @Resource
+    @Inject
     private StreamStore streamStore;
-    @Resource
+    @Inject
     private StoreCreationTool storeCreationTool;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
+    @Inject
     private XSLTService xsltService;
-    @Resource
+    @Inject
     private StreamTaskCreator streamTaskCreator;
-    @Resource
+    @Inject
     private NodeCache nodeCache;
 
     /**

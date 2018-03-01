@@ -16,10 +16,10 @@
 
 package stroom.entity;
 
-import stroom.entity.util.HqlBuilder;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.FindNamedEntityCriteria;
+import stroom.entity.util.HqlBuilder;
 
 import java.util.List;
 import java.util.Set;

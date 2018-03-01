@@ -16,12 +16,12 @@
 
 package stroom.util.task;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 public class TaskScopeTestSingleton extends TaskScopeTestBaseObject {
-    @Resource
+    @Inject
     TaskScopeTestObject1 threadScopeTestObject1;
-    @Resource
+    @Inject
     TaskScopeTestObject2 threadScopeTestObject2;
 
     @Override

@@ -16,12 +16,6 @@
 
 package com.caucho.hessian.client;
 
-import com.caucho.hessian.client.HessianConnection;
-import com.caucho.hessian.client.HessianConnectionFactory;
-import com.caucho.hessian.client.HessianProxyFactory;
-import com.caucho.hessian.client.HessianURLConnection;
-import com.caucho.hessian.client.HessianURLConnectionFactory;
-
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.net.URL;

@@ -19,8 +19,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.streamstore.OldFindStreamCriteria;
-import stroom.streamstore.StreamAttributeKeyService;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;

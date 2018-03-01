@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.SmartLifecycle;
 import stroom.util.concurrent.AtomicSequence;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 
@@ -43,7 +43,7 @@ public class StroomBeanLifeCycleReloadableContextBeanProcessor implements SmartL
     private volatile boolean stopped = false;
     private volatile int instance;
 
-    @Resource
+    @Inject
     private volatile StroomBeanLifeCycle stroomBeanLifeCycle;
 
     public synchronized void setStroomBeanLifeCycle(final StroomBeanLifeCycle stroomBeanLifeCycle) {

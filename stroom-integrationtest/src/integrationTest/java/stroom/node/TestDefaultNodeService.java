@@ -22,12 +22,12 @@ import org.junit.Test;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 public class TestDefaultNodeService extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private NodeCache nodeCache;
-    @Resource
+    @Inject
     private NodeService nodeService;
 
     @Test

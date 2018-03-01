@@ -18,8 +18,6 @@ package stroom.datafeed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
 
 import javax.inject.Inject;
