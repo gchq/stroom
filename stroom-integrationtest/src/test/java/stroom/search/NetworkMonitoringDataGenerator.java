@@ -17,65 +17,45 @@ public class NetworkMonitoringDataGenerator {
         LocalDateTime startInc = LocalDateTime.of(2016, 1, 1, 0, 0, 0);
         LocalDateTime endExc = LocalDateTime.of(2018, 1, 1, 0, 0, 0);
 
-        TestDataFieldDefinition dateField = TestDataFieldDefinition.randomDateTime(
-                "Date",
-                startInc,
-                endExc,
-                DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-
-        TestDataFieldDefinition timeField = TestDataFieldDefinition.randomDateTime(
-                "Time",
-                startInc,
-                endExc,
-                DateTimeFormatter.ofPattern("HH:mm:ss"));
-
-        TestDataFieldDefinition eventTypeField = TestDataFieldDefinition.randomValueField(
-                "EventType",
-                Arrays.asList(
-                        "authenticationFailed",
-                        "authorisationFailed",
-                        "login"));
-
-        TestDataFieldDefinition deviceField = TestDataFieldDefinition.randomNumberedValueField(
-                "Device",
-                "device%s",
-                100);
-
-        TestDataFieldDefinition userNameField = TestDataFieldDefinition.randomNumberedValueField(
-                "UserName",
-                "user-%s",
-                100);
-
-        TestDataFieldDefinition idField = TestDataFieldDefinition.randomIpV4Field("ID");
-
-        TestDataFieldDefinition errorCodeField = TestDataFieldDefinition.randomNumberedValueField(
-                "ErrorCode",
-                "E%03d",
-                1000);
-
-        TestDataFieldDefinition ipAddressField = TestDataFieldDefinition.randomIpV4Field("IPAddress");
-
-        TestDataFieldDefinition serverField = TestDataFieldDefinition.randomNumberedValueField(
-                "Server",
-                "server-%s",
-                100);
-
-        TestDataFieldDefinition messageField = TestDataFieldDefinition.randomClassNames(
-                "Message",
-                0,
-                3);
-
         TestDataGenerator.buildDefinition()
-                .addFieldDefinition(dateField)
-                .addFieldDefinition(timeField)
-                .addFieldDefinition(eventTypeField)
-                .addFieldDefinition(deviceField)
-                .addFieldDefinition(userNameField)
-                .addFieldDefinition(idField)
-                .addFieldDefinition(errorCodeField)
-                .addFieldDefinition(ipAddressField)
-                .addFieldDefinition(serverField)
-                .addFieldDefinition(messageField)
+                .addFieldDefinition(TestDataFieldDefinition.randomDateTime(
+                        "Date",
+                        startInc,
+                        endExc,
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                .addFieldDefinition(TestDataFieldDefinition.randomDateTime(
+                        "Time",
+                        startInc,
+                        endExc,
+                        DateTimeFormatter.ofPattern("HH:mm:ss")))
+                .addFieldDefinition(TestDataFieldDefinition.randomValueField(
+                        "EventType",
+                        Arrays.asList(
+                                "authenticationFailed",
+                                "authorisationFailed",
+                                "login")))
+                .addFieldDefinition(TestDataFieldDefinition.randomNumberedValueField(
+                        "Device",
+                        "device%s",
+                        100))
+                .addFieldDefinition(TestDataFieldDefinition.randomNumberedValueField(
+                        "UserName",
+                        "user-%s",
+                        100))
+                .addFieldDefinition(TestDataFieldDefinition.randomIpV4Field("ID"))
+                .addFieldDefinition(TestDataFieldDefinition.randomNumberedValueField(
+                        "ErrorCode",
+                        "E%03d",
+                        1000))
+                .addFieldDefinition(TestDataFieldDefinition.randomIpV4Field("IPAddress"))
+                .addFieldDefinition(TestDataFieldDefinition.randomNumberedValueField(
+                        "Server",
+                        "server-%s",
+                        100))
+                .addFieldDefinition(TestDataFieldDefinition.randomClassNames(
+                        "Message",
+                        0,
+                        3))
                 .outputHeaderRow(true)
                 .rowCount(50)
                 .delimitedBy(",")
