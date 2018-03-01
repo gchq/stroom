@@ -1,9 +1,7 @@
 package stroom.search;
 
-import stroom.test.TestDataFieldDefinition;
 import stroom.test.TestDataGenerator;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -18,41 +16,41 @@ public class NetworkMonitoringDataGenerator {
         LocalDateTime endExc = LocalDateTime.of(2018, 1, 1, 0, 0, 0);
 
         TestDataGenerator.buildDefinition()
-                .addFieldDefinition(TestDataFieldDefinition.randomDateTime(
+                .addFieldDefinition(TestDataGenerator.randomDateTime(
                         "Date",
                         startInc,
                         endExc,
                         DateTimeFormatter.ofPattern("dd/MM/yyyy")))
-                .addFieldDefinition(TestDataFieldDefinition.randomDateTime(
+                .addFieldDefinition(TestDataGenerator.randomDateTime(
                         "Time",
                         startInc,
                         endExc,
                         DateTimeFormatter.ofPattern("HH:mm:ss")))
-                .addFieldDefinition(TestDataFieldDefinition.randomValueField(
+                .addFieldDefinition(TestDataGenerator.randomValueField(
                         "EventType",
                         Arrays.asList(
                                 "authenticationFailed",
                                 "authorisationFailed",
                                 "login")))
-                .addFieldDefinition(TestDataFieldDefinition.randomNumberedValueField(
+                .addFieldDefinition(TestDataGenerator.randomNumberedValueField(
                         "Device",
                         "device%s",
                         100))
-                .addFieldDefinition(TestDataFieldDefinition.randomNumberedValueField(
+                .addFieldDefinition(TestDataGenerator.randomNumberedValueField(
                         "UserName",
                         "user-%s",
                         100))
-                .addFieldDefinition(TestDataFieldDefinition.randomIpV4Field("ID"))
-                .addFieldDefinition(TestDataFieldDefinition.randomNumberedValueField(
+                .addFieldDefinition(TestDataGenerator.randomIpV4Field("ID"))
+                .addFieldDefinition(TestDataGenerator.randomNumberedValueField(
                         "ErrorCode",
                         "E%03d",
                         1000))
-                .addFieldDefinition(TestDataFieldDefinition.randomIpV4Field("IPAddress"))
-                .addFieldDefinition(TestDataFieldDefinition.randomNumberedValueField(
+                .addFieldDefinition(TestDataGenerator.randomIpV4Field("IPAddress"))
+                .addFieldDefinition(TestDataGenerator.randomNumberedValueField(
                         "Server",
                         "server-%s",
                         100))
-                .addFieldDefinition(TestDataFieldDefinition.randomClassNames(
+                .addFieldDefinition(TestDataGenerator.randomClassNames(
                         "Message",
                         0,
                         3))
@@ -62,6 +60,4 @@ public class NetworkMonitoringDataGenerator {
                 .consumedBy(TestDataGenerator.systemOutConsumer())
                 .generate();
     }
-
-
 }
