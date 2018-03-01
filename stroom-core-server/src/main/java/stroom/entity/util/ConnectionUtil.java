@@ -26,7 +26,6 @@ import stroom.util.config.StroomProperties;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -206,7 +205,6 @@ public class ConnectionUtil {
         }
     }
 
-//    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
 //    public static BaseResultList<SummaryDataRow> executeQuerySummaryDataResult(final Connection connection,
 //                                                                               final String sql,
 //                                                                               final int numberKeys,
@@ -275,7 +273,6 @@ public class ConnectionUtil {
      * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
      * MANY param objects.
      */
-    @NotThreadSafe
     public static class MultiInsertExecutor implements AutoCloseable {
 
         private final Map<Integer, PreparedStatement> preparedStatements = new HashMap<>();

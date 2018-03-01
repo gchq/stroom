@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Configuration;
 public class StroomStatsRollupSpringConfig {
     @Bean
     public StroomStatsRollUpBitMaskConversionHandler stroomStatsRollUpBitMaskConversionHandler() {
-        return new StroomStatsRollUpBitMaskConversionHandler   ();
+        return new StroomStatsRollUpBitMaskConversionHandler();
     }
 
     @Bean
