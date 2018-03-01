@@ -364,6 +364,12 @@ public class TestDataGenerator {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //    public static class XmlDataWriterBuilder {
+//    private boolean useAttributes = false;
+//    private Optional<String> namespace;
+//    private String rootElementName;
+//    private String recordWrapperElementName = "records";
+//    private String recordElementName = "record";
+//    private String dataItemElementName = "data";
 //
 //        public static XmlDataWriterBuilder builder() {
 //            return new XmlDataWriterBuilder();
