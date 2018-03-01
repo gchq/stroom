@@ -34,7 +34,7 @@ public class BuildInfoUtil {
             properties.load(
                     BuildInfoUtil.class.getClassLoader().getResourceAsStream("META-INF/stroom-util-build.properties"));
         } catch (Exception e) {
-            LOGGER.error("Unable to load strom-util-build.properties!", e);
+            LOGGER.error("Unable to load stroom-util-build.properties!", e);
         }
         buildVersion = properties.getProperty("buildVersion");
         buildDate = properties.getProperty("buildDate");
