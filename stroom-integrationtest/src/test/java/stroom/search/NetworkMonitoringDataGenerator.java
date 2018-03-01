@@ -60,11 +60,10 @@ public class NetworkMonitoringDataGenerator {
                 "server-%s",
                 100);
 
-        TestDataFieldDefinition messageField = TestDataFieldDefinition.randomWords(
+        TestDataFieldDefinition messageField = TestDataFieldDefinition.randomClassNames(
                 "Message",
                 0,
                 3);
-
 
         TestDataGenerator.buildDefinition()
                 .addFieldDefinition(dateField)
