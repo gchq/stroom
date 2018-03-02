@@ -134,6 +134,7 @@ public class TestTestDataGenerator {
     }
 
     private TestDataGenerator.DefinitionBuilder buildBasicDefinition() {
+        //start building a definition that uses all field types
         return TestDataGenerator.buildDefinition()
                 .addFieldDefinition(TestDataGenerator.sequentialValueField(
                         "sequentialValueField",
@@ -174,7 +175,6 @@ public class TestTestDataGenerator {
                         0,
                         3,
                         Arrays.asList("attractive", "bald", "beautiful", "chubby", "drab", "elegant", "scruffy", "fit", "glamorous", "handsome", "unkempt")));
-
     }
 
 }
