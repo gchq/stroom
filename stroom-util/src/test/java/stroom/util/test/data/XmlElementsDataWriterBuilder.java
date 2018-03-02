@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
  *     <field3>field3-value2</field1>
  *   </record>
  *   </records>
+ * }
  * </pre>
  */
 public class XmlElementsDataWriterBuilder extends AbstractXmlDataWriterBuilder {
