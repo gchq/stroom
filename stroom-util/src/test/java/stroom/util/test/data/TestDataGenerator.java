@@ -353,6 +353,9 @@ public class TestDataGenerator {
                 return new Record(fieldDefinitions, values);
             };
 
+            //TODO need to consider allowing this to be done in parallel, but to do this
+            //any stateful field types will need to be thread safe. At the moment, some of
+            //them do two step operations on the atomic classes which won't work when multi threaded
             return IntStream.rangeClosed(1, rowCount)
                     .sequential()
                     .boxed()
