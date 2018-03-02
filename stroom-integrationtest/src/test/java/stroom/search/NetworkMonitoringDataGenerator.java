@@ -1,6 +1,7 @@
 package stroom.search;
 
-import stroom.test.TestDataGenerator;
+import stroom.util.test.data.FlatDataWriterBuilder;
+import stroom.util.test.data.TestDataGenerator;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,12 +17,12 @@ public class NetworkMonitoringDataGenerator {
         LocalDateTime endExc = LocalDateTime.of(2018, 1, 1, 0, 0, 0);
 
         TestDataGenerator.buildDefinition()
-                .addFieldDefinition(TestDataGenerator.randomDateTime(
+                .addFieldDefinition(TestDataGenerator.randomDateTimeField(
                         "Date",
                         startInc,
                         endExc,
                         DateTimeFormatter.ofPattern("dd/MM/yyyy")))
-                .addFieldDefinition(TestDataGenerator.randomDateTime(
+                .addFieldDefinition(TestDataGenerator.randomDateTimeField(
                         "Time",
                         startInc,
                         endExc,
@@ -50,16 +51,13 @@ public class NetworkMonitoringDataGenerator {
                         "Server",
                         "server-%s",
                         100))
-                .addFieldDefinition(TestDataGenerator.randomClassNames(
+                .addFieldDefinition(TestDataGenerator.randomClassNamesField(
                         "Message",
                         0,
                         3))
-                .setDataWriter(TestDataGenerator.FlatDataWriterBuilder.builder()
-                        .outputHeaderRow(true)
-                        .delimitedBy(",")
-                        .build())
+                .setDataWriter(FlatDataWriterBuilder.defaultCsvFormat())
                 .rowCount(50)
-                .consumedBy(TestDataGenerator.systemOutConsumer())
+                .consumedBy(TestDataGenerator.getSystemOutConsumer())
                 .generate();
     }
 }
