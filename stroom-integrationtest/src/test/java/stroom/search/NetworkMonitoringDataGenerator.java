@@ -29,10 +29,7 @@ public class NetworkMonitoringDataGenerator {
                         DateTimeFormatter.ofPattern("HH:mm:ss")))
                 .addFieldDefinition(TestDataGenerator.randomValueField(
                         "EventType",
-                        Arrays.asList(
-                                "authenticationFailed",
-                                "authorisationFailed",
-                                "login")))
+                        Arrays.asList("authenticationFailed", "authorisationFailed")))
                 .addFieldDefinition(TestDataGenerator.randomNumberedValueField(
                         "Device",
                         "device%s",

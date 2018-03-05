@@ -117,6 +117,10 @@ public class TestDataGenerator {
         return new Field(name, supplier);
     }
 
+    /**
+     * A field that produces sequential integers starting at startInc (inclusive).
+     * If endExc (exclusive) is reached it will loop back round to startInc.
+     */
     public static Field sequentialNumberField(final String name,
                                               final int startInc,
                                               final int endExc) {
@@ -138,6 +142,9 @@ public class TestDataGenerator {
         return new Field(name, supplier);
     }
 
+    /**
+     * A field that produces integers between startInc (inclusive) and endExc (exclusive)
+     */
     public static Field randomNumberField(final String name,
                                           final int startInc,
                                           final int endExc) {
@@ -149,6 +156,9 @@ public class TestDataGenerator {
                 () -> Integer.toString(buildRandomNumberSupplier(startInc, endExc).getAsInt()));
     }
 
+    /**
+     * A field that produces IP address conforming to [0-9]{1-3}\.[0-9]{1-3}\.[0-9]{1-3}\.[0-9]{1-3}
+     */
     public static Field randomIpV4Field(final String name) {
 
         final IntSupplier intSupplier = buildRandomNumberSupplier(0, 256);
@@ -162,10 +172,34 @@ public class TestDataGenerator {
         return new Field(name, supplier);
     }
 
+    /**
+     * A field to produce a sequence of random datetime values within a defined time range.
+     * The formatter controls the output format.
+     *
+     * @param formatStr Format string conforming to the format expected by {@link DateTimeFormatter}
+     */
+    public static Field randomDateTimeField(final String name,
+                                            final LocalDateTime startDateInc,
+                                            final LocalDateTime endDateExc,
+                                            final String formatStr) {
+        Preconditions.checkNotNull(startDateInc);
+        Preconditions.checkNotNull(endDateExc);
+        Preconditions.checkNotNull(formatStr);
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
+        return randomDateTimeField(name, startDateInc, endDateExc, dateTimeFormatter);
+    }
+
+    /**
+     * A field to produce a sequence of random datetime values within a defined time range.
+     * The formatter controls the output format.
+     */
     public static Field randomDateTimeField(final String name,
                                             final LocalDateTime startDateInc,
                                             final LocalDateTime endDateExc,
                                             final DateTimeFormatter formatter) {
+        Preconditions.checkNotNull(startDateInc);
+        Preconditions.checkNotNull(endDateExc);
+        Preconditions.checkNotNull(formatter);
         Preconditions.checkArgument(endDateExc.isAfter(startDateInc));
 
         final long millisBetween = endDateExc.toInstant(ZoneOffset.UTC).toEpochMilli()
@@ -184,6 +218,11 @@ public class TestDataGenerator {
         return new Field(name, supplier);
     }
 
+
+    /**
+     * A field to produce a sequence of datetime values with a constant delta based on
+     * a configured start datetime and delta. The formatter controls the output format.
+     */
     public static Field sequentialDateTimeField(final String name,
                                                 final LocalDateTime startDateInc,
                                                 final Duration delta,
@@ -202,6 +241,9 @@ public class TestDataGenerator {
         return new Field(name, supplier);
     }
 
+    /**
+     * A field that produces a new random UUID on each call to getNext()
+     */
     public static Field uuidField(final String name) {
         return new Field(name, () -> UUID.randomUUID().toString());
     }
@@ -256,7 +298,7 @@ public class TestDataGenerator {
         return () ->
                 random.nextInt(delta) + startInc;
     }
-    
+
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
@@ -293,6 +335,7 @@ public class TestDataGenerator {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public static class DefinitionBuilder {
+
         private List<Field> fieldDefinitions = new ArrayList<>();
         private Consumer<Stream<String>> rowStreamConsumer;
         private int rowCount = 1;
