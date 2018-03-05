@@ -123,4 +123,9 @@ if ${showInfo}; then
     echo -e "Response content:"
 fi
 
-echo -e "${req}" | jq -r ".key.uuid = \"${uuid}\"" | http POST ${fullUrl} "Authorization:Bearer ${TOKEN}" 
+# Disable certificate verification to cope with stroom's self-signed cert
+if [[ "${fullUrl}" =~ ^https.* ]]; then
+    extraHttpieArgs="${extraHttpieArgs} --verify=no"
+fi
+
+echo -e "${req}" | jq -r ".key.uuid = \"${uuid}\"" | http ${extraHttpieArgs} POST ${fullUrl} "Authorization:Bearer ${TOKEN}" 
