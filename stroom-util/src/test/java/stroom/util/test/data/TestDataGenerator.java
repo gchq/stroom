@@ -26,8 +26,17 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+/**
+ * Class for generating test data by constructing field definitions. Each {@link Field} definition
+ * defines how the next value will be generated. A number of different types of predefined {@link Field}
+ * types are available. For examples of how to use this class see {@link TestTestDataGenerator}.
+ */
 public class TestDataGenerator {
 
+    /**
+     * Method to begin the process of building a test data generator definition and producing the test data.
+     * @return
+     */
     public static DefinitionBuilder buildDefinition() {
         return new DefinitionBuilder();
     }
@@ -36,7 +45,8 @@ public class TestDataGenerator {
      * @return A pre-canned stream consumer that writes each string to System.out
      */
     public static Consumer<Stream<String>> getSystemOutConsumer() {
-        return stringStream -> stringStream.forEach(System.out::println);
+        return stringStream ->
+                stringStream.forEach(System.out::println);
     }
 
     /**
@@ -56,19 +66,6 @@ public class TestDataGenerator {
             }
         };
     }
-
-//    /**
-//     * Allows you to wrap a {@link Field} object with xml tags, e.g.
-//     * <fieldName>fieldValue</fieldName>
-//     *
-//     * @param name         The name of the field
-//     * @param wrappedField The {@link Field} object to wrap in xml tags
-//     */
-//    public static Field asXmlTag(final String name,
-//                                 final Field wrappedField) {
-//        return new Field(name, () ->
-//                String.format("<%s>%s</%s>", name, wrappedField.getNext(), name));
-//    }
 
     /**
      * Stateful value supplier that supplies a value from values in sequential order
