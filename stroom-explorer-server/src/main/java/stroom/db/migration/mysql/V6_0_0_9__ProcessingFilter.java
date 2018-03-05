@@ -83,7 +83,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                         findStreamCriteriaStrById.put(id, datAsString);
                         findStreamCriteriaById.put(id, streamCriteria);
                     } catch (final Exception e) {
-                        LOGGER.error(String.format("Could not get old stream criteria %s", e.getLocalizedMessage()));
+                        LOGGER.error("Could not get old stream criteria {}", e.getLocalizedMessage());
                         throw e;
                     }
                 }
@@ -92,10 +92,19 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
 
         // Convert the existing criteria to query data/expression based
         final Map<Long, String> queryDataStrById = new HashMap<>();
+
         for (final Map.Entry<Long, OldFindStreamCriteria> criteriaEntry : findStreamCriteriaById.entrySet()) {
-            final QueryData queryData = this.convertFindStreamCriteria(connection, criteriaEntry.getValue());
-            final String queryDataStr = this.marshalQueryData(queryData);
-            queryDataStrById.put(criteriaEntry.getKey(), queryDataStr);
+            try {
+                final QueryData queryData = this.convertFindStreamCriteria(connection, criteriaEntry.getValue());
+                final String queryDataStr = this.marshalQueryData(queryData);
+                queryDataStrById.put(criteriaEntry.getKey(), queryDataStr);
+
+            } catch (final Exception e) {
+                LOGGER.error("Could not convert stream criteria {}, {}",
+                        criteriaEntry.getKey(),
+                        e.getLocalizedMessage());
+                throw e;
+            }
         }
 
         // Write out the updated data
@@ -117,7 +126,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                         throw new Exception(String.format("Wrong number of rows affected by update %d", rowsAffected));
                     }
                 } catch (final Exception e) {
-                    LOGGER.error(String.format("Could not update filter: %s", e.getLocalizedMessage()));
+                    LOGGER.error("Could not update filter: {}", e.getLocalizedMessage());
                     throw e;
                 }
             }
@@ -127,7 +136,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
 
             findStreamCriteriaStrById.forEach((id, criteriaStr) -> {
                 final String queryDataStr = queryDataStrById.get(id);
-                LOGGER.info(String.format("%d\n%s\n%s\n-----------+", id, criteriaStr, queryDataStr));
+                LOGGER.info("{}\n{}\n{}\n-----------+", id, criteriaStr, queryDataStr);
             });
         }
     }
@@ -288,7 +297,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                 }
             }
         } else {
-            LOGGER.info(String.format("Creating Dictionary: %d, %s, %s", folderId, dict, dictDataStr));
+            LOGGER.info("Creating Dictionary: {}, {}, {}", folderId, dict, dictDataStr);
         }
 
 

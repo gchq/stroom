@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        jcenter()
+    }
+    dependencies {
+        classpath libs.mysql_connector_java
+    }
+}
+
 plugins {
     //id 'com.github.johnrengelman.shadow' version '2.0.0'
     id "com.benjaminsproule.swagger" version "0.1.9"
@@ -6,6 +16,7 @@ plugins {
     //usage: honkerCheck honkerGenNotice honkerGenDependencies
     //search for NOTICE.txt and DEPENDENCIES.txt
     //id "org.nosphere.honker" version "0.3.0"
+    id 'org.flywaydb.flyway' version '5.0.7'
 }
 
 def uiDir = project.file('src/main/resources/ui')
