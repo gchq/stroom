@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -35,6 +34,7 @@ public class TestDataGenerator {
 
     /**
      * Method to begin the process of building a test data generator definition and producing the test data.
+     *
      * @return
      */
     public static DefinitionBuilder buildDefinition() {
@@ -74,14 +74,10 @@ public class TestDataGenerator {
     public static Field sequentialValueField(final String name, final List<String> values) {
         Preconditions.checkNotNull(values);
         Preconditions.checkArgument(!values.isEmpty());
-        final AtomicInteger lastIndex = new AtomicInteger(-1);
-        final Supplier<String> supplier = () -> {
-            if (lastIndex.incrementAndGet() >= values.size()) {
-                //cycle back to first item
-                lastIndex.set(0);
-            }
-            return values.get(lastIndex.get());
-        };
+        final AtomicLoopedIntegerSequence indexSequence = new AtomicLoopedIntegerSequence( 0, values.size());
+
+        final Supplier<String> supplier = () ->
+                values.get(indexSequence.getNext());
         return new Field(name, supplier);
     }
 
@@ -118,27 +114,47 @@ public class TestDataGenerator {
     }
 
     /**
+     * Returns numbered values where the value is defined by a format and the number increases
+     * sequentially and loops back round when it hits endEx.
+     * @param name         Field name for use in the header
+     * @param format       A {@link String:format} compatible format containing a single
+     *                     placeholder, e.g. "user-%s" or "user-%03d"
+     * @param startInc The lowest value to use in the string format (inclusive)
+     * @param endExc The highest value to use in the string format (exclusive)
+     *                     replace the %s in the format string
+     * @return A complete {@link Field}
+     */
+    public static Field sequentiallyNumberedValueField(final String name,
+                                                       final String format,
+                                                       final int startInc,
+                                                       final int endExc) {
+        Preconditions.checkNotNull(format);
+
+        final AtomicLoopedLongSequence numberSequence = new AtomicLoopedLongSequence(
+                startInc,
+                endExc);
+
+        final Supplier<String> supplier = () ->
+                String.format(format, numberSequence.getNext());
+
+        return new Field(name, supplier);
+    }
+
+    /**
      * A field that produces sequential integers starting at startInc (inclusive).
      * If endExc (exclusive) is reached it will loop back round to startInc.
      */
     public static Field sequentialNumberField(final String name,
-                                              final int startInc,
-                                              final int endExc) {
+                                              final long startInc,
+                                              final long endExc) {
 
-        Preconditions.checkArgument(endExc > startInc);
+        final AtomicLoopedLongSequence numberSequence = new AtomicLoopedLongSequence(
+                startInc,
+                endExc);
 
-        final AtomicInteger lastIndex = new AtomicInteger(-1);
+        final Supplier<String> supplier = () ->
+                Long.toString(numberSequence.getNext());
 
-        final Supplier<String> supplier = () -> {
-            if (lastIndex.get() == -1L) {
-                lastIndex.set(startInc);
-            } else {
-                if (lastIndex.incrementAndGet() >= endExc) {
-                    lastIndex.set(startInc);
-                }
-            }
-            return Integer.toString(lastIndex.get());
-        };
         return new Field(name, supplier);
     }
 

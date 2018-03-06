@@ -146,6 +146,11 @@ public class TestTestDataGenerator {
                         "randomNumberedValueField",
                         "user-%s",
                         3))
+                .addFieldDefinition(TestDataGenerator.sequentiallyNumberedValueField(
+                        "sequentiallyNumberedValueField",
+                        "user-%s",
+                        5,
+                        10))
                 .addFieldDefinition(TestDataGenerator.sequentialNumberField(
                         "sequentialNumberField",
                         5,
