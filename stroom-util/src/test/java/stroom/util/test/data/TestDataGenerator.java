@@ -74,7 +74,7 @@ public class TestDataGenerator {
     public static Field sequentialValueField(final String name, final List<String> values) {
         Preconditions.checkNotNull(values);
         Preconditions.checkArgument(!values.isEmpty());
-        final AtomicLoopedIntegerSequence indexSequence = new AtomicLoopedIntegerSequence( 0, values.size());
+        final AtomicLoopedIntegerSequence indexSequence = new AtomicLoopedIntegerSequence(0, values.size());
 
         final Supplier<String> supplier = () ->
                 values.get(indexSequence.getNext());
@@ -116,12 +116,13 @@ public class TestDataGenerator {
     /**
      * Returns numbered values where the value is defined by a format and the number increases
      * sequentially and loops back round when it hits endEx.
-     * @param name         Field name for use in the header
-     * @param format       A {@link String:format} compatible format containing a single
-     *                     placeholder, e.g. "user-%s" or "user-%03d"
+     *
+     * @param name     Field name for use in the header
+     * @param format   A {@link String:format} compatible format containing a single
+     *                 placeholder, e.g. "user-%s" or "user-%03d"
      * @param startInc The lowest value to use in the string format (inclusive)
-     * @param endExc The highest value to use in the string format (exclusive)
-     *                     replace the %s in the format string
+     * @param endExc   The highest value to use in the string format (exclusive)
+     *                 replace the %s in the format string
      * @return A complete {@link Field}
      */
     public static Field sequentiallyNumberedValueField(final String name,
@@ -356,6 +357,7 @@ public class TestDataGenerator {
         private Consumer<Stream<String>> rowStreamConsumer;
         private int rowCount = 1;
         private DataWriter dataWriter;
+        private boolean isParallel = false;
 
         public DefinitionBuilder addFieldDefinition(final Field fieldDefinition) {
             boolean isNamedAlreadyUsed = fieldDefinitions.stream()
@@ -380,6 +382,11 @@ public class TestDataGenerator {
         public DefinitionBuilder rowCount(final int rowCount) {
             Preconditions.checkArgument(rowCount > 0, "rowCount must be > 0");
             this.rowCount = rowCount;
+            return this;
+        }
+
+        public DefinitionBuilder multiThreaded() {
+            this.isParallel = true;
             return this;
         }
 
@@ -410,11 +417,15 @@ public class TestDataGenerator {
                 return new Record(fieldDefinitions, values);
             };
 
-            //TODO need to consider allowing this to be done in parallel, but to do this
-            //any stateful field types will need to be thread safe. At the moment, some of
-            //them do two step operations on the atomic classes which won't work when multi threaded
-            return IntStream.rangeClosed(1, rowCount)
-                    .sequential()
+            IntStream stream = IntStream.rangeClosed(1, rowCount);
+
+            if (isParallel) {
+                stream.parallel();
+            } else {
+                stream.sequential();
+            }
+
+            return stream
                     .boxed()
                     .map(toRecordMapper);
         }

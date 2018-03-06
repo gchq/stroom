@@ -6,9 +6,9 @@ import org.junit.Test;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class TestTestDataGenerator {
 
@@ -17,7 +17,7 @@ public class TestTestDataGenerator {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
-        List<String> lines = new ArrayList<>();
+        Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(FlatDataWriterBuilder.defaultCsvFormat())
                 .rowCount(recCount)
@@ -35,7 +35,7 @@ public class TestTestDataGenerator {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
-        List<String> lines = new ArrayList<>();
+        Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(FlatDataWriterBuilder.builder()
                         .delimitedBy("|")
@@ -57,7 +57,7 @@ public class TestTestDataGenerator {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
-        List<String> lines = new ArrayList<>();
+        Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(XmlElementsDataWriterBuilder.defaultXmlElementFormat())
                 .rowCount(recCount)
@@ -75,7 +75,7 @@ public class TestTestDataGenerator {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
-        List<String> lines = new ArrayList<>();
+        Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(XmlElementsDataWriterBuilder.builder()
                         .namespace("myNamespace")
@@ -97,7 +97,7 @@ public class TestTestDataGenerator {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
-        List<String> lines = new ArrayList<>();
+        Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(XmlAttributesDataWriterBuilder.defaultXmlElementFormat())
                 .rowCount(recCount)
@@ -115,7 +115,7 @@ public class TestTestDataGenerator {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
-        List<String> lines = new ArrayList<>();
+        Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(XmlAttributesDataWriterBuilder.builder()
                         .namespace("myNamespace")
@@ -136,6 +136,7 @@ public class TestTestDataGenerator {
     private TestDataGenerator.DefinitionBuilder buildBasicDefinition() {
         //start building a definition that uses all field types
         return TestDataGenerator.buildDefinition()
+                .multiThreaded()
                 .addFieldDefinition(TestDataGenerator.sequentialValueField(
                         "sequentialValueField",
                         Arrays.asList("One", "Two", "Three")))
