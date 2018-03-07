@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#666** : Fixed the duplicate dictionary issue in processing filter migrations, made querying more efficient too
+
 ## [v6.0-alpha.14]
 
 * Minor fix to migrations
