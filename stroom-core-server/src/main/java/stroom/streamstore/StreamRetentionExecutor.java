@@ -35,7 +35,7 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -51,17 +51,17 @@ public class StreamRetentionExecutor {
 
     private final FeedService feedService;
     private final StreamStore streamStore;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
 
     @Inject
     StreamRetentionExecutor(final FeedService feedService,
                             final StreamStore streamStore,
-                            final TaskMonitor taskMonitor,
+                            final TaskContext taskContext,
                             final ClusterLockService clusterLockService) {
         this.feedService = feedService;
         this.streamStore = streamStore;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
     }
 
@@ -80,7 +80,7 @@ public class StreamRetentionExecutor {
                 final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
                 final List<Feed> feedList = feedService.find(findFeedCriteria);
                 for (final Feed feed : feedList) {
-                    if (!taskMonitor.isTerminated()) {
+                    if (!taskContext.isTerminated()) {
                         processFeed(feed);
                     }
                 }
@@ -109,7 +109,7 @@ public class StreamRetentionExecutor {
                     DateUtil.createNormalDateTimeString(createPeriod.getTo())
             );
 
-            taskMonitor.info("{} deleting range {} .. {}", new Object[]{
+            taskContext.info("{} deleting range {} .. {}", new Object[]{
                     feed.getName(),
                     DateUtil.createNormalDateTimeString(createPeriod.getFrom()),
                     DateUtil.createNormalDateTimeString(createPeriod.getTo())

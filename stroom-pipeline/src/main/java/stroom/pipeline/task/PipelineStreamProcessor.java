@@ -76,7 +76,7 @@ import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -100,7 +100,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private final StreamStore streamStore;
     private final FeedService feedService;
     private final PipelineService pipelineService;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
     private final StreamHolder streamHolder;
@@ -128,7 +128,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             final StreamStore streamStore,
                             @Named("cachedFeedService") final FeedService feedService,
                             @Named("cachedPipelineService") final PipelineService pipelineService,
-                            final TaskMonitor taskMonitor,
+                            final TaskContext taskContext,
                             final PipelineHolder pipelineHolder,
                             final FeedHolder feedHolder,
                             final StreamHolder streamHolder,
@@ -148,7 +148,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.pipelineService = pipelineService;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
         this.streamHolder = streamHolder;
@@ -235,7 +235,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             final String processingInfo = processingInfoSb.toString();
 
             // Log that we are starting to process.
-            taskMonitor.info(processingInfo);
+            taskContext.info(processingInfo);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(processingInfo);
             }
@@ -258,7 +258,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             final String finishedInfo = finishedInfoSb.toString();
 
             // Log that we have finished processing.
-            taskMonitor.info(finishedInfo);
+            taskContext.info(finishedInfo);
             LOGGER.info(finishedInfo);
 
         } catch (final Exception e) {
@@ -399,7 +399,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 // Loop over the stream boundaries and process each
                 // sequentially.
                 final long streamCount = mainProvider.getStreamCount();
-                for (long streamNo = 0; streamNo < streamCount && !taskMonitor.isTerminated(); streamNo++) {
+                for (long streamNo = 0; streamNo < streamCount && !taskContext.isTerminated(); streamNo++) {
                     InputStream inputStream = null;
 
                     // If the task requires specific events to be processed then

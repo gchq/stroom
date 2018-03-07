@@ -16,10 +16,9 @@
 
 package stroom.dashboard;
 
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindDashboardCriteria;
@@ -30,9 +29,9 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.entity.StroomEntityManager;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportActionHandler;
@@ -45,6 +44,8 @@ import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -52,21 +53,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Singleton
 @Transactional
 public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, FindDashboardCriteria>
         implements DashboardService, ExplorerActionHandler, ImportExportActionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardServiceImpl.class);
 
-    private final ResourceLoader resourceLoader;
     private String xmlTemplate;
 
     @Inject
-    public DashboardServiceImpl(final StroomEntityManager entityManager,
+    DashboardServiceImpl(final StroomEntityManager entityManager,
                                 final ImportExportHelper importExportHelper,
-                                final SecurityContext securityContext,
-                                final ResourceLoader resourceLoader) {
+                                final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
-        this.resourceLoader = resourceLoader;
     }
 
     @Override
@@ -200,9 +199,8 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     private String getTemplate() {
         if (xmlTemplate == null) {
             try {
-                final org.springframework.core.io.Resource resource = resourceLoader
-                        .getResource("classpath:/stroom/dashboard/DashboardTemplate.data.xml");
-                xmlTemplate = StreamUtil.streamToString(resource.getInputStream());
+                final InputStream inputStream = getClass().getResourceAsStream("/stroom/dashboard/DashboardTemplate.data.xml");
+                xmlTemplate = StreamUtil.streamToString(inputStream);
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
             }

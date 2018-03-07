@@ -27,6 +27,7 @@ import stroom.pipeline.errorhandler.LoggedException;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskCallback;
 import stroom.task.TaskManager;
+import stroom.util.guice.PipelineScoped;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@PipelineScoped
 class ProcessorFactoryImpl implements ProcessorFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
     private final TaskManager taskManager;

@@ -25,7 +25,6 @@ import javax.sql.DataSource;
 @Configuration
 public class DBSpringConfig {
     @Bean
-    @Primary
     public DBPersistence dBPersistence(final DataSource dataSource) {
         return new DBPersistence(dataSource);
     }

@@ -113,4 +113,9 @@ public class HqlBuilder extends AbstractSqlBuilder {
 
         append(")");
     }
+
+    @Override
+    String createParameter() {
+        return "?" + args.size();
+    }
 }

@@ -17,9 +17,9 @@
 
 package stroom.jobsystem;
 
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -35,6 +35,7 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,18 +43,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Singleton
 @Transactional
 @Secured(Job.MANAGE_JOBS_PERMISSION)
 public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
     private final StroomBeanStore stroomBeanStore;
+    private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
     @Inject
     JobServiceImpl(final StroomEntityManager entityManager,
-                   final StroomBeanStore stroomBeanStore) {
+                   final StroomBeanStore stroomBeanStore,
+                   final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         super(entityManager);
         this.stroomBeanStore = stroomBeanStore;
+        this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }
 
     @Override
@@ -92,13 +97,11 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
             }
         }
         // Distributed Jobs done a different way
-        for (final String beanFactory : stroomBeanStore.getAnnotatedStroomBeans(DistributedTaskFactoryBean.class)) {
-            final DistributedTaskFactoryBean distributedTaskFactoryBean = stroomBeanStore.findAnnotationOnBean(beanFactory,
-                    DistributedTaskFactoryBean.class);
-
+        distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
+            final DistributedTaskFactoryBean distributedTaskFactoryBean = factory.getClass().getAnnotation(DistributedTaskFactoryBean.class);
             queryAppender.getJobDescriptionMap().put(distributedTaskFactoryBean.jobName(), distributedTaskFactoryBean.description());
 
-        }
+        });
     }
 
     @Override

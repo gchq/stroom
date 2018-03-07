@@ -18,7 +18,7 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import org.springframework.util.StringUtils;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
@@ -32,6 +32,7 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.persistence.PersistenceException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Singleton
 @Transactional
 class UserAppPermissionServiceImpl implements UserAppPermissionService {
     private static final String LOCK_NAME = "UserAppPermissionService";
@@ -266,9 +268,9 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         final Set<String> requiredPermissionSet = new HashSet<>();
 
         // Add class level permissions
-        final Set<String> securityBeans = beanStore.getAnnotatedStroomBeans(Secured.class);
+        final Set<Class<?>> securityBeans = beanStore.getAnnotatedStroomBeans(Secured.class);
 
-        for (final String securityBean : securityBeans) {
+        for (final Class<?> securityBean : securityBeans) {
             requiredPermissionSet.addAll(buildAppPermissionKey(securityBean));
         }
 
@@ -295,10 +297,10 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         return appPermissionSet;
     }
 
-    private Set<String> buildAppPermissionKey(final String stroomBeanName) {
+    private Set<String> buildAppPermissionKey(final Class<?> stroomBeanName) {
         final Set<String> appPermissionSet = new HashSet<>();
 
-        final Secured secured = beanStore.findAnnotationOnBean(stroomBeanName, Secured.class);
+        final Secured secured = stroomBeanName.getAnnotation(Secured.class);
 
         final String name = secured.value();
         if (StringUtils.hasText(name)) {

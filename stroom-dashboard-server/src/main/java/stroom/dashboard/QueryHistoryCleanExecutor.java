@@ -23,7 +23,7 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.util.shared.Task;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
@@ -35,13 +35,13 @@ import java.util.List;
 public class QueryHistoryCleanExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryHistoryCleanExecutor.class);
 
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final QueryService queryService;
     private final StroomPropertyService propertyService;
 
     @Inject
-    public QueryHistoryCleanExecutor(final TaskMonitor taskMonitor, final QueryService queryService, final StroomPropertyService propertyService) {
-        this.taskMonitor = taskMonitor;
+    public QueryHistoryCleanExecutor(final TaskContext taskContext, final QueryService queryService, final StroomPropertyService propertyService) {
+        this.taskContext = taskContext;
         this.queryService = queryService;
         this.propertyService = propertyService;
     }
@@ -73,6 +73,6 @@ public class QueryHistoryCleanExecutor {
 
     private void info(final String message) {
         LOGGER.debug(message);
-        taskMonitor.info(message);
+        taskContext.info(message);
     }
 }

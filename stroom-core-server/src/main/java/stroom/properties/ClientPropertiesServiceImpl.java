@@ -22,6 +22,9 @@ import stroom.util.BuildInfoUtil;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class ClientPropertiesServiceImpl implements ClientPropertiesService {
     private static final String upDate = DateUtil.createNormalDateTimeString();
 

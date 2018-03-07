@@ -17,7 +17,7 @@
 
 package stroom.xmlschema;
 
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -31,7 +31,9 @@ import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 @Transactional
 class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, FindXMLSchemaCriteria>
         implements XMLSchemaService, ExplorerActionHandler, ImportExportActionHandler {

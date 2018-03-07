@@ -19,7 +19,9 @@ package stroom.search.shard;
 import stroom.search.taskqueue.TaskExecutor;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class IndexShardSearchTaskExecutor extends TaskExecutor {
     @Inject
     IndexShardSearchTaskExecutor() {

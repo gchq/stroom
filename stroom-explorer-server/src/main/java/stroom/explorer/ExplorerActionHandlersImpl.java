@@ -21,13 +21,16 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+@Singleton
 class ExplorerActionHandlers {
     private final StroomBeanStore beanStore;
 
@@ -68,20 +71,18 @@ class ExplorerActionHandlers {
         private final List<DocumentType> documentTypes;
 
         Handlers(final StroomBeanStore beanStore) {
-            final Map<String, ExplorerActionHandler> map = beanStore.getBeansOfType(ExplorerActionHandler.class, false, false);
-            map.forEach((name, handler) -> {
-                if (!name.toLowerCase().contains("cache")) {
-                    final String type = handler.getDocumentType().getType();
+            final Set<ExplorerActionHandler> set = beanStore.getBeansOfType(ExplorerActionHandler.class);
+            set.forEach(handler -> {
+                final String type = handler.getDocumentType().getType();
 
-                    final ExplorerActionHandler existingActionHandler = allHandlers.putIfAbsent(type, handler);
-                    if (existingActionHandler != null) {
-                        throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
-                    }
+                final ExplorerActionHandler existingActionHandler = allHandlers.putIfAbsent(type, handler);
+                if (existingActionHandler != null) {
+                    throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
+                }
 
-                    final DocumentType existingDocumentType = allTypes.putIfAbsent(type, handler.getDocumentType());
-                    if (existingDocumentType != null) {
-                        throw new RuntimeException("A document type already exists for '" + type + "' existing {" + existingDocumentType + "} new {" + handler.getDocumentType() + "}");
-                    }
+                final DocumentType existingDocumentType = allTypes.putIfAbsent(type, handler.getDocumentType());
+                if (existingDocumentType != null) {
+                    throw new RuntimeException("A document type already exists for '" + type + "' existing {" + existingDocumentType + "} new {" + handler.getDocumentType() + "}");
                 }
             });
 

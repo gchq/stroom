@@ -3,8 +3,8 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
+import stroom.task.TaskContext;
 import stroom.util.io.StreamProgressMonitor;
-import stroom.util.shared.Monitor;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,7 +18,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     private static Logger LOGGER = LoggerFactory.getLogger(StroomZipOutputStreamImpl.class);
     private final Path file;
     private final Path lockFile;
-    private final Monitor monitor;
+    private final TaskContext taskContext;
     private final ZipOutputStream zipOutputStream;
     private final StreamProgressMonitor streamProgressMonitor;
     private StroomZipNameSet stroomZipNameSet;
@@ -29,12 +29,12 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         this(file, null);
     }
 
-    public StroomZipOutputStreamImpl(final Path file, final Monitor monitor) throws IOException {
-        this(file, monitor, true);
+    public StroomZipOutputStreamImpl(final Path file, final TaskContext taskContext) throws IOException {
+        this(file, taskContext, true);
     }
 
-    public StroomZipOutputStreamImpl(final Path path, final Monitor monitor, final boolean monitorEntries) throws IOException {
-        this.monitor = monitor;
+    public StroomZipOutputStreamImpl(final Path path, final TaskContext taskContext, final boolean monitorEntries) throws IOException {
+        this.taskContext = taskContext;
 
         Path file = path;
         Path lockFile = path.getParent().resolve(path.getFileName().toString() + LOCK_EXTENSION);
@@ -51,7 +51,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         // Ensure the lock file is created so that the parent dir is not cleaned up before we start writing data.
         this.lockFile = Files.createFile(lockFile);
 
-        streamProgressMonitor = new StreamProgressMonitor(monitor, "Write");
+        streamProgressMonitor = new StreamProgressMonitor(taskContext, "Write");
         zipOutputStream = new ZipOutputStream(new FilterOutputStreamProgressMonitor(Files.newOutputStream(lockFile), streamProgressMonitor));
         if (monitorEntries) {
             stroomZipNameSet = new StroomZipNameSet(false);
@@ -88,8 +88,8 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         }
         entryCount++;
         inEntry = true;
-        if (monitor != null) {
-            if (monitor.isTerminated()) {
+        if (taskContext != null) {
+            if (taskContext.isTerminated()) {
                 throw new IOException("Progress Stopped");
             }
         }

@@ -30,7 +30,7 @@ import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
-import stroom.task.TaskMonitorImpl;
+import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 
@@ -145,6 +145,6 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
     private void createTasks() {
         // Make sure there are no tasks yet.
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
     }
 }

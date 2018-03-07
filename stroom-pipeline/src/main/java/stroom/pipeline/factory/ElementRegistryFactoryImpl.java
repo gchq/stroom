@@ -22,10 +22,12 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@Singleton
 public class ElementRegistryFactoryImpl implements ElementRegistryFactory, ElementFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElementRegistryFactoryImpl.class);
 
@@ -63,11 +65,10 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
         TaskScopeContextHolder.addContext(null);
         try {
             LOGGER.info("Initialising pipeline element registry.");
-            final Set<String> beans = beanStore.getAnnotatedStroomBeans(ConfigurableElement.class);
+            final Set<Element> elements = beanStore.getBeansOfType(Element.class);
             final List<Class<?>> elementClasses = new ArrayList<>();
-            for (final String beanName : beans) {
-                final Object bean = beanStore.getBean(beanName);
-                final Class<?> clazz = bean.getClass();
+            for (final Element element : elements) {
+                final Class<?> clazz = element.getClass();
                 elementClasses.add(clazz);
 
                 if (LOGGER.isDebugEnabled()) {

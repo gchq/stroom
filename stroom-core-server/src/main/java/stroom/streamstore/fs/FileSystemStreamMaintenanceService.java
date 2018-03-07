@@ -21,7 +21,7 @@ import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import org.springframework.util.StringUtils;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.StroomEntityManager;
@@ -42,6 +42,8 @@ import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
+import javax.transaction.Transactional.TxType;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -57,6 +59,7 @@ import java.util.Map.Entry;
 /**
  * API used by the tasks to interface to the stream store under the bonnet.
  */
+@Singleton
 @Transactional
 @Secured(Stream.DELETE_DATA_PERMISSION)
 public class FileSystemStreamMaintenanceService
@@ -92,7 +95,7 @@ public class FileSystemStreamMaintenanceService
 
     @SuppressWarnings("unchecked")
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public BaseResultList<StreamVolume> find(final FindStreamVolumeCriteria criteria) {
         if (!criteria.isValidCriteria()) {
             throw new IllegalArgumentException("Not enough criteria to run");
@@ -179,7 +182,7 @@ public class FileSystemStreamMaintenanceService
 
     @SuppressWarnings("unchecked")
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public FileArrayList findAllStreamFile(final Stream stream) {
         final FileArrayList results = new FileArrayList();
         final HqlBuilder sql = new HqlBuilder();
@@ -203,7 +206,7 @@ public class FileSystemStreamMaintenanceService
     }
 
     @Override
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Transactional
     public ScanVolumePathResult scanVolumePath(final Volume volume, final boolean doDelete, final String repoPath,
                                                final long oldFileAge) {
         final ScanVolumePathResult result = new ScanVolumePathResult();

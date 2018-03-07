@@ -20,7 +20,7 @@ package stroom.jobsystem;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomDatabaseInfo;
@@ -46,12 +46,14 @@ import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Singleton
 @Transactional
 @Secured(Job.MANAGE_JOBS_PERMISSION)
 public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCriteria> implements JobNodeService {
@@ -70,6 +72,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     private final JobService jobService;
     private final StroomBeanStore stroomBeanStore;
     private final StroomDatabaseInfo stroomDatabaseInfo;
+    private final DistributedTaskFactoryBeanRegistry  distributedTaskFactoryBeanRegistry;
 
 
     @Inject
@@ -78,7 +81,8 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                        final NodeCache nodeCache,
                        final JobService jobService,
                        final StroomBeanStore stroomBeanStore,
-                       final StroomDatabaseInfo stroomDatabaseInfo) {
+                       final StroomDatabaseInfo stroomDatabaseInfo,
+                       final DistributedTaskFactoryBeanRegistry  distributedTaskFactoryBeanRegistry) {
         super(entityManager);
         this.entityManager = entityManager;
         this.clusterLockService = clusterLockService;
@@ -86,6 +90,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         this.jobService = jobService;
         this.stroomBeanStore = stroomBeanStore;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
+        this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }
 
     @Override
@@ -197,17 +202,15 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         }
 
         // Distributed Jobs done a different way
-        for (final String beanFactory : stroomBeanStore.getAnnotatedStroomBeans(DistributedTaskFactoryBean.class)) {
-            final DistributedTaskFactoryBean distributedTaskFactoryBean = stroomBeanStore.findAnnotationOnBean(beanFactory,
-                    DistributedTaskFactoryBean.class);
-            validJobNames.add(distributedTaskFactoryBean.jobName());
+        distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
+            validJobNames.add(jobName);
 
             // Add the job node to the DB if it isn't there already.
-            final JobNode existingJobNode = existingJobMap.get(distributedTaskFactoryBean.jobName());
+            final JobNode existingJobNode = existingJobMap.get(jobName);
             if (existingJobNode == null) {
                 // Get the actual job.
                 Job job = new Job();
-                job.setName(distributedTaskFactoryBean.jobName());
+                job.setName(jobName);
                 job.setEnabled(false);
                 job = getOrCreateJob(job);
 
@@ -222,7 +225,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                 save(newJobNode);
                 existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
             }
-        }
+        });
 
         existingJobList.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
                 .forEach(jobNode -> {

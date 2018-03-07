@@ -30,18 +30,18 @@ import javax.persistence.PersistenceContext;
 
 @Configuration
 public class ExplorerSpringConfig {
-    @PersistenceContext
-    private EntityManager entityManager;
+//    @PersistenceContext
+//    private EntityManager entityManager;
 
-    @Bean
-    public DbSession dbSessionJpa() {
-        return new DbSessionJpaImpl(entityManager);
-    }
+//    @Bean
+//    public DbSession dbSessionJpa() {
+//        return new DbSessionJpaImpl(entityManager);
+//    }
 
-    @Bean
-    public ExplorerActionHandlers explorerActionHandlers(final StroomBeanStore beanStore) {
-        return new ExplorerActionHandlers(beanStore);
-    }
+//    @Bean
+//    public ExplorerActionHandlers explorerActionHandlers(final StroomBeanStore beanStore) {
+//        return new ExplorerActionHandlers(beanStore);
+//    }
 
     @Bean
     public ExplorerEventLog explorerEventLog(final StroomEventLoggingService eventLoggingService) {
@@ -99,10 +99,10 @@ public class ExplorerSpringConfig {
         return new ExplorerServiceRenameHandler(explorerService);
     }
 
-    @Bean
-    public ExplorerTreeDao explorerTreeDao(final DbSession session) {
-        return new ExplorerTreeDaoImpl(session);
-    }
+//    @Bean
+//    public ExplorerTreeDao explorerTreeDao(final DbSession session) {
+//        return new ExplorerTreeDaoImpl(session);
+//    }
 
     @Bean
     public ExplorerTreeModel explorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlers explorerActionHandlers) {

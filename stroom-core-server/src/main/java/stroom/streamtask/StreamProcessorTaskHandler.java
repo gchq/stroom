@@ -33,7 +33,7 @@ import stroom.task.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -52,7 +52,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
     private final StreamTaskHelper streamTaskHelper;
     private final StreamStore streamStore;
     private final NodeCache nodeCache;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     @Inject
     StreamProcessorTaskHandler(final StroomBeanStore beanStore,
@@ -61,14 +61,14 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                                final StreamTaskHelper streamTaskHelper,
                                final StreamStore streamStore,
                                final NodeCache nodeCache,
-                               final TaskMonitor taskMonitor) {
+                               final TaskContext taskContext) {
         this.beanStore = beanStore;
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamTaskHelper = streamTaskHelper;
         this.streamStore = streamStore;
         this.nodeCache = nodeCache;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -104,11 +104,11 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                 }
 
                 if (destStreamProcessor.getPipeline() != null) {
-                    taskMonitor.info("Stream {} {} {} {}", stream.getId(),
+                    taskContext.info("Stream {} {} {} {}", stream.getId(),
                             DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                             destStreamProcessor.getTaskType(), destStreamProcessor.getPipeline().getName());
                 } else {
-                    taskMonitor.info("Stream {} {} {}", stream.getId(),
+                    taskContext.info("Stream {} {} {}", stream.getId(),
                             DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                             destStreamProcessor.getTaskType());
                 }

@@ -18,7 +18,7 @@ package stroom.statistics.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.sql.SQLSafe;
 

@@ -17,12 +17,14 @@
 package stroom.pipeline.stepping;
 
 import stroom.pipeline.shared.StepLocation;
+import stroom.util.guice.PipelineScoped;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
+@PipelineScoped
 public class SteppingResponseCache {
     private static final int MAX_CACHE_SIZE = 100;
 

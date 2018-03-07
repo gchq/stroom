@@ -18,7 +18,7 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.EntityServiceHelper;
 import stroom.entity.QueryAppender;
 import stroom.entity.util.FieldMap;
@@ -36,6 +36,7 @@ import stroom.security.shared.UserRef;
 import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.persistence.PersistenceException;
 import javax.persistence.Transient;
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ import java.util.UUID;
 
 @Transactional
 @Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
+@Singleton
 class UserServiceImpl implements UserService {
     private static final String USER_NAME_PATTERN_PROPERTY = "stroom.security.userNamePattern";
     private static final String USER_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_-]{3,}$";
@@ -110,7 +112,7 @@ class UserServiceImpl implements UserService {
      */
     @SuppressWarnings("unchecked")
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public BaseResultList<User> find(final FindUserCriteria criteria) {
         // Build up the HQL
         final HqlBuilder sql = new HqlBuilder();
@@ -259,13 +261,13 @@ class UserServiceImpl implements UserService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public User load(final User entity) throws RuntimeException {
         return entityServiceHelper.load(entity, Collections.emptySet(), queryAppender);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public User load(final User entity, final Set<String> fetchSet) throws RuntimeException {
         return entityServiceHelper.load(entity, fetchSet, queryAppender);

@@ -27,7 +27,7 @@ import javax.inject.Inject;
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.STROOM_STATS)
-class StroomStatsFilter extends AbstractKafkaProducerFilter {
+public class StroomStatsFilter extends AbstractKafkaProducerFilter {
 
     private final TopicNameFactory topicNameFactory;
     private final StroomStatsStoreEntityService stroomStatsStoreEntityService;

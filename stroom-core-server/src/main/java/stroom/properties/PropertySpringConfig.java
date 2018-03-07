@@ -43,10 +43,10 @@ public class PropertySpringConfig {
         return new GlobalPropertyUpdater(globalPropertyService);
     }
 
-    @Bean("propertyConfigurer")
-    public PropertyConfigurer propertyConfigurer(final StroomPropertyService stroomPropertyService) {
-        return new PropertyConfigurer(stroomPropertyService);
-    }
+//    @Bean("propertyConfigurer")
+//    public PropertyConfigurer propertyConfigurer(final StroomPropertyService stroomPropertyService) {
+//        return new PropertyConfigurer(stroomPropertyService);
+//    }
 
     @Bean
     public StroomPropertyService stroomPropertyService() {

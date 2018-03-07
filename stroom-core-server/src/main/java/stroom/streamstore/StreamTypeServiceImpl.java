@@ -17,7 +17,7 @@
 
 package stroom.streamstore;
 
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;

@@ -8,6 +8,7 @@ import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 
+import javax.inject.Inject;
 import java.util.Map;
 
 class SystemExplorerActionHandler implements ExplorerActionHandler {
@@ -16,7 +17,9 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     private final SecurityContext securityContext;
     private final ExplorerTreeDao explorerTreeDao;
 
-    SystemExplorerActionHandler(final SecurityContext securityContext, final ExplorerTreeDao explorerTreeDao) {
+    @Inject
+    SystemExplorerActionHandler(final SecurityContext securityContext,
+                                final ExplorerTreeDao explorerTreeDao) {
         this.securityContext = securityContext;
         this.explorerTreeDao = explorerTreeDao;
     }

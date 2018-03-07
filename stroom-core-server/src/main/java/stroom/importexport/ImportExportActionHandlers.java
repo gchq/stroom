@@ -16,12 +16,19 @@
 
 package stroom.importexport;
 
+import com.google.inject.Binding;
+import com.google.inject.Injector;
+import com.google.inject.multibindings.MultibinderBinding;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+@Singleton
 class ImportExportActionHandlers {
     private final StroomBeanStore beanStore;
 
@@ -44,18 +51,29 @@ class ImportExportActionHandlers {
         return handlers;
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, ImportExportActionHandler> findHandlers() {
         final Map<String, ImportExportActionHandler> handlerMap = new HashMap<>();
-        final Map<String, ImportExportActionHandler> map = beanStore.getBeansOfType(ImportExportActionHandler.class, false, false);
-        map.forEach((name, handler) -> {
-            if (!name.toLowerCase().contains("cache")) {
-                final String type = handler.getDocumentType().getType();
-                final ImportExportActionHandler existing = handlerMap.putIfAbsent(type, handler);
-                if (existing != null) {
-                    throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existing + "} new {" + handler + "}");
-                }
+        final Set<ImportExportActionHandler> set = beanStore.getBeansOfType(ImportExportActionHandler.class);
+        set.forEach(handler -> {
+            final String type = handler.getDocumentType().getType();
+            final ImportExportActionHandler existing = handlerMap.putIfAbsent(type, handler);
+            if (existing != null) {
+                throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existing + "} new {" + handler + "}");
             }
         });
+
+
+//        final Map<String, ImportExportActionHandler> map = beanStore.getBeansOfType(ImportExportActionHandler.class, false, false);
+//        map.forEach((name, handler) -> {
+//            if (!name.toLowerCase().contains("cache")) {
+//                final String type = handler.getDocumentType().getType();
+//                final ImportExportActionHandler existing = handlerMap.putIfAbsent(type, handler);
+//                if (existing != null) {
+//                    throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existing + "} new {" + handler + "}");
+//                }
+//            }
+//        });
         return handlerMap;
     }
 }

@@ -17,7 +17,8 @@
 
 package stroom.policy;
 
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.ScopeAnnotation;
+import com.google.inject.persist.Transactional;
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -28,8 +29,10 @@ import stroom.ruleset.shared.Policy;
 import stroom.security.Secured;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 
+@Singleton
 @Transactional
 @Secured(Policy.MANAGE_POLICIES_PERMISSION)
 public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicyCriteria>

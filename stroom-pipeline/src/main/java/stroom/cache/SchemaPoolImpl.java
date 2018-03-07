@@ -28,7 +28,9 @@ import stroom.xmlschema.XMLSchemaCache;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 @Insecure
 @EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
 class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>

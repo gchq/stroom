@@ -28,10 +28,12 @@ import stroom.ruleset.shared.RuleSet;
 import stroom.util.shared.Message;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Singleton
 public class RuleSetServiceImpl implements RuleSetService {
     private final Store<RuleSet> store;
 

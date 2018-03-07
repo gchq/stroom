@@ -49,10 +49,10 @@ class StroomBeanLifeCycleTestConfiguration {
         return new StroomBeanLifeCycle(stroomBeanStore);
     }
 
-    @Bean
-    StroomBeanStore stroomBeanStore(final ApplicationContext applicationContext, final BeanFactory beanFactory) {
-        return new StroomBeanStore(applicationContext, beanFactory);
-    }
+//    @Bean
+////    StroomBeanStore stroomBeanStore(final ApplicationContext applicationContext, final BeanFactory beanFactory) {
+////        return new StroomBeanStore(applicationContext, beanFactory);
+////    }
 
     @Bean
     public StroomBeanLifeCycleReloadableContextBeanProcessor beanProcessor(StroomBeanLifeCycle stroomBeanLifeCycle) {

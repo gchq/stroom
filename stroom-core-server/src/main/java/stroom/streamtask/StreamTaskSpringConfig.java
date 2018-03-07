@@ -16,7 +16,6 @@
 
 package stroom.streamtask;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -38,7 +37,7 @@ import stroom.task.ExecutorProvider;
 import stroom.task.TaskManager;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -62,8 +61,8 @@ public class StreamTaskSpringConfig {
     @Bean
     @Scope(value = StroomScope.TASK)
     public CreateStreamTasksTaskHandler createStreamTasksTaskHandler(final StreamTaskCreator streamTaskCreator,
-                                                                     final TaskMonitor taskMonitor) {
-        return new CreateStreamTasksTaskHandler(streamTaskCreator, taskMonitor);
+                                                                     final TaskContext taskContext) {
+        return new CreateStreamTasksTaskHandler(streamTaskCreator, taskContext);
     }
 
     @Bean
@@ -77,24 +76,19 @@ public class StreamTaskSpringConfig {
     @Bean
     @Scope(value = StroomScope.PROTOTYPE)
     public ProxyAggregationExecutor proxyAggregationExecutor(final ProxyFileProcessorImpl proxyFileProcessor,
-                                                             final TaskMonitor taskMonitor,
+                                                             final TaskContext taskContext,
                                                              final ExecutorProvider executorProvider,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}") final String threadCount,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.maxAggregationScan')}") final String maxFileScan,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
-        return new ProxyAggregationExecutor(proxyFileProcessor, taskMonitor, executorProvider, proxyDir, threadCount, maxAggregation, maxFileScan, maxStreamSize);
+                                                             final StroomPropertyService propertyService) {
+        return new ProxyAggregationExecutor(proxyFileProcessor, taskContext, executorProvider, propertyService);
     }
 
     @Bean
     @Scope(StroomScope.PROTOTYPE)
     public ProxyFileProcessorImpl proxyFileProcessorImpl(final StreamStore streamStore,
-                                                 @Named("cachedFeedService") final FeedService feedService,
-                                                 final MetaDataStatistic metaDataStatistic,
-                                                 @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
-                                                 @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
-        return new ProxyFileProcessorImpl(streamStore, feedService, metaDataStatistic, maxAggregation, maxStreamSize);
+                                                         @Named("cachedFeedService") final FeedService feedService,
+                                                         final MetaDataStatistic metaDataStatistic,
+                                                         final StroomPropertyService propertyService) {
+        return new ProxyFileProcessorImpl(streamStore, feedService, metaDataStatistic, propertyService);
     }
 
     @Bean
@@ -145,8 +139,8 @@ public class StreamTaskSpringConfig {
                                                                  final StreamTaskHelper streamTaskHelper,
                                                                  final StreamStore streamStore,
                                                                  final NodeCache nodeCache,
-                                                                 final TaskMonitor taskMonitor) {
-        return new StreamProcessorTaskHandler(beanStore, streamProcessorService, streamProcessorFilterService, streamTaskHelper, streamStore, nodeCache, taskMonitor);
+                                                                 final TaskContext taskContext) {
+        return new StreamProcessorTaskHandler(beanStore, streamProcessorService, streamProcessorFilterService, streamTaskHelper, streamStore, nodeCache, taskContext);
     }
 
     @Bean("streamProcessorTaskTester")
@@ -185,10 +179,10 @@ public class StreamTaskSpringConfig {
     public StreamTaskDeleteExecutor streamTaskDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                                                              final ClusterLockService clusterLockService,
                                                              final StroomPropertyService propertyService,
-                                                             final TaskMonitor taskMonitor,
+                                                             final TaskContext taskContext,
                                                              final StreamTaskCreatorImpl streamTaskCreator,
                                                              final StreamProcessorFilterService streamProcessorFilterService) {
-        return new StreamTaskDeleteExecutor(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor, streamTaskCreator, streamProcessorFilterService);
+        return new StreamTaskDeleteExecutor(batchIdTransactionHelper, clusterLockService, propertyService, taskContext, streamTaskCreator, streamProcessorFilterService);
     }
 
     @Bean

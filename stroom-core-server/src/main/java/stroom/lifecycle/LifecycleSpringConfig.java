@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.ScheduledTaskExecutor;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.task.TaskManager;
 import stroom.util.spring.StroomBeanLifeCycle;
@@ -35,9 +36,8 @@ public class LifecycleSpringConfig {
                                              final StroomEntityManager entityManager,
                                              final ScheduledTaskExecutor scheduledTaskExecutor,
                                              final SecurityContext securityContext,
-                                             @Value("#{propertyConfigurer.getProperty('stroom.lifecycle.enabled')}") final String enabled,
-                                             @Value("#{propertyConfigurer.getProperty('stroom.lifecycle.executionInterval')}") final String executionIntervalString) {
-        return new LifecycleServiceImpl(taskManager, stroomBeanLifeCycle, entityManager, scheduledTaskExecutor, securityContext, enabled, executionIntervalString);
+                                                 final StroomPropertyService propertyService) {
+        return new LifecycleServiceImpl(taskManager, stroomBeanLifeCycle, entityManager, scheduledTaskExecutor, securityContext, propertyService);
     }
 
     @Bean

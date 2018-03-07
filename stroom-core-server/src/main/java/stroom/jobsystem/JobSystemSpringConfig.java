@@ -43,14 +43,14 @@ public class JobSystemSpringConfig {
         return new ClusterLockHandler(dispatchHelper);
     }
 
-    @Bean
-    public ClusterLockService clusterLockService(final StroomEntityManager entityManager,
-                                                 final StroomDatabaseInfo stroomDatabaseInfo,
-                                                 final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper,
-                                                 final TaskManager taskManager,
-                                                 final NodeCache nodeCache) {
-        return new ClusterLockServiceImpl(entityManager, stroomDatabaseInfo, clusterLockServiceTransactionHelper, taskManager, nodeCache);
-    }
+//    @Bean
+//    public ClusterLockService clusterLockService(final StroomEntityManager entityManager,
+//                                                 final StroomDatabaseInfo stroomDatabaseInfo,
+//                                                 final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper,
+//                                                 final TaskManager taskManager,
+//                                                 final NodeCache nodeCache) {
+//        return new ClusterLockServiceImpl(entityManager, stroomDatabaseInfo, clusterLockServiceTransactionHelper, taskManager, nodeCache);
+//    }
 
     @Bean
     public ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper(final StroomEntityManager entityManager) {
@@ -103,27 +103,27 @@ return new DistributedTaskRequestClusterHandler(distributedTaskFactoryBeanRegist
         return new JobNodeInfoClusterHandler(jobNodeTrackerCache);
     }
 
-    @Bean
-    public JobNodeService jobNodeService(final StroomEntityManager entityManager,
-                                         final ClusterLockService clusterLockService,
-                                         final NodeCache nodeCache,
-                                         final JobService jobService,
-                                         final StroomBeanStore stroomBeanStore,
-                                         final StroomDatabaseInfo stroomDatabaseInfo) {
-        return new JobNodeServiceImpl(entityManager, clusterLockService, nodeCache, jobService, stroomBeanStore, stroomDatabaseInfo);
-    }
+//    @Bean
+//    public JobNodeService jobNodeService(final StroomEntityManager entityManager,
+//                                         final ClusterLockService clusterLockService,
+//                                         final NodeCache nodeCache,
+//                                         final JobService jobService,
+//                                         final StroomBeanStore stroomBeanStore,
+//                                         final StroomDatabaseInfo stroomDatabaseInfo) {
+//        return new JobNodeServiceImpl(entityManager, clusterLockService, nodeCache, jobService, stroomBeanStore, stroomDatabaseInfo);
+//    }
 
     @Bean
     public JobNodeTrackerCache jobNodeTrackerCache(final NodeCache nodeCache,
                                                    final JobNodeService jobNodeService) {
         return new JobNodeTrackerCache(nodeCache, jobNodeService);
     }
-
-    @Bean
-    public JobService jobService(final StroomEntityManager entityManager,
-                                 final StroomBeanStore stroomBeanStore) {
-        return new JobServiceImpl(entityManager, stroomBeanStore);
-    }
+//
+//    @Bean
+//    public JobService jobService(final StroomEntityManager entityManager,
+//                                 final StroomBeanStore stroomBeanStore) {
+//        return new JobServiceImpl(entityManager, stroomBeanStore);
+//    }
 
     @Bean
     public ScheduleService scheduleService() {

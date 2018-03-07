@@ -80,7 +80,7 @@ dependencies {
     compile libs.guice3
     compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.jetty_servlet
+        compile libs.jetty_servlet
     compile libs.spring_beans
     compile libs.spring_context
     permitUnusedDeclared libs.spring_aspects
@@ -101,7 +101,7 @@ dependencies {
     compile libs.guava
 //    compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.javax_servlet_api
+        compile libs.javax_servlet_api
 //    compile libs.javax_validation
     compile libs.javax_servlet_api
     compile libs.jetty_server

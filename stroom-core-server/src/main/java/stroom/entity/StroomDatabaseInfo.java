@@ -17,6 +17,7 @@
 package stroom.entity;
 
 import org.springframework.beans.factory.annotation.Value;
+import stroom.properties.StroomPropertyService;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
@@ -25,8 +26,8 @@ public class StroomDatabaseInfo {
     private String driverClassName;
 
     @Inject
-    StroomDatabaseInfo(@Value("#{propertyConfigurer.getProperty('stroom.jdbcDriverClassName')}") final String driverClassName) {
-        this.driverClassName = driverClassName;
+    StroomDatabaseInfo(final StroomPropertyService propertyService) {
+        this.driverClassName = propertyService.getProperty("stroom.jdbcDriverClassName");
     }
 
     public boolean isMysql() {

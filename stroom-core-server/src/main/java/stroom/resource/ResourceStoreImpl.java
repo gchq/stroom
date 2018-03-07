@@ -22,6 +22,7 @@ import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
 
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -34,6 +35,7 @@ import java.util.Set;
  * Simple Store that gives you 1 hour to use your temp file and then it deletes
  * it.
  */
+@Singleton
 public class ResourceStoreImpl implements ResourceStore {
     private Set<ResourceKey> currentFiles = new HashSet<>();
     private Set<ResourceKey> oldFiles = new HashSet<>();

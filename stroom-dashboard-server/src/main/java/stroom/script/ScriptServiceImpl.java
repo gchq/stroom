@@ -19,7 +19,7 @@ package stroom.script;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportActionHandler;
@@ -36,6 +36,7 @@ import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -43,6 +44,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Singleton
 @Transactional
 public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScriptCriteria> implements ScriptService, ExplorerActionHandler, ImportExportActionHandler {
     public static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);

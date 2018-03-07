@@ -38,7 +38,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -76,7 +76,7 @@ public class DataRetentionExecutor {
     private static final String LOCK_NAME = "DataRetentionExecutor";
     private static final String STREAM_DELETE_BATCH_SIZE_PROPERTY = "stroom.stream.deleteBatchSize";
 
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
     private final DataRetentionService dataRetentionService;
     private final StroomPropertyService propertyService;
@@ -85,13 +85,13 @@ public class DataRetentionExecutor {
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
-    DataRetentionExecutor(final TaskMonitor taskMonitor,
+    DataRetentionExecutor(final TaskContext taskContext,
                           final ClusterLockService clusterLockService,
                           final DataRetentionService dataRetentionService,
                           final StroomPropertyService propertyService,
                           final DictionaryStore dictionaryStore,
                           final DataSource dataSource) {
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
         this.dataRetentionService = dataRetentionService;
         this.propertyService = propertyService;
@@ -169,7 +169,7 @@ public class DataRetentionExecutor {
                     // Process the different data ages separately as they can consider different sets of streams.
                     ages.forEach(age -> {
                         // Skip if we have terminated processing.
-                        if (!taskMonitor.isTerminated()) {
+                        if (!taskContext.isTerminated()) {
                             final boolean success = processAge(connection, age, timeElapsedSinceLastRun, rules, batchSize, ageMap);
                             if (!success) {
                                 allSuccessful.set(false);
@@ -178,7 +178,7 @@ public class DataRetentionExecutor {
                     });
 
                     // If we finished running then save the tracker for use next time.
-                    if (!taskMonitor.isTerminated() && allSuccessful.get()) {
+                    if (!taskContext.isTerminated() && allSuccessful.get()) {
                         tracker.save();
                     }
                 } catch (final SQLException e) {
@@ -234,13 +234,13 @@ public class DataRetentionExecutor {
                         boolean more = true;
                         final Progress progress = new Progress(ageRange, rowCount);
                         Range<Long> streamIdRange = new Range<>(0L, null);
-                        while (more && !taskMonitor.isTerminated()) {
+                        while (more && !taskContext.isTerminated()) {
                             if (progress.getStreamId() != null) {
                                 // Process from the next stream id onwards.
                                 streamIdRange = new Range<>(progress.getStreamId() + 1, null);
                             }
 
-                            more = finder.findMatches(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskMonitor, progress, streamIdDeleteList);
+                            more = finder.findMatches(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskContext, progress, streamIdDeleteList);
 
                             // Delete a batch of streams.
                             while (streamIdDeleteList.size() >= batchSize) {
@@ -275,7 +275,7 @@ public class DataRetentionExecutor {
 
     private void info(final String info) {
         LOGGER.info(info);
-        taskMonitor.info(info);
+        taskContext.info(info);
     }
 
     @XmlAccessorType(XmlAccessType.FIELD)

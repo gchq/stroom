@@ -16,7 +16,7 @@
 
 package stroom.index;
 
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -29,7 +29,9 @@ import stroom.index.shared.Index;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 @Transactional
 public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndexCriteria> implements IndexService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject

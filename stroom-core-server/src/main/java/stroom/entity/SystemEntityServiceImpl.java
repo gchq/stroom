@@ -17,7 +17,7 @@
 package stroom.entity;
 
 import event.logging.BaseAdvancedQueryItem;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
@@ -56,34 +56,34 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
 //    }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public E load(final E entity) throws RuntimeException {
         return entityServiceHelper.load(entity, Collections.emptySet(), queryAppender);
     }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public E load(final E entity, final Set<String> fetchSet) throws RuntimeException {
         return entityServiceHelper.load(entity, fetchSet, queryAppender);
     }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public E loadById(final long id) throws RuntimeException {
         return entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender);
     }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
         return entityServiceHelper.loadById(id, fetchSet, queryAppender);
     }
 
-//    @Transactional(readOnly = true)
+//    @Transactional
 //    @Override
 //    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
 //        return entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender);

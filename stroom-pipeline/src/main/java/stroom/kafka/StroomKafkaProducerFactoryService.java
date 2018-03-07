@@ -10,6 +10,7 @@ import stroom.properties.StroomPropertyService;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ServiceLoader;
 
 /**
@@ -21,6 +22,7 @@ import java.util.ServiceLoader;
  * It uses {@link ServiceLoader} to iterate through all {@link StroomKafkaProducerFactory} and find one
  * that can create a {@link StroomKafkaProducer} for the requested version.
  */
+@Singleton
 public class StroomKafkaProducerFactoryService extends StroomAbstractConnectorFactoryService<StroomKafkaProducer, StroomKafkaProducerFactory> {
 
     // Can register server/version pairs for specific roles within the system

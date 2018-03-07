@@ -18,7 +18,7 @@ package stroom.statistics.sql.datasource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.util.HqlBuilder;
@@ -31,7 +31,9 @@ import stroom.security.SecurityContext;
 import stroom.statistics.shared.StatisticStoreEntity;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 @Transactional
 class StatisticStoreEntityServiceImpl
         extends DocumentEntityServiceImpl<StatisticStoreEntity, FindStatisticsEntityCriteria>

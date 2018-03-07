@@ -20,6 +20,7 @@ import stroom.entity.shared.Clearable;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
+import java.util.Set;
 
 /**
  * Version of the test control used with the mocks.
@@ -38,7 +39,8 @@ public class MockCommonTestControl implements CommonTestControl {
 
     @Override
     public void teardown() {
-        beanStore.getBeansOfType(Clearable.class, false, false).values().forEach(Clearable::clear);
+        final Set<Clearable> set = beanStore.getBeansOfType(Clearable.class);
+        set.forEach(Clearable::clear);
     }
 
     @Override

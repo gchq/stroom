@@ -18,9 +18,11 @@ package stroom.pipeline.errorhandler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.guice.PipelineScoped;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
+@PipelineScoped
 public class ErrorReceiverProxy implements ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorReceiverProxy.class);
 

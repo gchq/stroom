@@ -5,6 +5,7 @@ import stroom.docstore.RWLockFactory;
 import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,7 +17,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@Singleton
 public class FSPersistence implements Persistence {
     private static final String FILE_EXTENSION = ".json";
 

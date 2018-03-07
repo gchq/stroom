@@ -30,12 +30,14 @@ import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
+@Singleton
 public class JobNodeTrackerCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackerCache.class);
     // Default refresh interval is 10 seconds.

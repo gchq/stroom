@@ -36,7 +36,9 @@ import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.xmlfragment.XMLFragmentParserFactory;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 @Insecure
 class ParserFactoryPoolImpl
         extends AbstractEntityPool<TextConverter, StoredParserFactory>

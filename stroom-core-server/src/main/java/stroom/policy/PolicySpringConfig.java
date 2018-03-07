@@ -24,7 +24,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.ClusterLockService;
 import stroom.properties.StroomPropertyService;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.sql.DataSource;
 
@@ -32,13 +32,13 @@ import javax.sql.DataSource;
 public class PolicySpringConfig {
     @Bean
     @Scope(value = StroomScope.TASK)
-    public DataRetentionExecutor dataRetentionExecutor(final TaskMonitor taskMonitor,
+    public DataRetentionExecutor dataRetentionExecutor(final TaskContext taskContext,
                                                        final ClusterLockService clusterLockService,
                                                        final DataRetentionService dataRetentionService,
                                                        final StroomPropertyService propertyService,
                                                        final DictionaryStore dictionaryStore,
                                                        final DataSource dataSource) {
-        return new DataRetentionExecutor(taskMonitor, clusterLockService, dataRetentionService, propertyService, dictionaryStore, dataSource);
+        return new DataRetentionExecutor(taskContext, clusterLockService, dataRetentionService, propertyService, dictionaryStore, dataSource);
     }
 
     @Bean

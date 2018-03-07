@@ -36,7 +36,7 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -86,7 +86,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         return rowCount;
     }
 
-    public boolean findMatches(final Period ageRange, final Range<Long> streamIdRange, final long batchSize, final ActiveRules activeRules, final Map<DataRetentionRule, Optional<Long>> ageMap, final TaskMonitor taskMonitor, final Progress progress, final List<Long> matches) throws SQLException {
+    public boolean findMatches(final Period ageRange, final Range<Long> streamIdRange, final long batchSize, final ActiveRules activeRules, final Map<DataRetentionRule, Optional<Long>> ageMap, final TaskContext taskContext, final Progress progress, final List<Long> matches) throws SQLException {
         boolean more = false;
 
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), dictionaryStore);
@@ -110,7 +110,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         }
 
         try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-            while (resultSet.next() && !taskMonitor.isTerminated()) {
+            while (resultSet.next() && !taskContext.isTerminated()) {
                 final Map<String, Object> attributeMap = createAttributeMap(resultSet, activeRules.getFieldSet());
                 final Long streamId = (Long) attributeMap.get(StreamDataSource.STREAM_ID);
                 final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATE_TIME);
@@ -118,7 +118,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
                     more = true;
                     progress.nextStream(streamId, createMs);
                     final String streamInfo = progress.toString();
-                    info(taskMonitor, "Examining stream " + streamInfo);
+                    info(taskContext, "Examining stream " + streamInfo);
 
                     final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules.getActiveRules());
                     if (matchingRule != null) {
@@ -138,9 +138,9 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         return more;
     }
 
-    private void info(final TaskMonitor taskMonitor, final String message) {
+    private void info(final TaskContext taskContext, final String message) {
         LOGGER.debug(message);
-        taskMonitor.info(message);
+        taskContext.info(message);
     }
 
     private SqlBuilder getSelectSql(final Period ageRange, final Range<Long> streamIdRange, final Set<String> fieldSet, final boolean count, final Long limit) {

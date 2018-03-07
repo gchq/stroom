@@ -20,7 +20,7 @@ package stroom.index;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.SystemEntityServiceImpl;
@@ -41,9 +41,11 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.Set;
 
+@Singleton
 @Insecure
 @Transactional
 public class IndexShardServiceImpl

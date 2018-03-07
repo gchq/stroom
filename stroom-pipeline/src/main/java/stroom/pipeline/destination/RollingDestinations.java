@@ -24,7 +24,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -46,9 +46,9 @@ public class RollingDestinations {
         this.stroomPropertyService = stroomPropertyService;
     }
 
-    public RollingDestination borrow(final TaskMonitor taskMonitor, final Object key,
+    public RollingDestination borrow(final TaskContext taskContext, final Object key,
                                      final RollingDestinationFactory destinationFactory) throws IOException {
-        if (taskMonitor != null && taskMonitor.isTerminated()) {
+        if (taskContext != null && taskContext.isTerminated()) {
             throw new TerminatedException();
         }
 

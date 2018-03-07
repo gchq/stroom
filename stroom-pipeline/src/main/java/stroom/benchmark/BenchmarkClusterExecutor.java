@@ -19,7 +19,6 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
 import stroom.feed.FeedService;
@@ -57,17 +56,17 @@ import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskManager;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -98,13 +97,11 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private final StreamStore streamStore;
     private final JobManager jobManager;
     private final NodeService nodeService;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final TaskManager taskManager;
     private final Set<Node> nodeSet = new HashSet<>();
     private final Statistics statistics;
-    private final int streamCount;
-    private final int recordCount;
-    private final int concurrentWriters;
+    private final BenchmarkClusterConfig benchmarkClusterConfig;
 
     private final ReentrantLock rangeLock = new ReentrantLock();
     private volatile Long minStreamId = null;
@@ -122,12 +119,10 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final StreamStore streamStore,
                              final JobManager jobManager,
                              final NodeService nodeService,
-                             final TaskMonitor taskMonitor,
+                             final TaskContext taskContext,
                              final TaskManager taskManager,
                              final Statistics statistics,
-                             @Value("#{propertyConfigurer.getProperty('stroom.benchmark.streamCount')}") final int streamCount,
-                             @Value("#{propertyConfigurer.getProperty('stroom.benchmark.recordCount')}") final int recordCount,
-                             @Value("#{propertyConfigurer.getProperty('stroom.benchmark.concurrentWriters')}") final int concurrentWriters) {
+                             final BenchmarkClusterConfig benchmarkClusterConfig) {
         this.feedService = feedService;
         this.pipelineService = pipelineService;
         this.streamProcessorFilterService = streamProcessorFilterService;
@@ -137,12 +132,10 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         this.streamStore = streamStore;
         this.jobManager = jobManager;
         this.nodeService = nodeService;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.taskManager = taskManager;
         this.statistics = statistics;
-        this.streamCount = streamCount;
-        this.recordCount = recordCount;
-        this.concurrentWriters = concurrentWriters;
+        this.benchmarkClusterConfig = benchmarkClusterConfig;
     }
 
     @StroomSimpleCronSchedule(cron = "* * *")
@@ -155,9 +148,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         // possible across the cluster. If execution of no tasks are possible
         // then we should skip this benchmark as we won't be able to process
         // anything.
-        LOGGER.info("Using benchmark stream count of {}", streamCount);
-        LOGGER.info("Using benchmark record count of {}", recordCount);
-        LOGGER.info("Using benchmark concurrent writers of {}", concurrentWriters);
+        LOGGER.info("Using benchmark stream count of {}", benchmarkClusterConfig.getStreamCount());
+        LOGGER.info("Using benchmark record count of {}", benchmarkClusterConfig.getRecordCount());
+        LOGGER.info("Using benchmark concurrent writers of {}", benchmarkClusterConfig.getConcurrentWriters());
 
         nodeSet.addAll(nodeService.find(new FindNodeCriteria()));
 
@@ -228,15 +221,15 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
                 // Create some data.
                 LOGGER.info("Creating data");
-                final String referenceData = createReferenceData(recordCount);
-                final String eventData = createEventData(recordCount);
+                final String referenceData = createReferenceData(benchmarkClusterConfig.getRecordCount());
+                final String eventData = createEventData(benchmarkClusterConfig.getRecordCount());
 
-                final Period refPeriod = writeData(referenceFeed, StreamType.RAW_REFERENCE, referenceData, streamCount);
+                final Period refPeriod = writeData(referenceFeed, StreamType.RAW_REFERENCE, referenceData, benchmarkClusterConfig.getStreamCount());
 
                 processData(referenceFeed, StreamType.RAW_REFERENCE, StreamType.REFERENCE, referenceProcessor,
                         refPeriod);
 
-                final Period evtPeriod = writeData(eventFeed, StreamType.RAW_EVENTS, eventData, streamCount);
+                final Period evtPeriod = writeData(eventFeed, StreamType.RAW_EVENTS, eventData, benchmarkClusterConfig.getStreamCount());
 
                 processData(eventFeed, StreamType.RAW_EVENTS, StreamType.EVENTS, eventsProcessor, evtPeriod);
 
@@ -290,7 +283,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
             LOGGER.info("Writing data");
             final AsyncTaskHelper<VoidResult> asyncTaskHelper = new AsyncTaskHelper<>(
-                    "Writing test streams\n", taskMonitor, taskManager, concurrentWriters);
+                    "Writing test streams\n", taskContext, taskManager, benchmarkClusterConfig.getConcurrentWriters());
             for (int i = 1; i <= streamCount && !isTerminated(); i++) {
                 final int count = i;
                 final GenericServerTask writerTask = GenericServerTask.create("WriteBenchmarkData", "Writing benchmark data");
@@ -378,9 +371,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     completedTaskCount = streams.size();
                 }
 
-                info("Completed {}/{} translation tasks", completedTaskCount, streamCount);
+                info("Completed {}/{} translation tasks", completedTaskCount, benchmarkClusterConfig.getStreamCount());
 
-                if (completedTaskCount >= streamCount) {
+                if (completedTaskCount >= benchmarkClusterConfig.getStreamCount()) {
                     complete = true;
                 }
                 if (System.currentTimeMillis() > timeoutTime) {

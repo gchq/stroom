@@ -9,4 +9,4 @@ dependencies {
         exclude(module: 'gwtp-crawler-service')
     }
     compile libs.javax_inject
-}
+    }

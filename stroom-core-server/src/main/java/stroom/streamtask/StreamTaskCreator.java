@@ -18,7 +18,7 @@ package stroom.streamtask;
 
 import stroom.node.shared.Node;
 import stroom.streamtask.shared.StreamTask;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public interface StreamTaskCreator {
 
     void abandonStreamTasks(Node node, List<StreamTask> tasks);
 
-    void createTasks(final TaskMonitor taskMonitor);
+    void createTasks(final TaskContext taskContext);
 
     int getStreamTaskQueueSize();
 

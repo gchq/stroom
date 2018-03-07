@@ -38,10 +38,10 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
     private String name;
     private String tags;
 
-    ExplorerTreeNode() {
+    public ExplorerTreeNode() {
     }
 
-    ExplorerTreeNode(final String type, final String uuid, final String name, final String tags) {
+    public ExplorerTreeNode(final String type, final String uuid, final String name, final String tags) {
         this.type = type;
         this.uuid = uuid;
         this.name = name;
@@ -61,7 +61,7 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", columnDefinition = "INT")
     @XmlTransient
     public Long getId() {

@@ -16,6 +16,10 @@
 
 package stroom.task;
 
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+import com.google.inject.util.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.shared.SharedObject;
@@ -23,80 +27,134 @@ import stroom.util.shared.Task;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class TaskHandlerBeanRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerBeanRegistry.class);
+    private volatile Map<Class<?>, Class<TaskHandler>> taskHandlerMap;
 
     private final StroomBeanStore beanStore;
-    private volatile Handlers handlers;
 
     @Inject
     TaskHandlerBeanRegistry(final StroomBeanStore beanStore) {
         this.beanStore = beanStore;
     }
 
+    //    @Inject
+//    TaskHandlerBeanRegistry(final Collection<Provider<TaskHandler>> taskHandlerProviders) {
+//        taskHandlerProviders.forEach(taskHandlerProvider -> {
+//            final TaskHandler taskHandler = taskHandlerProvider.get();
+//            if (taskHandler != null) {
+//                final TaskHandlerBean taskHandlerBean = taskHandler.getClass().getAnnotation(TaskHandlerBean.class);
+//                if (taskHandlerBean != null) {
+//                    final Class<?> task = taskHandlerBean.task();
+//                    taskHandlerMap.put(task, taskHandlerProvider);
+//                }
+//            }
+//        });
+//    }
+
     @SuppressWarnings("unchecked")
     public <R, H extends TaskHandler<Task<R>, R>> H findHandler(final Task<R> task) {
-        final String handlerName = getHandlers().getHandlerMap().get(task.getClass());
+        if (taskHandlerMap == null) {
+            synchronized (this) {
+                if (taskHandlerMap == null) {
+                    final Map<Class<?>, Class<TaskHandler>> map = new HashMap<>();
 
-        if (handlerName == null) {
+                    final Set<TaskHandler> taskHandlers = beanStore.getBeansOfType(TaskHandler.class);
+                    taskHandlers.forEach(taskHandler -> {
+                        final Class<TaskHandler> taskHandlerClazz = (Class<TaskHandler>) taskHandler.getClass();
+                        final TaskHandlerBean taskHandlerBean = taskHandlerClazz.getAnnotation(TaskHandlerBean.class);
+                        if (taskHandlerBean != null) {
+                            final Class<?> taskClazz = taskHandlerBean.task();
+                            map.put(taskClazz, taskHandlerClazz);
+                        }
+                    });
+
+                    taskHandlerMap = Collections.unmodifiableMap(map);
+                }
+            }
+        }
+
+        final Class<TaskHandler> taskHandlerClazz = taskHandlerMap.get(task.getClass());
+        if (taskHandlerClazz == null) {
             throw new RuntimeException("No handler for " + task.getClass().getName());
         }
 
-        return (H) beanStore.getBean(handlerName);
+        return (H) beanStore.getBean(taskHandlerClazz);
     }
 
-    public TaskHandlerBean getTaskHandlerBean(final Task<? extends SharedObject> task) {
-        return getHandlers().getTaskHandlerMap().get(task.getClass());
-    }
-
-    private Handlers getHandlers() {
-        if (handlers == null) {
-            synchronized (this) {
-                if (handlers == null) {
-                    handlers = new Handlers(beanStore);
-                }
-            }
-        }
-        return handlers;
-    }
-
-    private static class Handlers {
-        private final Map<Class<?>, String> handlerMap = new HashMap<>();
-        private final Map<Class<?>, TaskHandlerBean> taskHandlerMap = new HashMap<>();
-
-        Handlers(final StroomBeanStore beanStore) {
-            final Set<String> beanList = beanStore.getAnnotatedStroomBeans(TaskHandlerBean.class);
-
-            for (final String handlerName : beanList) {
-                final TaskHandlerBean handlerBean = beanStore.findAnnotationOnBean(handlerName, TaskHandlerBean.class);
-                final Class<?> taskClass = handlerBean.task();
-
-                final Object previousHandler = handlerMap.put(taskClass, handlerName);
-
-                taskHandlerMap.put(taskClass, handlerBean);
-
-                // Check that there isn't a handler already associated
-                // with the task.
-                if (previousHandler != null) {
-                    throw new RuntimeException("TaskHandler \"" + previousHandler + "\" has already been registered for \""
-                            + taskClass + "\"");
-                }
-
-                LOGGER.debug("postProcessAfterInitialization() - registering {} for action {}", handlerName,
-                        taskClass.getSimpleName());
-            }
-        }
-
-        Map<Class<?>, String> getHandlerMap() {
-            return handlerMap;
-        }
-
-        Map<Class<?>, TaskHandlerBean> getTaskHandlerMap() {
-            return taskHandlerMap;
-        }
-    }
+//    private <T> Collection<Provider<T>> getProviders(Class<T> type) {
+//        final TypeLiteral<Collection<Provider<T>>> lit = (TypeLiteral<Collection<Provider<T>>>)TypeLiteral.get(Types.collectionOf(type));
+//        final Key<Collection<Provider<T>>> key = Key.get(lit);
+//        return this.injector.getInstance(key);
+//    }
+//
+//    private <T> Set<T> getBindings(Class<T> type) {
+//        final TypeLiteral<Set<T>> lit = setOf(type);
+//        final Key<Set<T>> key = Key.get(lit);
+//        return this.injector.getInstance(key);
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    private static <T> TypeLiteral<Set<T>> setOf(Class<T> type) {
+//        return (TypeLiteral<Set<T>>)TypeLiteral.get(Types.setOf(type));
+//    }
+//
+//
+//    public TaskHandlerBean getTaskHandlerBean(final Task<? extends SharedObject> task) {
+//        return getHandlers().getTaskHandlerMap().get(task.getClass());
+//    }
+//
+//    private Handlers getHandlers() {
+//        if (handlers == null) {
+//            synchronized (this) {
+//                if (handlers == null) {
+//                    handlers = new Handlers(beanStore);
+//                }
+//            }
+//        }
+//        return handlers;
+//    }
+//
+//    private static class Handlers {
+//        private final Map<Class<?>, String> handlerMap = new HashMap<>();
+//        private final Map<Class<?>, TaskHandlerBean> taskHandlerMap = new HashMap<>();
+//
+//        Handlers(final StroomBeanStore beanStore) {
+//            final Set<String> beanList = beanStore.getAnnotatedStroomBeans(TaskHandlerBean.class);
+//
+//            for (final String handlerName : beanList) {
+//                final TaskHandlerBean handlerBean = beanStore.findAnnotationOnBean(handlerName, TaskHandlerBean.class);
+//                final Class<?> taskClass = handlerBean.task();
+//
+//                final Object previousHandler = handlerMap.put(taskClass, handlerName);
+//
+//                taskHandlerMap.put(taskClass, handlerBean);
+//
+//                // Check that there isn't a handler already associated
+//                // with the task.
+//                if (previousHandler != null) {
+//                    throw new RuntimeException("TaskHandler \"" + previousHandler + "\" has already been registered for \""
+//                            + taskClass + "\"");
+//                }
+//
+//                LOGGER.debug("postProcessAfterInitialization() - registering {} for action {}", handlerName,
+//                        taskClass.getSimpleName());
+//            }
+//        }
+//
+//        Map<Class<?>, String> getHandlerMap() {
+//            return handlerMap;
+//        }
+//
+//        Map<Class<?>, TaskHandlerBean> getTaskHandlerMap() {
+//            return taskHandlerMap;
+//        }
+//    }
 }

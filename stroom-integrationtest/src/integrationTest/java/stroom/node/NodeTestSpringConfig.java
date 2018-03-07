@@ -29,10 +29,10 @@ public class NodeTestSpringConfig {
         return new NodeCache(nodeService);
     }
 
-    @Bean
-    public NodeConfigForTesting nodeConfigForTesting(final NodeService nodeService,
-                                                     final VolumeService volumeService,
-                                                     final StroomEntityManager stroomEntityManager) {
-        return new NodeConfigForTesting(nodeService, volumeService, stroomEntityManager);
-    }
+//    @Bean
+//    public NodeConfigForTesting nodeConfigForTesting(final NodeService nodeService,
+//                                                     final VolumeService volumeService,
+//                                                     final StroomEntityManager stroomEntityManager) {
+//        return new NodeConfigForTesting(nodeService, volumeService, stroomEntityManager);
+//    }
 }

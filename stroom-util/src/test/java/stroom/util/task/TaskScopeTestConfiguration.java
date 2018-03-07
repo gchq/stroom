@@ -41,10 +41,10 @@ class TaskScopeTestConfiguration {
         LOGGER.info("TaskScopeConfiguration loading...");
     }
 
-    @Bean
-    public StroomBeanStore stroomBeanStore(final ApplicationContext applicationContext, final BeanFactory beanFactory) {
-        return new StroomBeanStore(applicationContext, beanFactory);
-    }
+//    @Bean
+//    public StroomBeanStore stroomBeanStore(final ApplicationContext applicationContext, final BeanFactory beanFactory) {
+//        return new StroomBeanStore(applicationContext, beanFactory);
+//    }
 
     @Bean
     @Scope(value = StroomScope.TASK)

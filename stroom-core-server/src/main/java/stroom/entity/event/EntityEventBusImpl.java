@@ -24,11 +24,13 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Singleton
 public class EntityEventBusImpl implements EntityEventBus {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityEventBusImpl.class);
     private final Map<String, Map<EntityAction, List<EntityEvent.Handler>>> handlers = new HashMap<>();
@@ -173,22 +175,10 @@ public class EntityEventBusImpl implements EntityEventBus {
     private synchronized void initialise() {
         if (!initialised) {
             try {
-                for (final String bean : stroomBeanStore.getAnnotatedStroomBeans(EntityEventHandler.class)) {
-                    final EntityEventHandler annotation = stroomBeanStore.findAnnotationOnBean(bean,
-                            EntityEventHandler.class);
+                for (final EntityEvent.Handler handler : stroomBeanStore.getBeansOfType(EntityEvent.Handler.class)) {
+                    final EntityEventHandler annotation = handler.getClass().getAnnotation(EntityEventHandler.class);
                     if (annotation != null) {
-                        final Object instance = stroomBeanStore.getBean(bean);
-
-                        if (!(instance instanceof EntityEvent.Handler)) {
-                            throw new RuntimeException("Unexpected type for entity handler: " + bean);
-                        }
-
-                        final EntityEvent.Handler handler = (EntityEvent.Handler) instance;
                         final String type = annotation.type();
-                        if (type == null) {
-                            throw new RuntimeException("Null type");
-                        }
-
                         addHandler(handler, type, annotation.action());
                     } else {
                         LOGGER.error("Annotation not found");

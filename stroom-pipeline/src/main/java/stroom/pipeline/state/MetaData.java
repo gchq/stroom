@@ -17,7 +17,9 @@
 package stroom.pipeline.state;
 
 import stroom.feed.MetaMap;
+import stroom.util.guice.PipelineScoped;
 
+@PipelineScoped
 public class MetaData {
     private final MetaMap metaMap = new MetaMap();
 

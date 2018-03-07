@@ -25,6 +25,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +39,7 @@ public class ClusterDispatchAsyncHelper {
 
     private final StroomPropertyService stroomPropertyService;
     private final ClusterResultCollectorCache collectorCache;
-    private final ClusterDispatchAsync dispatcher;
+    private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final TargetNodeSetFactory targetNodeSetFactory;
 
     private volatile long lastClusterStateWarn;
@@ -46,11 +47,11 @@ public class ClusterDispatchAsyncHelper {
     @Inject
     public ClusterDispatchAsyncHelper(final StroomPropertyService stroomPropertyService,
                                       final ClusterResultCollectorCache collectorCache,
-                                      final ClusterDispatchAsync dispatcher,
+                                      final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
                                       final TargetNodeSetFactory targetNodeSetFactory) {
         this.stroomPropertyService = stroomPropertyService;
         this.collectorCache = collectorCache;
-        this.dispatcher = dispatcher;
+        this.dispatchAsyncProvider = dispatchAsyncProvider;
         this.targetNodeSetFactory = targetNodeSetFactory;
     }
 
@@ -110,7 +111,7 @@ public class ClusterDispatchAsyncHelper {
                 // Remember the collector until we get all results.
                 collectorCache.put(collector.getId(), collector);
                 try {
-                    dispatcher.execAsync(task, collector, sourceNode, targetNodes);
+                    dispatchAsyncProvider.get().execAsync(task, collector, sourceNode, targetNodes);
                     collector.waitToComplete(waitTime, timeUnit);
                 } catch (final Throwable t) {
                     LOGGER.error(t.getMessage(), t);

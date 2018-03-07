@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.CriteriaSet;
@@ -55,6 +55,7 @@ import stroom.streamtask.shared.TaskStatus;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.sql.DataSource;
+import javax.transaction.Transactional.TxType;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,9 +67,9 @@ import java.util.Map.Entry;
 /**
  * Class used to do the transactional aspects of stream task creation
  */
-@Transactional(propagation = Propagation.REQUIRES_NEW)
+@Transactional
 class StreamTaskCreatorTransactionHelper {
-    public static final int RECENT_STREAM_ID_LIMIT = 10000;
+    private static final int RECENT_STREAM_ID_LIMIT = 10000;
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskCreatorTransactionHelper.class);
 
     private static final String LOCK_NAME = "StreamTaskCreator";
@@ -97,7 +98,7 @@ class StreamTaskCreatorTransactionHelper {
                                        final StreamTaskService streamTaskService,
                                        final StreamStore streamStore,
                                        final StroomEntityManager stroomEntityManager,
-                                       @Named("dataSource") final DataSource dataSource) {
+                                       final DataSource dataSource) {
         this.nodeCache = nodeCache;
         this.clusterLockService = clusterLockService;
         this.streamTaskService = streamTaskService;

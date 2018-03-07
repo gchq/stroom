@@ -22,8 +22,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     // TODO : This is a temporary means to set tags on nodes for the purpose of finding data source nodes.
     // TODO : The explorer will eventually allow a user to set custom tags and to find nodes searching by tag.
-    private static Map<String, String> DEFAULT_TAG_MAP = new HashMap<>();
-
+    private static final Map<String, String> DEFAULT_TAG_MAP = new HashMap<>();
     static {
         DEFAULT_TAG_MAP.put("StatisticStore", "DataSource");
         DEFAULT_TAG_MAP.put("ElasticIndex", "DataSource");

@@ -1,16 +1,14 @@
 package stroom.docstore.db;
 
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Primary;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.docstore.Persistence;
 import stroom.docstore.RWLockFactory;
 import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,6 +22,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Singleton
 @Transactional
 public class DBPersistence implements Persistence {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBPersistence.class);
@@ -39,8 +38,7 @@ public class DBPersistence implements Persistence {
 
     @Override
     public boolean exists(final DocRef docRef) {
-        final Connection connection = DataSourceUtils.getConnection(dataSource);
-        try {
+        try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id FROM doc WHERE type = ? AND uuid = ?")) {
                 preparedStatement.setString(1, docRef.getType());
                 preparedStatement.setString(2, docRef.getUuid());
@@ -54,8 +52,6 @@ public class DBPersistence implements Persistence {
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            DataSourceUtils.releaseConnection(connection, dataSource);
         }
 
         return false;
@@ -74,8 +70,7 @@ public class DBPersistence implements Persistence {
 
     @Override
     public void delete(final DocRef docRef) {
-        final Connection connection = DataSourceUtils.getConnection(dataSource);
-        try {
+        try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM doc WHERE type = ? AND uuid = ?")) {
                 preparedStatement.setString(1, docRef.getType());
                 preparedStatement.setString(2, docRef.getUuid());
@@ -85,8 +80,6 @@ public class DBPersistence implements Persistence {
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            DataSourceUtils.releaseConnection(connection, dataSource);
         }
     }
 
@@ -94,8 +87,7 @@ public class DBPersistence implements Persistence {
     public List<DocRef> list(final String type) {
         final List<DocRef> list = new ArrayList<>();
 
-        final Connection connection = DataSourceUtils.getConnection(dataSource);
-        try {
+        try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT uuid FROM doc WHERE type = ? ORDER BY id")) {
                 preparedStatement.setString(1, type);
 
@@ -109,8 +101,6 @@ public class DBPersistence implements Persistence {
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            DataSourceUtils.releaseConnection(connection, dataSource);
         }
 
         return list;
@@ -122,8 +112,7 @@ public class DBPersistence implements Persistence {
     }
 
     private DocEntity load(final DocRef docRef) {
-        final Connection connection = DataSourceUtils.getConnection(dataSource);
-        try {
+        try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id, type, uuid, name, data FROM doc WHERE type = ? AND uuid = ?")) {
                 preparedStatement.setString(1, docRef.getType());
                 preparedStatement.setString(2, docRef.getUuid());
@@ -142,16 +131,13 @@ public class DBPersistence implements Persistence {
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            DataSourceUtils.releaseConnection(connection, dataSource);
         }
 
         throw new RuntimeException("Document not found " + docRef);
     }
 
     private void save(final DocEntity entity) {
-        final Connection connection = DataSourceUtils.getConnection(dataSource);
-        try {
+        try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO doc (type, uuid, name, data) VALUES (?, ?, ?, ?)")) {
                 preparedStatement.setString(1, entity.getType());
                 preparedStatement.setString(2, entity.getUuid());
@@ -163,14 +149,11 @@ public class DBPersistence implements Persistence {
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            DataSourceUtils.releaseConnection(connection, dataSource);
         }
     }
 
     private void update(final DocEntity entity) {
-        final Connection connection = DataSourceUtils.getConnection(dataSource);
-        try {
+        try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE doc SET type = ?, uuid = ?, name = ?, data = ? WHERE id = ?")) {
                 preparedStatement.setString(1, entity.getType());
                 preparedStatement.setString(2, entity.getUuid());
@@ -183,8 +166,6 @@ public class DBPersistence implements Persistence {
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            DataSourceUtils.releaseConnection(connection, dataSource);
         }
     }
 

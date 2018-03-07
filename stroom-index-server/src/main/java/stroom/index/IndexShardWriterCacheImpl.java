@@ -41,6 +41,7 @@ import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,6 +61,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@Singleton
 public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
 

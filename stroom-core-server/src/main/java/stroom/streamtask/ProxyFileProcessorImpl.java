@@ -24,6 +24,7 @@ import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
+import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;
@@ -72,14 +73,13 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     ProxyFileProcessorImpl(final StreamStore streamStore,
                            @Named("cachedFeedService") final FeedService feedService,
                            final MetaDataStatistic metaDataStatistic,
-                           @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
-                           @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
+                           final StroomPropertyService propertyService) {
         this(
                 streamStore,
                 feedService,
                 metaDataStatistic,
-                PropertyUtil.toInt(maxAggregation, DEFAULT_MAX_AGGREGATION),
-                getByteSize(maxStreamSize, DEFAULT_MAX_STREAM_SIZE)
+                propertyService.getIntProperty("stroom.maxAggregation", DEFAULT_MAX_AGGREGATION),
+                getByteSize(propertyService.getProperty("stroom.maxStreamSize"), DEFAULT_MAX_STREAM_SIZE)
         );
     }
 

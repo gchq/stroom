@@ -76,6 +76,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
@@ -205,8 +206,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         //ensure all the caches are empty
         stroomCacheManager.clear();
 
-        final Map<String, Clearable> clearableBeanMap = beanStore.getBeansOfType(Clearable.class, false, false);
-        clearableBeanMap.values().forEach(Clearable::clear);
+        final Set<Clearable> set = beanStore.getBeansOfType(Clearable.class);
+        set.forEach(Clearable::clear);
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
     }
 

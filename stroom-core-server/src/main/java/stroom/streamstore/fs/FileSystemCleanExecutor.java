@@ -25,6 +25,7 @@ import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
+import stroom.properties.StroomPropertyService;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
@@ -36,7 +37,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -57,7 +58,7 @@ public class FileSystemCleanExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemCleanExecutor.class);
     private final VolumeService volumeService;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final TaskManager taskManager;
     private final NodeCache nodeCache;
     private final int batchSize;
@@ -68,32 +69,30 @@ public class FileSystemCleanExecutor {
 
     @Inject
     FileSystemCleanExecutor(final VolumeService volumeService,
-                                   final TaskMonitor taskMonitor,
+                                   final TaskContext taskContext,
                                    final TaskManager taskManager,
                                    final NodeCache nodeCache,
-                                   @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanBatchSize')}") final String fileSystemCleanBatchSize,
-                                   @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanOldAge')}") final String oldFileAge,
-                                   @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanDeleteOut')}") final String matchFile) {
+                            final StroomPropertyService propertyService) {
         this.volumeService = volumeService;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.taskManager = taskManager;
         this.nodeCache = nodeCache;
-        this.batchSize = PropertyUtil.toInt(fileSystemCleanBatchSize, 20);
+        this.batchSize = propertyService.getIntProperty("stroom.fileSystemCleanBatchSize", 20);
 
         Long age;
         try {
-            age = ModelStringUtil.parseDurationString(oldFileAge);
+            age = ModelStringUtil.parseDurationString(propertyService.getProperty("stroom.fileSystemCleanOldAge"));
             if (age == null) {
                 age = ModelStringUtil.parseDurationString("1d");
             }
         } catch (final NumberFormatException e) {
-            LOGGER.error("Unable to parse property 'stroom.fileSystemCleanOldAge' value '" + oldFileAge
+            LOGGER.error("Unable to parse property 'stroom.fileSystemCleanOldAge' value '" + propertyService.getProperty("stroom.fileSystemCleanOldAge")
                     + "', using default of '1d' instead", e);
             age = ModelStringUtil.parseDurationString("1d");
         }
         this.oldAge = age;
 
-        this.deleteOut = PropertyUtil.toBoolean(matchFile, false);
+        this.deleteOut = propertyService.getBooleanProperty("stroom.fileSystemCleanDeleteOut", false);
     }
 
     public Long getOldAge() {
@@ -110,7 +109,7 @@ public class FileSystemCleanExecutor {
 
     private void logInfo(final Object... args) {
         Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
-        taskMonitor.info(args);
+        taskContext.info(args);
     }
 
     @StroomSimpleCronSchedule(cron = "0 0 *")
@@ -125,17 +124,11 @@ public class FileSystemCleanExecutor {
         final Map<Volume, PrintWriter> printWriterMap = new HashMap<>();
 
         // Load the node.
-        asyncTaskHelper = new AsyncTaskHelper<>(null, taskMonitor, taskManager, batchSize);
+        asyncTaskHelper = new AsyncTaskHelper<>(null, taskContext, taskManager, batchSize);
 
         logInfo("Starting file system clean task. oldAge = {}", ModelStringUtil.formatDurationString(oldAge));
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-
-        // Get the progress monitor and add a stop listener.
-        taskMonitor.addTerminateHandler(() -> {
-            logInfo("Stopping file system clean task.");
-            asyncTaskHelper.clear();
-        });
 
         final FindVolumeCriteria criteria = new FindVolumeCriteria();
         criteria.getNodeIdSet().add(nodeId);
@@ -179,6 +172,11 @@ public class FileSystemCleanExecutor {
                 while (asyncTaskHelper.busy()) {
                     // Wait for all task steps to complete.
                     ThreadUtil.sleep(500);
+
+                    if (taskContext.isTerminated()) {
+                        logInfo("Stopping file system clean task.");
+                        asyncTaskHelper.clear();
+                    }
 
                     final StringBuilder trace = new StringBuilder();
 

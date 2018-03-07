@@ -36,7 +36,7 @@ import stroom.streamtask.StreamProcessorService;
 import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -84,8 +84,8 @@ public class StreamStoreSpringConfig {
     public StreamAttributeValueDeleteExecutor streamAttributeValueDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                                                                                  final ClusterLockService clusterLockService,
                                                                                  final StroomPropertyService propertyService,
-                                                                                 final TaskMonitor taskMonitor) {
-        return new StreamAttributeValueDeleteExecutor(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor);
+                                                                                 final TaskContext taskContext) {
+        return new StreamAttributeValueDeleteExecutor(batchIdTransactionHelper, clusterLockService, propertyService, taskContext);
     }
 
     @Bean
@@ -112,17 +112,17 @@ public class StreamStoreSpringConfig {
     public StreamDeleteExecutor streamDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                                                      final ClusterLockService clusterLockService,
                                                      final StroomPropertyService propertyService,
-                                                     final TaskMonitor taskMonitor) {
-        return new StreamDeleteExecutor(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor);
+                                                     final TaskContext taskContext) {
+        return new StreamDeleteExecutor(batchIdTransactionHelper, clusterLockService, propertyService, taskContext);
     }
 
     @Bean
     @Scope(value = StroomScope.TASK)
     public StreamRetentionExecutor streamRetentionExecutor(final FeedService feedService,
                                                            final StreamStore streamStore,
-                                                           final TaskMonitor taskMonitor,
+                                                           final TaskContext taskContext,
                                                            final ClusterLockService clusterLockService) {
-        return new StreamRetentionExecutor(feedService, streamStore, taskMonitor, clusterLockService);
+        return new StreamRetentionExecutor(feedService, streamStore, taskContext, clusterLockService);
     }
 
     @Bean("streamTypeService")
@@ -145,9 +145,9 @@ public class StreamStoreSpringConfig {
 
     @Bean
     @Scope(value = StroomScope.TASK)
-    public StreamDownloadTaskHandler streamDownloadTaskHandler(final TaskMonitor taskMonitor,
+    public StreamDownloadTaskHandler streamDownloadTaskHandler(final TaskContext taskContext,
                                                                final StreamStore streamStore) {
-        return new StreamDownloadTaskHandler(taskMonitor, streamStore);
+        return new StreamDownloadTaskHandler(taskContext, streamStore);
     }
 
     @Bean
@@ -159,11 +159,11 @@ public class StreamStoreSpringConfig {
 
     @Bean
     @Scope(value = StroomScope.TASK)
-    public StreamUploadTaskHandler streamUploadTaskHandler(final TaskMonitor taskMonitor,
+    public StreamUploadTaskHandler streamUploadTaskHandler(final TaskContext taskContext,
                                                            final StreamStore streamStore,
                                                            @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                                                            @Named("cachedFeedService") final FeedService feedService,
                                                            final MetaDataStatistic metaDataStatistics) {
-        return new StreamUploadTaskHandler(taskMonitor, streamStore, streamTypeService, feedService, metaDataStatistics);
+        return new StreamUploadTaskHandler(taskContext, streamStore, streamTypeService, feedService, metaDataStatistics);
     }
 }

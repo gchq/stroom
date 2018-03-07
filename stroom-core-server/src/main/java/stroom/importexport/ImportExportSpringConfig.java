@@ -41,10 +41,10 @@ public class ImportExportSpringConfig {
         return new DependencyServiceImpl(importExportActionHandlers);
     }
 
-    @Bean
-    public ImportExportActionHandlers importExportActionHandlers(final StroomBeanStore beanStore) {
-        return new ImportExportActionHandlers(beanStore);
-    }
+//    @Bean
+//    public ImportExportActionHandlers importExportActionHandlers(final StroomBeanStore beanStore) {
+//        return new ImportExportActionHandlers(beanStore);
+//    }
 
     @Bean
     public ImportExportDocumentEventLog importExportDocumentEventLog(final StroomEventLoggingService eventLoggingService) {

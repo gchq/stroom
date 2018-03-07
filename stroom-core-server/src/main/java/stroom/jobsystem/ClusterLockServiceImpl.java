@@ -18,41 +18,45 @@ package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.node.NodeCache;
+import stroom.spring.EntityManagerSupport;
 import stroom.task.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ClusterLockServiceImpl implements ClusterLockService {
+@Singleton
+class ClusterLockServiceImpl implements ClusterLockService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
     private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
 
-    private final StroomEntityManager entityManager;
+    private final StroomEntityManager stroomEntityManager;
+    private final EntityManagerSupport entityManagerSupport;
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper;
     private final TaskManager taskManager;
     private final NodeCache nodeCache;
 
     @Inject
-    public ClusterLockServiceImpl(final StroomEntityManager entityManager,
-                                  final StroomDatabaseInfo stroomDatabaseInfo,
-                                  final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper,
-                                  final TaskManager taskManager,
-                                  final NodeCache nodeCache) {
-        this.entityManager = entityManager;
+    ClusterLockServiceImpl(final StroomEntityManager stroomEntityManager,
+                           final EntityManagerSupport entityManagerSupport,
+                           final StroomDatabaseInfo stroomDatabaseInfo,
+                           final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper,
+                           final TaskManager taskManager,
+                           final NodeCache nodeCache) {
+        this.stroomEntityManager = stroomEntityManager;
+        this.entityManagerSupport = entityManagerSupport;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.clusterLockServiceTransactionHelper = clusterLockServiceTransactionHelper;
         this.taskManager = taskManager;
@@ -60,34 +64,35 @@ public class ClusterLockServiceImpl implements ClusterLockService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.MANDATORY)
     public void lock(final String lockName) {
-        LOGGER.debug("lock({}) - >>>", lockName);
+        entityManagerSupport.transaction(entityManager -> {
+            LOGGER.debug("lock({}) - >>>", lockName);
 
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        // This happens outside this transaction
-        clusterLockServiceTransactionHelper.checkLockCreated(lockName);
+            // This happens outside this transaction
+            clusterLockServiceTransactionHelper.checkLockCreated(lockName);
 
-        final SqlBuilder sql = new SqlBuilder();
-        sql.append("SELECT * FROM ");
-        sql.append(ClusterLock.TABLE_NAME);
-        sql.append(" WHERE ");
-        sql.append(SQLNameConstants.NAME);
-        sql.append(" = ");
-        sql.arg(lockName);
+            final SqlBuilder sql = new SqlBuilder();
+            sql.append("SELECT * FROM ");
+            sql.append(ClusterLock.TABLE_NAME);
+            sql.append(" WHERE ");
+            sql.append(SQLNameConstants.NAME);
+            sql.append(" = ");
+            sql.arg(lockName);
 
-        // Here we lock the records read until the transaction commits.
-        if (stroomDatabaseInfo.isMysql()) {
-            sql.append(" FOR UPDATE");
-        }
+            // Here we lock the records read until the transaction commits.
+            if (stroomDatabaseInfo.isMysql()) {
+                sql.append(" FOR UPDATE");
+            }
 
-        final List<ClusterLock> result = entityManager.executeNativeQueryResultList(sql, ClusterLock.class);
-        if (result == null || result.size() != 1) {
-            throw new IllegalStateException("No cluster lock has been found or created: " + lockName);
-        }
+            final List<ClusterLock> result = stroomEntityManager.executeNativeQueryResultList(sql, ClusterLock.class);
+            if (result == null || result.size() != 1) {
+                throw new IllegalStateException("No cluster lock has been found or created: " + lockName);
+            }
 
-        LOGGER.debug("lock({}) - <<< {}", lockName, logExecutionTime);
+            LOGGER.debug("lock({}) - <<< {}", lockName, logExecutionTime);
+        });
     }
 
     @Override

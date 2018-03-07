@@ -37,6 +37,7 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.HashSet;
@@ -47,6 +48,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Singleton
 class DictionaryStoreImpl implements DictionaryStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryStoreImpl.class);
 

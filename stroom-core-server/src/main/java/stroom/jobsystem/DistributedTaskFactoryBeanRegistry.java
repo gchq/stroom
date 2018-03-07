@@ -22,41 +22,24 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Singleton
 class DistributedTaskFactoryBeanRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFactoryBeanRegistry.class);
-    private final Map<String, String> factoryMap = new HashMap<>();
-
-    private final StroomBeanStore stroomBeanStore;
+    private final Map<String, DistributedTaskFactory> factoryMap = new HashMap<>();
 
     @Inject
     DistributedTaskFactoryBeanRegistry(final StroomBeanStore stroomBeanStore) {
-        this.stroomBeanStore = stroomBeanStore;
-    }
-
-    @SuppressWarnings("unchecked")
-    public DistributedTaskFactory<DistributedTask<?>, ?> findFactory(final String jobName) {
-        final String factoryName = factoryMap.get(jobName);
-
-        if (factoryName == null) {
-            throw new RuntimeException("No factory for " + jobName);
-        }
-
-        return (DistributedTaskFactory<DistributedTask<?>, ?>) stroomBeanStore.getBean(factoryName);
-    }
-
-    @StroomStartup
-    public void afterPropertiesSet() throws Exception {
-        Set<String> beanNames = stroomBeanStore.getAnnotatedStroomBeans(DistributedTaskFactoryBean.class);
-        for (final String beanName : beanNames) {
-            DistributedTaskFactoryBean annotation = stroomBeanStore.findAnnotationOnBean(beanName,
-                    DistributedTaskFactoryBean.class);
+        Set<DistributedTaskFactory> distributedTaskFactories = stroomBeanStore.getBeansOfType(DistributedTaskFactory.class);
+        for (final DistributedTaskFactory distributedTaskFactory : distributedTaskFactories) {
+            DistributedTaskFactoryBean annotation = distributedTaskFactory.getClass().getAnnotation(DistributedTaskFactoryBean.class);
             final String jobName = annotation.jobName();
 
-            final Object previousFactory = factoryMap.put(jobName, beanName);
+            final Object previousFactory = factoryMap.put(jobName, distributedTaskFactory);
 
             // Check that there isn't a factory already associated with the job.
             if (previousFactory != null) {
@@ -65,13 +48,24 @@ class DistributedTaskFactoryBeanRegistry {
             }
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("postProcessAfterInitialization() - registering task factory " + beanName + " for job "
+                LOGGER.debug("postProcessAfterInitialization() - registering task factory " + distributedTaskFactory + " for job "
                         + jobName);
             }
         }
     }
 
-//    public void setTaskFactoryMap(final Map<String, String> taskFactoryMap) {
-//        this.factoryMap = taskFactoryMap;
-//    }
+    @SuppressWarnings("unchecked")
+    public DistributedTaskFactory<DistributedTask<?>, ?> findFactory(final String jobName) {
+        final DistributedTaskFactory distributedTaskFactory = factoryMap.get(jobName);
+
+        if (distributedTaskFactory == null) {
+            throw new RuntimeException("No factory for " + jobName);
+        }
+
+        return distributedTaskFactory;
+    }
+
+    Map<String, DistributedTaskFactory> getFactoryMap() {
+        return factoryMap;
+    }
 }

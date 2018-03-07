@@ -25,7 +25,7 @@ import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Provider;
 
@@ -59,8 +59,8 @@ public class TaskSpringConfig {
 
     @Bean
     @Scope(value = StroomScope.TASK)
-    public GenericServerTaskHandler genericServerTaskHandler(final TaskMonitor taskMonitor) {
-        return new GenericServerTaskHandler(taskMonitor);
+    public GenericServerTaskHandler genericServerTaskHandler(final TaskContext taskContext) {
+        return new GenericServerTaskHandler(taskContext);
     }
 
     @Bean
@@ -68,24 +68,24 @@ public class TaskSpringConfig {
         return new TaskContextImpl();
     }
 
-    @Bean
-    public TaskHandlerBeanRegistry taskHandlerBeanRegistry(final StroomBeanStore beanStore) {
-        return new TaskHandlerBeanRegistry(beanStore);
-    }
-
-    @Bean("taskManager")
-    public TaskManager taskManager(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
-                                   final NodeCache nodeCache,
-                                   final StroomBeanStore beanStore,
-                                   final SecurityContext securityContext) {
-        return new TaskManagerImpl(taskHandlerBeanRegistry, nodeCache, beanStore, securityContext);
-    }
-
-    @Bean("taskMonitor")
-    @Scope(value = StroomScope.TASK)
-    public TaskMonitorImpl taskMonitor() {
-        return new TaskMonitorImpl();
-    }
+//    @Bean
+//    public TaskHandlerBeanRegistry taskHandlerBeanRegistry(final StroomBeanStore beanStore) {
+//        return new TaskHandlerBeanRegistry(beanStore);
+//    }
+//
+//    @Bean("taskManager")
+//    public TaskManager taskManager(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
+//                                   final NodeCache nodeCache,
+//                                   final StroomBeanStore beanStore,
+//                                   final SecurityContext securityContext) {
+//        return new TaskManagerImpl(taskHandlerBeanRegistry, nodeCache, beanStore, securityContext);
+//    }
+//
+//    @Bean("taskContext")
+//    @Scope(value = StroomScope.TASK)
+//    public TaskMonitorImpl taskContext() {
+//        return new SimpleTaskContext();
+//    }
 
     @Bean
     @Scope(value = StroomScope.TASK)

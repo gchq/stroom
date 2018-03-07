@@ -19,7 +19,7 @@ package stroom.task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.shared.Task;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ public class AsyncTaskHelper<R> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncTaskHelper.class);
     private static final String STATUS = "Executing task {}\n{}";
     private static final String FINISHED = "Finished task {}\n{}";
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final TaskManager taskManager;
     private final int concurrent;
     private final String taskInfo;
@@ -41,10 +41,10 @@ public class AsyncTaskHelper<R> {
     private volatile long completed;
     private volatile long total;
     private volatile boolean busy;
-    public AsyncTaskHelper(final String taskInfo, final TaskMonitor taskMonitor, final TaskManager taskManager,
+    public AsyncTaskHelper(final String taskInfo, final TaskContext taskContext, final TaskManager taskManager,
                            final int concurrent) {
         this.taskInfo = taskInfo;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.taskManager = taskManager;
         this.concurrent = concurrent;
         updateInfo();
@@ -58,7 +58,7 @@ public class AsyncTaskHelper<R> {
         // Add the task to the task list.
         lock.lock();
         try {
-            if (!taskMonitor.isTerminated()) {
+            if (!taskContext.isTerminated()) {
                 total++;
 
                 remaining++;
@@ -194,7 +194,7 @@ public class AsyncTaskHelper<R> {
             final StringBuilder sb = new StringBuilder();
             sb.append(taskInfo);
             appendStatus(sb);
-            taskMonitor.info(sb.toString());
+            taskContext.info(sb.toString());
         }
     }
 

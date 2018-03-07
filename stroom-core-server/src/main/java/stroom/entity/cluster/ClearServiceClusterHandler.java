@@ -26,6 +26,7 @@ import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
 import java.util.Map;
+import java.util.Set;
 
 @TaskHandlerBean(task = ClearServiceClusterTask.class)
 class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceClusterTask, VoidResult> {
@@ -44,10 +45,10 @@ class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceCluster
             throw new RuntimeException("No task supplied");
         }
         if (task.getBeanClass() == null) {
-            final Map<String, Clearable> map = stroomBeanStore.getBeansOfType(Clearable.class, false, false);
-            map.forEach((name, bean) -> {
-                LOGGER.info("Calling clear on {}", name);
-                bean.clear();
+            final Set<Clearable> set = stroomBeanStore.getBeansOfType(Clearable.class);
+            set.forEach(clearable -> {
+                LOGGER.info("Calling clear on {}", clearable);
+                clearable.clear();
             });
         } else {
             LOGGER.info("Calling clear on {}", task.getBeanClass());

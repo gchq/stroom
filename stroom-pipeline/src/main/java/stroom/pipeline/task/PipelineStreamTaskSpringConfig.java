@@ -39,7 +39,7 @@ import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.StreamStore;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Named;
 
@@ -51,7 +51,7 @@ public class PipelineStreamTaskSpringConfig {
                                                            final StreamStore streamStore,
                                                            @Named("cachedFeedService") final FeedService feedService,
                                                            @Named("cachedPipelineService") final PipelineService pipelineService,
-                                                           final TaskMonitor taskMonitor,
+                                                           final TaskContext taskContext,
                                                            final PipelineHolder pipelineHolder,
                                                            final FeedHolder feedHolder,
                                                            final StreamHolder streamHolder,
@@ -71,7 +71,7 @@ public class PipelineStreamTaskSpringConfig {
                 streamStore,
                 feedService,
                 pipelineService,
-                taskMonitor,
+                taskContext,
                 pipelineHolder,
                 feedHolder,
                 streamHolder,

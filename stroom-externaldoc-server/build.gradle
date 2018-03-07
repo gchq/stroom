@@ -13,6 +13,6 @@ dependencies {
     compile libs.spring_context
 
     compile libs.javax_inject
-    compile libs.ws_rs_api
+        compile libs.ws_rs_api
     compile libs.jackson_annotations
 }

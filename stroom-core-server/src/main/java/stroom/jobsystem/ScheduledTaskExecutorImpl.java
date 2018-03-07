@@ -34,11 +34,13 @@ import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Singleton
 public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutorImpl.class);
     private final ConcurrentHashMap<StroomBeanMethod, AtomicBoolean> runningMap = new ConcurrentHashMap<>();

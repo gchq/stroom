@@ -18,11 +18,13 @@ package stroom.util.cache;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.inject.Singleton;
 import stroom.util.spring.StroomShutdown;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Singleton
 public class CacheManager implements AutoCloseable {
     private final Map<String, CacheHolder> caches = new ConcurrentHashMap<>();
 

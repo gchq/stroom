@@ -31,6 +31,7 @@ import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.persistence.FlushModeType;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +39,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 public class CachingEntityManager implements StroomEntityManager, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CachingEntityManager.class);
 
@@ -206,10 +208,10 @@ public class CachingEntityManager implements StroomEntityManager, Clearable {
         stroomEntityManager.shutdown();
     }
 
-    @Override
-    public void setFlushMode(final FlushModeType mode) {
-        stroomEntityManager.setFlushMode(mode);
-    }
+//    @Override
+//    public void setFlushMode(final FlushModeType mode) {
+//        stroomEntityManager.setFlushMode(mode);
+//    }
 
     @Override
     public void clearContext() {

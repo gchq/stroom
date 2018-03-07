@@ -16,6 +16,9 @@
 
 package stroom.pipeline.state;
 
+import stroom.util.guice.PipelineScoped;
+
+@PipelineScoped
 public class RecordCount {
     private long read;
     private long written;

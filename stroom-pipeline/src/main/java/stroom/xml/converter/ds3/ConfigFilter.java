@@ -20,7 +20,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 import stroom.xml.converter.ds3.GroupFactory.MatchOrder;
 import stroom.xml.converter.ds3.NodeFactory.NodeType;
 

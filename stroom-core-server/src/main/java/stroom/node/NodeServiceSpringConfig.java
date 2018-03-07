@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import stroom.entity.CachingEntityManager;
 import stroom.entity.StroomEntityManager;
+import stroom.properties.StroomPropertyService;
 
 @Configuration
 public class NodeServiceSpringConfig {
@@ -36,18 +37,16 @@ public class NodeServiceSpringConfig {
 
     @Bean("nodeService")
     public NodeServiceImpl nodeServiceImpl(final StroomEntityManager entityManager,
-                                   final NodeServiceTransactionHelper nodeServiceTransactionHelper,
-                                   @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
-                                   @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
-        return new NodeServiceImpl(entityManager, nodeServiceTransactionHelper, nodeName, rackName);
+                                           final NodeServiceTransactionHelper nodeServiceTransactionHelper,
+                                           final StroomPropertyService propertyService) {
+        return new NodeServiceImpl(entityManager, nodeServiceTransactionHelper, propertyService);
     }
 
     @Bean("cachedNodeService")
     public NodeService cachedNodeService(final CachingEntityManager entityManager,
                                          final NodeServiceTransactionHelper nodeServiceTransactionHelper,
-                                         @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
-                                         @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
-        return new NodeServiceImpl(entityManager, nodeServiceTransactionHelper, nodeName, rackName);
+                                         final StroomPropertyService propertyService) {
+        return new NodeServiceImpl(entityManager, nodeServiceTransactionHelper, propertyService);
     }
 
     @Bean

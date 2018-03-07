@@ -29,6 +29,7 @@ import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
+import stroom.task.SimpleTaskContext;
 import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -66,7 +67,7 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
 
         Assert.assertNull(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails());
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
         Assert.assertNotNull(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails());
         Assert.assertFalse(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail());
 
@@ -78,16 +79,16 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feed1);
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feed2);
 
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
         Assert.assertTrue(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail());
         Assert.assertEquals(4, commonTestControl.countEntity(StreamTask.class));
 
         commonTestScenarioCreator.createSample2LineRawFile(feed1, StreamType.RAW_EVENTS);
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
 
         Assert.assertEquals(6, commonTestControl.countEntity(StreamTask.class));
 
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
         Assert.assertEquals(6, commonTestControl.countEntity(StreamTask.class));
     }
 
@@ -105,7 +106,7 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         final Feed feed2 = commonTestScenarioCreator.createSimpleFeed();
 
         Assert.assertNull(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails());
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
         Assert.assertNotNull(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails());
         Assert.assertFalse(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail());
 
@@ -131,7 +132,7 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         StroomProperties.setIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, 5000, StroomProperties.Source.TEST);
         StroomProperties.setBooleanProperty(StreamTaskCreatorImpl.STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY, false, StroomProperties.Source.TEST);
 
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
 
         // Because MySQL continues to create new incremental id's for streams this check will fail as Stroom thinks more
         // streams have been created so recreates recent stream info before this point which means that it doesn't have
@@ -142,7 +143,7 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         List<StreamTask> tasks = streamTaskCreator.assignStreamTasks(node, 5000);
         Assert.assertEquals(5000, tasks.size());
 
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
         Assert.assertTrue(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail());
         Assert.assertEquals(6000, commonTestControl.countEntity(StreamTask.class));
         tasks = streamTaskCreator.assignStreamTasks(node, 5000);
@@ -165,7 +166,7 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals(0, streamTaskCreator.getStreamTaskQueueSize());
 
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
 
         Assert.assertEquals(1, commonTestControl.countEntity(StreamTask.class));
         Assert.assertEquals(1, streamTaskCreator.getStreamTaskQueueSize());
@@ -178,7 +179,7 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         streamTaskCreator.startup();
         Assert.assertEquals(0, streamTaskCreator.getStreamTaskQueueSize());
 
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
         Assert.assertEquals(1, streamTaskCreator.getStreamTaskQueueSize());
     }
 }

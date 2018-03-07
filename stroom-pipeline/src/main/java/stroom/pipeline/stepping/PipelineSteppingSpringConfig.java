@@ -35,7 +35,7 @@ import stroom.security.SecurityContext;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTypeService;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Named;
 
@@ -71,7 +71,7 @@ public class PipelineSteppingSpringConfig {
                                                    final StreamCloser streamCloser,
                                                    final FeedService feedService,
                                                    @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
-                                                   final TaskMonitor taskMonitor,
+                                                   final TaskContext taskContext,
                                                    final FeedHolder feedHolder,
                                                    final PipelineHolder pipelineHolder,
                                                    final StreamHolder streamHolder,
@@ -89,7 +89,7 @@ public class PipelineSteppingSpringConfig {
                 streamCloser,
                 feedService,
                 streamTypeService,
-                taskMonitor,
+                taskContext,
                 feedHolder,
                 pipelineHolder,
                 streamHolder,

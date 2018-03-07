@@ -205,9 +205,9 @@ The table below includes licences for all Maven dependencies. Not included in th
 | mysql                                     | mysql-connector-java                         | 5.1.40           | GPL\*         |         |               |
 | org.beanshell                             | bsh-core                                     | 2.0b4            | LGPL          |         |               |
 | org.hibernate.common                      | hibernate-commons-annotations                | 4.0.5.Final      | LGPL          |         |               |
-| org.hibernate                             | hibernate-core                               | 4.3.8.Final      | LGPL          |         |               |
+| org.hibernate                             | hibernate-core                               | 5.2.13.Final     | LGPL          |         |               |
 | org.hibernate                             | hibernate-entitymanager                      | 4.3.8.Final      | LGPL          |         |               |
-| org.hibernate.javax.persistence           | hibernate-jpa-2.1-api                        | 1.0.0.Final      | LGPL          |         |               |
+| org.hibernate.javax.persistence           | hibernate-jpa-2.1-api                        | 1.0.2.Final      | LGPL          |         |               |
 | org.hibernate                             | hibernate-validator                          | 5.1.3.Final      | LGPL          |         |               |
 | org.jboss.logging                         | jboss-logging                                | 3.1.3.GA         | LGPL          |         |               |
 | org.jboss.logging                         | jboss-logging-annotations                    | 1.2.0.Beta1      | LGPL          |         |               |

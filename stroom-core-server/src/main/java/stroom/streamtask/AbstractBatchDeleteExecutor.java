@@ -25,7 +25,7 @@ import stroom.properties.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import java.util.Arrays;
 
@@ -35,7 +35,7 @@ public abstract class AbstractBatchDeleteExecutor {
     private final BatchIdTransactionHelper batchIdTransactionHelper;
     private final ClusterLockService clusterLockService;
     private final StroomPropertyService propertyService;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     private final String taskName;
     private final String clusterLockName;
@@ -46,13 +46,13 @@ public abstract class AbstractBatchDeleteExecutor {
 
     public AbstractBatchDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                                        final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
-                                       final TaskMonitor taskMonitor, final String taskName, final String clusterLockName,
+                                       final TaskContext taskContext, final String taskName, final String clusterLockName,
                                        final String deleteAgePropertyName, final String deleteBatchSizePropertyName,
                                        final int deleteBatchSizeDefaultValue, final String tempIdTable) {
         this.batchIdTransactionHelper = batchIdTransactionHelper;
         this.clusterLockService = clusterLockService;
         this.propertyService = propertyService;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
 
         this.taskName = taskName;
         this.clusterLockName = clusterLockName;
@@ -67,7 +67,7 @@ public abstract class AbstractBatchDeleteExecutor {
         LOGGER.info(taskName + " - start");
         if (clusterLockService.tryLock(clusterLockName)) {
             try {
-                if (!taskMonitor.isTerminated()) {
+                if (!taskContext.isTerminated()) {
                     final Long age = getDeleteAge(deleteAgePropertyName);
                     if (age != null) {
                         delete(age);
@@ -85,7 +85,7 @@ public abstract class AbstractBatchDeleteExecutor {
     }
 
     public void delete(final long age) {
-        if (!taskMonitor.isTerminated()) {
+        if (!taskContext.isTerminated()) {
             long count = 0;
             long total = 0;
 
@@ -108,7 +108,7 @@ public abstract class AbstractBatchDeleteExecutor {
                 truncateTempIdTable(total);
             }
 
-            if (!taskMonitor.isTerminated()) {
+            if (!taskContext.isTerminated()) {
                 do {
                     // Insert a batch of ids into the temp id table and find out
                     // how many were inserted.
@@ -121,7 +121,7 @@ public abstract class AbstractBatchDeleteExecutor {
                         // Remove the current batch of ids from the id table.
                         truncateTempIdTable(total);
                     }
-                } while (!taskMonitor.isTerminated() && count >= deleteBatchSize);
+                } while (!taskContext.isTerminated() && count >= deleteBatchSize);
             }
 
             LOGGER.debug("Deleted {} streams in {}.", total, logExecutionTime);
@@ -172,7 +172,7 @@ public abstract class AbstractBatchDeleteExecutor {
     }
 
     private void info(final Object... args) {
-        taskMonitor.info(args);
+        taskContext.info(args);
         Arrays.asList(args).forEach(arg -> LOGGER.debug(arg.toString()));
     }
 

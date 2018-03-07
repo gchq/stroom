@@ -19,9 +19,8 @@ package stroom.node;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.framework.Advised;
-import stroom.entity.util.BaseEntityUtil;
 import stroom.entity.StroomEntityManager;
+import stroom.entity.util.BaseEntityUtil;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
@@ -43,12 +42,12 @@ public class NodeConfigForTesting implements NodeConfig {
     private final Node node1a = createNode("node1a", rack1);
     private final Node node2a = createNode("node2a", rack2);
 
-    private final NodeService nodeService;
+    private final NodeServiceImpl nodeService;
     private final VolumeService volumeService;
     private final StroomEntityManager stroomEntityManager;
 
     @Inject
-    public NodeConfigForTesting(final NodeService nodeService,
+    public NodeConfigForTesting(final NodeServiceImpl nodeService,
                                 final VolumeService volumeService,
                                 final StroomEntityManager stroomEntityManager) {
         this.nodeService = nodeService;
@@ -103,9 +102,6 @@ public class NodeConfigForTesting implements NodeConfig {
     @Override
     public void setup() {
         try {
-            final Object o = ((Advised) nodeService).getTargetSource().getTarget();
-            final NodeServiceImpl nodeServiceImpl = (NodeServiceImpl) o;
-
             final List<Rack> initialRackList = getInitialRackList();
             final List<Node> initialNodeList = getInitialNodeList();
             final List<Volume> initialVolumeList = getInitialVolumeList();
@@ -114,7 +110,7 @@ public class NodeConfigForTesting implements NodeConfig {
             final List<Node> realNodeList = new ArrayList<>();
 
             for (final Rack rack : initialRackList) {
-                final Rack realRack = nodeServiceImpl.getRack(rack.getName());
+                final Rack realRack = nodeService.getRack(rack.getName());
                 if (realRack != null) {
                     realRackList.add(realRack);
                 } else {
@@ -122,7 +118,7 @@ public class NodeConfigForTesting implements NodeConfig {
                 }
             }
             for (final Node node : initialNodeList) {
-                Node realNode = nodeServiceImpl.getNode(node.getName());
+                Node realNode = nodeService.getNode(node.getName());
                 if (realNode == null) {
                     realNode = BaseEntityUtil.clone(node);
                     realNode.setRack(BaseEntityUtil.findByName(realRackList, realNode.getRack().getName()));
@@ -159,8 +155,8 @@ public class NodeConfigForTesting implements NodeConfig {
                 }
             }
 
-            nodeServiceImpl.setNodeName(initialNodeList.get(0).getName());
-            nodeServiceImpl.setRackName(initialRackList.get(0).getName());
+            nodeService.setNodeName(initialNodeList.get(0).getName());
+            nodeService.setRackName(initialRackList.get(0).getName());
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }

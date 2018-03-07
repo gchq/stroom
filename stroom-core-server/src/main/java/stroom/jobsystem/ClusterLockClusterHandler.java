@@ -24,12 +24,14 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedBoolean;
 import stroom.util.spring.StroomFrequencySchedule;
 
+import javax.inject.Singleton;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Singleton
 @TaskHandlerBean(task = ClusterLockClusterTask.class)
 class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, SharedBoolean> {
-    // 10 min
-    public static final long TEN_MINUTES = 10 * 60 * 1000;
+    // 10 minr
+    private static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
     private final ConcurrentHashMap<String, Lock> lockMap = new ConcurrentHashMap<>();
 

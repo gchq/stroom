@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
-import stroom.task.TaskMonitorImpl;
+import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
@@ -56,7 +56,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
             Assert.assertEquals(0, getRowCount());
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
+                    sqlStatisticValueBatchSaveService, new SimpleTaskContext());
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -87,7 +87,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
             Assert.assertEquals(0, getRowCount());
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
+                    sqlStatisticValueBatchSaveService, new SimpleTaskContext());
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -114,7 +114,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
             Assert.assertEquals(0, getRowCount());
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
+                    sqlStatisticValueBatchSaveService, new SimpleTaskContext());
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -137,7 +137,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
             Assert.assertEquals(0, getRowCount());
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
+                    sqlStatisticValueBatchSaveService, new SimpleTaskContext());
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 

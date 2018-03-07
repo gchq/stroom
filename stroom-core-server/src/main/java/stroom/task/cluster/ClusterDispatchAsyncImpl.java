@@ -35,11 +35,13 @@ import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import java.util.Set;
 
 /**
  * Entry to point to distribute cluster tasks in system.
  */
+@Singleton
 public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     public static final String BEAN_NAME = "clusterDispatchAsync";
     public static final String RECEIVE_RESULT_METHOD = "receiveResult";
@@ -56,8 +58,9 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     private String receiveResult;
 
     @Inject
-    ClusterDispatchAsyncImpl(final TaskManager taskManager, final ClusterResultCollectorCache collectorCache,
-                                    @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
+    ClusterDispatchAsyncImpl(final TaskManager taskManager,
+                             final ClusterResultCollectorCache collectorCache,
+                             @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
         this.taskManager = taskManager;
         this.collectorCache = collectorCache;
         this.clusterCallService = clusterCallService;

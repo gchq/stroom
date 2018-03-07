@@ -18,15 +18,14 @@ package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.ScheduledTaskExecutor;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.task.StroomThreadGroup;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
-import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
@@ -71,23 +70,22 @@ public class LifecycleServiceImpl implements LifecycleService {
                                 final StroomEntityManager entityManager,
                                 final ScheduledTaskExecutor scheduledTaskExecutor,
                                 final SecurityContext securityContext,
-                                @Value("#{propertyConfigurer.getProperty('stroom.lifecycle.enabled')}") final String enabled,
-                                @Value("#{propertyConfigurer.getProperty('stroom.lifecycle.executionInterval')}") final String executionIntervalString) {
+                                final StroomPropertyService propertyService) {
         this.taskManager = taskManager;
         this.stroomBeanLifeCycle = stroomBeanLifeCycle;
         this.entityManager = entityManager;
         this.scheduledTaskExecutor = scheduledTaskExecutor;
         this.securityContext = securityContext;
-        this.enabled.set(PropertyUtil.toBoolean(enabled, false));
+        this.enabled.set(propertyService.getBooleanProperty("stroom.lifecycle.enabled", false));
 
         Long executionInterval;
         try {
-            executionInterval = ModelStringUtil.parseDurationString(executionIntervalString);
+            executionInterval = ModelStringUtil.parseDurationString(propertyService.getProperty("stroom.lifecycle.executionInterval"));
             if (executionInterval == null) {
                 executionInterval = DEFAULT_INTERVAL;
             }
         } catch (final NumberFormatException e) {
-            LOGGER.error("Unable to parse property 'stroom.lifecycle.executionInterval' value '" + executionIntervalString
+            LOGGER.error("Unable to parse property 'stroom.lifecycle.executionInterval' value '" + propertyService.getProperty("stroom.lifecycle.executionInterval")
                     + "', using default of '10s' instead", e);
             executionInterval = DEFAULT_INTERVAL;
         }

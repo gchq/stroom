@@ -40,11 +40,8 @@ import javax.validation.constraints.NotNull;
 @Configuration
 public class SecuritySpringConfig {
     @Bean
-    public AuthenticationServiceClients authenticationServiceClients(
-            @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}") final String ourApiToken,
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authServiceUrl,
-            @Value("#{propertyConfigurer.getProperty('stroom.authentication.required')}") final String authRequired) {
-        return new AuthenticationServiceClients(ourApiToken, authServiceUrl, authRequired);
+    public AuthenticationServiceClients authenticationServiceClients(final StroomPropertyService propertyService) {
+        return new AuthenticationServiceClients(propertyService);
     }
 
     @Bean
@@ -148,11 +145,9 @@ public class SecuritySpringConfig {
     }
 
     @Bean
-    public JWTService jWTService(@NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authenticationServiceUrl,
-                                 @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String authJwtIssuer,
-                                 @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}") final boolean enableTokenRevocationCheck,
+    public JWTService jWTService(final StroomPropertyService propertyService,
                                  final AuthenticationServiceClients authenticationServiceClients) {
-        return new JWTService(authenticationServiceUrl, authJwtIssuer, enableTokenRevocationCheck, authenticationServiceClients);
+        return new JWTService(propertyService, authenticationServiceClients);
     }
 
     @Bean

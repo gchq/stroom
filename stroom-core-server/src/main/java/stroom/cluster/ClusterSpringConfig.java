@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.node.NodeCache;
 import stroom.node.NodeService;
 import stroom.node.shared.ClientPropertiesService;
+import stroom.properties.StroomPropertyService;
 import stroom.task.TaskManager;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
@@ -45,10 +46,8 @@ public class ClusterSpringConfig {
     @Bean("clusterCallServiceRemote")
     public ClusterCallServiceRemote clusterCallServiceRemote(final NodeCache nodeCache,
                                                              final StroomBeanStore beanStore,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallUseLocal')}") final boolean clusterCallUseLocal,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallReadTimeout')}") final String clusterCallReadTimeout,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallIgnoreSSLHostnameVerifier')}") final boolean ignoreSSLHostnameVerifier) {
-        return new ClusterCallServiceRemote(nodeCache, beanStore, clusterCallUseLocal, clusterCallReadTimeout, ignoreSSLHostnameVerifier);
+                                                             final StroomPropertyService propertyService) {
+        return new ClusterCallServiceRemote(nodeCache, beanStore, propertyService);
     }
 
     @Bean(ClusterNodeManager.BEAN_NAME)

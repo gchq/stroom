@@ -31,7 +31,7 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -54,10 +54,10 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
     StreamTaskDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                              final ClusterLockService clusterLockService,
                              final StroomPropertyService propertyService,
-                             final TaskMonitor taskMonitor,
+                             final TaskContext taskContext,
                              final StreamTaskCreatorImpl streamTaskCreator,
                              final StreamProcessorFilterService streamProcessorFilterService) {
-        super(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor, TASK_NAME, LOCK_NAME,
+        super(batchIdTransactionHelper, clusterLockService, propertyService, taskContext, TASK_NAME, LOCK_NAME,
                 STREAM_TASKS_DELETE_AGE_PROPERTY, STREAM_TASKS_DELETE_BATCH_SIZE_PROPERTY,
                 DEFAULT_STREAM_TASK_DELETE_BATCH_SIZE, TEMP_STRM_TASK_ID_TABLE);
         this.streamTaskCreator = streamTaskCreator;

@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
@@ -78,6 +78,8 @@ import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
+import javax.transaction.Transactional.TxType;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -98,6 +100,7 @@ import java.util.stream.Collectors;
  * Stores streams in the stream store indexed by some meta data.
  * </p>
  */
+@Singleton
 @Transactional
 public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private static final String MYSQL_INDEX_STRM_CRT_MS_IDX = "STRM_CRT_MS_IDX";
@@ -680,7 +683,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public long getLockCount() {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT count(*) FROM ");
@@ -696,7 +699,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      */
     @Override
     @SuppressWarnings("unchecked")
-    @Transactional(readOnly = true)
+    @Transactional
     public Set<StreamVolume> findStreamVolume(final Long metaDataId) {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT sv FROM ");
@@ -714,7 +717,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public BaseResultList<Stream> find(final OldFindStreamCriteria originalCriteria) {
         final boolean relationshipQuery = originalCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
         final PageRequest pageRequest = originalCriteria.getPageRequest();
@@ -1178,7 +1181,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      */
     @Override
     @SuppressWarnings("unchecked")
-    @Transactional(readOnly = true)
+    @Transactional
     public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
         final StreamType streamType = getStreamType(criteria.getStreamType());
 
@@ -1325,7 +1328,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     @Secured(Stream.DELETE_DATA_PERMISSION)
-    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public Long findDelete(final FindStreamCriteria criteria) throws RuntimeException {
         final Context context = new Context(null, System.currentTimeMillis());
         final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);

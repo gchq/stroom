@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
+import stroom.util.guice.PipelineScoped;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -29,6 +30,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+@PipelineScoped
 public class DefaultErrorWriter implements ErrorWriter {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultErrorWriter.class);
 

@@ -22,6 +22,7 @@ import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
@@ -37,6 +38,7 @@ import java.util.regex.Pattern;
  * Utility class to split out the query of the node status in a separate read
  * only transaction so it queries the slave node.
  */
+@Singleton
 public class NodeStatusServiceUtil {
     private static final String INTERNAL_STAT_KEY_MEMORY = "memory";
     private static final String INTERNAL_STAT_KEY_CPU = "cpu";

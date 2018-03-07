@@ -9,6 +9,7 @@ import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 
+import javax.inject.Inject;
 import java.util.Map;
 import java.util.UUID;
 
@@ -18,7 +19,9 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     private final SecurityContext securityContext;
     private final ExplorerTreeDao explorerTreeDao;
 
-    FolderExplorerActionHandler(final SecurityContext securityContext, final ExplorerTreeDao explorerTreeDao) {
+    @Inject
+    FolderExplorerActionHandler(final SecurityContext securityContext,
+                                final ExplorerTreeDao explorerTreeDao) {
         this.securityContext = securityContext;
         this.explorerTreeDao = explorerTreeDao;
     }

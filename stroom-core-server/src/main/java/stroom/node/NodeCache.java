@@ -23,7 +23,9 @@ import stroom.entity.shared.EntityAction;
 import stroom.node.shared.Node;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeCache implements Clearable, EntityEvent.Handler {
     private final NodeServiceGetDefaultNode nodeService;

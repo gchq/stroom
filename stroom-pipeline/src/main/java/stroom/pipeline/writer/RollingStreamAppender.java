@@ -39,7 +39,7 @@ import stroom.streamstore.StreamTarget;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -67,13 +67,13 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
     @Inject
     RollingStreamAppender(final RollingDestinations destinations,
-                          final TaskMonitor taskMonitor,
+                          final TaskContext taskContext,
                           final StreamStore streamStore,
                           final StreamHolder streamHolder,
                           final FeedService feedService,
                           final StreamTypeService streamTypeService,
                           final NodeCache nodeCache) {
-        super(destinations, taskMonitor);
+        super(destinations, taskContext);
         this.streamStore = streamStore;
         this.streamHolder = streamHolder;
         this.feedService = feedService;

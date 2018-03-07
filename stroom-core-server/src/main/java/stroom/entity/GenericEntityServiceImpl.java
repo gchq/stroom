@@ -25,6 +25,7 @@ import stroom.entity.shared.HasLoadById;
 import stroom.entity.shared.HasLoadByUuid;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.Set;
 

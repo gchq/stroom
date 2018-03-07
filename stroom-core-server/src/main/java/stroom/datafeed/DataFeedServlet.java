@@ -42,7 +42,7 @@ public class DataFeedServlet extends HttpServlet {
     private final Provider<RequestHandler> requestHandlerProvider;
 
     @Inject
-    public DataFeedServlet(final Provider<RequestHandler> requestHandlerProvider) {
+    DataFeedServlet(final Provider<RequestHandler> requestHandlerProvider) {
         this.requestHandlerProvider = requestHandlerProvider;
     }
 

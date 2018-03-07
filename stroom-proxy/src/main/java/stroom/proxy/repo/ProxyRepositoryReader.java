@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
+import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
@@ -55,7 +56,7 @@ public final class ProxyRepositoryReader {
     private final RepositoryProcessor repositoryProcessor;
 
     @Inject
-    ProxyRepositoryReader(final Monitor monitor,
+    ProxyRepositoryReader(final TaskContext taskContext,
                           final ProxyRepositoryManager proxyRepositoryManager,
                           final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
                           final StreamHandlerFactory handlerFactory) {
@@ -66,7 +67,7 @@ public final class ProxyRepositoryReader {
 
         this.executorService = Executors.newFixedThreadPool(proxyRepositoryReaderConfig.getForwardThreadCount());
         final ProxyFileProcessor feedFileProcessor = new ProxyFileProcessorImpl(proxyRepositoryReaderConfig, handlerFactory, finish);
-        repositoryProcessor = new RepositoryProcessor(feedFileProcessor, executorService, monitor);
+        repositoryProcessor = new RepositoryProcessor(feedFileProcessor, executorService, taskContext);
     }
 
     private static Scheduler createScheduler(final String simpleCron) {

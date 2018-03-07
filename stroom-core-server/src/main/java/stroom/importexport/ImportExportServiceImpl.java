@@ -28,6 +28,7 @@ import stroom.util.shared.SharedList;
 import stroom.util.zip.ZipUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;

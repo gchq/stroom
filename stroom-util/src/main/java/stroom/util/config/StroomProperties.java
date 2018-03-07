@@ -21,12 +21,11 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.Resource;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomResourceLoaderUtil;
 
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -73,39 +72,38 @@ public class StroomProperties {
 //            }
 
             // Get properties for the current user if there are any.
-            loadResource(resourceLoader, "file:" + System.getProperty("user.home") + "/" + USER_CONF_PATH, Source.USER_CONF);
+            final Path file = Paths.get(System.getProperty("user.home") + "/" + USER_CONF_PATH);
+            if (Files.isRegularFile(file)) {
+                loadResource(file, Source.USER_CONF);
+            }
             ensureStroomTempEstablished();
         }
     }
 
-    private static void loadResource(final DefaultResourceLoader resourceLoader, final String resourceName, final Source source) {
+    private static void loadResource(final Path file, final Source source) {
         try {
-            final Resource resource = StroomResourceLoaderUtil.getResource(resourceLoader, resourceName);
+            final InputStream inputStream = Files.newInputStream(file);
+            final Properties properties = new Properties();
+            properties.load(inputStream);
+            CloseableUtil.close(inputStream);
 
-            if (resource != null && resource.exists()) {
-                final InputStream is = resource.getInputStream();
-                final Properties properties = new Properties();
-                properties.load(is);
-                CloseableUtil.close(is);
-
-                for (final Map.Entry<Object, Object> entry : properties.entrySet()) {
-                    final String key = (String) entry.getKey();
-                    final String value = (String) entry.getValue();
-                    if (value != null) {
-                        setProperty(key, value, source);
-                    }
+            for (final Map.Entry<Object, Object> entry : properties.entrySet()) {
+                final String key = (String) entry.getKey();
+                final String value = (String) entry.getValue();
+                if (value != null) {
+                    setProperty(key, value, source);
                 }
+            }
 
-                String path = "";
-                try {
-                    final Path file = Paths.get(resource.getURI());
-                    final Path dir = file.getParent();
-                    path = FileUtil.getCanonicalPath(dir);
-                } catch (final Exception e) {
-                    // Ignore.
-                }
+            String path = "";
+            try {
+                final Path dir = file.getParent();
+                path = FileUtil.getCanonicalPath(dir);
+            } catch (final Exception e) {
+                // Ignore.
+            }
 
-                LOGGER.info("Using properties '{}' from '{}'", resourceName, path);
+            LOGGER.info("Using properties from '{}'", path);
 
 //                // Is this this web app property file?
 //                if (Source.WAR.equals(source)) {
@@ -116,9 +114,6 @@ public class StroomProperties {
 //                        LOGGER.warn("Unable to locate properties dir ... maybe running in maven?");
 //                    }
 //                }
-            } else {
-                LOGGER.info("Properties not found at '{}'", resourceName);
-            }
         } catch (final Exception e) {
             e.printStackTrace();
         }

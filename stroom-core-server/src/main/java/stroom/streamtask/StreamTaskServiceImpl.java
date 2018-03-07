@@ -18,7 +18,7 @@
 package stroom.streamtask;
 
 import event.logging.BaseAdvancedQueryItem;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -43,12 +43,14 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.Set;
 
 /**
  * Base class the API stream task services.
  */
+@Singleton
 @Transactional
 @Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, FindStreamTaskCriteria>

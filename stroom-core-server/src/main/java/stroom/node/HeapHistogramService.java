@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import stroom.properties.StroomPropertyService;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
  * Class for generating a java heap map histogram using the 'jmap' tool supplied with the JDK. Requires that
  * jmap is available on the filesystem and executable by this java process.
  */
+@Singleton
 @SuppressWarnings("unused")
 class HeapHistogramService {
 

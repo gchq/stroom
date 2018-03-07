@@ -20,6 +20,7 @@ import stroom.entity.MockEntityService;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -29,6 +30,7 @@ import java.util.UUID;
  * Very simple mock user manager with just one user.
  * </p>
  */
+@Singleton
 public class MockUserService extends MockEntityService<User, FindUserCriteria> implements UserService {
     @Override
     public User loadByUuid(final String uuid) throws RuntimeException {

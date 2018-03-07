@@ -27,7 +27,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.scheduler.SimpleCronScheduler;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -263,12 +263,12 @@ public class SQLStatisticAggregationTransactionHelper {
         return ((timeMs) / scale) * scale;
     }
 
-    protected int doAggregateSQL_Update(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
+    protected int doAggregateSQL_Update(final Connection connection, final TaskContext taskContext, final String prefix,
                                         final String sql, final List<Object> args) throws SQLException {
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = SqlUtil.buildSQLTrace(sql, args);
 
-        taskMonitor.info("{}\n {}", prefix, trace);
+        taskContext.info("{}\n {}", prefix, trace);
 
         final int count = ConnectionUtil.executeUpdate(connection, sql, args);
 
@@ -276,12 +276,12 @@ public class SQLStatisticAggregationTransactionHelper {
         return count;
     }
 
-    protected long doLongSelect(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
+    protected long doLongSelect(final Connection connection, final TaskContext taskContext, final String prefix,
                                 final String sql, final List<Object> args) throws SQLException {
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = SqlUtil.buildSQLTrace(sql, args);
 
-        taskMonitor.info("{}\n {}", prefix, trace);
+        taskContext.info("{}\n {}", prefix, trace);
 
         final long result = ConnectionUtil.executeQueryLongResult(connection, sql, args);
 
@@ -316,11 +316,11 @@ public class SQLStatisticAggregationTransactionHelper {
         }
     }
 
-    public Long deleteOldStats(final TaskMonitor taskMonitor) throws SQLException {
-        return deleteOldStats(System.currentTimeMillis(), taskMonitor);
+    public Long deleteOldStats(final TaskContext taskContext) throws SQLException {
+        return deleteOldStats(System.currentTimeMillis(), taskContext);
     }
 
-    public Long deleteOldStats(final long timeNowMs, final TaskMonitor taskMonitor) throws SQLException {
+    public Long deleteOldStats(final long timeNowMs, final TaskContext taskContext) throws SQLException {
         final AggregateConfig mostCoarseLevel = new AggregateConfig(StatisticType.COUNT, MS_MONTH, MONTH_PRECISION,
                 DEFAULT_PRECISION, "* * *");
 
@@ -333,7 +333,7 @@ public class SQLStatisticAggregationTransactionHelper {
             // everything older than that time bucket
             final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(timeNowMs - retentionAgeMs);
             try (final Connection connection = statisticsDataSource.getConnection()) {
-                final long rowsAffected = doAggregateSQL_Update(connection, taskMonitor, "", DELETE_OLD_STATS,
+                final long rowsAffected = doAggregateSQL_Update(connection, taskContext, "", DELETE_OLD_STATS,
                         Arrays.asList((Object) oldestTimeBucketToKeep));
                 LOGGER.info("Deleted {} stats with a time older than {}", rowsAffected,
                         DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep));
@@ -348,7 +348,7 @@ public class SQLStatisticAggregationTransactionHelper {
         Arrays.asList(args).forEach(arg -> LOGGER.debug(arg.toString()));
     }
 
-    public long aggregateConfigStage1(final TaskMonitor taskMonitor, final String prefix, final long batchSize,
+    public long aggregateConfigStage1(final TaskContext taskContext, final String prefix, final long batchSize,
                                       final long timeNowMs) throws SQLException {
         if (!isMySqlDialect()) {
             throw new UnsupportedOperationException("Need MySQL to do statistics aggregation");
@@ -360,11 +360,11 @@ public class SQLStatisticAggregationTransactionHelper {
             // mark a set of records in STATVAL_SRC as being processed so all
             // DML below can filter by them
             // records are chosen at random to avoid overhead of a sort
-            processCount = doAggregateSQL_Update(connection, taskMonitor, AGGREGATE, STAGE1_MARK_PROCESSING,
+            processCount = doAggregateSQL_Update(connection, taskContext, AGGREGATE, STAGE1_MARK_PROCESSING,
                     Arrays.asList((Object) batchSize));
 
             // Fill the STAT_KEY table with any new Keys
-            doAggregateSQL_Update(connection, taskMonitor, AGGREGATE, STAGE1_AGGREGATE_SOURCE_KEY, null);
+            doAggregateSQL_Update(connection, taskContext, AGGREGATE, STAGE1_AGGREGATE_SOURCE_KEY, null);
 
             // Stage 1 is about handling values in the source table that are
             // implied to be precision 0 and aggregating them into SQL_STAT_VAL
@@ -388,7 +388,7 @@ public class SQLStatisticAggregationTransactionHelper {
                     // if it is a value stat then the VAL column gets the sum of
                     // the grouped stats and the CNT column
                     // gets th count of the number of records in the group
-                    final int rowsAffectedOnUpsert = doAggregateSQL_Update(connection, taskMonitor, newPrefix,
+                    final int rowsAffectedOnUpsert = doAggregateSQL_Update(connection, taskContext, newPrefix,
                             STAGE1_UPSERT,
                             Arrays.asList(level.getSQLPrecision(), level.getPrecision(),
                                     level.getValueType().getPrimitiveValue(), aggregateToMs,
@@ -399,7 +399,7 @@ public class SQLStatisticAggregationTransactionHelper {
                     // i.e. all the records we have just upserted.
                     int rowsAffectedOnDelete = 0;
                     if (rowsAffectedOnUpsert > 0) {
-                        rowsAffectedOnDelete = doAggregateSQL_Update(connection, taskMonitor, newPrefix,
+                        rowsAffectedOnDelete = doAggregateSQL_Update(connection, taskContext, newPrefix,
                                 STAGE1_AGGREGATE_DELETE_SOURCE,
                                 Arrays.asList(aggregateToMs, level.getValueType().getPrimitiveValue()));
                     }
@@ -417,7 +417,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
     }
 
-    public void aggregateConfigStage2(final TaskMonitor taskMonitor, final String prefix, final long timeNowMs)
+    public void aggregateConfigStage2(final TaskContext taskContext, final String prefix, final long timeNowMs)
             throws SQLException {
         if (!isMySqlDialect()) {
             throw new UnsupportedOperationException("Need MySQL to do statistics aggregation");
@@ -449,7 +449,7 @@ public class SQLStatisticAggregationTransactionHelper {
                     // otherwise. Don't car how many rows there are
                     // just that there are more than zero. This stops the upsert
                     // from changing rows for no reason.
-                    final long rowsExist = doLongSelect(connection, taskMonitor, newPrefix, STAGE2_FIND_ROWS_TO_MOVE,
+                    final long rowsExist = doLongSelect(connection, taskContext, newPrefix, STAGE2_FIND_ROWS_TO_MOVE,
                             Arrays.asList(aggregateToMs, lastPrecision, valueType));
 
                     if (rowsExist == 1) {
@@ -459,7 +459,7 @@ public class SQLStatisticAggregationTransactionHelper {
                         // required. Does an update or
                         // insert depending on if the target precision has a
                         // record or not.
-                        final int upsertCount = doAggregateSQL_Update(connection, taskMonitor, newPrefix, STAGE2_UPSERT,
+                        final int upsertCount = doAggregateSQL_Update(connection, taskContext, newPrefix, STAGE2_UPSERT,
                                 Arrays.asList(targetPrecision, valueType, targetPrecision, valueType,
                                         aggregateToMs, targetSqlPrecision, targetSqlPrecision, aggregateToMs,
                                         lastPrecision, valueType));
@@ -467,7 +467,7 @@ public class SQLStatisticAggregationTransactionHelper {
                         if (upsertCount > 0) {
                             // now delete the old stats that we just copied up
                             // into the new precision
-                            doAggregateSQL_Update(connection, taskMonitor, newPrefix,
+                            doAggregateSQL_Update(connection, taskContext, newPrefix,
                                     STAGE2_AGGREGATE_DELETE_OLD_PRECISION,
                                     Arrays.asList(aggregateToMs, lastPrecision, valueType));
                         }

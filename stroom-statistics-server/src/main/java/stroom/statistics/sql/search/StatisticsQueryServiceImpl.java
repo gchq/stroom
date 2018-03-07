@@ -65,11 +65,11 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     public static Coprocessor createCoprocessor(final CoprocessorSettings settings,
                                                 final FieldIndexMap fieldIndexMap,
                                                 final Map<String, String> paramMap,
-                                                final HasTerminate taskMonitor) {
+                                                final HasTerminate taskContext) {
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
-                    fieldIndexMap, taskMonitor, paramMap);
+                    fieldIndexMap, taskContext, paramMap);
             return tableCoprocessor;
         }
         return null;

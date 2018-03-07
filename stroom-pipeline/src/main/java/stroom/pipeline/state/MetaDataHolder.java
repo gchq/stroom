@@ -26,6 +26,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
+import stroom.util.guice.PipelineScoped;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@PipelineScoped
 public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Holder {
     private static final int MINIMUM_BYTE_COUNT = 10;
     private static final String FEED = "Feed";

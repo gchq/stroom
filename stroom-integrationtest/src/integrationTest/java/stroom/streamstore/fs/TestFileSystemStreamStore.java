@@ -53,7 +53,7 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.StreamTaskCreator;
-import stroom.task.TaskMonitorImpl;
+import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
@@ -710,7 +710,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         streamStore.closeStreamTarget(streamTarget);
 
         // Create tasks.
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
 
         Stream reloadedStream = streamStore.loadStreamById(streamTarget.getStream().getId());
         Assert.assertNotNull(reloadedStream);

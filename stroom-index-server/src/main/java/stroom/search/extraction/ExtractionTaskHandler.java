@@ -48,7 +48,7 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -68,7 +68,7 @@ public class ExtractionTaskHandler {
     private final PipelineFactory pipelineFactory;
     private final PipelineService pipelineService;
     private final PipelineDataCache pipelineDataCache;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final SecurityContext securityContext;
 
     private ExtractionTask task;
@@ -84,7 +84,7 @@ public class ExtractionTaskHandler {
                           final PipelineFactory pipelineFactory,
                           @Named("cachedPipelineService") final PipelineService pipelineService,
                           final PipelineDataCache pipelineDataCache,
-                          final TaskMonitor taskMonitor,
+                          final TaskContext taskContext,
                           final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedService = feedService;
@@ -96,16 +96,16 @@ public class ExtractionTaskHandler {
         this.pipelineFactory = pipelineFactory;
         this.pipelineService = pipelineService;
         this.pipelineDataCache = pipelineDataCache;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.securityContext = securityContext;
     }
 
     public VoidResult exec(final ExtractionTask task) {
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            taskMonitor.setName("Extraction");
-            if (!taskMonitor.isTerminated()) {
+            taskContext.setName("Extraction");
+            if (!taskContext.isTerminated()) {
                 final String streamId = String.valueOf(task.getStreamId());
-                taskMonitor.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
+                taskContext.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
 
                 extract(task);
             }

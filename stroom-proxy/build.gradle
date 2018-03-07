@@ -12,9 +12,11 @@ dependencies {
     compile libs.commons_lang
     compile libs.jackson_annotations
 
-    compile libs.guice4
     compile libs.javax_inject
-
+        compile libs.guice4
+    compile libs.guice_multibindings
+    compile libs.guice_persist
+    
     compile libs.javax_servlet_api
     compile libs.dropwizard_lifecycle
 

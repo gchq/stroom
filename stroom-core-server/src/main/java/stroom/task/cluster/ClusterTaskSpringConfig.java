@@ -32,14 +32,14 @@ import javax.inject.Named;
 
 @Configuration
 public class ClusterTaskSpringConfig {
-    @Bean
-    @Scope(value = StroomScope.TASK)
-    public ClusterDispatchAsyncHelper clusterDispatchAsyncHelper(final StroomPropertyService stroomPropertyService,
-                                                                 final ClusterResultCollectorCache collectorCache,
-                                                                 final ClusterDispatchAsync dispatcher,
-                                                                 final TargetNodeSetFactory targetNodeSetFactory) {
-        return new ClusterDispatchAsyncHelper(stroomPropertyService, collectorCache, dispatcher, targetNodeSetFactory);
-    }
+//    @Bean
+//    @Scope(value = StroomScope.TASK)
+//    public ClusterDispatchAsyncHelper clusterDispatchAsyncHelper(final StroomPropertyService stroomPropertyService,
+//                                                                 final ClusterResultCollectorCache collectorCache,
+//                                                                 final ClusterDispatchAsync dispatcher,
+//                                                                 final TargetNodeSetFactory targetNodeSetFactory) {
+//        return new ClusterDispatchAsyncHelper(stroomPropertyService, collectorCache, dispatcher, targetNodeSetFactory);
+//    }
 
     @Bean(ClusterDispatchAsyncImpl.BEAN_NAME)
     @Lazy

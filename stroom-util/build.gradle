@@ -20,6 +20,10 @@ dependencies {
     compile libs.spring_context
     compile libs.spring_core
     compile libs.spring_test
+    compile libs.guice4
+    compile libs.guice_multibindings
+    compile libs.guice_persist
+    compile libs.fast_classpath_scanner
     permitUnusedDeclared libs.spring_test
 
     testCompile libs.junit

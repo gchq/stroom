@@ -19,17 +19,16 @@ package stroom.datafeed;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.springframework.test.context.ContextConfiguration;
+import org.junit.runner.RunWith;
 import stroom.feed.FeedService;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.streamstore.MockStreamStore;
-import stroom.test.StroomIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.test.GuiceJUnit4Runner;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
@@ -43,9 +42,9 @@ import java.util.zip.ZipOutputStream;
  * The combination of mock and prod classes means this test needs its own
  * context.
  */
-@ContextConfiguration(classes = {TestDataFeedServiceImplConfiguration.class})
-@Ignore("TODO 2015-11-18: These tests have interdependencies: they pass individually but fail when run together. Ignoring so the test may be fixed later.")
-public class TestDataFeedServiceImpl extends StroomIntegrationTest {
+//@ContextConfiguration(classes = {TestDataFeedServiceImplConfiguration.class})
+//@Ignore("TODO 2015-11-18: These tests have interdependencies: they pass individually but fail when run together. Ignoring so the test may be fixed later.")
+public class TestDataFeedServiceImpl extends TestBase {
     @Inject
     private DataFeedServlet dataFeedService;
     @Inject

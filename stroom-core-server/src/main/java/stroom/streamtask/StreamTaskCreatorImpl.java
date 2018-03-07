@@ -59,10 +59,11 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -82,6 +83,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>
  * Fill up our pool if we are below our low water mark (FILL_LOW_SIZE).
  */
+@Singleton
 public class StreamTaskCreatorImpl implements StreamTaskCreator {
     public static final String STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY = "stroom.streamTask.fillTaskQueue";
     public static final String STREAM_TASKS_CREATE_TASKS_PROPERTY = "stroom.streamTask.createTasks";
@@ -378,7 +380,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
      * Task call back
      */
     @Override
-    public void createTasks(final TaskMonitor taskMonitor) {
+    public void createTasks(final TaskContext taskContext) {
         // We need to make sure that only 1 thread at a time is allowed to
         // create tasks. This should always be the case in production but some
         // tests will call this directly while scheduled execution could also be
@@ -386,7 +388,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         createTasksLock.lock();
         try {
             if (allowFillTaskStore) {
-                doCreateTasks(taskMonitor);
+                doCreateTasks(taskContext);
             }
         } catch (final Throwable t) {
             LOGGER.error(t.getMessage(), t);
@@ -395,7 +397,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         }
     }
 
-    private void doCreateTasks(final TaskMonitor taskMonitor) {
+    private void doCreateTasks(final TaskContext taskContext) {
         // We need to make sure that only 1 thread at a time is allowed to
         // create tasks. This should always be the case in production but some
         // tests will call this directly while scheduled execution could also be
@@ -464,7 +466,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     if (remaining > 0 && queueSize < halfQueueSize) {
                         if (queue.compareAndSetFilling(false, true)) {
                             // Create tasks for this filter.
-                            createTasksForFilter(taskMonitor, node, filter, queue, totalQueueSize, recentStreamInfo);
+                            createTasksForFilter(taskContext, node, filter, queue, totalQueueSize, recentStreamInfo);
                         }
                     }
                 }
@@ -498,7 +500,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         LOGGER.debug("doCreateTasks() - Finished in {}", logExecutionTime);
     }
 
-    private void createTasksForFilter(final TaskMonitor taskMonitor, final Node node,
+    private void createTasksForFilter(final TaskContext taskContext, final Node node,
                                       final StreamProcessorFilter filter, final StreamTaskQueue queue, final int maxQueueSize,
                                       final StreamTaskCreatorRecentStreamDetails recentStreamInfo) {
         boolean searching = false;
@@ -524,7 +526,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                         // node and their associated stream is unlocked then add
                         // them here.
                         if (isFillTaskQueueEnabled()) {
-                            count = addUnownedTasks(taskMonitor, node, loadedFilter, queue, tasksToCreate);
+                            count = addUnownedTasks(taskContext, node, loadedFilter, queue, tasksToCreate);
                         }
 
                         // If we allowing tasks to be created then go ahead and
@@ -541,7 +543,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
                             // Skip once we have done all that is required
                             final int requiredTasks = tasksToCreate;
-                            if (requiredTasks > 0 && !taskMonitor.isTerminated()) {
+                            if (requiredTasks > 0 && !taskContext.isTerminated()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
 
                                 final Context context = new Context(null, System.currentTimeMillis());
@@ -634,7 +636,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                     } else {
                                         // Create tasks from a standard stream
                                         // filter criteria.
-                                        createTasksFromCriteria(loadedFilter, findStreamCriteria, taskMonitor, logPrefix,
+                                        createTasksFromCriteria(loadedFilter, findStreamCriteria, taskContext, logPrefix,
                                                 streamQueryTime, node, requiredTasks, queue, recentStreamInfo, tracker);
                                     }
                                 }
@@ -659,7 +661,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         }
     }
 
-    private int addUnownedTasks(final TaskMonitor taskMonitor, final Node node, final StreamProcessorFilter filter,
+    private int addUnownedTasks(final TaskContext taskContext, final Node node, final StreamProcessorFilter filter,
                                 final StreamTaskQueue queue, final int tasksToCreate) {
         int count = 0;
 
@@ -684,10 +686,10 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     if (modified != null) {
                         queue.add(modified);
                         count++;
-                        taskMonitor.info("Adding {}/{} non owned Tasks", count, size);
+                        taskContext.info("Adding {}/{} non owned Tasks", count, size);
                     }
 
-                    if (taskMonitor.isTerminated()) {
+                    if (taskContext.isTerminated()) {
                         break;
                     }
                 } catch (final Throwable t) {
@@ -809,7 +811,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
     private void createTasksFromCriteria(final StreamProcessorFilter filter,
                                          final OldFindStreamCriteria findStreamCriteria,
-                                         final TaskMonitor taskMonitor,
+                                         final TaskContext taskContext,
                                          final String logPrefix,
                                          final long streamQueryTime,
                                          final Node node,

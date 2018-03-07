@@ -24,7 +24,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import java.io.IOException;
 
@@ -42,12 +42,12 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
     private boolean validatedSettings;
 
     private final RollingDestinations destinations;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     public AbstractRollingAppender(final RollingDestinations destinations,
-                                   final TaskMonitor taskMonitor) {
+                                   final TaskContext taskContext) {
         this.destinations = destinations;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.validatedSettings = false;
     }
 
@@ -59,7 +59,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         final Object key = getKey();
 
         // Send off this record to be written to a destination.
-        return destinations.borrow(taskMonitor, key, this);
+        return destinations.borrow(taskContext, key, this);
     }
 
     @Override

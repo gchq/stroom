@@ -26,7 +26,7 @@ import stroom.streamstore.StreamStore;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Named;
 
@@ -72,8 +72,8 @@ public class MockStreamTaskSpringConfig {
                                                                  final StreamTaskHelper streamTaskHelper,
                                                                  final StreamStore streamStore,
                                                                  final NodeCache nodeCache,
-                                                                 final TaskMonitor taskMonitor) {
-        return new StreamProcessorTaskHandler(beanStore, streamProcessorService, streamProcessorFilterService, streamTaskHelper, streamStore, nodeCache, taskMonitor);
+                                                                 final TaskContext taskContext) {
+        return new StreamProcessorTaskHandler(beanStore, streamProcessorService, streamProcessorFilterService, streamTaskHelper, streamStore, nodeCache, taskContext);
     }
 
     @Bean

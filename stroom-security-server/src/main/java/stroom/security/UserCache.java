@@ -23,9 +23,11 @@ import stroom.security.shared.UserRef;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 class UserCache {
     private static final int MAX_CACHE_ENTRIES = 1000;
 

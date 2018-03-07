@@ -42,10 +42,11 @@ import stroom.task.TaskHandlerBean;
 import stroom.task.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,9 +57,9 @@ import java.util.Set;
 
 @TaskHandlerBean(task = AsyncSearchTask.class)
 class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidResult> {
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final TargetNodeSetFactory targetNodeSetFactory;
-    private final ClusterDispatchAsync dispatcher;
+    private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final IndexService indexService;
@@ -67,18 +68,18 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
     private final SecurityContext securityContext;
 
     @Inject
-    AsyncSearchTaskHandler(final TaskMonitor taskMonitor,
+    AsyncSearchTaskHandler(final TaskContext taskContext,
                            final TargetNodeSetFactory targetNodeSetFactory,
-                           final ClusterDispatchAsync dispatcher,
+                           final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
                            final ClusterDispatchAsyncHelper dispatchHelper,
                            final ClusterResultCollectorCache clusterResultCollectorCache,
                            final IndexService indexService,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
                            final SecurityContext securityContext) {
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.targetNodeSetFactory = targetNodeSetFactory;
-        this.dispatcher = dispatcher;
+        this.dispatchAsyncProvider = dispatchAsyncProvider;
         this.dispatchHelper = dispatchHelper;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.indexService = indexService;
@@ -100,7 +101,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Get the nodes that we are going to send the search request
                     // to.
                     final Set<Node> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                    taskMonitor.info(task.getSearchName() + " - initialising");
+                    taskContext.info(task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
                     // Reload the index.
@@ -150,7 +151,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         if (targetNodes.contains(node)) {
                             final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
                                     task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
-                            dispatcher.execAsync(clusterSearchTask, resultCollector, sourceNode,
+                            dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
                                     Collections.singleton(node));
                             expectedNodeResultCount++;
 
@@ -159,7 +160,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                                     .add("Node is not enabled or active. Some search results may be missing.");
                         }
                     }
-                    taskMonitor.info(task.getSearchName() + " - searching...");
+                    taskContext.info(task.getSearchName() + " - searching...");
 
                     // Keep waiting until search completes.
                     while (!task.isTerminated() && !resultHandler.shouldTerminateSearch() && !resultHandler.isComplete()) {
@@ -173,7 +174,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                             terminateTasks(task);
                         }
                     }
-                    taskMonitor.info(task.getSearchName() + " - complete");
+                    taskContext.info(task.getSearchName() + " - complete");
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
@@ -189,7 +190,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                 // We need to wait here for the client to keep getting results if
                 // this is an interactive search.
-                taskMonitor.info(task.getSearchName() + " - staying alive for UI requests");
+                taskContext.info(task.getSearchName() + " - staying alive for UI requests");
             }
 
             return VoidResult.INSTANCE;
@@ -205,7 +206,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         // will not execute it if the parent task is terminated.
         final GenericServerTask outerTask = GenericServerTask.create(null, task.getUserToken(), "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
         outerTask.setRunnable(() -> {
-            taskMonitor.info(task.getSearchName() + " - terminating child tasks");
+            taskContext.info(task.getSearchName() + " - terminating child tasks");
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addAncestorId(task.getId());
             final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(task.getUserToken(), "Terminate: " + task.getTaskName(), findTaskCriteria, false);

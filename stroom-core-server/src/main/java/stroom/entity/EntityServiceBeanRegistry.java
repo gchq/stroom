@@ -17,6 +17,10 @@
 
 package stroom.entity;
 
+import com.google.inject.Binding;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.document.DocumentStore;
@@ -27,6 +31,7 @@ import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -35,23 +40,74 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Singleton
 public class EntityServiceBeanRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityServiceBeanRegistry.class);
-    private final Map<Class<?>, String> entityServiceClassMap = new HashMap<>();
-    private final Map<String, String> entityServiceTypeMap = new HashMap<>();
+//    private final Map<Class<?>, Object> entityServiceClassMap = new HashMap<>();
+//    private final Map<String, Object> entityServiceTypeMap = new HashMap<>();
     private final Map<List<Object>, Method> entityServiceMethodMap = new ConcurrentHashMap<>();
+    private final Map<String, Object> externalDocRefServices = new HashMap<>();
 
     private final StroomBeanStore beanStore;
-    private volatile boolean init;
-
-    private final Map<String, Object> externalDocRefServices = new HashMap<>();
 
     @Inject
     EntityServiceBeanRegistry(final StroomBeanStore beanStore) {
         this.beanStore = beanStore;
     }
+
+    //    @Inject
+//    EntityServiceBeanRegistry(final Set<EntityService> entityServices,
+//                              final Set<FindService> findServices,
+//                              final Set<DocumentStore> documentStores) {
+//        entityServices.forEach(entityService -> {
+//            final Class<?> entityType = entityService.getEntityClass();
+//            if (entityType != null && Entity.class.isAssignableFrom(entityType)) {
+//                try {
+//                    final Entity entity = (Entity) entityType.newInstance();
+//                    final Object existing = entityServiceTypeMap.put(entity.getType(), entityService);
+//                    if (existing != null) {
+//                        LOGGER.error("Existing bean found for entity type '" + existing + "'");
+//                    }
+//                } catch (final Exception e) {
+//                    LOGGER.error(e.getMessage(), e);
+//                }
+//
+//                final Object existing = entityServiceClassMap.put(entityType, entityService);
+//                if (existing != null) {
+//                    LOGGER.error("Existing bean found for entity type class '" + existing + "'");
+//                }
+//            }
+//
+//            final Class<?> findType = findParameterizedType(entityService.getClass(), BaseCriteria.class);
+//            if (findType != null) {
+//                final Object existing = entityServiceClassMap.put(findType, entityService);
+//                if (existing != null) {
+//                    LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
+//                }
+//            }
+//        });
+//
+//
+//        findServices.forEach(findService -> {
+//            final Class<?> findType = findParameterizedType(findService.getClass(), BaseCriteria.class);
+//            if (findType != null) {
+//                final Object existing = entityServiceClassMap.put(findType, findService);
+//                if (existing != null) {
+//                    LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
+//                }
+//            }
+//        });
+//
+//        documentStores.forEach(documentStore -> {
+//            final Object existing = entityServiceTypeMap.put(documentStore.getDocType(), documentStore);
+//            if (existing != null) {
+//                LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
+//            }
+//        });
+//    }
 
     /**
      * Used to register services that are instantiations of a generic class. These are services that cannot
@@ -65,17 +121,23 @@ public class EntityServiceBeanRegistry {
     }
 
     public Object getEntityService(final Class<?> clazz) {
-        final String beanName = getEntityServiceName(clazz, clazz);
-        return beanStore.getBean(beanName);
+        return beanStore.getBean(clazz);
+
+//        final Binding<?> binding = injector.getBinding(clazz);
+//        if (binding != null) {
+//            return binding.getProvider().get();
+//        }
+//
+//        throw new EntityServiceException("No bean name found for " + clazz.getSimpleName());
     }
 
     public Object getEntityService(final String entityType) {
-        if (externalDocRefServices.containsKey(entityType)) {
-            return externalDocRefServices.get(entityType);
-        } else {
-            final String beanName = getEntityServiceName(entityType);
-            return beanStore.getBean(beanName);
-        }
+        return injector.getInstance(Key.get(String.class, Names.named(entityType)));
+//        if (externalDocRefServices.containsKey(entityType)) {
+//            return externalDocRefServices.get(entityType);
+//        } else {
+//            return entityServiceTypeMap.get(entityType);
+//        }
     }
 
     public Object invoke(final String methodName, final Object... args) {
@@ -88,12 +150,12 @@ public class EntityServiceBeanRegistry {
 
             final Object obj = args[0];
             final Class<?> clazz = obj.getClass();
-            final String beanName = getEntityServiceName(clazz, clazz);
+            final String beanName = getEntityType(clazz, clazz);
             if (beanName == null) {
                 throw new EntityServiceException("No bean name found for " + clazz.getSimpleName());
             }
 
-            final Object entityService = beanStore.getBean(beanName);
+            final Object entityService = getEntityService(beanName);
             final Method method = getMethod(entityService.getClass(), methodName, buildArgTypes(args));
             if (method == null) {
                 throw new EntityServiceException("No method '" + methodName + "' found on bean '" + beanName + "'");
@@ -122,7 +184,7 @@ public class EntityServiceBeanRegistry {
         final List<Object> signature = new ArrayList<>();
         signature.add(methodName);
         signature.addAll(Arrays.asList(argTypes));
-        final Method method = getEntityServiceMethodMap().get(signature);
+        final Method method = entityServiceMethodMap.get(signature);
         if (method != null) {
             return method;
         }
@@ -135,7 +197,7 @@ public class EntityServiceBeanRegistry {
                     }
                 }
                 if (allOk) {
-                    getEntityServiceMethodMap().put(signature, testMethod);
+                    entityServiceMethodMap.put(signature, testMethod);
                     return testMethod;
                 }
 
@@ -144,23 +206,21 @@ public class EntityServiceBeanRegistry {
         return null;
     }
 
-    private String getEntityServiceName(final Class<?> baseClass, final Class<?> entityClass) {
+    private String getEntityType(final Class<?> baseClass, final Class<?> entityClass) {
         if (entityClass == null) {
             throw new EntityServiceException("Unknown handler for " + baseClass.getName(), null, false);
         }
-        final String name = getEntityServiceClassMap().get(entityClass);
-        if (name != null) {
-            return name;
+        final Object entityService = injector.getInstance(entityClass);
+        if (entityService != null) {
+            if (entityService instanceof EntityService) {
+                return ((EntityService) entityService).getEntityType();
+            }
+            if (entityService instanceof DocumentStore) {
+                return ((DocumentStore) entityService).getDocType();
+            }
         }
-        return getEntityServiceName(baseClass, entityClass.getSuperclass());
-    }
 
-    private String getEntityServiceName(final String entityType) {
-        final String name = getEntityServiceTypeMap().get(entityType);
-        if (name == null) {
-            throw new EntityServiceException("No service found for " + entityType, null, false);
-        }
-        return name;
+        return null;
     }
 
     private Class<?> tryParameterizedType(final Type clazz, final Class<?> paramClazz) {
@@ -196,127 +256,5 @@ public class EntityServiceBeanRegistry {
 
         }
         return null;
-    }
-
-    private Map<Class<?>, String> getEntityServiceClassMap() {
-        init();
-        return entityServiceClassMap;
-    }
-
-    private Map<String, String> getEntityServiceTypeMap() {
-        init();
-        return entityServiceTypeMap;
-    }
-
-    private Map<List<Object>, Method> getEntityServiceMethodMap() {
-        init();
-        return entityServiceMethodMap;
-    }
-
-    private void init() {
-        if (init) {
-            return;
-        }
-
-        synchronized (this) {
-            if (init) {
-                return;
-            }
-
-            beanStore.getBeansOfType(EntityService.class, false, false).forEach((name, bean) -> {
-                try {
-                    if (!name.toLowerCase().startsWith("cached")) {
-                        final Class<?> entityType = findParameterizedType(bean.getClass(), Entity.class);
-                        if (entityType != null && Entity.class.isAssignableFrom(entityType)) {
-                            try {
-                                final Entity entity = (Entity) entityType.newInstance();
-                                final String existing = entityServiceTypeMap.put(entity.getType(), name);
-                                if (existing != null) {
-                                    LOGGER.error("Existing bean found for entity type '" + existing + "'");
-                                }
-                            } catch (final Exception e) {
-                                LOGGER.error(e.getMessage(), e);
-                            }
-
-                            final String existing = entityServiceClassMap.put(entityType, name);
-                            if (existing != null) {
-                                LOGGER.error("Existing bean found for entity type class '" + existing + "'");
-                            }
-                        }
-
-                        final Class<?> findType = findParameterizedType(bean.getClass(), BaseCriteria.class);
-                        if (findType != null) {
-                            final String existing = entityServiceClassMap.put(findType, name);
-                            if (existing != null) {
-                                LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
-                            }
-                        }
-                    }
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            });
-
-            beanStore.getBeansOfType(FindService.class, false, false).forEach((name, bean) -> {
-                try {
-                    if (!name.toLowerCase().startsWith("cached")) {
-                        final Class<?> findType = findParameterizedType(bean.getClass(), BaseCriteria.class);
-                        if (findType != null) {
-                            final String existing = entityServiceClassMap.put(findType, name);
-                            if (existing != null) {
-                                LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
-                            }
-                        }
-                    }
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            });
-
-            beanStore.getBeansOfType(DocumentStore.class, false, false).forEach((name, bean) -> {
-                try {
-                    if (!name.toLowerCase().startsWith("cached")) {
-                        final String existing = entityServiceTypeMap.put(bean.getDocType(), name);
-                        if (existing != null) {
-                            LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
-                        }
-                    }
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            });
-
-
-//            Arrays.stream(applicationContext.getBeanDefinitionNames()).forEach(beanName -> {
-//
-//                        final Object bean = applicationContext.getBean(beanName);
-//
-//                        if (bean instanceof EntityService<?>) {
-//
-//
-//
-//
-//                        } else if (bean instanceof FindService<?, ?>) {
-//                            final Class<?> findType = findParameterizedType(bean.getClass(), BaseCriteria.class);
-//                            if (findType != null) {
-//                                final String existing = entityServiceClassMap.put(findType, beanName);
-//                                if (existing != null) {
-//                                    LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
-//                                }
-//                            }
-//                        } else if (bean instanceof DocumentStore) {
-//                            final DocumentStore documentStore = (DocumentStore) bean;
-//                            final String existing = entityServiceTypeMap.put(documentStore.getDocType(), beanName);
-//                            if (existing != null) {
-//                                LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
-//                            }
-//                        }
-//                    }
-//                } catch (final RuntimeException e) {
-//                    LOGGER.error(e.getMessage(), e);
-//                }
-//            });
-            init = true;
-        }
     }
 }

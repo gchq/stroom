@@ -26,7 +26,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.FileUtil;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -45,7 +45,7 @@ import java.nio.file.Paths;
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.FILES)
-class RollingFileAppender extends AbstractRollingAppender {
+public class RollingFileAppender extends AbstractRollingAppender {
     private final PathCreator pathCreator;
 
     private String[] outputPaths;
@@ -59,9 +59,9 @@ class RollingFileAppender extends AbstractRollingAppender {
 
     @Inject
     RollingFileAppender(final RollingDestinations destinations,
-                        final TaskMonitor taskMonitor,
+                        final TaskContext taskContext,
                         final PathCreator pathCreator) {
-        super(destinations, taskMonitor);
+        super(destinations, taskContext);
         this.pathCreator = pathCreator;
     }
 

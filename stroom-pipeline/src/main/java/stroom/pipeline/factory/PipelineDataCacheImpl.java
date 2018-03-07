@@ -34,10 +34,12 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 @Insecure
 public class PipelineDataCacheImpl implements PipelineDataCache {
     private static final int MAX_CACHE_ENTRIES = 1000;

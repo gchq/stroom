@@ -30,7 +30,9 @@ import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
+@Singleton
 public class ClusterWorkerImpl implements ClusterWorker {
     public static final String BEAN_NAME = "clusterWorker";
     static final String EXEC_ASYNC_METHOD = "execAsync";
@@ -45,7 +47,8 @@ public class ClusterWorkerImpl implements ClusterWorker {
     private final ClusterCallService clusterCallService;
 
     @Inject
-    public ClusterWorkerImpl(final TaskManager taskManager, final NodeCache nodeCache,
+    public ClusterWorkerImpl(final TaskManager taskManager,
+                             final NodeCache nodeCache,
                              @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
         this.taskManager = taskManager;
         this.nodeCache = nodeCache;

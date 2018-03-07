@@ -16,17 +16,16 @@
 
 package stroom.streamtask;
 
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.SqlBuilder;
 import stroom.streamstore.shared.Stream;
 
 import javax.inject.Inject;
+import com.google.inject.persist.Transactional;
+import javax.transaction.Transactional.TxType;
 
-@Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
+@Transactional
 public class BatchIdTransactionHelper {
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final StroomEntityManager stroomEntityManager;

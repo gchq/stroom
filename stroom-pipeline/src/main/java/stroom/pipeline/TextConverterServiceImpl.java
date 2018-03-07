@@ -17,7 +17,7 @@
 
 package stroom.pipeline;
 
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.StroomEntityManager;
 import stroom.explorer.ExplorerActionHandler;
@@ -29,7 +29,9 @@ import stroom.pipeline.shared.TextConverter;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 @Transactional
 public class TextConverterServiceImpl extends DocumentEntityServiceImpl<TextConverter, FindTextConverterCriteria>
         implements TextConverterService, ExplorerActionHandler, ImportExportActionHandler {

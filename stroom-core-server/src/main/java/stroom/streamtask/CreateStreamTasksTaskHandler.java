@@ -19,25 +19,25 @@ package stroom.streamtask;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = CreateStreamTasksTask.class)
 class CreateStreamTasksTaskHandler extends AbstractTaskHandler<CreateStreamTasksTask, VoidResult> {
     private final StreamTaskCreator streamTaskCreator;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     @Inject
     CreateStreamTasksTaskHandler(final StreamTaskCreator streamTaskCreator,
-                                 final TaskMonitor taskMonitor) {
+                                 final TaskContext taskContext) {
         this.streamTaskCreator = streamTaskCreator;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
     }
 
     @Override
     public VoidResult exec(final CreateStreamTasksTask task) {
-        streamTaskCreator.createTasks(taskMonitor);
+        streamTaskCreator.createTasks(taskContext);
         return new VoidResult();
     }
 }

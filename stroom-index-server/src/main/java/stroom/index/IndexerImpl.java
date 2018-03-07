@@ -24,11 +24,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.locks.Lock;
 
 /**
  * Pool API into open index shards.
  */
+@Singleton
 public class IndexerImpl implements Indexer {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexerImpl.class);
     private static final int MAX_ATTEMPTS = 10000;

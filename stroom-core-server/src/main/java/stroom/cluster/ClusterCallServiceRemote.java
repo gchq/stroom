@@ -20,10 +20,10 @@ import com.caucho.hessian.client.HessianProxyFactory;
 import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import stroom.feed.StroomHessianProxyFactory;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
+import stroom.properties.StroomPropertyService;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomBeanStore;
@@ -50,18 +50,17 @@ class ClusterCallServiceRemote implements ClusterCallService {
     private final Map<Node, ClusterCallService> proxyMap = new HashMap<>();
 
     private HessianProxyFactory proxyFactory = null;
-    private boolean ignoreSSLHostnameVerifier = true;
+    private boolean ignoreSSLHostnameVerifier;
 
     @Inject
-    ClusterCallServiceRemote(final NodeCache nodeCache, final StroomBeanStore beanStore,
-                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallUseLocal')}") final boolean clusterCallUseLocal,
-                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallReadTimeout')}") final String clusterCallReadTimeout,
-                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallIgnoreSSLHostnameVerifier')}") final boolean ignoreSSLHostnameVerifier) {
+    ClusterCallServiceRemote(final NodeCache nodeCache,
+                             final StroomBeanStore beanStore,
+                             final StroomPropertyService propertyService) {
         this.nodeCache = nodeCache;
         this.beanStore = beanStore;
-        this.clusterCallUseLocal = clusterCallUseLocal;
-        this.clusterCallReadTimeout = ModelStringUtil.parseDurationString(clusterCallReadTimeout);
-        this.ignoreSSLHostnameVerifier = ignoreSSLHostnameVerifier;
+        this.clusterCallUseLocal = propertyService.getBooleanProperty("stroom.clusterCallUseLocal", true);
+        this.clusterCallReadTimeout = ModelStringUtil.parseDurationString(propertyService.getProperty("stroom.clusterCallReadTimeout"));
+        this.ignoreSSLHostnameVerifier = propertyService.getBooleanProperty("stroom.clusterCallIgnoreSSLHostnameVerifier", true);
     }
 
     public HessianProxyFactory getProxyFactory() {

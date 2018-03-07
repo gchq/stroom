@@ -27,7 +27,9 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 class AuthenticationServiceImpl implements AuthenticationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 

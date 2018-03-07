@@ -25,7 +25,7 @@ import stroom.task.TaskHandlerBean;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.sql.BatchUpdateException;
@@ -41,7 +41,7 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
     public static final int BATCH_SIZE = 5000;
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticFlushTaskHandler.class);
     private final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     private LogExecutionTime logExecutionTime;
     private int count;
@@ -50,9 +50,9 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
 
     @Inject
     SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
-                                 final TaskMonitor taskMonitor) {
+                                 final TaskContext taskContext) {
         this.sqlStatisticValueBatchSaveService = sqlStatisticValueBatchSaveService;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -71,12 +71,12 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
             final int batchSizetoUse = BATCH_SIZE;
 
             LOGGER.info("Flushing statistics (batch size={})", batchSizetoUse);
-            taskMonitor.info("Flushing statistics (batch size={})", batchSizetoUse);
+            taskContext.info("Flushing statistics (batch size={})", batchSizetoUse);
 
             final List<SQLStatisticValueSourceDO> batchInsert = new ArrayList<>();
             // Store all aggregated entries.
             for (final Entry<SQLStatKey, MutableLong> entry : map.countEntrySet()) {
-                if (!taskMonitor.isTerminated()) {
+                if (!taskContext.isTerminated()) {
                     final long ms = entry.getKey().getMs();
                     final String name = entry.getKey().getName();
                     final long value = entry.getValue().longValue();
@@ -97,7 +97,7 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
                 }
             }
             for (final Entry<SQLStatKey, Double> entry : map.valueEntrySet()) {
-                if (!taskMonitor.isTerminated()) {
+                if (!taskContext.isTerminated()) {
                     final long ms = entry.getKey().getMs();
                     final String name = entry.getKey().getName();
                     final long value = entry.getValue().longValue();
@@ -118,7 +118,7 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
                 }
             }
 
-            if (!taskMonitor.isTerminated()) {
+            if (!taskContext.isTerminated()) {
                 if (batchInsert.size() > 0) {
                     doSaveBatch(batchInsert);
                 }
@@ -131,10 +131,10 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
             final int seconds = (int) (logExecutionTime.getDuration() / 1000L);
 
             if (seconds > 0) {
-                taskMonitor.info("Saving {}/{} ({} ps)", ModelStringUtil.formatCsv(count),
+                taskContext.info("Saving {}/{} ({} ps)", ModelStringUtil.formatCsv(count),
                         ModelStringUtil.formatCsv(total), ModelStringUtil.formatCsv(savedCount / seconds));
             } else {
-                taskMonitor.info("Saving {}/{} (? ps)", ModelStringUtil.formatCsv(count),
+                taskContext.info("Saving {}/{} (? ps)", ModelStringUtil.formatCsv(count),
                         ModelStringUtil.formatCsv(total));
 
             }

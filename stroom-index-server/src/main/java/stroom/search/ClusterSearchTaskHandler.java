@@ -30,6 +30,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.MessageUtil;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
@@ -134,8 +135,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final ExtractionTaskProperties extractionTaskProperties,
                              final StreamStore streamStore,
                              final SecurityContext securityContext,
-                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
-                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize,
+                             final StroomPropertyService propertyService,
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                              final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                              final ExecutorProvider executorProvider) {
@@ -150,8 +150,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         this.extractionTaskProperties = extractionTaskProperties;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
-        this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
-        this.maxStoredDataQueueSize = PropertyUtil.toInt(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
+        this.maxBooleanClauseCount = propertyService.getIntProperty("stroom.search.maxBooleanClauseCount", DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
+        this.maxStoredDataQueueSize = propertyService.getIntProperty("stroom.search.maxStoredDataQueueSize", DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
         this.indexShardSearchTaskHandlerProvider = indexShardSearchTaskHandlerProvider;
         this.extractionTaskHandlerProvider = extractionTaskHandlerProvider;
         this.executorProvider = executorProvider;

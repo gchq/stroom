@@ -34,6 +34,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.io.CloseableUtil;
@@ -42,7 +43,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.MonitorImpl;
-import stroom.util.task.TaskMonitor;
 import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
@@ -61,19 +61,19 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     private static final String FILE_SEPERATOR = ".";
     private static final String GZ = "GZ";
 
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final StreamStore streamStore;
     private final StreamTypeService streamTypeService;
     private final FeedService feedService;
     private final MetaDataStatistic metaDataStatistics;
 
     @Inject
-    StreamUploadTaskHandler(final TaskMonitor taskMonitor,
+    StreamUploadTaskHandler(final TaskContext taskContext,
                             final StreamStore streamStore,
                             @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                             @Named("cachedFeedService") final FeedService feedService,
                             final MetaDataStatistic metaDataStatistics) {
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.streamStore = streamStore;
         this.streamTypeService = streamTypeService;
         this.feedService = feedService;
@@ -82,7 +82,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
 
     @Override
     public VoidResult exec(final StreamUploadTask task) {
-        taskMonitor.info(task.getFile().toString());
+        taskContext.info(task.getFile().toString());
         uploadData(task);
         return VoidResult.INSTANCE;
     }
@@ -97,8 +97,6 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         if (task.getFileName() == null) {
             throw new EntityServiceException("File not set!");
         }
-
-        final Monitor progressMonitor = new MonitorImpl(taskMonitor);
 
         final String name = task.getFileName().toUpperCase();
 
@@ -121,7 +119,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
 
         if (name.endsWith(FILE_SEPERATOR + StroomHeaderArguments.COMPRESSION_ZIP)) {
             metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
-            uploadZipFile(progressMonitor, task, metaMap);
+            uploadZipFile(taskContext, task, metaMap);
         } else {
             if (name.endsWith(FILE_SEPERATOR + StroomHeaderArguments.COMPRESSION_GZIP)) {
                 metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_GZIP);
@@ -133,11 +131,12 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         }
     }
 
-    private void uploadZipFile(final Monitor progressMonitor,
-                               final StreamUploadTask streamUploadTask, final MetaMap metaMap) {
+    private void uploadZipFile(final TaskContext taskContext,
+                               final StreamUploadTask streamUploadTask,
+                               final MetaMap metaMap) {
         StroomZipFile stroomZipFile = null;
         try {
-            progressMonitor.info("Zip");
+            taskContext.info("Zip");
 
             stroomZipFile = new StroomZipFile(streamUploadTask.getFile());
 
@@ -145,7 +144,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                     .getBaseNameGroupedList(AGGREGATION_DELIMITER);
 
             for (int i = 0; i < groupedFileLists.size(); i++) {
-                progressMonitor.info("Zip {}/{}", i, groupedFileLists.size());
+                taskContext.info("Zip {}/{}", i, groupedFileLists.size());
 
                 uploadData(stroomZipFile, streamUploadTask, metaMap, groupedFileLists.get(i));
 
@@ -154,7 +153,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             throw EntityServiceExceptionUtil.create(ex);
         } finally {
             CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
-            taskMonitor.info("done");
+            taskContext.info("done");
         }
     }
 
@@ -179,13 +178,11 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
 
     private void uploadData(final StroomZipFile stroomZipFile, final StreamUploadTask task, final MetaMap metaMap,
                             final List<String> fileList) throws IOException {
-        final Monitor zipPartTaskMonitor = new MonitorImpl(taskMonitor);
-        final Monitor streamReadTaskMonitor = new MonitorImpl(taskMonitor);
         StreamTarget streamTarget = null;
 
         try {
             final Long effectiveMs = task.getEffectiveMs();
-            final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(streamReadTaskMonitor,
+            final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(taskContext,
                     "Read");
 
             final StreamType streamType = streamTypeService.loadByName(task.getStreamType().getName());
@@ -200,7 +197,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             final int maxCount = fileList.size();
             for (final String inputBase : fileList) {
                 count++;
-                zipPartTaskMonitor.info("{}/{}", count, maxCount);
+                taskContext.info("{}/{}", count, maxCount);
                 streamContents(stroomZipFile, metaMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Data,
                         streamProgressMonitor);
                 streamContents(stroomZipFile, metaMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Meta,

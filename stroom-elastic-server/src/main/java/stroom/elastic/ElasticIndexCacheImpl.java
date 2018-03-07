@@ -15,9 +15,11 @@ import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.ws.rs.core.Response;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 public class ElasticIndexCacheImpl implements ElasticIndexCache {
     private static final int MAX_CACHE_ENTRIES = 100;
 

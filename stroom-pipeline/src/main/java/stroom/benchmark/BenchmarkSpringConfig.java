@@ -16,7 +16,6 @@
 
 package stroom.benchmark;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -24,15 +23,16 @@ import stroom.feed.FeedService;
 import stroom.jobsystem.shared.JobManager;
 import stroom.node.NodeService;
 import stroom.pipeline.PipelineService;
+import stroom.properties.StroomPropertyService;
 import stroom.statistics.sql.Statistics;
 import stroom.streamstore.StreamAttributeMapService;
 import stroom.streamstore.StreamStore;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.TaskManager;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 @Configuration
 public class BenchmarkSpringConfig {
@@ -47,12 +47,23 @@ public class BenchmarkSpringConfig {
                                                              final StreamStore streamStore,
                                                              final JobManager jobManager,
                                                              final NodeService nodeService,
-                                                             final TaskMonitor taskMonitor,
+                                                             final TaskContext taskContext,
                                                              final TaskManager taskManager,
                                                              final Statistics statistics,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.benchmark.streamCount')}") final int streamCount,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.benchmark.recordCount')}") final int recordCount,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.benchmark.concurrentWriters')}") final int concurrentWriters) {
-        return new BenchmarkClusterExecutor(feedService, pipelineService, streamProcessorFilterService, streamProcessorService, dispatchHelper, streamAttributeMapService, streamStore, jobManager, nodeService, taskMonitor, taskManager, statistics, streamCount, recordCount, concurrentWriters);
+                                                             final BenchmarkClusterConfig benchmarkClusterConfig) {
+        return new BenchmarkClusterExecutor(
+                feedService,
+                pipelineService,
+                streamProcessorFilterService,
+                streamProcessorService,
+                dispatchHelper,
+                streamAttributeMapService,
+                streamStore,
+                jobManager,
+                nodeService,
+                taskContext,
+                taskManager,
+                statistics,
+                benchmarkClusterConfig);
     }
 }

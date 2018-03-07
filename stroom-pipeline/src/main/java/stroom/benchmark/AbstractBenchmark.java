@@ -35,7 +35,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -52,27 +52,27 @@ public abstract class AbstractBenchmark {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private TaskMonitor taskMonitor;
+    private TaskContext taskContext;
 
     public static int getRandomSkewed() {
         return (int) (Math.exp(Math.random() * 10));
     }
 
     protected boolean isTerminated() {
-        return taskMonitor.isTerminated();
+        return taskContext.isTerminated();
     }
 
     public void abortDueToTimeout() {
-        taskMonitor.terminate();
+        taskContext.terminate();
     }
 
     protected void info(final Object... args) {
-        taskMonitor.info(args);
+        taskContext.info(args);
         Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
     }
 
     protected void infoInterval(final Object... args) {
-        taskMonitor.info(args);
+        taskContext.info(args);
         //TODO logger in an interval
         Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
     }
@@ -166,7 +166,7 @@ public abstract class AbstractBenchmark {
         final StringBuilder sb = new StringBuilder();
         sb.append("FileNo,Country,Site,Building,Floor,Room,Desk\n");
 
-        for (int i = 0; i < recordCount && !taskMonitor.isTerminated(); i++) {
+        for (int i = 0; i < recordCount && !taskContext.isTerminated(); i++) {
             sb.append(i);
             sb.append(",UK,Site ");
             sb.append(i);
@@ -182,7 +182,7 @@ public abstract class AbstractBenchmark {
 
         final SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy,HH:mm:ss");
 
-        for (int i = 0; i < recordCount && !taskMonitor.isTerminated(); i++) {
+        for (int i = 0; i < recordCount && !taskContext.isTerminated(); i++) {
             sb.append(df.format(new Date()));
             sb.append(",");
             sb.append(i);

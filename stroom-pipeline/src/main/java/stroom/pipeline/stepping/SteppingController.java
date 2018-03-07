@@ -25,9 +25,10 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.state.StreamHolder;
+import stroom.task.TaskContext;
+import stroom.util.guice.PipelineScoped;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
-import stroom.util.task.TaskMonitor;
 import stroom.xml.converter.ds3.DS3Reader;
 
 import javax.inject.Inject;
@@ -36,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@PipelineScoped
 public class SteppingController {
     private final Set<ElementMonitor> monitors = new HashSet<>();
 
@@ -53,7 +55,7 @@ public class SteppingController {
     private Location currentStartLocation;
     private Location currentEndLocation;
 
-    private TaskMonitor taskMonitor;
+    private TaskContext taskContext;
 
     @Inject
     SteppingController(final StreamHolder streamHolder,
@@ -111,12 +113,12 @@ public class SteppingController {
         }
     }
 
-    public TaskMonitor getTaskMonitor() {
-        return taskMonitor;
+    public TaskContext getTaskContext() {
+        return taskContext;
     }
 
-    public void setTaskMonitor(final TaskMonitor taskMonitor) {
-        this.taskMonitor = taskMonitor;
+    public void setTaskMonitor(final TaskContext taskContext) {
+        this.taskContext = taskContext;
     }
 
     public void setStepLocation(final StepLocation stepLocation) {
@@ -142,11 +144,11 @@ public class SteppingController {
         final long currentStreamNo = streamHolder.getStreamNo() + 1;
 
         // Update the progress monitor.
-        if (getTaskMonitor() != null) {
-            if (getTaskMonitor().isTerminated()) {
+        if (getTaskContext() != null) {
+            if (getTaskContext().isTerminated()) {
                 return true;
             }
-            getTaskMonitor().info("Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo);
+            getTaskContext().info("Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo);
         }
 
         // Move source location.

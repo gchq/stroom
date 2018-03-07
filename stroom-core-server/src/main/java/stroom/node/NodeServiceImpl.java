@@ -18,21 +18,24 @@
 package stroom.node;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.StroomEntityManager;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
+import stroom.properties.StroomPropertyService;
 import stroom.security.Secured;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * <p>
  * JPA implementation of a node manager.
  * </p>
  */
+@Singleton
 @Transactional
 @Secured(Node.MANAGE_NODES_PERMISSION)
 public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriteria>
@@ -44,13 +47,12 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
     @Inject
     NodeServiceImpl(final StroomEntityManager entityManager,
                     final NodeServiceTransactionHelper nodeServiceUtil,
-                    @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
-                    @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
+                    final StroomPropertyService propertyService) {
         super(entityManager);
 
         this.nodeServiceUtil = nodeServiceUtil;
-        this.nodeName = nodeName;
-        this.rackName = rackName;
+        this.nodeName = propertyService.getProperty("stroom.node");
+        this.rackName = propertyService.getProperty("stroom.rack");
     }
 
     public Node getNode(final String name) {
@@ -62,7 +64,7 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public Node getDefaultNode() {
         Node node = getNode(nodeName);
 

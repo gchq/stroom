@@ -44,7 +44,9 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.DocRef;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
+import stroom.util.guice.PipelineScoped;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
@@ -57,22 +59,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@PipelineScoped
 public class PipelineFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineFactory.class);
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final ElementFactory elementFactory;
     private final ProcessorFactory processorFactory;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     @Inject
     public PipelineFactory(final ElementRegistryFactory pipelineElementRegistryFactory,
                            final ElementFactory elementFactory,
                            final ProcessorFactory processorFactory,
-                           final TaskMonitor taskMonitor) {
+                           final TaskContext taskContext) {
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
         this.elementFactory = elementFactory;
         this.processorFactory = processorFactory;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
 
         if (processorFactory == null) {
             throw new NullPointerException("processorFactory is null");
@@ -91,7 +94,7 @@ public class PipelineFactory {
         final ElementRegistry pipelineElementRegistry = pipelineElementRegistryFactory.get();
 
         final Terminator terminator = () -> {
-            if (taskMonitor.isTerminated()) {
+            if (taskContext.isTerminated()) {
                 throw new TerminatedException();
             }
         };

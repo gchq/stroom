@@ -16,6 +16,9 @@
 
 package stroom.pipeline.state;
 
+import stroom.util.guice.PipelineScoped;
+
+@PipelineScoped
 public class CurrentUserHolder implements Holder {
     private String currentUser;
 

@@ -35,7 +35,7 @@ import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTypeService;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import java.io.OutputStream;
 
@@ -87,21 +87,21 @@ public class WriterSpringConfig {
     @Bean
     @Scope(StroomScope.PROTOTYPE)
     public RollingFileAppender rollingFileAppender(final RollingDestinations destinations,
-                                                   final TaskMonitor taskMonitor,
+                                                   final TaskContext taskContext,
                                                    final PathCreator pathCreator) {
-        return new RollingFileAppender(destinations, taskMonitor, pathCreator);
+        return new RollingFileAppender(destinations, taskContext, pathCreator);
     }
 
     @Bean
     @Scope(StroomScope.PROTOTYPE)
     public RollingStreamAppender rollingStreamAppender(final RollingDestinations destinations,
-                                                       final TaskMonitor taskMonitor,
+                                                       final TaskContext taskContext,
                                                        final StreamStore streamStore,
                                                        final StreamHolder streamHolder,
                                                        final FeedService feedService,
                                                        final StreamTypeService streamTypeService,
                                                        final NodeCache nodeCache) {
-        return new RollingStreamAppender(destinations, taskMonitor, streamStore, streamHolder, feedService, streamTypeService, nodeCache);
+        return new RollingStreamAppender(destinations, taskContext, streamStore, streamHolder, feedService, streamTypeService, nodeCache);
     }
 
     @Bean

@@ -3,6 +3,7 @@ package stroom.security;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 class AuthorisationServiceImpl implements AuthorisationService {
     private final SecurityContext securityContext;

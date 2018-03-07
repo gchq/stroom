@@ -30,14 +30,12 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
-import stroom.util.shared.Monitor;
-import stroom.util.task.MonitorImpl;
-import stroom.util.task.TaskMonitor;
 import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
@@ -53,19 +51,19 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
     private static final String AGGREGATION_DELIMITER = "_";
 
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final StreamStore streamStore;
 
     @Inject
-    StreamDownloadTaskHandler(final TaskMonitor taskMonitor,
+    StreamDownloadTaskHandler(final TaskContext taskContext,
                               final StreamStore streamStore) {
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.streamStore = streamStore;
     }
 
     @Override
     public StreamDownloadResult exec(final StreamDownloadTask task) {
-        taskMonitor.info(task.getFile().toString());
+        taskContext.info(task.getFile().toString());
         return downloadData(task, task.getCriteria(), task.getFile(), task.getSettings());
     }
 
@@ -79,12 +77,9 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
             return result;
         }
 
-        final Monitor zipProgressMonitor = new MonitorImpl(taskMonitor);
-        final Monitor streamProgressMonitor = new MonitorImpl(taskMonitor);
-
         StroomZipOutputStream stroomZipOutputStream = null;
         try {
-            stroomZipOutputStream = new StroomZipOutputStreamImpl(data, zipProgressMonitor, false);
+            stroomZipOutputStream = new StroomZipOutputStreamImpl(data, taskContext, false);
 
             long id = 0;
             long fileCount = 0;
@@ -92,13 +87,13 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
             final String fileBasePath = FileUtil.getCanonicalPath(data).substring(0, FileUtil.getCanonicalPath(data).lastIndexOf(".zip"));
 
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
-            streamProgressMonitor.info("Stream {}", logItemProgress);
+            taskContext.info("Stream {}", logItemProgress);
 
             for (final Stream stream : list) {
                 result.incrementRecordsWritten();
                 logItemProgress.incrementProgress();
 
-                id = downloadStream(streamProgressMonitor, stream.getId(), stroomZipOutputStream, id,
+                id = downloadStream(taskContext, stream.getId(), stroomZipOutputStream, id,
                         settings.getMaxFileParts());
 
                 boolean startNewFile = false;
@@ -124,7 +119,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
                         stroomZipOutputStream.close();
                         fileCount++;
                         data = Paths.get(fileBasePath + "_" + fileCount + ".zip");
-                        stroomZipOutputStream = new StroomZipOutputStreamImpl(data, zipProgressMonitor, false);
+                        stroomZipOutputStream = new StroomZipOutputStreamImpl(data, taskContext, false);
                     }
                 }
 
@@ -142,15 +137,13 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
             throw new UncheckedIOException(e);
         } finally {
             closeDelete(data, stroomZipOutputStream);
-            taskMonitor.info("done");
+            taskContext.info("done");
         }
     }
 
-    private long downloadStream(final Monitor parentMonitor, final long streamId,
+    private long downloadStream(final TaskContext taskContext, final long streamId,
                                 final StroomZipOutputStream stroomZipOutputStream, final long startId, final Long maxParts) throws IOException {
         long id = startId;
-
-        final Monitor streamProgressMonitor = new MonitorImpl(parentMonitor);
 
         NestedInputStream contextInputStream = null;
         NestedInputStream metaInputStream = null;
@@ -186,7 +179,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
                 while (dataInputStream.getNextEntry()) {
                     entryProgress++;
 
-                    streamProgressMonitor.info("Stream Input {}/{}", entryProgress, entryTotal);
+                    taskContext.info("Stream Input {}/{}", entryProgress, entryTotal);
 
                     String basePartName = StroomFileNameUtil.getIdPath(id);
 

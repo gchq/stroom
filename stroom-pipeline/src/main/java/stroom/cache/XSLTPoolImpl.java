@@ -41,11 +41,13 @@ import stroom.util.shared.Severity;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
 import java.util.List;
 
+@Singleton
 @Insecure
 class XSLTPoolImpl extends AbstractEntityPool<XSLT, StoredXsltExecutable> implements XSLTPool {
     private static final Logger LOGGER = LoggerFactory.getLogger(XSLTPoolImpl.class);

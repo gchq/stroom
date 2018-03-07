@@ -12,7 +12,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.AbstractRollingAppender;
 import stroom.pipeline.writer.PathCreator;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 
@@ -37,11 +37,11 @@ class RollingKafkaAppender extends AbstractRollingAppender {
 
     @Inject
     RollingKafkaAppender(final RollingDestinations destinations,
-                         final TaskMonitor taskMonitor,
+                         final TaskContext taskContext,
                          final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
                          final PathCreator pathCreator,
                          final ErrorReceiverProxy errorReceiverProxy) {
-        super(destinations, taskMonitor);
+        super(destinations, taskContext);
         this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
         this.pathCreator = pathCreator;
         this.errorReceiverProxy = errorReceiverProxy;

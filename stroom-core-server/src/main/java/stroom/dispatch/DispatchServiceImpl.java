@@ -31,6 +31,7 @@ import stroom.security.SecurityContext;
 import stroom.security.UserTokenUtil;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.servlet.SessionListListener;
+import stroom.task.TaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.task.TaskHandlerBeanRegistry;
 import stroom.task.TaskManager;
@@ -86,8 +87,7 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
 
         LOGGER.debug("exec() - >> {} {}", action.getClass().getName(), httpServletRequestHolder);
 
-        final TaskHandlerBean taskHandlerBean = taskHandlerBeanRegistry.getTaskHandlerBean(action);
-
+        final TaskHandler taskHandlerBean = taskHandlerBeanRegistry.findHandler(action);
         if (taskHandlerBean == null) {
             throw new EntityServiceException("No handler for " + action.getClass(), null, false);
         }

@@ -21,8 +21,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class ClusterLockTestSpringConfig {
-    @Bean
-    public ClusterLockServiceInnerTransactions clusterLockServiceInnerTransactions(final ClusterLockService clusterLockService) {
-        return new ClusterLockServiceInnerTransactions(clusterLockService);
-    }
+//    @Bean
+////    public ClusterLockServiceInnerTransactions clusterLockServiceInnerTransactions(final ClusterLockService clusterLockService) {
+////        return new ClusterLockServiceInnerTransactions(clusterLockService);
+////    }
 }

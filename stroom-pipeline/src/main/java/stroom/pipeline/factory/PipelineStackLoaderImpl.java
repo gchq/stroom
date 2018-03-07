@@ -27,13 +27,13 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PipelineStackLoaderImpl implements PipelineStackLoader {
+class PipelineStackLoaderImpl implements PipelineStackLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineStackLoaderImpl.class);
 
     private final PipelineService pipelineService;
 
     @Inject
-    public PipelineStackLoaderImpl(final PipelineService pipelineService) {
+    PipelineStackLoaderImpl(final PipelineService pipelineService) {
         this.pipelineService = pipelineService;
     }
 

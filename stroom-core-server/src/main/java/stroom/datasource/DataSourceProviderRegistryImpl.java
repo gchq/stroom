@@ -10,8 +10,10 @@ import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Optional;
 
+@Singleton
 @SuppressWarnings("unused")
 public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistry {
 
@@ -19,19 +21,14 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
 
     public static final String PROP_KEY_SERVICE_DISCOVERY_ENABLED = "stroom.serviceDiscovery.enabled";
 
-    private final SecurityContext securityContext;
-    private final StroomPropertyService stroomPropertyService;
     private final DataSourceProviderRegistry delegateDataSourceProviderRegistry;
 
     @SuppressWarnings("unused")
     @Inject
-    public DataSourceProviderRegistryImpl(final SecurityContext securityContext,
+    DataSourceProviderRegistryImpl(final SecurityContext securityContext,
                                           final StroomPropertyService stroomPropertyService,
                                           final StroomBeanStore stroomBeanStore,
                                           final HttpServletRequestHolder httpServletRequestHolder) {
-        this.securityContext = securityContext;
-        this.stroomPropertyService = stroomPropertyService;
-
         boolean isServiceDiscoveryEnabled = stroomPropertyService.getBooleanProperty(
                 PROP_KEY_SERVICE_DISCOVERY_ENABLED,
                 false);

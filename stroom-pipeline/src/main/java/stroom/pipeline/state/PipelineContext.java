@@ -16,6 +16,9 @@
 
 package stroom.pipeline.state;
 
+import stroom.util.guice.PipelineScoped;
+
+@PipelineScoped
 public class PipelineContext {
     private boolean stepping;
 

@@ -31,7 +31,7 @@ import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.sql.search.StatisticDataPoint;
 import stroom.statistics.sql.search.StatisticDataSet;
-import stroom.task.TaskMonitorImpl;
+import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 
@@ -251,7 +251,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
+                sqlStatisticValueBatchSaveService, new SimpleTaskContext());
 
         final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(sqlStatisticAggregateMap);
 

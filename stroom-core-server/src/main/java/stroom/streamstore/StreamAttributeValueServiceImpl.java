@@ -17,7 +17,7 @@
 package stroom.streamstore;
 
 import event.logging.BaseAdvancedQueryItem;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -27,8 +27,10 @@ import stroom.entity.util.SqlBuilder;
 import stroom.streamstore.shared.StreamAttributeValue;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 
+@Singleton
 @Transactional
 class StreamAttributeValueServiceImpl
         extends SystemEntityServiceImpl<StreamAttributeValue, FindStreamAttributeValueCriteria>

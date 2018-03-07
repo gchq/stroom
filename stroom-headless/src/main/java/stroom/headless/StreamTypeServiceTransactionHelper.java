@@ -18,7 +18,7 @@ package stroom.headless;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;

@@ -31,8 +31,10 @@ import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 @EntityEventHandler(type = User.ENTITY_TYPE, action = {EntityAction.CLEAR_CACHE})
 public class UserAppPermissionsCache implements EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 1000;

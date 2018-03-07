@@ -17,7 +17,9 @@
 package stroom.pipeline.state;
 
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.util.guice.PipelineScoped;
 
+@PipelineScoped
 public class PipelineHolder {
     private PipelineEntity pipelineEntity;
 

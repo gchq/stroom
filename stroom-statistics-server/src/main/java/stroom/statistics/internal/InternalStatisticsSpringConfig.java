@@ -28,9 +28,9 @@ public class InternalStatisticsSpringConfig {
         return new InternalStatisticDocRefCache(stroomPropertyService);
     }
 
-    @Bean
-    public InternalStatisticsReceiver internalStatisticsReceiver(final StroomBeanStore stroomBeanStore,
-                                                                 final InternalStatisticDocRefCache internalStatisticDocRefCache) {
-        return new InternalStatisticsReceiverImpl(stroomBeanStore, internalStatisticDocRefCache);
-    }
+//    @Bean
+//    public InternalStatisticsReceiver internalStatisticsReceiver(final StroomBeanStore stroomBeanStore,
+//                                                                 final InternalStatisticDocRefCache internalStatisticDocRefCache) {
+//        return new InternalStatisticsReceiverImpl(stroomBeanStore, internalStatisticDocRefCache);
+//    }
 }

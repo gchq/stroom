@@ -35,8 +35,8 @@ import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
+import stroom.task.SimpleTaskContext;
 import stroom.task.TaskManager;
-import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StroomPipelineTestFileUtil;
@@ -349,7 +349,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             }
 
             // Force creation of stream tasks.
-            streamTaskCreator.createTasks(new TaskMonitorImpl());
+            streamTaskCreator.createTasks(new SimpleTaskContext());
 
         } catch (final Exception ex) {
             ex.printStackTrace();

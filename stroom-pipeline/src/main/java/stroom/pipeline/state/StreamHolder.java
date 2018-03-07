@@ -22,12 +22,14 @@ import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProviderImpl;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.guice.PipelineScoped;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+@PipelineScoped
 public class StreamHolder implements Holder {
     private final Map<StreamType, StreamSourceInputStreamProvider> streamProviders = new HashMap<>();
 

@@ -16,7 +16,7 @@
 
 package stroom.entity;
 
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
@@ -130,13 +130,13 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entity;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public E load(final E entity) throws RuntimeException {
         return load(entity, Collections.emptySet());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public E load(final E entity, final Set<String> fetchSet) throws RuntimeException {
         if (entity == null) {
@@ -145,13 +145,13 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return loadById(entity.getId(), fetchSet, queryAppender);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public E loadById(final long id) throws RuntimeException {
         return loadById(id, Collections.emptySet(), queryAppender);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
         return loadById(id, fetchSet, queryAppender);
@@ -195,14 +195,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entity;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public final E loadByUuid(final String uuid) throws RuntimeException {
         return loadByUuid(uuid, null);
     }
 
     @SuppressWarnings("unchecked")
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public final E loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
         return loadByUuid(uuid, fetchSet, queryAppender);
@@ -244,7 +244,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
     @SuppressWarnings("unchecked")
-    @Transactional(readOnly = true)
+    @Transactional
     protected E loadByUuidInsecure(final String uuid, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
 
@@ -396,7 +396,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public BaseResultList<E> find(final C criteria) throws RuntimeException {
         // Make sure the required permission is a valid one.
@@ -580,7 +580,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public E readDocument(final DocRef docRef) {
         return loadByUuid(docRef.getUuid());

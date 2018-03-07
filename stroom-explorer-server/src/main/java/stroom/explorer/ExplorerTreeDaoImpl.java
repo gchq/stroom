@@ -16,12 +16,13 @@
 
 package stroom.explorer;
 
+import com.google.inject.persist.Transactional;
 import fri.util.database.jpa.commons.DbSession;
 import fri.util.database.jpa.tree.closuretable.ClosureTableTreeDao;
 import fri.util.database.jpa.tree.closuretable.ClosureTableTreeNode;
 import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationException;
 import fri.util.database.jpa.tree.uniqueconstraints.UniqueTreeConstraint;
-import org.springframework.transaction.annotation.Transactional;
+import stroom.spring.EntityManagerSupport;
 
 import javax.inject.Inject;
 import java.io.Serializable;
@@ -32,12 +33,14 @@ import java.util.Map;
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private final DbSession session;
     private final ClosureTableTreeDao dao;
+    private final EntityManagerSupport entityManagerSupport;
 
     @Inject
-    ExplorerTreeDaoImpl(final DbSession session) {
+    ExplorerTreeDaoImpl(final DbSession session, final EntityManagerSupport entityManagerSupport) {
         this.session = session;
         this.dao = new ClosureTableTreeDao(ExplorerTreeNode.class, ExplorerTreePath.class, false, session);
         this.dao.setRemoveReferencedNodes(true);
+        this.entityManagerSupport = entityManagerSupport;
     }
 
     @Override
@@ -51,8 +54,14 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     @Override
-    public void update(final ExplorerTreeNode entity) throws UniqueConstraintViolationException {
-        dao.update(entity);
+    public void update(final ExplorerTreeNode entity) {
+        entityManagerSupport.transaction(entityManager -> {
+            try {
+                dao.update(entity);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
@@ -61,8 +70,14 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     @Override
-    public ExplorerTreeNode createRoot(final ExplorerTreeNode root) throws UniqueConstraintViolationException {
-        return (ExplorerTreeNode) dao.createRoot(root);
+    public ExplorerTreeNode createRoot(final ExplorerTreeNode root) {
+        return entityManagerSupport.transactionResult(entityManager -> {
+            try {
+                return (ExplorerTreeNode) dao.createRoot(root);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
@@ -77,7 +92,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public void removeAll() {
-        dao.removeAll();
+        entityManagerSupport.transaction(entityManager -> dao.removeAll());
     }
 
     @Override
@@ -146,63 +161,129 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     @Override
-    public ExplorerTreeNode addChild(final ExplorerTreeNode parent, final ExplorerTreeNode child) throws UniqueConstraintViolationException {
-        return (ExplorerTreeNode) dao.addChild(parent, child);
+    public ExplorerTreeNode addChild(final ExplorerTreeNode parent, final ExplorerTreeNode child) {
+        return entityManagerSupport.transactionResult(entityManager -> {
+            try {
+                return (ExplorerTreeNode) dao.addChild(parent, child);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
-    public ExplorerTreeNode addChildAt(final ExplorerTreeNode parent, final ExplorerTreeNode child, final int position) throws UniqueConstraintViolationException {
-        return (ExplorerTreeNode) dao.addChildAt(parent, child, position);
+    public ExplorerTreeNode addChildAt(final ExplorerTreeNode parent, final ExplorerTreeNode child, final int position) {
+        return entityManagerSupport.transactionResult(entityManager -> {
+            try {
+                return (ExplorerTreeNode) dao.addChildAt(parent, child, position);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
-    public ExplorerTreeNode addChildBefore(final ExplorerTreeNode sibling, final ExplorerTreeNode child) throws UniqueConstraintViolationException {
-        return (ExplorerTreeNode) dao.addChildBefore(sibling, child);
+    public ExplorerTreeNode addChildBefore(final ExplorerTreeNode sibling, final ExplorerTreeNode child) {
+        return entityManagerSupport.transactionResult(entityManager -> {
+            try {
+                return (ExplorerTreeNode) dao.addChildBefore(sibling, child);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
     public void remove(final ExplorerTreeNode node) {
-        dao.remove(node);
+        entityManagerSupport.transaction(entityManager -> dao.remove(node));
     }
 
     @Override
-    public void move(final ExplorerTreeNode node, final ExplorerTreeNode newParent) throws UniqueConstraintViolationException {
-        dao.move(node, newParent);
+    public void move(final ExplorerTreeNode node, final ExplorerTreeNode newParent) {
+        entityManagerSupport.transaction(entityManager -> {
+            try {
+                dao.move(node, newParent);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
-    public void moveTo(final ExplorerTreeNode node, final ExplorerTreeNode parent, final int position) throws UniqueConstraintViolationException {
-        dao.moveTo(node, parent, position);
+    public void moveTo(final ExplorerTreeNode node, final ExplorerTreeNode parent, final int position) {
+        entityManagerSupport.transaction(entityManager -> {
+            try {
+                dao.moveTo(node, parent, position);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
-    public void moveBefore(final ExplorerTreeNode node, final ExplorerTreeNode sibling) throws UniqueConstraintViolationException {
-        dao.moveBefore(node, sibling);
+    public void moveBefore(final ExplorerTreeNode node, final ExplorerTreeNode sibling) {
+        entityManagerSupport.transaction(entityManager -> {
+            try {
+                dao.moveBefore(node, sibling);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
-    public void moveToBeRoot(final ExplorerTreeNode child) throws UniqueConstraintViolationException {
-        dao.moveToBeRoot(child);
+    public void moveToBeRoot(final ExplorerTreeNode child) {
+        entityManagerSupport.transaction(entityManager -> {
+            try {
+                dao.moveToBeRoot(child);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
-    public ExplorerTreeNode copy(final ExplorerTreeNode node, final ExplorerTreeNode parent, final ExplorerTreeNode copiedNodeTemplate) throws UniqueConstraintViolationException {
-        return (ExplorerTreeNode) dao.copy(node, parent, copiedNodeTemplate);
+    public ExplorerTreeNode copy(final ExplorerTreeNode node, final ExplorerTreeNode parent, final ExplorerTreeNode copiedNodeTemplate) {
+        return entityManagerSupport.transactionResult(entityManager -> {
+            try {
+                return (ExplorerTreeNode) dao.copy(node, parent, copiedNodeTemplate);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
-    public ExplorerTreeNode copyTo(final ExplorerTreeNode node, final ExplorerTreeNode parent, final int position, final ExplorerTreeNode copiedNodeTemplate) throws UniqueConstraintViolationException {
-        return (ExplorerTreeNode) dao.copyTo(node, parent, position, copiedNodeTemplate);
+    public ExplorerTreeNode copyTo(final ExplorerTreeNode node, final ExplorerTreeNode parent, final int position, final ExplorerTreeNode copiedNodeTemplate) {
+        return entityManagerSupport.transactionResult(entityManager -> {
+            try {
+                return (ExplorerTreeNode) dao.copyTo(node, parent, position, copiedNodeTemplate);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
-    public ExplorerTreeNode copyBefore(final ExplorerTreeNode node, final ExplorerTreeNode sibling, final ExplorerTreeNode copiedNodeTemplate) throws UniqueConstraintViolationException {
-        return (ExplorerTreeNode) dao.copyBefore(node, sibling, copiedNodeTemplate);
+    public ExplorerTreeNode copyBefore(final ExplorerTreeNode node, final ExplorerTreeNode sibling, final ExplorerTreeNode copiedNodeTemplate) {
+        return entityManagerSupport.transactionResult(entityManager -> {
+            try {
+                return (ExplorerTreeNode) dao.copyBefore(node, sibling, copiedNodeTemplate);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
-    public ExplorerTreeNode copyToBeRoot(final ExplorerTreeNode child, final ExplorerTreeNode copiedNodeTemplate) throws UniqueConstraintViolationException {
-        return (ExplorerTreeNode) dao.copyToBeRoot(child, copiedNodeTemplate);
+    public ExplorerTreeNode copyToBeRoot(final ExplorerTreeNode child, final ExplorerTreeNode copiedNodeTemplate) {
+        return entityManagerSupport.transactionResult(entityManager -> {
+            try {
+                return (ExplorerTreeNode) dao.copyToBeRoot(child, copiedNodeTemplate);
+            } catch (final UniqueConstraintViolationException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
@@ -249,7 +330,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             return null;
         }
 
-        final List<ExplorerTreeNode> list = (List<ExplorerTreeNode>) this.session.queryList("select n from " + ExplorerTreeNode.class.getSimpleName() + " n where n.uuid = ?", new String[]{uuid});
+        final List<ExplorerTreeNode> list = (List<ExplorerTreeNode>) this.session.queryList("select n from " + ExplorerTreeNode.class.getSimpleName() + " n where n.uuid = ?1", new String[]{uuid});
         if (list == null || list.size() == 0) {
             return null;
         }

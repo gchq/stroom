@@ -17,10 +17,12 @@
 package stroom.pipeline;
 
 import org.xml.sax.Locator;
+import stroom.util.guice.PipelineScoped;
 import stroom.util.shared.Location;
 
 import javax.xml.transform.SourceLocator;
 
+@PipelineScoped
 public class LocationFactoryProxy implements LocationFactory {
     private LocationFactory locationFactory;
 

@@ -27,6 +27,7 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * <p>
@@ -37,12 +38,13 @@ import javax.inject.Inject;
  * You can call clear at any point to clear everything down.
  * </p>
  */
+@Singleton
 public class MockFeedService extends MockDocumentEntityService<Feed, FindFeedCriteria> implements FeedService, ExplorerActionHandler, ImportExportActionHandler {
     public MockFeedService() {
     }
 
     @Inject
-    public MockFeedService(final ImportExportHelper importExportHelper) {
+    MockFeedService(final ImportExportHelper importExportHelper) {
         super(importExportHelper);
     }
 

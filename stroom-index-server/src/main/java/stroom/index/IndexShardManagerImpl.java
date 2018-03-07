@@ -37,6 +37,7 @@ import stroom.util.spring.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
@@ -60,6 +61,7 @@ import java.util.concurrent.locks.Lock;
 /**
  * Pool API into open index shards.
  */
+@Singleton
 @Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
 public class IndexShardManagerImpl implements IndexShardManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardManagerImpl.class);
@@ -74,9 +76,11 @@ public class IndexShardManagerImpl implements IndexShardManager {
 
     private final Map<IndexShardStatus, Set<IndexShardStatus>> allowedStateTransitions = new HashMap<>();
 
-
     @Inject
-    IndexShardManagerImpl(final IndexShardService indexShardService, final Provider<IndexShardWriterCache> indexShardWriterCacheProvider, final NodeCache nodeCache, final TaskManager taskManager) {
+    IndexShardManagerImpl(final IndexShardService indexShardService,
+                          final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
+                          final NodeCache nodeCache,
+                          final TaskManager taskManager) {
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
         this.nodeCache = nodeCache;

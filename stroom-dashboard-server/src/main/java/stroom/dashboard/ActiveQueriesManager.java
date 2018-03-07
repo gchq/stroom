@@ -24,8 +24,10 @@ import stroom.datasource.DataSourceProviderRegistry;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 class ActiveQueriesManager {
     private static final int MAX_ACTIVE_QUERIES = 100;
 

@@ -12,17 +12,17 @@ import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
+import stroom.properties.StroomPropertyService;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
+@Singleton
 class JWTService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTService.class);
 
@@ -35,18 +35,15 @@ class JWTService {
     private final boolean checkTokenRevocation;
 
     @Inject
-    JWTService(
-            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authenticationServiceUrl,
-            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String authJwtIssuer,
-            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}") final boolean enableTokenRevocationCheck,
-            final AuthenticationServiceClients authenticationServiceClients) {
-        this.authJwtIssuer = authJwtIssuer;
+    JWTService(final StroomPropertyService propertyService,
+               final AuthenticationServiceClients authenticationServiceClients) {
+        this.authJwtIssuer = propertyService.getProperty("stroom.auth.jwt.issuer");
         this.authenticationServiceClients = authenticationServiceClients;
-        this.checkTokenRevocation = enableTokenRevocationCheck;
+        this.checkTokenRevocation = propertyService.getBooleanProperty("stroom.auth.jwt.enabletokenrevocationcheck", false);
 
         fetchNewPublicKeys();
 
-        if (authenticationServiceUrl == null) {
+        if (propertyService.getProperty("stroom.auth.services.url") == null) {
             throw new SecurityException("No authentication service URL is defined");
         }
     }

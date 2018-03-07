@@ -30,7 +30,7 @@ import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -101,7 +101,7 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     }
 
     @Override
-    public void createTasks(TaskMonitor taskMonitor) {
+    public void createTasks(TaskContext taskContext) {
     }
 
     @Override

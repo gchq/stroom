@@ -62,8 +62,8 @@ import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
+import stroom.task.SimpleTaskContext;
 import stroom.task.TaskManager;
-import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService;
@@ -209,7 +209,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         addStream(inputFile, feed);
 
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
 
         List<StreamProcessorTask> tasks = getTasks();
         Assert.assertTrue("There should be one task here", tasks.size() == 1);

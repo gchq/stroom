@@ -26,6 +26,7 @@ import stroom.feed.FeedService;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.pipeline.PipelineService;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.StreamAttributeValueFlush;
@@ -34,7 +35,7 @@ import stroom.streamstore.StreamTypeService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.TaskManager;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Named;
 
@@ -43,20 +44,22 @@ public class FSSpringConfig {
     @Bean
     @Scope(value = StroomScope.TASK)
     public FileSystemCleanExecutor fileSystemCleanExecutor(final VolumeService volumeService,
-                                                           final TaskMonitor taskMonitor,
+                                                           final TaskContext taskContext,
                                                            final TaskManager taskManager,
                                                            final NodeCache nodeCache,
-                                                           @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanBatchSize')}") final String fileSystemCleanBatchSize,
-                                                           @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanOldAge')}") final String oldFileAge,
-                                                           @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanDeleteOut')}") final String matchFile) {
-        return new FileSystemCleanExecutor(volumeService, taskMonitor, taskManager, nodeCache, fileSystemCleanBatchSize, oldFileAge, matchFile);
+                                                           final StroomPropertyService propertyService) {
+        return new FileSystemCleanExecutor(volumeService,
+                taskContext,
+                taskManager,
+                nodeCache,
+                propertyService);
     }
 
     @Bean
     @Scope(value = StroomScope.TASK)
     public FileSystemCleanSubTaskHandler fileSystemCleanSubTaskHandler(final StreamMaintenanceService streamMaintenanceService,
-                                                                       final TaskMonitor taskMonitor) {
-        return new FileSystemCleanSubTaskHandler(streamMaintenanceService, taskMonitor);
+                                                                       final TaskContext taskContext) {
+        return new FileSystemCleanSubTaskHandler(streamMaintenanceService, taskContext);
     }
 
     @Bean

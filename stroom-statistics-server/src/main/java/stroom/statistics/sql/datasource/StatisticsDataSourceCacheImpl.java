@@ -32,9 +32,11 @@ import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 @EntityEventHandler(
         type = StatisticStoreEntity.ENTITY_TYPE,
         action = {

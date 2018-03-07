@@ -24,6 +24,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.task.SimpleTaskContext;
 import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
@@ -47,7 +48,7 @@ public class TestPipelineFactory extends AbstractProcessIntegrationTest {
         final PipelineData mergedPipelineData = pipelineDataMerger.createMergedData();
 
         final PipelineFactory pipelineFactory = new PipelineFactory(elementRegistryFactory, elementRegistryFactory,
-                new SimpleProcessorFactory(), new TaskMonitorImpl());
+                new SimpleProcessorFactory(), new SimpleTaskContext());
         final Pipeline pipeline = pipelineFactory.create(mergedPipelineData);
 
         System.out.println(pipeline);
@@ -56,7 +57,7 @@ public class TestPipelineFactory extends AbstractProcessIntegrationTest {
     @Test
     public void testOverride() throws Exception {
         final PipelineFactory pipelineFactory = new PipelineFactory(elementRegistryFactory, elementRegistryFactory,
-                new SimpleProcessorFactory(), new TaskMonitorImpl());
+                new SimpleProcessorFactory(), new SimpleTaskContext());
 
         final String data1 = StroomPipelineTestFileUtil
                 .getString("TestPipelineFactory/EventDataPipeline.Pipeline.data.xml");

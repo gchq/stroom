@@ -23,13 +23,7 @@ import java.lang.reflect.Method;
 
 public class StroomBeanMethod {
     private final Method beanMethod;
-    private String beanName;
     private Class<?> beanClass;
-
-    public StroomBeanMethod(final String beanName, final Method beanMethod) {
-        this.beanName = beanName;
-        this.beanMethod = beanMethod;
-    }
 
     public StroomBeanMethod(final Class<?> clazz, final Method beanMethod) {
         this.beanClass = clazz;
@@ -40,9 +34,6 @@ public class StroomBeanMethod {
         return beanMethod;
     }
 
-    public String getBeanName() {
-        return beanName;
-    }
 
     public Class<?> getBeanClass() {
         return beanClass;
@@ -51,12 +42,7 @@ public class StroomBeanMethod {
     @Override
     public String toString() {
         final StringBuilder builder = new StringBuilder();
-        // for (Annotation annotation :beanMethod.getAnnotations()) {
-        // builder.append("@");
-        // builder.append(annotation.annotationType().getSimpleName());
-        // builder.append(" ");
-        // }
-        builder.append(beanName);
+        builder.append(beanClass.getName());
         builder.append(".");
         builder.append(beanMethod.getName());
         return builder.toString();
@@ -69,7 +55,6 @@ public class StroomBeanMethod {
         }
         final StroomBeanMethod other = (StroomBeanMethod) obj;
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(this.beanName, other.beanName);
         builder.append(this.beanClass, other.beanClass);
         builder.append(this.beanMethod, other.beanMethod);
         return builder.isEquals();
@@ -78,7 +63,6 @@ public class StroomBeanMethod {
     @Override
     public int hashCode() {
         final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(this.beanName);
         builder.append(this.beanClass);
         builder.append(this.beanMethod);
         return builder.toHashCode();

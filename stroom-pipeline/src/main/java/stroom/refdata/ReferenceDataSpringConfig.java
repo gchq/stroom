@@ -35,7 +35,7 @@ import stroom.streamstore.StreamStore;
 import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Named;
 
@@ -118,7 +118,7 @@ public class ReferenceDataSpringConfig {
                                                                      final LocationFactoryProxy locationFactory,
                                                                      final StreamCloser streamCloser,
                                                                      final ErrorReceiverProxy errorReceiverProxy,
-                                                                     final TaskMonitor taskMonitor,
+                                                                     final TaskContext taskContext,
                                                                      final PipelineDataCache pipelineDataCache) {
         return new ReferenceDataLoadTaskHandler(streamStore,
                 pipelineFactory,
@@ -131,7 +131,7 @@ public class ReferenceDataSpringConfig {
                 locationFactory,
                 streamCloser,
                 errorReceiverProxy,
-                taskMonitor,
+                taskContext,
                 pipelineDataCache);
     }
 }

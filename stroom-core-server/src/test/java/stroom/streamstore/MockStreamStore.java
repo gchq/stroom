@@ -30,6 +30,7 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.collections.TypedMap;
 
+import javax.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Singleton
 public class MockStreamStore implements StreamStore, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MockStreamStore.class);
 

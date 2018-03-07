@@ -25,6 +25,7 @@ import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Singleton
 @EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
 public class XMLSchemaCache implements EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(XMLSchemaCache.class);

@@ -25,7 +25,7 @@ import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 
@@ -37,20 +37,20 @@ class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanS
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemCleanSubTaskHandler.class);
 
     private final StreamMaintenanceService streamMaintenanceService;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     @Inject
     FileSystemCleanSubTaskHandler(final StreamMaintenanceService streamMaintenanceService,
-                                  final TaskMonitor taskMonitor) {
+                                  final TaskContext taskContext) {
         this.streamMaintenanceService = streamMaintenanceService;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
     }
 
     @Override
     public VoidResult exec(final FileSystemCleanSubTask task) {
-        taskMonitor.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
+        taskContext.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
 
-        if (taskMonitor.isTerminated() || task.getParentTask().isTerminated()) {
+        if (taskContext.isTerminated() || task.getParentTask().isTerminated()) {
             LOGGER.info("exec() - Been asked to Quit");
             return VoidResult.INSTANCE;
         }
@@ -69,7 +69,7 @@ class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanS
                     + task.getTaskProgress().traceInfo());
         }
 
-        if (taskMonitor.isTerminated() || task.getParentTask().isTerminated()) {
+        if (taskContext.isTerminated() || task.getParentTask().isTerminated()) {
             LOGGER.info("exec() - Been asked to Quit");
             return VoidResult.INSTANCE;
         }
@@ -81,7 +81,7 @@ class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanS
             for (final String subPath : result.getChildDirectoryList()) {
                 final FileSystemCleanSubTask subTask = new FileSystemCleanSubTask(task.getParentHandler(),
                         task.getParentTask(), task.getTaskProgress(), task.getVolume(), subPath, task.getLogPrefix());
-                if (!taskMonitor.isTerminated()) {
+                if (!taskContext.isTerminated()) {
                     task.getParentHandler().getAsyncTaskHelper().fork(subTask,
                             new FileSystemCleanProgressCallback(task.getTaskProgress()));
                 }

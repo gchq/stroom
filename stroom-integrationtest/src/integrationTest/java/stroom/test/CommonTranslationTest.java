@@ -26,8 +26,8 @@ import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
+import stroom.task.SimpleTaskContext;
 import stroom.task.TaskManager;
-import stroom.task.TaskMonitorImpl;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -88,7 +88,7 @@ public class CommonTranslationTest {
     public List<StreamProcessorTaskExecutor> processAll() throws Exception {
         // Force creation of stream tasks.
         if (streamTaskCreator instanceof StreamTaskCreator) {
-            streamTaskCreator.createTasks(new TaskMonitorImpl());
+            streamTaskCreator.createTasks(new SimpleTaskContext());
         }
 
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();

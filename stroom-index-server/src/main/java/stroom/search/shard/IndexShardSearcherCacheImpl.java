@@ -40,6 +40,7 @@ import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -47,6 +48,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Singleton
 public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearcherCacheImpl.class);
     private static final int MAX_CACHE_ENTRIES = 2;

@@ -28,7 +28,7 @@ public abstract class CoreSqlBuilder {
 
     private static final boolean VALIDATE = true;
 
-    private final List<Object> args;
+    final List<Object> args;
     private final StringBuilder sql;
 
     CoreSqlBuilder() {
@@ -113,10 +113,15 @@ public abstract class CoreSqlBuilder {
 
     public CoreSqlBuilder arg(final Object arg) {
         args.add(arg);
-        checkStringAppend("?");
-        sql.append("?");
+        final String parameter = createParameter();
+        checkStringAppend(parameter);
+        sql.append(parameter);
 
         return this;
+    }
+
+    String createParameter() {
+        return "?";
     }
 
     public Object get(final int pos) {

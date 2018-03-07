@@ -31,6 +31,7 @@ import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.persistence.RollbackException;
 import java.util.List;
 import java.util.Map;

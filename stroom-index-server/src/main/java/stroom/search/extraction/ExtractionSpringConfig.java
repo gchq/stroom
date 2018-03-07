@@ -32,7 +32,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.security.SecurityContext;
 import stroom.streamstore.StreamStore;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -57,9 +57,9 @@ public class ExtractionSpringConfig {
                                                        final PipelineFactory pipelineFactory,
                                                        @Named("cachedPipelineService") final PipelineService pipelineService,
                                                        final PipelineDataCache pipelineDataCache,
-                                                       final TaskMonitor taskMonitor,
+                                                       final TaskContext taskContext,
                                                        final SecurityContext securityContext) {
-        return new ExtractionTaskHandler(streamStore, feedService, feedHolder, currentUserHolder, streamHolder, pipelineHolder, errorReceiverProxy, pipelineFactory, pipelineService, pipelineDataCache, taskMonitor, securityContext);
+        return new ExtractionTaskHandler(streamStore, feedService, feedHolder, currentUserHolder, streamHolder, pipelineHolder, errorReceiverProxy, pipelineFactory, pipelineService, pipelineDataCache, taskContext, securityContext);
     }
 
     @Bean

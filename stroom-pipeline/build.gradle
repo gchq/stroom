@@ -29,7 +29,7 @@ dependencies {
     compile libs.xml_apis
     compile libs.stax_api
     compile libs.javax_inject
-    compile libs.ws_rs_api
+        compile libs.ws_rs_api
 
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

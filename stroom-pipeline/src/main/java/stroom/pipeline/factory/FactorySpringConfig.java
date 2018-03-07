@@ -27,7 +27,7 @@ import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 @Configuration
 public class FactorySpringConfig {
@@ -54,8 +54,8 @@ public class FactorySpringConfig {
     public PipelineFactory pipelineFactory(final ElementRegistryFactory pipelineElementRegistryFactory,
                                            final ElementFactory elementFactory,
                                            final ProcessorFactory processorFactory,
-                                           final TaskMonitor taskMonitor) {
-        return new PipelineFactory(pipelineElementRegistryFactory, elementFactory, processorFactory, taskMonitor);
+                                           final TaskContext taskContext) {
+        return new PipelineFactory(pipelineElementRegistryFactory, elementFactory, processorFactory, taskContext);
     }
 
     @Bean

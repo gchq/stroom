@@ -72,7 +72,7 @@ public class LuceneSearchStoreFactory {
                                     final NodeCache nodeCache,
                                     final TaskManager taskManager,
                                     final ClusterResultCollectorCache clusterResultCollectorCache,
-                                    @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
+                                    final StroomPropertyService propertyService,
                                     final SecurityContext securityContext) {
         this.indexService = indexService;
         this.dictionaryStore = dictionaryStore;
@@ -80,7 +80,7 @@ public class LuceneSearchStoreFactory {
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
-        this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
+        this.maxBooleanClauseCount = propertyService.getIntProperty("stroom.search.maxBooleanClauseCount", DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
         this.securityContext = securityContext;
     }
 

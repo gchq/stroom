@@ -23,11 +23,12 @@ import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.jobsystem.ClusterLockService;
 import stroom.jobsystem.JobTrackedSchedule;
+import stroom.properties.StroomPropertyService;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.sql.SQLException;
@@ -48,24 +49,24 @@ public class SQLStatisticAggregationManager {
     private static final ReentrantLock guard = new ReentrantLock();
     private final ClusterLockService clusterLockService;
     private final SQLStatisticAggregationTransactionHelper helper;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private int batchSize;
 
     @Inject
     SQLStatisticAggregationManager(final ClusterLockService clusterLockService,
                                    final SQLStatisticAggregationTransactionHelper helper,
-                                   final TaskMonitor taskMonitor,
+                                   final TaskContext taskContext,
                                    final StroomDatabaseInfo stroomDatabaseInfo,
-                                   @Value("#{propertyConfigurer.getProperty('stroom.statistics.sql.statisticAggregationBatchSize')}") String batchSizeString) {
+                                   final StroomPropertyService propertyService) {
         this.clusterLockService = clusterLockService;
         this.helper = helper;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
 
         Integer batchSize = DEFAULT_BATCH_SIZE;
         try {
-            batchSize = ModelStringUtil.parseNumberStringAsInt(batchSizeString);
+            batchSize = ModelStringUtil.parseNumberStringAsInt(propertyService.getProperty("stroom.statistics.sql.statisticAggregationBatchSize"));
             if (batchSize == null || batchSize == 0) {
                 batchSize = DEFAULT_BATCH_SIZE;
             }
@@ -116,7 +117,7 @@ public class SQLStatisticAggregationManager {
                 // don't
                 // have to aggregate any old data
                 try {
-                    helper.deleteOldStats(timeNow, taskMonitor);
+                    helper.deleteOldStats(timeNow, taskContext);
 
                     long processedCount = 0;
                     int iteration = 0;
@@ -124,13 +125,13 @@ public class SQLStatisticAggregationManager {
                     // that
                     // was not a full batch
                     do {
-                        processedCount = helper.aggregateConfigStage1(taskMonitor, "Iteration: " + ++iteration + "",
+                        processedCount = helper.aggregateConfigStage1(taskContext, "Iteration: " + ++iteration + "",
                                 batchSize, timeNow);
 
-                    } while (processedCount == batchSize && !taskMonitor.isTerminated());
+                    } while (processedCount == batchSize && !taskContext.isTerminated());
 
-                    if (!taskMonitor.isTerminated()) {
-                        helper.aggregateConfigStage2(taskMonitor, "Final Reduce", timeNow);
+                    if (!taskContext.isTerminated()) {
+                        helper.aggregateConfigStage2(taskContext, "Final Reduce", timeNow);
                     }
 
                 } catch (final SQLException ex) {

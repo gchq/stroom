@@ -19,9 +19,11 @@ package stroom.node;
 import stroom.node.shared.RecordCountService;
 import stroom.node.shared.RecordCounter;
 
+import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.Set;
 
+@Singleton
 public class RecordCountServiceImpl implements RecordCountService {
     private final Set<RecordCounter> recordReadCounters = new HashSet<>();
     private final Set<RecordCounter> recordWriteCounters = new HashSet<>();

@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.event.EntityEventBus;
 import stroom.entity.event.EntityEventBusImpl;
 import stroom.logging.DocumentEventLog;
+import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
@@ -36,17 +37,17 @@ import javax.inject.Provider;
 @Configuration
 public class EntitySpringConfig {
     @Bean
-    public StroomDatabaseInfo stroomDatabaseInfo(@Value("#{propertyConfigurer.getProperty('stroom.jdbcDriverClassName')}") final String driverClassName) {
-        return new StroomDatabaseInfo(driverClassName);
+    public StroomDatabaseInfo stroomDatabaseInfo(final StroomPropertyService propertyService) {
+        return new StroomDatabaseInfo(propertyService);
     }
 
-    @Bean("stroomEntityManager")
-    @Primary
-    public StroomEntityManager stroomEntityManager(final StroomBeanStore beanStore,
-                                                   final Provider<EntityEventBus> eventBusProvider,
-                                                   final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider) {
-        return new StroomEntityManagerImpl(beanStore, eventBusProvider, stroomDatabaseInfoProvider);
-    }
+//    @Bean("stroomEntityManager")
+//    @Primary
+//    public StroomEntityManager stroomEntityManager(final StroomBeanStore beanStore,
+//                                                   final Provider<EntityEventBus> eventBusProvider,
+//                                                   final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider) {
+//        return new StroomEntityManagerImpl(beanStore, eventBusProvider, stroomDatabaseInfoProvider);
+//    }
 
     @Bean("cachingEntityManager")
     public CachingEntityManager cachingEntityManager(@Named("stroomEntityManager") final StroomEntityManager stroomEntityManager, final CacheManager cacheManager) {
@@ -66,10 +67,10 @@ public class EntitySpringConfig {
         return new EntityReferenceFindHandler(beanRegistry, documentEventLog);
     }
 
-    @Bean
-    public EntityServiceBeanRegistry entityServiceBeanRegistry(final StroomBeanStore beanStore) {
-        return new EntityServiceBeanRegistry(beanStore);
-    }
+//    @Bean
+//    public EntityServiceBeanRegistry entityServiceBeanRegistry(final StroomBeanStore beanStore) {
+//        return new EntityServiceBeanRegistry(beanStore);
+//    }
 
     @Bean
     @Scope(value = StroomScope.TASK)

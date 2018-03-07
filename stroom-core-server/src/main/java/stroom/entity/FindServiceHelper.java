@@ -16,7 +16,7 @@
 
 package stroom.entity;
 
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Entity;
@@ -36,7 +36,7 @@ public class FindServiceHelper<E extends Entity, C extends BaseCriteria> {
         this.queryAppender = queryAppender;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public BaseResultList<E> find(final C criteria, final FieldMap sqlFieldMap) throws RuntimeException {
         return doBasicFind(criteria, sqlFieldMap);
     }

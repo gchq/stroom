@@ -19,7 +19,6 @@ package stroom.dashboard;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import org.springframework.core.io.ResourceLoader;
 import stroom.dashboard.logging.SearchEventLog;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.entity.StroomEntityManager;
@@ -27,9 +26,9 @@ import stroom.importexport.ImportExportHelper;
 import stroom.properties.StroomPropertyService;
 import stroom.resource.ResourceStore;
 import stroom.security.SecurityContext;
+import stroom.task.TaskContext;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
 import stroom.visualisation.VisualisationService;
 
 import javax.inject.Provider;
@@ -42,13 +41,13 @@ public class DashboardSpringConfig {
         return new ActiveQueriesManager(cacheManager, dataSourceProviderRegistry);
     }
 
-    @Bean
-    public DashboardService dashboardService(final StroomEntityManager entityManager,
-                                             final ImportExportHelper importExportHelper,
-                                             final SecurityContext securityContext,
-                                             final ResourceLoader resourceLoader) {
-        return new DashboardServiceImpl(entityManager, importExportHelper, securityContext, resourceLoader);
-    }
+//    @Bean
+//    public DashboardService dashboardService(final StroomEntityManager entityManager,
+//                                             final ImportExportHelper importExportHelper,
+//                                             final SecurityContext securityContext,
+//                                             final ResourceLoader resourceLoader) {
+//        return new DashboardServiceImpl(entityManager, importExportHelper, securityContext, resourceLoader);
+//    }
 
     @Bean
     @Scope(value = StroomScope.TASK)
@@ -89,10 +88,10 @@ public class DashboardSpringConfig {
 
     @Bean
     @Scope(value = StroomScope.TASK)
-    public QueryHistoryCleanExecutor queryHistoryCleanExecutor(final TaskMonitor taskMonitor,
+    public QueryHistoryCleanExecutor queryHistoryCleanExecutor(final TaskContext taskContext,
                                                                final QueryService queryService,
                                                                final StroomPropertyService propertyService) {
-        return new QueryHistoryCleanExecutor(taskMonitor, queryService, propertyService);
+        return new QueryHistoryCleanExecutor(taskContext, queryService, propertyService);
     }
 
     @Bean("queryService")

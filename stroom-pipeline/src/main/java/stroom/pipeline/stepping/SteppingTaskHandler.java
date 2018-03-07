@@ -62,7 +62,7 @@ import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Highlight;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -92,7 +92,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private final StreamCloser streamCloser;
     private final FeedService feedService;
     private final StreamTypeService streamTypeService;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final FeedHolder feedHolder;
     private final PipelineHolder pipelineHolder;
     private final StreamHolder streamHolder;
@@ -123,7 +123,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         final StreamCloser streamCloser,
                         final FeedService feedService,
                         @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
-                        final TaskMonitor taskMonitor,
+                        final TaskContext taskContext,
                         final FeedHolder feedHolder,
                         final PipelineHolder pipelineHolder,
                         final StreamHolder streamHolder,
@@ -141,7 +141,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         this.streamCloser = streamCloser;
         this.feedService = feedService;
         this.streamTypeService = streamTypeService;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
         this.streamHolder = streamHolder;
@@ -172,7 +172,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
             // Set the controller for the pipeline.
             controller.setRequest(request);
-            controller.setTaskMonitor(taskMonitor);
+            controller.setTaskMonitor(taskContext);
 
             try {
                 // Initialise the process by finding streams to process and setting
@@ -225,7 +225,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private void initialise(final SteppingTask request) {
-        if (!taskMonitor.isTerminated()) {
+        if (!taskContext.isTerminated()) {
             final StepType stepType = request.getStepType();
             currentLocation = request.getStepLocation();
 
@@ -287,7 +287,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private void process(final SteppingTask request, final Long streamId) {
-        if (!taskMonitor.isTerminated()) {
+        if (!taskContext.isTerminated()) {
             final StepType stepType = request.getStepType();
 
             if (streamId != null && !streamId.equals(lastStreamId)) {
@@ -391,7 +391,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private Long getStreamId(final SteppingTask request) {
-        if (!taskMonitor.isTerminated()) {
+        if (!taskContext.isTerminated()) {
             final StepType stepType = request.getStepType();
             // If we are just refreshing then just return the same task we used
             // before.
@@ -487,7 +487,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             lastFeed = null;
         }
 
-        if (!taskMonitor.isTerminated()) {
+        if (!taskContext.isTerminated()) {
             // Create a new pipeline for a new feed or if the feed has changed.
             if (lastFeed == null) {
                 lastFeed = feed;
@@ -560,7 +560,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 // sequentially. Loop over the stream boundaries and process
                 // each sequentially until we find a record.
                 boolean done = controller.isFound();
-                while (!done && streamNo > 0 && streamNo <= streamCount && !taskMonitor.isTerminated()) {
+                while (!done && streamNo > 0 && streamNo <= streamCount && !taskContext.isTerminated()) {
                     // Set the stream number.
                     streamHolder.setStreamNo(streamNo - 1);
                     streamLocationFactory.setStreamNo(streamNo);

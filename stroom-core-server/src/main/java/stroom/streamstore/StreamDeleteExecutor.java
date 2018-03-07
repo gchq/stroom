@@ -29,9 +29,10 @@ import stroom.streamtask.AbstractBatchDeleteExecutor;
 import stroom.streamtask.BatchIdTransactionHelper;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     private static final String TASK_NAME = "Stream Delete Executor";
@@ -45,8 +46,8 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     StreamDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                          final ClusterLockService clusterLockService,
                          final StroomPropertyService propertyService,
-                         final TaskMonitor taskMonitor) {
-        super(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor, TASK_NAME, LOCK_NAME,
+                         final TaskContext taskContext) {
+        super(batchIdTransactionHelper, clusterLockService, propertyService, taskContext, TASK_NAME, LOCK_NAME,
                 STREAM_DELETE_PURGE_AGE_PROPERTY, STREAM_DELETE_BATCH_SIZE_PROPERTY, DEFAULT_STREAM_DELETE_BATCH_SIZE,
                 TEMP_STRM_ID_TABLE);
     }

@@ -36,8 +36,8 @@ import stroom.streamstore.fs.FileSystemCleanExecutor;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
+import stroom.task.SimpleTaskContext;
 import stroom.task.TaskManager;
-import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -135,7 +135,7 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         // deleted if they exist, however currently streams are only deleted if
         // their associated task exists which would prevent us from deleting
         // streams that have no task associated with them.
-        streamTaskCreator.createTasks(new TaskMonitorImpl());
+        streamTaskCreator.createTasks(new SimpleTaskContext());
 
         List<StreamVolume> oldVolumeList = streamMaintenanceService
                 .find(FindStreamVolumeCriteria.create(oldFileTarget.getStream()));

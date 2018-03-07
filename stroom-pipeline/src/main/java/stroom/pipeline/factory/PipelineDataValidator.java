@@ -34,7 +34,7 @@ public class PipelineDataValidator {
     private final ElementRegistryFactory pipelineElementRegistryFactory;
 
     @Inject
-    public PipelineDataValidator(final ElementRegistryFactory pipelineElementRegistryFactory) {
+    PipelineDataValidator(final ElementRegistryFactory pipelineElementRegistryFactory) {
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
     }
 

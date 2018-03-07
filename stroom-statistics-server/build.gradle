@@ -25,7 +25,7 @@ dependencies {
     compile libs.guava
     compile (libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
     compile libs.javax_inject
-    compile libs.slf4j_api
+        compile libs.slf4j_api
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_core

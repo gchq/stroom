@@ -26,18 +26,18 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @Configuration
 @EnableAspectJAutoProxy
 public class UtilSpringConfig {
-    @Bean("propertyFileProvider")
-    public static PropertyConfigurer propertyConfigurer() {
-        return new PropertyConfigurer();
-    }
+//    @Bean("propertyFileProvider")
+//    public static PropertyConfigurer propertyConfigurer() {
+//        return new PropertyConfigurer();
+//    }
 
     @Bean
     public StroomBeanLifeCycle stroomBeanLifeCycle(final StroomBeanStore stroomBeanStore) {
         return new StroomBeanLifeCycle(stroomBeanStore);
     }
-
-    @Bean
-    public StroomBeanStore stroomBeanStore(final ApplicationContext applicationContext, final BeanFactory beanFactory) {
-        return new StroomBeanStore(applicationContext, beanFactory);
-    }
+//
+//    @Bean
+//    public StroomBeanStore stroomBeanStore(final ApplicationContext applicationContext, final BeanFactory beanFactory) {
+//        return new StroomBeanStore(applicationContext, beanFactory);
+//    }
 }

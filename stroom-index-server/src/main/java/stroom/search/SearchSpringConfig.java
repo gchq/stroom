@@ -43,33 +43,33 @@ import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Provider;
 
 @Configuration
 public class SearchSpringConfig {
-    @Bean
-    @Scope(value = StroomScope.TASK)
-    public AsyncSearchTaskHandler asyncSearchTaskHandler(final TaskMonitor taskMonitor,
-                                                         final TargetNodeSetFactory targetNodeSetFactory,
-                                                         final ClusterDispatchAsync dispatcher,
-                                                         final ClusterDispatchAsyncHelper dispatchHelper,
-                                                         final ClusterResultCollectorCache clusterResultCollectorCache,
-                                                         final IndexService indexService,
-                                                         final IndexShardService indexShardService,
-                                                         final TaskManager taskManager,
-                                                         final SecurityContext securityContext) {
-        return new AsyncSearchTaskHandler(taskMonitor,
-                targetNodeSetFactory,
-                dispatcher,
-                dispatchHelper,
-                clusterResultCollectorCache,
-                indexService,
-                indexShardService,
-                taskManager,
-                securityContext);
-    }
+//    @Bean
+//    @Scope(value = StroomScope.TASK)
+//    public AsyncSearchTaskHandler asyncSearchTaskHandler(final TaskContext taskContext,
+//                                                         final TargetNodeSetFactory targetNodeSetFactory,
+//                                                         final ClusterDispatchAsync dispatcher,
+//                                                         final ClusterDispatchAsyncHelper dispatchHelper,
+//                                                         final ClusterResultCollectorCache clusterResultCollectorCache,
+//                                                         final IndexService indexService,
+//                                                         final IndexShardService indexShardService,
+//                                                         final TaskManager taskManager,
+//                                                         final SecurityContext securityContext) {
+//        return new AsyncSearchTaskHandler(taskContext,
+//                targetNodeSetFactory,
+//                dispatcher,
+//                dispatchHelper,
+//                clusterResultCollectorCache,
+//                indexService,
+//                indexShardService,
+//                taskManager,
+//                securityContext);
+//    }
 
     @Bean
     @Scope(value = StroomScope.TASK)
@@ -84,8 +84,7 @@ public class SearchSpringConfig {
                                                              final ExtractionTaskProperties extractionTaskProperties,
                                                              final StreamStore streamStore,
                                                              final SecurityContext securityContext,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize,
+                                                             final StroomPropertyService propertyService,
                                                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                                                              final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                                                              final ExecutorProvider executorProvider) {
@@ -100,8 +99,7 @@ public class SearchSpringConfig {
                 extractionTaskProperties,
                 streamStore,
                 securityContext,
-                maxBooleanClauseCount,
-                maxStoredDataQueueSize,
+                propertyService,
                 indexShardSearchTaskHandlerProvider,
                 extractionTaskHandlerProvider,
                 executorProvider);
@@ -131,9 +129,9 @@ public class SearchSpringConfig {
                                                              final NodeCache nodeCache,
                                                              final TaskManager taskManager,
                                                              final ClusterResultCollectorCache clusterResultCollectorCache,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
+                                                             final StroomPropertyService propertyService,
                                                              final SecurityContext securityContext) {
-        return new LuceneSearchStoreFactory(indexService, dictionaryStore, stroomPropertyService, nodeCache, taskManager, clusterResultCollectorCache, maxBooleanClauseCount, securityContext);
+        return new LuceneSearchStoreFactory(indexService, dictionaryStore, stroomPropertyService, nodeCache, taskManager, clusterResultCollectorCache, propertyService, securityContext);
     }
 
     @Bean

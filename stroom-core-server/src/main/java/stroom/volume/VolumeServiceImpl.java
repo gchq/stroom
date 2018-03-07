@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -54,6 +54,7 @@ import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -76,6 +77,7 @@ import java.util.stream.Stream;
 /**
  * Implementation for the volume API.
  */
+@Singleton
 @Transactional
 @Secured(Volume.MANAGE_VOLUMES_PERMISSION)
 @EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
@@ -146,7 +148,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         volumeSelectorMap.put(volumeSelector.getName(), volumeSelector);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Insecure
     @Override
     public Set<Volume> getStreamVolumeSet(final Node node) {
@@ -159,7 +161,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                 getResilientReplicationCount());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Insecure
     @Override
     public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {

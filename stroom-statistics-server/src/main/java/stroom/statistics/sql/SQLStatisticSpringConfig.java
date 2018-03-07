@@ -27,7 +27,7 @@ import stroom.statistics.sql.datasource.StatisticStoreCache;
 import stroom.statistics.sql.datasource.StatisticStoreValidator;
 import stroom.task.TaskManager;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Named;
 import javax.sql.DataSource;
@@ -38,10 +38,10 @@ public class SQLStatisticSpringConfig {
     @Scope(value = StroomScope.TASK)
     public SQLStatisticAggregationManager sQLStatisticAggregationManager(final ClusterLockService clusterLockService,
                                                                          final SQLStatisticAggregationTransactionHelper helper,
-                                                                         final TaskMonitor taskMonitor,
+                                                                         final TaskContext taskContext,
                                                                          final StroomDatabaseInfo stroomDatabaseInfo,
-                                                                         @Value("#{propertyConfigurer.getProperty('stroom.statistics.sql.statisticAggregationBatchSize')}") String batchSizeString) {
-        return new SQLStatisticAggregationManager(clusterLockService, helper, taskMonitor, stroomDatabaseInfo, batchSizeString);
+                                                                         final StroomPropertyService propertyService) {
+        return new SQLStatisticAggregationManager(clusterLockService, helper, taskContext, stroomDatabaseInfo, propertyService);
     }
 
     @Bean
@@ -68,8 +68,8 @@ public class SQLStatisticSpringConfig {
     @Bean
     @Scope(value = StroomScope.TASK)
     public SQLStatisticFlushTaskHandler sqlStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
-                                                                     final TaskMonitor taskMonitor) {
-        return new SQLStatisticFlushTaskHandler(sqlStatisticValueBatchSaveService, taskMonitor);
+                                                                     final TaskContext taskContext) {
+        return new SQLStatisticFlushTaskHandler(sqlStatisticValueBatchSaveService, taskContext);
     }
 
     @Bean

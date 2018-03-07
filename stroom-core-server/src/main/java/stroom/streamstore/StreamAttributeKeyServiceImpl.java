@@ -19,7 +19,7 @@ package stroom.streamstore;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
@@ -30,8 +30,10 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 @Transactional
 @Insecure
 class StreamAttributeKeyServiceImpl

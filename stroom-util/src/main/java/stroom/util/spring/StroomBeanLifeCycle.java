@@ -113,7 +113,7 @@ public class StroomBeanLifeCycle {
                     return compare;
                 }
 
-                compare = o1.getBeanName().compareTo(o2.getBeanName());
+                compare = o1.getBeanClass().getName().compareTo(o2.getBeanClass().getName());
                 if (compare != 0) {
                     return compare;
                 }
@@ -136,7 +136,7 @@ public class StroomBeanLifeCycle {
                     return compare;
                 }
 
-                compare = o1.getBeanName().compareTo(o2.getBeanName());
+                compare = o1.getBeanClass().getName().compareTo(o2.getBeanClass().getName());
                 if (compare != 0) {
                     return compare;
                 }

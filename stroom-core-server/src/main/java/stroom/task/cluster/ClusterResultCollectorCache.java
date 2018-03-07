@@ -24,8 +24,10 @@ import stroom.util.cache.CacheUtil;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 public class ClusterResultCollectorCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000000;
 

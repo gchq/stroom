@@ -26,12 +26,12 @@ import stroom.security.SecurityHelper;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-public class RemoteFeedServiceImpl implements RemoteFeedService {
+class RemoteFeedServiceImpl implements RemoteFeedService {
     private final SecurityContext securityContext;
     private final FeedService feedService;
 
     @Inject
-    public RemoteFeedServiceImpl(final SecurityContext securityContext, @Named("cachedFeedService") final FeedService feedService) {
+    RemoteFeedServiceImpl(final SecurityContext securityContext, @Named("cachedFeedService") final FeedService feedService) {
         this.securityContext = securityContext;
         this.feedService = feedService;
     }

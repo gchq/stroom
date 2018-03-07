@@ -19,16 +19,19 @@ package stroom.jobsystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.inject.persist.Transactional;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.HqlBuilder;
 import stroom.jobsystem.shared.ClusterLock;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.transaction.Transactional.TxType;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Singleton
 @Transactional
 public class ClusterLockServiceTransactionHelperImpl implements ClusterLockServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceTransactionHelper.class);
@@ -42,7 +45,7 @@ public class ClusterLockServiceTransactionHelperImpl implements ClusterLockServi
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void checkLockCreated(final String name) {
         LOGGER.debug("Getting cluster lock: " + name);
 

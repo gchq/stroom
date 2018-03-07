@@ -44,10 +44,13 @@ import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
+@Singleton
 @Insecure
 public class DocumentEventLogImpl implements DocumentEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentEventLogImpl.class);
@@ -69,9 +72,9 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 if (objectInfoAppenders == null) {
                     final StroomBeanStore stroomBeanStore = stroomBeanStoreProvider.get();
                     final Map<Class<?>, EventInfoProvider> appenders = new HashMap<>();
-                    final Map<String, EventInfoProvider> map = stroomBeanStore.getBeansOfType(EventInfoProvider.class, false, false);
-                    map.forEach((name, provider) -> {
-                        appenders.put(provider.getType(), provider);
+                    final Set<EventInfoProvider> eventInfoProviders = stroomBeanStore.getBeansOfType(EventInfoProvider.class);
+                    eventInfoProviders.forEach(eventInfoProvider -> {
+                        appenders.put(eventInfoProvider.getType(), eventInfoProvider);
                     });
                     objectInfoAppenders = appenders;
                 }

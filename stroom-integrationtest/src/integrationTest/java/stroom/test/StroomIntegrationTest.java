@@ -45,8 +45,6 @@ import java.nio.file.Path;
  * It is safer if all test classes destroy the Spring context after running
  * tests in the class to avoid knock on effects in other tests.
  */
-@RunWith(StroomSpringJUnit4ClassRunner.class)
-@Category(IntegrationTest.class)
 public abstract class StroomIntegrationTest implements StroomTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomIntegrationTest.class);
 
@@ -86,7 +84,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * Initialise required database entities.
      */
     @Before
-    public final void before() {
+    public void before() {
         final State state = TestState.getState();
         state.incrementTestCount();
 

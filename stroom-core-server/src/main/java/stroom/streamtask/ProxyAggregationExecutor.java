@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import stroom.jobsystem.JobTrackedSchedule;
+import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.ExecutorProvider;
@@ -32,7 +33,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.util.concurrent.Executor;
@@ -47,7 +48,7 @@ class ProxyAggregationExecutor {
 
     private final static int DEFAULT_MAX_AGGREGATION = 10000;
 
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final String proxyDir;
     private final int maxAggregation;
     private final ProxyFileProcessorImpl proxyFileProcessor;
@@ -57,27 +58,23 @@ class ProxyAggregationExecutor {
 
     @Inject
     ProxyAggregationExecutor(final ProxyFileProcessorImpl proxyFileProcessor,
-                             final TaskMonitor taskMonitor,
+                             final TaskContext taskContext,
                              final ExecutorProvider executorProvider,
-                             @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
-                             @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}") final String threadCount,
-                             @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
-                             @Value("#{propertyConfigurer.getProperty('stroom.maxAggregationScan')}") final String maxFileScan,
-                             @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
+                             final StroomPropertyService propertyService) {
         this(
                 proxyFileProcessor,
-                taskMonitor,
+                taskContext,
                 executorProvider,
-                proxyDir,
-                PropertyUtil.toInt(threadCount, 10),
-                PropertyUtil.toInt(maxAggregation, DEFAULT_MAX_AGGREGATION),
-                PropertyUtil.toInt(maxFileScan, RepositoryProcessor.DEFAULT_MAX_FILE_SCAN),
-                ProxyFileProcessorImpl.getByteSize(maxStreamSize, ProxyFileProcessorImpl.DEFAULT_MAX_STREAM_SIZE)
+                propertyService.getProperty("stroom.proxyDir"),
+                propertyService.getIntProperty("stroom.proxyThreads", 10),
+                propertyService.getIntProperty("stroom.maxAggregation", DEFAULT_MAX_AGGREGATION),
+                propertyService.getIntProperty("stroom.maxAggregationScan", RepositoryProcessor.DEFAULT_MAX_FILE_SCAN),
+                ProxyFileProcessorImpl.getByteSize(propertyService.getProperty("stroom.maxStreamSize"), ProxyFileProcessorImpl.DEFAULT_MAX_STREAM_SIZE)
         );
     }
 
     ProxyAggregationExecutor(final ProxyFileProcessorImpl proxyFileProcessor,
-                             final TaskMonitor taskMonitor,
+                             final TaskContext taskContext,
                              final ExecutorProvider executorProvider,
                              final String proxyDir,
                              final int threadCount,
@@ -85,7 +82,7 @@ class ProxyAggregationExecutor {
                              final int maxFileScan,
                              final long maxStreamSize) {
         this.proxyFileProcessor = proxyFileProcessor;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.proxyDir = proxyDir;
         this.maxAggregation = maxAggregation;
         this.maxStreamSize = maxStreamSize;
@@ -93,7 +90,7 @@ class ProxyAggregationExecutor {
         final ThreadPool threadPool = new ThreadPoolImpl("Proxy Aggregation", 5, 0, threadCount);
 
         this.executor = executorProvider.getExecutor(threadPool);
-        repositoryProcessor = new RepositoryProcessor(proxyFileProcessor, executor, taskMonitor);
+        repositoryProcessor = new RepositoryProcessor(proxyFileProcessor, executor, taskContext);
         repositoryProcessor.setMaxFileScan(maxFileScan);
     }
 
@@ -101,14 +98,12 @@ class ProxyAggregationExecutor {
     @JobTrackedSchedule(jobName = "Proxy Aggregation", advanced = false, description = "Job to pick up the data written by the proxy and store it in Stroom")
     public void exec(final Task<?> task) {
         try {
-            taskMonitor.addTerminateHandler(this::stop);
-
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
             LOGGER.info("exec() - started");
 
             boolean complete = false;
-            while (!complete && !taskMonitor.isTerminated()) {
-                taskMonitor.info("Aggregate started {}, maxAggregation {}, maxAggregationScan {}, maxStreamSize {}",
+            while (!complete && !taskContext.isTerminated()) {
+                taskContext.info("Aggregate started {}, maxAggregation {}, maxAggregationScan {}, maxStreamSize {}",
                         DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
                         ModelStringUtil.formatCsv(maxAggregation),
                         ModelStringUtil.formatCsv(repositoryProcessor.getMaxFileScan()),
@@ -126,13 +121,13 @@ class ProxyAggregationExecutor {
 
 
 //    private void startExecutor() {
-//        taskPool = new AsyncTaskHelper<>(null, taskMonitor, taskManager, threadCount);
+//        taskPool = new AsyncTaskHelper<>(null, taskContext, taskManager, threadCount);
 //    }
 //
 //    private void stopExecutor(final boolean now) {
 //        if (taskPool != null) {
 //            if (now) {
-//                taskMonitor.terminate();
+//                taskContext.terminate();
 //                taskPool.clear();
 //            }
 //            taskPool.join();

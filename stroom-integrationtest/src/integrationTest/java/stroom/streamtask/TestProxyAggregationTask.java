@@ -39,7 +39,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.DummyTask;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
 
@@ -67,7 +67,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Inject
     private MetaDataStatistic metaDataStatistic;
     @Inject
-    private TaskMonitor taskMonitor;
+    private TaskContext taskContext;
     @Inject
     private ExecutorProvider executorProvider;
     @Inject
@@ -77,7 +77,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                            final int maxAggregation,
                            final long maxStreamSize) {
         final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedService, metaDataStatistic, maxAggregation, maxStreamSize);
-        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(proxyFileProcessor, taskMonitor, executorProvider, proxyDir, 10, maxAggregation, 10000, maxStreamSize);
+        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(proxyFileProcessor, taskContext, executorProvider, proxyDir, 10, maxAggregation, 10000, maxStreamSize);
         proxyAggregationExecutor.exec(new DummyTask());
     }
 

@@ -26,6 +26,7 @@ import stroom.task.TaskHandler;
 import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

@@ -23,6 +23,7 @@ import stroom.entity.util.ConnectionUtil;
 import stroom.node.shared.GlobalProperty;
 import stroom.util.config.StroomProperties;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+@Singleton
 public class GlobalProperties {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalProperties.class);
 

@@ -26,7 +26,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.writer.PathCreator;
 import stroom.properties.StroomPropertyService;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 @Configuration
 public class KafkaSpringConfig {
@@ -48,11 +48,11 @@ public class KafkaSpringConfig {
     @Bean
     @Scope(StroomScope.PROTOTYPE)
     public RollingKafkaAppender rollingKafkaAppender(final RollingDestinations destinations,
-                                                     final TaskMonitor taskMonitor,
+                                                     final TaskContext taskContext,
                                                      final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
                                                      final PathCreator pathCreator,
                                                      final ErrorReceiverProxy errorReceiverProxy) {
-        return new RollingKafkaAppender(destinations, taskMonitor, stroomKafkaProducerFactoryService, pathCreator, errorReceiverProxy);
+        return new RollingKafkaAppender(destinations, taskContext, stroomKafkaProducerFactoryService, pathCreator, errorReceiverProxy);
     }
 
     @Bean

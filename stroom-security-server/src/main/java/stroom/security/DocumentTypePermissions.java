@@ -8,6 +8,7 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.security.shared.DocumentPermissionNames;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Singleton
 class DocumentTypePermissions {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTypePermissions.class);
     private static final String[] STANDARD_PERMISSIONS = DocumentPermissionNames.DOCUMENT_PERMISSIONS;

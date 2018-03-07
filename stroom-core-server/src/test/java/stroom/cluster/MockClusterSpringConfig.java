@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import stroom.cluster.MockClusterNodeManager;
 import stroom.node.NodeCache;
+import stroom.properties.StroomPropertyService;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomSpringProfiles;
 
@@ -43,10 +44,8 @@ public class MockClusterSpringConfig {
     @Bean("clusterCallServiceRemote")
     public ClusterCallServiceRemote clusterCallServiceRemote(final NodeCache nodeCache,
                                                              final StroomBeanStore beanStore,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallUseLocal')}") final boolean clusterCallUseLocal,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallReadTimeout')}") final String clusterCallReadTimeout,
-                                                             @Value("#{propertyConfigurer.getProperty('stroom.clusterCallIgnoreSSLHostnameVerifier')}") final boolean ignoreSSLHostnameVerifier) {
-        return new ClusterCallServiceRemote(nodeCache, beanStore, clusterCallUseLocal, clusterCallReadTimeout, ignoreSSLHostnameVerifier);
+                                                             final StroomPropertyService propertyService) {
+        return new ClusterCallServiceRemote(nodeCache, beanStore, propertyService);
     }
 
     @Bean

@@ -41,6 +41,7 @@ import stroom.util.spring.StroomShutdown;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.util.Collection;
@@ -57,6 +58,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * class may execute many tasks concurrently if required, e.g. using separate
  * threads for transforming multiple XML files.
  */
+@Singleton
 public class DistributedTaskFetcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
     private static final long ONE_MINUTE = 60 * 1000;
