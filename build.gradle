@@ -164,6 +164,7 @@ ext.libs = [
     javax_servlet_api: "javax.servlet:javax.servlet-api:3.1.0",
     javax_validation: 'javax.validation:validation-api:1.1.0.Final',
     jcl_over_slf4j: "org.slf4j:jcl-over-slf4j:$versions.slf4j",
+    jcommander: 'com.beust:jcommander:1.72',
     jersey_client: "org.glassfish.jersey.core:jersey-client:$versions.jersey",
     jersey_common: "org.glassfish.jersey.core:jersey-common:$versions.jersey",
     jersey_server: "org.glassfish.jersey.core:jersey-server:$versions.jersey", //was 2.25 now 2.25.1
