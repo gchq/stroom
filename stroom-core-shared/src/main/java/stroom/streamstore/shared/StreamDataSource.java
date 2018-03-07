@@ -5,7 +5,6 @@ import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
@@ -91,8 +90,8 @@ public class StreamDataSource {
     private static DataSourceField createDateField(final String name) {
         return new DataSourceField.Builder()
                 .name(name)
-                .addConditions(ExpressionTerm.Condition.EQUALS)
-                .addConditions(ExpressionTerm.Condition.BETWEEN)
+                .addConditions(Condition.EQUALS)
+                .addConditions(Condition.BETWEEN)
                 .addConditions(Condition.GREATER_THAN)
                 .addConditions(Condition.GREATER_THAN_OR_EQUAL_TO)
                 .addConditions(Condition.LESS_THAN)
@@ -104,8 +103,9 @@ public class StreamDataSource {
     private static DataSourceField createStringField(final String name) {
         return new DataSourceField.Builder()
                 .name(name)
-                .addConditions(ExpressionTerm.Condition.EQUALS)
-                .addConditions(ExpressionTerm.Condition.IN)
+                .addConditions(Condition.EQUALS)
+                .addConditions(Condition.IN)
+                .addConditions(Condition.IN_DICTIONARY)
                 .type(DataSourceField.DataSourceFieldType.FIELD)
                 .build();
     }
@@ -113,8 +113,8 @@ public class StreamDataSource {
     private static DataSourceField createIdField(final String name) {
         return new DataSourceField.Builder()
                 .name(name)
-                .addConditions(ExpressionTerm.Condition.EQUALS)
-                .addConditions(ExpressionTerm.Condition.IN)
+                .addConditions(Condition.EQUALS)
+                .addConditions(Condition.IN)
                 .type(DataSourceField.DataSourceFieldType.ID)
                 .build();
     }
@@ -122,8 +122,8 @@ public class StreamDataSource {
     private static DataSourceField createNumField(final String name) {
         return new DataSourceField.Builder()
                 .name(name)
-                .addConditions(ExpressionTerm.Condition.EQUALS)
-                .addConditions(ExpressionTerm.Condition.BETWEEN)
+                .addConditions(Condition.EQUALS)
+                .addConditions(Condition.BETWEEN)
                 .addConditions(Condition.GREATER_THAN)
                 .addConditions(Condition.GREATER_THAN_OR_EQUAL_TO)
                 .addConditions(Condition.LESS_THAN)
