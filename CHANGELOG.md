@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#666** : Fixed the duplicate dictionary issue in processing filter migrations, made querying more efficient too
 
+* Issue **#668** : Fixed the issue that prevented editing of stroom volumes
+
+* Issue **#669** : Elastic Index Filter now uses stroomServiceUser to retrieve the index config from the Query Elastic service.
+
 ## [v6.0-alpha.14]
 
 * Minor fix to migrations
