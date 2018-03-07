@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-alpha.15]
+
 * Issue **#666** : Fixed the duplicate dictionary issue in processing filter migrations, made querying more efficient too
+* Database migration fixes and tools
 
 ## [v6.0-alpha.14]
 
@@ -806,7 +809,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...6.0
+[v6.0-alpha.14]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...v6.0-alpha.15
 [v6.0-alpha.14]: https://github.com/gchq/stroom/compare/v6.0-alpha.13...v6.0-alpha.14
 [v6.0-alpha.13]: https://github.com/gchq/stroom/compare/v6.0-alpha.12...v6.0-alpha.13
 [v6.0-alpha.12]: https://github.com/gchq/stroom/compare/v6.0-alpha.11...v6.0-alpha.12
