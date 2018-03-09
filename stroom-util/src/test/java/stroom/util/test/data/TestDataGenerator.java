@@ -2,6 +2,8 @@ package stroom.util.test.data;
 
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.ClassPath;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,6 +14,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -31,6 +34,8 @@ import java.util.stream.Stream;
  * types are available. For examples of how to use this class see {@link TestTestDataGenerator}.
  */
 public class TestDataGenerator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataGenerator.class);
 
     /**
      * Method to begin the process of building a test data generator definition and producing the test data.
@@ -72,25 +77,33 @@ public class TestDataGenerator {
      * looping back to the beginning when it gets to the end.
      */
     public static Field sequentialValueField(final String name, final List<String> values) {
-        Preconditions.checkNotNull(values);
-        Preconditions.checkArgument(!values.isEmpty());
-        final AtomicLoopedIntegerSequence indexSequence = new AtomicLoopedIntegerSequence(0, values.size());
+        try {
+            Preconditions.checkNotNull(values);
+            Preconditions.checkArgument(!values.isEmpty());
+            final AtomicLoopedIntegerSequence indexSequence = new AtomicLoopedIntegerSequence(0, values.size());
 
-        final Supplier<String> supplier = () ->
-                values.get(indexSequence.getNext());
-        return new Field(name, supplier);
+            final Supplier<String> supplier = () ->
+                    values.get(indexSequence.getNext());
+            return new Field(name, supplier);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building sequentialValueField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
      * {@link Field} that supplies a random value from values on each call to getNext()
      */
     public static Field randomValueField(final String name, final List<String> values) {
-        Preconditions.checkNotNull(values);
-        Preconditions.checkArgument(!values.isEmpty());
-        final Random random = new Random();
-        final Supplier<String> supplier = () ->
-                values.get(random.nextInt(values.size()));
-        return new Field(name, supplier);
+        try {
+            Preconditions.checkNotNull(values);
+            Preconditions.checkArgument(!values.isEmpty());
+            final Random random = new Random();
+            final Supplier<String> supplier = () ->
+                    values.get(random.nextInt(values.size()));
+            return new Field(name, supplier);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building randomValueField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
@@ -104,13 +117,17 @@ public class TestDataGenerator {
     public static Field randomNumberedValueField(final String name,
                                                  final String format,
                                                  final int maxNumberExc) {
-        Preconditions.checkNotNull(format);
-        Preconditions.checkArgument(maxNumberExc > 0);
+        try {
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(maxNumberExc > 0);
 
-        final Random random = new Random();
-        final Supplier<String> supplier = () ->
-                String.format(format, random.nextInt(maxNumberExc));
-        return new Field(name, supplier);
+            final Random random = new Random();
+            final Supplier<String> supplier = () ->
+                    String.format(format, random.nextInt(maxNumberExc));
+            return new Field(name, supplier);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building randomNumberedValueField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
@@ -129,16 +146,20 @@ public class TestDataGenerator {
                                                        final String format,
                                                        final int startInc,
                                                        final int endExc) {
-        Preconditions.checkNotNull(format);
+        try {
+            Preconditions.checkNotNull(format);
 
-        final AtomicLoopedLongSequence numberSequence = new AtomicLoopedLongSequence(
-                startInc,
-                endExc);
+            final AtomicLoopedLongSequence numberSequence = new AtomicLoopedLongSequence(
+                    startInc,
+                    endExc);
 
-        final Supplier<String> supplier = () ->
-                String.format(format, numberSequence.getNext());
+            final Supplier<String> supplier = () ->
+                    String.format(format, numberSequence.getNext());
 
-        return new Field(name, supplier);
+            return new Field(name, supplier);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building sequentiallyNumberedValueField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
@@ -149,14 +170,18 @@ public class TestDataGenerator {
                                               final long startInc,
                                               final long endExc) {
 
-        final AtomicLoopedLongSequence numberSequence = new AtomicLoopedLongSequence(
-                startInc,
-                endExc);
+        try {
+            final AtomicLoopedLongSequence numberSequence = new AtomicLoopedLongSequence(
+                    startInc,
+                    endExc);
 
-        final Supplier<String> supplier = () ->
-                Long.toString(numberSequence.getNext());
+            final Supplier<String> supplier = () ->
+                    Long.toString(numberSequence.getNext());
 
-        return new Field(name, supplier);
+            return new Field(name, supplier);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building sequentialValueField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
@@ -166,11 +191,15 @@ public class TestDataGenerator {
                                           final int startInc,
                                           final int endExc) {
 
-        Preconditions.checkArgument(endExc > startInc);
+        try {
+            Preconditions.checkArgument(endExc > startInc);
 
-        return new Field(
-                name,
-                () -> Integer.toString(buildRandomNumberSupplier(startInc, endExc).getAsInt()));
+            return new Field(
+                    name,
+                    () -> Integer.toString(buildRandomNumberSupplier(startInc, endExc).getAsInt()));
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building sequentialValueField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
@@ -178,15 +207,19 @@ public class TestDataGenerator {
      */
     public static Field randomIpV4Field(final String name) {
 
-        final IntSupplier intSupplier = buildRandomNumberSupplier(0, 256);
+        try {
+            final IntSupplier intSupplier = buildRandomNumberSupplier(0, 256);
 
-        final Supplier<String> supplier = () ->
-                String.format("%d.%d.%d.%d",
-                        intSupplier.getAsInt(),
-                        intSupplier.getAsInt(),
-                        intSupplier.getAsInt(),
-                        intSupplier.getAsInt());
-        return new Field(name, supplier);
+            final Supplier<String> supplier = () ->
+                    String.format("%d.%d.%d.%d",
+                            intSupplier.getAsInt(),
+                            intSupplier.getAsInt(),
+                            intSupplier.getAsInt(),
+                            intSupplier.getAsInt());
+            return new Field(name, supplier);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building randomIpV4Field, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
@@ -199,11 +232,15 @@ public class TestDataGenerator {
                                             final LocalDateTime startDateInc,
                                             final LocalDateTime endDateExc,
                                             final String formatStr) {
-        Preconditions.checkNotNull(startDateInc);
-        Preconditions.checkNotNull(endDateExc);
-        Preconditions.checkNotNull(formatStr);
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
-        return randomDateTimeField(name, startDateInc, endDateExc, dateTimeFormatter);
+        try {
+            Preconditions.checkNotNull(startDateInc);
+            Preconditions.checkNotNull(endDateExc);
+            Preconditions.checkNotNull(formatStr);
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
+            return randomDateTimeField(name, startDateInc, endDateExc, dateTimeFormatter);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building randomDateTimeField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
@@ -214,27 +251,30 @@ public class TestDataGenerator {
                                             final LocalDateTime startDateInc,
                                             final LocalDateTime endDateExc,
                                             final DateTimeFormatter formatter) {
-        Preconditions.checkNotNull(startDateInc);
-        Preconditions.checkNotNull(endDateExc);
-        Preconditions.checkNotNull(formatter);
-        Preconditions.checkArgument(endDateExc.isAfter(startDateInc));
+        try {
+            Preconditions.checkNotNull(startDateInc);
+            Preconditions.checkNotNull(endDateExc);
+            Preconditions.checkNotNull(formatter);
+            Preconditions.checkArgument(endDateExc.isAfter(startDateInc));
 
-        final long millisBetween = endDateExc.toInstant(ZoneOffset.UTC).toEpochMilli()
-                - startDateInc.toInstant(ZoneOffset.UTC).toEpochMilli();
+            final long millisBetween = endDateExc.toInstant(ZoneOffset.UTC).toEpochMilli()
+                    - startDateInc.toInstant(ZoneOffset.UTC).toEpochMilli();
 
-        final Supplier<String> supplier = () -> {
-            try {
-                final long randomDelta = (long) (Math.random() * millisBetween);
-                final LocalDateTime dateTime = startDateInc.plus(randomDelta, ChronoUnit.MILLIS);
-                return dateTime.format(formatter);
-            } catch (Exception e) {
-                throw new RuntimeException(String.format("Time range is too large, maximum allowed: %s",
-                        Duration.ofMillis(Integer.MAX_VALUE).toString()));
-            }
-        };
-        return new Field(name, supplier);
+            final Supplier<String> supplier = () -> {
+                try {
+                    final long randomDelta = (long) (Math.random() * millisBetween);
+                    final LocalDateTime dateTime = startDateInc.plus(randomDelta, ChronoUnit.MILLIS);
+                    return dateTime.format(formatter);
+                } catch (Exception e) {
+                    throw new RuntimeException(String.format("Time range is too large, maximum allowed: %s",
+                            Duration.ofMillis(Integer.MAX_VALUE).toString()), e);
+                }
+            };
+            return new Field(name, supplier);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building randomDateTimeField, %s, %s", name, e.getMessage()), e);
+        }
     }
-
 
     /**
      * A field to produce a sequence of datetime values with a constant delta based on
@@ -243,26 +283,50 @@ public class TestDataGenerator {
     public static Field sequentialDateTimeField(final String name,
                                                 final LocalDateTime startDateInc,
                                                 final Duration delta,
+                                                final String formatStr) {
+        try {
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
+            return sequentialDateTimeField(name, startDateInc, delta, dateTimeFormatter);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(String.format("Error building sequentialDateTimeField, %s, %s", name, e.getMessage()), e);
+        }
+    }
+    /**
+     * A field to produce a sequence of datetime values with a constant delta based on
+     * a configured start datetime and delta. The formatter controls the output format.
+     */
+    public static Field sequentialDateTimeField(final String name,
+                                                final LocalDateTime startDateInc,
+                                                final Duration delta,
                                                 final DateTimeFormatter formatter) {
-        final AtomicReference<LocalDateTime> lastValueRef = new AtomicReference<>(startDateInc);
+        try {
+            final AtomicReference<LocalDateTime> lastValueRef = new AtomicReference<>(startDateInc);
 
-        final Supplier<String> supplier = () -> {
-            try {
-                return lastValueRef.getAndUpdate(lastVal -> lastVal.plus(delta))
-                        .format(formatter);
-            } catch (Exception e) {
-                throw new RuntimeException(String.format("Time range is too large, maximum allowed: %s",
-                        Duration.ofMillis(Integer.MAX_VALUE).toString()));
-            }
-        };
-        return new Field(name, supplier);
+            final Supplier<String> supplier = () -> {
+                try {
+                    return lastValueRef.getAndUpdate(lastVal -> lastVal.plus(delta))
+                            .format(formatter);
+                } catch (Exception e) {
+                    throw new RuntimeException(String.format("Time range is too large, maximum allowed: %s",
+                            Duration.ofMillis(Integer.MAX_VALUE).toString()));
+                }
+            };
+            return new Field(name, supplier);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building sequentialDateTimeField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
      * A field that produces a new random UUID on each call to getNext()
      */
     public static Field uuidField(final String name) {
-        return new Field(name, () -> UUID.randomUUID().toString());
+        try {
+            return new Field(name, () -> UUID.randomUUID().toString());
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building uuidField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
@@ -273,9 +337,22 @@ public class TestDataGenerator {
     public static Field randomClassNamesField(final String name,
                                               final int minCount,
                                               final int maxCount) {
-        final List<String> classNames = ClassNamesListHolder.getClassNames();
+        try {
+            final List<String> classNames;
+            try {
+                classNames = ClassNamesListHolder.getClassNames();
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("Error getting class names list", e.getMessage()), e);
+            }
 
-        return randomWordsField(name, minCount, maxCount, classNames);
+            Preconditions.checkNotNull(classNames);
+            Preconditions.checkArgument(!classNames.isEmpty(),
+                    "classNames cannot be empty, something has gone wrong finding the class names");
+
+            return randomWordsField(name, minCount, maxCount, classNames);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building randomClassNamesField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
     /**
@@ -286,34 +363,46 @@ public class TestDataGenerator {
                                          final int minCount,
                                          final int maxCount,
                                          final List<String> wordList) {
-        Preconditions.checkArgument(minCount >= 0);
-        Preconditions.checkArgument(maxCount >= minCount);
+        try {
+            Preconditions.checkArgument(minCount >= 0);
+            Preconditions.checkArgument(maxCount >= minCount);
+            Preconditions.checkNotNull(wordList);
+            Preconditions.checkArgument(wordList.size() > 0,
+                    "wordList must have size greater than zero, size %s",
+                    wordList.size());
 
-        final Random random = new Random();
+            final Random random = new Random();
 
-        Supplier<String> supplier = () -> {
-            int wordCount = random.nextInt(maxCount - minCount + 1) + minCount;
-            return IntStream.rangeClosed(0, wordCount)
-                    .boxed()
-                    .map(i -> wordList.get(random.nextInt(wordList.size())))
-                    .collect(Collectors.joining(" "))
-                    .replaceAll("(^\\s+|\\s+$)", "") //remove leading/trailing spaces
-                    .replaceAll("\\s\\s+", " "); //replace multiple spaces with one
-        };
+            Supplier<String> supplier = () -> {
+                int wordCount = random.nextInt(maxCount - minCount + 1) + minCount;
+                return IntStream.rangeClosed(0, wordCount)
+                        .boxed()
+                        .map(i -> wordList.get(random.nextInt(wordList.size())))
+                        .collect(Collectors.joining(" "))
+                        .replaceAll("(^\\s+|\\s+$)", "") //remove leading/trailing spaces
+                        .replaceAll("\\s\\s+", " "); //replace multiple spaces with one
+            };
 
-        return new Field(name, supplier);
+            return new Field(name, supplier);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building randomWordsField, %s, %s", name, e.getMessage()), e);
+        }
     }
 
 
     private static IntSupplier buildRandomNumberSupplier(final int startInc,
                                                          final int endExc) {
-        Preconditions.checkArgument(endExc > startInc);
+        try {
+            Preconditions.checkArgument(endExc > startInc);
 
-        final Random random = new Random();
-        final int delta = endExc - startInc;
+            final Random random = new Random();
+            final int delta = endExc - startInc;
 
-        return () ->
-                random.nextInt(delta) + startInc;
+            return () ->
+                    random.nextInt(delta) + startInc;
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error building randomNumberSupplier, %s", e.getMessage()), e);
+        }
     }
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -323,6 +412,8 @@ public class TestDataGenerator {
      */
     private static class ClassNamesListHolder {
         private static List<String> classNames;
+
+        public static final List<String> NOT_FOUND_LIST = Collections.singletonList("ERROR_NO_CLASS_NAMES_FOUND");
 
         static {
             //lazy initialisation
@@ -336,15 +427,22 @@ public class TestDataGenerator {
 
         private static List<String> generateList() {
 
-            final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-
             try {
-                return ClassPath.from(loader).getAllClasses().stream()
+                final ClassLoader loader = Thread.currentThread().getContextClassLoader();
+
+                List<String> classNames = ClassPath.from(loader).getAllClasses().stream()
                         .filter(classInfo -> classInfo.getPackageName().startsWith("java."))
                         .map(ClassPath.ClassInfo::getSimpleName)
                         .collect(Collectors.toList());
-            } catch (IOException e) {
-                throw new RuntimeException("Error reading classloader", e);
+
+                if (classNames.isEmpty()) {
+                    return NOT_FOUND_LIST;
+                } else {
+                    return classNames;
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error reading classloader", e);
+                return NOT_FOUND_LIST;
             }
         }
     }
@@ -412,7 +510,14 @@ public class TestDataGenerator {
 
             Function<Integer, Record> toRecordMapper = integer -> {
                 List<String> values = fieldDefinitions.stream()
-                        .map(Field::getNext)
+                        .map(field -> {
+                            try {
+                                return field.getNext();
+                            } catch (Exception e) {
+                                throw new RuntimeException(String.format("Error getting next value for field %s, %s",
+                                        field.getName(), e.getMessage()), e);
+                            }
+                        })
                         .collect(Collectors.toList());
                 return new Record(fieldDefinitions, values);
             };
@@ -420,9 +525,9 @@ public class TestDataGenerator {
             IntStream stream = IntStream.rangeClosed(1, rowCount);
 
             if (isParallel) {
-                stream.parallel();
+                stream = stream.parallel();
             } else {
-                stream.sequential();
+                stream = stream.sequential();
             }
 
             return stream

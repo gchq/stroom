@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -133,6 +134,30 @@ public class TestTestDataGenerator {
         lines.forEach(System.out::println);
     }
 
+    @Test
+    public void testRandomWordsField_singleItem() {
+        Field field = TestDataGenerator.randomWordsField(
+                "myField",
+                2,
+                4,
+                Collections.singletonList("MY_SINGLE_VALUE"));
+
+        String val = field.getNext();
+
+        System.out.println("val = " + val);
+    }
+
+    @Test (expected = RuntimeException.class)
+    public void testRandomWordsField_emptyList() {
+        Field field = TestDataGenerator.randomWordsField(
+                "myField",
+                2,
+                4,
+                Collections.emptyList());
+
+        String val = field.getNext();
+    }
+
     private TestDataGenerator.DefinitionBuilder buildBasicDefinition() {
         //start building a definition that uses all field types
         return TestDataGenerator.buildDefinition()
@@ -166,11 +191,21 @@ public class TestTestDataGenerator {
                         LocalDateTime.of(2016, 1, 1, 0, 0, 0),
                         LocalDateTime.of(2018, 1, 1, 0, 0, 0),
                         DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .addFieldDefinition(TestDataGenerator.randomDateTimeField(
+                        "randomDateTimeField2",
+                        LocalDateTime.of(2016, 1, 1, 0, 0, 0),
+                        LocalDateTime.of(2018, 1, 1, 0, 0, 0),
+                        "yyyyMMdd"))
                 .addFieldDefinition(TestDataGenerator.sequentialDateTimeField(
                         "sequentialDateTimeField",
                         LocalDateTime.of(2016, 1, 1, 0, 0, 0),
                         Duration.ofDays(1),
                         DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .addFieldDefinition(TestDataGenerator.sequentialDateTimeField(
+                        "sequentialDateTimeField2",
+                        LocalDateTime.of(2016, 1, 1, 0, 0, 0),
+                        Duration.ofDays(1),
+                        "yyyyMMdd"))
                 .addFieldDefinition(TestDataGenerator.uuidField("uuidField"))
                 .addFieldDefinition(TestDataGenerator.randomClassNamesField(
                         "randomClassNamesField",
