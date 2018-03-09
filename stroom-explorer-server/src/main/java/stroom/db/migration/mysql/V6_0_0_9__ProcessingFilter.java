@@ -13,6 +13,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.stream.OldFindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.util.date.DateUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -275,13 +276,13 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         });
 
         // Created Period
-        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), StreamDataSource.CREATE_TIME, Object::toString);
+        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), StreamDataSource.CREATE_TIME, DateUtil::createNormalDateTimeString);
 
         // Effective Period
-        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), StreamDataSource.EFFECTIVE_TIME, Object::toString);
+        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), StreamDataSource.EFFECTIVE_TIME, DateUtil::createNormalDateTimeString);
 
         // Status Time Period
-        applyBoundedTerm(rootAnd, criteria.obtainStatusPeriod(), StreamDataSource.STATUS_TIME, Object::toString);
+        applyBoundedTerm(rootAnd, criteria.obtainStatusPeriod(), StreamDataSource.STATUS_TIME, DateUtil::createNormalDateTimeString);
 
         // Build and return
         return new QueryData.Builder()
