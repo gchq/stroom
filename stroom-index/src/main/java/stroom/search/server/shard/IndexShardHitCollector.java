@@ -26,6 +26,7 @@ import stroom.task.server.TaskContext;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
+import java.util.OptionalInt;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,12 +35,14 @@ public class IndexShardHitCollector extends Collector {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardHitCollector.class);
 
     private final TaskContext taskContext;
-    private final LinkedBlockingQueue<Integer> docIdStore;
+    //an empty optional is used as a marker to indicate no more items will be added
+    private final LinkedBlockingQueue<OptionalInt> docIdStore;
     private final AtomicLong hitCount;
     private int docBase;
     private Long pauseTime;
 
-    public IndexShardHitCollector(final TaskContext taskContext, final LinkedBlockingQueue<Integer> docIdStore,
+    public IndexShardHitCollector(final TaskContext taskContext,
+                                  final LinkedBlockingQueue<OptionalInt> docIdStore,
                                   final AtomicLong hitCount) {
         this.docIdStore = docIdStore;
         this.taskContext = taskContext;
@@ -53,7 +56,7 @@ public class IndexShardHitCollector extends Collector {
 
         try {
 
-            while (!docIdStore.offer(docId, 1, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
+            while (!docIdStore.offer(OptionalInt.of(docId), 5, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
                 if (isProvidingInfo()) {
                     if (pauseTime == null) {
                         pauseTime = System.currentTimeMillis();
@@ -64,7 +67,6 @@ public class IndexShardHitCollector extends Collector {
                     LOGGER.trace("elapsed [{}]", elapsed);
                 }
             }
-
         } catch (final Throwable e) {
             LOGGER.error(e.getMessage(), e);
         }

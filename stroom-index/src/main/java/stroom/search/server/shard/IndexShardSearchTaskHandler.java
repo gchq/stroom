@@ -38,8 +38,7 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -103,7 +102,7 @@ public class IndexShardSearchTaskHandler {
         if (query != null) {
             final int maxDocIdQueueSize = getIntProperty("stroom.search.shard.maxDocIdQueueSize", 1000);
             LOGGER.debug("Creating docIdStore with size {}", maxDocIdQueueSize);
-            final LinkedBlockingQueue<Integer> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
+            final LinkedBlockingQueue<OptionalInt> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
 
             // Create a collector.
             final IndexShardHitCollector collector = new IndexShardHitCollector(taskContext, docIdStore,
@@ -114,12 +113,17 @@ public class IndexShardSearchTaskHandler {
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
                     final Executor executor = executorProvider.getExecutor(IndexShardSearchTaskProducer.THREAD_POOL);
-                    final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
+                    CompletableFuture.runAsync(() -> {
                         taskContext.setName("Index Searcher");
                         LAMBDA_LOGGER.logDurationIfDebugEnabled(
                                 () -> {
                                     try {
                                         searcher.search(query, collector);
+                                        boolean wasOffered = false;
+                                        while (!wasOffered && !taskContext.isTerminated()) {
+                                            //add empty optional to end of queue to indicate completion
+                                            wasOffered = docIdStore.offer(OptionalInt.empty(), 5, TimeUnit.SECONDS);
+                                        }
                                     } catch (final Throwable t) {
                                         error(task, t.getMessage(), t);
                                     }
@@ -128,23 +132,20 @@ public class IndexShardSearchTaskHandler {
                     }, executor);
 
                     // Start converting found docIds into stored data values
-                    while (!completableFuture.isDone() && !taskContext.isTerminated()) {
-                        final Integer docId;
-                        // Poll for the next doc id.
-                        docId = docIdStore.poll(1, TimeUnit.SECONDS);
-                        if (docId != null) {
-                            // If we have a doc id then retrieve the stored data for it.
-                            getStoredData(task, searcher, docId);
+                    while (!taskContext.isTerminated()) {
+                        final OptionalInt optDocId;
+                        // Poll for the next item
+                        optDocId = docIdStore.poll(5, TimeUnit.SECONDS);
+                        //if we get null back the queue is empty and we need to try polling again
+                        if (optDocId != null) {
+                            if (optDocId.isPresent()) {
+                                // If we have a doc id then retrieve the stored data for it.
+                                getStoredData(task, searcher, optDocId.getAsInt());
+                            } else {
+                                //empty optional which indicates the end of the queue.
+                                break;
+                            }
                         }
-                    }
-
-                    //search is now complete, drain the queue to be sure we got everything
-                    if (!taskContext.isTerminated()) {
-                        List<Integer> docIds = new ArrayList<>();
-                        //drain the queue just in case
-                        docIdStore.drainTo(docIds);
-                        docIds.forEach(id ->
-                                getStoredData(task, searcher, id));
                     }
                 } catch (final Throwable t) {
                     error(task, t.getMessage(), t);
