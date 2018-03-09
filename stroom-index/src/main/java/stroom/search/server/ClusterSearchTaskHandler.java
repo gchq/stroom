@@ -57,6 +57,8 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskTerminatedException;
 import stroom.task.server.ThreadPoolImpl;
 import stroom.util.config.PropertyUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
@@ -85,6 +87,7 @@ import java.util.function.Supplier;
 @Scope(StroomScope.TASK)
 class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterSearchTaskHandler.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
     /**
      * We don't want to collect more than 1 million doc's data into the queue by
@@ -271,6 +274,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     }
 
     private void sendData(final Map<Integer, Coprocessor<?>> coprocessorMap, final TaskCallback<NodeResult> callback, final long frequency, final Executor executor) {
+        LOGGER.debug("sendData called");
         final long now = System.currentTimeMillis();
 
         final Supplier<Boolean> supplier = () -> {
@@ -324,6 +328,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     if (complete) {
                         // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
                         sendingData.set(false);
+                        LOGGER.debug("sendingData is false");
 
                     } else {
                         // If we aren't complete then send more using the supplied sending frequency.

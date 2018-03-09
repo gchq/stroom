@@ -16,7 +16,10 @@
 
 package stroom.streamstore.server.tools;
 
+import org.joda.time.DateTime;
+import org.junit.Assert;
 import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import stroom.CommonTestControl;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
@@ -57,12 +60,9 @@ import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorService;
-import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.test.PipelineTestUtil;
+import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.StreamUtil;
-import org.joda.time.DateTime;
-import org.junit.Assert;
-import org.springframework.stereotype.Component;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.annotation.Resource;
@@ -72,6 +72,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.Set;
 
 /**
@@ -564,7 +565,7 @@ public final class StoreCreationTool {
                 data);
     }
 
-    public Index addIndex(final String name, final File translationXsltLocation) {
+    public Index addIndex(final String name, final File translationXsltLocation, final OptionalInt maxDocsPerShard) {
         final FindIndexCriteria criteria = new FindIndexCriteria();
         criteria.getName().setString(name);
         final BaseResultList<Index> list = indexService.find(criteria);
@@ -572,7 +573,10 @@ public final class StoreCreationTool {
             return list.getFirst();
         }
 
-        final Index index = commonTestScenarioCreator.createIndex(name, createIndexFields());
+        final Index index = commonTestScenarioCreator.createIndex(
+                name,
+                createIndexFields(),
+                maxDocsPerShard.orElse(Index.DEFAULT_MAX_DOCS_PER_SHARD));
 
         // Create the indexing pipeline.
         final PipelineEntity pipeline = getIndexingPipeline(index, translationXsltLocation);

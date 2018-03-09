@@ -149,6 +149,7 @@ public class CommonTestScenarioCreator {
         Index index = indexService.create(folder, name);
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setIndexFieldsObject(indexFields);
+        index.setPartitionBy(Index.PartitionBy.MONTH);
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
         findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);

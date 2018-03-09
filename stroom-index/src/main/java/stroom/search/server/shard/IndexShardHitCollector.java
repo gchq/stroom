@@ -52,6 +52,7 @@ public class IndexShardHitCollector extends Collector {
         final int docId = docBase + doc;
 
         try {
+
             while (!docIdStore.offer(docId, 1, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
                 if (isProvidingInfo()) {
                     if (pauseTime == null) {
@@ -60,8 +61,10 @@ public class IndexShardHitCollector extends Collector {
 
                     final long elapsed = System.currentTimeMillis() - pauseTime;
                     provideInfo("Paused for " + ModelStringUtil.formatDurationString(elapsed));
+                    LOGGER.trace("elapsed [{}]", elapsed);
                 }
             }
+
         } catch (final Throwable e) {
             LOGGER.error(e.getMessage(), e);
         }

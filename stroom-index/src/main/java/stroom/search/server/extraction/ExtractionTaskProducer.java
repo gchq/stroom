@@ -16,6 +16,8 @@
 
 package stroom.search.server.extraction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.entity.shared.DocRef;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
@@ -45,6 +47,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class ExtractionTaskProducer extends TaskProducer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Extraction", 5, 0, Integer.MAX_VALUE);
 
     private final ClusterSearchTask clusterSearchTask;
@@ -80,6 +83,7 @@ public class ExtractionTaskProducer extends TaskProducer {
         // Start mapping streams.
         final Executor executor = executorProvider.getExecutor(THREAD_POOL);
         streamEventMapperCompletableFuture = CompletableFuture.runAsync(() -> {
+            LOGGER.debug("Starting extraction task producer");
             try {
                 boolean complete = false;
                 while (!complete && !clusterSearchTask.isTerminated()) {
