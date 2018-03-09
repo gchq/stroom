@@ -123,6 +123,7 @@ public class SecurityFilter implements Filter {
             //   blocks requests that look like '.*clustercall.rpc$'.
             final String servletPath = request.getServletPath().toLowerCase();
             final boolean isApiRequest = servletPath.contains("/api");
+            final boolean isDatafeedRequest = servletPath.contains("/datafeed");
             final boolean isClusterCallRequest = servletPath.contains("clustercall.rpc");
 
             if (isApiRequest) {
@@ -134,7 +135,7 @@ public class SecurityFilter implements Filter {
                     continueAsUser(request, response, chain, userRef);
                 }
 
-            } else if (isClusterCallRequest) {
+            } else if (isClusterCallRequest | isDatafeedRequest) {
                 bypassAuthentication(request, response, chain, false);
             } else {
                 // Authenticate requests from the UI.
