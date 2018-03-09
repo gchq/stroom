@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#673* : Fixed issue with Stream processing filters that specify Create Time
+## [v6.0-alpha.16]
+
+* Issue **#673** : Fixed issue with Stream processing filters that specify Create Time
+
+* Issue **#675** : Fixed issue with datafeed requests authenticating incorrectly
 
 ## [v6.0-alpha.15]
 
@@ -815,8 +819,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...6.0
-[v6.0-alpha.14]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...v6.0-alpha.15
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.16...6.0
+[v6.0-alpha.16]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...v6.0-alpha.16
+[v6.0-alpha.15]: https://github.com/gchq/stroom/compare/v6.0-alpha.14...v6.0-alpha.15
 [v6.0-alpha.14]: https://github.com/gchq/stroom/compare/v6.0-alpha.13...v6.0-alpha.14
 [v6.0-alpha.13]: https://github.com/gchq/stroom/compare/v6.0-alpha.12...v6.0-alpha.13
 [v6.0-alpha.12]: https://github.com/gchq/stroom/compare/v6.0-alpha.11...v6.0-alpha.12
