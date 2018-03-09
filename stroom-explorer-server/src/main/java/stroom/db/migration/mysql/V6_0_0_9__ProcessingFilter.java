@@ -347,7 +347,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                                                      final String fieldName,
                                                      final Function<T, String> toString) {
         if (range.isBounded()) {
-            final String boundTerm = String.format("%s,%s", range.getFrom(), range.getTo());
+            final String boundTerm = String.format("%s,%s", toString.apply(range.getFrom()), toString.apply(range.getTo()));
             parentTerm.addTerm(fieldName, ExpressionTerm.Condition.BETWEEN, boundTerm);
         } else if (null != range.getFrom()) {
             parentTerm.addTerm(fieldName, ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO, toString.apply(range.getFrom()));
