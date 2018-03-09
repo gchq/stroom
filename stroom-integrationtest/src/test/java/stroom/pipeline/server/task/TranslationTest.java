@@ -16,12 +16,12 @@
 
 package stroom.pipeline.server.task;
 
+import org.joda.time.DateTime;
 import org.junit.Assert;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.ImportState.ImportMode;
-import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
@@ -34,7 +34,6 @@ import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SharedStepData;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
-import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -55,13 +54,14 @@ import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreServerTestFileUtil;
-import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Indicators;
 import stroom.util.task.ServerTask;
+import stroom.feed.MetaMap;
 import stroom.util.zip.StroomHeaderArguments;
+import stroom.proxy.repo.StroomStreamProcessor;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
@@ -83,6 +83,7 @@ import java.util.List;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(TranslationTest.class);
+    private static final int OLD_YEAR = 2006;
 
     @Resource
     private NodeCache nodeCache;
@@ -261,10 +262,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             // We need to ensure the reference data is older then the earliest
             // event we are going to see. In the case of these component tests
             // we have some events from 2007.
-            final long ms = DateUtil.parseNormalDateTimeString("2006-01-01T00:00:00.000Z");
+            DateTime dateTime = new DateTime();
+            dateTime = dateTime.withYear(OLD_YEAR);
 
             // Create the stream.
-            final Stream stream = Stream.createStreamForTesting(streamType, feed, ms, ms);
+            final Stream stream = Stream.createStreamForTesting(streamType, feed, dateTime.getMillis(),
+                    dateTime.getMillis());
             final StreamTarget target = streamStore.openStreamTarget(stream);
 
             final InputStream inputStream = new BufferedInputStream(new FileInputStream(file));

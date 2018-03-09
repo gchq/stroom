@@ -6,12 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v5.2.0] - 2018-02-25
-
-* Issue **#659** : Made format-date XSLT function default year if none specified to the year the data was received unless this would make the date later then the received time in which case a year is subtracted.
-
-* Issue **#658** : Added a hashing function for XSLT translations.
-
 ## [v5.1.0] - 2018-02-07
 
 * Issue **#523** : Changed permission behaviours for copy and move to support `None`, `Source`, `Destination` and `Combined` behaviours. Creating new items now allows for `None` and `Destination` permission behaviours. Also imported items now receive permissions from the destination folder. Event logging now indicates the permission behaviour used during copy, move and create operations.
@@ -741,8 +735,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.2.0...HEAD
-[v5.2.0]: https://github.com/gchq/stroom/compare/v5.1.0...v5.2.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.1.0...HEAD
 [v5.1.0]: https://github.com/gchq/stroom/compare/v5.1-beta.16...v5.1.0
 [v5.1-beta.16]: https://github.com/gchq/stroom/compare/v5.1-beta.15...v5.1-beta.16
 [v5.1-beta.15]: https://github.com/gchq/stroom/compare/v5.1-beta.14...v5.1-beta.15

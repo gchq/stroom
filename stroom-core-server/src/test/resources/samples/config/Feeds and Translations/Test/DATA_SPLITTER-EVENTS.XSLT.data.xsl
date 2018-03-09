@@ -99,13 +99,13 @@
         </Id>
       </User>
       <Data Name="LocalTime">
-        <xsl:attribute name="Value" select="stroom:format-date($dateTime, 'dd/MM/yyyyHH:mm:ss', 'UTC', 'd MMM yyyy HH:mm:ss xx', 'GMT/BST')" />
+        <xsl:attribute name="Value" select="stroom:format-date($dateTime, 'dd/MM/yyyyHH:mm:ss', 'UTC', 'd MMM yyyy HH:mm:ss Z', 'GMT/BST')" />
       </Data>
       <Data Name="LocalTime">
-        <xsl:attribute name="Value" select="stroom:format-date($dateTime, 'dd/MM/yyyyHH:mm:ss', 'UTC', 'd MMM yyyy HH:mm:ss xxx', 'GMT/BST')" />
+        <xsl:attribute name="Value" select="stroom:format-date($dateTime, 'dd/MM/yyyyHH:mm:ss', 'UTC', 'd MMM yyyy HH:mm:ss ZZ', 'GMT/BST')" />
       </Data>
       <Data Name="LocalTime">
-        <xsl:attribute name="Value" select="stroom:format-date($dateTime, 'dd/MM/yyyyHH:mm:ss', 'UTC', 'd MMM yyyy HH:mm:ss VV', 'GMT/BST')" />
+        <xsl:attribute name="Value" select="stroom:format-date($dateTime, 'dd/MM/yyyyHH:mm:ss', 'UTC', 'd MMM yyyy HH:mm:ss ZZZ', 'GMT/BST')" />
       </Data>
     </EventSource>
   </xsl:template>
