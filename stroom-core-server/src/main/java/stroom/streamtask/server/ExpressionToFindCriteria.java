@@ -3,6 +3,7 @@ package stroom.streamtask.server;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
@@ -23,6 +24,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamAttributeKeyService;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
@@ -32,6 +34,7 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 
+import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
@@ -50,21 +53,22 @@ public class ExpressionToFindCriteria {
     private final PipelineService pipelineService;
     private final DictionaryStore dictionaryStore;
     private final StreamAttributeKeyService streamAttributeKeyService;
+    private final StreamTypeService streamTypeService;
 
     private static final Map<String, StreamStatus> STREAM_STATUS_MAP = Arrays.stream(StreamStatus.values())
             .collect(Collectors.toMap(StreamStatus::getDisplayValue, Function.identity()));
-    private static final Map<String, Long> STREAM_TYPE_MAP = Arrays.stream(StreamType.initialValues())
-            .collect(Collectors.toMap(StreamType::getDisplayValue, StreamType::getId));
 
     @Inject
     public ExpressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
                                     @Named("cachedPipelineService") final PipelineService pipelineService,
                                     final DictionaryStore dictionaryStore,
-                                    final StreamAttributeKeyService streamAttributeKeyService) {
+                                    final StreamAttributeKeyService streamAttributeKeyService,
+                                    @Named("cachedStreamTypeService") StreamTypeService streamTypeService) {
         this.feedService = feedService;
         this.pipelineService = pipelineService;
         this.dictionaryStore = dictionaryStore;
         this.streamAttributeKeyService = streamAttributeKeyService;
+        this.streamTypeService = streamTypeService;
     }
 
     public OldFindStreamCriteria convert(final FindStreamCriteria findStreamCriteria, final Context context) {
@@ -205,25 +209,63 @@ public class ExpressionToFindCriteria {
             switch (field) {
                 case StreamDataSource.FEED:
                     if (negate) {
-                        criteria.obtainFeeds().setExclude(convertEntityIdSetValues(criteria.obtainFeeds().getExclude(), field, getAllValues(terms), value -> findFeeds(field, value)));
+                        criteria.obtainFeeds().setExclude(
+                                convertEntityIdSetValues(
+                                        criteria.obtainFeeds().getExclude(),
+                                        field,
+                                        getAllValues(terms),
+                                        value -> findFeeds(field, value)));
                     } else {
-                        criteria.obtainFeeds().setInclude(convertEntityIdSetValues(criteria.obtainFeeds().getInclude(), field, getAllValues(terms), value -> findFeeds(field, value)));
+                        criteria.obtainFeeds().setInclude(
+                                convertEntityIdSetValues(
+                                        criteria.obtainFeeds().getInclude(),
+                                        field,
+                                        getAllValues(terms),
+                                        value -> findFeeds(field, value)));
                     }
                     break;
                 case StreamDataSource.PIPELINE:
-                    criteria.setPipelineIdSet(convertEntityIdSetValues(criteria.getPipelineIdSet(), field, getAllValues(terms), value -> findPipelines(field, value)));
+                    criteria.setPipelineIdSet(
+                            convertEntityIdSetValues(
+                                    criteria.getPipelineIdSet(),
+                                    field,
+                                    getAllValues(terms),
+                                    value -> findPipelines(field, value)));
                     break;
                 case StreamDataSource.STREAM_TYPE:
-                    criteria.setStreamTypeIdSet(convertEntityIdSetLongValues(criteria.getStreamTypeIdSet(), field, getAllValues(terms), STREAM_TYPE_MAP::get));
+                    criteria.setStreamTypeIdSet(
+                            convertEntityIdSetLongValues(
+                                    criteria.getStreamTypeIdSet(),
+                                    field,
+                                    getAllValues(terms),
+                                    streamTypeName -> {
+                                        final StreamType streamType = streamTypeService.loadByName(streamTypeName);
+                                        return streamType.getId();
+                                    }));
                     break;
                 case StreamDataSource.STATUS:
-                    criteria.setStatusSet(convertCriteriaSetValues(criteria.getStatusSet(), field, getAllValues(terms), STREAM_STATUS_MAP::get));
+                    criteria.setStatusSet(
+                            convertCriteriaSetValues(
+                                    criteria.getStatusSet(),
+                                    field,
+                                    getAllValues(terms),
+                                    STREAM_STATUS_MAP::get));
                     break;
                 case StreamDataSource.STREAM_ID:
-                    criteria.setStreamIdSet(convertEntityIdSetLongValues(criteria.getStreamIdSet(), field, getAllValues(terms), Long::valueOf));
+                    criteria.setStreamIdSet(
+                            convertEntityIdSetLongValues(
+                                    criteria.getStreamIdSet(),
+                                    field,
+                                    getAllValues(terms),
+                                    Long::valueOf));
                     break;
                 case StreamDataSource.PARENT_STREAM_ID:
-                    criteria.setParentStreamIdSet(convertEntityIdSetLongValues(criteria.getParentStreamIdSet(), field, getAllValues(terms), Long::valueOf));
+                    criteria.setParentStreamIdSet(
+                            convertEntityIdSetLongValues(
+                                    criteria.getParentStreamIdSet(),
+                                    field,
+                                    getAllValues(terms),
+                                    Long::valueOf));
                     break;
                 case StreamDataSource.CREATE_TIME:
                     setPeriod(criteria.obtainCreatePeriod(), terms, context);
@@ -236,7 +278,8 @@ public class ExpressionToFindCriteria {
                     break;
                 default:
                     // Assume all other field names are extended fields.
-                    criteria.obtainAttributeConditionList().addAll(getStreamAttributeConditions(field, terms));
+                    criteria.obtainAttributeConditionList()
+                            .addAll(getStreamAttributeConditions(field, terms));
             }
         });
     }
