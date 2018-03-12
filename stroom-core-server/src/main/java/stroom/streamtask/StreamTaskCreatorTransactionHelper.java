@@ -17,11 +17,10 @@
 
 package stroom.streamtask;
 
+import com.google.inject.persist.Transactional;
+import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.transaction.annotation.Propagation;
-import com.google.inject.persist.Transactional;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.CriteriaSet;
@@ -38,6 +37,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.spring.EntityManagerSupport;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -53,10 +53,6 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.sql.DataSource;
-import javax.transaction.Transactional.TxType;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -90,7 +86,7 @@ class StreamTaskCreatorTransactionHelper {
     private final StreamTaskService streamTaskService;
     private final StreamStore streamStore;
     private final StroomEntityManager stroomEntityManager;
-    private final DataSource dataSource;
+    private final EntityManagerSupport entityManagerSupport;
 
     @Inject
     StreamTaskCreatorTransactionHelper(final NodeCache nodeCache,
@@ -98,13 +94,13 @@ class StreamTaskCreatorTransactionHelper {
                                        final StreamTaskService streamTaskService,
                                        final StreamStore streamStore,
                                        final StroomEntityManager stroomEntityManager,
-                                       final DataSource dataSource) {
+                                       final EntityManagerSupport entityManagerSupport) {
         this.nodeCache = nodeCache;
         this.clusterLockService = clusterLockService;
         this.streamTaskService = streamTaskService;
         this.streamStore = streamStore;
         this.stroomEntityManager = stroomEntityManager;
-        this.dataSource = dataSource;
+        this.entityManagerSupport = entityManagerSupport;
     }
 
     /**
@@ -227,193 +223,202 @@ class StreamTaskCreatorTransactionHelper {
                                        final Node thisNode,
                                        final StreamTaskCreatorRecentStreamDetails recentStreamInfo,
                                        final boolean reachedLimit) {
-        List<StreamTask> availableTaskList = Collections.emptyList();
-        int availableTasksCreated = 0;
-        int totalTasksCreated = 0;
-        long eventCount = 0;
+        return entityManagerSupport.transactionResult(em -> {
+            List<StreamTask> availableTaskList = Collections.emptyList();
+            int availableTasksCreated = 0;
+            int totalTasksCreated = 0;
+            long eventCount = 0;
 
-        try {
-            // Lock the cluster so that only this node can create tasks for this
-            // filter at this time.
-            lockCluster();
+            try {
+                // Lock the cluster so that only this node can create tasks for this
+                // filter at this time.
+                lockCluster();
 
-            // Get the current time.
-            final long streamTaskCreateMs = System.currentTimeMillis();
+                // Get the current time.
+                final long streamTaskCreateMs = System.currentTimeMillis();
 
-            InclusiveRange streamIdRange = null;
-            InclusiveRange streamMsRange = null;
-            InclusiveRange eventIdRange = null;
+                InclusiveRange streamIdRange = null;
+                InclusiveRange streamMsRange = null;
+                InclusiveRange eventIdRange = null;
 
-            if (streams.size() > 0) {
+                if (streams.size() > 0) {
 
-                final List<String> columnNames = Arrays.asList(
-                        BaseEntity.VERSION,
-                        StreamTask.CREATE_MS,
-                        StreamTask.STATUS,
-                        StreamTask.STATUS_MS,
-                        Node.FOREIGN_KEY,
-                        Stream.FOREIGN_KEY,
-                        StreamTask.DATA,
-                        StreamProcessorFilter.FOREIGN_KEY);
+                    final List<String> columnNames = Arrays.asList(
+                            BaseEntity.VERSION,
+                            StreamTask.CREATE_MS,
+                            StreamTask.STATUS,
+                            StreamTask.STATUS_MS,
+                            Node.FOREIGN_KEY,
+                            Stream.FOREIGN_KEY,
+                            StreamTask.DATA,
+                            StreamProcessorFilter.FOREIGN_KEY);
 
-                final List<List<Object>> allArgs = new ArrayList<>();
+                    final List<List<Object>> allArgs = new ArrayList<>();
 
 
-                for (final Entry<Stream, InclusiveRanges> entry : streams.entrySet()) {
-                    final Stream stream = entry.getKey();
-                    final InclusiveRanges eventRanges = entry.getValue();
+                    for (final Entry<Stream, InclusiveRanges> entry : streams.entrySet()) {
+                        final Stream stream = entry.getKey();
+                        final InclusiveRanges eventRanges = entry.getValue();
 
-                    String eventRangeData = null;
-                    if (eventRanges != null) {
-                        eventRangeData = eventRanges.rangesToString();
-                        eventCount += eventRanges.count();
-                    }
-
-                    // Update the max event id if this stream id is greater than
-                    // any we have seen before.
-                    if (streamIdRange == null || stream.getId() > streamIdRange.getMax()) {
+                        String eventRangeData = null;
                         if (eventRanges != null) {
-                            eventIdRange = eventRanges.getOuterRange();
-                        } else {
-                            eventIdRange = null;
+                            eventRangeData = eventRanges.rangesToString();
+                            eventCount += eventRanges.count();
                         }
+
+                        // Update the max event id if this stream id is greater than
+                        // any we have seen before.
+                        if (streamIdRange == null || stream.getId() > streamIdRange.getMax()) {
+                            if (eventRanges != null) {
+                                eventIdRange = eventRanges.getOuterRange();
+                            } else {
+                                eventIdRange = null;
+                            }
+                        }
+
+                        streamIdRange = InclusiveRange.extend(streamIdRange, stream.getId());
+                        streamMsRange = InclusiveRange.extend(streamMsRange, stream.getCreateMs());
+
+                        final List<Object> rowArgs = new ArrayList<>(columnNames.size());
+
+                        rowArgs.add(1); //version
+                        rowArgs.add(streamTaskCreateMs); //create_ms
+                        rowArgs.add(TaskStatus.UNPROCESSED.getPrimitiveValue()); //stat
+                        rowArgs.add(streamTaskCreateMs); //stat_ms
+
+                        if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
+                            // If the stream is unlocked then take ownership of the
+                            // task, i.e. set the node to this node.
+                            rowArgs.add(thisNode.getId()); //fk_node_id
+                            availableTasksCreated++;
+                        } else {
+                            // If the stream is locked then don't take ownership of
+                            // the task at this time, i.e. set the node to null.
+                            rowArgs.add(null); //fk_node_id
+                        }
+                        rowArgs.add(stream.getId()); //fk_strm_id
+                        if (eventRangeData != null && eventRangeData.length() > 0) {
+                            rowArgs.add(eventRangeData); //dat
+                        } else {
+                            rowArgs.add(null); //dat
+                        }
+                        rowArgs.add(filter.getId()); //fk_strm_proc_filt_id
+
+                        allArgs.add(rowArgs);
                     }
 
-                    streamIdRange = InclusiveRange.extend(streamIdRange, stream.getId());
-                    streamMsRange = InclusiveRange.extend(streamMsRange, stream.getCreateMs());
+                    // Save the stream tasks using the existing transaction
+                    final Session session = em.unwrap(Session.class);
+                    session.doWork(connection -> {
+                        try {
+                            try (final ConnectionUtil.MultiInsertExecutor multiInsertExecutor = new ConnectionUtil.MultiInsertExecutor(
+                                    connection,
+                                    StreamTask.TABLE_NAME,
+                                    columnNames)) {
 
-                    final List<Object> rowArgs = new ArrayList<>(columnNames.size());
+                                multiInsertExecutor.execute(allArgs);
+                            }
+                        } catch (final Exception e) {
+                            LOGGER.error(e.getMessage(), e);
+                            throw new RuntimeException(e.getMessage(), e);
+                        }
+                    });
 
-                    rowArgs.add(1); //version
-                    rowArgs.add(streamTaskCreateMs); //create_ms
-                    rowArgs.add(TaskStatus.UNPROCESSED.getPrimitiveValue()); //stat
-                    rowArgs.add(streamTaskCreateMs); //stat_ms
+                    totalTasksCreated = allArgs.size();
 
-                    if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
-                        // If the stream is unlocked then take ownership of the
-                        // task, i.e. set the node to this node.
-                        rowArgs.add(thisNode.getId()); //fk_node_id
-                        availableTasksCreated++;
+                    // Select them back
+                    final FindStreamTaskCriteria findStreamTaskCriteria = new FindStreamTaskCriteria();
+                    findStreamTaskCriteria.obtainNodeIdSet().add(thisNode);
+                    findStreamTaskCriteria.setCreateMs(streamTaskCreateMs);
+                    findStreamTaskCriteria.obtainStreamTaskStatusSet().add(TaskStatus.UNPROCESSED);
+                    findStreamTaskCriteria.obtainStreamProcessorFilterIdSet().add(filter.getId());
+                    availableTaskList = streamTaskService.find(findStreamTaskCriteria);
+
+                    taskStatusTraceLog.createdTasks(StreamTaskCreatorTransactionHelper.class, availableTaskList);
+
+                    // Ensure that the select has got back the stream tasks that we
+                    // have just inserted. If it hasn't this would be very bad.
+                    if (availableTaskList.size() != availableTasksCreated) {
+                        throw new RuntimeException("Unexpected number of stream tasks selected back after insertion.");
+                    }
+                }
+
+                // Anything created?
+                if (totalTasksCreated > 0) {
+                    LOGGER.debug("processStreamProcessorFilter() - Created {} tasks ({} available) in the range {}",
+                            new Object[]{totalTasksCreated, availableTasksCreated, streamIdRange});
+
+                    // If we have never created tasks before or the last poll gave
+                    // us no tasks then start to report a new creation range.
+                    if (tracker.getMinStreamCreateMs() == null || (tracker.getLastPollTaskCount() != null
+                            && tracker.getLastPollTaskCount().longValue() == 0L)) {
+                        tracker.setMinStreamCreateMs(streamMsRange.getMin());
+                    }
+                    // Report where we have got to.
+                    tracker.setStreamCreateMs(streamMsRange.getMax());
+
+                    // Only create tasks for streams with an id 1 or more greater
+                    // than the greatest stream id we have created tasks for this
+                    // time round in future.
+                    if (eventIdRange != null) {
+                        tracker.setMinStreamId(streamIdRange.getMax());
+                        tracker.setMinEventId(eventIdRange.getMax() + 1);
                     } else {
-                        // If the stream is locked then don't take ownership of
-                        // the task at this time, i.e. set the node to null.
-                        rowArgs.add(null); //fk_node_id
+                        tracker.setMinStreamId(streamIdRange.getMax() + 1);
+                        tracker.setMinEventId(0L);
                     }
-                    rowArgs.add(stream.getId()); //fk_strm_id
-                    if (eventRangeData != null && eventRangeData.length() > 0) {
-                        rowArgs.add(eventRangeData); //dat
-                    } else {
-                        rowArgs.add(null); //dat
-                    }
-                    rowArgs.add(filter.getId()); //fk_strm_proc_filt_id
 
-                    allArgs.add(rowArgs);
-                }
-
-                // Save the stream tasks using the existing transaction
-                final Connection connection = DataSourceUtils.getConnection(dataSource);
-                try (final ConnectionUtil.MultiInsertExecutor multiInsertExecutor = new ConnectionUtil.MultiInsertExecutor(
-                        connection,
-                        StreamTask.TABLE_NAME,
-                        columnNames)) {
-
-                    multiInsertExecutor.execute(allArgs);
-                }
-
-                totalTasksCreated = allArgs.size();
-
-                // Select them back
-                final FindStreamTaskCriteria findStreamTaskCriteria = new FindStreamTaskCriteria();
-                findStreamTaskCriteria.obtainNodeIdSet().add(thisNode);
-                findStreamTaskCriteria.setCreateMs(streamTaskCreateMs);
-                findStreamTaskCriteria.obtainStreamTaskStatusSet().add(TaskStatus.UNPROCESSED);
-                findStreamTaskCriteria.obtainStreamProcessorFilterIdSet().add(filter.getId());
-                availableTaskList = streamTaskService.find(findStreamTaskCriteria);
-
-                taskStatusTraceLog.createdTasks(StreamTaskCreatorTransactionHelper.class, availableTaskList);
-
-                // Ensure that the select has got back the stream tasks that we
-                // have just inserted. If it hasn't this would be very bad.
-                if (availableTaskList.size() != availableTasksCreated) {
-                    throw new RuntimeException("Unexpected number of stream tasks selected back after insertion.");
-                }
-            }
-
-            // Anything created?
-            if (totalTasksCreated > 0) {
-                LOGGER.debug("processStreamProcessorFilter() - Created {} tasks ({} available) in the range {}",
-                        new Object[]{totalTasksCreated, availableTasksCreated, streamIdRange});
-
-                // If we have never created tasks before or the last poll gave
-                // us no tasks then start to report a new creation range.
-                if (tracker.getMinStreamCreateMs() == null || (tracker.getLastPollTaskCount() != null
-                        && tracker.getLastPollTaskCount().longValue() == 0L)) {
-                    tracker.setMinStreamCreateMs(streamMsRange.getMin());
-                }
-                // Report where we have got to.
-                tracker.setStreamCreateMs(streamMsRange.getMax());
-
-                // Only create tasks for streams with an id 1 or more greater
-                // than the greatest stream id we have created tasks for this
-                // time round in future.
-                if (eventIdRange != null) {
-                    tracker.setMinStreamId(streamIdRange.getMax());
-                    tracker.setMinEventId(eventIdRange.getMax() + 1);
                 } else {
-                    tracker.setMinStreamId(streamIdRange.getMax() + 1);
+                    // We have completed all tasks so update the window to be from
+                    // now
+                    tracker.setMinStreamCreateMs(streamTaskCreateMs);
+
+                    // Report where we have got to.
+                    tracker.setStreamCreateMs(streamQueryTime);
+
+                    // Only create tasks for streams with an id 1 or more greater
+                    // than the current max stream id in future as we didn't manage
+                    // to create any tasks.
+                    tracker.setMinStreamId(recentStreamInfo.getMaxStreamId() + 1);
                     tracker.setMinEventId(0L);
                 }
 
-            } else {
-                // We have completed all tasks so update the window to be from
-                // now
-                tracker.setMinStreamCreateMs(streamTaskCreateMs);
-
-                // Report where we have got to.
-                tracker.setStreamCreateMs(streamQueryTime);
-
-                // Only create tasks for streams with an id 1 or more greater
-                // than the current max stream id in future as we didn't manage
-                // to create any tasks.
-                tracker.setMinStreamId(recentStreamInfo.getMaxStreamId() + 1);
-                tracker.setMinEventId(0L);
-            }
-
-            if (tracker.getStreamCount() != null) {
-                if (totalTasksCreated > 0) {
-                    tracker.setStreamCount(tracker.getStreamCount() + totalTasksCreated);
-                }
-            } else {
-                tracker.setStreamCount((long) totalTasksCreated);
-            }
-            if (eventCount > 0) {
-                if (tracker.getEventCount() != null) {
-                    tracker.setEventCount(tracker.getEventCount() + eventCount);
+                if (tracker.getStreamCount() != null) {
+                    if (totalTasksCreated > 0) {
+                        tracker.setStreamCount(tracker.getStreamCount() + totalTasksCreated);
+                    }
                 } else {
-                    tracker.setEventCount(eventCount);
+                    tracker.setStreamCount((long) totalTasksCreated);
                 }
+                if (eventCount > 0) {
+                    if (tracker.getEventCount() != null) {
+                        tracker.setEventCount(tracker.getEventCount() + eventCount);
+                    } else {
+                        tracker.setEventCount(eventCount);
+                    }
+                }
+
+                tracker.setLastPollMs(streamTaskCreateMs);
+                tracker.setLastPollTaskCount(totalTasksCreated);
+                tracker.setStatus(null);
+
+                // Has this filter finished creating tasks for good, i.e. is there
+                // any possibility of getting more tasks in future?
+                if (tracker.getMaxStreamCreateMs() != null && tracker.getStreamCreateMs() != null
+                        && tracker.getStreamCreateMs().longValue() > tracker.getMaxStreamCreateMs()) {
+                    LOGGER.info("processStreamProcessorFilter() - Finished task creation for bounded filter {}", filter);
+                    tracker.setStatus(StreamProcessorFilterTracker.COMPLETE);
+                }
+
+                // Save the tracker state.
+                saveTracker(tracker);
+
+            } catch (final Exception ex) {
+                LOGGER.error("createNewTasks", ex);
             }
 
-            tracker.setLastPollMs(streamTaskCreateMs);
-            tracker.setLastPollTaskCount(totalTasksCreated);
-            tracker.setStatus(null);
-
-            // Has this filter finished creating tasks for good, i.e. is there
-            // any possibility of getting more tasks in future?
-            if (tracker.getMaxStreamCreateMs() != null && tracker.getStreamCreateMs() != null
-                    && tracker.getStreamCreateMs().longValue() > tracker.getMaxStreamCreateMs()) {
-                LOGGER.info("processStreamProcessorFilter() - Finished task creation for bounded filter {}", filter);
-                tracker.setStatus(StreamProcessorFilterTracker.COMPLETE);
-            }
-
-            // Save the tracker state.
-            saveTracker(tracker);
-
-        } catch (final Exception ex) {
-            LOGGER.error("createNewTasks", ex);
-        }
-
-        return new CreatedTasks(availableTaskList, availableTasksCreated, totalTasksCreated, eventCount);
+            return new CreatedTasks(availableTaskList, availableTasksCreated, totalTasksCreated, eventCount);
+        });
     }
 
     public StreamProcessorFilterTracker saveTracker(final StreamProcessorFilterTracker tracker) {

@@ -21,6 +21,7 @@ import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.CachingEntityManager;
 import stroom.jobsystem.DistributedTaskFactory;
+import stroom.spring.EntityManagerSupport;
 import stroom.task.TaskHandler;
 
 import javax.inject.Named;
@@ -47,8 +48,9 @@ public class StreamTaskModule extends AbstractModule {
     @Provides
     @Named("cachedStreamProcessorFilterService")
     public StreamProcessorFilterService cachedStreamProcessorFilterService(final CachingEntityManager entityManager,
+                                                                           final EntityManagerSupport entityManagerSupport,
                                                                            final StreamProcessorService streamProcessorService) {
-        return new StreamProcessorFilterServiceImpl(entityManager, streamProcessorService);
+        return new StreamProcessorFilterServiceImpl(entityManager, entityManagerSupport, streamProcessorService);
     }
 
     @Provides

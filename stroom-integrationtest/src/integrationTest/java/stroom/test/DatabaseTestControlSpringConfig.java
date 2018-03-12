@@ -65,19 +65,19 @@ public class DatabaseTestControlSpringConfig {
         return new ContentImportService(importExportService);
     }
 
-    @Bean
-    public CommonTestControl commonTestControl(final VolumeService volumeService,
-                                               final ContentImportService contentImportService,
-                                               final StreamAttributeKeyService streamAttributeKeyService,
-                                               final IndexShardManager indexShardManager,
-                                               final IndexShardWriterCache indexShardWriterCache,
-                                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
-                                               final NodeConfig nodeConfig,
-                                               final StreamTaskCreator streamTaskCreator,
-                                               final StroomCacheManager stroomCacheManager,
-                                               final StroomBeanStore beanStore) {
-        return new DatabaseCommonTestControl(volumeService, contentImportService, streamAttributeKeyService, indexShardManager, indexShardWriterCache, databaseCommonTestControlTransactionHelper, nodeConfig, streamTaskCreator, stroomCacheManager, beanStore);
-    }
+//    @Bean
+//    public CommonTestControl commonTestControl(final VolumeService volumeService,
+//                                               final ContentImportService contentImportService,
+//                                               final StreamAttributeKeyService streamAttributeKeyService,
+//                                               final IndexShardManager indexShardManager,
+//                                               final IndexShardWriterCache indexShardWriterCache,
+//                                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
+//                                               final NodeConfig nodeConfig,
+//                                               final StreamTaskCreator streamTaskCreator,
+//                                               final StroomCacheManager stroomCacheManager,
+//                                               final StroomBeanStore beanStore) {
+//        return new DatabaseCommonTestControl(volumeService, contentImportService, streamAttributeKeyService, indexShardManager, indexShardWriterCache, databaseCommonTestControlTransactionHelper, nodeConfig, streamTaskCreator, stroomCacheManager, beanStore);
+//    }
 
     @Bean
     public DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper(final StroomEntityManager entityManager) {

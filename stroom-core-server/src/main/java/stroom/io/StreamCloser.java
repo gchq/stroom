@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
+import stroom.util.guice.PipelineScoped;
 
 import javax.inject.Inject;
 import java.io.Closeable;
@@ -29,6 +30,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+@PipelineScoped
 public class StreamCloser implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamCloser.class);
     private final List<Closeable> list = new ArrayList<>();

@@ -46,6 +46,8 @@ public class PersistenceModule extends AbstractModule {
     //    private static final Logger LOGGER = LoggerFactory.getLogger(PersistenceModule.class);
     private static final String PACKAGE = "stroom";
 
+    private static EntityManagerFactory existingEntityManagerFactory;
+
     @Override
     protected void configure() {
         bind(DataSource.class).toProvider(DataSourceProvider.class);
@@ -53,7 +55,8 @@ public class PersistenceModule extends AbstractModule {
 
     @Provides
     public EntityManager entityManager(final Provider<EntityManagerFactory> entityManagerFactoryProvider) {
-        return entityManagerFactoryProvider.get().createEntityManager();
+        final EntityManagerFactory entityManagerFactory = entityManagerFactoryProvider.get();
+        return entityManagerFactory.createEntityManager();
     }
 
     @Provides
@@ -241,8 +244,8 @@ public class PersistenceModule extends AbstractModule {
 
 
         properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLInnoDBDialect");
-        properties.put("hibernate.show_sql", "true");
-        properties.put("hibernate.format_sql", "true");
+        properties.put("hibernate.show_sql", "false");
+        properties.put("hibernate.format_sql", "false");
         properties.put("hibernate.hbm2ddl.auto", "validate");
 
         if (dataSource != null) {

@@ -16,6 +16,7 @@
 
 package stroom.test;
 
+import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.StroomCacheManager;
@@ -70,6 +71,8 @@ import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;

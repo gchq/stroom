@@ -104,17 +104,17 @@ public class StreamTaskSpringConfig {
         return new ReprocessDataHandler(streamProcessorFilterService, streamStore);
     }
 
-    @Bean("streamProcessorFilterService")
-    public StreamProcessorFilterService streamProcessorFilterService(final StroomEntityManager entityManager,
-                                                                     final StreamProcessorService streamProcessorService) {
-        return new StreamProcessorFilterServiceImpl(entityManager, streamProcessorService);
-    }
-
-    @Bean("cachedStreamProcessorFilterService")
-    public StreamProcessorFilterService cachedStreamProcessorFilterService(final CachingEntityManager entityManager,
-                                                                           final StreamProcessorService streamProcessorService) {
-        return new StreamProcessorFilterServiceImpl(entityManager, streamProcessorService);
-    }
+//    @Bean("streamProcessorFilterService")
+//    public StreamProcessorFilterService streamProcessorFilterService(final StroomEntityManager entityManager,
+//                                                                     final StreamProcessorService streamProcessorService) {
+//        return new StreamProcessorFilterServiceImpl(entityManager, streamProcessorService);
+//    }
+//
+//    @Bean("cachedStreamProcessorFilterService")
+//    public StreamProcessorFilterService cachedStreamProcessorFilterService(final CachingEntityManager entityManager,
+//                                                                           final StreamProcessorService streamProcessorService) {
+//        return new StreamProcessorFilterServiceImpl(entityManager, streamProcessorService);
+//    }
 
     @Bean("streamProcessorService")
     public StreamProcessorService streamProcessorService(final StroomEntityManager entityManager) {
@@ -164,15 +164,15 @@ public class StreamTaskSpringConfig {
         return new StreamTaskCreatorImpl(streamProcessorFilterService, streamTaskTransactionHelper, taskManager, nodeCache, streamTaskService, streamTaskHelper, propertyService, internalStatisticsReceiverProvider, streamStore, securityContext, expressionToFindCriteria);
     }
 
-    @Bean
-    public StreamTaskCreatorTransactionHelper streamTaskCreatorTransactionHelper(final NodeCache nodeCache,
-                                                                                 final ClusterLockService clusterLockService,
-                                                                                 final StreamTaskService streamTaskService,
-                                                                                 final StreamStore streamStore,
-                                                                                 final StroomEntityManager stroomEntityManager,
-                                                                                 @Named("dataSource") final DataSource dataSource) {
-        return new StreamTaskCreatorTransactionHelper(nodeCache, clusterLockService, streamTaskService, streamStore, stroomEntityManager, dataSource);
-    }
+//    @Bean
+//    public StreamTaskCreatorTransactionHelper streamTaskCreatorTransactionHelper(final NodeCache nodeCache,
+//                                                                                 final ClusterLockService clusterLockService,
+//                                                                                 final StreamTaskService streamTaskService,
+//                                                                                 final StreamStore streamStore,
+//                                                                                 final StroomEntityManager stroomEntityManager,
+//                                                                                 @Named("dataSource") final DataSource dataSource) {
+//        return new StreamTaskCreatorTransactionHelper(nodeCache, clusterLockService, streamTaskService, streamStore, stroomEntityManager, dataSource);
+//    }
 
     @Bean
     @Scope(value = StroomScope.TASK)
@@ -185,10 +185,10 @@ public class StreamTaskSpringConfig {
         return new StreamTaskDeleteExecutor(batchIdTransactionHelper, clusterLockService, propertyService, taskContext, streamTaskCreator, streamProcessorFilterService);
     }
 
-    @Bean
-    public StreamTaskHelper streamTaskHelper(final StreamTaskService streamTaskService) {
-        return new StreamTaskHelper(streamTaskService);
-    }
+//    @Bean
+//    public StreamTaskHelper streamTaskHelper(final StreamTaskService streamTaskService) {
+//        return new StreamTaskHelper(streamTaskService);
+//    }
 
     @Bean
     public StreamTaskService streamTaskService(final StroomEntityManager entityManager,

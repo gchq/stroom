@@ -21,8 +21,10 @@ import com.google.inject.multibindings.Multibinder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import stroom.entity.CachingEntityManager;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
+import stroom.entity.shared.Clearable;
 import stroom.jobsystem.shared.JobManager;
 import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.node.NodeCache;
@@ -42,6 +44,9 @@ public class JobSystemModule extends AbstractModule {
         bind(ScheduleService.class).to(ScheduleServiceImpl.class);
         bind(ScheduledTaskExecutor.class).to(ScheduledTaskExecutorImpl.class);
         bind(JobManager.class).to(JobManagerImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(ClusterLockServiceTransactionHelperImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.jobsystem.ClusterLockClusterHandler.class);

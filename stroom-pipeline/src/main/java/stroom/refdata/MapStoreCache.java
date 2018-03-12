@@ -26,6 +26,7 @@ import stroom.security.SecurityHelper;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
  * Implementation class that stores reference data from reference data feeds.
  * </p>
  */
+@Singleton
 public final class MapStoreCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapStoreCache.class);
 

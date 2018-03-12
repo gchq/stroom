@@ -31,12 +31,14 @@ import stroom.streamstore.shared.Stream;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 public class EffectiveStreamCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
 

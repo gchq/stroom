@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.event.EntityEventBus;
 import stroom.entity.event.EntityEventBusImpl;
+import stroom.entity.shared.Clearable;
 import stroom.logging.DocumentEventLog;
 import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
@@ -44,6 +45,9 @@ public class EntityModule extends AbstractModule {
         bind(StroomEntityManager.class).to(StroomEntityManagerImpl.class);
         bind(EntityEventBus.class).to(EntityEventBusImpl.class);
         bind(DocumentPermissionCache.class).to(DocumentPermissionCacheImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(CachingEntityManager.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.entity.EntityReferenceFindHandler.class);

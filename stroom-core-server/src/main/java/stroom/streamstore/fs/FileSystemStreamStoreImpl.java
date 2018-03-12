@@ -17,12 +17,10 @@
 
 package stroom.streamstore.fs;
 
+import com.google.inject.persist.Transactional;
 import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import com.google.inject.persist.Transactional;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
@@ -51,6 +49,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.spring.EntityManagerSupport;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.ExpressionToFindCriteria.Context;
@@ -79,7 +78,6 @@ import stroom.util.logging.LogExecutionTime;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.transaction.Transactional.TxType;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -122,6 +120,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     private final StroomEntityManager entityManager;
+    private final EntityManagerSupport entityManagerSupport;
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final NodeCache nodeCache;
     private final StreamProcessorService streamProcessorService;
@@ -171,6 +170,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Inject
     FileSystemStreamStoreImpl(final StroomEntityManager entityManager,
+                              final EntityManagerSupport entityManagerSupport,
                               final StroomDatabaseInfo stroomDatabaseInfo,
                               final NodeCache nodeCache,
                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
@@ -182,6 +182,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               final ExpressionToFindCriteria expressionToFindCriteria,
                               final SecurityContext securityContext) {
         this.entityManager = entityManager;
+        this.entityManagerSupport = entityManagerSupport;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.nodeCache = nodeCache;
         this.streamProcessorService = streamProcessorService;
@@ -200,7 +201,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         final OldFindStreamCriteria outerCriteria = new OldFindStreamCriteria();
         outerCriteria.obtainPageRequest().setLength(1000);
         outerCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
-        final FileSystemStreamStoreImpl fileSystemStreamStore = new FileSystemStreamStoreImpl(null, null, null, null,
+        final FileSystemStreamStoreImpl fileSystemStreamStore = new FileSystemStreamStoreImpl(null, null, null, null, null,
                 null, null, null, null, null, null, null);
         final SqlBuilder sql = new SqlBuilder();
 
@@ -478,34 +479,36 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 //    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
     @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     public StreamTarget openStreamTarget(final Stream stream, final boolean append) {
-        LOGGER.debug("openStreamTarget() " + stream);
+        return entityManagerSupport.transactionResult(em -> {
+            LOGGER.debug("openStreamTarget() " + stream);
 
-        if (!append && stream.isPersistent()) {
-            throw new StreamException("Trying to create a stream target that already exists");
-        } else if (append && !stream.isPersistent()) {
-            throw new StreamException("Trying to append to a stream target that doesn't exist");
-        }
-
-        final Set<StreamVolume> lock = obtainLockForUpdate(stream);
-        if (lock != null) {
-            final Stream dbStream = lock.iterator().next().getStream();
-            final StreamType streamType = streamTypeService.load(dbStream.getStreamType());
-            final FileSystemStreamTarget target = FileSystemStreamTarget.create(dbStream, lock,
-                    streamType, append);
-
-            // TODO - one day allow appending to the stream (not just add child
-            // streams)
-            if (!append) {
-                // Force Creation of the files
-                target.getOutputStream();
+            if (!append && stream.isPersistent()) {
+                throw new StreamException("Trying to create a stream target that already exists");
+            } else if (append && !stream.isPersistent()) {
+                throw new StreamException("Trying to append to a stream target that doesn't exist");
             }
 
-            syncAttributes(stream, dbStream, target);
+            final Set<StreamVolume> lock = obtainLockForUpdate(stream);
+            if (lock != null) {
+                final Stream dbStream = lock.iterator().next().getStream();
+                final StreamType streamType = streamTypeService.load(dbStream.getStreamType());
+                final FileSystemStreamTarget target = FileSystemStreamTarget.create(dbStream, lock,
+                        streamType, append);
 
-            return target;
-        }
-        LOGGER.error("openStreamTarget() Failed to obtain lock");
-        return null;
+                // TODO - one day allow appending to the stream (not just add child
+                // streams)
+                if (!append) {
+                    // Force Creation of the files
+                    target.getOutputStream();
+                }
+
+                syncAttributes(stream, dbStream, target);
+
+                return target;
+            }
+            LOGGER.error("openStreamTarget() Failed to obtain lock");
+            return null;
+        });
     }
 
     private void syncAttributes(final Stream stream, final Stream dbStream, final FileSystemStreamTarget target) {
@@ -621,65 +624,67 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     public void closeStreamTarget(final StreamTarget streamTarget) {
-        // If we get error on closing the stream we must return it to the caller
-        Exception streamCloseException = null;
+        entityManagerSupport.transaction(em -> {
+            // If we get error on closing the stream we must return it to the caller
+            Exception streamCloseException = null;
 
-        try {
-            // Close the stream target.
-            streamTarget.close();
-        } catch (final Exception e) {
-            LOGGER.error("closeStreamTarget() - Error on closing stream {}", streamTarget, e);
-            streamCloseException = e;
-        }
-
-        updateAttribute(streamTarget, StreamAttributeConstants.STREAM_SIZE,
-                String.valueOf(((FileSystemStreamTarget) streamTarget).getStreamSize()));
-
-        updateAttribute(streamTarget, StreamAttributeConstants.FILE_SIZE,
-                String.valueOf(((FileSystemStreamTarget) streamTarget).getTotalFileSize()));
-
-        try {
-            boolean doneManifest = false;
-
-            // Are we appending?
-            if (streamTarget.isAppend()) {
-                final Set<Path> childFile = FileSystemStreamTypeUtil.createChildStreamPath(
-                        ((FileSystemStreamTarget) streamTarget).getFiles(false), StreamType.MANIFEST);
-
-                // Does the manifest exist ... overwrite it
-                if (FileSystemUtil.isAllFile(childFile)) {
-                    streamTarget.getAttributeMap()
-                            .write(FileSystemStreamTypeUtil.getOutputStream(StreamType.MANIFEST, childFile), true);
-                    doneManifest = true;
-                }
+            try {
+                // Close the stream target.
+                streamTarget.close();
+            } catch (final Exception e) {
+                LOGGER.error("closeStreamTarget() - Error on closing stream {}", streamTarget, e);
+                streamCloseException = e;
             }
 
-            if (!doneManifest) {
-                // No manifest done yet ... output one if the parent dir's exist
-                if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
-                    streamTarget.getAttributeMap()
-                            .write(streamTarget.addChildStream(StreamType.MANIFEST).getOutputStream(), true);
-                } else {
-                    LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
+            updateAttribute(streamTarget, StreamAttributeConstants.STREAM_SIZE,
+                    String.valueOf(((FileSystemStreamTarget) streamTarget).getStreamSize()));
+
+            updateAttribute(streamTarget, StreamAttributeConstants.FILE_SIZE,
+                    String.valueOf(((FileSystemStreamTarget) streamTarget).getTotalFileSize()));
+
+            try {
+                boolean doneManifest = false;
+
+                // Are we appending?
+                if (streamTarget.isAppend()) {
+                    final Set<Path> childFile = FileSystemStreamTypeUtil.createChildStreamPath(
+                            ((FileSystemStreamTarget) streamTarget).getFiles(false), StreamType.MANIFEST);
+
+                    // Does the manifest exist ... overwrite it
+                    if (FileSystemUtil.isAllFile(childFile)) {
+                        streamTarget.getAttributeMap()
+                                .write(FileSystemStreamTypeUtil.getOutputStream(StreamType.MANIFEST, childFile), true);
+                        doneManifest = true;
+                    }
                 }
 
-            }
-        } catch (final Exception e) {
-            LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", streamTarget, e);
-        }
+                if (!doneManifest) {
+                    // No manifest done yet ... output one if the parent dir's exist
+                    if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
+                        streamTarget.getAttributeMap()
+                                .write(streamTarget.addChildStream(StreamType.MANIFEST).getOutputStream(), true);
+                    } else {
+                        LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
+                    }
 
-        if (streamCloseException == null) {
-            // Unlock will update the meta data so set it back on the stream
-            // target so the client has the up to date copy
-            ((FileSystemStreamTarget) streamTarget).setMetaData(
-                    unLock(streamTarget.getStream(), streamTarget.getAttributeMap(), streamTarget.isAppend()));
-        } else {
-            if (streamCloseException instanceof RuntimeException) {
-                throw (RuntimeException) streamCloseException;
+                }
+            } catch (final Exception e) {
+                LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", streamTarget, e);
+            }
+
+            if (streamCloseException == null) {
+                // Unlock will update the meta data so set it back on the stream
+                // target so the client has the up to date copy
+                ((FileSystemStreamTarget) streamTarget).setMetaData(
+                        unLock(streamTarget.getStream(), streamTarget.getAttributeMap(), streamTarget.isAppend()));
             } else {
-                throw new RuntimeException(streamCloseException);
+                if (streamCloseException instanceof RuntimeException) {
+                    throw (RuntimeException) streamCloseException;
+                } else {
+                    throw new RuntimeException(streamCloseException);
+                }
             }
-        }
+        });
     }
 
     @Override

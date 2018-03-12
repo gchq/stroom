@@ -18,13 +18,17 @@ package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.After;
 import org.junit.Before;
+import stroom.spring.PersistenceManager;
 import stroom.statistics.sql.SQLStatisticModule;
 import stroom.statistics.sql.internal.InternalModule;
 import stroom.statistics.sql.rollup.SQLStatisticRollupModule;
 import stroom.statistics.stroomstats.entity.StroomStatsEntityModule;
 
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
+    private Injector injector;
+
     @Before
     public void before() {
 
@@ -124,7 +128,7 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
 //        properties.put("hibernate.c3p0.connection_tester_class_name", StroomProperties.getProperty("stroom.connectionTesterClassName"));
 
 
-        final Injector injector = Guice.createInjector(
+        injector = Guice.createInjector(
                 new stroom.entity.EntityModule(),
                 new stroom.datafeed.DataFeedModule(),
                 new stroom.security.MockSecurityContextModule(),
@@ -154,6 +158,7 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
                 new stroom.pipeline.PipelineModule(),
                 new stroom.cache.PipelineCacheModule(),
                 new stroom.pipeline.stepping.PipelineSteppingModule(),
+                new stroom.pipeline.task.PipelineStreamTaskModule(),
                 new stroom.dashboard.DashboardModule(),
                 new stroom.document.DocumentModule(),
                 new stroom.entity.cluster.EntityClusterModule(),
@@ -191,5 +196,10 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         injector.injectMembers(this);
 
         super.before();
+    }
+
+    @After
+    public void after() {
+        injector.getInstance(PersistenceManager.class).shutdown();
     }
 }

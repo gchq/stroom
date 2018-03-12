@@ -17,10 +17,10 @@
 
 package stroom.jobsystem;
 
+import com.google.inject.persist.Transactional;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomDatabaseInfo;
@@ -37,6 +37,7 @@ import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Secured;
+import stroom.spring.EntityManagerSupport;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomBeanMethod;
@@ -67,24 +68,27 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     private static final String LOCK_NAME = "JobNodeService";
 
     private final StroomEntityManager entityManager;
+    private final EntityManagerSupport entityManagerSupport;
     private final ClusterLockService clusterLockService;
     private final NodeCache nodeCache;
     private final JobService jobService;
     private final StroomBeanStore stroomBeanStore;
     private final StroomDatabaseInfo stroomDatabaseInfo;
-    private final DistributedTaskFactoryBeanRegistry  distributedTaskFactoryBeanRegistry;
+    private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
 
     @Inject
     JobNodeServiceImpl(final StroomEntityManager entityManager,
+                       final EntityManagerSupport entityManagerSupport,
                        final ClusterLockService clusterLockService,
                        final NodeCache nodeCache,
                        final JobService jobService,
                        final StroomBeanStore stroomBeanStore,
                        final StroomDatabaseInfo stroomDatabaseInfo,
-                       final DistributedTaskFactoryBeanRegistry  distributedTaskFactoryBeanRegistry) {
+                       final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         super(entityManager);
         this.entityManager = entityManager;
+        this.entityManagerSupport = entityManagerSupport;
         this.clusterLockService = clusterLockService;
         this.nodeCache = nodeCache;
         this.jobService = jobService;
@@ -135,119 +139,120 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     @Override
     @StroomStartup
     public void startup() {
-        LOGGER.info("startup()");
-        // Lock the cluster so only 1 node at a time can call the
-        // following code.
-        LOGGER.trace("Locking the cluster");
-        clusterLockService.lock(LOCK_NAME);
+        entityManagerSupport.transaction(entityManager1 -> {
+            LOGGER.info("startup()");
+            // Lock the cluster so only 1 node at a time can call the
+            // following code.
+            LOGGER.trace("Locking the cluster");
+            clusterLockService.lock(LOCK_NAME);
 
-        final Node node = nodeCache.getDefaultNode();
+            final Node node = nodeCache.getDefaultNode();
 
-        final List<JobNode> existingJobList = findAllJobs(node);
-        final Map<String, JobNode> existingJobMap = new HashMap<>();
-        for (final JobNode jobNode : existingJobList) {
-            existingJobMap.put(jobNode.getJob().getName(), jobNode);
-        }
-
-        final Set<String> validJobNames = new HashSet<>();
-
-        for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore.getAnnotatedStroomBeanMethods(JobTrackedSchedule.class)) {
-            final JobTrackedSchedule jobScheduleDescriptor = stroomBeanMethod.getBeanMethod()
-                    .getAnnotation(JobTrackedSchedule.class);
-            final StroomSimpleCronSchedule stroomSimpleCronSchedule = stroomBeanMethod.getBeanMethod()
-                    .getAnnotation(StroomSimpleCronSchedule.class);
-            final StroomFrequencySchedule stroomFrequencySchedule = stroomBeanMethod.getBeanMethod()
-                    .getAnnotation(StroomFrequencySchedule.class);
-
-            validJobNames.add(jobScheduleDescriptor.jobName());
-
-            if (stroomFrequencySchedule == null && stroomSimpleCronSchedule == null) {
-                LOGGER.error("Invalid annotations on {}", stroomBeanMethod);
-                continue;
+            final List<JobNode> existingJobList = findAllJobs(node);
+            final Map<String, JobNode> existingJobMap = new HashMap<>();
+            for (final JobNode jobNode : existingJobList) {
+                existingJobMap.put(jobNode.getJob().getName(), jobNode);
             }
 
-            // Get the actual job.
-            Job job = new Job();
-            job.setName(jobScheduleDescriptor.jobName());
-            job.setEnabled(jobScheduleDescriptor.enabled());
-            job = getOrCreateJob(job);
+            final Set<String> validJobNames = new HashSet<>();
 
-            final JobNode newJobNode = new JobNode();
-            newJobNode.setJob(job);
-            newJobNode.setNode(node);
-            newJobNode.setEnabled(jobScheduleDescriptor.enabled());
-            if (stroomSimpleCronSchedule != null) {
-                newJobNode.setJobType(JobType.CRON);
-                newJobNode.setSchedule(stroomSimpleCronSchedule.cron());
-            } else if (stroomFrequencySchedule != null) {
-                newJobNode.setJobType(JobType.FREQUENCY);
-                newJobNode.setSchedule(stroomFrequencySchedule.value());
-            }
+            for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore.getAnnotatedStroomBeanMethods(JobTrackedSchedule.class)) {
+                final JobTrackedSchedule jobScheduleDescriptor = stroomBeanMethod.getBeanMethod()
+                        .getAnnotation(JobTrackedSchedule.class);
+                final StroomSimpleCronSchedule stroomSimpleCronSchedule = stroomBeanMethod.getBeanMethod()
+                        .getAnnotation(StroomSimpleCronSchedule.class);
+                final StroomFrequencySchedule stroomFrequencySchedule = stroomBeanMethod.getBeanMethod()
+                        .getAnnotation(StroomFrequencySchedule.class);
 
-            // Add the job node to the DB if it isn't there already.
-            JobNode existingJobNode = existingJobMap.get(jobScheduleDescriptor.jobName());
-            if (existingJobNode == null) {
-                LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
-                        newJobNode.getNode().getName());
-                save(newJobNode);
-                existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+                validJobNames.add(jobScheduleDescriptor.jobName());
 
-            } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
-                // If the job type has changed then update the job node.
-                existingJobNode.setJobType(newJobNode.getJobType());
-                existingJobNode.setSchedule(newJobNode.getSchedule());
-                existingJobNode = save(existingJobNode);
-                existingJobMap.put(jobScheduleDescriptor.jobName(), existingJobNode);
-            }
-        }
+                if (stroomFrequencySchedule == null && stroomSimpleCronSchedule == null) {
+                    LOGGER.error("Invalid annotations on {}", stroomBeanMethod);
+                    continue;
+                }
 
-        // Distributed Jobs done a different way
-        distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
-            validJobNames.add(jobName);
-
-            // Add the job node to the DB if it isn't there already.
-            final JobNode existingJobNode = existingJobMap.get(jobName);
-            if (existingJobNode == null) {
                 // Get the actual job.
                 Job job = new Job();
-                job.setName(jobName);
-                job.setEnabled(false);
+                job.setName(jobScheduleDescriptor.jobName());
+                job.setEnabled(jobScheduleDescriptor.enabled());
                 job = getOrCreateJob(job);
 
                 final JobNode newJobNode = new JobNode();
                 newJobNode.setJob(job);
                 newJobNode.setNode(node);
-                newJobNode.setEnabled(false);
-                newJobNode.setJobType(JobType.DISTRIBUTED);
+                newJobNode.setEnabled(jobScheduleDescriptor.enabled());
+                if (stroomSimpleCronSchedule != null) {
+                    newJobNode.setJobType(JobType.CRON);
+                    newJobNode.setSchedule(stroomSimpleCronSchedule.cron());
+                } else if (stroomFrequencySchedule != null) {
+                    newJobNode.setJobType(JobType.FREQUENCY);
+                    newJobNode.setSchedule(stroomFrequencySchedule.value());
+                }
 
-                LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
-                        newJobNode.getNode().getName());
-                save(newJobNode);
-                existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+                // Add the job node to the DB if it isn't there already.
+                JobNode existingJobNode = existingJobMap.get(jobScheduleDescriptor.jobName());
+                if (existingJobNode == null) {
+                    LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
+                            newJobNode.getNode().getName());
+                    save(newJobNode);
+                    existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+
+                } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
+                    // If the job type has changed then update the job node.
+                    existingJobNode.setJobType(newJobNode.getJobType());
+                    existingJobNode.setSchedule(newJobNode.getSchedule());
+                    existingJobNode = save(existingJobNode);
+                    existingJobMap.put(jobScheduleDescriptor.jobName(), existingJobNode);
+                }
+            }
+
+            // Distributed Jobs done a different way
+            distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
+                validJobNames.add(jobName);
+
+                // Add the job node to the DB if it isn't there already.
+                final JobNode existingJobNode = existingJobMap.get(jobName);
+                if (existingJobNode == null) {
+                    // Get the actual job.
+                    Job job = new Job();
+                    job.setName(jobName);
+                    job.setEnabled(false);
+                    job = getOrCreateJob(job);
+
+                    final JobNode newJobNode = new JobNode();
+                    newJobNode.setJob(job);
+                    newJobNode.setNode(node);
+                    newJobNode.setEnabled(false);
+                    newJobNode.setJobType(JobType.DISTRIBUTED);
+
+                    LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
+                            newJobNode.getNode().getName());
+                    save(newJobNode);
+                    existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+                }
+            });
+
+            existingJobList.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
+                    .forEach(jobNode -> {
+                        LOGGER.info("Removing old job node {} ", jobNode.getJob().getName());
+                        delete(jobNode);
+                    });
+
+            // Force to delete
+            entityManager.flush();
+
+            final SqlBuilder sql = new SqlBuilder();
+            if (stroomDatabaseInfo.isMysql()) {
+                sql.append(DELETE_ORPHAN_JOBS_MYSQL);
+            } else {
+                sql.append(DELETE_ORPHAN_JOBS_HSQLDB);
+            }
+
+            final Long deleteCount = entityManager.executeNativeUpdate(sql);
+            if (deleteCount != null && deleteCount > 0) {
+                LOGGER.info("Removed {} orhan jobs", deleteCount);
             }
         });
-
-        existingJobList.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
-                .forEach(jobNode -> {
-                    LOGGER.info("Removing old job node {} ", jobNode.getJob().getName());
-                    delete(jobNode);
-                });
-
-        // Force to delete
-        entityManager.flush();
-
-        final SqlBuilder sql = new SqlBuilder();
-        if (stroomDatabaseInfo.isMysql()) {
-            sql.append(DELETE_ORPHAN_JOBS_MYSQL);
-        } else {
-            sql.append(DELETE_ORPHAN_JOBS_HSQLDB);
-        }
-
-        final Long deleteCount = entityManager.executeNativeUpdate(sql);
-        if (deleteCount != null && deleteCount > 0) {
-            LOGGER.info("Removed {} orhan jobs", deleteCount);
-        }
-
     }
 
     private Job getOrCreateJob(final Job job) {

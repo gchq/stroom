@@ -17,10 +17,16 @@
 package stroom.search.shard;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import stroom.cache.StroomCacheManagerImpl;
+import stroom.entity.shared.Clearable;
 
 public class ShardModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(IndexShardSearcherCache.class).to(IndexShardSearcherCacheImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(IndexShardSearcherCacheImpl.class);
     }
 }

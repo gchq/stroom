@@ -22,7 +22,9 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.CachingEntityManager;
 import stroom.entity.FindService;
+import stroom.entity.shared.Clearable;
 import stroom.feed.shared.Feed;
+import stroom.jobsystem.ClusterLockServiceTransactionHelperImpl;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.TaskHandler;
 
@@ -36,6 +38,9 @@ public class StreamStoreModule extends AbstractModule {
         bind(StreamAttributeValueFlush.class).to(StreamAttributeValueFlushImpl.class);
         bind(StreamAttributeValueService.class).to(StreamAttributeValueServiceImpl.class);
         bind(StreamTypeService.class).to(StreamTypeServiceImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(StreamAttributeValueFlushImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.streamstore.DownloadDataHandler.class);

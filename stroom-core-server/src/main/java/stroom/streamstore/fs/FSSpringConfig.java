@@ -68,20 +68,20 @@ public class FSSpringConfig {
         return new FileSystemStreamMaintenanceService(entityManager, streamTypeService);
     }
 
-    @Bean
-    public FileSystemStreamStore fileSystemStreamStore(final StroomEntityManager entityManager,
-                                                       final StroomDatabaseInfo stroomDatabaseInfo,
-                                                       final NodeCache nodeCache,
-                                                       @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
-                                                       @Named("cachedPipelineService") final PipelineService pipelineService,
-                                                       @Named("cachedFeedService") final FeedService feedService,
-                                                       @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
-                                                       final VolumeService volumeService,
-                                                       final StreamAttributeValueFlush streamAttributeValueFlush,
-                                                       final ExpressionToFindCriteria expressionToFindCriteria,
-                                                       final SecurityContext securityContext) {
-        return new FileSystemStreamStoreImpl(entityManager, stroomDatabaseInfo, nodeCache, streamProcessorService, pipelineService, feedService, streamTypeService, volumeService, streamAttributeValueFlush, expressionToFindCriteria, securityContext);
-    }
+//    @Bean
+//    public FileSystemStreamStore fileSystemStreamStore(final StroomEntityManager entityManager,
+//                                                       final StroomDatabaseInfo stroomDatabaseInfo,
+//                                                       final NodeCache nodeCache,
+//                                                       @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
+//                                                       @Named("cachedPipelineService") final PipelineService pipelineService,
+//                                                       @Named("cachedFeedService") final FeedService feedService,
+//                                                       @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
+//                                                       final VolumeService volumeService,
+//                                                       final StreamAttributeValueFlush streamAttributeValueFlush,
+//                                                       final ExpressionToFindCriteria expressionToFindCriteria,
+//                                                       final SecurityContext securityContext) {
+//        return new FileSystemStreamStoreImpl(entityManager, stroomDatabaseInfo, nodeCache, streamProcessorService, pipelineService, feedService, streamTypeService, volumeService, streamAttributeValueFlush, expressionToFindCriteria, securityContext);
+//    }
 
     @Bean
     public FileSystemStreamStoreTransactionHelper fileSystemStreamStoreTransactionHelper(final StroomDatabaseInfo stroomDatabaseInfo,

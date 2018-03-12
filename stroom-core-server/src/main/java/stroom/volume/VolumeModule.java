@@ -18,23 +18,18 @@ package stroom.volume;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import stroom.entity.StroomEntityManager;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEvent.Handler;
-import stroom.node.NodeCache;
+import stroom.entity.shared.Clearable;
 import stroom.node.VolumeService;
-import stroom.properties.StroomPropertyService;
-import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.spring.StroomBeanStore;
-
-import javax.inject.Provider;
 
 public class VolumeModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(VolumeService.class).to(VolumeServiceImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(VolumeServiceImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(VolumeServiceImpl.class);

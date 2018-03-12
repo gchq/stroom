@@ -76,9 +76,9 @@ public class MockStreamTaskSpringConfig {
         return new StreamProcessorTaskHandler(beanStore, streamProcessorService, streamProcessorFilterService, streamTaskHelper, streamStore, nodeCache, taskContext);
     }
 
-    @Bean
-    public StreamTaskHelper streamTaskHelper(final StreamTaskService streamTaskService) {
-        return new StreamTaskHelper(streamTaskService);
-    }
+//    @Bean
+//    public StreamTaskHelper streamTaskHelper(final StreamTaskService streamTaskService) {
+//        return new StreamTaskHelper(streamTaskService);
+//    }
 
 }

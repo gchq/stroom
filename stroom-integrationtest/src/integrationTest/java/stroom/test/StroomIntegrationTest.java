@@ -109,7 +109,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * Remove all entities from the database.
      */
     @After
-    public final void after() {
+    public void after() {
         onAfter();
     }
 

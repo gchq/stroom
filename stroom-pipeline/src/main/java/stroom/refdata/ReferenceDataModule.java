@@ -45,101 +45,11 @@ import javax.inject.Named;
 public class ReferenceDataModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind(ReferenceDataLoader.class).to(ReferenceDataLoaderImpl.class);
+        bind(ContextDataLoader.class).to(ContextDataLoaderImpl.class);
+
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.refdata.ContextDataLoadTaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.refdata.ReferenceDataLoadTaskHandler.class);
     }
-    //    @Bean
-//    public ContextDataLoader contextDataLoader(final TaskManager taskManager) {
-//        return new ContextDataLoaderImpl(taskManager);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public ContextDataLoadTaskHandler contextDataLoadTaskHandler(final PipelineFactory pipelineFactory,
-//                                                                 final MapStoreHolder mapStoreHolder,
-//                                                                 final FeedHolder feedHolder,
-//                                                                 final ErrorReceiverProxy errorReceiverProxy,
-//                                                                 @Named("cachedPipelineService") final PipelineService pipelineService,
-//                                                                 final PipelineDataCache pipelineDataCache) {
-//        return new ContextDataLoadTaskHandler(pipelineFactory, mapStoreHolder, feedHolder, errorReceiverProxy, pipelineService, pipelineDataCache);
-//    }
-//
-//    @Bean
-//    public EffectiveStreamCache effectiveStreamCache(final CacheManager cacheManager,
-//                                                     final StreamStore streamStore,
-//                                                     final EffectiveStreamInternPool internPool,
-//                                                     final SecurityContext securityContext) {
-//        return new EffectiveStreamCache(cacheManager, streamStore, internPool, securityContext);
-//    }
-//
-//    @Bean
-//    public EffectiveStreamInternPool effectiveStreamInternPool() {
-//        return new EffectiveStreamInternPool();
-//    }
-//
-//    @Bean
-//    public MapStoreCache mapStoreCache(final CacheManager cacheManager,
-//                                       final ReferenceDataLoader referenceDataLoader,
-//                                       final MapStoreInternPool internPool,
-//                                       final SecurityContext securityContext) {
-//        return new MapStoreCache(cacheManager, referenceDataLoader, internPool, securityContext);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public MapStoreHolder mapStoreHolder() {
-//        return new MapStoreHolder();
-//    }
-//
-//    @Bean
-//    public MapStoreInternPool mapStoreInternPool() {
-//        return new MapStoreInternPool();
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.PROTOTYPE)
-//    public ReferenceData referenceData(final EffectiveStreamCache effectiveStreamCache,
-//                                       final MapStoreCache mapStoreCache,
-//                                       final FeedHolder feedHolder,
-//                                       final StreamHolder streamHolder,
-//                                       final ContextDataLoader contextDataLoader,
-//                                       final DocumentPermissionCache documentPermissionCache) {
-//        return new ReferenceData(effectiveStreamCache, mapStoreCache, feedHolder, streamHolder, contextDataLoader, documentPermissionCache);
-//    }
-//
-//    @Bean
-//    public ReferenceDataLoader referenceDataLoader(final TaskManager taskManager) {
-//        return new ReferenceDataLoaderImpl(taskManager);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public ReferenceDataLoadTaskHandler referenceDataLoadTaskHandler(final StreamStore streamStore,
-//                                                                     final PipelineFactory pipelineFactory,
-//                                                                     final MapStoreHolder mapStoreHolder,
-//                                                                     @Named("cachedFeedService") final FeedService feedService,
-//                                                                     @Named("cachedPipelineService") final PipelineService pipelineService,
-//                                                                     final PipelineHolder pipelineHolder,
-//                                                                     final FeedHolder feedHolder,
-//                                                                     final StreamHolder streamHolder,
-//                                                                     final LocationFactoryProxy locationFactory,
-//                                                                     final StreamCloser streamCloser,
-//                                                                     final ErrorReceiverProxy errorReceiverProxy,
-//                                                                     final TaskContext taskContext,
-//                                                                     final PipelineDataCache pipelineDataCache) {
-//        return new ReferenceDataLoadTaskHandler(streamStore,
-//                pipelineFactory,
-//                mapStoreHolder,
-//                feedService,
-//                pipelineService,
-//                pipelineHolder,
-//                feedHolder,
-//                streamHolder,
-//                locationFactory,
-//                streamCloser,
-//                errorReceiverProxy,
-//                taskContext,
-//                pipelineDataCache);
-//    }
 }

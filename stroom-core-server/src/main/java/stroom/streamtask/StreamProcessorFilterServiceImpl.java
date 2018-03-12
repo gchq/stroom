@@ -16,8 +16,8 @@
 
 package stroom.streamtask;
 
-import event.logging.BaseAdvancedQueryItem;
 import com.google.inject.persist.Transactional;
+import event.logging.BaseAdvancedQueryItem;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -26,6 +26,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Secured;
+import stroom.spring.EntityManagerSupport;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
@@ -44,13 +45,16 @@ import java.util.Set;
 class StreamProcessorFilterServiceImpl
         extends SystemEntityServiceImpl<StreamProcessorFilter, FindStreamProcessorFilterCriteria>
         implements StreamProcessorFilterService {
+    private final EntityManagerSupport entityManagerSupport;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterMarshaller marshaller;
 
     @Inject
     StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
+                                     final EntityManagerSupport entityManagerSupport,
                                      final StreamProcessorService streamProcessorService) {
         super(entityManager);
+        this.entityManagerSupport = entityManagerSupport;
         this.streamProcessorService = streamProcessorService;
         this.marshaller = new StreamProcessorFilterMarshaller();
     }
@@ -64,19 +68,20 @@ class StreamProcessorFilterServiceImpl
     public void addFindStreamCriteria(final StreamProcessor streamProcessor,
                                       final int priority,
                                       final QueryData queryData) {
-
-        StreamProcessorFilter filter = new StreamProcessorFilter();
-        // Blank tracker
-        filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
-        filter.setPriority(priority);
-        filter.setStreamProcessor(streamProcessor);
-        filter.setQueryData(queryData);
-        filter.setEnabled(true);
-        filter = marshaller.marshal(filter);
-        // Save initial tracker
-        getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());
-        getEntityManager().flush();
-        save(filter);
+        entityManagerSupport.transaction(entityManager -> {
+            StreamProcessorFilter filter = new StreamProcessorFilter();
+            // Blank tracker
+            filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
+            filter.setPriority(priority);
+            filter.setStreamProcessor(streamProcessor);
+            filter.setQueryData(queryData);
+            filter.setEnabled(true);
+            filter = marshaller.marshal(filter);
+            // Save initial tracker
+            getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());
+            getEntityManager().flush();
+            save(filter);
+        });
     }
 
     @Override
@@ -84,7 +89,7 @@ class StreamProcessorFilterServiceImpl
                                                  final QueryData queryData,
                                                  final boolean enabled,
                                                  final int priority) {
-
+        return entityManagerSupport.transactionResult(entityManager -> {
         // First see if we can find a stream processor for this pipeline.
         final FindStreamProcessorCriteria findStreamProcessorCriteria = new FindStreamProcessorCriteria(pipelineEntity);
         final List<StreamProcessor> list = streamProcessorService.find(findStreamProcessorCriteria);
@@ -113,6 +118,7 @@ class StreamProcessorFilterServiceImpl
         filter = marshaller.unmarshal(filter);
 
         return filter;
+        });
     }
 
     @Override

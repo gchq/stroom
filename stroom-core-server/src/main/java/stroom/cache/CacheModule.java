@@ -21,6 +21,7 @@ import com.google.inject.multibindings.Multibinder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import stroom.entity.shared.Clearable;
 import stroom.task.TaskHandler;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.util.cache.CacheManager;
@@ -30,6 +31,9 @@ public class CacheModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StroomCacheManager.class).to(StroomCacheManagerImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(StroomCacheManagerImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.cache.CacheClearHandler.class);

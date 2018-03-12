@@ -25,6 +25,8 @@ import stroom.cluster.ClusterCallService;
 import stroom.cluster.ClusterNodeManager;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.event.EntityEvent;
+import stroom.entity.shared.Clearable;
+import stroom.jobsystem.ClusterLockServiceTransactionHelperImpl;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.RecordCountService;
@@ -43,6 +45,9 @@ public class NodeModule extends AbstractModule {
         bind(DBTableService.class).to(DBTableServiceImpl.class);
         bind(RecordCountService.class).to(RecordCountServiceImpl.class);
         bind(RemoteStatusService.class).to(RemoteStatusServiceImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(NodeCache.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.node.ClusterNodeInfoHandler.class);

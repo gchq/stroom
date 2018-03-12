@@ -18,5 +18,8 @@ package stroom.refdata;
 
 import stroom.pool.InternPool;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class MapStoreInternPool extends InternPool<MapStore> {
 }
