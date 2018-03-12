@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#676** : Fixed use of custom stream type values in expression based processing filters.
+
 ## [v6.0-alpha.16]
 
 * Issue **#673** : Fixed issue with Stream processing filters that specify Create Time
