@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-alpha.17]
+
 * Issue **#676** : Fixed use of custom stream type values in expression based processing filters.
 
 ## [v6.0-alpha.16]
@@ -821,7 +824,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.16...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.17...6.0
+[v6.0-alpha.17]: https://github.com/gchq/stroom/compare/v6.0-alpha.16...v6.0-alpha.17
 [v6.0-alpha.16]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...v6.0-alpha.16
 [v6.0-alpha.15]: https://github.com/gchq/stroom/compare/v6.0-alpha.14...v6.0-alpha.15
 [v6.0-alpha.14]: https://github.com/gchq/stroom/compare/v6.0-alpha.13...v6.0-alpha.14
