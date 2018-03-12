@@ -19,17 +19,23 @@ package stroom.importexport;
 import stroom.pipeline.shared.ExtensionProvider;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Comparator;
 
 public class Property {
     private final String name;
     private final boolean externalFile;
     private final ExtensionProvider extensionProvider;
+    private final Method getMethod;
+    private final Method setMethod;
 
-    public Property(final String name, final boolean externalFile, final ExtensionProvider extensionProvider) {
+    public Property(final String name, final boolean externalFile, final ExtensionProvider extensionProvider, final Method getMethod, final Method setMethod) {
         this.name = name;
         this.externalFile = externalFile;
         this.extensionProvider = extensionProvider;
+        this.getMethod = getMethod;
+        this.setMethod = setMethod;
     }
 
     public String getName() {
@@ -42,6 +48,26 @@ public class Property {
 
     public ExtensionProvider getExtensionProvider() {
         return extensionProvider;
+    }
+
+//    Method getGetMethod() {
+//        return getMethod;
+//    }
+//
+//    Method getSetMethod() {
+//        return setMethod;
+//    }
+
+    Object get(final Object object) throws IllegalAccessException, InvocationTargetException {
+        return getMethod.invoke(object);
+    }
+
+    void set(final Object object, final Object value) throws IllegalAccessException, InvocationTargetException {
+        setMethod.invoke(object, value);
+    }
+
+    Class<?> getType() {
+        return getMethod.getReturnType();
     }
 
     @Override

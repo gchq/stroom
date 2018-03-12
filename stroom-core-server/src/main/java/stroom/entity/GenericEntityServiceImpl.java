@@ -226,7 +226,7 @@ class GenericEntityServiceImpl implements GenericEntityService {
     @Override
     public <E extends Entity> EntityService<E> getEntityService(
             final String entityType) {
-        Object entityService = entityServiceBeanRegistry.getEntityService(entityType);
+        Object entityService = entityServiceBeanRegistry.getEntityServiceByType(entityType);
 
         //if (entityService == null || !(entityService instanceof EntityService)) {
         //    entityService = externalDocRefServices.get(entityType);

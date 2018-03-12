@@ -27,6 +27,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
@@ -39,9 +40,10 @@ class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, FindXMLS
         implements XMLSchemaService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     XMLSchemaServiceImpl(final StroomEntityManager entityManager,
+                         final EntityManagerSupport entityManagerSupport,
                          final ImportExportHelper importExportHelper,
                          final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Override

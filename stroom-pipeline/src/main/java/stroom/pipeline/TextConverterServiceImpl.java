@@ -27,6 +27,7 @@ import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.TextConverter;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -38,9 +39,10 @@ public class TextConverterServiceImpl extends DocumentEntityServiceImpl<TextConv
 
     @Inject
     TextConverterServiceImpl(final StroomEntityManager entityManager,
+                             final EntityManagerSupport entityManagerSupport,
                              final ImportExportHelper importExportHelper,
                              final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Override

@@ -28,6 +28,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.stats.shared.StroomStatsStoreEntity;
 
 import javax.inject.Inject;
@@ -43,9 +44,10 @@ class StroomStatsStoreEntityServiceImpl
 
     @Inject
     StroomStatsStoreEntityServiceImpl(final StroomEntityManager entityManager,
+                                      final EntityManagerSupport entityManagerSupport,
                                       final ImportExportHelper importExportHelper,
                                       final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
         LOGGER.debug("StatisticsDataSourceServiceImpl initialised");
     }
 

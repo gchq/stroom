@@ -18,15 +18,18 @@ package stroom.ruleset;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import stroom.datafeed.MetaMapFilterFactory;
 import stroom.dictionary.DictionaryStore;
 import stroom.docstore.Store;
+import stroom.entity.FindService;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.ruleset.shared.RuleSet;
+import stroom.xmlschema.shared.XMLSchema;
 
 public class RulesetModule extends AbstractModule {
     @Override
@@ -39,6 +42,12 @@ public class RulesetModule extends AbstractModule {
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.ruleset.RuleSetServiceImpl.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(RuleSet.DOCUMENT_TYPE).to(stroom.ruleset.RuleSetServiceImpl.class);
+
+//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+//        findServiceBinder.addBinding().to(stroom.ruleset.RuleSetServiceImpl.class);
     }
 
 //    @Bean

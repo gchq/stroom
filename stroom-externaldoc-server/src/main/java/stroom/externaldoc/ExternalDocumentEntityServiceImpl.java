@@ -23,8 +23,8 @@ import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.logging.DocumentEventLog;
-import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.query.audit.ExportDTO;
@@ -52,10 +52,10 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     private final DocumentEventLog documentEventLog;
     private final DocRefResourceHttpClient docRefHttpClient;
 
-    public ExternalDocumentEntityServiceImpl(final String type,
-                                             final SecurityContext securityContext,
-                                             final DocumentEventLog documentEventLog,
-                                             final StroomPropertyService propertyService) {
+    ExternalDocumentEntityServiceImpl(final String type,
+                                      final SecurityContext securityContext,
+                                      final DocumentEventLog documentEventLog,
+                                      final StroomPropertyService propertyService) {
         this.type = type;
         this.securityContext = securityContext;
         this.documentEventLog = documentEventLog;
@@ -84,6 +84,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     /**
      * Given a DocRef, it simply converts it to a SharedDocRef. This is as much as the core Stroom app
      * will need to know about an external Doc Ref in the general sense.
+     *
      * @param docRef The DocRef of the external object
      * @return A shared doc ref with the same details as the input
      */
@@ -101,6 +102,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
      * Normally this is how the detail of a document are updated, but external DocRefs will be maintained by
      * external services with their own UI. So this is little more than a stub implementation to satisfy the need
      * to implement DocumentActionHandler.
+     *
      * @param document The document being written.
      * @return The input document
      */
@@ -229,7 +231,8 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         }
 
 
-        final List<DocRefEntity> results = response.readEntity(new GenericType<List<DocRefEntity>>(){});
+        final List<DocRefEntity> results = response.readEntity(new GenericType<List<DocRefEntity>>() {
+        });
 
         return results.stream()
                 .map(this::getDocRef)
@@ -258,6 +261,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
 
     /**
      * General form of parsing a response into a Doc Ref
+     *
      * @param response The Response from the client, should be HTTP 200, with the Doc Ref Entity in the body
      * @return The Doc Ref, created from the Doc Ref Entity
      */

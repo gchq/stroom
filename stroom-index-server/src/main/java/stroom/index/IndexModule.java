@@ -17,15 +17,19 @@
 package stroom.index;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import stroom.entity.FindService;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.event.EntityEvent;
 import stroom.explorer.ExplorerActionHandler;
+import stroom.feed.shared.Feed;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
+import stroom.index.shared.Index;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.pipeline.LocationFactoryProxy;
@@ -71,6 +75,12 @@ public class IndexModule extends AbstractModule {
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.index.IndexServiceImpl.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(Index.ENTITY_TYPE).to(stroom.index.IndexServiceImpl.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(stroom.index.IndexServiceImpl.class);
     }
     //    @Bean
 //    @Scope(StroomScope.TASK)

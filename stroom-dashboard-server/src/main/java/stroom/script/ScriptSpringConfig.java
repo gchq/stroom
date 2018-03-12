@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.util.spring.StroomScope;
 
 @Configuration
@@ -35,9 +36,10 @@ public class ScriptSpringConfig {
 
     @Bean("scriptService")
     public ScriptService scriptService(final StroomEntityManager entityManager,
+                                       final EntityManagerSupport entityManagerSupport,
                                        final ImportExportHelper importExportHelper,
                                        final SecurityContext securityContext) {
-        return new ScriptServiceImpl(entityManager, importExportHelper, securityContext);
+        return new ScriptServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Bean(ScriptServlet.BEAN_NAME)

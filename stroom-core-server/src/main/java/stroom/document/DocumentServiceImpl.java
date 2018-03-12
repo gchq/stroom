@@ -70,7 +70,7 @@ class DocumentServiceImpl implements DocumentService {
     }
 
     private DocumentActionHandler getDocumentActionHandler(final String type) {
-        final Object bean = beanRegistry.getEntityService(type);
+        final Object bean = beanRegistry.getEntityServiceByType(type);
         if (bean == null) {
             throw new EntityServiceException("No document action handler can be found for type '" + type + "'");
         }

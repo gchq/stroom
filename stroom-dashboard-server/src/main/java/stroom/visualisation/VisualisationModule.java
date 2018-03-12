@@ -17,14 +17,18 @@
 package stroom.visualisation;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import stroom.dashboard.shared.Dashboard;
+import stroom.entity.FindService;
 import stroom.entity.StroomEntityManager;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
+import stroom.visualisation.shared.Visualisation;
 
 public class VisualisationModule extends AbstractModule {
     @Override
@@ -36,5 +40,11 @@ public class VisualisationModule extends AbstractModule {
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.visualisation.VisualisationServiceImpl.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(Visualisation.ENTITY_TYPE).to(stroom.visualisation.VisualisationServiceImpl.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(stroom.visualisation.VisualisationServiceImpl.class);
     }
 }

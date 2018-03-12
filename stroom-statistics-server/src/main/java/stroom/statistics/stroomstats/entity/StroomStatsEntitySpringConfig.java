@@ -21,14 +21,16 @@ import org.springframework.context.annotation.Configuration;
 import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 
 
 @Configuration
 public class StroomStatsEntitySpringConfig {
     @Bean
     public StroomStatsStoreEntityService stroomStatsStoreEntityService(final StroomEntityManager entityManager,
+                                                                       final EntityManagerSupport entityManagerSupport,
                                                                        final ImportExportHelper importExportHelper,
                                                                        final SecurityContext securityContext) {
-        return new StroomStatsStoreEntityServiceImpl(entityManager, importExportHelper, securityContext);
+        return new StroomStatsStoreEntityServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 }

@@ -40,7 +40,7 @@ class EntityServiceSaveHandler extends AbstractTaskHandler<EntityServiceSaveActi
     @SuppressWarnings("unchecked")
     @Override
     public BaseEntity exec(final EntityServiceSaveAction<BaseEntity> action) {
-        final Object bean = beanRegistry.getEntityService(action.getEntity().getClass());
+        final Object bean = beanRegistry.getEntityServiceByType(action.getEntity().getType());
         if (bean == null) {
             throw new EntityServiceException("No entity service can be found");
         }

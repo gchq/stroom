@@ -22,17 +22,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.StroomDatabaseInfo;
-import stroom.explorer.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
 import stroom.jobsystem.ClusterLockService;
-import stroom.pipeline.factory.Element;
 import stroom.properties.StroomPropertyService;
 import stroom.statistics.sql.datasource.StatisticStoreCache;
 import stroom.statistics.sql.datasource.StatisticStoreValidator;
+import stroom.task.TaskContext;
 import stroom.task.TaskHandler;
 import stroom.task.TaskManager;
 import stroom.util.spring.StroomScope;
-import stroom.task.TaskContext;
 
 import javax.inject.Named;
 import javax.sql.DataSource;
@@ -40,52 +37,10 @@ import javax.sql.DataSource;
 public class SQLStatisticModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.statistics.sql.SQLStatisticFlushTaskHandler.class);
+        bind(SQLStatisticCache.class).to(SQLStatisticCacheImpl.class);
+        bind(Statistics.class).to(SQLStatisticEventStore.class);
 
-        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
-        elementBinder.addBinding().to(stroom.statistics.sql.pipeline.filter.StatisticsFilter.class);
+        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
+        taskHandlerBinder.addBinding().to(SQLStatisticFlushTaskHandler.class);
     }
-    //    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public SQLStatisticAggregationManager sQLStatisticAggregationManager(final ClusterLockService clusterLockService,
-//                                                                         final SQLStatisticAggregationTransactionHelper helper,
-//                                                                         final TaskContext taskContext,
-//                                                                         final StroomDatabaseInfo stroomDatabaseInfo,
-//                                                                         final StroomPropertyService propertyService) {
-//        return new SQLStatisticAggregationManager(clusterLockService, helper, taskContext, stroomDatabaseInfo, propertyService);
-//    }
-//
-//    @Bean
-//    public SQLStatisticAggregationTransactionHelper sQLStatisticAggregationTransactionHelper(@Named("statisticsDataSource") final DataSource statisticsDataSource,
-//                                                                                             final StroomDatabaseInfo stroomDatabaseInfo,
-//                                                                                             final StroomPropertyService stroomPropertyService) {
-//        return new SQLStatisticAggregationTransactionHelper(statisticsDataSource, stroomDatabaseInfo, stroomPropertyService);
-//    }
-//
-//    @Bean
-//    public SQLStatisticCache sQLStatisticCache(final TaskManager taskManager) {
-//        return new SQLStatisticCacheImpl(taskManager);
-//    }
-//
-//    @Bean
-//    public SQLStatisticEventStore sQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
-//                                                         final StatisticStoreCache statisticsDataSourceCache,
-//                                                         final SQLStatisticCache statisticCache,
-//                                                         @Named("statisticsDataSource") final DataSource statisticsDataSource,
-//                                                         final StroomPropertyService propertyService) {
-//        return new SQLStatisticEventStore(statisticsDataSourceValidator, statisticsDataSourceCache, statisticCache, statisticsDataSource, propertyService);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public SQLStatisticFlushTaskHandler sqlStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
-//                                                                     final TaskContext taskContext) {
-//        return new SQLStatisticFlushTaskHandler(sqlStatisticValueBatchSaveService, taskContext);
-//    }
-//
-//    @Bean
-//    public SQLStatisticValueBatchSaveService sQLStatisticValueBatchSaveService(@Named("statisticsDataSource") final DataSource statisticsDataSource) {
-//        return new SQLStatisticValueBatchSaveService(statisticsDataSource);
-//    }
 }

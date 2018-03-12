@@ -19,6 +19,10 @@ package stroom.test;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Before;
+import stroom.statistics.sql.SQLStatisticModule;
+import stroom.statistics.sql.internal.InternalModule;
+import stroom.statistics.sql.rollup.SQLStatisticRollupModule;
+import stroom.statistics.stroomstats.entity.StroomStatsEntityModule;
 
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
     @Before
@@ -173,12 +177,16 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
                 new stroom.visualisation.VisualisationModule(),
                 new stroom.xmlschema.XmlSchemaModule(),
                 new stroom.elastic.ElasticModule(),
-                new stroom.kafka.KafkaModule()
-//                new SQLStatisticModule(),
-//                new SQLStatisticRollupModule(),
-//                new StroomStatsRollupModule()
-//                new InternalModule()
-//                 new stroom.statistics.sql.datasource.DataSourceModule()
+                new stroom.kafka.KafkaModule(),
+                new stroom.externaldoc.ExternalDocRefModule(),
+                new stroom.statistics.spring.PersistenceModule(),
+                new stroom.statistics.sql.SQLStatisticModule(),
+                new stroom.statistics.sql.rollup.SQLStatisticRollupModule(),
+                new stroom.statistics.sql.internal.InternalModule(),
+                new stroom.statistics.sql.datasource.DataSourceModule(),
+                new stroom.statistics.stroomstats.entity.StroomStatsEntityModule(),
+                new stroom.statistics.stroomstats.rollup.StroomStatsRollupModule(),
+                new stroom.statistics.stroomstats.internal.InternalModule()
         );
         injector.injectMembers(this);
 

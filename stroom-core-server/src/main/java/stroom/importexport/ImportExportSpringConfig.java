@@ -51,10 +51,10 @@ public class ImportExportSpringConfig {
         return new ImportExportDocumentEventLogImpl(eventLoggingService);
     }
 
-    @Bean
-    public ImportExportHelper importExportHelper(final GenericEntityService genericEntityService) {
-        return new ImportExportHelper(genericEntityService);
-    }
+//    @Bean
+//    public ImportExportHelper importExportHelper(final GenericEntityService genericEntityService) {
+//        return new ImportExportHelper(genericEntityService);
+//    }
 
     @Bean
     public ImportExportSerializer importExportSerializer(final ExplorerService explorerService,

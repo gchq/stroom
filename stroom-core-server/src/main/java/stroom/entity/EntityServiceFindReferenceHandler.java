@@ -38,8 +38,7 @@ class EntityServiceFindReferenceHandler
     @SuppressWarnings("unchecked")
     @Override
     public ResultList<DocRef> exec(final EntityServiceFindReferenceAction<BaseEntity> action) {
-        ResultList<DocRef> result = null;
-        result = (ResultList<DocRef>) beanRegistry.invoke("findReference", action.getEntity());
-        return result;
+        final Object entityService = beanRegistry.getEntityServiceByType(action.getEntity().getType());
+        return (ResultList<DocRef>) beanRegistry.invoke(entityService, "findReference", action.getEntity());
     }
 }

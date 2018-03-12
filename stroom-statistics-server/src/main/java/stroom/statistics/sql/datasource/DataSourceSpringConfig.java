@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.statistics.sql.Statistics;
 import stroom.util.cache.CacheManager;
 
@@ -28,9 +29,10 @@ import stroom.util.cache.CacheManager;
 public class DataSourceSpringConfig {
     @Bean
     public StatisticStoreEntityService statisticStoreEntityService(final StroomEntityManager entityManager,
+                                                                   final EntityManagerSupport entityManagerSupport,
                                                                    final ImportExportHelper importExportHelper,
                                                                    final SecurityContext securityContext) {
-        return new StatisticStoreEntityServiceImpl(entityManager, importExportHelper, securityContext);
+        return new StatisticStoreEntityServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Bean("statisticsDataSourceCache")

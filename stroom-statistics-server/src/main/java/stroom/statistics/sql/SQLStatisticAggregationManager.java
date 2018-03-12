@@ -31,6 +31,7 @@ import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.SQLException;
 import java.util.concurrent.locks.ReentrantLock;
 

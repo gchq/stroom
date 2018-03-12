@@ -17,14 +17,17 @@
 package stroom.script;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import stroom.entity.FindService;
 import stroom.entity.StroomEntityManager;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
+import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
 import stroom.util.spring.StroomScope;
@@ -42,5 +45,11 @@ public class ScriptModule extends AbstractModule {
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.script.ScriptServiceImpl.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(Script.ENTITY_TYPE).to(stroom.script.ScriptServiceImpl.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(stroom.script.ScriptServiceImpl.class);
     }
 }

@@ -30,6 +30,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.properties.StroomPropertyService;
 import stroom.search.SearchResultCreatorManager;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
 import stroom.task.TaskManager;
@@ -82,9 +83,10 @@ public class IndexSpringConfig {
     @Bean("indexService")
 //    @Profile(StroomSpringProfiles.PROD)
     public IndexService indexService(final StroomEntityManager entityManager,
+                                     final EntityManagerSupport entityManagerSupport,
                                      final ImportExportHelper importExportHelper,
                                      final SecurityContext securityContext) {
-        return new IndexServiceImpl(entityManager, importExportHelper, securityContext);
+        return new IndexServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Bean

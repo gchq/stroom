@@ -24,16 +24,12 @@ import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import org.hibernate.integrator.spi.Integrator;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.hibernate.jpa.boot.spi.IntegratorProvider;
-import stroom.explorer.ExplorerTreeNode;
-import stroom.explorer.ExplorerTreePath;
-import stroom.util.spring.StroomBeanMethod;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.sql.DataSource;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,8 +43,8 @@ import java.util.Properties;
  * entity manager factory, data sources.
  */
 public class PersistenceModule extends AbstractModule {
-//    private static final Logger LOGGER = LoggerFactory.getLogger(PersistenceModule.class);
-private static final String PACKAGE = "stroom";
+    //    private static final Logger LOGGER = LoggerFactory.getLogger(PersistenceModule.class);
+    private static final String PACKAGE = "stroom";
 
     @Override
     protected void configure() {
@@ -159,7 +155,7 @@ private static final String PACKAGE = "stroom";
 
     private PersistenceUnitInfoImpl persistenceUnitInfo(final String name, final DataSource dataSource) {
         final List<String> entityClassNames = new ArrayList<>();
-                new FastClasspathScanner(PACKAGE)
+        new FastClasspathScanner(PACKAGE)
                 .matchClassesWithAnnotation(Entity.class, classWithAnnotation -> entityClassNames.add(classWithAnnotation.getName()))
                 .scan();
 //

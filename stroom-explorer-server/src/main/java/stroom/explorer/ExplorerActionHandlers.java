@@ -18,6 +18,8 @@ package stroom.explorer;
 
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.node.shared.ClientProperties;
+import stroom.properties.StroomPropertyService;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
@@ -33,12 +35,18 @@ import java.util.stream.Collectors;
 @Singleton
 class ExplorerActionHandlers {
     private final StroomBeanStore beanStore;
+    private final ExplorerActionHandlerFactory explorerActionHandlerFactory;
+    private final StroomPropertyService propertyService;
 
     private volatile Handlers handlers;
 
     @Inject
-    ExplorerActionHandlers(final StroomBeanStore beanStore) {
+    ExplorerActionHandlers(final StroomBeanStore beanStore,
+                           final ExplorerActionHandlerFactory explorerActionHandlerFactory,
+                           final StroomPropertyService propertyService) {
         this.beanStore = beanStore;
+        this.explorerActionHandlerFactory = explorerActionHandlerFactory;
+        this.propertyService = propertyService;
     }
 
     List<DocumentType> getNonSystemTypes() {
@@ -60,7 +68,7 @@ class ExplorerActionHandlers {
 
     private Handlers getHandlers() {
         if (handlers == null) {
-            handlers = new Handlers(beanStore);
+            handlers = new Handlers(beanStore, explorerActionHandlerFactory, propertyService);
         }
         return handlers;
     }
@@ -70,27 +78,39 @@ class ExplorerActionHandlers {
         private final Map<String, DocumentType> allTypes = new ConcurrentHashMap<>();
         private final List<DocumentType> documentTypes;
 
-        Handlers(final StroomBeanStore beanStore) {
+        Handlers(final StroomBeanStore beanStore,
+                 final ExplorerActionHandlerFactory explorerActionHandlerFactory,
+                 final StroomPropertyService propertyService) {
+            // Add external handlers.
+            propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES)
+                    .forEach(type -> {
+                        final ExplorerActionHandler explorerActionHandler = explorerActionHandlerFactory.create(type);
+                        addExplorerActionHandler(explorerActionHandler);
+                    });
+
+            // Add internal handlers.
             final Set<ExplorerActionHandler> set = beanStore.getBeansOfType(ExplorerActionHandler.class);
-            set.forEach(handler -> {
-                final String type = handler.getDocumentType().getType();
-
-                final ExplorerActionHandler existingActionHandler = allHandlers.putIfAbsent(type, handler);
-                if (existingActionHandler != null) {
-                    throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
-                }
-
-                final DocumentType existingDocumentType = allTypes.putIfAbsent(type, handler.getDocumentType());
-                if (existingDocumentType != null) {
-                    throw new RuntimeException("A document type already exists for '" + type + "' existing {" + existingDocumentType + "} new {" + handler.getDocumentType() + "}");
-                }
-            });
+            set.forEach(this::addExplorerActionHandler);
 
             final List<DocumentType> list = allTypes.values().stream()
                     .filter(type -> !DocumentTypes.isSystem(type.getType()))
                     .sorted(Comparator.comparingInt(DocumentType::getPriority))
                     .collect(Collectors.toList());
             this.documentTypes = new ArrayList<>(list);
+        }
+
+        private void addExplorerActionHandler(final ExplorerActionHandler handler) {
+            final String type = handler.getDocumentType().getType();
+
+            final ExplorerActionHandler existingActionHandler = allHandlers.putIfAbsent(type, handler);
+            if (existingActionHandler != null) {
+                throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
+            }
+
+            final DocumentType existingDocumentType = allTypes.putIfAbsent(type, handler.getDocumentType());
+            if (existingDocumentType != null) {
+                throw new RuntimeException("A document type already exists for '" + type + "' existing {" + existingDocumentType + "} new {" + handler.getDocumentType() + "}");
+            }
         }
     }
 }

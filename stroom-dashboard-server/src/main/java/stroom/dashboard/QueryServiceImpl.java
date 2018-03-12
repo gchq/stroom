@@ -16,19 +16,20 @@
 
 package stroom.dashboard;
 
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -43,9 +44,10 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
 
     @Inject
     public QueryServiceImpl(final StroomEntityManager entityManager,
+                            final EntityManagerSupport entityManagerSupport,
                             final ImportExportHelper importExportHelper,
                             final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
         this.entityManager = entityManager;
         this.securityContext = securityContext;
     }

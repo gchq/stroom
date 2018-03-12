@@ -41,6 +41,7 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
@@ -63,9 +64,10 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
 
     @Inject
     DashboardServiceImpl(final StroomEntityManager entityManager,
-                                final ImportExportHelper importExportHelper,
-                                final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+                         final EntityManagerSupport entityManagerSupport,
+                         final ImportExportHelper importExportHelper,
+                         final SecurityContext securityContext) {
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Override

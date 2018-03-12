@@ -39,6 +39,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.spring.EntityManagerSupport;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
@@ -63,6 +64,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     public static final String NAME = "@NAME@";
 
     private final StroomEntityManager entityManager;
+    private final EntityManagerSupport entityManagerSupport;
     private final SecurityContext securityContext;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
@@ -73,9 +75,11 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     private FieldMap sqlFieldMap;
 
     protected DocumentEntityServiceImpl(final StroomEntityManager entityManager,
+                                        final EntityManagerSupport entityManagerSupport,
                                         final ImportExportHelper importExportHelper,
                                         final SecurityContext securityContext) {
         this.entityManager = entityManager;
+        this.entityManagerSupport = entityManagerSupport;
         this.importExportHelper = importExportHelper;
         this.securityContext = securityContext;
         this.queryAppender = createQueryAppender(entityManager);
@@ -486,10 +490,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
         if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
-            final E entity = entityServiceHelper.loadByUuid(docRef.getUuid(), Collections.emptySet(), queryAppender);
-            if (entity != null) {
-                return importExportHelper.performExport(entity, omitAuditFields, messageList);
-            }
+            return entityManagerSupport.executeResult(em -> {
+                final E entity = entityServiceHelper.loadByUuid(docRef.getUuid(), Collections.emptySet(), queryAppender);
+                if (entity != null) {
+                    return importExportHelper.performExport(entity, omitAuditFields, messageList);
+                }
+
+                return Collections.emptyMap();
+            });
         }
 
         return Collections.emptyMap();

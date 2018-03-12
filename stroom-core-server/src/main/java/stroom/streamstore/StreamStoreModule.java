@@ -18,8 +18,12 @@ package stroom.streamstore;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.CachingEntityManager;
+import stroom.entity.FindService;
+import stroom.feed.shared.Feed;
+import stroom.streamstore.shared.StreamType;
 import stroom.task.TaskHandler;
 
 import javax.inject.Named;
@@ -39,6 +43,12 @@ public class StreamStoreModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.streamstore.StreamDownloadTaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.streamstore.StreamUploadTaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.streamstore.UploadDataHandler.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(StreamType.ENTITY_TYPE).to(stroom.streamstore.StreamTypeServiceImpl.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(stroom.streamstore.StreamTypeServiceImpl.class);
     }
 
     @Provides

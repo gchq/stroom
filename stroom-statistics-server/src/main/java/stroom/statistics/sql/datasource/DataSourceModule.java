@@ -17,11 +17,15 @@
 package stroom.statistics.sql.datasource;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import stroom.entity.FindService;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEvent.Handler;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.stats.shared.StroomStatsStoreEntity;
 
 public class DataSourceModule extends AbstractModule {
     @Override
@@ -39,5 +43,11 @@ public class DataSourceModule extends AbstractModule {
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.statistics.sql.datasource.StatisticStoreEntityServiceImpl.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(StatisticStoreEntity.ENTITY_TYPE).to(stroom.statistics.sql.datasource.StatisticStoreEntityServiceImpl.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(stroom.statistics.sql.datasource.StatisticStoreEntityServiceImpl.class);
     }
 }

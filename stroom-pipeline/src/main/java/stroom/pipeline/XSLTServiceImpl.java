@@ -27,6 +27,7 @@ import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,9 +37,10 @@ import javax.inject.Singleton;
 public class XSLTServiceImpl extends DocumentEntityServiceImpl<XSLT, FindXSLTCriteria> implements XSLTService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     XSLTServiceImpl(final StroomEntityManager entityManager,
+                    final EntityManagerSupport entityManagerSupport,
                     final ImportExportHelper importExportHelper,
                     final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Override

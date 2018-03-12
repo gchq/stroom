@@ -27,9 +27,11 @@ import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
+@Singleton
 public class SQLStatisticCacheImpl implements SQLStatisticCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 

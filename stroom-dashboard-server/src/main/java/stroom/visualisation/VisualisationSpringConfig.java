@@ -18,19 +18,19 @@ package stroom.visualisation;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
-import stroom.util.spring.StroomSpringProfiles;
+import stroom.spring.EntityManagerSupport;
 
 @Configuration
 public class VisualisationSpringConfig {
     @Bean("visualisationService")
 //    @Profile(StroomSpringProfiles.PROD)
     public VisualisationService visualisationService(final StroomEntityManager entityManager,
+                                                     final EntityManagerSupport entityManagerSupport,
                                                      final ImportExportHelper importExportHelper,
                                                      final SecurityContext securityContext) {
-        return new VisualisationServiceImpl(entityManager, importExportHelper, securityContext);
+        return new VisualisationServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 }

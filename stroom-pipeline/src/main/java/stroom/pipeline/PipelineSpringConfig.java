@@ -34,6 +34,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.streamstore.StreamStore;
 import stroom.task.TaskManager;
 import stroom.util.spring.StroomScope;
@@ -132,16 +133,18 @@ public class PipelineSpringConfig {
 
     @Bean("pipelineService")
     public PipelineService pipelineService(final StroomEntityManager entityManager,
+                                           final EntityManagerSupport entityManagerSupport,
                                            final ImportExportHelper importExportHelper,
                                            final SecurityContext securityContext) {
-        return new PipelineServiceImpl(entityManager, importExportHelper, securityContext);
+        return new PipelineServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Bean("cachedPipelineService")
     public PipelineService cachedPipelineService(final CachingEntityManager entityManager,
+                                                 final EntityManagerSupport entityManagerSupport,
                                                  final ImportExportHelper importExportHelper,
                                                  final SecurityContext securityContext) {
-        return new PipelineServiceImpl(entityManager, importExportHelper, securityContext);
+        return new PipelineServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Bean
@@ -158,16 +161,18 @@ public class PipelineSpringConfig {
 
     @Bean
     public TextConverterService textConverterService(final StroomEntityManager entityManager,
+                                                     final EntityManagerSupport entityManagerSupport,
                                                      final ImportExportHelper importExportHelper,
                                                      final SecurityContext securityContext) {
-        return new TextConverterServiceImpl(entityManager, importExportHelper, securityContext);
+        return new TextConverterServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Bean
     public XSLTService xSLTService(final StroomEntityManager entityManager,
+                                   final EntityManagerSupport entityManagerSupport,
                                    final ImportExportHelper importExportHelper,
                                    final SecurityContext securityContext) {
-        return new XSLTServiceImpl(entityManager, importExportHelper, securityContext);
+        return new XSLTServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Bean

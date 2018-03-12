@@ -58,18 +58,20 @@ class EntityReferenceFindHandler
         final Query query = new Query();
         query.setAdvanced(advanced);
 
-        try {
-            final Object entityService = beanRegistry.getEntityService(action.getCriteria().getClass());
-            if (entityService != null && entityService instanceof SupportsCriteriaLogging) {
-                final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
-                logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
-            }
-        } catch (final Exception e) {
-            // Ignore.
-        }
 
         try {
-            resultList = (BaseResultList<BaseEntity>) beanRegistry.invoke("find", action.getCriteria());
+            final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
+
+            try {
+                if (entityService != null && entityService instanceof SupportsCriteriaLogging) {
+                    final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
+                    logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
+                }
+            } catch (final Exception e) {
+                // Ignore.
+            }
+
+            resultList = (BaseResultList<BaseEntity>) beanRegistry.invoke(entityService,"find", action.getCriteria());
             documentEventLog.search(action.getCriteria(), query, resultList);
         } catch (final RuntimeException e) {
             documentEventLog.search(action.getCriteria(), query, e);

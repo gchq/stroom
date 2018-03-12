@@ -26,9 +26,9 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityDependencyServiceException;
+import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Res;
-import stroom.entity.util.BaseEntityBeanWrapper;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -40,8 +40,10 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -55,29 +57,29 @@ import java.util.Set;
 public class ImportExportHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportHelper.class);
 
-    private final GenericEntityService genericEntityService;
-    private final ClassTypeMap classTypeMap = new ClassTypeMap();
-    private volatile boolean entitiesInitialised = false;
+    private final Provider<GenericEntityService> genericEntityServiceProvider;
+//    private final ClassTypeMap classTypeMap = new ClassTypeMap();
+//    private volatile boolean entitiesInitialised = false;
 
     @Inject
-    public ImportExportHelper(final GenericEntityService genericEntityService) {
-        this.genericEntityService = genericEntityService;
+    public ImportExportHelper(final Provider<GenericEntityService> genericEntityServiceProvider) {
+        this.genericEntityServiceProvider = genericEntityServiceProvider;
     }
 
-    /**
-     * Registers all the entities in the ClassTypeMap if they have not already
-     * been registered.
-     */
-    private void init() {
-//        if (!entitiesInitialised) {
-//            synchronized (this) {
-//                if (!entitiesInitialised) {
-//                    registerEntities();
-//                    entitiesInitialised = true;
-//                }
-//            }
-//        }
-    }
+//    /**
+//     * Registers all the entities in the ClassTypeMap if they have not already
+//     * been registered.
+//     */
+//    private void init() {
+////        if (!entitiesInitialised) {
+////            synchronized (this) {
+////                if (!entitiesInitialised) {
+////                    registerEntities();
+////                    entitiesInitialised = true;
+////                }
+////            }
+////        }
+//    }
 
 //    /**
 //     * Use the spring registered instances of DocumentEntityServiceImpl to work
@@ -123,14 +125,14 @@ public class ImportExportHelper {
     public <E extends DocumentEntity> void performImport(final E entity, final Map<String, String> dataMap,
                                                          final ImportState importState, final ImportMode importMode) {
         try {
-            init();
+//            init();
 
             final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), false);
 
             final Config config = new Config();
             config.read(new StringReader(dataMap.get("xml")));
 
-            final BaseEntityBeanWrapper beanWrapper = new BaseEntityBeanWrapper(entity);
+//            final BaseEntityBeanWrapper beanWrapper = new BaseEntityBeanWrapper(entity);
 
             // Output warnings where the config lists invalid properties.
             for (final String property : config.getProperties()) {
@@ -161,7 +163,7 @@ public class ImportExportHelper {
                 if (!property.isExternalFile()) {
                     // Set the property if it is specified.
                     if (config.hasProperty(propertyName)) {
-                        updateProperty(beanWrapper, propertyName, config.get(propertyName), importState, importMode);
+                        updateProperty(entity, property, config.get(propertyName), importState, importMode);
                     }
                 }
             }
@@ -179,7 +181,7 @@ public class ImportExportHelper {
                     if (data != null) {
                         final List<Object> newDataList = new ArrayList<>();
                         newDataList.add(data);
-                        updateProperty(beanWrapper, propertyName, newDataList, importState, importMode);
+                        updateProperty(entity, property, newDataList, importState, importMode);
 
                     } else {
                         importState.addMessage(Severity.WARNING, String
@@ -251,11 +253,14 @@ public class ImportExportHelper {
         }
     }
 
-    private void updateProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
-                                final List<Object> values, final ImportState importState,
+    private void updateProperty(final Object object,
+                                final Property property,
+                                final List<Object> values,
+                                final ImportState importState,
                                 final ImportMode importMode) {
         try {
-            if (beanWrapper.isPropertyBaseEntity(propertyName)) {
+            if (BaseEntity.class.isAssignableFrom(property.getType())) {
+                Entity entity = (Entity) object;
                 Object obj = null;
                 if (values != null && values.size() > 0) {
                     obj = values.iterator().next();
@@ -265,23 +270,24 @@ public class ImportExportHelper {
                     if (obj instanceof String) {
                         final String string = (String) obj;
                         if (StringUtils.hasText(string)) {
-                            setStringProperty(beanWrapper, propertyName, string, importState, importMode);
+                            setStringProperty(entity, property, string, importState, importMode);
                         }
                     } else if (obj instanceof DocRef) {
                         final DocRef docRef = (DocRef) obj;
-                        setDocRefProperty(beanWrapper, propertyName, docRef, importState, importMode);
+                        setDocRefProperty(entity, property, docRef, importState, importMode);
                     }
                 } else {
                     // The new property value is null so set it to null.
                     if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                        if (beanWrapper.getPropertyValue(propertyName) != null) {
-                            importState.getUpdatedFieldList().add(propertyName);
+                        final Object value = property.get(entity);
+                        if (value != null) {
+                            importState.getUpdatedFieldList().add(property.getName());
                         }
                     } else {
-                        beanWrapper.setPropertyValue(propertyName, null);
+                        property.set(entity, null);
                     }
                 }
-            } else if (beanWrapper.isPropertyBaseEntitySet(propertyName)) {
+            } else if (Set.class.isAssignableFrom(property.getType())) {
                 final Set<BaseEntity> newSet = new HashSet<>();
 
                 if (values != null && values.size() > 0) {
@@ -307,28 +313,24 @@ public class ImportExportHelper {
 //                        }
 //                    }
                 }
-                @SuppressWarnings("unchecked") final Set<? extends DocumentEntity> oldSet = (Set<? extends DocumentEntity>) beanWrapper
-                        .getPropertyValue(propertyName);
+                @SuppressWarnings("unchecked") final Set<? extends DocumentEntity> oldSet = (Set<? extends DocumentEntity>) property.get(object);
 
                 if (importMode == ImportMode.CREATE_CONFIRMATION) {
                     if (!newSet.equals(oldSet)) {
-                        importState.getUpdatedFieldList().add(propertyName);
+                        importState.getUpdatedFieldList().add(property.getName());
                     }
                 } else {
-                    beanWrapper.clearPropertySet(propertyName);
-                    for (final BaseEntity o : newSet) {
-                        beanWrapper.addToPropertySet(propertyName, o);
-                    }
+                    property.set(object, newSet);
                 }
 
             } else if (importMode == ImportMode.CREATE_CONFIRMATION) {
                 if (values == null || values.size() == 0) {
-                    if (beanWrapper.getPropertyValue(propertyName) != null) {
-                        importState.getUpdatedFieldList().add(propertyName);
+                    if (property.get(object) != null) {
+                        importState.getUpdatedFieldList().add(property.getName());
                     }
                 } else {
                     // null is like "" from a Stroom XML POV
-                    final Object oldValueO = beanWrapper.getPropertyValue(propertyName);
+                    final Object oldValueO = property.get(object);
                     String oldValue = "";
                     if (oldValueO != null) {
                         oldValue = String.valueOf(oldValueO);
@@ -336,17 +338,40 @@ public class ImportExportHelper {
                     final Object newValue = values.get(0);
 
                     if (!newValue.equals(oldValue)) {
-                        importState.getUpdatedFieldList().add(propertyName);
+                        importState.getUpdatedFieldList().add(property.getName());
                     }
                 }
 
             } else {
+                // Simple property
                 if (values == null || values.size() == 0) {
-                    // Simple property
-                    beanWrapper.setPropertyValue(propertyName, null);
+                    property.set(object, null);
                 } else {
-                    // Simple property
-                    beanWrapper.setPropertyValue(propertyName, values.get(0));
+                    final String value = values.get(0).toString();
+
+                    if (String.class.equals(property.getType())) {
+                        property.set(object, value);
+                    } else if (Long.class.equals(property.getType())) {
+                        property.set(object, Long.valueOf(value));
+                    } else if (Integer.class.equals(property.getType())) {
+                        property.set(object, Integer.valueOf(value));
+                    } else if (Boolean.class.equals(property.getType())) {
+                        property.set(object, Boolean.valueOf(value));
+                    } else if (property.getType().isEnum()) {
+                        property.set(object, Enum.valueOf((Class<Enum>)property.getType(), value));
+                    } else if (property.getType().isPrimitive()) {
+                        if (property.getType().getName().equals("boolean")) {
+                            property.set(object, Boolean.valueOf(value));
+                        } else if (property.getType().getName().equals("int")) {
+                            property.set(object, Integer.valueOf(value));
+                        } else if (property.getType().getName().equals("long")) {
+                            property.set(object, Long.valueOf(value));
+                        } else {
+                            throw new EntityServiceException("Unexpected property type " + property.getType());
+                        }
+                    } else {
+                        throw new EntityServiceException("Unexpected property type " + property.getType());
+                    }
                 }
             }
         } catch (final Exception ex) {
@@ -354,16 +379,17 @@ public class ImportExportHelper {
         }
     }
 
-    private void setStringProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
-                                   final String value, final ImportState importState,
-                                   final ImportMode importMode) {
-        final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
+    private void setStringProperty(final Entity entity,
+                                   final Property property,
+                                   final String value,
+                                   final ImportState importState,
+                                   final ImportMode importMode) throws IllegalAccessException, InvocationTargetException {
 
         // See if this property is a resource. If it is then create
         // a new resource or update an existing one.
-        if (Res.class.equals(clazz)) {
+        if (Res.class.equals(property.getType())) {
             Res res;
-            final Object existing = beanWrapper.getPropertyValue(propertyName);
+            final Object existing = property.get(entity);
             if (existing == null) {
                 res = new Res();
             } else {
@@ -372,39 +398,30 @@ public class ImportExportHelper {
 
             if (importMode == ImportMode.CREATE_CONFIRMATION) {
                 if (!EqualsUtil.isEquals(res.getData(), value)) {
-                    importState.getUpdatedFieldList().add(propertyName);
+                    importState.getUpdatedFieldList().add(property.getName());
                 }
             } else {
                 res.setData(value);
-                beanWrapper.setPropertyValue(propertyName, res);
+                property.set(entity, res);
             }
-
         }
-//        else {
-//            // This property is an entity so get the referenced
-//            // entity if we can.
-//            final BaseEntity entity = resolveEntityByPath(beanWrapper, clazz, value);
-//            if (importMode == ImportMode.CREATE_CONFIRMATION) {
-//                if (!entity.equals(beanWrapper.getPropertyValue(propertyName))) {
-//                    importState.getUpdatedFieldList().add(propertyName);
-//                }
-//            }
-//            beanWrapper.setPropertyValue(propertyName, entity);
-//        }
     }
 
-    private void setDocRefProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
-                                   final DocRef docRef, final ImportState importState,
-                                   final ImportMode importMode) {
+    private void setDocRefProperty(final Entity entity,
+                                   final Property property,
+                                   final DocRef docRef,
+                                   final ImportState importState,
+                                   final ImportMode importMode) throws IllegalAccessException, InvocationTargetException {
         // This property is an entity so get the referenced
         // entity if we can.
-        final BaseEntity entity = resolveEntityByDocRef(beanWrapper, docRef);
+        final BaseEntity value = resolveEntityByDocRef(docRef);
         if (importMode == ImportMode.CREATE_CONFIRMATION) {
-            if (!entity.equals(beanWrapper.getPropertyValue(propertyName))) {
-                importState.getUpdatedFieldList().add(propertyName);
+            final Object existing = property.get(entity);
+            if (!value.equals(existing)) {
+                importState.getUpdatedFieldList().add(property.getName());
             }
         }
-        beanWrapper.setPropertyValue(propertyName, entity);
+        property.set(entity, value);
     }
 
 //    private BaseEntity resolveEntityByPath(final BaseEntityBeanWrapper beanWrapper, final Class<? extends Entity> clazz,
@@ -427,7 +444,8 @@ public class ImportExportHelper {
 //        return entity;
 //    }
 
-    private BaseEntity resolveEntityByDocRef(final BaseEntityBeanWrapper beanWrapper, final DocRef docRef) {
+    private BaseEntity resolveEntityByDocRef(final DocRef docRef) {
+        final GenericEntityService genericEntityService = genericEntityServiceProvider.get();
         NamedEntity entity = genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid());
 
 //        // Try by path if we couldn't find with uuid
@@ -479,15 +497,15 @@ public class ImportExportHelper {
         final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), omitAuditFields);
 
         try {
-            init();
+//            init();
 
             final Config config = new Config();
             final String name = entity.getName();
-            final BaseEntityBeanWrapper beanWrapper = new BaseEntityBeanWrapper(entity);
+//            final BaseEntityBeanWrapper beanWrapper = new BaseEntityBeanWrapper(entity);
 
             for (final Property property : propertyList) {
                 final String propertyName = property.getName();
-                final Object value = beanWrapper.getPropertyValue(propertyName);
+                final Object value = property.get(entity);
 
                 // If the property is supposed to produce an external file then
                 // do so.
@@ -532,6 +550,7 @@ public class ImportExportHelper {
                         } else if (value instanceof DocumentEntity) {
                             try {
                                 DocumentEntity documentEntity = (DocumentEntity) value;
+                                final GenericEntityService genericEntityService = genericEntityServiceProvider.get();
                                 documentEntity = genericEntityService.load(documentEntity, null);
                                 final DocRef docRef = DocRefUtil.create(documentEntity);
                                 if (docRef != null) {
@@ -542,6 +561,7 @@ public class ImportExportHelper {
                             }
                         } else if (value instanceof NamedEntity) {
                             try {
+                                final GenericEntityService genericEntityService = genericEntityServiceProvider.get();
                                 final NamedEntity namedEntity = genericEntityService.load((NamedEntity) value);
                                 if (namedEntity != null) {
                                     config.add(propertyName, namedEntity.getName());

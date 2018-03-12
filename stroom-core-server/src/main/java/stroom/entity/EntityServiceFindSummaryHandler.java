@@ -56,17 +56,18 @@ class EntityServiceFindSummaryHandler
         query.setAdvanced(advanced);
 
         try {
-            final Object entityService = beanRegistry.getEntityService(action.getCriteria().getClass());
-            if (entityService != null && entityService instanceof SupportsCriteriaLogging<?>) {
-                final SupportsCriteriaLogging<BaseCriteria> usesCriteria = (SupportsCriteriaLogging<BaseCriteria>) entityService;
-                usesCriteria.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
-            }
-        } catch (final Exception e) {
-            // Ignore.
-        }
+            final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
 
-        try {
-            result = (BaseResultList<SummaryDataRow>) beanRegistry.invoke("findSummary", action.getCriteria());
+            try {
+                if (entityService != null && entityService instanceof SupportsCriteriaLogging<?>) {
+                    final SupportsCriteriaLogging<BaseCriteria> usesCriteria = (SupportsCriteriaLogging<BaseCriteria>) entityService;
+                    usesCriteria.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
+                }
+            } catch (final Exception e) {
+                // Ignore.
+            }
+
+            result = (BaseResultList<SummaryDataRow>) beanRegistry.invoke(entityService, "findSummary", action.getCriteria());
             documentEventLog.searchSummary(action.getCriteria(), query, result);
         } catch (final RuntimeException e) {
             documentEventLog.searchSummary(action.getCriteria(), query, e);

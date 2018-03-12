@@ -18,12 +18,19 @@ package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.CachingEntityManager;
+import stroom.entity.FindService;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
+import stroom.pipeline.factory.Pipeline;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.XSLT;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.task.TaskHandler;
 
 import javax.inject.Named;
@@ -57,13 +64,24 @@ public class PipelineModule extends AbstractModule {
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.PipelineServiceImpl.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterServiceImpl.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.XSLTServiceImpl.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(PipelineEntity.ENTITY_TYPE).to(stroom.pipeline.PipelineServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(TextConverter.ENTITY_TYPE).to(stroom.pipeline.TextConverterServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(XSLT.ENTITY_TYPE).to(stroom.pipeline.XSLTServiceImpl.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(stroom.pipeline.PipelineServiceImpl.class);
+        findServiceBinder.addBinding().to(stroom.pipeline.TextConverterServiceImpl.class);
+        findServiceBinder.addBinding().to(stroom.pipeline.XSLTServiceImpl.class);
     }
 
     @Provides
     @Named("cachedPipelineService")
     public PipelineService cachedPipelineService(final CachingEntityManager entityManager,
+                                                 final EntityManagerSupport entityManagerSupport,
                                                  final ImportExportHelper importExportHelper,
                                                  final SecurityContext securityContext) {
-        return new PipelineServiceImpl(entityManager, importExportHelper, securityContext);
+        return new PipelineServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 }

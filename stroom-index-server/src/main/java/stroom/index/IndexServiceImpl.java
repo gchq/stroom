@@ -27,6 +27,7 @@ import stroom.importexport.ImportExportHelper;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,9 +37,10 @@ import javax.inject.Singleton;
 public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndexCriteria> implements IndexService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     IndexServiceImpl(final StroomEntityManager entityManager,
+                     final EntityManagerSupport entityManagerSupport,
                      final ImportExportHelper importExportHelper,
                      final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Override

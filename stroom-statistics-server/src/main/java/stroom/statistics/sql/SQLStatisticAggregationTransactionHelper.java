@@ -31,6 +31,7 @@ import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -38,6 +39,7 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 
+@Singleton
 public class SQLStatisticAggregationTransactionHelper {
     public static final long NEWEST_SENSIBLE_STAT_AGE = DateUtil.parseNormalDateTimeString("9999-01-01T00:00:00.000Z");
     // /**

@@ -17,17 +17,28 @@
 package stroom.feed;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Key;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import stroom.entity.CachingEntityManager;
+import stroom.entity.EntityServiceBeanRegistry;
+import stroom.entity.FindService;
+import stroom.entity.shared.BaseCriteria;
 import stroom.explorer.ExplorerActionHandler;
+import stroom.feed.shared.Feed;
+import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.task.TaskHandler;
 
 import javax.inject.Named;
+
+import static com.google.inject.name.Names.named;
 
 public class FeedModule extends AbstractModule {
     @Override
@@ -43,13 +54,20 @@ public class FeedModule extends AbstractModule {
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.feed.FeedServiceImpl.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(Feed.ENTITY_TYPE).to(stroom.feed.FeedServiceImpl.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(stroom.feed.FeedServiceImpl.class);
     }
 
     @Provides
     @Named("cachedFeedService")
     public FeedService cachedFeedService(final CachingEntityManager entityManager,
+                                         final EntityManagerSupport entityManagerSupport,
                                          final ImportExportHelper importExportHelper,
                                          final SecurityContext securityContext) {
-        return new FeedServiceImpl(entityManager, importExportHelper, securityContext);
+        return new FeedServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 }

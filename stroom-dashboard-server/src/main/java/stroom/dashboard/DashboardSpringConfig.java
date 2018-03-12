@@ -26,6 +26,7 @@ import stroom.importexport.ImportExportHelper;
 import stroom.properties.StroomPropertyService;
 import stroom.resource.ResourceStore;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.task.TaskContext;
 import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
@@ -97,9 +98,10 @@ public class DashboardSpringConfig {
     @Bean("queryService")
 //    @Profile(StroomSpringProfiles.PROD)
     public QueryService queryService(final StroomEntityManager entityManager,
+                                     final EntityManagerSupport entityManagerSupport,
                                      final ImportExportHelper importExportHelper,
                                      final SecurityContext securityContext) {
-        return new QueryServiceImpl(entityManager, importExportHelper, securityContext);
+        return new QueryServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Bean

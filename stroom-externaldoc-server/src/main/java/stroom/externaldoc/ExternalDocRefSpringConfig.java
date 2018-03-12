@@ -17,13 +17,13 @@ public class ExternalDocRefSpringConfig {
                                       final DocumentEventLog documentEventLog,
                                       final StroomPropertyService propertyService) {
 
-        propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES).stream()
-                .map(type -> new ExternalDocumentEntityServiceImpl(type,
-                        securityContext,
-                        documentEventLog,
-                        propertyService)
-                ).forEach(service -> {
-            entityServiceBeanRegistry.addExternal(service.getType(), service);
-        });
+//        propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES).stream()
+//                .map(type -> new ExternalDocumentEntityServiceImpl(type,
+//                        securityContext,
+//                        documentEventLog,
+//                        propertyService)
+//                ).forEach(service -> {
+//            entityServiceBeanRegistry.addExternal(service.getType(), () -> service);
+//        });
     }
 }

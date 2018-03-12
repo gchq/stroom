@@ -43,7 +43,6 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
     StatisticsDataSourceProviderImpl(final StatisticStoreCache statisticStoreCache,
                                      final Statistics statistics,
                                      final SecurityContext securityContext) {
-
         this.statisticStoreCache = statisticStoreCache;
         this.statistics = statistics;
         this.securityContext = securityContext;

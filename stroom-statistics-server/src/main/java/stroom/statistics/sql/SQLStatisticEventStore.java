@@ -56,6 +56,7 @@ import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -71,6 +72,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@Singleton
 public class SQLStatisticEventStore implements Statistics {
     public static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
 

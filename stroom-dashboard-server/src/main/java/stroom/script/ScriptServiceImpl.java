@@ -34,6 +34,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -53,9 +54,10 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
 
     @Inject
     ScriptServiceImpl(final StroomEntityManager entityManager,
+                      final EntityManagerSupport entityManagerSupport,
                       final ImportExportHelper importExportHelper,
                       final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Override

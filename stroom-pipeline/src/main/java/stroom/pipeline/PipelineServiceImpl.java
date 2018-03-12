@@ -33,6 +33,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -52,9 +53,10 @@ public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntit
 
     @Inject
     PipelineServiceImpl(final StroomEntityManager entityManager,
+                        final EntityManagerSupport entityManagerSupport,
                         final ImportExportHelper importExportHelper,
                         final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Override

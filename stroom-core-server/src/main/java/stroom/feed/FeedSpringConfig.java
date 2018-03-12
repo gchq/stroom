@@ -23,6 +23,7 @@ import stroom.entity.CachingEntityManager;
 import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;
@@ -32,16 +33,18 @@ import javax.inject.Named;
 public class FeedSpringConfig {
     @Bean("feedService")
     public FeedService feedService(final StroomEntityManager entityManager,
+                                   final EntityManagerSupport entityManagerSupport,
                                    final ImportExportHelper importExportHelper,
                                    final SecurityContext securityContext) {
-        return new FeedServiceImpl(entityManager, importExportHelper, securityContext);
+        return new FeedServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Bean("cachedFeedService")
     public FeedService cachedFeedService(final CachingEntityManager entityManager,
+                                         final EntityManagerSupport entityManagerSupport,
                                          final ImportExportHelper importExportHelper,
                                          final SecurityContext securityContext) {
-        return new FeedServiceImpl(entityManager, importExportHelper, securityContext);
+        return new FeedServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Bean

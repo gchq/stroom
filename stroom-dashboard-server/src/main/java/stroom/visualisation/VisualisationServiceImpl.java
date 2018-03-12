@@ -30,6 +30,7 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 
@@ -49,9 +50,10 @@ public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualis
 
     @Inject
     VisualisationServiceImpl(final StroomEntityManager entityManager,
+                             final EntityManagerSupport entityManagerSupport,
                              final ImportExportHelper importExportHelper,
                              final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Override

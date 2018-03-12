@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import stroom.entity.StroomEntityManager;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 
 @Configuration
 public class XmlSchemaSpringConfig {
@@ -31,8 +32,9 @@ public class XmlSchemaSpringConfig {
 
     @Bean
     public XMLSchemaService xMLSchemaService(final StroomEntityManager entityManager,
+                                             final EntityManagerSupport entityManagerSupport,
                                              final ImportExportHelper importExportHelper,
                                              final SecurityContext securityContext) {
-        return new XMLSchemaServiceImpl(entityManager, importExportHelper, securityContext);
+        return new XMLSchemaServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 }

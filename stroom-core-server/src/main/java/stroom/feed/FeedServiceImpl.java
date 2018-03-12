@@ -33,6 +33,7 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
+import stroom.spring.EntityManagerSupport;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.config.StroomProperties;
 
@@ -52,9 +53,10 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
 
     @Inject
     FeedServiceImpl(final StroomEntityManager entityManager,
+                    final EntityManagerSupport entityManagerSupport,
                     final ImportExportHelper importExportHelper,
                     final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+        super(entityManager, entityManagerSupport, importExportHelper, securityContext);
     }
 
     @Override

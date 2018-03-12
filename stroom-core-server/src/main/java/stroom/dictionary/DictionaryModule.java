@@ -18,6 +18,7 @@ package stroom.dictionary;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.entity.FindService;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.logging.DocumentEventLog;
@@ -47,6 +49,12 @@ public class DictionaryModule extends AbstractModule {
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.dictionary.DictionaryStoreImpl.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(DictionaryDoc.ENTITY_TYPE).to(stroom.dictionary.DictionaryStoreImpl.class);
+
+//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+//        findServiceBinder.addBinding().to(stroom.dictionary.DictionaryStoreImpl.class);
     }
 //
 //    @Bean
