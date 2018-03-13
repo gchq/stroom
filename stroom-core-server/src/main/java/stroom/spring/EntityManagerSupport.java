@@ -68,11 +68,11 @@ public class EntityManagerSupport {
         try {
             runnable.run(entityManager);
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             entityManager.getTransaction().setRollbackOnly();
             throw e;
         } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             entityManager.getTransaction().setRollbackOnly();
             throw new RuntimeException(e.getMessage(), e);
         } finally {
@@ -106,12 +106,12 @@ public class EntityManagerSupport {
         try {
             t = callable.run(entityManager);
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            entityManager.getTransaction().rollback();
+            LOGGER.debug(e.getMessage(), e);
+            entityManager.getTransaction().setRollbackOnly();
             throw e;
         } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
-            entityManager.getTransaction().rollback();
+            LOGGER.debug(e.getMessage(), e);
+            entityManager.getTransaction().setRollbackOnly();
             throw new RuntimeException(e.getMessage(), e);
         } finally {
             try {

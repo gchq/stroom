@@ -36,6 +36,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -60,6 +61,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
+    @Named("statisticsDataSource")
     private DataSource statisticsDataSource;
     @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;

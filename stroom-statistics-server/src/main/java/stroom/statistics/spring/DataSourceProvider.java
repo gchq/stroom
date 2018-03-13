@@ -36,6 +36,7 @@ public class DataSourceProvider implements Provider<DataSource> {
     private ComboPooledDataSource dataSource() {
         try {
             final ComboPooledDataSource dataSource = new ComboPooledDataSource();
+            dataSource.setDataSourceName("statistics");
             dataSource.setDriverClass(StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverClassName"));
             dataSource.setJdbcUrl(StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverUrl|trace"));
             dataSource.setUser(StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverUsername"));

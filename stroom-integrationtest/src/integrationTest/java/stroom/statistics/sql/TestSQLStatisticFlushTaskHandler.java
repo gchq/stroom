@@ -27,6 +27,7 @@ import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,6 +38,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
 
     @Inject
+    @Named("statisticsDataSource")
     private DataSource statisticsDataSource;
     @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;

@@ -32,6 +32,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -51,6 +52,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
+    @Named("statisticsDataSource")
     private DataSource statisticsDataSource;
     @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
