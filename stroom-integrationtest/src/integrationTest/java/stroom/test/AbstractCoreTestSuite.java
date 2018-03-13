@@ -27,11 +27,9 @@ import org.junit.runners.Suite;
         stroom.pipeline.task.TestFullTranslationTask.class,
         stroom.pipeline.task.TestFullTranslationTaskAndStepping.class,
         stroom.pipeline.task.TestTranslationStepping.class,
-        stroom.pipeline.task.TranslationTest.class,
         stroom.policy.TestDataRetentionStreamFinder.class,
         stroom.refdata.TestReferenceDataWithCache.class,
         stroom.script.TestScriptServiceImpl.class,
-        stroom.search.AbstractSearchTest.class,
         stroom.search.TestBasicSearch.class,
         stroom.search.TestBasicSearch_EndToEnd.class,
         stroom.search.TestDictionaryStoreImpl.class,
@@ -67,10 +65,7 @@ import org.junit.runners.Suite;
         stroom.streamtask.TestStreamTaskServiceBatchLocking.class,
         stroom.streamtask.TestTranslationStreamTaskServiceImportExport.class,
         stroom.task.TestTaskManagerImpl.class,
-        stroom.test.AbstractCoreIntegrationTest.class,
         stroom.test.TestAbstractCoreIntegrationTest.class,
-        stroom.util.TestStreamDumpTool.class,
-        stroom.util.TestStreamGrepTool.class,
         stroom.xmlschema.TestXMLSchemaServiceImpl.class
 })
 public class AbstractCoreTestSuite {

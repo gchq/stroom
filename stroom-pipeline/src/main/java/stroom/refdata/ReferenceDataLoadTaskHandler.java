@@ -99,8 +99,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.pipelineService = pipelineService;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
-        this.streamHolder = streamHolder;
         this.locationFactory = locationFactory;
+        this.streamHolder = streamHolder;
         this.streamCloser = streamCloser;
         this.errorReceiverProxy = errorReceiverProxy;
         this.taskContext = taskContext;

@@ -308,9 +308,10 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
             // context.
             // The reference to the current context is stored during
             // construction of this object.
-                final TaskScopeRunnable taskScopeRunnable = new TaskScopeRunnable(task) {
-                    @Override
-                    protected void exec() {
+            final TaskScopeRunnable taskScopeRunnable = new TaskScopeRunnable(task) {
+                @Override
+                protected void exec() {
+                    pipelineScopeRunnable.scopeRunnable(() -> {
                         try {
                             currentTasks.put(task.getId(), taskThread);
                             LOGGER.debug("execAsync()->exec() - {} {} took {}",
@@ -347,33 +348,34 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                             currentAsyncTaskCount.decrementAndGet();
                             currentTasks.remove(task.getId());
                         }
-                    }
-                };
+                    });
+                }
+            };
 
 
-                // Now we have a task scoped runnable we will execute it in a new
-                // thread.
-                final Executor executor = getExecutor(threadPool);
-                if (executor != null) {
-                    currentAsyncTaskCount.incrementAndGet();
+            // Now we have a task scoped runnable we will execute it in a new
+            // thread.
+            final Executor executor = getExecutor(threadPool);
+            if (executor != null) {
+                currentAsyncTaskCount.incrementAndGet();
 
+                try {
+                    // We might run out of threads and get a can't fork
+                    // exception from the thread pool.
+                    executor.execute(taskScopeRunnable);
+
+                } catch (final Throwable t) {
                     try {
-                        // We might run out of threads and get a can't fork
-                        // exception from the thread pool.
-                        executor.execute(taskScopeRunnable);
+                        LOGGER.error(MarkerFactory.getMarker("FATAL"), "exec() - Unexpected Exception (" + task.getClass().getSimpleName() + ")", t);
+                        throw new RuntimeException(t.getMessage(), t);
 
-                    } catch (final Throwable t) {
-                        try {
-                            LOGGER.error(MarkerFactory.getMarker("FATAL"), "exec() - Unexpected Exception (" + task.getClass().getSimpleName() + ")", t);
-                            throw new RuntimeException(t.getMessage(), t);
-
-                        } finally {
-                            taskThread.setThread(null);
-                            // Decrease the count of the number of async tasks.
-                            currentAsyncTaskCount.decrementAndGet();
-                        }
+                    } finally {
+                        taskThread.setThread(null);
+                        // Decrease the count of the number of async tasks.
+                        currentAsyncTaskCount.decrementAndGet();
                     }
                 }
+            }
 
         } catch (final Throwable t) {
             try {
@@ -405,20 +407,18 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                     taskContext.setMonitor(hasMonitor.getMonitor());
                 }
 
-                pipelineScopeRunnable.scopeRunnable(() -> {
-                    CurrentTaskState.pushState(task, taskContext);
-                    try {
-                        // Get the task handler that will deal with this task.
-                        final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
+                CurrentTaskState.pushState(task, taskContext);
+                try {
+                    // Get the task handler that will deal with this task.
+                    final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
 
-                        LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
-                        taskHandler.exec(task, callback);
-                        LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
+                    LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
+                    taskHandler.exec(task, callback);
+                    LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
 
-                    } finally {
-                        CurrentTaskState.popState();
-                    }
-                });
+                } finally {
+                    CurrentTaskState.popState();
+                }
             }
 
         } finally {

@@ -35,6 +35,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
+import stroom.util.guice.PipelineScopeRunnable;
 import stroom.util.spring.StroomBeanStore;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
@@ -56,64 +57,68 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private PipelineService pipelineService;
     @Inject
     private StroomBeanStore beanStore;
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
 
     /**
      * Test.
      */
     @Test
     public void testSimple() {
-        Feed feed1 = feedService.create("TEST_FEED_1");
-        feed1.setReference(true);
-        feed1 = feedService.save(feed1);
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            Feed feed1 = feedService.create("TEST_FEED_1");
+            feed1.setReference(true);
+            feed1 = feedService.save(feed1);
 
-        Feed feed2 = feedService.create("TEST_FEED_2");
-        feed2.setReference(true);
-        feed2 = feedService.save(feed2);
+            Feed feed2 = feedService.create("TEST_FEED_2");
+            feed2.setReference(true);
+            feed2 = feedService.save(feed2);
 
-        final PipelineEntity pipeline1 = pipelineService.create("TEST_PIPELINE_1");
-        final PipelineEntity pipeline2 = pipelineService.create("TEST_PIPELINE_2");
+            final PipelineEntity pipeline1 = pipelineService.create("TEST_PIPELINE_1");
+            final PipelineEntity pipeline2 = pipelineService.create("TEST_PIPELINE_2");
 
-        final PipelineReference pipelineReference1 = new PipelineReference(DocRefUtil.create(pipeline1),
-                DocRefUtil.create(feed1), StreamType.REFERENCE.getName());
-        final PipelineReference pipelineReference2 = new PipelineReference(DocRefUtil.create(pipeline2),
-                DocRefUtil.create(feed2), StreamType.REFERENCE.getName());
+            final PipelineReference pipelineReference1 = new PipelineReference(DocRefUtil.create(pipeline1),
+                    DocRefUtil.create(feed1), StreamType.REFERENCE.getName());
+            final PipelineReference pipelineReference2 = new PipelineReference(DocRefUtil.create(pipeline2),
+                    DocRefUtil.create(feed2), StreamType.REFERENCE.getName());
 
-        final List<PipelineReference> pipelineReferences = new ArrayList<>();
-        pipelineReferences.add(pipelineReference1);
-        pipelineReferences.add(pipelineReference2);
+            final List<PipelineReference> pipelineReferences = new ArrayList<>();
+            pipelineReferences.add(pipelineReference1);
+            pipelineReferences.add(pipelineReference2);
 
-        final ReferenceData referenceData = createReferenceData();
+            final ReferenceData referenceData = createReferenceData();
 
-        final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
-        streamSet.add(new EffectiveStream(1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
-        streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
-        streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
+            final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
+            streamSet.add(new EffectiveStream(1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
+            streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
+            streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
 
-        try (final CacheManager cacheManager = new CacheManager()) {
-            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
-                @Override
-                public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
-                    return streamSet;
-                }
-            };
-            final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
-            referenceData.setEffectiveStreamCache(effectiveStreamCache);
-            referenceData.setMapStorePool(mapStoreCache);
+            try (final CacheManager cacheManager = new CacheManager()) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
+                    @Override
+                    public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                        return streamSet;
+                    }
+                };
+                final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
+                final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
+                referenceData.setEffectiveStreamCache(effectiveStreamCache);
+                referenceData.setMapStorePool(mapStoreCache);
 
-            final ErrorReceiver errorReceiver = new FatalErrorReceiver();
+                final ErrorReceiver errorReceiver = new FatalErrorReceiver();
 
-            // Add multiple reference data items to prove that looping over maps
-            // works.
-            addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
-            addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
-            checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_1");
-            checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_2");
-            checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_3");
-            checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_4");
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+                // Add multiple reference data items to prove that looping over maps
+                // works.
+                addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
+                addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
+                checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_1");
+                checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_2");
+                checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_3");
+                checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_4");
+            } catch (final Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     private void addData(final ReferenceData referenceData, final PipelineEntity pipeline, final String[] mapNames) {
@@ -165,50 +170,52 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
      */
     @Test
     public void testNestedMaps() {
-        Feed feed = feedService.create("TEST_FEED_V3");
-        feed.setReference(true);
-        feed = feedService.save(feed);
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            Feed feed = feedService.create("TEST_FEED_V3");
+            feed.setReference(true);
+            feed = feedService.save(feed);
 
-        final PipelineEntity pipelineEntity = new PipelineEntity();
-        final PipelineReference pipelineReference = new PipelineReference(DocRefUtil.create(pipelineEntity),
-                DocRefUtil.create(feed), StreamType.REFERENCE.getName());
-        final List<PipelineReference> pipelineReferences = new ArrayList<>();
-        pipelineReferences.add(pipelineReference);
+            final PipelineEntity pipelineEntity = new PipelineEntity();
+            final PipelineReference pipelineReference = new PipelineReference(DocRefUtil.create(pipelineEntity),
+                    DocRefUtil.create(feed), StreamType.REFERENCE.getName());
+            final List<PipelineReference> pipelineReferences = new ArrayList<>();
+            pipelineReferences.add(pipelineReference);
 
-        final ReferenceData referenceData = createReferenceData();
+            final ReferenceData referenceData = createReferenceData();
 
-        final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
-        streamSet.add(new EffectiveStream(0, 0L));
+            final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
+            streamSet.add(new EffectiveStream(0, 0L));
 
-        try (final CacheManager cacheManager = new CacheManager()) {
-            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
-                @Override
-                public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
-                    return streamSet;
-                }
-            };
-            final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
-            referenceData.setEffectiveStreamCache(effectiveStreamCache);
-            referenceData.setMapStorePool(mapStoreCache);
+            try (final CacheManager cacheManager = new CacheManager()) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
+                    @Override
+                    public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                        return streamSet;
+                    }
+                };
+                final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
+                final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
+                referenceData.setEffectiveStreamCache(effectiveStreamCache);
+                referenceData.setMapStorePool(mapStoreCache);
 
-            final ErrorReceiver errorReceiver = new FatalErrorReceiver();
+                final ErrorReceiver errorReceiver = new FatalErrorReceiver();
 
-            final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
-            mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
-            mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
-            referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
+                final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
+                mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
+                mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
+                referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
 
-            Assert.assertEquals("091111", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
-                    0, "CARD_NUMBER_TO_PF_NUMBER", "011111")));
-            Assert.assertEquals("user1", getStringFromEvents(
-                    referenceData.getValue(pipelineReferences, errorReceiver, 0, "NUMBER_TO_SID", "091111")));
+                Assert.assertEquals("091111", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
+                        0, "CARD_NUMBER_TO_PF_NUMBER", "011111")));
+                Assert.assertEquals("user1", getStringFromEvents(
+                        referenceData.getValue(pipelineReferences, errorReceiver, 0, "NUMBER_TO_SID", "091111")));
 
-            Assert.assertEquals("user1", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
-                    0, "CARD_NUMBER_TO_PF_NUMBER/NUMBER_TO_SID", "011111")));
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+                Assert.assertEquals("user1", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
+                        0, "CARD_NUMBER_TO_PF_NUMBER/NUMBER_TO_SID", "011111")));
+            } catch (final Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     private EventList getEventsFromString(final String string) {

@@ -7,7 +7,10 @@ import com.google.inject.Provider;
 import com.google.inject.Scope;
 import com.google.inject.Scopes;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Map;
+import java.util.Queue;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -25,7 +28,7 @@ import static com.google.common.base.Preconditions.checkState;
  *   }
  * </code></pre>
  * <p>
- * The scope can be initialized with one or more seed values by calling
+ * The scope can be initialized with one or more seed threadLocal by calling
  * <code>seed(key, value)</code> before the injector will be called upon to
  * provide for this key. A typical use is for a servlet filter to enter/exit the
  * scope, representing a Request Scope, and seed HttpServletRequest and
@@ -48,16 +51,27 @@ public class PipelineScope implements Scope {
                         " explicitly seeded in this scope by calling" +
                         " SimpleScope.seed(), but was not.");
             };
-    private final ThreadLocal<Map<Key<?>, Object>> values = new ThreadLocal<>();
+    private final ThreadLocal<Deque<Map<Key<?>, Object>>> threadLocal = new ThreadLocal<>();
 
     public void enter() {
-        checkState(values.get() == null, "A scoping block is already in progress");
-        values.set(Maps.newHashMap());
+        Deque<Map<Key<?>, Object>> deque = threadLocal.get();
+        if (deque == null) {
+            deque = new ArrayDeque<>();
+            threadLocal.set(deque);
+        }
+
+        deque.offerLast(Maps.newHashMap());
     }
 
     public void exit() {
-        checkState(values.get() != null, "No scoping block in progress");
-        values.remove();
+        final Deque<Map<Key<?>, Object>> deque = threadLocal.get();
+        checkState(deque != null, "No scoping block in progress");
+        final Map<Key<?>, Object> map = deque.pollLast();
+        checkState(map != null, "No scoping block in progress");
+
+//        if (queue.peek() == null) {
+//            threadLocal.remove();
+//        }
     }
 
     public <T> void seed(Key<T> key, T value) {
@@ -93,7 +107,12 @@ public class PipelineScope implements Scope {
     }
 
     private <T> Map<Key<?>, Object> getScopedObjectMap(Key<T> key) {
-        Map<Key<?>, Object> scopedObjects = values.get();
+        final Deque<Map<Key<?>, Object>> deque = threadLocal.get();
+        if (deque == null) {
+            throw new OutOfScopeException("Cannot access " + key
+                    + " outside of a scoping block");
+        }
+        final Map<Key<?>, Object> scopedObjects = deque.peekLast();
         if (scopedObjects == null) {
             throw new OutOfScopeException("Cannot access " + key
                     + " outside of a scoping block");

@@ -20,7 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.framework.Advised;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
@@ -87,9 +86,8 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void test_getRequiredPermissionSet() throws Exception {
-        final UserAppPermissionServiceImpl userAppPermissionServiceImpl = (UserAppPermissionServiceImpl) ((Advised) userAppPermissionService)
-                .getTargetSource().getTarget();
+    public void test_getRequiredPermissionSet() {
+        final UserAppPermissionServiceImpl userAppPermissionServiceImpl = (UserAppPermissionServiceImpl) userAppPermissionService;
         final Set<String> set = userAppPermissionServiceImpl.getRequiredPermissionSet();
         Assert.assertNotNull(set);
         Assert.assertEquals(21, set.size());

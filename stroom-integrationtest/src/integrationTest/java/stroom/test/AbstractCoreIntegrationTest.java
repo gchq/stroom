@@ -18,13 +18,9 @@ package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.persist.PersistService;
 import org.junit.After;
 import org.junit.Before;
-import stroom.spring.PersistenceManager;
-import stroom.statistics.sql.SQLStatisticModule;
-import stroom.statistics.sql.internal.InternalModule;
-import stroom.statistics.sql.rollup.SQLStatisticRollupModule;
-import stroom.statistics.stroomstats.entity.StroomStatsEntityModule;
 
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
     private Injector injector;
@@ -195,11 +191,15 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         );
         injector.injectMembers(this);
 
+        // Start persistance.
+        injector.getInstance(PersistService.class).start();
+
         super.before();
     }
 
     @After
     public void after() {
-        injector.getInstance(PersistenceManager.class).shutdown();
+        // Stop persistance.
+        injector.getInstance(PersistService.class).stop();
     }
 }

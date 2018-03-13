@@ -28,12 +28,14 @@ import stroom.util.spring.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Singleton
 public class TaskHandlerBeanRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerBeanRegistry.class);
     private volatile Map<Class<?>, Class<TaskHandler>> taskHandlerMap;
