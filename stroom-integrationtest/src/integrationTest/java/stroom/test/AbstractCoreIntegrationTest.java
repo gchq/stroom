@@ -144,7 +144,7 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
                 new stroom.node.NodeTestConfigModule(),
                 new stroom.node.NodeModule(),
                 new stroom.volume.VolumeModule(),
-                new stroom.statistics.internal.InternalStatisticsModule(),
+                new stroom.statistics.internal.MockInternalStatisticsModule(),
                 new stroom.streamstore.StreamStoreModule(),
                 new stroom.streamstore.fs.FSModule(),
                 new stroom.streamtask.StreamTaskModule(),

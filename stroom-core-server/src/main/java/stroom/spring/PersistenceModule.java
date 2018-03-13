@@ -48,5 +48,6 @@ public class PersistenceModule extends AbstractModule {
     protected void configure() {
         bind(DataSource.class).toProvider(DataSourceProvider.class);
         bind(PersistService.class).to(PersistServiceImpl.class);
+        bind(EntityManagerSupport.class).to(EntityManagerSupportImpl.class);
     }
 }

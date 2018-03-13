@@ -2,6 +2,6 @@ package stroom.spring;
 
 import javax.persistence.EntityManager;
 
-public interface TransactionalRunnable {
+public interface EntityManagerRunnable {
     void run(EntityManager entityManager);
 }

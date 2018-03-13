@@ -19,6 +19,7 @@ package stroom.streamtask;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 import stroom.entity.CachingEntityManager;
 import stroom.jobsystem.DistributedTaskFactory;
 import stroom.spring.EntityManagerSupport;
@@ -32,14 +33,17 @@ public class MockStreamTaskModule extends AbstractModule {
         bind(StreamTaskCreator.class).to(MockStreamTaskCreator.class);
         bind(StreamProcessorFilterService.class).to(MockStreamProcessorFilterService.class);
         bind(StreamProcessorService.class).to(MockStreamProcessorService.class);
-//        bind(StreamTaskService.class).to(StreamTaskServiceImpl.class);
+        bind(StreamTaskService.class).to(MockStreamTaskService.class);
+
+        bind(StreamProcessorService.class).annotatedWith(Names.named("cachedStreamProcessorService")).to(MockStreamProcessorService.class);
+        bind(StreamProcessorFilterService.class).annotatedWith(Names.named("cachedStreamProcessorFilterService")).to(MockStreamProcessorFilterService.class);
 //
-//        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
+        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
 //        taskHandlerBinder.addBinding().to(CreateProcessorHandler.class);
 //        taskHandlerBinder.addBinding().to(CreateStreamTasksTaskHandler.class);
 //        taskHandlerBinder.addBinding().to(FetchProcessorHandler.class);
 //        taskHandlerBinder.addBinding().to(ReprocessDataHandler.class);
-//        taskHandlerBinder.addBinding().to(StreamProcessorTaskHandler.class);
+        taskHandlerBinder.addBinding().to(StreamProcessorTaskHandler.class);
 //
 //        final Multibinder<DistributedTaskFactory> distributedTaskFactoryBinder = Multibinder.newSetBinder(binder(), DistributedTaskFactory.class);
 //        distributedTaskFactoryBinder.addBinding().to(StreamProcessorTaskFactory.class);
