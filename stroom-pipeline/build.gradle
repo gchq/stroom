@@ -17,9 +17,7 @@ dependencies {
     compile urlDependencies.get(urlLibs.hadoopHdfsShaded)
 
     compile libs.stroomQueryApi
-    compile libs.spring_beans
     compile libs.spring_context
-    compile libs.spring_tx
     compile libs.jersey_client
     compile libs.slf4j_api
     compile libs.guava
@@ -29,7 +27,9 @@ dependencies {
     compile libs.xml_apis
     compile libs.stax_api
     compile libs.javax_inject
-        compile libs.ws_rs_api
+    compile libs.ws_rs_api
+    compile libs.guice4
+    compile libs.guice_persist
 
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

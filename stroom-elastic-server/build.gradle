@@ -14,6 +14,7 @@ dependencies {
     compile libs.slf4j_api
     compile libs.spring_context
     compile libs.xml_apis
+    compile libs.guice4
 
     compile libs.javax_inject
     }

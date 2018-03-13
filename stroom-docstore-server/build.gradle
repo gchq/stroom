@@ -6,10 +6,7 @@ dependencies {
     compile libs.stroomQueryApi
     compile libs.slf4j_api
     compile libs.spring_context
-    compile libs.spring_tx
-    compile libs.spring_jdbc
     compile libs.guice4
-    compile libs.guice_multibindings
     compile libs.guice_persist
     compile libs.jackson_annotations
     compile libs.jackson_databind

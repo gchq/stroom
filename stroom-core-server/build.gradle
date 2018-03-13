@@ -57,6 +57,9 @@ dependencies {
     compile libs.spring_jdbc
     compile libs.spring_orm
     compile libs.commons_fileupload
+    compile libs.guice4
+    compile libs.guice_persist
+    compile libs.fast_classpath_scanner
 
     runtime libs.saxon_he
     runtime libs.jackson_annotations

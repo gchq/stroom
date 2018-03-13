@@ -11,8 +11,9 @@ dependencies {
     compile libs.stroomQueryAudit
 
     compile libs.spring_context
+    compile libs.guice4
 
     compile libs.javax_inject
-        compile libs.ws_rs_api
+    compile libs.ws_rs_api
     compile libs.jackson_annotations
 }

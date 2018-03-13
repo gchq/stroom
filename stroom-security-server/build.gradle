@@ -34,9 +34,7 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.javax_servlet_api
-    compile libs.javax_validation
     compile libs.slf4j_api
-    compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_core
     compile libs.spring_tx
@@ -44,6 +42,8 @@ dependencies {
     compile libs.ws_rs_api
     compile libs.swagger_annotations
     compile libs.ws_rs_api
+    compile libs.guice4
+    compile libs.guice_persist
 
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
