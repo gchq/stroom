@@ -30,7 +30,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import stroom.node.MockStroomPropertyService;
+import stroom.properties.MockStroomPropertyService;
 import stroom.node.shared.GlobalProperty;
 import stroom.properties.GlobalPropertyService;
 import stroom.util.config.StroomProperties;

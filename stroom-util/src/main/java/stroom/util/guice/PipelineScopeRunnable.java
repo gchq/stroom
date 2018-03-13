@@ -2,6 +2,7 @@ package stroom.util.guice;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.function.Supplier;
 
 public class PipelineScopeRunnable {
     private final PipelineScope scope;
@@ -23,5 +24,23 @@ public class PipelineScopeRunnable {
         } finally {
             scope.exit();
         }
+    }
+
+    public <T> T scopeResult(final Supplier<T> supplier) {
+        T result;
+
+        scope.enter();
+        try {
+//            // explicitly seed some seed objects...
+//            scope.seed(Key.get(SomeObject.class), someObject);
+
+            // create and access scoped objects
+            result = supplier.get();
+
+        } finally {
+            scope.exit();
+        }
+
+        return result;
     }
 }

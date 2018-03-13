@@ -21,6 +21,9 @@ import stroom.entity.MockEntityService;
 import stroom.jobsystem.shared.FindJobNodeCriteria;
 import stroom.jobsystem.shared.JobNode;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class MockJobNodeService extends MockEntityService<JobNode, FindJobNodeCriteria> implements JobNodeService {
     @Override
     public void startup() {

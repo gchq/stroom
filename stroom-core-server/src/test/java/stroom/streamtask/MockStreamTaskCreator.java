@@ -33,10 +33,12 @@ import stroom.streamtask.shared.TaskStatus;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Singleton
 public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     private final StreamStore streamStore;
     private final StreamProcessorFilterService streamProcessorFilterService;

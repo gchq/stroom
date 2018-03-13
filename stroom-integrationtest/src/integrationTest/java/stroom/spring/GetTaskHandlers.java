@@ -7,6 +7,7 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.pipeline.factory.Element;
 import stroom.task.TaskHandler;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.AbstractProcessIntegrationTest;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -32,10 +33,12 @@ public class GetTaskHandlers {
         final StringBuilder sb = new StringBuilder();
 
             new FastClasspathScanner(PACKAGE)
-                    .matchClassesImplementing(ImportExportActionHandler.class, proc -> {
-                        sb.append("        importExportActionHandlerBinder.addBinding().to(");
-                        sb.append(proc.getName());
-                        sb.append(".class);\n");
+                    .matchAllClasses(classRef -> {
+                        if (AbstractProcessIntegrationTest.class.isAssignableFrom(classRef)) {
+                            sb.append("        ");
+                            sb.append(classRef.getName());
+                            sb.append(".class,\n");
+                        }
                     })
                     .scan();
         System.out.println(sb.toString());

@@ -90,7 +90,6 @@ public class PersistServiceImpl implements Provider<EntityManager>, UnitOfWork, 
     }
 
     @Override
-
     public synchronized void stop() {
         Preconditions.checkState(emFactory.isOpen(), "Persistence service was already shut down.");
         emFactory.close();

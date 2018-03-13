@@ -41,9 +41,11 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.shared.Stream;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
+import stroom.util.guice.PipelineScopeRunnable;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.InputStream;
 import java.util.Map;
 
@@ -58,17 +60,19 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Inject
     private IndexService indexService;
     @Inject
-    private PipelineFactory pipelineFactory;
+    private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
-    private ErrorReceiverProxy errorReceiver;
+    private Provider<ErrorReceiverProxy> errorReceiverProvider;
     @Inject
     private MockIndexShardWriterCache indexShardWriterCache;
     @Inject
     private PipelineService pipelineService;
     @Inject
-    private StreamHolder streamHolder;
+    private Provider<StreamHolder> streamHolderProvider;
     @Inject
     private PipelineDataCache pipelineDataCache;
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
 
     @Before
     @After
@@ -78,6 +82,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
     @Test
     public void testSimple() {
+        pipelineScopeRunnable.scopeRunnable(() -> {
         // Setup the XSLT.
         XSLT xslt = xsltService.create("Indexing XSLT");
         xslt.setData(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
@@ -99,12 +104,12 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         index.setIndexFieldsObject(indexFields);
         index = indexService.save(index);
 
-        errorReceiver.setErrorReceiver(new FatalErrorReceiver());
+        errorReceiverProvider.get().setErrorReceiver(new FatalErrorReceiver());
 
         // Set the stream for decoration purposes.
         final long id = (long) (Math.random() * 1000);
         final Stream stream = Stream.createStub(id);
-        streamHolder.setStream(stream);
+        streamHolderProvider.get().setStream(stream);
 
         // Create the pipeline.
         PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
@@ -115,7 +120,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
         // Create the parser.
         final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
-        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+        final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
         final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_INPUT);
         pipeline.process(inputStream);
@@ -148,5 +153,6 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
         // // Return the writer to the pool.
         // indexShardManager.returnObject(poolItem, true);
+        });
     }
 }

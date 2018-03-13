@@ -26,7 +26,9 @@ import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class MockXMLSchemaService extends MockDocumentEntityService<XMLSchema, FindXMLSchemaCriteria>
         implements XMLSchemaService, ExplorerActionHandler, ImportExportActionHandler {
 

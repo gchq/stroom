@@ -22,6 +22,7 @@ import stroom.streamstore.MockStreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorTaskExecutor;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTest;
 import stroom.test.ComparisonHelper;

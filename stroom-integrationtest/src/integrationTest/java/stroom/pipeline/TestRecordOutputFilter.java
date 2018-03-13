@@ -40,13 +40,17 @@ import stroom.pipeline.state.RecordCount;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
+import stroom.util.guice.PipelineScopeRunnable;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,11 +60,11 @@ import java.util.List;
 
 public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     @Inject
-    private PipelineFactory pipelineFactory;
+    private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
-    private ErrorReceiverProxy errorReceiver;
+    private Provider<ErrorReceiverProxy> errorReceiverProvider;
     @Inject
-    private RecordCount recordCount;
+    private Provider<RecordCount> recordCountProvider;
     @Inject
     private XSLTService xsltService;
     @Inject
@@ -70,7 +74,9 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     @Inject
     private PipelineDataCache pipelineDataCache;
     @Inject
-    private StreamCloser streamCloser;
+    private Provider<StreamCloser> streamCloserProvider;
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
 
     @Test
     public void testAll() throws Exception {
@@ -136,76 +142,82 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
 
     private void test(final PipelineEntity pipelineEntity, final String dir, final String inputStem,
                       final String outputXMLStem, final String outputSAXStem, final String encoding) throws Exception {
-        final Path tempDir = getCurrentTestDir();
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            try {
+                final Path tempDir = getCurrentTestDir();
 
-        final Path outputFile = tempDir.resolve("TestRecordOutputFilter.xml");
-        final Path outputLockFile = tempDir.resolve("TestRecordOutputFilter.xml.lock");
+                final Path outputFile = tempDir.resolve("TestRecordOutputFilter.xml");
+                final Path outputLockFile = tempDir.resolve("TestRecordOutputFilter.xml.lock");
 
-        // Make sure the config dir is set.
-        System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
+                // Make sure the config dir is set.
+                System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
 
-        // Delete any output file.
-        FileUtil.deleteFile(outputFile);
-        FileUtil.deleteFile(outputLockFile);
+                // Delete any output file.
+                FileUtil.deleteFile(outputFile);
+                FileUtil.deleteFile(outputLockFile);
 
-        // Setup the error handler.
-        final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-        errorReceiver.setErrorReceiver(loggingErrorReceiver);
+                // Setup the error handler.
+                final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
+                errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
 
-        // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
-        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                // Create the parser.
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
-        // Add a SAX event filter.
-        final TestSAXEventFilter testSAXEventFilter = new TestSAXEventFilter();
-        insertFilter(pipeline, RecordOutputFilter.class, testSAXEventFilter);
+                // Add a SAX event filter.
+                final TestSAXEventFilter testSAXEventFilter = new TestSAXEventFilter();
+                insertFilter(pipeline, RecordOutputFilter.class, testSAXEventFilter);
 
-        // Get the input streams.
-        final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
-        Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
+                // Get the input streams.
+                final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
+                Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
 
-        List<Path> inputFiles = new ArrayList<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, inputStem + "*.in")) {
-            stream.forEach(inputFiles::add);
-        }
-        inputFiles.sort(Comparator.naturalOrder());
+                List<Path> inputFiles = new ArrayList<>();
+                try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, inputStem + "*.in")) {
+                    stream.forEach(inputFiles::add);
+                }
+                inputFiles.sort(Comparator.naturalOrder());
 
-        Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
+                Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
 
-        pipeline.startProcessing();
+                pipeline.startProcessing();
 
-        for (final Path inputFile : inputFiles) {
-            final InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile));
-            pipeline.process(inputStream, encoding);
-            inputStream.close();
-        }
+                for (final Path inputFile : inputFiles) {
+                    final InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile));
+                    pipeline.process(inputStream, encoding);
+                    inputStream.close();
+                }
 
-        pipeline.endProcessing();
+                pipeline.endProcessing();
 
-        // Close all streams that have been written.,
-        streamCloser.close();
+                // Close all streams that have been written.,
+                streamCloserProvider.get().close();
 
-        Assert.assertTrue(recordCount.getRead() > 0);
-        Assert.assertTrue(recordCount.getWritten() > 0);
-        // Assert.assertEquals(recordCount.getRead(), recordCount.getWritten());
-        Assert.assertEquals(200, recordCount.getRead());
-        Assert.assertEquals(200 - 59, recordCount.getWritten());
-        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
-        Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
-        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+                Assert.assertTrue(recordCountProvider.get().getRead() > 0);
+                Assert.assertTrue(recordCountProvider.get().getWritten() > 0);
+                // Assert.assertEquals(recordCount.getRead(), recordCount.getWritten());
+                Assert.assertEquals(200, recordCountProvider.get().getRead());
+                Assert.assertEquals(200 - 59, recordCountProvider.get().getWritten());
+                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
+                Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
+                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
 
-        final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(dir + outputXMLStem + ".out");
-        final Path tmpFile = refFile.getParent().resolve(outputXMLStem + ".out_tmp");
-        Files.delete(tmpFile);
-        StreamUtil.copyFile(outputFile, tmpFile);
-        ComparisonHelper.compareFiles(refFile, tmpFile);
+                final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(dir + outputXMLStem + ".out");
+                final Path tmpFile = refFile.getParent().resolve(outputXMLStem + ".out_tmp");
+                Files.delete(tmpFile);
+                StreamUtil.copyFile(outputFile, tmpFile);
+                ComparisonHelper.compareFiles(refFile, tmpFile);
 
-        final Path refSAXFile = refFile.getParent().resolve(outputSAXStem + ".sax");
-        final Path tmpSAXFile = refFile.getParent().resolve(outputSAXStem + ".sax_tmp");
-        Files.delete(tmpSAXFile);
-        final String actualSax = testSAXEventFilter.getOutput().trim();
-        StreamUtil.stringToFile(actualSax, tmpSAXFile);
-        ComparisonHelper.compareFiles(refSAXFile, tmpSAXFile);
+                final Path refSAXFile = refFile.getParent().resolve(outputSAXStem + ".sax");
+                final Path tmpSAXFile = refFile.getParent().resolve(outputSAXStem + ".sax_tmp");
+                Files.delete(tmpSAXFile);
+                final String actualSax = testSAXEventFilter.getOutput().trim();
+                StreamUtil.stringToFile(actualSax, tmpSAXFile);
+                ComparisonHelper.compareFiles(refSAXFile, tmpSAXFile);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     private <T extends XMLFilter> void insertFilter(final Pipeline pipeline, final Class<T> parentFilterType,

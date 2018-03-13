@@ -36,12 +36,16 @@ import stroom.pipeline.state.RecordCount;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
+import stroom.util.guice.PipelineScopeRunnable;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 
 public class TestXMLTransformer extends AbstractProcessIntegrationTest {
@@ -66,11 +70,11 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private static final String FRAGMENT_PIPELINE = DIR + "XMLFragment.Pipeline.data.xml";
 
     @Inject
-    private PipelineFactory pipelineFactory;
+    private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
-    private ErrorReceiverProxy errorReceiver;
+    private Provider<ErrorReceiverProxy> errorReceiverProvider;
     @Inject
-    private RecordCount recordCount;
+    private Provider<RecordCount> recordCountProvider;
     @Inject
     private XSLTService xsltService;
     @Inject
@@ -80,7 +84,9 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     @Inject
     private PipelineDataCache pipelineDataCache;
     @Inject
-    private StreamCloser streamCloser;
+    private Provider<StreamCloser> streamCloserProvider;
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
 
     @Test
     public void testDefault() throws Exception {
@@ -160,53 +166,58 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
         return pipelineService.save(pipelineEntity);
     }
 
-    private void test(final PipelineEntity pipelineEntity, final String inputResource, final String encoding)
-            throws Exception {
-        final Path tempDir = getCurrentTestDir();
+    private void test(final PipelineEntity pipelineEntity, final String inputResource, final String encoding) {
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            try {
+                final Path tempDir = getCurrentTestDir();
 
-        // Make sure the config dir is set.
-        System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
+                // Make sure the config dir is set.
+                System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
 
-        // Delete any output file.
-        final Path outputFile = tempDir.resolve("TestXMLTransformer.xml");
-        final Path outputLockFile = tempDir.resolve("TestXMLTransformer.xml.lock");
-        FileUtil.deleteFile(outputFile);
-        FileUtil.deleteFile(outputLockFile);
+                // Delete any output file.
+                final Path outputFile = tempDir.resolve("TestXMLTransformer.xml");
+                final Path outputLockFile = tempDir.resolve("TestXMLTransformer.xml.lock");
+                FileUtil.deleteFile(outputFile);
+                FileUtil.deleteFile(outputLockFile);
 
-        // Setup the error handler.
-        final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-        errorReceiver.setErrorReceiver(loggingErrorReceiver);
+                // Setup the error handler.
+                final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
+                errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
 
-        // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
-        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                // Create the parser.
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
-        // Get the input stream.
-        final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(inputResource);
+                // Get the input stream.
+                final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(inputResource);
 
-        pipeline.startProcessing();
+                pipeline.startProcessing();
 
-        pipeline.process(inputStream, encoding);
+                pipeline.process(inputStream, encoding);
 
-        pipeline.endProcessing();
+                pipeline.endProcessing();
 
-        // Close all streams that have been written.,
-        streamCloser.close();
+                // Close all streams that have been written.,
+                streamCloserProvider.get().close();
 
-        Assert.assertTrue(recordCount.getRead() > 0);
-        Assert.assertTrue(recordCount.getWritten() > 0);
-        Assert.assertEquals(recordCount.getRead(), recordCount.getWritten());
-        Assert.assertEquals(NUMBER_OF_RECORDS, recordCount.getRead());
-        Assert.assertEquals(NUMBER_OF_RECORDS, recordCount.getWritten());
-        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
-        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.ERROR));
-        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+                Assert.assertTrue(recordCountProvider.get().getRead() > 0);
+                Assert.assertTrue(recordCountProvider.get().getWritten() > 0);
+                Assert.assertEquals(recordCountProvider.get().getRead(), recordCountProvider.get().getWritten());
+                Assert.assertEquals(NUMBER_OF_RECORDS, recordCountProvider.get().getRead());
+                Assert.assertEquals(NUMBER_OF_RECORDS, recordCountProvider.get().getWritten());
+                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
+                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.ERROR));
+                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
 
-        if (!loggingErrorReceiver.isAllOk()) {
-            Assert.fail(loggingErrorReceiver.toString());
-        }
+                if (!loggingErrorReceiver.isAllOk()) {
+                    Assert.fail(loggingErrorReceiver.toString());
+                }
 
-        final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(REFERENCE);
-        ComparisonHelper.compareFiles(refFile, outputFile);
+                final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(REFERENCE);
+                ComparisonHelper.compareFiles(refFile, outputFile);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 }

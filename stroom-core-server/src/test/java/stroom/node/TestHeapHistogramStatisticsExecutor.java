@@ -11,6 +11,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
+import stroom.properties.MockStroomPropertyService;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.test.StroomExpectedException;

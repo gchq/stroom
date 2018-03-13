@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.node.MockStroomPropertyService;
+import stroom.properties.MockStroomPropertyService;
 import stroom.node.NodeCache;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;

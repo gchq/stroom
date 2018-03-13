@@ -27,6 +27,7 @@ import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.TextConverter;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * <p>
@@ -37,6 +38,7 @@ import javax.inject.Inject;
  * You can call clear at any point to clear everything down.
  * </p>
  */
+@Singleton
 public class MockTextConverterService extends MockDocumentEntityService<TextConverter, FindTextConverterCriteria>
         implements TextConverterService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject

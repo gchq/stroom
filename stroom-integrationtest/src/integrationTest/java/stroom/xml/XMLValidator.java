@@ -27,8 +27,10 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.test.StroomPipelineTestFileUtil;
+import stroom.util.guice.PipelineScopeRunnable;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 
@@ -38,17 +40,20 @@ import java.io.InputStream;
 public class XMLValidator {
     private static final String NO_RESOURCE_PROVIDED = "No resource provided";
 
-    private final PipelineFactory pipelineFactory;
+    private final Provider<PipelineFactory> pipelineFactoryProvider;
     private final PipelineService pipelineService;
-    private final ErrorReceiverProxy errorReceiver;
+    private final Provider<ErrorReceiverProxy> errorReceiverProvider;
+    private final PipelineScopeRunnable pipelineScopeRunnable;
 
     @Inject
-    XMLValidator(final PipelineFactory pipelineFactory,
+    XMLValidator(final Provider<PipelineFactory> pipelineFactoryProvider,
                  final PipelineService pipelineService,
-                 final ErrorReceiverProxy errorReceiver) {
-        this.pipelineFactory = pipelineFactory;
+                 final Provider<ErrorReceiverProxy> errorReceiverProvider,
+                 final PipelineScopeRunnable pipelineScopeRunnable) {
+        this.pipelineFactoryProvider = pipelineFactoryProvider;
         this.pipelineService = pipelineService;
-        this.errorReceiver = errorReceiver;
+        this.errorReceiverProvider = errorReceiverProvider;
+        this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
     /**
@@ -60,45 +65,47 @@ public class XMLValidator {
      * @return message
      */
     public String getInvalidXmlResourceMessage(final String resourceName, final boolean useSchema) {
-        // Only validate if something is provided
-        if (StringUtils.isNotBlank(resourceName)) {
-            try {
-                // Buffer the stream.
-                final InputStream inputStream = new BufferedInputStream(
-                        StroomPipelineTestFileUtil.getInputStream(resourceName));
+        return pipelineScopeRunnable.scopeResult(() -> {
+            // Only validate if something is provided
+            if (StringUtils.isNotBlank(resourceName)) {
+                try {
+                    // Buffer the stream.
+                    final InputStream inputStream = new BufferedInputStream(
+                            StroomPipelineTestFileUtil.getInputStream(resourceName));
 
-                // Setup the error receiver.
-                errorReceiver.setErrorReceiver(new LoggingErrorReceiver());
+                    // Setup the error receiver.
+                    errorReceiverProvider.get().setErrorReceiver(new LoggingErrorReceiver());
 
-                // Create the pipeline.
-                PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
-                        StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
-                final PipelineData pipelineData = pipelineEntity.getPipelineData();
+                    // Create the pipeline.
+                    PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
+                            StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
+                    final PipelineData pipelineData = pipelineEntity.getPipelineData();
 
-                // final ElementType schemaFilterElementType = new ElementType(
-                // "SchemaFilter");
-                // final PropertyType schemaValidationPropertyType = new
-                // PropertyType(
-                // schemaFilterElementType, "schemaValidation", "Boolean",
-                // false);
-                pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaValidation", false));
-                // final PropertyType schemaGroupPropertyType = new
-                // PropertyType(
-                // schemaFilterElementType, "schemaGroup", "String", false);
-                pipelineData
-                        .addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "DATA_SPLITTER"));
-                pipelineEntity = pipelineService.save(pipelineEntity);
+                    // final ElementType schemaFilterElementType = new ElementType(
+                    // "SchemaFilter");
+                    // final PropertyType schemaValidationPropertyType = new
+                    // PropertyType(
+                    // schemaFilterElementType, "schemaValidation", "Boolean",
+                    // false);
+                    pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaValidation", false));
+                    // final PropertyType schemaGroupPropertyType = new
+                    // PropertyType(
+                    // schemaFilterElementType, "schemaGroup", "String", false);
+                    pipelineData
+                            .addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "DATA_SPLITTER"));
+                    pipelineEntity = pipelineService.save(pipelineEntity);
 
-                final Pipeline pipeline = pipelineFactory.create(pipelineData);
-                pipeline.process(inputStream);
+                    final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
+                    pipeline.process(inputStream);
 
-                return errorReceiver.toString();
+                    return errorReceiverProvider.get().toString();
 
-            } catch (final Exception ex) {
-                return ex.getMessage();
+                } catch (final Exception ex) {
+                    return ex.getMessage();
+                }
             }
-        }
 
-        return NO_RESOURCE_PROVIDED;
+            return NO_RESOURCE_PROVIDED;
+        });
     }
 }

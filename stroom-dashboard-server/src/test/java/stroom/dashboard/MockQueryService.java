@@ -23,8 +23,10 @@ import stroom.entity.MockDocumentEntityService;
 import stroom.importexport.ImportExportHelper;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 
+@Singleton
 public class MockQueryService extends MockDocumentEntityService<QueryEntity, FindQueryCriteria> implements QueryService {
     @Inject
     public MockQueryService(final ImportExportHelper importExportHelper) {

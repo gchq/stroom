@@ -28,9 +28,11 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.util.io.FileUtil;
 
+import javax.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@Singleton
 public class MockIndexShardService extends MockEntityService<IndexShard, FindIndexShardCriteria>
         implements IndexShardService {
     @Override

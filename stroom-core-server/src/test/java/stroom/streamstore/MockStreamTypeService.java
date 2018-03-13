@@ -21,6 +21,9 @@ import stroom.entity.MockNamedEntityService;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
 
+import javax.inject.Singleton;
+
+@Singleton
 class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStreamTypeCriteria>
         implements StreamTypeService {
     MockStreamTypeService() {

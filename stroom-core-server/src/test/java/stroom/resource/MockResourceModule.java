@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,22 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.properties;
+package stroom.resource;
 
-import stroom.entity.MockNamedEntityService;
-import stroom.node.shared.FindGlobalPropertyCriteria;
-import stroom.node.shared.GlobalProperty;
+import com.google.inject.AbstractModule;
 
-import javax.inject.Singleton;
-
-@Singleton
-public class MockGlobalPropertyService extends MockNamedEntityService<GlobalProperty, FindGlobalPropertyCriteria>
-        implements GlobalPropertyService {
+public class MockResourceModule extends AbstractModule {
     @Override
-    public Class<GlobalProperty> getEntityClass() {
-        return GlobalProperty.class;
+    protected void configure() {
+        bind(ResourceStore.class).to(MockResourceStore.class);
     }
 }

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.node;
+package stroom.properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
-import stroom.properties.StroomPropertyService;
 import stroom.util.spring.PropertyProvider;
 
 import java.util.HashMap;

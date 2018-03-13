@@ -21,11 +21,14 @@ import stroom.entity.MockEntityService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 
+import javax.inject.Singleton;
+
 /**
  * Mock object.
  * <p>
  * In memory simple process manager that also uses the mock stream store.
  */
+@Singleton
 public class MockStreamProcessorService extends MockEntityService<StreamProcessor, FindStreamProcessorCriteria>
         implements StreamProcessorService {
     @Override

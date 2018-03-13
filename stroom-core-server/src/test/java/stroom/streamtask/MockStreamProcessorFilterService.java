@@ -25,11 +25,14 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 
+import javax.inject.Singleton;
+
 /**
  * Mock object.
  * <p>
  * In memory simple process manager that also uses the mock stream store.
  */
+@Singleton
 public class MockStreamProcessorFilterService
         extends MockEntityService<StreamProcessorFilter, FindStreamProcessorFilterCriteria>
         implements StreamProcessorFilterService {

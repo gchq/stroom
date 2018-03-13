@@ -27,10 +27,12 @@ import stroom.util.spring.StroomShutdown;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Singleton
 public class RollingDestinations {
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingDestinations.class);
 

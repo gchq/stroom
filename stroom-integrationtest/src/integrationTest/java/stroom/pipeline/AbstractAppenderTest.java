@@ -35,10 +35,12 @@ import stroom.pipeline.state.RecordCount;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StroomPipelineTestFileUtil;
+import stroom.util.guice.PipelineScopeRunnable;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,11 +54,11 @@ import java.util.List;
 
 public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     @Inject
-    private PipelineFactory pipelineFactory;
+    private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
-    private ErrorReceiverProxy errorReceiver;
+    private Provider<ErrorReceiverProxy> errorReceiverProvider;
     @Inject
-    private RecordCount recordCount;
+    private Provider<RecordCount> recordCountProvider;
     @Inject
     private XSLTService xsltService;
     @Inject
@@ -70,7 +72,9 @@ public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTes
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private StreamCloser streamCloser;
+    private Provider<StreamCloser> streamCloserProvider;
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
 
     void test(final String name, final String type) throws Exception {
         // Ensure a test feed exists.
@@ -129,51 +133,57 @@ public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTes
               final String type,
               final String outputReference,
               final String encoding) throws Exception {
-        // Setup the error handler.
-        final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-        errorReceiver.setErrorReceiver(loggingErrorReceiver);
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            try {
+                // Setup the error handler.
+                final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
+                errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
 
-        // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
-        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                // Create the parser.
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
-        // Get the input streams.
-        final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
-        Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
+                // Get the input streams.
+                final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
+                Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
 
-        final List<Path> inputFiles = new ArrayList<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, name + "*.in")) {
-            stream.forEach(inputFiles::add);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        inputFiles.sort(Comparator.naturalOrder());
+                final List<Path> inputFiles = new ArrayList<>();
+                try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, name + "*.in")) {
+                    stream.forEach(inputFiles::add);
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                inputFiles.sort(Comparator.naturalOrder());
 
-        Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
+                Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
 
-        pipeline.startProcessing();
+                pipeline.startProcessing();
 
-        for (final Path inputFile : inputFiles) {
-            final InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile));
-            pipeline.process(inputStream, encoding);
-            inputStream.close();
-        }
+                for (final Path inputFile : inputFiles) {
+                    final InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile));
+                    pipeline.process(inputStream, encoding);
+                    inputStream.close();
+                }
 
-        pipeline.endProcessing();
+                pipeline.endProcessing();
 
-        // Close all streams that have been written.
-        streamCloser.close();
+                // Close all streams that have been written.
+                streamCloserProvider.get().close();
 
-        // FORCE ROLL SO WE CAN GET OUTPUT
-        destinations.forceRoll();
+                // FORCE ROLL SO WE CAN GET OUTPUT
+                destinations.forceRoll();
 
-        Assert.assertTrue(recordCount.getRead() > 0);
-        Assert.assertTrue(recordCount.getWritten() > 0);
-        // Assert.assertEquals(recordCount.getRead(), recordCount.getWritten());
-        Assert.assertEquals(200, recordCount.getRead());
-        Assert.assertEquals(200 - 59, recordCount.getWritten());
-        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
-        Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
-        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+                Assert.assertTrue(recordCountProvider.get().getRead() > 0);
+                Assert.assertTrue(recordCountProvider.get().getWritten() > 0);
+                // Assert.assertEquals(recordCountProvider.get().getRead(), recordCountProvider.get().getWritten());
+                Assert.assertEquals(200, recordCountProvider.get().getRead());
+                Assert.assertEquals(200 - 59, recordCountProvider.get().getWritten());
+                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
+                Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
+                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 }

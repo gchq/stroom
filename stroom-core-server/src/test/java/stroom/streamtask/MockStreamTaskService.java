@@ -23,11 +23,14 @@ import stroom.entity.shared.SummaryDataRow;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamTask;
 
+import javax.inject.Singleton;
+
 /**
  * Mock object.
  * <p>
  * In memory simple process manager that also uses the mock stream store.
  */
+@Singleton
 public class MockStreamTaskService extends MockEntityService<StreamTask, FindStreamTaskCriteria>
         implements StreamTaskService {
     @Override

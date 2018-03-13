@@ -23,7 +23,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 import stroom.feed.shared.Feed;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -45,11 +44,11 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
+import stroom.util.guice.PipelineScopeRunnable;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
+import javax.inject.Provider;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
@@ -58,11 +57,11 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     private static final String PIPELINE = "TestIndexingFilter/TestIndexingFilter.Pipeline.data.xml";
 
     @Inject
-    private PipelineFactory pipelineFactory;
+    private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
-    private ErrorReceiverProxy errorReceiver;
+    private Provider<ErrorReceiverProxy> errorReceiverProvider;
     @Inject
-    private FeedHolder feedHolder;
+    private Provider<FeedHolder> feedHolderProvider;
     @Inject
     private MockIndexShardWriterCache indexShardWriterCache;
     @Inject
@@ -71,6 +70,8 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     private PipelineService pipelineService;
     @Inject
     private PipelineDataCache pipelineDataCache;
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
 
     @Before
     @After
@@ -79,7 +80,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     }
 
     @Test
-    public void testSimpleDocuments() throws SAXException, ParserConfigurationException, IOException {
+    public void testSimpleDocuments() {
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
         indexFields.add(IndexField.createField("sid2", AnalyzerType.ALPHA_NUMERIC, false, true, true, false));
@@ -106,7 +107,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     }
 
     @Test
-    public void testDuplicateFields() throws SAXException, ParserConfigurationException, IOException {
+    public void testDuplicateFields() {
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
         indexFields.add(IndexField.createDateField("eventTime"));
@@ -121,7 +122,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     }
 
     @Test
-    public void testBlankDocuments() throws SAXException, ParserConfigurationException, IOException {
+    public void testBlankDocuments() {
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
 
@@ -130,7 +131,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     }
 
     @Test
-    public void testInvalidContent1() throws SAXException, ParserConfigurationException, IOException {
+    public void testInvalidContent1() {
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
 
@@ -139,7 +140,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     }
 
     @Test
-    public void testInvalidContent2() throws SAXException, ParserConfigurationException, IOException {
+    public void testInvalidContent2() {
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
 
@@ -148,7 +149,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     }
 
     @Test
-    public void testComplexContent() throws SAXException, ParserConfigurationException, IOException {
+    public void testComplexContent() {
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("f1", AnalyzerType.ALPHA_NUMERIC, false, true, true, true));
         indexFields.add(IndexField.createField("f2", AnalyzerType.ALPHA_NUMERIC, false, false, true, false));
@@ -171,56 +172,57 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     }
 
-    public List<Document> doTest(final String resourceName, final IndexFields indexFields)
-            throws SAXException, ParserConfigurationException, IOException {
-        // Setup the index.
-        Index index = indexService.create("Test index");
-        index.setIndexFieldsObject(indexFields);
-        index = new IndexMarshaller().marshal(index);
-        index = indexService.save(index);
+    private List<Document> doTest(final String resourceName, final IndexFields indexFields) {
+        return pipelineScopeRunnable.scopeResult(() -> {
+            // Setup the index.
+            Index index = indexService.create("Test index");
+            index.setIndexFieldsObject(indexFields);
+            index = new IndexMarshaller().marshal(index);
+            index = indexService.save(index);
 
-        final Path tempDir = getCurrentTestDir();
+            final Path tempDir = getCurrentTestDir();
 
-        // Make sure the config dir is set.
-        System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
+            // Make sure the config dir is set.
+            System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
 
-        // Setup the error handler.
-        final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-        errorReceiver.setErrorReceiver(loggingErrorReceiver);
+            // Setup the error handler.
+            final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
+            errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
 
-        // Create the pipeline.
-        final String data = StroomPipelineTestFileUtil.getString(PIPELINE);
-        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
-        pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
-        pipelineEntity = pipelineService.save(pipelineEntity);
+            // Create the pipeline.
+            final String data = StroomPipelineTestFileUtil.getString(PIPELINE);
+            PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
+            pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
+            pipelineEntity = pipelineService.save(pipelineEntity);
 
-        // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
-        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+            // Create the parser.
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
-        feedHolder.setFeed(new Feed());
+            feedHolderProvider.get().setFeed(new Feed());
 
-        // Set the input.
-        final InputStream input = StroomPipelineTestFileUtil.getInputStream(resourceName);
-        try {
-            pipeline.process(input);
-        } catch (final Exception e) {
-            // Ignore as some tests expect errors. These tests will get see that
-            // nothing was written.
-        }
-
-        // Wrote anything ?
-        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-        if (indexShardWriterCache.getWriters().size() > 0) {
-            Assert.assertEquals(1, indexShardWriterCache.getWriters().size());
-            Assert.assertTrue(indexShardWriterCache.getWriters().containsKey(indexShardKey));
-
-            // Get a writer from the pool.
-            for (final IndexShardWriter writer : indexShardWriterCache.getWriters().values()) {
-                return ((MockIndexShardWriter) writer).getDocuments();
+            // Set the input.
+            final InputStream input = StroomPipelineTestFileUtil.getInputStream(resourceName);
+            try {
+                pipeline.process(input);
+            } catch (final Exception e) {
+                // Ignore as some tests expect errors. These tests will get see that
+                // nothing was written.
             }
-        }
 
-        return null;
+            // Wrote anything ?
+            final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+            if (indexShardWriterCache.getWriters().size() > 0) {
+                Assert.assertEquals(1, indexShardWriterCache.getWriters().size());
+                Assert.assertTrue(indexShardWriterCache.getWriters().containsKey(indexShardKey));
+
+                // Get a writer from the pool.
+                for (final IndexShardWriter writer : indexShardWriterCache.getWriters().values()) {
+                    return ((MockIndexShardWriter) writer).getDocuments();
+                }
+            }
+
+            return null;
+        });
     }
 }

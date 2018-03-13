@@ -26,7 +26,9 @@ import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class MockIndexService extends MockDocumentEntityService<Index, FindIndexCriteria> implements IndexService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     public MockIndexService(final ImportExportHelper importExportHelper) {

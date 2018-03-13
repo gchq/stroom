@@ -26,6 +26,7 @@ import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * <p>
@@ -36,6 +37,7 @@ import javax.inject.Inject;
  * You can call clear at any point to clear everything down.
  * </p>
  */
+@Singleton
 public class MockXSLTService extends MockDocumentEntityService<XSLT, FindXSLTCriteria> implements XSLTService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     public MockXSLTService(final ImportExportHelper importExportHelper) {

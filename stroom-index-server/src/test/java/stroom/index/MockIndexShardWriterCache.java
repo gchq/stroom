@@ -19,9 +19,11 @@ package stroom.index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 
+import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Singleton
 public class MockIndexShardWriterCache implements IndexShardWriterCache {
     private final int maxDocumentCount;
 

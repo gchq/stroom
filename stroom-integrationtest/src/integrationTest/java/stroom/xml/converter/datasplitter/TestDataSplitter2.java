@@ -20,18 +20,23 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.util.spring.StroomBeanStore;
+import stroom.util.guice.PipelineScopeRunnable;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 public class TestDataSplitter2 extends AbstractProcessIntegrationTest {
     @Inject
-    private StroomBeanStore beanStore;
+    private Provider<F2XTestUtil> f2XTestUtilProvider;
+    @Inject
+    private Provider<XMLValidator> xmlValidatorProvider;
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
 
     /**
      * Tests a multi line regex file.
@@ -54,24 +59,28 @@ public class TestDataSplitter2 extends AbstractProcessIntegrationTest {
 
     private String runF2XTest(final TextConverterType textConverterType, final String textConverterLocation,
                               final InputStream inputStream) {
-        validate(textConverterType, textConverterLocation);
+        return pipelineScopeRunnable.scopeResult(() -> {
+            validate(textConverterType, textConverterLocation);
 
-        final F2XTestUtil f2xTestUtil = beanStore.getBean(F2XTestUtil.class);
-        final String xml = f2xTestUtil.runF2XTest(textConverterType, textConverterLocation, inputStream);
-        return xml;
+            final F2XTestUtil f2xTestUtil = f2XTestUtilProvider.get();
+            final String xml = f2xTestUtil.runF2XTest(textConverterType, textConverterLocation, inputStream);
+            return xml;
+        });
     }
 
     private void validate(final TextConverterType textConverterType, final String textConverterLocation) {
-        try {
-            TaskScopeContextHolder.addContext();
-            final XMLValidator xmlValidator = beanStore.getBean(XMLValidator.class);
-            // Start by validating the resource.
-            if (textConverterType == TextConverterType.DATA_SPLITTER) {
-                final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
-                Assert.assertTrue(message, message.length() == 0);
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            try {
+                TaskScopeContextHolder.addContext();
+                final XMLValidator xmlValidator = xmlValidatorProvider.get();
+                // Start by validating the resource.
+                if (textConverterType == TextConverterType.DATA_SPLITTER) {
+                    final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
+                    Assert.assertTrue(message, message.length() == 0);
+                }
+            } finally {
+                TaskScopeContextHolder.removeContext();
             }
-        } finally {
-            TaskScopeContextHolder.removeContext();
-        }
+        });
     }
 }

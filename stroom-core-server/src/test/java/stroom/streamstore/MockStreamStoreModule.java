@@ -29,6 +29,8 @@ public class MockStreamStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StreamStore.class).to(MockStreamStore.class);
+        bind(StreamTypeService.class).to(MockStreamTypeService.class);
+        bind(StreamAttributeKeyService.class).to(MockStreamAttributeKeyService.class);
     }
     //    @Bean
 //    public ExpressionToFindCriteria expressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,

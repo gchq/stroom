@@ -25,6 +25,9 @@ import stroom.visualisation.VisualisationService;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class MockVisualisationService extends MockDocumentEntityService<Visualisation, FindVisualisationCriteria> implements VisualisationService, ExplorerActionHandler, ImportExportActionHandler {
     @Override
     public Class<Visualisation> getEntityClass() {

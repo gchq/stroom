@@ -22,12 +22,14 @@ import stroom.entity.shared.BaseResultList;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Mock class that manages one node.
  */
+@Singleton
 public class MockNodeService extends MockNamedEntityService<Node, FindNodeCriteria>
         implements NodeService, NodeServiceGetDefaultNode {
     private Node node = null;

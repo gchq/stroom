@@ -43,11 +43,11 @@ public class XmlSpringConfig {
         return new F2XTestUtil(pipelineFactory, feedHolder, textConverterService, xsltService, errorReceiverProxy, recordCount, streamStore);
     }
 
-    @Bean
-    @Scope(StroomScope.TASK)
-    public XMLValidator xMLValidator(final PipelineFactory pipelineFactory,
-                                     final PipelineService pipelineService,
-                                     final ErrorReceiverProxy errorReceiver) {
-        return new XMLValidator(pipelineFactory, pipelineService, errorReceiver);
-    }
+//    @Bean
+//    @Scope(StroomScope.TASK)
+//    public XMLValidator xMLValidator(final PipelineFactory pipelineFactory,
+//                                     final PipelineService pipelineService,
+//                                     final ErrorReceiverProxy errorReceiver) {
+//        return new XMLValidator(pipelineFactory, pipelineService, errorReceiver);
+//    }
 }

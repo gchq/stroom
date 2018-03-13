@@ -26,6 +26,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +39,7 @@ import java.util.List;
  * You can call clear at any point to clear everything down.
  * </p>
  */
+@Singleton
 public class MockPipelineService extends MockDocumentEntityService<PipelineEntity, FindPipelineEntityCriteria>
         implements PipelineService, ExplorerActionHandler, ImportExportActionHandler {
     public MockPipelineService() {
