@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#679** : Fixed the editing of Stroom properties that are 'persistent'.
 
+* Issue **#681** : Added dry run to check processor filters will convert to find stream criteria. Throws error to UI if fails.
+
 ## [v6.0-alpha.17]
 
 * Issue **#676** : Fixed use of custom stream type values in expression based processing filters.

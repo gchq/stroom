@@ -49,13 +49,22 @@ public class StreamProcessorFilterServiceImpl
         implements StreamProcessorFilterService {
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterMarshaller marshaller;
+    private final ExpressionToFindCriteria expressionToFindCriteria;
 
     @Inject
     public StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
-                                            final StreamProcessorService streamProcessorService) {
+                                            final StreamProcessorService streamProcessorService,
+                                            final ExpressionToFindCriteria expressionToFindCriteria) {
         super(entityManager);
         this.streamProcessorService = streamProcessorService;
         this.marshaller = new StreamProcessorFilterMarshaller();
+        this.expressionToFindCriteria = expressionToFindCriteria;
+    }
+
+    @Override
+    public StreamProcessorFilter save(final StreamProcessorFilter entity) throws RuntimeException {
+        expressionToFindCriteria.convert(entity.getQueryData());
+        return super.save(entity);
     }
 
     @Override
