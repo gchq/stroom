@@ -17,11 +17,14 @@
 package stroom.logging;
 
 import com.google.inject.AbstractModule;
+import stroom.servlet.HttpServletRequestHolder;
+import stroom.servlet.HttpServletRequestHolderImpl;
 
 public class LoggingModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
+        bind(HttpServletRequestHolder.class).to(HttpServletRequestHolderImpl.class);
     }
 
 

@@ -124,45 +124,45 @@ public class TestSpringConfigurations {
                 }));
     }
 
-    @Test
-    public void testRootConstruction() {
-        final Set<Class<?>> roots = new HashSet<>();
-        new FastClasspathScanner("stroom")
-                .matchClassesWithAnnotation(ComponentScan.class, c -> {
-                    roots.add(c);
-                })
-                .scan();
-
-        roots
-                .stream()
-                .sorted(Comparator.comparing(Class::getName))
-                .forEachOrdered(configuration -> {
-
-//                    if (TestDataFeedServiceImplConfiguration.class.isAssignableFrom(configuration)) {
-
-                        final TaskScopeRunnable taskScopeRunnable = new TaskScopeRunnable(null) {
-                            @Override
-                            protected void exec() {
-                                try {
-                                    String message = "\n---------------------------------------------------\n" +
-                                            " Testing configuration " + configuration.getName() + "\n" +
-                                            "---------------------------------------------------";
-                                    LOGGER.info(message);
-
-//                    System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
-                                    final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configuration);
-                                    context.destroy();
-                                    LOGGER.info("Configuration OK " + configuration.getName());
-                                } catch (final Exception e) {
-                                    LOGGER.error(e.getMessage(), e);
-                                    Assert.fail("Error with configuration " + configuration.getName());
-                                }
-                            }
-                        };
-                        taskScopeRunnable.run();
-//                    }
-                });
-    }
+//    @Test
+//    public void testRootConstruction() {
+//        final Set<Class<?>> roots = new HashSet<>();
+//        new FastClasspathScanner("stroom")
+//                .matchClassesWithAnnotation(ComponentScan.class, c -> {
+//                    roots.add(c);
+//                })
+//                .scan();
+//
+//        roots
+//                .stream()
+//                .sorted(Comparator.comparing(Class::getName))
+//                .forEachOrdered(configuration -> {
+//
+////                    if (TestDataFeedServiceImplConfiguration.class.isAssignableFrom(configuration)) {
+//
+//                        final TaskScopeRunnable taskScopeRunnable = new TaskScopeRunnable(null) {
+//                            @Override
+//                            protected void exec() {
+//                                try {
+//                                    String message = "\n---------------------------------------------------\n" +
+//                                            " Testing configuration " + configuration.getName() + "\n" +
+//                                            "---------------------------------------------------";
+//                                    LOGGER.info(message);
+//
+////                    System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
+//                                    final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configuration);
+//                                    context.destroy();
+//                                    LOGGER.info("Configuration OK " + configuration.getName());
+//                                } catch (final Exception e) {
+//                                    LOGGER.error(e.getMessage(), e);
+//                                    Assert.fail("Error with configuration " + configuration.getName());
+//                                }
+//                            }
+//                        };
+//                        taskScopeRunnable.run();
+////                    }
+//                });
+//    }
 
 //    @Test
 //    public void testConstruction() {

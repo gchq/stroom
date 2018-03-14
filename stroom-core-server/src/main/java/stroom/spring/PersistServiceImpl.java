@@ -8,6 +8,7 @@ import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import org.hibernate.integrator.spi.Integrator;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.hibernate.jpa.boot.spi.IntegratorProvider;
+import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -281,12 +282,10 @@ public class PersistServiceImpl implements Provider<EntityManager>, UnitOfWork, 
 
     private Properties properties(final DataSource dataSource) {
         Properties properties = new Properties();
-
-
-        properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLInnoDBDialect");
-        properties.put("hibernate.show_sql", "false");
+        properties.put("hibernate.dialect", StroomProperties.getProperty("stroom.jpaDialect", "org.hibernate.dialect.MySQLInnoDBDialect"));
+        properties.put("hibernate.show_sql", StroomProperties.getProperty("stroom.showSql", "false"));
         properties.put("hibernate.format_sql", "false");
-        properties.put("hibernate.hbm2ddl.auto", "validate");
+        properties.put("hibernate.hbm2ddl.auto", StroomProperties.getProperty("stroom.jpaHbm2DdlAuto", "validate"));
 
         if (dataSource != null) {
             properties.put("hibernate.connection.datasource", dataSource);

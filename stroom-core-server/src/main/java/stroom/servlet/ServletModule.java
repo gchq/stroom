@@ -23,8 +23,6 @@ import stroom.task.TaskHandler;
 public class ServletModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(HttpServletRequestHolder.class).to(HttpServletRequestHolderImpl.class);
-
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.servlet.SessionListHandler.class);
     }

@@ -33,6 +33,7 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeState;
 import stroom.properties.StroomPropertyService;
+import stroom.spring.EntityManagerSupport;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
@@ -80,9 +81,11 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     private MockVolumeService volumeServiceImpl = null;
     @Mock
     private StroomEntityManager stroomEntityManager;
+    @Mock
+    private EntityManagerSupport entityManagerSupport;
 
     @Before
-    public void init() throws IOException {
+    public void init() {
         MockitoAnnotations.initMocks(this);
         deleteDefaultVolumesDir();
 
@@ -95,7 +98,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
         mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, "2");
 
-        volumeServiceImpl = new MockVolumeService(stroomEntityManager, new NodeCache(node1a), mockStroomPropertyService, null, null);
+        volumeServiceImpl = new MockVolumeService(stroomEntityManager, entityManagerSupport, new NodeCache(node1a), mockStroomPropertyService, null, null);
         volumeServiceImpl.volumeList = volumeList;
     }
 
@@ -207,11 +210,12 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         private List<Volume> savedVolumes = new ArrayList<>();
 
         MockVolumeService(final StroomEntityManager stroomEntityManager,
+                          final EntityManagerSupport entityManagerSupport,
                           final NodeCache nodeCache,
                           final StroomPropertyService stroomPropertyService,
                           final StroomBeanStore stroomBeanStore,
                           final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
-            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsReceiverProvider);
+            super(stroomEntityManager, entityManagerSupport, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsReceiverProvider);
         }
 
         @Override

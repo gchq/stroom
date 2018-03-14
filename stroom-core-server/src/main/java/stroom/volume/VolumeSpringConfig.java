@@ -29,12 +29,12 @@ import javax.inject.Provider;
 
 @Configuration
 public class VolumeSpringConfig {
-    @Bean("volumeService")
-    public VolumeService volumeService(final StroomEntityManager stroomEntityManager,
-                                       final NodeCache nodeCache,
-                                       final StroomPropertyService stroomPropertyService,
-                                       final StroomBeanStore stroomBeanStore,
-                                       final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
-        return new VolumeServiceImpl(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsReceiverProvider);
-    }
+//    @Bean("volumeService")
+//    public VolumeService volumeService(final StroomEntityManager stroomEntityManager,
+//                                       final NodeCache nodeCache,
+//                                       final StroomPropertyService stroomPropertyService,
+//                                       final StroomBeanStore stroomBeanStore,
+//                                       final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
+//        return new VolumeServiceImpl(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsReceiverProvider);
+//    }
 }

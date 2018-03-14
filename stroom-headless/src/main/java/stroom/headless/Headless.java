@@ -16,11 +16,14 @@
 
 package stroom.headless;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.persist.PersistService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.entity.util.XMLUtil;
+import stroom.guice.PipelineScopeModule;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
@@ -31,7 +34,6 @@ import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.task.GenericServerTask;
 import stroom.task.TaskManager;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.config.StroomProperties;
@@ -40,9 +42,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.ExternalShutdownController;
-import stroom.util.task.TaskScopeRunnable;
 
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -63,8 +63,6 @@ import java.util.stream.Stream;
  */
 public class Headless extends AbstractCommandLineTool {
     private static final Logger LOGGER = LoggerFactory.getLogger(Headless.class);
-
-    private ApplicationContext appContext = null;
 
     private String input;
     private String output;
@@ -161,12 +159,7 @@ public class Headless extends AbstractCommandLineTool {
 
             StroomProperties.setOverrideProperty("stroom.lifecycle.enabled", "false", Source.TEST);
 
-            new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
-                @Override
-                protected void exec() {
-                    process();
-                }
-            }.run();
+            process();
         } finally {
             StroomProperties.removeOverrides();
 
@@ -180,12 +173,30 @@ public class Headless extends AbstractCommandLineTool {
         // Initialise some variables.
         init();
 
+        final Injector injector = createInjector();
+        // Start persistance.
+        injector.getInstance(PersistService.class).start();
+        try {
+            final PipelineScopeRunnable pipelineScopeRunnable = injector.getInstance(PipelineScopeRunnable.class);
+            pipelineScopeRunnable.scopeRunnable(() -> {
+                process(injector);
+            });
+        } finally {
+            // Stop persistance.
+            injector.getInstance(PersistService.class).stop();
+        }
+
+        LOGGER.info("Processing completed in "
+                + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
+    }
+
+    private void process(final Injector injector) {
         // Because we use HSQLDB for headless we need to insert stream types this way for now.
-        final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper = getAppContext().getBean(StreamTypeServiceTransactionHelper.class);
+        final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper = injector.getInstance(StreamTypeServiceTransactionHelper.class);
         streamTypeServiceTransactionHelper.doInserts();
 
         // Read the configuration.
-        readConfig();
+        readConfig(injector);
 
         OutputStreamWriter outputStreamWriter = null;
         try {
@@ -208,7 +219,7 @@ public class Headless extends AbstractCommandLineTool {
             // Output the start root element.
             headlessFilter.beginOutput();
 
-            processRepository(headlessFilter);
+            processRepository(injector, headlessFilter);
 
             // Output the end root element.
             headlessFilter.endOutput();
@@ -226,14 +237,11 @@ public class Headless extends AbstractCommandLineTool {
                 LOGGER.error("Unable to flush and close outputStreamWriter", e);
             }
         }
-
-        LOGGER.info("Processing completed in "
-                + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
     }
 
-    private void processRepository(final HeadlessFilter headlessFilter) {
+    private void processRepository(final Injector injector, final HeadlessFilter headlessFilter) {
         try {
-            final TaskManager taskManager = getAppContext().getBean(TaskManager.class);
+            final TaskManager taskManager = injector.getInstance(TaskManager.class);
 
             // Loop over all of the data files in the repository.
             final StroomZipRepository repo = new StroomZipRepository(FileUtil.getCanonicalPath(inputDir));
@@ -271,28 +279,60 @@ public class Headless extends AbstractCommandLineTool {
         }
     }
 
-    private void readConfig() {
+    private void readConfig(final Injector injector) {
         LOGGER.info("Reading configuration from: " + FileUtil.getCanonicalPath(configFile));
 
-        final ImportExportService importExportService = getAppContext().getBean(ImportExportService.class);
+        final ImportExportService importExportService = injector.getInstance(ImportExportService.class);
         importExportService.performImportWithoutConfirmation(configFile);
 
-        final NodeCache nodeCache = getAppContext().getBean(NodeCache.class);
-        final VolumeService volumeService = getAppContext().getBean(VolumeService.class);
+        final NodeCache nodeCache = injector.getInstance(NodeCache.class);
+        final VolumeService volumeService = injector.getInstance(VolumeService.class);
         volumeService
                 .save(Volume.create(nodeCache.getDefaultNode(), FileUtil.getCanonicalPath(tmpDir) + "/cvol", VolumeType.PUBLIC));
     }
 
-    private ApplicationContext getAppContext() {
-        if (appContext == null) {
-            appContext = buildAppContext();
-        }
-        return appContext;
-    }
+    private Injector createInjector() {
+        final Injector injector = Guice.createInjector(
+                new stroom.entity.EntityModule(),
+                new stroom.security.MockSecurityContextModule(),
+                new stroom.dictionary.DictionaryStoreModule(),
+                new stroom.dictionary.DictionaryHandlerModule(),
+                new stroom.docstore.db.DBPersistenceModule(),
+                new stroom.spring.PersistenceModule(),
+                new stroom.properties.PropertyModule(),
+                new stroom.importexport.ImportExportModule(),
+                new stroom.explorer.MockExplorerModule(),
+                new stroom.cache.CacheModule(),
+                new stroom.node.NodeServiceModule(),
+                new stroom.node.NodeModule(),
+                new stroom.volume.VolumeModule(),
+                new stroom.streamstore.StreamStoreModule(),
+                new stroom.streamstore.fs.FSModule(),
+                new stroom.streamtask.StreamTaskModule(),
+                new stroom.task.TaskModule(),
+                new stroom.task.cluster.ClusterTaskModule(),
+                new stroom.cluster.ClusterModule(),
+                new stroom.jobsystem.JobSystemModule(),
+                new stroom.pipeline.PipelineModule(),
+                new stroom.cache.PipelineCacheModule(),
+                new stroom.pipeline.stepping.PipelineSteppingModule(),
+                new stroom.pipeline.task.PipelineStreamTaskModule(),
+                new stroom.document.DocumentModule(),
+                new stroom.entity.cluster.EntityClusterModule(),
+                new stroom.entity.event.EntityEventModule(),
+                new stroom.feed.FeedModule(),
+                new stroom.lifecycle.LifecycleModule(),
+                new stroom.policy.PolicyModule(),
+                new stroom.refdata.ReferenceDataModule(),
+                new stroom.logging.LoggingModule(),
+                new stroom.pipeline.factory.FactoryModule(),
+                new PipelineScopeModule(),
+                new stroom.resource.ResourceModule(),
+                new stroom.xmlschema.XmlSchemaModule(),
+                new HeadlessModule()
+        );
+        injector.injectMembers(this);
 
-    private ApplicationContext buildAppContext() {
-        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
-        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(HeadlessSpringConfig.class);
-        return context;
+        return injector;
     }
 }

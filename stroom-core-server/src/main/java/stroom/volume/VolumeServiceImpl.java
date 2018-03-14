@@ -18,10 +18,10 @@
 package stroom.volume;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.persist.Transactional;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -32,6 +32,7 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.HqlBuilder;
+import stroom.guice.StroomBeanStore;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
@@ -44,11 +45,11 @@ import stroom.node.shared.VolumeState;
 import stroom.properties.StroomPropertyService;
 import stroom.security.Insecure;
 import stroom.security.Secured;
+import stroom.spring.EntityManagerSupport;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
-import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
 
@@ -124,6 +125,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private final StroomEntityManager stroomEntityManager;
+    private final EntityManagerSupport entityManagerSupport;
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
     private final StroomBeanStore stroomBeanStore;
@@ -132,12 +134,14 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
 
     @Inject
     VolumeServiceImpl(final StroomEntityManager stroomEntityManager,
+                      final EntityManagerSupport entityManagerSupport,
                       final NodeCache nodeCache,
                       final StroomPropertyService stroomPropertyService,
                       final StroomBeanStore stroomBeanStore,
                       final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;
+        this.entityManagerSupport = entityManagerSupport;
         this.nodeCache = nodeCache;
         this.stroomPropertyService = stroomPropertyService;
         this.stroomBeanStore = stroomBeanStore;
@@ -435,18 +439,20 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
      */
     @Override
     public Volume save(final Volume entity) throws RuntimeException {
-        if (!entity.isPersistent()) {
-            VolumeState volumeState = entity.getVolumeState();
-            if (volumeState == null) {
-                volumeState = new VolumeState();
-            }
-            // Save initial state
-            volumeState = stroomEntityManager.saveEntity(volumeState);
-            stroomEntityManager.flush();
+        return entityManagerSupport.transactionResult(em -> {
+            if (!entity.isPersistent()) {
+                VolumeState volumeState = entity.getVolumeState();
+                if (volumeState == null) {
+                    volumeState = new VolumeState();
+                }
+                // Save initial state
+                volumeState = stroomEntityManager.saveEntity(volumeState);
+                stroomEntityManager.flush();
 
-            entity.setVolumeState(volumeState);
-        }
-        return super.save(entity);
+                entity.setVolumeState(volumeState);
+            }
+            return super.save(entity);
+        });
     }
 
     @Override

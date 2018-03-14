@@ -67,7 +67,9 @@ class ImportExportActionHandlers {
             propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES)
                     .forEach(type -> {
                         final ImportExportActionHandler importExportActionHandler = importExportActionHandlerFactory.create(type);
-                        addImportExportActionHandler(importExportActionHandler);
+                        if (importExportActionHandler != null) {
+                            addImportExportActionHandler(importExportActionHandler);
+                        }
                     });
 
             // Add internal handlers.

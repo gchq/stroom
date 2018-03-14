@@ -17,29 +17,14 @@
 package stroom.headless;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Scope;
-import stroom.entity.StroomEntityManager;
-import stroom.feed.FeedService;
-import stroom.pipeline.ErrorWriterProxy;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.errorhandler.RecordErrorReceiver;
+import stroom.explorer.ExplorerActionHandlerFactory;
+import stroom.importexport.ImportExportActionHandlerFactory;
+import stroom.internalstatistics.MetaDataStatistic;
 import stroom.pipeline.factory.Element;
-import stroom.pipeline.factory.PipelineDataCache;
-import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.MetaData;
-import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.task.TaskHandler;
-import stroom.util.spring.StroomScope;
-
-import javax.inject.Named;
 //
 //@ComponentScan("ignore")
 //@Configuration
@@ -315,12 +300,31 @@ import javax.inject.Named;
 public class HeadlessModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
+
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.headless.HeadlessTranslationTaskHandler.class);
 
-        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
-        elementBinder.addBinding().to(stroom.headless.HeadlessFilter.class);
+//        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
+//        elementBinder.addBinding().to(stroom.headless.HeadlessFilter.class);
     }
+
+    @Provides
+    public ExplorerActionHandlerFactory explorerActionHandlerFactory() {
+        return type -> null;
+    }
+
+//    @Provides
+//    public ImportExportActionHandlerFactory importExportActionHandlerFactory() {
+//        return type -> null;
+//    }
+
+    @Provides
+    public MetaDataStatistic metaDataStatistic() {
+        return metaData -> {
+        };
+    }
+
     //    @Bean
 //    @Scope(StroomScope.TASK)
 //    public HeadlessTranslationTaskHandler headlessTranslationTaskHandler(final PipelineFactory pipelineFactory,

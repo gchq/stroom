@@ -60,16 +60,16 @@ public class LoggingSpringConfig {
         return new StreamEventLog(eventLoggingService);
     }
 
-    @Bean
-    public StroomEventLoggingService stroomEventLoggingService(final SecurityContext security,
-                                                               final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider) {
-        HttpServletRequestHolder httpServletRequestHolder = null;
-        try {
-            httpServletRequestHolder = httpServletRequestHolderProvider.get();
-        } catch (final Exception e) {
-            // Ignore
-        }
-
-        return new StroomEventLoggingService(security, httpServletRequestHolder);
-    }
+//    @Bean
+//    public StroomEventLoggingService stroomEventLoggingService(final SecurityContext security,
+//                                                               final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider) {
+//        HttpServletRequestHolder httpServletRequestHolder = null;
+//        try {
+//            httpServletRequestHolder = httpServletRequestHolderProvider.get();
+//        } catch (final Exception e) {
+//            // Ignore
+//        }
+//
+//        return new StroomEventLoggingService(security, httpServletRequestHolder);
+//    }
 }

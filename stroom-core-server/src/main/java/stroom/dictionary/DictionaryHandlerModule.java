@@ -17,30 +17,17 @@
 package stroom.dictionary;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docstore.Persistence;
-import stroom.docstore.Store;
-import stroom.entity.FindService;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.logging.DocumentEventLog;
-import stroom.resource.ResourceStore;
-import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
-import stroom.util.spring.StroomScope;
 
 
-public class DictionaryModule extends AbstractModule {
+public class DictionaryHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(DictionaryStore.class).to(DictionaryStoreImpl.class).in(Singleton.class);
-
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.dictionary.DownloadDictionaryHandler.class);
 

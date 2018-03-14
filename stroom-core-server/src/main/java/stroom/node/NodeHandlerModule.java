@@ -24,12 +24,22 @@ import stroom.node.shared.DBTableService;
 import stroom.node.shared.RecordCountService;
 import stroom.task.TaskHandler;
 
-public class NodeModule extends AbstractModule {
+public class NodeHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(DBTableService.class).to(DBTableServiceImpl.class);
-        bind(RecordCountService.class).to(RecordCountServiceImpl.class);
-        bind(RemoteStatusService.class).to(RemoteStatusServiceImpl.class);
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(NodeCache.class);
+
+        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
+        taskHandlerBinder.addBinding().to(ClusterNodeInfoHandler.class);
+        taskHandlerBinder.addBinding().to(FetchClientPropertiesHandler.class);
+        taskHandlerBinder.addBinding().to(FetchNodeInfoHandler.class);
+        taskHandlerBinder.addBinding().to(FindSystemTableStatusHandler.class);
+        taskHandlerBinder.addBinding().to(FlushVolumeStatusHandler.class);
+        taskHandlerBinder.addBinding().to(NodeInfoClusterHandler.class);
+
+        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
+        entityEventHandlerBinder.addBinding().to(NodeCache.class);
     }
     //    @Bean
 //    @Scope(value = StroomScope.TASK)

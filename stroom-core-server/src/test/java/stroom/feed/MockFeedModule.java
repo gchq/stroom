@@ -17,18 +17,18 @@
 package stroom.feed;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import stroom.importexport.ImportExportHelper;
-
-import javax.inject.Named;
+import stroom.entity.FindService;
 
 public class MockFeedModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(FeedService.class).to(MockFeedService.class);
         bind(FeedService.class).annotatedWith(Names.named("cachedFeedService")).to(MockFeedService.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(MockFeedService.class);
     }
 //
 //    @Provides

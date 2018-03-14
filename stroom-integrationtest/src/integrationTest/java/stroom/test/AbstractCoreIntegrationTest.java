@@ -21,6 +21,8 @@ import com.google.inject.Injector;
 import com.google.inject.persist.PersistService;
 import org.junit.After;
 import org.junit.Before;
+import stroom.dictionary.DictionaryHandlerModule;
+import stroom.dictionary.DictionaryStoreModule;
 import stroom.guice.PipelineScopeModule;
 
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
@@ -130,7 +132,8 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
                 new stroom.datafeed.DataFeedModule(),
                 new stroom.security.MockSecurityContextModule(),
                 new stroom.ruleset.RulesetModule(),
-                new stroom.dictionary.DictionaryModule(),
+                new stroom.dictionary.DictionaryStoreModule(),
+                new stroom.dictionary.DictionaryHandlerModule(),
                 new stroom.docstore.db.DBPersistenceModule(),
                 new stroom.spring.PersistenceModule(),
                 new stroom.internalstatistics.MockMetaDataStatisticModule(),
@@ -144,6 +147,7 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
                 new stroom.node.NodeServiceModule(),
                 new stroom.node.NodeTestConfigModule(),
                 new stroom.node.NodeModule(),
+                new stroom.node.NodeHandlerModule(),
                 new stroom.volume.VolumeModule(),
                 new stroom.statistics.internal.MockInternalStatisticsModule(),
                 new stroom.streamstore.StreamStoreModule(),
