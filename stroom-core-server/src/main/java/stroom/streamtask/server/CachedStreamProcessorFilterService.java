@@ -26,7 +26,9 @@ import javax.inject.Inject;
 @Component("cachedStreamProcessorFilterService")
 public class CachedStreamProcessorFilterService extends StreamProcessorFilterServiceImpl {
     @Inject
-    CachedStreamProcessorFilterService(final CachingEntityManager entityManager, final StreamProcessorService streamProcessorService) {
-        super(entityManager, streamProcessorService);
+    CachedStreamProcessorFilterService(final CachingEntityManager entityManager,
+                                       final StreamProcessorService streamProcessorService,
+                                       final ExpressionToFindCriteria expressionToFindCriteria) {
+        super(entityManager, streamProcessorService, expressionToFindCriteria);
     }
 }

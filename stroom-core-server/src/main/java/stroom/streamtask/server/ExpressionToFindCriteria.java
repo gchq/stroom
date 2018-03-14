@@ -37,13 +37,8 @@ import stroom.streamstore.shared.StreamType;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -58,6 +53,12 @@ public class ExpressionToFindCriteria {
     private static final Map<String, StreamStatus> STREAM_STATUS_MAP = Arrays.stream(StreamStatus.values())
             .collect(Collectors.toMap(StreamStatus::getDisplayValue, Function.identity()));
 
+    private static final Function<List<Op>, String> OP_STACK_DISPLAY = (s) ->
+        s.stream().map(Op::getDisplayValue).collect(Collectors.joining(" -> "));
+
+    private static final BiFunction<String, List<Op>, String> OP_STACK_ERROR = (err, ops) ->
+        String.format("%s [%s]", err, OP_STACK_DISPLAY.apply(ops));
+
     @Inject
     public ExpressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
                                     @Named("cachedPipelineService") final PipelineService pipelineService,
@@ -69,6 +70,10 @@ public class ExpressionToFindCriteria {
         this.dictionaryStore = dictionaryStore;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.streamTypeService = streamTypeService;
+    }
+
+    public OldFindStreamCriteria convert(final FindStreamCriteria findStreamCriteria) {
+        return this.convert(findStreamCriteria, Context.now());
     }
 
     public OldFindStreamCriteria convert(final FindStreamCriteria findStreamCriteria, final Context context) {
@@ -92,6 +97,10 @@ public class ExpressionToFindCriteria {
         return criteria;
     }
 
+    public OldFindStreamCriteria convert(final QueryData queryData) {
+        return this.convert(queryData, Context.now());
+    }
+
     public OldFindStreamCriteria convert(final QueryData queryData, final Context context) {
         final OldFindStreamCriteria newCriteria = new OldFindStreamCriteria();
 
@@ -103,7 +112,9 @@ public class ExpressionToFindCriteria {
         return newCriteria;
     }
 
-    private void convertExpression(final ExpressionOperator expression, final OldFindStreamCriteria criteria, final Context context) {
+    private void convertExpression(final ExpressionOperator expression,
+                                   final OldFindStreamCriteria criteria,
+                                   final Context context) {
         if (expression != null && expression.enabled() && expression.getChildren() != null) {
             final List<Op> opStack = new ArrayList<>();
             opStack.add(expression.getOp());
@@ -111,19 +122,21 @@ public class ExpressionToFindCriteria {
         }
     }
 
-    private void addChildren(final List<ExpressionItem> children, final List<Op> opStack, final OldFindStreamCriteria criteria, final Context context) {
+    private void addChildren(final List<ExpressionItem> children,
+                             final List<Op> opStack,
+                             final OldFindStreamCriteria criteria, final Context context) {
         final Op currentOp = opStack.get(opStack.size() - 1);
         if (opStack.size() > 3) {
-            final String errorMsg = "We do not support the following set of nested operations " + opStack;
+            final String errorMsg = OP_STACK_ERROR.apply("We do not support the following set of nested operations", opStack);
             throw new EntityServiceException(errorMsg);
         }
         if (currentOp.equals(Op.NOT)) {
             if (opStack.size() == 3) {
-                final String errorMsg = "No support for deep NOT operations " + opStack;
+                final String errorMsg = "No support for deep NOT operations " + OP_STACK_DISPLAY.apply(opStack);
                 throw new EntityServiceException(errorMsg);
             } else if (opStack.size() > 1) {
                 if (opStack.stream().filter(op -> op.equals(Op.NOT)).count() > 1) {
-                    final String errorMsg = "No support for nested NOT operations " + opStack;
+                    final String errorMsg = OP_STACK_ERROR.apply("No support for nested NOT operations", opStack);
                     throw new EntityServiceException(errorMsg);
                 }
             }
@@ -139,13 +152,13 @@ public class ExpressionToFindCriteria {
                 // Validate that all terms are of the same field type.
                 final Set<String> fieldNames = terms.stream().map(ExpressionTerm::getField).collect(Collectors.toSet());
                 if (fieldNames.size() > 1) {
-                    final String errorMsg = "No support OR operations with mixed fields " + opStack;
+                    final String errorMsg = OP_STACK_ERROR.apply("No support OR operations with mixed fields", opStack);
                     throw new EntityServiceException(errorMsg);
                 }
 
                 // Check that if parent is NOT then the only field we are using is FEED.
                 if (opStack.contains(Op.NOT) && !StreamDataSource.FEED.equals(fieldNames.iterator().next())) {
-                    final String errorMsg = "NOT is only supported for Feed " + opStack;
+                    final String errorMsg = OP_STACK_ERROR.apply("The use of NOT is only supported for Feed", opStack);
                     throw new EntityServiceException(errorMsg);
                 }
 
@@ -155,13 +168,13 @@ public class ExpressionToFindCriteria {
                 // Check that the same field does not occur more than once.
                 final Set<String> fieldNames = terms.stream().map(ExpressionTerm::getField).collect(Collectors.toSet());
                 if (fieldNames.size() < terms.size()) {
-                    final String errorMsg = "AND operation with duplicated fields " + opStack;
+                    final String errorMsg = OP_STACK_ERROR.apply("AND operation with the same field multiple times", opStack);
                     throw new EntityServiceException(errorMsg);
                 }
 
                 // Check that the parent OP is not a NOT.
                 if (opStack.contains(Op.NOT)) {
-                    final String errorMsg = "No support for nested AND within NOT operations " + opStack;
+                    final String errorMsg = OP_STACK_ERROR.apply("No support for nested AND within NOT operations", opStack);
                     throw new EntityServiceException(errorMsg);
                 }
 
@@ -170,12 +183,12 @@ public class ExpressionToFindCriteria {
                 // Validate that all terms are of the same field type.
                 final Set<String> fieldNames = terms.stream().map(ExpressionTerm::getField).collect(Collectors.toSet());
                 if (fieldNames.size() > 1) {
-                    final String errorMsg = "No support NOT operations with mixed fields " + opStack;
+                    final String errorMsg = OP_STACK_ERROR.apply("No support NOT operations with mixed fields", opStack);
                     throw new EntityServiceException(errorMsg);
                 }
 
                 if (!StreamDataSource.FEED.equals(fieldNames.iterator().next())) {
-                    final String errorMsg = "NOT is only supported for Feed " + opStack;
+                    final String errorMsg = OP_STACK_ERROR.apply("The use of NOT is only supported for Feed", opStack);
                     throw new EntityServiceException(errorMsg);
                 }
 
@@ -568,6 +581,10 @@ public class ExpressionToFindCriteria {
         public Context(final String timeZoneId, final long nowEpochMilli) {
             this.timeZoneId = timeZoneId;
             this.nowEpochMilli = nowEpochMilli;
+        }
+
+        public static Context now() {
+            return new Context(null, System.currentTimeMillis());
         }
     }
 }
