@@ -16,6 +16,7 @@
 
 package stroom.pipeline.errorhandler;
 
+import stroom.guice.PipelineScoped;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
@@ -31,6 +32,7 @@ import java.util.TreeMap;
  * Flags records that contain errors so that the RecordOutputFilter can exclude
  * them from the output.
  */
+@PipelineScoped
 public class RecordErrorReceiver implements ErrorReceiver, ErrorStatistics {
     private static final int MAX_TOTAL_WRITTEN_MARKERS = 1000;
 

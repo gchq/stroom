@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
@@ -41,6 +42,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.InputStream;
 import java.nio.file.Path;
 
@@ -54,13 +56,13 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
     private static final String XSLT_LOCATION = "XMLHttpBlankTokenFix/HttpProblem.xsl";
 
     @Inject
-    private PipelineFactory pipelineFactory;
+    private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
-    private RecordCount recordCount;
+    private Provider<RecordCount> recordCountProvider;
     @Inject
-    private ErrorReceiverProxy errorReceiver;
+    private Provider<ErrorReceiverProxy> errorReceiverProvider;
     @Inject
-    private FeedHolder feedHolder;
+    private Provider<FeedHolder> feedHolderProvider;
     @Inject
     private TextConverterService textConverterService;
     @Inject
@@ -71,6 +73,8 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
     private PipelineMarshaller pipelineMarshaller;
     @Inject
     private PipelineDataCache pipelineDataCache;
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
 
     /**
      * Tests the XMLTransformer on some sample Windows XML events.
@@ -78,70 +82,77 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
      * @throws Exception Could be thrown while running the test.
      */
     @Test
-    public void testXMLTransformer() throws Exception {
-        // Setup the text converter.
-        final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(FORMAT);
-        TextConverter textConverter = new TextConverter();
-        textConverter.setName("Test Text Converter");
-        textConverter.setConverterType(TextConverterType.DATA_SPLITTER);
-        textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
-        textConverter = textConverterService.save(textConverter);
+    public void testXMLTransformer() {
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            final PipelineFactory pipelineFactory = pipelineFactoryProvider.get();
+            final RecordCount recordCount = recordCountProvider.get();
+            final ErrorReceiverProxy errorReceiver = errorReceiverProvider.get();
+            final FeedHolder feedHolder = feedHolderProvider.get();
 
-        // Setup the XSLT.
-        final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_LOCATION);
-        XSLT xslt = new XSLT();
-        xslt.setName("Test");
-        xslt.setData(StreamUtil.streamToString(xsltInputStream));
-        xslt = xsltService.save(xslt);
+            // Setup the text converter.
+            final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(FORMAT);
+            TextConverter textConverter = new TextConverter();
+            textConverter.setName("Test Text Converter");
+            textConverter.setConverterType(TextConverterType.DATA_SPLITTER);
+            textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
+            textConverter = textConverterService.save(textConverter);
 
-        final Path testDir = getCurrentTestDir();
+            // Setup the XSLT.
+            final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_LOCATION);
+            XSLT xslt = new XSLT();
+            xslt.setName("Test");
+            xslt.setData(StreamUtil.streamToString(xsltInputStream));
+            xslt = xsltService.save(xslt);
 
-        // Make sure the config dir is set.
-        System.setProperty("stroom.temp", FileUtil.getCanonicalPath(testDir));
+            final Path testDir = getCurrentTestDir();
 
-        // Delete any output file.
-        final Path outputFile = testDir.resolve("XMLHttpBlankTokenFix.xml");
-        final Path outputLockFile = testDir.resolve("XMLHttpBlankTokenFix.xml.lock");
-        FileUtil.deleteFile(outputFile);
-        FileUtil.deleteFile(outputLockFile);
+            // Make sure the config dir is set.
+            System.setProperty("stroom.temp", FileUtil.getCanonicalPath(testDir));
 
-        // Setup the error handler.
-        final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-        errorReceiver.setErrorReceiver(loggingErrorReceiver);
+            // Delete any output file.
+            final Path outputFile = testDir.resolve("XMLHttpBlankTokenFix.xml");
+            final Path outputLockFile = testDir.resolve("XMLHttpBlankTokenFix.xml.lock");
+            FileUtil.deleteFile(outputFile);
+            FileUtil.deleteFile(outputLockFile);
 
-        // Create the pipeline.
-        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
-                StroomPipelineTestFileUtil.getString(PIPELINE));
-        pipelineEntity.getPipelineData().addProperty(
-                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
-        pipelineEntity.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
-        pipelineEntity = pipelineService.save(pipelineEntity);
+            // Setup the error handler.
+            final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
+            errorReceiver.setErrorReceiver(loggingErrorReceiver);
 
-        // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
-        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+            // Create the pipeline.
+            PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
+                    StroomPipelineTestFileUtil.getString(PIPELINE));
+            pipelineEntity.getPipelineData().addProperty(
+                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
+            pipelineEntity.getPipelineData()
+                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
+            pipelineEntity = pipelineService.save(pipelineEntity);
 
-        feedHolder.setFeed(new Feed());
+            // Create the parser.
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-        // Set the input file to transform.
-        final InputStream input = StroomPipelineTestFileUtil.getInputStream(INPUT);
-        pipeline.process(input);
+            feedHolder.setFeed(new Feed());
 
-        final String xml = StreamUtil.fileToString(outputFile);
-        System.out.println(xml);
+            // Set the input file to transform.
+            final InputStream input = StroomPipelineTestFileUtil.getInputStream(INPUT);
+            pipeline.process(input);
 
-        Assert.assertTrue(errorReceiver.toString(), recordCount.getRead() > 0);
-        Assert.assertTrue(errorReceiver.toString(), recordCount.getWritten() > 0);
-        Assert.assertEquals(errorReceiver.toString(), recordCount.getRead(), recordCount.getWritten());
-        Assert.assertEquals(errorReceiver.toString(), EXPECTED_RESULTS, recordCount.getRead());
-        Assert.assertEquals(errorReceiver.toString(), EXPECTED_RESULTS, recordCount.getWritten());
-        Assert.assertEquals(errorReceiver.toString(), 0, loggingErrorReceiver.getRecords(Severity.WARNING));
-        Assert.assertEquals(errorReceiver.toString(), 0, loggingErrorReceiver.getRecords(Severity.ERROR));
-        Assert.assertEquals(errorReceiver.toString(), 0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+            final String xml = StreamUtil.fileToString(outputFile);
+            System.out.println(xml);
 
-        if (!loggingErrorReceiver.isAllOk()) {
-            Assert.fail(errorReceiver.toString());
-        }
+            Assert.assertTrue(errorReceiver.toString(), recordCount.getRead() > 0);
+            Assert.assertTrue(errorReceiver.toString(), recordCount.getWritten() > 0);
+            Assert.assertEquals(errorReceiver.toString(), recordCount.getRead(), recordCount.getWritten());
+            Assert.assertEquals(errorReceiver.toString(), EXPECTED_RESULTS, recordCount.getRead());
+            Assert.assertEquals(errorReceiver.toString(), EXPECTED_RESULTS, recordCount.getWritten());
+            Assert.assertEquals(errorReceiver.toString(), 0, loggingErrorReceiver.getRecords(Severity.WARNING));
+            Assert.assertEquals(errorReceiver.toString(), 0, loggingErrorReceiver.getRecords(Severity.ERROR));
+            Assert.assertEquals(errorReceiver.toString(), 0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+
+            if (!loggingErrorReceiver.isAllOk()) {
+                Assert.fail(errorReceiver.toString());
+            }
+        });
     }
 }

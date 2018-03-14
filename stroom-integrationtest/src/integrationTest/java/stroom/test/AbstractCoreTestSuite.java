@@ -1,8 +1,10 @@
 package stroom.test;
 
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+@Ignore("Don't run this test suite automatically as the tests are already run on their own")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
         stroom.dashboard.TestDashboardServiceImpl.class,
