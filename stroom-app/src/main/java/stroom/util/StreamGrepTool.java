@@ -16,11 +16,13 @@
 
 package stroom.util;
 
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import com.google.inject.persist.PersistService;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionOperator;
@@ -35,7 +37,6 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
-import stroom.util.spring.StroomSpringProfiles;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -47,10 +48,9 @@ import java.util.List;
  * Handy tool to grep out content.
  */
 public class StreamGrepTool extends AbstractCommandLineTool {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamGrepTool.class);
 
-    private ApplicationContext appContext = null;
+    private final ToolInjector toolInjector = new ToolInjector();
 
     private String feed;
     private String streamType;
@@ -110,9 +110,19 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
     @Override
     public void run() {
-        // Boot up spring
-        final ApplicationContext appContext = getAppContext();
+        // Boot up Guice
+        final Injector injector = toolInjector.getInjector();
+        // Start persistance.
+        injector.getInstance(PersistService.class).start();
+        try {
+            process(injector);
+        } finally {
+            // Stop persistance.
+            injector.getInstance(PersistService.class).stop();
+        }
+    }
 
+    private void process(final Injector injector) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
         if (StringUtils.isNotBlank(createPeriodFrom) && StringUtils.isNotBlank(createPeriodTo)) {
@@ -123,9 +133,9 @@ public class StreamGrepTool extends AbstractCommandLineTool {
             builder.addTerm(StreamDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 
-        final StreamStore streamStore = appContext.getBean(StreamStore.class);
-        final FeedService feedService = (FeedService) appContext.getBean("cachedFeedService");
-        final StreamTypeService streamTypeService = (StreamTypeService) appContext.getBean("cachedStreamTypeService");
+        final StreamStore streamStore = injector.getInstance(StreamStore.class);
+        final FeedService feedService = injector.getInstance(Key.get(FeedService.class, Names.named("cachedFeedService")));
+        final StreamTypeService streamTypeService = injector.getInstance(Key.get(StreamTypeService.class, Names.named("cachedStreamTypeService")));
 
         Feed definition = null;
         if (feed != null) {
@@ -161,19 +171,6 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
             processFile(streamStore, stream.getId(), match);
         }
-    }
-
-    private ApplicationContext getAppContext() {
-        if (appContext == null) {
-            appContext = buildAppContext();
-        }
-        return appContext;
-    }
-
-    private ApplicationContext buildAppContext() {
-        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
-        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ToolSpringConfiguration.class);
-        return context;
     }
 
     private void processFile(final StreamStore streamStore, final long streamId, final String match) {

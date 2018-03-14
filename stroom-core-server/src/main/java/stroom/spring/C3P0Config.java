@@ -18,6 +18,8 @@ package stroom.spring;
 
 import stroom.properties.StroomPropertyService;
 
+import java.util.Objects;
+
 public class C3P0Config {
     private static final int MAX_STATEMENTS = 0;
     private static final int MAX_STATEMENTS_PER_CONNECTION = 0;
@@ -159,5 +161,34 @@ public class C3P0Config {
 
     public int getNumHelperThreads() {
         return numHelperThreads;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final C3P0Config that = (C3P0Config) o;
+        return maxStatements == that.maxStatements &&
+                maxStatementsPerConnection == that.maxStatementsPerConnection &&
+                initialPoolSize == that.initialPoolSize &&
+                minPoolSize == that.minPoolSize &&
+                maxPoolSize == that.maxPoolSize &&
+                idleConnectionTestPeriod == that.idleConnectionTestPeriod &&
+                maxIdleTime == that.maxIdleTime &&
+                acquireIncrement == that.acquireIncrement &&
+                acquireRetryAttempts == that.acquireRetryAttempts &&
+                acquireRetryDelay == that.acquireRetryDelay &&
+                checkoutTimeout == that.checkoutTimeout &&
+                maxAdministrativeTaskTime == that.maxAdministrativeTaskTime &&
+                maxIdleTimeExcessConnections == that.maxIdleTimeExcessConnections &&
+                maxConnectionAge == that.maxConnectionAge &&
+                unreturnedConnectionTimeout == that.unreturnedConnectionTimeout &&
+                statementCacheNumDeferredCloseThreads == that.statementCacheNumDeferredCloseThreads &&
+                numHelperThreads == that.numHelperThreads;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(maxStatements, maxStatementsPerConnection, initialPoolSize, minPoolSize, maxPoolSize, idleConnectionTestPeriod, maxIdleTime, acquireIncrement, acquireRetryAttempts, acquireRetryDelay, checkoutTimeout, maxAdministrativeTaskTime, maxIdleTimeExcessConnections, maxConnectionAge, unreturnedConnectionTimeout, statementCacheNumDeferredCloseThreads, numHelperThreads);
     }
 }

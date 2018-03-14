@@ -12,6 +12,7 @@ import stroom.util.shared.Version;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
@@ -23,7 +24,9 @@ public class DataSourceProvider implements Provider<DataSource> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceProvider.class);
 
     private final StroomPropertyService stroomPropertyService;
-    private static volatile DataSource dataSource;
+    private static volatile DataSourceConfig dataSourceConfig;
+    private static volatile C3P0Config c3P0Config;
+    private static volatile ComboPooledDataSource dataSource;
 
     @Inject
     DataSourceProvider(final GlobalProperties globalProperties, final StroomPropertyService stroomPropertyService) {
@@ -34,12 +37,15 @@ public class DataSourceProvider implements Provider<DataSource> {
         try {
             final ComboPooledDataSource dataSource = new ComboPooledDataSource();
             dataSource.setDataSourceName("stroom");
-            dataSource.setDriverClass(StroomProperties.getProperty("stroom.jdbcDriverClassName"));
-            dataSource.setJdbcUrl(StroomProperties.getProperty("stroom.jdbcDriverUrl|trace"));
-            dataSource.setUser(StroomProperties.getProperty("stroom.jdbcDriverUsername"));
-            dataSource.setPassword(StroomProperties.getProperty("stroom.jdbcDriverPassword"));
+            dataSource.setDescription("Stroom data source");
 
-            final C3P0Config config = new C3P0Config("stroom.db.connectionPool.", stroomPropertyService);
+            final DataSourceConfig dataSourceConfig = getDataSourceConfig();
+            dataSource.setDriverClass(dataSourceConfig.getJdbcDriverClassName());
+            dataSource.setJdbcUrl(dataSourceConfig.getJdbcDriverUrl());
+            dataSource.setUser(dataSourceConfig.getJdbcDriverUsername());
+            dataSource.setPassword(dataSourceConfig.getJdbcDriverPassword());
+
+            final C3P0Config config = getC3P0Config();
             dataSource.setMaxStatements(config.getMaxStatements());
             dataSource.setMaxStatementsPerConnection(config.getMaxStatementsPerConnection());
             dataSource.setInitialPoolSize(config.getInitialPoolSize());
@@ -60,6 +66,7 @@ public class DataSourceProvider implements Provider<DataSource> {
 
             dataSource.setPreferredTestQuery("select 1");
             dataSource.setConnectionTesterClassName(StroomProperties.getProperty("stroom.connectionTesterClassName"));
+
             return dataSource;
         } catch (final PropertyVetoException e) {
             LOGGER.error(e.getMessage(), e);
@@ -198,20 +205,55 @@ public class DataSourceProvider implements Provider<DataSource> {
 
     @Override
     public DataSource get() {
-        if (dataSource == null) {
+        if (dataSource == null || isNewConfig()) {
             synchronized (this) {
-                if (dataSource == null) {
+                if (dataSource == null || isNewConfig()) {
+
+                    try {
+                        // Close the existing data source.
+                        if (dataSource != null) {
+                            dataSource.close();
+                            dataSource = null;
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+
                     // Create a data source.
-                    final DataSource ds = dataSource();
+                    final ComboPooledDataSource ds = dataSource();
                     // Run flyway migrations.
                     flyway(ds);
 
                     // Assign.
                     dataSource = ds;
+                    dataSourceConfig = getDataSourceConfig();
+                    c3P0Config = getC3P0Config();
                 }
             }
         }
 
         return dataSource;
+    }
+
+    private boolean isNewConfig() {
+        if (dataSourceConfig == null || c3P0Config == null) {
+            return true;
+        }
+
+        final DataSourceConfig dsc = getDataSourceConfig();
+        if (!dataSourceConfig.equals(dsc)) {
+            return true;
+        }
+
+        final C3P0Config c3 = getC3P0Config();
+        return !c3P0Config.equals(c3);
+    }
+
+    private DataSourceConfig getDataSourceConfig() {
+        return new DataSourceConfig("stroom.", stroomPropertyService);
+    }
+
+    private C3P0Config getC3P0Config() {
+        return new C3P0Config("stroom.db.connectionPool.", stroomPropertyService);
     }
 }

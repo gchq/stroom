@@ -8,6 +8,7 @@ import org.slf4j.MarkerFactory;
 import stroom.properties.GlobalProperties;
 import stroom.properties.StroomPropertyService;
 import stroom.spring.C3P0Config;
+import stroom.spring.DataSourceConfig;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
 
@@ -37,10 +38,13 @@ public class DataSourceProvider implements Provider<DataSource> {
         try {
             final ComboPooledDataSource dataSource = new ComboPooledDataSource();
             dataSource.setDataSourceName("statistics");
-            dataSource.setDriverClass(StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverClassName"));
-            dataSource.setJdbcUrl(StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverUrl|trace"));
-            dataSource.setUser(StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverUsername"));
-            dataSource.setPassword(StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverPassword"));
+            dataSource.setDescription("SQL statistics data source");
+
+            final DataSourceConfig dataSourceConfig = new DataSourceConfig("stroom.statistics.sql.", stroomPropertyService);
+            dataSource.setDriverClass(dataSourceConfig.getJdbcDriverClassName());
+            dataSource.setJdbcUrl(dataSourceConfig.getJdbcDriverUrl());
+            dataSource.setUser(dataSourceConfig.getJdbcDriverUsername());
+            dataSource.setPassword(dataSourceConfig.getJdbcDriverPassword());
 
             final C3P0Config config = new C3P0Config("stroom.statistics.sql.db.connectionPool.", stroomPropertyService);
             dataSource.setMaxStatements(config.getMaxStatements());
@@ -63,7 +67,7 @@ public class DataSourceProvider implements Provider<DataSource> {
 
             dataSource.setPreferredTestQuery("select 1");
             dataSource.setConnectionTesterClassName(StroomProperties.getProperty("stroom.statistics.connectionTesterClassName"));
-            dataSource.setDescription("SQL statistics data source");
+
             return dataSource;
         } catch (final PropertyVetoException e) {
             LOGGER.error(e.getMessage(), e);

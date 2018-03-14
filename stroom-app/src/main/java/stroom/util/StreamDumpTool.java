@@ -16,9 +16,11 @@
 
 package stroom.util;
 
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import com.google.inject.persist.PersistService;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionOperator;
@@ -33,7 +35,6 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.spring.StroomSpringProfiles;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +48,7 @@ import java.util.List;
  * Handy tool to dump out content.
  */
 public class StreamDumpTool extends AbstractCommandLineTool {
-    private ApplicationContext appContext = null;
+    private final ToolInjector toolInjector = new ToolInjector();
 
     private String feed;
     private String streamType;
@@ -81,9 +82,19 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 
     @Override
     public void run() {
-        // Boot up spring
-        final ApplicationContext appContext = getAppContext();
+        // Boot up Guice
+        final Injector injector = toolInjector.getInjector();
+        // Start persistance.
+        injector.getInstance(PersistService.class).start();
+        try {
+            process(injector);
+        } finally {
+            // Stop persistance.
+            injector.getInstance(PersistService.class).stop();
+        }
+    }
 
+    private void process(final Injector injector) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
         if (StringUtils.isNotBlank(createPeriodFrom) && StringUtils.isNotBlank(createPeriodTo)) {
@@ -108,9 +119,9 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             }
         }
 
-        final StreamStore streamStore = appContext.getBean(StreamStore.class);
-        final FeedService feedService = (FeedService) appContext.getBean("cachedFeedService");
-        final StreamTypeService streamTypeService = (StreamTypeService) appContext.getBean("cachedStreamTypeService");
+        final StreamStore streamStore = injector.getInstance(StreamStore.class);
+        final FeedService feedService = injector.getInstance(Key.get(FeedService.class, Names.named("cachedFeedService")));
+        final StreamTypeService streamTypeService = injector.getInstance(Key.get(StreamTypeService.class, Names.named("cachedStreamTypeService")));
 
         Feed definition = null;
         if (feed != null) {
@@ -144,19 +155,6 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         }
 
         System.out.println("Finished dumping " + results.size() + " streams");
-    }
-
-    private ApplicationContext getAppContext() {
-        if (appContext == null) {
-            appContext = buildAppContext();
-        }
-        return appContext;
-    }
-
-    private ApplicationContext buildAppContext() {
-        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
-        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ToolSpringConfiguration.class);
-        return context;
     }
 
     /**
