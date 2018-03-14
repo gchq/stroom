@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
-import stroom.util.guice.PipelineScoped;
+import stroom.guice.PipelineScoped;
 
 import javax.inject.Inject;
 import java.io.Closeable;

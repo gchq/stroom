@@ -28,7 +28,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.util.spring.StroomBeanMethod;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;

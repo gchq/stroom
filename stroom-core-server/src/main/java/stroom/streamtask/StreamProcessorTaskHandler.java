@@ -32,7 +32,7 @@ import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;

@@ -19,7 +19,7 @@ package stroom.entity.cluster;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 @Configuration

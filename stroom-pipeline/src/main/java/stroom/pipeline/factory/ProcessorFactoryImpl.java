@@ -27,7 +27,7 @@ import stroom.pipeline.errorhandler.LoggedException;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskCallback;
 import stroom.task.TaskManager;
-import stroom.util.guice.PipelineScoped;
+import stroom.guice.PipelineScoped;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;

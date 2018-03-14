@@ -22,10 +22,9 @@ import stroom.entity.shared.Clearable;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
-import java.util.Map;
 import java.util.Set;
 
 @TaskHandlerBean(task = ClearServiceClusterTask.class)

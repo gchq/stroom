@@ -17,16 +17,6 @@
 package stroom.logging;
 
 import com.google.inject.AbstractModule;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import stroom.feed.FeedService;
-import stroom.security.SecurityContext;
-import stroom.servlet.HttpServletRequestHolder;
-import stroom.streamstore.StreamTypeService;
-import stroom.util.spring.StroomBeanStore;
-
-import javax.inject.Named;
-import javax.inject.Provider;
 
 public class LoggingModule extends AbstractModule {
     @Override

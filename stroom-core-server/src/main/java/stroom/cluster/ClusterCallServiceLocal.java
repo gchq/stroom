@@ -23,7 +23,7 @@ import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Insecure;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import java.lang.reflect.Method;

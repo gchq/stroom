@@ -20,7 +20,6 @@ package stroom.datafeed;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import stroom.feed.FeedService;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
@@ -28,7 +27,6 @@ import stroom.feed.shared.Feed.FeedStatus;
 import stroom.streamstore.MockStreamStore;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.GuiceJUnit4Runner;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;

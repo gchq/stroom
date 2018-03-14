@@ -18,13 +18,9 @@ package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.persist.PersistService;
 import org.junit.After;
 import org.junit.Before;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import stroom.security.SecuritySpringConfig;
-import stroom.util.spring.StroomSpringProfiles;
+import stroom.guice.PipelineScopeModule;
 
 public abstract class AbstractProcessIntegrationTest  extends StroomIntegrationTest {
     private Injector injector;
@@ -176,7 +172,7 @@ public abstract class AbstractProcessIntegrationTest  extends StroomIntegrationT
 //                new stroom.datasource.DatasourceModule(),
 //                new stroom.logging.LoggingModule(),
                 new stroom.pipeline.factory.FactoryModule(),
-                new stroom.util.guice.PipelineScopeModule(),
+                new PipelineScopeModule(),
                 new stroom.resource.MockResourceModule(),
 //                new stroom.search.shard.ShardModule(),
 //                new stroom.visualisation.VisualisationModule(),

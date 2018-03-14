@@ -18,11 +18,6 @@ package stroom.statistics.internal;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import stroom.properties.StroomPropertyService;
-import stroom.task.TaskHandler;
-import stroom.util.spring.StroomBeanStore;
 
 public class InternalStatisticsModule extends AbstractModule {
     @Override

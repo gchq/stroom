@@ -17,26 +17,11 @@
 package stroom.entity;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Scope;
 import stroom.entity.event.EntityEventBus;
 import stroom.entity.event.EntityEventBusImpl;
 import stroom.entity.shared.Clearable;
-import stroom.logging.DocumentEventLog;
-import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
-import stroom.task.TaskManager;
-import stroom.util.cache.CacheManager;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
-
-import javax.inject.Named;
-import javax.inject.Provider;
 
 public class EntityModule extends AbstractModule {
     @Override

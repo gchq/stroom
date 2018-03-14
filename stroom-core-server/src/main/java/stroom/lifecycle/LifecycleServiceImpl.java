@@ -29,8 +29,6 @@ import stroom.task.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomBeanLifeCycle;
-import stroom.util.spring.StroomBeanMethodExecutable;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.ThreadUtil;
 

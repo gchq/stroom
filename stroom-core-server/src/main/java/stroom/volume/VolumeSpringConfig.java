@@ -23,7 +23,7 @@ import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.properties.StroomPropertyService;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Provider;
 

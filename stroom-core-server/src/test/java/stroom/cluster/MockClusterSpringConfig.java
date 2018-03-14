@@ -16,15 +16,11 @@
 
 package stroom.cluster;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import stroom.cluster.MockClusterNodeManager;
 import stroom.node.NodeCache;
 import stroom.properties.StroomPropertyService;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomSpringProfiles;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Named;
 

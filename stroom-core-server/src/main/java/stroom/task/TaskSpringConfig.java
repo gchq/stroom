@@ -19,13 +19,10 @@ package stroom.task;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.node.NodeCache;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
-import stroom.task.TaskContext;
 
 import javax.inject.Provider;
 

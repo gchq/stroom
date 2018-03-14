@@ -7,7 +7,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.servlet.HttpServletRequestHolder;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

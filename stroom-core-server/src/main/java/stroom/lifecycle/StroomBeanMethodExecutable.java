@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.util.spring;
+package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.guice.StroomBeanStore;
 import stroom.util.shared.Task;
+import stroom.util.spring.StroomBeanMethod;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 

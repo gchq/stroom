@@ -18,19 +18,7 @@ package stroom.importexport;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.entity.GenericEntityService;
-import stroom.explorer.ExplorerNodeService;
-import stroom.explorer.ExplorerService;
-import stroom.logging.StroomEventLoggingService;
-import stroom.properties.StroomPropertyService;
-import stroom.resource.ResourceStore;
-import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
 
 public class ImportExportModule extends AbstractModule {
     @Override

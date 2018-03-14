@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import stroom.entity.DocumentPermissionCache;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.xml.converter.ds3.DS3ParserFactory;
 import stroom.xmlschema.XMLSchemaCache;
 

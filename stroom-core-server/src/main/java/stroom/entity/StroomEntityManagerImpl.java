@@ -38,7 +38,7 @@ import stroom.security.SecurityContext;
 import stroom.spring.EntityManagerSupport;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

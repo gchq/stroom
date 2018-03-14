@@ -29,7 +29,7 @@ import stroom.resource.ResourceStore;
 import stroom.security.SecurityContext;
 import stroom.task.TaskManager;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;

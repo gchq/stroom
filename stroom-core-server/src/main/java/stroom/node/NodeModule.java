@@ -18,26 +18,11 @@ package stroom.node;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.cluster.ClusterCallService;
-import stroom.cluster.ClusterNodeManager;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
-import stroom.jobsystem.ClusterLockServiceTransactionHelperImpl;
-import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.RecordCountService;
-import stroom.properties.StroomPropertyService;
-import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.task.TaskHandler;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
-
-import javax.inject.Named;
 
 public class NodeModule extends AbstractModule {
     @Override

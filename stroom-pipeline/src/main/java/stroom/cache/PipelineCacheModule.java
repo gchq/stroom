@@ -18,20 +18,8 @@ package stroom.cache;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import stroom.entity.DocumentPermissionCache;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEvent.Handler;
-import stroom.node.NodeCache;
-import stroom.security.SecurityContext;
-import stroom.util.cache.CacheManager;
-import stroom.util.spring.StroomBeanStore;
-import stroom.xml.converter.ds3.DS3ParserFactory;
-import stroom.xmlschema.XMLSchemaCache;
-
-import javax.inject.Provider;
-import javax.xml.transform.URIResolver;
 
 public class PipelineCacheModule extends AbstractModule {
     @Override

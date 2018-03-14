@@ -18,13 +18,6 @@ package stroom.cluster;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import stroom.node.NodeCache;
-import stroom.properties.StroomPropertyService;
-import stroom.util.spring.StroomBeanStore;
-
-import javax.inject.Named;
 
 public class MockClusterModule extends AbstractModule {
     @Override

@@ -17,7 +17,7 @@
 package stroom.test;
 
 import stroom.entity.shared.Clearable;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import java.util.Set;

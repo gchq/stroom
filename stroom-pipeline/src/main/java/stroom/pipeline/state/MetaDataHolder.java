@@ -26,7 +26,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
-import stroom.util.guice.PipelineScoped;
+import stroom.guice.PipelineScoped;
 
 import javax.inject.Inject;
 import java.io.IOException;

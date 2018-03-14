@@ -18,24 +18,8 @@ package stroom.test;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import stroom.cache.StroomCacheManager;
-import stroom.entity.StroomEntityManager;
-import stroom.feed.FeedService;
 import stroom.importexport.ImportExportService;
-import stroom.index.IndexService;
-import stroom.index.IndexShardManager;
-import stroom.index.IndexShardWriterCache;
-import stroom.node.NodeCache;
-import stroom.node.NodeConfig;
-import stroom.node.VolumeService;
-import stroom.streamstore.StreamAttributeKeyService;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.tools.StoreCreationTool;
-import stroom.streamtask.StreamProcessorFilterService;
-import stroom.streamtask.StreamProcessorService;
-import stroom.streamtask.StreamTaskCreator;
-import stroom.task.TaskManager;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 @Configuration
 public class MockTestControlSpringConfig {

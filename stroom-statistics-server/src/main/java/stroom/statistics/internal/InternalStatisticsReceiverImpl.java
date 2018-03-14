@@ -3,7 +3,6 @@ package stroom.statistics.internal;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;

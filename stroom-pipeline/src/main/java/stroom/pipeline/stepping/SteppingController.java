@@ -26,7 +26,7 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.state.StreamHolder;
 import stroom.task.TaskContext;
-import stroom.util.guice.PipelineScoped;
+import stroom.guice.PipelineScoped;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
 import stroom.xml.converter.ds3.DS3Reader;

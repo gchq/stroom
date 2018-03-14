@@ -25,7 +25,7 @@ import stroom.security.UserTokenUtil;
 import stroom.task.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.task.TaskIdFactory;
 
 import javax.inject.Inject;

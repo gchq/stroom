@@ -18,21 +18,9 @@ package stroom.jobsystem;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.entity.CachingEntityManager;
-import stroom.entity.StroomDatabaseInfo;
-import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.jobsystem.shared.JobManager;
-import stroom.lifecycle.LifecycleServiceImpl;
-import stroom.node.NodeCache;
 import stroom.task.TaskHandler;
-import stroom.task.TaskManager;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
 
 public class JobSystemModule extends AbstractModule {
     @Override

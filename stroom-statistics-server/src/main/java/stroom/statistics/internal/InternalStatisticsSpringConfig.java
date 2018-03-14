@@ -19,7 +19,6 @@ package stroom.statistics.internal;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import stroom.properties.StroomPropertyService;
-import stroom.util.spring.StroomBeanStore;
 
 @Configuration
 public class InternalStatisticsSpringConfig {

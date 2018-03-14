@@ -65,7 +65,7 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 

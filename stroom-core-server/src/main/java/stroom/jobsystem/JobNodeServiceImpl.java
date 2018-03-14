@@ -41,7 +41,7 @@ import stroom.spring.EntityManagerSupport;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomBeanMethod;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.spring.StroomStartup;

@@ -23,7 +23,7 @@ import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;

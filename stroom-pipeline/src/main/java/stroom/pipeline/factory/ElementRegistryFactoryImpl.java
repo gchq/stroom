@@ -18,7 +18,7 @@ package stroom.pipeline.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 
 import javax.inject.Inject;

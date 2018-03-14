@@ -44,7 +44,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
-import stroom.util.guice.PipelineScopeRunnable;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;

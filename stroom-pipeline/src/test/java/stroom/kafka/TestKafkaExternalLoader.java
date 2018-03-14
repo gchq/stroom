@@ -8,8 +8,7 @@ import stroom.connectors.ExternalLibService;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.connectors.kafka.StroomKafkaRecordMetaData;
-import stroom.kafka.StroomKafkaProducerFactoryService;
-import stroom.node.MockStroomPropertyService;
+import stroom.properties.MockStroomPropertyService;
 import stroom.properties.StroomPropertyService;
 
 import java.nio.charset.StandardCharsets;
@@ -24,9 +23,9 @@ public class TestKafkaExternalLoader {
     private final MockStroomPropertyService mockPropertyService = new MockStroomPropertyService();
 
     @Before
-    public void setup(){
-        mockPropertyService.setProperty("stroom.connectors.kafka.default.connector.version","0.10.0.1");
-        mockPropertyService.setProperty("stroom.connectors.kafka.default.bootstrap.servers","localhost:9092");
+    public void setup() {
+        mockPropertyService.setProperty("stroom.connectors.kafka.default.connector.version", "0.10.0.1");
+        mockPropertyService.setProperty("stroom.connectors.kafka.default.bootstrap.servers", "localhost:9092");
         mockPropertyService.setProperty("stroom.plugins.lib.dir", DEV_EXTERNAL_LIB_DIR);
     }
 

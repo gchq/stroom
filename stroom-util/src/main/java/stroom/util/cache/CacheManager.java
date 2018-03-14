@@ -18,9 +18,9 @@ package stroom.util.cache;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.inject.Singleton;
 import stroom.util.spring.StroomShutdown;
 
+import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

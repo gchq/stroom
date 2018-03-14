@@ -17,14 +17,6 @@
 package stroom.datasource;
 
 import com.google.inject.AbstractModule;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.properties.StroomPropertyService;
-import stroom.security.SecurityContext;
-import stroom.servlet.HttpServletRequestHolder;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
 
 public class DatasourceModule extends AbstractModule {
     @Override

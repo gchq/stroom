@@ -41,7 +41,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.shared.Stream;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.guice.PipelineScopeRunnable;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;

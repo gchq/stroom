@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 @Configuration

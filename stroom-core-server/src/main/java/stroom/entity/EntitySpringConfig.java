@@ -16,10 +16,8 @@
 
 package stroom.entity;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.event.EntityEventBus;
 import stroom.entity.event.EntityEventBusImpl;
@@ -28,11 +26,10 @@ import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;
-import javax.inject.Provider;
 
 @Configuration
 public class EntitySpringConfig {

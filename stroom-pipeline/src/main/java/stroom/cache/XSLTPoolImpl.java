@@ -38,7 +38,7 @@ import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

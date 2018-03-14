@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.util.spring;
+package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.guice.StroomBeanStore;
+import stroom.util.spring.StroomBeanMethod;
+import stroom.util.spring.StroomShutdown;
+import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

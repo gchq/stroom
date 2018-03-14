@@ -28,7 +28,7 @@ import stroom.node.shared.RecordCountService;
 import stroom.properties.StroomPropertyService;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;

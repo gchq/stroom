@@ -25,7 +25,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.security.SecurityContext;
 import stroom.task.TaskManager;
 import stroom.util.cache.CacheManager;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 import stroom.task.TaskContext;
 

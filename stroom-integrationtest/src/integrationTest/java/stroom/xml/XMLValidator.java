@@ -27,7 +27,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.guice.PipelineScopeRunnable;
+import stroom.guice.PipelineScopeRunnable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

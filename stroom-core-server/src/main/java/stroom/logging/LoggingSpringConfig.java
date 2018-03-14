@@ -22,7 +22,7 @@ import stroom.feed.FeedService;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.streamstore.StreamTypeService;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Named;
 import javax.inject.Provider;

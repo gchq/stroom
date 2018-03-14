@@ -46,6 +46,7 @@ dependencies {
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_core
+    compile libs.spring_aop
     compile libs.xml_apis
     compile libs.flyway_core
     compile libs.hsqldb

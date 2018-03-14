@@ -18,12 +18,7 @@ package stroom.entity.cluster;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 import stroom.task.TaskHandler;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
 
 public class EntityClusterModule extends AbstractModule {
     @Override

@@ -22,7 +22,7 @@ import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProviderImpl;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.guice.PipelineScoped;
+import stroom.guice.PipelineScoped;
 
 import javax.inject.Inject;
 import java.io.IOException;

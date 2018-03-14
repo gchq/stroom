@@ -1,4 +1,4 @@
-package stroom.util.guice;
+package stroom.guice;
 
 import javax.inject.Inject;
 import javax.inject.Named;

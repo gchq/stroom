@@ -26,7 +26,7 @@ import stroom.node.shared.Node;
 import stroom.properties.StroomPropertyService;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import java.lang.reflect.Method;

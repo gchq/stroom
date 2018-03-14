@@ -35,7 +35,7 @@ import stroom.pipeline.state.RecordCount;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.guice.PipelineScopeRunnable;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 

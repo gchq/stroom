@@ -18,8 +18,7 @@ package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomStartup;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

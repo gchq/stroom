@@ -45,8 +45,7 @@ import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.DocRef;
 import stroom.task.TaskContext;
-import stroom.util.guice.PipelineScoped;
-import stroom.task.TaskContext;
+import stroom.guice.PipelineScoped;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;

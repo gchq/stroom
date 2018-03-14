@@ -17,23 +17,10 @@
 package stroom.cluster;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Key;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 import stroom.entity.event.EntityEvent;
-import stroom.node.NodeCache;
-import stroom.node.NodeService;
-import stroom.node.shared.ClientPropertiesService;
-import stroom.properties.StroomPropertyService;
 import stroom.task.TaskHandler;
-import stroom.task.TaskManager;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
-
-import javax.inject.Named;
 
 public class ClusterModule extends AbstractModule {
     @Override

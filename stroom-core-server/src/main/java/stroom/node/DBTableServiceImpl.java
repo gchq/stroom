@@ -26,7 +26,7 @@ import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.Secured;
 import stroom.util.shared.CompareUtil;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;

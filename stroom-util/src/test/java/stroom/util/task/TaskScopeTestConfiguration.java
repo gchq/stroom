@@ -18,13 +18,10 @@ package stroom.util.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.CustomScopeConfigurer;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 import java.util.HashMap;

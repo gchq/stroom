@@ -16,20 +16,13 @@
 
 package stroom.task;
 
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.TypeLiteral;
-import com.google.inject.util.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.SharedObject;
 import stroom.util.shared.Task;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

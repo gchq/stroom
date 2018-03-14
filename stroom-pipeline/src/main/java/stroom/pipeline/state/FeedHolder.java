@@ -17,7 +17,7 @@
 package stroom.pipeline.state;
 
 import stroom.feed.shared.Feed;
-import stroom.util.guice.PipelineScoped;
+import stroom.guice.PipelineScoped;
 
 @PipelineScoped
 public class FeedHolder implements Holder {

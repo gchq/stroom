@@ -16,7 +16,6 @@
 
 package stroom.cluster;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -25,7 +24,7 @@ import stroom.node.NodeService;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.properties.StroomPropertyService;
 import stroom.task.TaskManager;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Named;

@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.util.guice.PipelineScopeRunnable;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;

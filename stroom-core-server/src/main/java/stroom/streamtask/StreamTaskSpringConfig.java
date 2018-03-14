@@ -35,13 +35,12 @@ import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.StreamStore;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskManager;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 import stroom.task.TaskContext;
 
 import javax.inject.Named;
 import javax.inject.Provider;
-import javax.sql.DataSource;
 
 @Configuration
 public class StreamTaskSpringConfig {

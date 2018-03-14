@@ -21,7 +21,7 @@ import net.sf.saxon.value.SequenceType;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import java.util.ArrayList;
 import java.util.List;

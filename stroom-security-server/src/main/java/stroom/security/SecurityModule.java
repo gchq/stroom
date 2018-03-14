@@ -19,27 +19,9 @@ package stroom.security;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.cluster.ClusterNodeManagerImpl;
-import stroom.entity.StroomEntityManager;
 import stroom.entity.event.EntityEvent;
-import stroom.entity.event.EntityEvent.Handler;
-import stroom.entity.event.EntityEventBus;
-import stroom.explorer.ExplorerNodeService;
-import stroom.explorer.ExplorerService;
-import stroom.jobsystem.ClusterLockService;
-import stroom.logging.AuthenticationEventLog;
-import stroom.logging.AuthorisationEventLog;
 import stroom.properties.StroomPropertyService;
-import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.TaskHandler;
-import stroom.util.cache.CacheManager;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
-
-import javax.inject.Provider;
 
 public class SecurityModule extends AbstractModule {
     @Override

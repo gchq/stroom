@@ -18,17 +18,7 @@ package stroom.lifecycle;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.entity.StroomEntityManager;
-import stroom.jobsystem.ScheduledTaskExecutor;
-import stroom.properties.StroomPropertyService;
-import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
-import stroom.task.TaskManager;
-import stroom.util.spring.StroomBeanLifeCycle;
-import stroom.util.spring.StroomScope;
 
 public class LifecycleModule extends AbstractModule {
     @Override

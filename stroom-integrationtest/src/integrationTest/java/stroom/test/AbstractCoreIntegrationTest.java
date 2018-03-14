@@ -21,6 +21,7 @@ import com.google.inject.Injector;
 import com.google.inject.persist.PersistService;
 import org.junit.After;
 import org.junit.Before;
+import stroom.guice.PipelineScopeModule;
 
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
     private Injector injector;
@@ -172,7 +173,7 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
                 new stroom.datasource.DatasourceModule(),
                 new stroom.logging.LoggingModule(),
                 new stroom.pipeline.factory.FactoryModule(),
-                new stroom.util.guice.PipelineScopeModule(),
+                new PipelineScopeModule(),
                 new stroom.resource.ResourceModule(),
                 new stroom.search.shard.ShardModule(),
                 new stroom.visualisation.VisualisationModule(),

@@ -28,8 +28,8 @@ import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.Task;
 import stroom.util.spring.StroomBeanMethod;
-import stroom.util.spring.StroomBeanMethodExecutable;
-import stroom.util.spring.StroomBeanStore;
+import stroom.lifecycle.StroomBeanMethodExecutable;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomSimpleCronSchedule;
 

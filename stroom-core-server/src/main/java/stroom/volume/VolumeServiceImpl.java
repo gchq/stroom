@@ -48,7 +48,7 @@ import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
 

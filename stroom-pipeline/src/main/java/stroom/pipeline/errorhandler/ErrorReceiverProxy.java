@@ -18,7 +18,7 @@ package stroom.pipeline.errorhandler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.guice.PipelineScoped;
+import stroom.guice.PipelineScoped;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 

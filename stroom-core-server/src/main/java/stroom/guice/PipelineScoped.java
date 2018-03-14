@@ -1,4 +1,4 @@
-package stroom.util.guice;
+package stroom.guice;
 
 import com.google.inject.ScopeAnnotation;
 

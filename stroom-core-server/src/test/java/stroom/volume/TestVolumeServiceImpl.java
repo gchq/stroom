@@ -36,7 +36,7 @@ import stroom.properties.StroomPropertyService;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 

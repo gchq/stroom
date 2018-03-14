@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util.spring;
+package stroom.guice;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
+import stroom.util.spring.StroomBeanMethod;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

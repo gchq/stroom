@@ -19,17 +19,7 @@ package stroom.explorer;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import fri.util.database.jpa.commons.DbSession;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.logging.StroomEventLoggingService;
-import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 public class ExplorerModule extends AbstractModule {
     @Override

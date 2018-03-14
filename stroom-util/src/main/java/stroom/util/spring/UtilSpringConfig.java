@@ -16,8 +16,6 @@
 
 package stroom.util.spring;
 
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -30,12 +28,12 @@ public class UtilSpringConfig {
 //    public static PropertyConfigurer propertyConfigurer() {
 //        return new PropertyConfigurer();
 //    }
-
-    @Bean
-    public StroomBeanLifeCycle stroomBeanLifeCycle(final StroomBeanStore stroomBeanStore) {
-        return new StroomBeanLifeCycle(stroomBeanStore);
-    }
 //
+//    @Bean
+//    public StroomBeanLifeCycle stroomBeanLifeCycle(final StroomBeanStore stroomBeanStore) {
+//        return new StroomBeanLifeCycle(stroomBeanStore);
+//    }
+////
 //    @Bean
 //    public StroomBeanStore stroomBeanStore(final ApplicationContext applicationContext, final BeanFactory beanFactory) {
 //        return new StroomBeanStore(applicationContext, beanFactory);

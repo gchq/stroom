@@ -35,7 +35,7 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.thread.ThreadUtil;

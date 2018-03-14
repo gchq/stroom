@@ -17,10 +17,6 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import stroom.importexport.ImportExportService;
-import stroom.util.spring.StroomBeanStore;
 
 public class MockTestControlModule extends AbstractModule {
     @Override

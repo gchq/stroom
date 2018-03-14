@@ -18,24 +18,7 @@ package stroom.servlet;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.importexport.ImportExportService;
-import stroom.logging.StreamEventLog;
-import stroom.node.NodeService;
-import stroom.node.VolumeService;
-import stroom.node.shared.ClientPropertiesService;
-import stroom.properties.StroomPropertyService;
-import stroom.resource.ResourceStore;
-import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
-import stroom.task.TaskManager;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
-
-import javax.inject.Named;
 
 public class ServletModule extends AbstractModule {
     @Override

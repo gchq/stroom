@@ -31,7 +31,7 @@ import stroom.jobsystem.shared.Job;
 import stroom.security.Secured;
 import stroom.util.shared.CompareUtil;
 import stroom.util.spring.StroomBeanMethod;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;

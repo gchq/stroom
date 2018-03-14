@@ -40,7 +40,7 @@ import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageResponse;
 import stroom.security.Insecure;
 import stroom.util.shared.HasId;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

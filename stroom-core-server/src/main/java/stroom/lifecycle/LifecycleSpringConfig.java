@@ -16,7 +16,6 @@
 
 package stroom.lifecycle;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -25,7 +24,6 @@ import stroom.jobsystem.ScheduledTaskExecutor;
 import stroom.properties.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.task.TaskManager;
-import stroom.util.spring.StroomBeanLifeCycle;
 import stroom.util.spring.StroomScope;
 
 @Configuration

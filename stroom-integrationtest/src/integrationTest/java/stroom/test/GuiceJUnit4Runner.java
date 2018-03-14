@@ -1,4 +1,4 @@
-package stroom.util.test;
+package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Module;

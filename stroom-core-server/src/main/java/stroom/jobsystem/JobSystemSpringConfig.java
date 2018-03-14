@@ -19,14 +19,13 @@ package stroom.jobsystem;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.shared.JobManager;
 import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.node.NodeCache;
 import stroom.task.TaskManager;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 @Configuration

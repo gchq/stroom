@@ -17,7 +17,7 @@
 package stroom.refdata;
 
 import stroom.pipeline.state.Holder;
-import stroom.util.guice.PipelineScoped;
+import stroom.guice.PipelineScoped;
 
 @PipelineScoped
 public class MapStoreHolder implements Holder {

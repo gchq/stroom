@@ -18,14 +18,12 @@ package stroom.streamtask;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import stroom.node.NodeCache;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.StreamStore;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.task.TaskContext;
 
 import javax.inject.Named;

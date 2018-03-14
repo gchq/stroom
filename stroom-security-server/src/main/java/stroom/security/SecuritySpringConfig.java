@@ -16,11 +16,9 @@
 
 package stroom.security;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.event.EntityEventBus;
 import stroom.explorer.ExplorerNodeService;
@@ -31,11 +29,10 @@ import stroom.logging.AuthorisationEventLog;
 import stroom.properties.StroomPropertyService;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cache.CacheManager;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Provider;
-import javax.validation.constraints.NotNull;
 
 @Configuration
 public class SecuritySpringConfig {
