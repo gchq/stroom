@@ -24,6 +24,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentServiceReadAction;
+import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.NamedEntity;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -79,22 +80,10 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
         //final PopupType popupType = isCurrentUserUpdate() ? PopupType.OK_CANCEL_DIALOG : PopupType.CLOSE_DIALOG;
         final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
 
-        if (entity.isPersistent()) {
-            // Reload it so we always have the latest version
-            final DocumentServiceReadAction<E> action = new DocumentServiceReadAction<>(DocRefUtil.create(entity));
-            dispatcher.exec(action).onSuccess(result -> {
-                setEntity(result);
-                read();
-                ShowPopupEvent.fire(ManageEntityEditPresenter.this, ManageEntityEditPresenter.this, popupType,
-                        getPopupSize(), caption, internalPopupUiHandlers);
-            });
-        } else {
-            // new entity
-            setEntity(entity);
-            read();
-            ShowPopupEvent.fire(ManageEntityEditPresenter.this, ManageEntityEditPresenter.this, popupType,
-                    getPopupSize(), caption, internalPopupUiHandlers);
-        }
+        setEntity(entity);
+        read();
+        ShowPopupEvent.fire(ManageEntityEditPresenter.this, ManageEntityEditPresenter.this, popupType,
+                getPopupSize(), caption, internalPopupUiHandlers);
     }
 
     protected abstract void read();
