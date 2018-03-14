@@ -16,7 +16,7 @@
 
 package stroom.dashboard;
 
-import com.google.inject.persist.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.ComponentSettings;
@@ -55,7 +55,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
-@Transactional
+// @Transactional
 public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, FindDashboardCriteria>
         implements DashboardService, ExplorerActionHandler, ImportExportActionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardServiceImpl.class);

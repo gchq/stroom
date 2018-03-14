@@ -22,10 +22,9 @@ import stroom.entity.util.SqlBuilder;
 import stroom.streamstore.shared.Stream;
 
 import javax.inject.Inject;
-import com.google.inject.persist.Transactional;
-import javax.transaction.Transactional.TxType;
 
-@Transactional
+
+// @Transactional
 public class BatchIdTransactionHelper {
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final StroomEntityManager stroomEntityManager;

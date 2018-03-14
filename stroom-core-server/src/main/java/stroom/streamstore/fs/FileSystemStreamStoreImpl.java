@@ -17,7 +17,7 @@
 
 package stroom.streamstore.fs;
 
-import com.google.inject.persist.Transactional;
+
 import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +99,7 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Singleton
-@Transactional
+// @Transactional
 public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private static final String MYSQL_INDEX_STRM_CRT_MS_IDX = "STRM_CRT_MS_IDX";
     private static final String MYSQL_INDEX_STRM_FK_FD_ID_CRT_MS_IDX = "STRM_FK_FD_ID_CRT_MS_IDX";
@@ -688,7 +688,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-    @Transactional
+    // @Transactional
     public long getLockCount() {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT count(*) FROM ");
@@ -704,7 +704,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      */
     @Override
     @SuppressWarnings("unchecked")
-    @Transactional
+    // @Transactional
     public Set<StreamVolume> findStreamVolume(final Long metaDataId) {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT sv FROM ");
@@ -722,7 +722,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-    @Transactional
+    // @Transactional
     public BaseResultList<Stream> find(final OldFindStreamCriteria originalCriteria) {
         final boolean relationshipQuery = originalCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
         final PageRequest pageRequest = originalCriteria.getPageRequest();
@@ -1186,7 +1186,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      */
     @Override
     @SuppressWarnings("unchecked")
-    @Transactional
+    // @Transactional
     public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
         final StreamType streamType = getStreamType(criteria.getStreamType());
 
@@ -1333,7 +1333,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     @Secured(Stream.DELETE_DATA_PERMISSION)
-    @Transactional
+    // @Transactional
     public Long findDelete(final FindStreamCriteria criteria) throws RuntimeException {
         final Context context = new Context(null, System.currentTimeMillis());
         final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);

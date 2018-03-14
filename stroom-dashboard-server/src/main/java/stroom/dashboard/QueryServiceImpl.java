@@ -16,7 +16,7 @@
 
 package stroom.dashboard;
 
-import com.google.inject.persist.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.FindQueryCriteria;
@@ -36,7 +36,7 @@ import javax.inject.Singleton;
 import java.util.List;
 
 @Singleton
-@Transactional
+// @Transactional
 public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, FindQueryCriteria> implements QueryService {
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryServiceImpl.class);
     private final StroomEntityManager entityManager;
@@ -115,7 +115,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
         }
     }
 
-    @Transactional
+    // @Transactional
     @Override
     public List<String> getUsers(final boolean favourite) {
         final SqlBuilder sql = new SqlBuilder();
@@ -137,7 +137,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
         return list;
     }
 
-    @Transactional
+    // @Transactional
     @Override
     public Integer getOldestId(final String user, final boolean favourite, final int retain) {
         final SqlBuilder sql = new SqlBuilder();

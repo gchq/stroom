@@ -16,7 +16,6 @@
 
 package stroom.entity;
 
-import com.google.inject.persist.Transactional;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
@@ -45,6 +44,7 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Transactional
+// @Transactional
 public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, ProvidesNamePattern {
     public static final String FOLDER = ExplorerConstants.FOLDER;
     private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
@@ -134,13 +134,13 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entity;
     }
 
-    @Transactional
+    // @Transactional
     @Override
     public E load(final E entity) throws RuntimeException {
         return load(entity, Collections.emptySet());
     }
 
-    @Transactional
+    // @Transactional
     @Override
     public E load(final E entity, final Set<String> fetchSet) throws RuntimeException {
         if (entity == null) {
@@ -149,13 +149,13 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return loadById(entity.getId(), fetchSet, queryAppender);
     }
 
-    @Transactional
+    // @Transactional
     @Override
     public E loadById(final long id) throws RuntimeException {
         return loadById(id, Collections.emptySet(), queryAppender);
     }
 
-    @Transactional
+    // @Transactional
     @Override
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
         return loadById(id, fetchSet, queryAppender);
@@ -199,14 +199,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entity;
     }
 
-    @Transactional
+    // @Transactional
     @Override
     public final E loadByUuid(final String uuid) throws RuntimeException {
         return loadByUuid(uuid, null);
     }
 
     @SuppressWarnings("unchecked")
-    @Transactional
+    // @Transactional
     @Override
     public final E loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
         return loadByUuid(uuid, fetchSet, queryAppender);
@@ -248,7 +248,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
     @SuppressWarnings("unchecked")
-    @Transactional
+    // @Transactional
     protected E loadByUuidInsecure(final String uuid, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
 
@@ -400,7 +400,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
 
-    @Transactional
+    // @Transactional
     @Override
     public BaseResultList<E> find(final C criteria) throws RuntimeException {
         // Make sure the required permission is a valid one.
@@ -588,7 +588,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    @Transactional
+    // @Transactional
     @Override
     public E readDocument(final DocRef docRef) {
         return loadByUuid(docRef.getUuid());

@@ -17,7 +17,7 @@
 
 package stroom.pipeline;
 
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.StroomEntityManager;
 import stroom.explorer.ExplorerActionHandler;
@@ -33,7 +33,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@Transactional
+// @Transactional
 public class XSLTServiceImpl extends DocumentEntityServiceImpl<XSLT, FindXSLTCriteria> implements XSLTService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     XSLTServiceImpl(final StroomEntityManager entityManager,

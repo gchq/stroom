@@ -17,7 +17,7 @@
 
 package stroom.streamtask;
 
-import com.google.inject.persist.Transactional;
+
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ import java.util.Map.Entry;
 /**
  * Class used to do the transactional aspects of stream task creation
  */
-@Transactional
+// @Transactional
 class StreamTaskCreatorTransactionHelper {
     private static final int RECENT_STREAM_ID_LIMIT = 10000;
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskCreatorTransactionHelper.class);

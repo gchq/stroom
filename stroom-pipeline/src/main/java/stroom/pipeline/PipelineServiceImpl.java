@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.ObjectMarshaller;
 import stroom.entity.QueryAppender;
@@ -46,7 +46,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
-@Transactional
+// @Transactional
 public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntity, FindPipelineEntityCriteria>
         implements PipelineService, ExplorerActionHandler, ImportExportActionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineServiceImpl.class);
@@ -74,7 +74,7 @@ public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntit
         return save(pipelineEntity, null);
     }
 
-    @Transactional
+    // @Transactional
     @Override
     public PipelineEntity loadByUuidWithoutUnmarshal(final String uuid) {
         return loadByUuid(uuid, Collections.emptySet(), null);

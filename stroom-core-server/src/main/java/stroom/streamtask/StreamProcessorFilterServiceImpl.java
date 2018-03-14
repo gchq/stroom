@@ -16,7 +16,7 @@
 
 package stroom.streamtask;
 
-import com.google.inject.persist.Transactional;
+
 import event.logging.BaseAdvancedQueryItem;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Set;
 
 @Singleton
-@Transactional
+// @Transactional
 @Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 class StreamProcessorFilterServiceImpl
         extends SystemEntityServiceImpl<StreamProcessorFilter, FindStreamProcessorFilterCriteria>

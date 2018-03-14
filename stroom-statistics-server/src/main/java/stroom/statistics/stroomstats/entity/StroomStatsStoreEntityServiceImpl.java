@@ -18,7 +18,7 @@ package stroom.statistics.stroomstats.entity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.util.HqlBuilder;
@@ -35,7 +35,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@Transactional
+// @Transactional
 class StroomStatsStoreEntityServiceImpl
         extends DocumentEntityServiceImpl<StroomStatsStoreEntity, FindStroomStatsStoreEntityCriteria>
         implements StroomStatsStoreEntityService, ExplorerActionHandler, ImportExportActionHandler {

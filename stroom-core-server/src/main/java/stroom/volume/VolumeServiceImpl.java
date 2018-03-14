@@ -18,7 +18,7 @@
 package stroom.volume;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.persist.Transactional;
+
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +79,7 @@ import java.util.stream.Stream;
  * Implementation for the volume API.
  */
 @Singleton
-@Transactional
+// @Transactional
 @Secured(Volume.MANAGE_VOLUMES_PERMISSION)
 @EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolumeCriteria>
@@ -152,7 +152,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         volumeSelectorMap.put(volumeSelector.getName(), volumeSelector);
     }
 
-    @Transactional
+    // @Transactional
     @Insecure
     @Override
     public Set<Volume> getStreamVolumeSet(final Node node) {
@@ -165,7 +165,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                 getResilientReplicationCount());
     }
 
-    @Transactional
+    // @Transactional
     @Insecure
     @Override
     public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {

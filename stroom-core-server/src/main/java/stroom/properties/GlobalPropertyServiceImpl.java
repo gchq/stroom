@@ -17,7 +17,7 @@
 
 package stroom.properties;
 
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -39,7 +39,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-@Transactional
+// @Transactional
 @Secured(GlobalProperty.MANAGE_PROPERTIES_PERMISSION)
 class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProperty, FindGlobalPropertyCriteria>
         implements GlobalPropertyService {

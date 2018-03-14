@@ -16,7 +16,7 @@
 
 package stroom.index;
 
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -33,7 +33,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@Transactional
+// @Transactional
 public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndexCriteria> implements IndexService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject
     IndexServiceImpl(final StroomEntityManager entityManager,

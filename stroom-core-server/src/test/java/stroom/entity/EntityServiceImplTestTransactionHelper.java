@@ -19,15 +19,15 @@ package stroom.entity;
 
 import org.junit.Assert;
 import org.springframework.transaction.annotation.Propagation;
-import com.google.inject.persist.Transactional;
+
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.transaction.Transactional.TxType;
 
-@Transactional
+
+// @Transactional
 class EntityServiceImplTestTransactionHelper {
     private final FeedService feedService;
     private final FeedService cachedFeedService;
@@ -45,7 +45,7 @@ class EntityServiceImplTestTransactionHelper {
         feed = feedService.create("FEED_" + System.currentTimeMillis());
     }
 
-    @Transactional
+    // @Transactional
     public void test1() {
         Feed feed1 = feedService.loadById(feed.getId());
         Feed feed2 = cachedFeedService.loadById(feed.getId());

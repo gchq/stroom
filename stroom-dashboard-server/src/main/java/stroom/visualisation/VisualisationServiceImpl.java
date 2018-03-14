@@ -19,7 +19,7 @@ package stroom.visualisation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.ObjectMarshaller;
 import stroom.entity.QueryAppender;
@@ -43,7 +43,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
-@Transactional
+// @Transactional
 public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualisation, FindVisualisationCriteria>
         implements VisualisationService, ExplorerActionHandler, ImportExportActionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(VisualisationServiceImpl.class);

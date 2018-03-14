@@ -38,7 +38,6 @@ dependencies {
     compile libs.spring_context
     compile libs.ws_rs_api
     compile libs.guice4
-    compile libs.guice_persist
 
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

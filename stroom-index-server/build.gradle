@@ -40,7 +40,6 @@ dependencies {
     compile libs.swagger_annotations
     compile libs.ws_rs_api
     compile libs.guice4
-    compile libs.guice_persist
 
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks

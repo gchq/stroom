@@ -43,7 +43,6 @@ dependencies {
     compile libs.swagger_annotations
     compile libs.ws_rs_api
     compile libs.guice4
-    compile libs.guice_persist
 
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

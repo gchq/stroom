@@ -19,7 +19,7 @@ package stroom.streamstore;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
@@ -34,7 +34,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-@Transactional
+// @Transactional
 @Insecure
 class StreamAttributeKeyServiceImpl
         extends SystemEntityServiceImpl<StreamAttributeKey, FindStreamAttributeKeyCriteria>

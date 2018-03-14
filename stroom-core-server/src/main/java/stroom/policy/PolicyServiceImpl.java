@@ -18,7 +18,7 @@
 package stroom.policy;
 
 import com.google.inject.ScopeAnnotation;
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -33,7 +33,7 @@ import javax.inject.Singleton;
 import java.util.List;
 
 @Singleton
-@Transactional
+// @Transactional
 @Secured(Policy.MANAGE_POLICIES_PERMISSION)
 public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicyCriteria>
         implements PolicyService {

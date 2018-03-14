@@ -17,7 +17,7 @@
 
 package stroom.jobsystem;
 
-import com.google.inject.persist.Transactional;
+
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-@Transactional
+// @Transactional
 @Secured(Job.MANAGE_JOBS_PERMISSION)
 public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCriteria> implements JobNodeService {
     public static final String DELETE_ORPHAN_JOBS_MYSQL = "DELETE JB FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN "

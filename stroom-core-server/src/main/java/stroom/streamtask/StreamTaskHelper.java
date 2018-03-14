@@ -17,7 +17,7 @@
 
 package stroom.streamtask;
 
-import com.google.inject.persist.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
@@ -29,7 +29,7 @@ import stroom.util.thread.ThreadUtil;
 import javax.inject.Inject;
 import javax.persistence.EntityNotFoundException;
 
-@Transactional
+// @Transactional
 class StreamTaskHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskHelper.class);
 

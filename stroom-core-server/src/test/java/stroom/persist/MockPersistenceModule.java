@@ -17,13 +17,7 @@
 package stroom.persist;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.persist.PersistService;
-import stroom.spring.DataSourceProvider;
 import stroom.spring.EntityManagerSupport;
-import stroom.spring.EntityManagerSupportImpl;
-import stroom.spring.PersistServiceImpl;
-
-import javax.sql.DataSource;
 
 /**
  * Configures anything related to persistence, e.g. transaction management, the

@@ -20,7 +20,7 @@ package stroom.index;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.SystemEntityServiceImpl;
@@ -47,7 +47,7 @@ import java.util.Set;
 
 @Singleton
 @Insecure
-@Transactional
+// @Transactional
 public class IndexShardServiceImpl
         extends SystemEntityServiceImpl<IndexShard, FindIndexShardCriteria> implements IndexShardService {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardServiceImpl.class);

@@ -18,7 +18,7 @@ package stroom.statistics.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
+
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.sql.SQLSafe;
 
@@ -35,7 +35,7 @@ import java.util.List;
  * SQL_STAT_VAL_SRC - Input Table SQL_STAT_KEY - Key Table SQL_STAT_VAL - Value
  * Table
  */
-@Transactional
+// @Transactional
 public class SQLStatisticValueBatchSaveService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveService.class);
     public static final String SAVE_CALL;

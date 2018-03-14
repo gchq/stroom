@@ -16,7 +16,7 @@
 
 package stroom.explorer;
 
-import com.google.inject.persist.Transactional;
+
 import fri.util.database.jpa.commons.DbSession;
 import fri.util.database.jpa.tree.closuretable.ClosureTableTreeDao;
 import fri.util.database.jpa.tree.closuretable.ClosureTableTreeNode;
@@ -29,7 +29,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-@Transactional
+// @Transactional
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private final DbSession session;
     private final ClosureTableTreeDao dao;

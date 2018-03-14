@@ -20,7 +20,7 @@ package stroom.streamstore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
-import com.google.inject.persist.Transactional;
+
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.jobsystem.ClusterLockService;
@@ -36,7 +36,7 @@ import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.transaction.Transactional.TxType;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -104,7 +104,7 @@ class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
 
     @Override
     @StroomFrequencySchedule("10s")
-    @Transactional
+    // @Transactional
     public void flush() {
         final List<StreamAttributeKey> keys = streamAttributeKeyService.findAll();
 

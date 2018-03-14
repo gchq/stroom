@@ -17,7 +17,7 @@
 package stroom.jobsystem;
 
 import org.junit.Assert;
-import com.google.inject.persist.Transactional;
+
 import stroom.spring.EntityManagerSupport;
 import stroom.util.thread.ThreadUtil;
 

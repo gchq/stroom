@@ -2,8 +2,6 @@ package stroom.spring;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Provider;
-import com.google.inject.persist.PersistService;
-import com.google.inject.persist.UnitOfWork;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import org.hibernate.integrator.spi.Integrator;
 import org.hibernate.jpa.HibernatePersistenceProvider;
@@ -28,7 +26,7 @@ import java.util.Map;
 import java.util.Properties;
 
 @Singleton
-public class PersistServiceImpl implements Provider<EntityManager>, UnitOfWork, PersistService {
+public class PersistServiceImpl implements Provider<EntityManager>, PersistService {
     private static final String PACKAGE = "stroom";
 
     private final DataSource dataSource;
@@ -54,7 +52,6 @@ public class PersistServiceImpl implements Provider<EntityManager>, UnitOfWork, 
         return currentContext.getEntityManager();
     }
 
-    @Override
     public void begin() {
         final Deque<Context> deque = getDeque();
 
@@ -70,7 +67,6 @@ public class PersistServiceImpl implements Provider<EntityManager>, UnitOfWork, 
         deque.offerLast(context);
     }
 
-    @Override
     public void end() {
         final Deque<Context> deque = getDeque();
         final Context context = deque.pollLast();

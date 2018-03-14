@@ -16,7 +16,6 @@ dependencies {
     compile libs.slf4j_api
     compile libs.flyway_core
     compile libs.guice4
-    compile libs.guice_persist
 
     integrationTestRuntime libs.mysql_connector_java
     integrationTestCompile libs.junit

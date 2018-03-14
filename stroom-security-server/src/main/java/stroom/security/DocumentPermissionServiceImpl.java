@@ -20,7 +20,7 @@ package stroom.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
@@ -31,7 +31,7 @@ import stroom.security.shared.UserRef;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.PersistenceException;
-import javax.transaction.Transactional.TxType;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-@Transactional
+// @Transactional
 class DocumentPermissionServiceImpl implements DocumentPermissionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 

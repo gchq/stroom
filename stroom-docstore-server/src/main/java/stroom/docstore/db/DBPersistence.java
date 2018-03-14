@@ -1,6 +1,5 @@
 package stroom.docstore.db;
 
-import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docstore.Persistence;
@@ -23,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-@Transactional
 public class DBPersistence implements Persistence {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBPersistence.class);
 

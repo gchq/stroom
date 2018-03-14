@@ -17,7 +17,7 @@
 
 package stroom.xmlschema;
 
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -35,7 +35,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@Transactional
+// @Transactional
 class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, FindXMLSchemaCriteria>
         implements XMLSchemaService, ExplorerActionHandler, ImportExportActionHandler {
     @Inject

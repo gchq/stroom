@@ -18,22 +18,20 @@ package stroom.node;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Propagation;
-import com.google.inject.persist.Transactional;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.HqlBuilder;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 
 import javax.inject.Inject;
-import javax.transaction.Transactional.TxType;
+
 import java.util.List;
 
 /**
  * Helper class so that we can split out some transactions away from
  * NodeService.
  */
-@Transactional
+// @Transactional
 public class NodeServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeServiceTransactionHelper.class);
 
@@ -45,7 +43,7 @@ public class NodeServiceTransactionHelper {
     }
 
     @SuppressWarnings("unchecked")
-    @Transactional
+    // @Transactional
     public Node getNode(final String name) {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT r FROM ");
@@ -63,7 +61,7 @@ public class NodeServiceTransactionHelper {
     }
 
     @SuppressWarnings("unchecked")
-    @Transactional
+    // @Transactional
     public Rack getRack(final String name) {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT r FROM ");
@@ -84,7 +82,7 @@ public class NodeServiceTransactionHelper {
      * Create a new transaction to create the node .... only ever called once at
      * initial deployment time.
      */
-    @Transactional
+    // @Transactional
     public Node buildNode(final String nodeName, final String rackName) {
         Node node = getNode(nodeName);
 

@@ -18,7 +18,6 @@ package stroom.headless;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.persist.PersistService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.util.XMLUtil;
@@ -34,6 +33,7 @@ import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.proxy.repo.StroomZipRepository;
+import stroom.spring.PersistService;
 import stroom.task.TaskManager;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.config.StroomProperties;

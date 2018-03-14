@@ -4,6 +4,7 @@ dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
+    compile project(':stroom-explorer-api')
     compile project(':stroom-explorer-server')
     compile project(':stroom-pipeline')
     compile project(':stroom-statistics-api')
@@ -14,5 +15,4 @@ dependencies {
     compile libs.xml_apis
     compile libs.javax_inject
     compile libs.guice4
-    compile libs.guice_persist
 }

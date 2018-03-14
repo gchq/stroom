@@ -18,7 +18,7 @@ package stroom.headless;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
@@ -26,7 +26,7 @@ import stroom.streamstore.shared.StreamType;
 
 import javax.inject.Inject;
 
-@Transactional
+// @Transactional
 class StreamTypeServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypeServiceTransactionHelper.class);
 

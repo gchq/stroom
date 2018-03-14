@@ -18,7 +18,7 @@
 package stroom.node;
 
 import org.springframework.beans.factory.annotation.Value;
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.StroomEntityManager;
 import stroom.node.shared.FindNodeCriteria;
@@ -36,7 +36,7 @@ import javax.inject.Singleton;
  * </p>
  */
 @Singleton
-@Transactional
+// @Transactional
 @Secured(Node.MANAGE_NODES_PERMISSION)
 public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriteria>
         implements NodeService, NodeServiceGetDefaultNode {
@@ -64,7 +64,7 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
     }
 
     @Override
-    @Transactional
+    // @Transactional
     public Node getDefaultNode() {
         Node node = getNode(nodeName);
 

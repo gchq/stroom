@@ -16,12 +16,12 @@
 
 package stroom.entity;
 
-import com.google.inject.persist.Transactional;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Entity;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
+
 
 import java.util.List;
 
@@ -36,7 +36,7 @@ public class FindServiceHelper<E extends Entity, C extends BaseCriteria> {
         this.queryAppender = queryAppender;
     }
 
-    @Transactional
+    // @Transactional
     public BaseResultList<E> find(final C criteria, final FieldMap sqlFieldMap) throws RuntimeException {
         return doBasicFind(criteria, sqlFieldMap);
     }

@@ -18,7 +18,7 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.EntityServiceHelper;
 import stroom.entity.QueryAppender;
 import stroom.entity.util.FieldMap;
@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-@Transactional
+// @Transactional
 @Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
 @Singleton
 class UserServiceImpl implements UserService {
@@ -112,7 +112,7 @@ class UserServiceImpl implements UserService {
      */
     @SuppressWarnings("unchecked")
     @Override
-    @Transactional
+    // @Transactional
     public BaseResultList<User> find(final FindUserCriteria criteria) {
         // Build up the HQL
         final HqlBuilder sql = new HqlBuilder();
@@ -261,13 +261,13 @@ class UserServiceImpl implements UserService {
         }
     }
 
-    @Transactional
+    // @Transactional
     @Override
     public User load(final User entity) throws RuntimeException {
         return entityServiceHelper.load(entity, Collections.emptySet(), queryAppender);
     }
 
-    @Transactional
+    // @Transactional
     @Override
     public User load(final User entity, final Set<String> fetchSet) throws RuntimeException {
         return entityServiceHelper.load(entity, fetchSet, queryAppender);

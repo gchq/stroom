@@ -18,12 +18,10 @@ package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.persist.PersistService;
 import org.junit.After;
 import org.junit.Before;
-import stroom.dictionary.DictionaryHandlerModule;
-import stroom.dictionary.DictionaryStoreModule;
 import stroom.guice.PipelineScopeModule;
+import stroom.spring.PersistService;
 
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
     private Injector injector;

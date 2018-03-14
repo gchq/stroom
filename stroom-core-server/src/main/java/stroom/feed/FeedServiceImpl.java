@@ -17,7 +17,6 @@
 
 package stroom.feed;
 
-import com.google.inject.persist.Transactional;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -40,12 +39,13 @@ import stroom.util.config.StroomProperties;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.Transient;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 @Singleton
-@Transactional
+// @Transactional
 public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCriteria> implements FeedService, ExplorerActionHandler, ImportExportActionHandler {
     private static final String FEED_NAME_PATTERN_PROPERTY = "stroom.feedNamePattern";
     private static final String FEED_NAME_PATTERN_VALUE = "^[A-Z0-9_\\-]{3,}$";

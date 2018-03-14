@@ -18,7 +18,7 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.inject.persist.Transactional;
+
 import org.springframework.util.StringUtils;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
-@Transactional
+// @Transactional
 class UserAppPermissionServiceImpl implements UserAppPermissionService {
     private static final String LOCK_NAME = "UserAppPermissionService";
 

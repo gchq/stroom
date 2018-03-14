@@ -17,7 +17,7 @@
 
 package stroom.streamstore;
 
-import com.google.inject.persist.Transactional;
+
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -30,7 +30,7 @@ import stroom.streamstore.shared.StreamType;
 import javax.inject.Inject;
 import java.util.List;
 
-@Transactional
+// @Transactional
 @Insecure
 class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria> implements StreamTypeService {
     @Inject

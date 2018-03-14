@@ -17,7 +17,7 @@
 
 package stroom.jobsystem;
 
-import com.google.inject.persist.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.NamedEntityServiceImpl;
@@ -44,7 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-@Transactional
+// @Transactional
 @Secured(Job.MANAGE_JOBS_PERMISSION)
 public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
