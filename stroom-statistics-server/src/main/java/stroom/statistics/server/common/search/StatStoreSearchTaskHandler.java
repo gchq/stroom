@@ -17,7 +17,6 @@
 package stroom.statistics.server.common.search;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import org.slf4j.Logger;
@@ -72,11 +71,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -92,37 +92,37 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
     static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
 
     //defines how the entity fields relate to the table columns
-    private static final Map<String, List<String>> fieldToColumnsMap = ImmutableMap.<String, List<String>>builder()
-            .put(StatisticStoreEntity.FIELD_NAME_DATE_TIME,
-                    Collections.singletonList(SQLStatisticNames.TIME_MS))
-            .put(StatisticStoreEntity.FIELD_NAME_PRECISION_MS,
-                    Collections.singletonList(SQLStatisticNames.PRECISION))
-            .put(StatisticStoreEntity.FIELD_NAME_PRECISION,
-                    Collections.singletonList(SQLStatisticNames.PRECISION))
-            .put(StatisticStoreEntity.FIELD_NAME_COUNT,
-                    Collections.singletonList(SQLStatisticNames.COUNT))
-            .put(StatisticStoreEntity.FIELD_NAME_VALUE,
-                    Arrays.asList(SQLStatisticNames.COUNT, SQLStatisticNames.VALUE))
-            .build();
+//    private static final Map<String, List<String>> fieldToColumnsMap = ImmutableMap.<String, List<String>>builder()
+//            .put(StatisticStoreEntity.FIELD_NAME_DATE_TIME,
+//                    Collections.singletonList(SQLStatisticNames.TIME_MS))
+//            .put(StatisticStoreEntity.FIELD_NAME_PRECISION_MS,
+//                    Collections.singletonList(SQLStatisticNames.PRECISION))
+//            .put(StatisticStoreEntity.FIELD_NAME_PRECISION,
+//                    Collections.singletonList(SQLStatisticNames.PRECISION))
+//            .put(StatisticStoreEntity.FIELD_NAME_COUNT,
+//                    Collections.singletonList(SQLStatisticNames.COUNT))
+//            .put(StatisticStoreEntity.FIELD_NAME_VALUE,
+//                    Arrays.asList(SQLStatisticNames.COUNT, SQLStatisticNames.VALUE))
+//            .build();
 
 
-    private static final String STAT_QUERY_SKELETON =
-            "SELECT " +
-                    "K." + SQLStatisticNames.NAME + ", " +
-                    "V." + SQLStatisticNames.PRECISION + ", " +
-                    "V." + SQLStatisticNames.TIME_MS + ", " +
-                    "V." + SQLStatisticNames.VALUE_TYPE + ", " +
-                    "V." + SQLStatisticNames.VALUE + ", " +
-                    "V." + SQLStatisticNames.COUNT + " ";
-
-    private static final String STAT_QUERY_FROM_AND_WHERE_PARTS =
-            "FROM " + SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME + " K " +
-                    "JOIN " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME + " V " +
-                    "ON (K." + SQLStatisticNames.ID + " = V." + SQLStatisticNames.SQL_STATISTIC_KEY_FOREIGN_KEY + ") " +
-                    "WHERE K." + SQLStatisticNames.NAME + " LIKE ? " +
-                    "AND K." + SQLStatisticNames.NAME + " REGEXP ? " +
-                    "AND V." + SQLStatisticNames.TIME_MS + " >= ? " +
-                    "AND V." + SQLStatisticNames.TIME_MS + " < ?";
+//    private static final String STAT_QUERY_SKELETON =
+//            "SELECT " +
+//                    "K." + SQLStatisticNames.NAME + ", " +
+//                    "V." + SQLStatisticNames.PRECISION + ", " +
+//                    "V." + SQLStatisticNames.TIME_MS + ", " +
+//                    "V." + SQLStatisticNames.VALUE_TYPE + ", " +
+//                    "V." + SQLStatisticNames.VALUE + ", " +
+//                    "V." + SQLStatisticNames.COUNT + " ";
+//
+//    private static final String STAT_QUERY_FROM_AND_WHERE_PARTS =
+//            "FROM " + SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME + " K " +
+//                    "JOIN " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME + " V " +
+//                    "ON (K." + SQLStatisticNames.ID + " = V." + SQLStatisticNames.SQL_STATISTIC_KEY_FOREIGN_KEY + ") " +
+//                    "WHERE K." + SQLStatisticNames.NAME + " LIKE ? " +
+//                    "AND K." + SQLStatisticNames.NAME + " REGEXP ? " +
+//                    "AND V." + SQLStatisticNames.TIME_MS + " >= ? " +
+//                    "AND V." + SQLStatisticNames.TIME_MS + " < ?";
 
 
     private final TaskMonitor taskMonitor;
@@ -131,6 +131,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
     private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
 
+    @SuppressWarnings("unused") // Called by the task manager
     @Inject
     StatStoreSearchTaskHandler(final TaskMonitor taskMonitor,
                                final StatisticsFactory statisticsFactory,
@@ -213,11 +214,19 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                 //required by all coprocessors
                 Function<ResultSet, String[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, entity);
 
-                flowableQueryResults.blockingSubscribe(resultSet -> {
-                    final String[] data = resultSetMapper.apply(resultSet);
-                    LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
-                    dataArrayConsumers.forEach(resultSetConsumer -> resultSetConsumer.accept(data));
-                });
+                flowableQueryResults
+                        .map(resultSetMapper) // convert the ResultSet into a String[]
+                        .subscribe(
+                                data -> {
+                                    LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
+                                    dataArrayConsumers.forEach(dataArrayConsumer -> dataArrayConsumer.accept(data));
+                                },
+                                throwable -> {
+                                    throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
+                                },
+                                () -> {
+                                    LOGGER.debug("onComplete called");
+                                });
 
                 resultCollector.handle(payloadMap);
             }
@@ -427,37 +436,6 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
      * @return A list of {@link StatisticTag} objects built from the tag/value
      * token pairs in the string or an empty list if there are none.
      */
-    private List<StatisticTag> extractTagsListFromColumn(final String columnValue) {
-        final String[] tokens = columnValue.split(SQLStatisticConstants.NAME_SEPARATOR);
-        final List<StatisticTag> statisticTags = new ArrayList<StatisticTag>();
-
-        if (tokens.length == 1) {
-            // no separators so there are no tags
-        } else if (tokens.length % 2 == 0) {
-            throw new RuntimeException(
-                    String.format("Expecting an odd number of tokens, columnValue: %s", columnValue));
-        } else {
-            // stat name will be at pos 0 so start at 1
-            for (int i = 1; i < tokens.length; i++) {
-                final String tag = tokens[i++];
-                String value = tokens[i];
-                if (value.equals(SQLStatisticConstants.NULL_VALUE_STRING)) {
-                    value = null;
-                }
-                final StatisticTag statisticTag = new StatisticTag(tag, value);
-                statisticTags.add(statisticTag);
-            }
-        }
-
-        return statisticTags;
-    }
-
-    /**
-     * @param columnValue The value from the STAT_KEY.NAME column which could be of the
-     *                    form 'StatName' or 'StatName¬Tag1¬Tag1Val1¬Tag2¬Tag2Val1'
-     * @return A list of {@link StatisticTag} objects built from the tag/value
-     * token pairs in the string or an empty list if there are none.
-     */
     private Map<String, String> extractTagsMapFromColumn(final String columnValue) {
         final String[] tokens = columnValue.split(SQLStatisticConstants.NAME_SEPARATOR);
         final Map<String, String> statisticTags = new HashMap<>();
@@ -478,7 +456,6 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                 statisticTags.put(tag, value);
             }
         }
-
         return statisticTags;
     }
 
@@ -492,10 +469,10 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT");
         sql.append(" K." + SQLStatisticNames.NAME + ",");
-        sql.append(" V." + SQLStatisticNames.PRECISION + ", ");
-        sql.append(" V." + SQLStatisticNames.TIME_MS + ", ");
-        sql.append(" V." + SQLStatisticNames.VALUE + ", ");
-        sql.append(" V." + SQLStatisticNames.COUNT + " ");
+        sql.append(" V." + SQLStatisticNames.PRECISION + ",");
+        sql.append(" V." + SQLStatisticNames.TIME_MS + ",");
+        sql.append(" V." + SQLStatisticNames.VALUE + ",");
+        sql.append(" V." + SQLStatisticNames.COUNT);
 
         //determine which columns we want to come back as an optimisation
         //to reduce the data being process that will not be used in the query results
@@ -516,13 +493,13 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 //        sql.append(selectCols);
 
         //join to key table
-        sql.append(" FROM " + SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME + " K ");
-        sql.join(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME,
-                "K",
+        sql.append(" FROM " + SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME + " K");
+        sql.join(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME,
+                "V",
                 "K",
                 SQLStatisticNames.ID,
                 "V",
-                SQLStatisticNames.SQL_STATISTIC_VALUE_FOREIGN_KEY);
+                SQLStatisticNames.SQL_STATISTIC_KEY_FOREIGN_KEY);
 
         // do a like on the name first so we can hit the index before doing the slow regex matches
         sql.append(" WHERE K." + SQLStatisticNames.NAME + " LIKE ");
@@ -535,7 +512,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         //add the time bounds
         sql.append(" AND V." + SQLStatisticNames.TIME_MS + " >= ");
         sql.arg(criteria.getPeriod().getFromMs());
-        sql.append("AND V." + SQLStatisticNames.TIME_MS + " < ");
+        sql.append(" AND V." + SQLStatisticNames.TIME_MS + " < ");
         sql.arg(criteria.getPeriod().getToMs());
 
         //now add the query terms
@@ -544,7 +521,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         final int maxResults = propertyService.getIntProperty(PROP_KEY_SQL_SEARCH_MAX_RESULTS, 100000);
         sql.append(" LIMIT " + maxResults);
 
-        LOGGER.debug("Search query: %s", sql.toString());
+        LOGGER.debug("Search query: {}", sql.toString());
 
         return sql;
     }
@@ -567,6 +544,9 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
     private io.reactivex.functions.Function<ResultSet, String[]> buildResultSetMapper(
             final FieldIndexMap fieldIndexMap,
             final StatisticStoreEntity statisticStoreEntity) {
+
+        LAMBDA_LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
+                fieldIndexMap, statisticStoreEntity.getUuid()));
 
         final List<String> allFields = new ArrayList<>();
         allFields.add(StatisticStoreEntity.FIELD_NAME_DATE_TIME);
@@ -591,7 +571,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                         } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_COUNT)) {
                             extractor = (rs, arr, cache) ->
                                     arr[idx] = getResultSetLong(rs, SQLStatisticNames.COUNT);
-                        } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_COUNT)) {
+                        } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_PRECISION_MS)) {
                             extractor = (rs, arr, cache) -> {
 
                                 // the precision in the table represents the number of zeros
@@ -659,8 +639,20 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
         final int arrSize = fieldIndexMap.size();
 
+        LAMBDA_LOGGER.debug(() -> String.format("Extraction wrappers\n%s",
+                extractionWrappers.stream()
+                        .sorted(Comparator.comparing(FieldExtractionFunctionWrapper::getIdx))
+                        .map(FieldExtractionFunctionWrapper::toString)
+                        .map(str -> "  " + str)
+                        .collect(Collectors.joining("\n"))));
+
         //the mapping function that will be used on each row in the resultSet
         return rs -> {
+            LOGGER.trace("Mapping a row");
+            Preconditions.checkNotNull(rs);
+            if (rs.isClosed()) {
+                throw new RuntimeException("ResultSet is closed");
+            }
             //the data array we are populating
             final String[] data = new String[arrSize];
             //state to hold while mapping this row
@@ -669,10 +661,16 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
             //run each of our field extractors to fill up the data arr
             extractionWrappers.forEach(extractionWrapper ->
                     extractionWrapper.getExtractor().extract(rs, data, fieldValueCache));
+            LAMBDA_LOGGER.trace(() -> {
+                try {
+                    return String.format("Mapped resultSet row %s to %s", rs.getRow(), Arrays.toString(data));
+                } catch (SQLException e) {
+                    throw new RuntimeException(String.format("Error getting current row number: %s", e.getMessage()), e);
+                }
+            });
             return data;
         };
     }
-
 
     private String getResultSetLong(final ResultSet resultSet, final String column) {
         try {
@@ -733,6 +731,30 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         public ValueExtractor getExtractor() {
             return extractor;
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final FieldExtractionFunctionWrapper wrapper = (FieldExtractionFunctionWrapper) o;
+            return idx == wrapper.idx &&
+                    Objects.equals(fieldName, wrapper.fieldName) &&
+                    Objects.equals(extractor, wrapper.extractor);
+        }
+
+        @Override
+        public int hashCode() {
+
+            return Objects.hash(idx, fieldName, extractor);
+        }
+
+        @Override
+        public String toString() {
+            return "FieldExtractionFunctionWrapper{" +
+                    "idx=" + idx +
+                    ", fieldName='" + fieldName + '\'' +
+                    '}';
+        }
     }
 
     private Flowable<ResultSet> getFlowableQueryResults(final SqlBuilder sql) {
@@ -740,21 +762,65 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
         //Not thread safe as eachOnNext will get the same ResultSet instance, however its position
         //will have mode on each time.
-        Flowable<ResultSet> resultSetFlowable = Flowable.using(
-                PreparedStatementFactory::new,
-                factory -> factory.create(statisticsDataSource, sql),
-                PreparedStatementFactory::dispose)
-                .flatMap(ps ->
-                        Flowable.<ResultSet, ResultSet>generate(
-                                ps::executeQuery,
-                                (rs, emitter) -> {
-                                    if (rs.next()) {
-                                        emitter.onNext(rs);
-                                    } else {
-                                        emitter.onComplete();
-                                    }
-                                }));
+        Flowable<ResultSet> resultSetFlowable = Flowable
+                .using(
+                        () -> new PreparedStatementResourceHolder(statisticsDataSource, sql),
+                        factory -> {
+                            LOGGER.debug("Converting factory to a flowable");
+                            Preconditions.checkNotNull(factory);
+                            PreparedStatement ps = factory.getPreparedStatement();
+                            return Flowable.generate(
+                                    () -> {
+                                        LAMBDA_LOGGER.debug(() -> String.format("Executing query %s", ps.toString()));
+                                        try {
+                                            return ps.executeQuery();
+                                        } catch (SQLException e) {
+                                            throw new RuntimeException(String.format("Error executing query %s, %s",
+                                                    ps.toString(), e.getMessage()), e);
+                                        }
+                                    },
+                                    (rs, emitter) -> {
+                                        if (rs.next()) {
+                                            LOGGER.trace("calling onNext");
+                                            emitter.onNext(rs);
+                                        } else {
+                                            LOGGER.debug("calling onComplete");
+                                            emitter.onComplete();
+                                        }
+                                    });
 
+                        },
+                        PreparedStatementResourceHolder::dispose);
+
+
+//                .using(
+//                        PreparedStatementFactory::new,
+//                        factory -> factory.create(statisticsDataSource, sql),
+//                        PreparedStatementFactory::dispose)
+//                .flatMap(ps -> {
+//                    Preconditions.checkNotNull(ps);
+//                    return Flowable.<ResultSet, ResultSet>generate(
+//                            () -> {
+//                                LAMBDA_LOGGER.debug(() -> String.format("Executing query %s", ps.toString()));
+//                                try {
+//                                    return ps.executeQuery();
+//                                } catch (SQLException e) {
+//                                    throw new RuntimeException(String.format("Error executing query %s, %s",
+//                                            ps.toString(), e.getMessage()), e);
+//                                }
+//                            },
+//                            (rs, emitter) -> {
+//                                LOGGER.trace("emitter called");
+//                                if (rs.next()) {
+//                                    emitter.onNext(rs);
+//                                } else {
+//                                    LOGGER.debug("emitter complete");
+//                                    emitter.onComplete();
+//                                }
+//                            });
+//                });
+
+        LOGGER.debug("Returning flowable");
         return resultSetFlowable;
     }
 
@@ -783,6 +849,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         public void dispose() {
             if (preparedStatement != null) {
                 try {
+                    LOGGER.debug("Closing preparedStatement");
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new RuntimeException("Error closing preparedStatement", e);
@@ -791,6 +858,55 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
             }
             if (connection != null) {
                 try {
+                    LOGGER.debug("Closing connection");
+                    connection.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException("Error closing connection", e);
+                }
+                connection = null;
+            }
+        }
+    }
+
+    public class PreparedStatementResourceHolder {
+        private Connection connection;
+        private PreparedStatement preparedStatement;
+
+        public PreparedStatementResourceHolder(final DataSource dataSource, final SqlBuilder sql) {
+            try {
+                connection = dataSource.getConnection();
+            } catch (SQLException e) {
+                throw new RuntimeException("Error getting connection", e);
+            }
+            try {
+                preparedStatement = connection.prepareStatement(sql.toString());
+                preparedStatement.setFetchSize(200);
+
+                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
+                LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement.toString()));
+
+            } catch (SQLException e) {
+                throw new RuntimeException(String.format("Error preparing statement for sql [%s]", sql.toString()), e);
+            }
+        }
+
+        public PreparedStatement getPreparedStatement() {
+            return preparedStatement;
+        }
+
+        public void dispose() {
+            if (preparedStatement != null) {
+                try {
+                    LOGGER.debug("Closing preparedStatement");
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException("Error closing preparedStatement", e);
+                }
+                preparedStatement = null;
+            }
+            if (connection != null) {
+                try {
+                    LOGGER.debug("Closing connection");
                     connection.close();
                 } catch (SQLException e) {
                     throw new RuntimeException("Error closing connection", e);

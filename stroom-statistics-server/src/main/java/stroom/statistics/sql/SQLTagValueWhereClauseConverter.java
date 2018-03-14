@@ -112,7 +112,7 @@ public class SQLTagValueWhereClauseConverter {
                 }
                 i++;
             }
-            sql.append(" ) ");
+            sql.append(" )");
         }
     }
 }
