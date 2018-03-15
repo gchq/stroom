@@ -29,25 +29,14 @@ import stroom.mapreduce.BlockingPairQueue;
 import stroom.mapreduce.PairQueue;
 import stroom.mapreduce.UnsafePairQueue;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.CompiledDepths;
-import stroom.query.CompiledFields;
-import stroom.query.Item;
-import stroom.query.ItemMapper;
-import stroom.query.ItemPartitioner;
-import stroom.query.Payload;
-import stroom.query.TableCoprocessorSettings;
-import stroom.query.TablePayload;
+import stroom.query.*;
 import stroom.query.shared.TableSettings;
 import stroom.security.SecurityContext;
 import stroom.statistics.common.FindEventCriteria;
-import stroom.statistics.common.StatisticDataPoint;
-import stroom.statistics.common.StatisticDataSet;
 import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.statistics.server.common.AbstractStatistics;
-import stroom.statistics.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.SQLStatisticConstants;
@@ -55,7 +44,6 @@ import stroom.statistics.sql.SQLStatisticNames;
 import stroom.statistics.sql.SQLTagValueWhereClauseConverter;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.VoidResult;
@@ -69,19 +57,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unused") // Instantiated by TaskManager
 @TaskHandlerBean(task = StatStoreSearchTask.class)
 @Scope(value = StroomScope.TASK)
 public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSearchTask, VoidResult> {
@@ -89,7 +69,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
     private static final Logger LOGGER = LoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
 
-    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
+    private static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
 
     //defines how the entity fields relate to the table columns
 //    private static final Map<String, List<String>> fieldToColumnsMap = ImmutableMap.<String, List<String>>builder()
@@ -159,22 +139,6 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
                 Preconditions.checkNotNull(entity);
 
-                // Get the statistic store service class based on the engine of the
-                // datasource being searched
-                final Statistics statisticEventStore;
-                statisticEventStore = statisticsFactory.instance(entity.getEngineName());
-
-//                final StatisticDataSet statisticDataSet;
-//                if (statisticEventStore instanceof AbstractStatistics) {
-//                    statisticDataSet = ((AbstractStatistics) statisticEventStore)
-//                            .searchStatisticsData(task.getSearch(), entity);
-//                } else {
-//                    throw new RuntimeException(String.format("Unable to cast %s to %s for engineName %s",
-//                            statisticEventStore.getClass().getName(),
-//                            AbstractStatistics.class.getName(),
-//                            entity.getEngineName()));
-//                }
-
                 // Produce payloads for each coprocessor.
                 final Map<Integer, Payload> payloadMap = new HashMap<>();
 
@@ -190,6 +154,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
                 Flowable<ResultSet> flowableQueryResults = getFlowableQueryResults(sql);
 
+                // each coporcessor will have its own consumer of the String[]
                 List<Consumer<String[]>> dataArrayConsumers = new ArrayList<>();
 
                 //fieldIndexMap is common across all coprocessors as we will have a single String[] that will
@@ -200,7 +165,9 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                 //each coprocessor has its own settings and field requirements
                 task.getCoprocessorMap().forEach((id, coprocessorSettings) -> {
 
-                    Consumer<String[]> dataArrayConsumer = compileProcessorSettings(
+                    //build a consumer that will accept a String[] and feed it into the
+                    //item mapper for the coprocessor
+                    Consumer<String[]> dataArrayConsumer = buildDataArrayConsumer(
                             task,
                             payloadMap,
                             fieldIndexMap,
@@ -214,20 +181,23 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                 //required by all coprocessors
                 Function<ResultSet, String[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, entity);
 
+                // subscribe to the flowable, mapping each resultSet to a String[]
                 flowableQueryResults
                         .map(resultSetMapper) // convert the ResultSet into a String[]
                         .subscribe(
                                 data -> {
                                     LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
-                                    dataArrayConsumers.forEach(dataArrayConsumer -> dataArrayConsumer.accept(data));
+                                    // give the data array to each of our coprocessor consumers
+                                    dataArrayConsumers.forEach(dataArrayConsumer ->
+                                            dataArrayConsumer.accept(data));
                                 },
                                 throwable -> {
-                                    throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
+                                    throw new RuntimeException(String.format("Error in flow, %s",
+                                            throwable.getMessage()), throwable);
                                 },
-                                () -> {
-                                    LOGGER.debug("onComplete called");
-                                });
+                                () -> LOGGER.debug("onComplete called"));
 
+                // give the processed results to the collector
                 resultCollector.handle(payloadMap);
             }
 
@@ -241,7 +211,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         }
     }
 
-    private Consumer<String[]> compileProcessorSettings(
+    private Consumer<String[]> buildDataArrayConsumer(
             final StatStoreSearchTask task,
             final Map<Integer, Payload> payloadMap,
             final FieldIndexMap fieldIndexMap,
@@ -289,147 +259,6 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         };
     }
 
-    private void performSearch(final StatisticStoreEntity dataSource,
-                               final ItemMapper mapper,
-                               final StatisticDataSet statisticDataSet,
-                               final FieldIndexMap fieldIndexMap) {
-        final List<String> tagsForStatistic = dataSource.getFieldNames();
-
-        final int[] indexes = new int[7 + tagsForStatistic.size()];
-        int i = 0;
-
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_DATE_TIME);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_COUNT);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_VALUE);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_MIN_VALUE);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_MAX_VALUE);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_PRECISION);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_PRECISION_MS);
-
-        for (final String tag : tagsForStatistic) {
-            indexes[i++] = fieldIndexMap.get(tag);
-        }
-
-        for (final StatisticDataPoint dataPoint : statisticDataSet) {
-            final Map<String, String> tagMap = dataPoint.getTagsAsMap();
-
-            final long precisionMs = dataPoint.getPrecisionMs();
-
-            final EventStoreTimeIntervalEnum interval = EventStoreTimeIntervalEnum.fromColumnInterval(precisionMs);
-            String precisionText;
-            if (interval != null) {
-                precisionText = interval.longName();
-            } else {
-                // could be a precision that doesn't match one of our interval
-                // sizes
-                precisionText = "-";
-            }
-
-            final String[] data = new String[fieldIndexMap.size()];
-            i = 0;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = DateUtil.createNormalDateTimeString(dataPoint.getTimeMs());
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = String.valueOf(dataPoint.getCount());
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = String.valueOf(dataPoint.getValue());
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = String.valueOf(dataPoint.getMinValue());
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = String.valueOf(dataPoint.getMaxValue());
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = precisionText;
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = Long.toString(precisionMs);
-            }
-            i++;
-
-            for (final String tag : tagsForStatistic) {
-                if (indexes[i] != -1) {
-                    data[indexes[i]] = tagMap.get(tag);
-                }
-                i++;
-            }
-
-            mapper.collect(null, data);
-        }
-    }
-
-    private StatisticDataSet performStatisticQuery(final StatisticStoreEntity dataSource,
-                                                   final FindEventCriteria criteria) {
-        final Set<StatisticDataPoint> dataPoints = new HashSet<StatisticDataPoint>();
-
-        // TODO need to fingure out how we get the precision
-        final StatisticDataSet statisticDataSet = new StatisticDataSet(dataSource.getName(),
-                dataSource.getStatisticType(), 1000L, dataPoints);
-
-        /*
-        try (final Connection connection = statisticsDataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = buildSearchPreparedStatement(dataSource, criteria, connection)) {
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        final StatisticType statisticType = StatisticType.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(resultSet.getByte(SQLStatisticNames.VALUE_TYPE));
-
-                        final List<StatisticTag> statisticTags = extractStatisticTagsFromColumn(
-                                resultSet.getString(SQLStatisticNames.NAME));
-                        final long timeMs = resultSet.getLong(SQLStatisticNames.TIME_MS);
-
-                        // the precision in the table represents the number of zeros
-                        // of millisecond precision, e.g.
-                        // 6=1,000,000ms
-                        final long precisionMs = (long) Math.pow(10, resultSet.getInt(SQLStatisticNames.PRECISION));
-
-                        StatisticDataPoint statisticDataPoint;
-
-                        if (StatisticType.COUNT.equals(statisticType)) {
-                            statisticDataPoint = StatisticDataPoint.countInstance(timeMs, precisionMs, statisticTags,
-                                    resultSet.getLong(SQLStatisticNames.COUNT));
-                        } else {
-                            final double aggregatedValue = resultSet.getDouble(SQLStatisticNames.VALUE);
-                            final long count = resultSet.getLong(SQLStatisticNames.COUNT);
-
-                            // the aggregateValue is sum of all values against that
-                            // key/time. We therefore need to get the
-                            // average using the count column
-                            final double averagedValue = count != 0 ? (aggregatedValue / count) : 0;
-
-                            // min/max are not supported by SQL stats so use -1
-                            statisticDataPoint = StatisticDataPoint.valueInstance(timeMs, precisionMs, statisticTags,
-                                    averagedValue, count, -1, -1);
-                        }
-
-                        statisticDataSet.addDataPoint(statisticDataPoint);
-                    }
-                }
-            }
-        } catch (final SQLException sqlEx) {
-            LOGGER.error("performStatisticQuery failed", sqlEx);
-            throw new RuntimeException("performStatisticQuery failed", sqlEx);
-        }
-       */
-        return statisticDataSet;
-    }
-
     /**
      * @param columnValue The value from the STAT_KEY.NAME column which could be of the
      *                    form 'StatName' or 'StatName¬Tag1¬Tag1Val1¬Tag2¬Tag2Val1'
@@ -459,8 +288,27 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         return statisticTags;
     }
 
+    /**
+     * Construct the sql select for the query's criteria
+     */
     private SqlBuilder buildSql(final StatisticStoreEntity dataSource,
                                 final FindEventCriteria criteria) {
+        /**
+         * SQL for testing querying the stat/tag names
+         * <p>
+         * create table test (name varchar(255)) ENGINE=InnoDB DEFAULT
+         * CHARSET=latin1;
+         * <p>
+         * insert into test values ('StatName1');
+         * <p>
+         * insert into test values ('StatName2¬Tag1¬Val1¬Tag2¬Val2');
+         * <p>
+         * insert into test values ('StatName2¬Tag2¬Val2¬Tag1¬Val1');
+         * <p>
+         * select * from test where name REGEXP '^StatName1(¬|$)';
+         * <p>
+         * select * from test where name REGEXP '¬Tag1¬Val1(¬|$)';
+         */
 
         final RollUpBitMask rollUpBitMask = AbstractStatistics.buildRollUpBitMaskFromCriteria(criteria, dataSource);
 
@@ -558,11 +406,11 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
         //construct a list of field extractors that can populate the appropriate bit of the data arr
         //when given a resultSet row
-        List<FieldExtractionFunctionWrapper> extractionWrappers = allFields.stream()
+        List<ValueExtractor> valueExtractors = allFields.stream()
                 .map(fieldName -> {
                     int idx = fieldIndexMap.get(fieldName);
                     if (idx == -1) {
-                        return Optional.<FieldExtractionFunctionWrapper>empty();
+                        return Optional.<ValueExtractor>empty();
                     } else {
                         ValueExtractor extractor;
                         if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
@@ -630,7 +478,10 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                         } else {
                             throw new RuntimeException(String.format("Unexpected fieldName %s", fieldName));
                         }
-                        return Optional.of(new FieldExtractionFunctionWrapper(idx, fieldName, extractor));
+                        LAMBDA_LOGGER.debug(() ->
+                                String.format("Adding extraction function for field %s, idx %s",
+                                        fieldName, idx));
+                        return Optional.of(extractor);
                     }
                 })
                 .filter(Optional::isPresent)
@@ -639,16 +490,8 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
         final int arrSize = fieldIndexMap.size();
 
-        LAMBDA_LOGGER.debug(() -> String.format("Extraction wrappers\n%s",
-                extractionWrappers.stream()
-                        .sorted(Comparator.comparing(FieldExtractionFunctionWrapper::getIdx))
-                        .map(FieldExtractionFunctionWrapper::toString)
-                        .map(str -> "  " + str)
-                        .collect(Collectors.joining("\n"))));
-
         //the mapping function that will be used on each row in the resultSet
         return rs -> {
-            LOGGER.trace("Mapping a row");
             Preconditions.checkNotNull(rs);
             if (rs.isClosed()) {
                 throw new RuntimeException("ResultSet is closed");
@@ -658,9 +501,10 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
             //state to hold while mapping this row
             final Map<String, String> fieldValueCache = new HashMap<>();
 
-            //run each of our field extractors to fill up the data arr
-            extractionWrappers.forEach(extractionWrapper ->
-                    extractionWrapper.getExtractor().extract(rs, data, fieldValueCache));
+            //run each of our field extractors against the resultSet to fill up the data arr
+            valueExtractors.forEach(valueExtractor ->
+                    valueExtractor.extract(rs, data, fieldValueCache));
+
             LAMBDA_LOGGER.trace(() -> {
                 try {
                     return String.format("Mapped resultSet row %s to %s", rs.getRow(), Arrays.toString(data));
@@ -680,22 +524,6 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         }
     }
 
-    private String getResultSetDouble(final ResultSet resultSet, final String column) {
-        try {
-            return Double.toString(resultSet.getDouble(column));
-        } catch (SQLException e) {
-            throw new RuntimeException(String.format("Error extracting field %s", column), e);
-        }
-    }
-
-    private String getResultSetInt(final ResultSet resultSet, final String column) {
-        try {
-            return Integer.toString(resultSet.getInt(column));
-        } catch (SQLException e) {
-            throw new RuntimeException(String.format("Error extracting field %s", column), e);
-        }
-    }
-
     private String getResultSetString(final ResultSet resultSet, final String column) {
         try {
             return resultSet.getString(column);
@@ -704,63 +532,25 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         }
     }
 
-
+    @FunctionalInterface
     private interface ValueExtractor {
-        void extract(final ResultSet resultSet, final String[] data, final Map<String, String> fieldValueCache);
-    }
-
-    private static class FieldExtractionFunctionWrapper {
-        final int idx;
-        final String fieldName;
-        final StatStoreSearchTaskHandler.ValueExtractor extractor;
-
-        public FieldExtractionFunctionWrapper(final int idx, final String fieldName, final ValueExtractor extractor) {
-            this.idx = idx;
-            this.fieldName = fieldName;
-            this.extractor = extractor;
-        }
-
-        public int getIdx() {
-            return idx;
-        }
-
-        public String getFieldName() {
-            return fieldName;
-        }
-
-        public ValueExtractor getExtractor() {
-            return extractor;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            final FieldExtractionFunctionWrapper wrapper = (FieldExtractionFunctionWrapper) o;
-            return idx == wrapper.idx &&
-                    Objects.equals(fieldName, wrapper.fieldName) &&
-                    Objects.equals(extractor, wrapper.extractor);
-        }
-
-        @Override
-        public int hashCode() {
-
-            return Objects.hash(idx, fieldName, extractor);
-        }
-
-        @Override
-        public String toString() {
-            return "FieldExtractionFunctionWrapper{" +
-                    "idx=" + idx +
-                    ", fieldName='" + fieldName + '\'' +
-                    '}';
-        }
+        /**
+         * Function for extracting values from a {@link ResultSet} and placing them into the passed String[]
+         * @param resultSet The {@link ResultSet} instance to extract data from. It is assumed the {@link ResultSet}
+         *                  has already been positioned at the desired row. next() should not be called on the
+         *                  resultSet.
+         * @param data      The data array to populate
+         * @param fieldValueCache   A map of fieldName=>fieldValue that can be used to hold state while
+         *                          processing a row
+         */
+        void extract(final ResultSet resultSet,
+                     final String[] data,
+                     final Map<String, String> fieldValueCache);
     }
 
     private Flowable<ResultSet> getFlowableQueryResults(final SqlBuilder sql) {
 
-
-        //Not thread safe as eachOnNext will get the same ResultSet instance, however its position
+        //Not thread safe as each onNext will get the same ResultSet instance, however its position
         //will have mode on each time.
         Flowable<ResultSet> resultSetFlowable = Flowable
                 .using(
@@ -780,6 +570,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                                         }
                                     },
                                     (rs, emitter) -> {
+                                        //advance the resultSet, if it is a row emit it, else finish the flow
                                         if (rs.next()) {
                                             LOGGER.trace("calling onNext");
                                             emitter.onNext(rs);
@@ -792,87 +583,15 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                         },
                         PreparedStatementResourceHolder::dispose);
 
-
-//                .using(
-//                        PreparedStatementFactory::new,
-//                        factory -> factory.create(statisticsDataSource, sql),
-//                        PreparedStatementFactory::dispose)
-//                .flatMap(ps -> {
-//                    Preconditions.checkNotNull(ps);
-//                    return Flowable.<ResultSet, ResultSet>generate(
-//                            () -> {
-//                                LAMBDA_LOGGER.debug(() -> String.format("Executing query %s", ps.toString()));
-//                                try {
-//                                    return ps.executeQuery();
-//                                } catch (SQLException e) {
-//                                    throw new RuntimeException(String.format("Error executing query %s, %s",
-//                                            ps.toString(), e.getMessage()), e);
-//                                }
-//                            },
-//                            (rs, emitter) -> {
-//                                LOGGER.trace("emitter called");
-//                                if (rs.next()) {
-//                                    emitter.onNext(rs);
-//                                } else {
-//                                    LOGGER.debug("emitter complete");
-//                                    emitter.onComplete();
-//                                }
-//                            });
-//                });
-
         LOGGER.debug("Returning flowable");
         return resultSetFlowable;
     }
 
-    public class PreparedStatementFactory {
-        private Connection connection = null;
-        private PreparedStatement preparedStatement = null;
-
-        public Flowable<PreparedStatement> create(final DataSource dataSource, final SqlBuilder sql) {
-            try {
-                connection = dataSource.getConnection();
-            } catch (SQLException e) {
-                throw new RuntimeException("Error getting connection", e);
-            }
-            try {
-                preparedStatement = connection.prepareStatement(sql.toString());
-                preparedStatement.setFetchSize(200);
-
-                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
-                LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement.toString()));
-                return Flowable.just(preparedStatement);
-            } catch (SQLException e) {
-                throw new RuntimeException(String.format("Error preparing statement for sql [%s]", sql.toString()), e);
-            }
-        }
-
-        public void dispose() {
-            if (preparedStatement != null) {
-                try {
-                    LOGGER.debug("Closing preparedStatement");
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error closing preparedStatement", e);
-                }
-                preparedStatement = null;
-            }
-            if (connection != null) {
-                try {
-                    LOGGER.debug("Closing connection");
-                    connection.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error closing connection", e);
-                }
-                connection = null;
-            }
-        }
-    }
-
-    public class PreparedStatementResourceHolder {
+    private class PreparedStatementResourceHolder {
         private Connection connection;
         private PreparedStatement preparedStatement;
 
-        public PreparedStatementResourceHolder(final DataSource dataSource, final SqlBuilder sql) {
+        PreparedStatementResourceHolder(final DataSource dataSource, final SqlBuilder sql) {
             try {
                 connection = dataSource.getConnection();
             } catch (SQLException e) {
@@ -890,11 +609,11 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
             }
         }
 
-        public PreparedStatement getPreparedStatement() {
+        PreparedStatement getPreparedStatement() {
             return preparedStatement;
         }
 
-        public void dispose() {
+        void dispose() {
             if (preparedStatement != null) {
                 try {
                     LOGGER.debug("Closing preparedStatement");
