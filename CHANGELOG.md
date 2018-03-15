@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#680** : Fixed the order of streams in the data viewer to descending by date
+
 * Issue **#679** : Fixed the editing of Stroom properties that are 'persistent'.
 
 * Issue **#681** : Added dry run to check processor filters will convert to find stream criteria. Throws error to UI if fails.

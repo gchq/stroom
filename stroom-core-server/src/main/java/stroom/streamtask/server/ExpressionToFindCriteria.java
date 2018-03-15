@@ -2,8 +2,6 @@ package stroom.streamtask.server;
 
 import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.dictionary.shared.DictionaryDoc;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
@@ -34,7 +32,6 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
@@ -84,7 +81,8 @@ public class ExpressionToFindCriteria {
         criteria.setFetchSet(findStreamCriteria.getFetchSet());
         criteria.setPageRequest(findStreamCriteria.getPageRequest());
         criteria.setStreamIdRange(findStreamCriteria.getStreamIdRange());
-        if (criteria.getSortList() != null && criteria.getSortList().size() > 0) {
+
+        if (findStreamCriteria.getSortList() != null) {
             findStreamCriteria.getSortList().forEach(criteria::addSort);
         }
 
