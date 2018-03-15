@@ -65,9 +65,9 @@ class RemoteFeedServiceImpl implements RemoteFeedService {
 //                || GroupAuthorisation.RESTRICTED.equals(groupAuthorisation)) {
 //            SecurityContext securityContext = null;
 //
-//            if (StringUtils.hasText(request.getSenderDn())) {
+//            if (request.getSenderDn( != null && !request.getSenderDn(.isEmpty())) {
 //                final String cn = CertificateUtil.extractCNFromDN(request.getSenderDn());
-//                if (StringUtils.hasText(cn)) {
+//                if (cn != null && !cn.isEmpty()) {
 //                    securityContext = securityContextFactory.forUser(cn);
 //                }
 //            }

@@ -219,7 +219,7 @@ public class ConfigFilter extends AbstractXMLFilter {
     private final Set<Integer> getOnlyMatch(final Attributes atts) throws SAXException {
         final String string = atts.getValue(XML_ATTRIBUTE_ONLY_MATCH);
 
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             // Turn the comma separated list into integers.
             final String[] arr = string.split(",");
             final Set<Integer> val = new HashSet<>(arr.length);

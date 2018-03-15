@@ -23,9 +23,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.util.StringUtils;
 import stroom.entity.shared.PermissionException;
 import stroom.security.Insecure;
 import stroom.security.Secured;
@@ -36,7 +33,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 @Aspect
-@Order(Ordered.HIGHEST_PRECEDENCE)
 public class UserSecurityMethodInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserSecurityMethodInterceptor.class);
 
@@ -115,7 +111,7 @@ public class UserSecurityMethodInterceptor {
                 throw PermissionException.createLoginRequiredException(permission, methodName);
             }
 
-            if (StringUtils.hasText(permission)) {
+            if (permission != null && !permission.isEmpty()) {
                 checkAppPermission(permission, methodName);
             }
 

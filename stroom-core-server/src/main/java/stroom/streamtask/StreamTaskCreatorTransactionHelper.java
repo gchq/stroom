@@ -297,7 +297,7 @@ class StreamTaskCreatorTransactionHelper {
                             rowArgs.add(null); //fk_node_id
                         }
                         rowArgs.add(stream.getId()); //fk_strm_id
-                        if (eventRangeData != null && eventRangeData.length() > 0) {
+                        if (eventRangeData != null && !eventRangeData.isEmpty()) {
                             rowArgs.add(eventRangeData); //dat
                         } else {
                             rowArgs.add(null); //dat

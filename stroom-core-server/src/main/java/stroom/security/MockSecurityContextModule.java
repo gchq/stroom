@@ -17,8 +17,6 @@
 package stroom.security;
 
 import com.google.inject.AbstractModule;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 public class MockSecurityContextModule extends AbstractModule {
     @Override

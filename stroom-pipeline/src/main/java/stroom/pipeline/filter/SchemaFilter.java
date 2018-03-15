@@ -16,7 +16,7 @@
 
 package stroom.pipeline.filter;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
@@ -481,7 +481,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
         final StringBuilder where = new StringBuilder();
 
         if (schemaConstraint != null) {
-            if (StringUtils.isNotBlank(schemaConstraint.getSchemaGroup())) {
+            if (!Strings.isNullOrEmpty(schemaConstraint.getSchemaGroup())) {
                 if (where.length() == 0) {
                     where.append(" where ");
                 } else {
@@ -491,7 +491,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
                 where.append(schemaConstraint.getSchemaGroup());
                 where.append("'");
             }
-            if (StringUtils.isNotBlank(schemaConstraint.getNamespaceURI())) {
+            if (!Strings.isNullOrEmpty(schemaConstraint.getNamespaceURI())) {
                 if (where.length() == 0) {
                     where.append(" where ");
                 } else {
@@ -501,7 +501,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
                 where.append(schemaConstraint.getNamespaceURI());
                 where.append("'");
             }
-            if (StringUtils.isNotBlank(schemaConstraint.getSystemId())) {
+            if (!Strings.isNullOrEmpty(schemaConstraint.getSystemId())) {
                 if (where.length() == 0) {
                     where.append(" where ");
                 } else {

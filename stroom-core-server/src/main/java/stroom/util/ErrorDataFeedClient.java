@@ -138,7 +138,7 @@ public final class ErrorDataFeedClient {
 
             System.out.println(
                     "Client Got Response " + response + " in " + (System.currentTimeMillis() - startTime) + "ms");
-            if (msg != null && msg.length() > 0) {
+            if (msg != null && !msg.isEmpty()) {
                 System.out.println(msg);
             }
 

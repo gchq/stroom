@@ -19,7 +19,6 @@ package stroom.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.util.StringUtils;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.StroomEntityManager;
@@ -290,7 +289,7 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         final Secured secured = stroomBeanMethod.getBeanMethod().getAnnotation(Secured.class);
 
         final String name = secured.value();
-        if (StringUtils.hasText(name)) {
+        if (name != null && !name.isEmpty()) {
             appPermissionSet.add(name);
         }
 
@@ -303,7 +302,7 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         final Secured secured = stroomBeanName.getAnnotation(Secured.class);
 
         final String name = secured.value();
-        if (StringUtils.hasText(name)) {
+        if (name != null && !name.isEmpty()) {
             appPermissionSet.add(name);
         }
 

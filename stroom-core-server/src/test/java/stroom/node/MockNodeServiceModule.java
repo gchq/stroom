@@ -17,8 +17,6 @@
 package stroom.node;
 
 import com.google.inject.AbstractModule;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import stroom.properties.MockGlobalPropertyService;
 
 public class MockNodeServiceModule extends AbstractModule {

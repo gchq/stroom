@@ -16,7 +16,7 @@
 
 package stroom.streamstore.fs;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Volume;
@@ -111,7 +111,7 @@ public final class FileSystemUtil {
                 builder.append(c);
             } else {
                 builder.append("#");
-                builder.append(StringUtils.leftPad(Integer.toHexString(c), 3, '0'));
+                builder.append(Strings.padStart(Integer.toHexString(c), 3, '0'));
             }
         }
         return builder.toString();

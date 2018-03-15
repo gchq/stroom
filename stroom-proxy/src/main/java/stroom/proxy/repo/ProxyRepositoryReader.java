@@ -71,7 +71,7 @@ public final class ProxyRepositoryReader {
     }
 
     private static Scheduler createScheduler(final String simpleCron) {
-        if (simpleCron != null && simpleCron.length() > 0) {
+        if (simpleCron != null && !simpleCron.isEmpty()) {
             return SimpleCron.compile(simpleCron).createScheduler();
         }
 

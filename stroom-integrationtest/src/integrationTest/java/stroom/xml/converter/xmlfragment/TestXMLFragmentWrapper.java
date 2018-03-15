@@ -18,10 +18,9 @@ package stroom.xml.converter.xmlfragment;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.guice.PipelineScopeRunnable;
-import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;
 
@@ -50,32 +49,22 @@ public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
 
             // Start by validating the resource.
             if (textConverterType == TextConverterType.DATA_SPLITTER) {
-                try {
-                    TaskScopeContextHolder.addContext();
-                    final XMLValidator xmlValidator = xmlValidatorProvider.get();
-                    final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
-                    Assert.assertTrue(message, message.length() == 0);
-                } finally {
-                    TaskScopeContextHolder.removeContext();
-                }
+                final XMLValidator xmlValidator = xmlValidatorProvider.get();
+                final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
+                Assert.assertTrue(message, message.length() == 0);
             }
 
-            try {
-                TaskScopeContextHolder.addContext();
-                final F2XTestUtil f2xTestUtil = f2XTestUtilProvider.get();
-                final String xml = f2xTestUtil.runF2XTest(textConverterType, textConverterLocation,
-                        new ByteArrayInputStream(
-                                "<record><data name=\"Test Name\" value=\"Test value\"/></record>".getBytes()));
+            final F2XTestUtil f2xTestUtil = f2XTestUtilProvider.get();
+            final String xml = f2xTestUtil.runF2XTest(textConverterType, textConverterLocation,
+                    new ByteArrayInputStream(
+                            "<record><data name=\"Test Name\" value=\"Test value\"/></record>".getBytes()));
 
-                final String example = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>" + "<records " + "xmlns=\"records:2\" "
-                        + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-                        + "xsi:schemaLocation=\"records:2 file://records-v2.0.xsd\" " + "version=\"2.0\">"
-                        + "<record><data name=\"Test Name\" value=\"Test value\"/></record>" + "</records>";
+            final String example = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>" + "<records " + "xmlns=\"records:2\" "
+                    + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+                    + "xsi:schemaLocation=\"records:2 file://records-v2.0.xsd\" " + "version=\"2.0\">"
+                    + "<record><data name=\"Test Name\" value=\"Test value\"/></record>" + "</records>";
 
-                Assert.assertEquals(example, xml);
-            } finally {
-                TaskScopeContextHolder.removeContext();
-            }
+            Assert.assertEquals(example, xml);
         });
     }
 }

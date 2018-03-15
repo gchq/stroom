@@ -166,7 +166,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
             @Override
             public void write(final JSONObject settings) {
                 final String selected = ctrl.getSelected();
-                if (selected != null && selected.length() > 0) {
+                if (selected != null && !selected.isEmpty()) {
                     settings.put(id, new JSONString(selected));
                 }
             }

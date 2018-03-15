@@ -18,17 +18,7 @@ package stroom.query;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.feed.FeedService;
-import stroom.node.NodeService;
-import stroom.pipeline.PipelineService;
-import stroom.streamstore.StreamTypeService;
 import stroom.task.TaskHandler;
-import stroom.util.spring.StroomScope;
-
-import javax.inject.Named;
 
 public class QueryModule extends AbstractModule {
     @Override
@@ -36,12 +26,4 @@ public class QueryModule extends AbstractModule {
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.query.FetchSuggestionsHandler.class);
     }
-    //    @Bean
-//    @Scope(StroomScope.TASK)
-//    public FetchSuggestionsHandler fetchSuggestionsHandler(@Named("cachedFeedService") final FeedService feedService,
-//                                                           @Named("cachedPipelineService") final PipelineService pipelineService,
-//                                                           @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
-//                                                           @Named("cachedNodeService") final NodeService nodeService) {
-//        return new FetchSuggestionsHandler(feedService, pipelineService, streamTypeService, nodeService);
-//    }
 }

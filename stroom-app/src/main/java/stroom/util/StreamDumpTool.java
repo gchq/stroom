@@ -19,7 +19,6 @@ package stroom.util;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
-import org.apache.commons.lang.StringUtils;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionOperator;
@@ -97,11 +96,11 @@ public class StreamDumpTool extends AbstractCommandLineTool {
     private void process(final Injector injector) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
-        if (StringUtils.isNotBlank(createPeriodFrom) && StringUtils.isNotBlank(createPeriodTo)) {
+        if (createPeriodFrom != null && !createPeriodFrom.isEmpty() && createPeriodTo != null && !createPeriodTo.isEmpty()) {
             builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
-        } else if (StringUtils.isNotBlank(createPeriodFrom)) {
+        } else if (createPeriodFrom != null && !createPeriodFrom.isEmpty()) {
             builder.addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
-        } else if (StringUtils.isNotBlank(createPeriodTo)) {
+        } else if (createPeriodTo != null && !createPeriodTo.isEmpty()) {
             builder.addTerm(StreamDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 

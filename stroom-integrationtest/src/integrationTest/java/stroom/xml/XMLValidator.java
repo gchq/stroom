@@ -16,7 +16,6 @@
 
 package stroom.xml;
 
-import org.apache.commons.lang.StringUtils;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -67,7 +66,7 @@ public class XMLValidator {
     public String getInvalidXmlResourceMessage(final String resourceName, final boolean useSchema) {
         return pipelineScopeRunnable.scopeResult(() -> {
             // Only validate if something is provided
-            if (StringUtils.isNotBlank(resourceName)) {
+            if (resourceName != null && !resourceName.isEmpty()) {
                 try {
                     // Buffer the stream.
                     final InputStream inputStream = new BufferedInputStream(

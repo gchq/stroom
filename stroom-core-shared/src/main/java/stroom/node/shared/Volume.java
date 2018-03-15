@@ -240,6 +240,18 @@ public class Volume extends AuditedEntity {
         return ENTITY_TYPE;
     }
 
+    public Volume copy() {
+        final Volume volume = new Volume();
+        volume.path = path;
+        volume.pvolumeType = pvolumeType;
+        volume.pstreamStatus = pstreamStatus;
+        volume.pindexStatus = pindexStatus;
+        volume.node = node;
+        volume.bytesLimit = bytesLimit;
+        volume.volumeState = volumeState;
+        return volume;
+    }
+
     /**
      * A non generic class!
      */

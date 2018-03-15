@@ -20,11 +20,10 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
+import stroom.guice.StroomBeanStore;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.guice.StroomBeanStore;
-import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;
 
@@ -137,28 +136,18 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
                                final int expectedWarnings) {
         validate(textConverterType, textConverterLocation);
 
-        try {
-            TaskScopeContextHolder.addContext();
-            final F2XTestUtil f2xTestUtil = beanStore.getBean(F2XTestUtil.class);
-            final String xml = f2xTestUtil.runFullTest(feed, textConverterType, textConverterLocation, xsltLocation,
-                    dataLocation, expectedWarnings);
-            return xml;
-        } finally {
-            TaskScopeContextHolder.removeContext();
-        }
+        final F2XTestUtil f2xTestUtil = beanStore.getBean(F2XTestUtil.class);
+        final String xml = f2xTestUtil.runFullTest(feed, textConverterType, textConverterLocation, xsltLocation,
+                dataLocation, expectedWarnings);
+        return xml;
     }
 
     private void validate(final TextConverterType textConverterType, final String textConverterLocation) {
-        try {
-            TaskScopeContextHolder.addContext();
-            final XMLValidator xmlValidator = beanStore.getBean(XMLValidator.class);
-            // Start by validating the resource.
-            if (textConverterType == TextConverterType.DATA_SPLITTER) {
-                final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
-                Assert.assertTrue(message, message.length() == 0);
-            }
-        } finally {
-            TaskScopeContextHolder.removeContext();
+        final XMLValidator xmlValidator = beanStore.getBean(XMLValidator.class);
+        // Start by validating the resource.
+        if (textConverterType == TextConverterType.DATA_SPLITTER) {
+            final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
+            Assert.assertTrue(message, message.length() == 0);
         }
     }
 }

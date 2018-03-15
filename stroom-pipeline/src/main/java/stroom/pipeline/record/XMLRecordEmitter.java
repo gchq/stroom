@@ -90,7 +90,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
 
             // Set the encoding to use.
             Charset charset = StreamUtil.DEFAULT_CHARSET;
-            if (encoding != null && encoding.length() > 0) {
+            if (encoding != null && !encoding.isEmpty()) {
                 try {
                     charset = Charset.forName(encoding);
                 } catch (final Exception e) {

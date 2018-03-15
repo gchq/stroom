@@ -11,7 +11,6 @@ dependencies {
     compile project(':stroom-docstore-server')
 
     compile libs.slf4j_api
-    compile libs.spring_context
     compile libs.xml_apis
     compile libs.javax_inject
     compile libs.guice4

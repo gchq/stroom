@@ -2,7 +2,6 @@ package stroom.security;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.stereotype.Component;
 import stroom.logging.AuthenticationEventLog;
 import stroom.security.shared.UserRef;
 import stroom.servlet.SessionListListener;

@@ -2,20 +2,13 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.writer.AbstractDestinationProvider;
-import stroom.pipeline.shared.ElementIcons;
-import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.writer.AbstractDestinationProvider;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.IOException;

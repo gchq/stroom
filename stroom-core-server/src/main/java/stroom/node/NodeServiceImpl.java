@@ -17,7 +17,6 @@
 
 package stroom.node;
 
-import org.springframework.beans.factory.annotation.Value;
 
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.StroomEntityManager;

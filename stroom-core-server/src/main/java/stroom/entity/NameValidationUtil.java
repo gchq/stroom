@@ -39,7 +39,7 @@ public class NameValidationUtil {
 //
 //    public static void validate(final ProvidesNamePattern providesNamePattern, final String name) {
 //        final String pattern = providesNamePattern.getNamePattern();
-//        if (pattern != null && pattern.length() > 0) {
+//        if (pattern != null && !pattern.isEmpty()) {
 //            if (name == null || !name.matches(pattern)) {
 //                throw new EntityServiceException("Invalid name \"" + name + "\" ("
 //                        + pattern + ")");
@@ -48,7 +48,7 @@ public class NameValidationUtil {
 //    }
 
     public static void validate(final String pattern, final String name) {
-        if (pattern != null && pattern.length() > 0) {
+        if (pattern != null && !pattern.isEmpty()) {
             if (name == null || !name.matches(pattern)) {
                 throw new EntityServiceException("Invalid name \"" + name + "\" ("
                         + pattern + ")");

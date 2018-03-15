@@ -17,8 +17,6 @@
 package stroom.properties;
 
 import com.google.inject.AbstractModule;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import stroom.entity.StroomEntityManager;
 import stroom.node.shared.ClientPropertiesService;
 

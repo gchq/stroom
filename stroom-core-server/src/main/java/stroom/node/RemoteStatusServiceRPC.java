@@ -5,9 +5,7 @@ import com.caucho.hessian.server.HessianServlet;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-//import org.springframework.remoting.caucho.HessianServiceExporter;
-//import org.springframework.stereotype.Component;
-
+////
 class RemoteStatusServiceRPC extends HessianServlet implements RemoteStatusService {
     private RemoteStatusService remoteStatusService;
 

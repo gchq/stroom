@@ -18,8 +18,6 @@ package stroom.statistics.sql.internal;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import stroom.properties.StroomPropertyService;
 import stroom.statistics.internal.InternalStatisticsService;
 import stroom.statistics.sql.Statistics;

@@ -18,13 +18,7 @@ package stroom.document;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.entity.EntityServiceBeanRegistry;
-import stroom.logging.DocumentEventLog;
 import stroom.task.TaskHandler;
-import stroom.util.spring.StroomScope;
 
 public class DocumentModule extends AbstractModule {
     @Override
@@ -35,18 +29,4 @@ public class DocumentModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.document.DocumentServiceReadHandler.class);
         taskHandlerBinder.addBinding().to(stroom.document.DocumentServiceWriteHandler.class);
     }
-
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public DocumentServiceReadHandler documentServiceReadHandler(final DocumentService documentService,
-//                                                                 final DocumentEventLog documentEventLog) {
-//        return new DocumentServiceReadHandler(documentService, documentEventLog);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public DocumentServiceWriteHandler documentServiceWriteHandler(final DocumentService documentService,
-//                                                                   final DocumentEventLog documentEventLog) {
-//        return new DocumentServiceWriteHandler(documentService, documentEventLog);
-//    }
 }

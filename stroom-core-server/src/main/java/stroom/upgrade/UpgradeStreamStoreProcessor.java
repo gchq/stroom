@@ -19,7 +19,6 @@ package stroom.upgrade;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.PreparedStatementUtil;
 import stroom.feed.MetaMap;
@@ -199,7 +198,7 @@ class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
                 argObjs.add(stream.getId());
             }
 
-            if (StringUtils.hasText(query)) {
+            if (query != null && !query.isEmpty()) {
                 try (final PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                     PreparedStatementUtil.setArguments(preparedStatement, argObjs);
                     try (final ResultSet resultSet = preparedStatement.executeQuery()) {

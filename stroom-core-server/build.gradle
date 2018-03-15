@@ -43,10 +43,6 @@ dependencies {
     compile libs.hibernate_core
     compile libs.javassist
     compile libs.slf4j_api
-    compile libs.spring_beans
-    compile libs.spring_context
-    compile libs.spring_core
-    compile libs.spring_aop
     compile libs.xml_apis
     compile libs.flyway_core
     compile libs.hsqldb
@@ -54,9 +50,6 @@ dependencies {
     compile libs.vavr
 
     compile libs.c3p0
-    compile libs.spring_tx
-    compile libs.spring_jdbc
-    compile libs.spring_orm
     compile libs.commons_fileupload
     compile libs.guice4
     compile libs.fast_classpath_scanner

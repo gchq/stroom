@@ -19,7 +19,6 @@ package stroom.util;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.FeedService;
@@ -125,11 +124,11 @@ public class StreamGrepTool extends AbstractCommandLineTool {
     private void process(final Injector injector) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
-        if (StringUtils.isNotBlank(createPeriodFrom) && StringUtils.isNotBlank(createPeriodTo)) {
+        if (createPeriodFrom != null && !createPeriodFrom.isEmpty() && createPeriodTo != null && !createPeriodTo.isEmpty()) {
             builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
-        } else if (StringUtils.isNotBlank(createPeriodFrom)) {
+        } else if (createPeriodFrom != null && !createPeriodFrom.isEmpty()) {
             builder.addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
-        } else if (StringUtils.isNotBlank(createPeriodTo)) {
+        } else if (createPeriodTo != null && !createPeriodTo.isEmpty()) {
             builder.addTerm(StreamDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 

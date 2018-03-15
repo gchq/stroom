@@ -16,7 +16,7 @@
 
 package stroom.streamstore.fs;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import stroom.util.ArgsUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -80,7 +80,7 @@ public abstract class ManualCheckStreamPerformance {
         final long average = totalTime / threadTimes.size();
 
         System.out.println(
-                "Average for " + StringUtils.leftPad(msg, 20) + " is " + StringUtils.leftPad("" + average, 10));
+                "Average for " + Strings.padStart(msg, 20, ' ') + " is " + Strings.padStart("" + average, 10, ' '));
     }
 
     public static void main(final String[] args) throws IOException {

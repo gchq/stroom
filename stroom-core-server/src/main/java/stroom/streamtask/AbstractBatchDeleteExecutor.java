@@ -18,7 +18,6 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
 import stroom.properties.StroomPropertyService;
@@ -179,7 +178,7 @@ public abstract class AbstractBatchDeleteExecutor {
     private Long getDeleteAge(final String property) {
         Long age = null;
         final String durationString = propertyService.getProperty(property);
-        if (StringUtils.hasText(durationString)) {
+        if (durationString != null && !durationString.isEmpty()) {
             try {
                 final long duration = ModelStringUtil.parseDurationString(durationString);
                 age = System.currentTimeMillis() - duration;

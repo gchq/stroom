@@ -19,9 +19,7 @@ package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Propagation;
 
-import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.jobsystem.ClusterLockService;
 import stroom.properties.StroomPropertyService;
@@ -95,7 +93,7 @@ class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
 
         long applicableStreamAgeMs = 0;
 
-        if (StringUtils.hasText(streamAttributeDatabaseAge)) {
+        if (streamAttributeDatabaseAge != null && !streamAttributeDatabaseAge.isEmpty()) {
             final long duration = ModelStringUtil.parseDurationString(streamAttributeDatabaseAge);
             applicableStreamAgeMs = System.currentTimeMillis() - duration;
         }

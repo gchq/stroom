@@ -18,10 +18,9 @@ package stroom.xml.converter.datasplitter;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.guice.PipelineScopeRunnable;
-import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;
 
@@ -70,16 +69,11 @@ public class TestDataSplitter2 extends AbstractProcessIntegrationTest {
 
     private void validate(final TextConverterType textConverterType, final String textConverterLocation) {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            try {
-                TaskScopeContextHolder.addContext();
-                final XMLValidator xmlValidator = xmlValidatorProvider.get();
-                // Start by validating the resource.
-                if (textConverterType == TextConverterType.DATA_SPLITTER) {
-                    final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
-                    Assert.assertTrue(message, message.length() == 0);
-                }
-            } finally {
-                TaskScopeContextHolder.removeContext();
+            final XMLValidator xmlValidator = xmlValidatorProvider.get();
+            // Start by validating the resource.
+            if (textConverterType == TextConverterType.DATA_SPLITTER) {
+                final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
+                Assert.assertTrue(message, message.length() == 0);
             }
         });
     }

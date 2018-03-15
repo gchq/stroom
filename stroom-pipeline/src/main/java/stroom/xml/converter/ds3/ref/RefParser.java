@@ -16,6 +16,7 @@
 
 package stroom.xml.converter.ds3.ref;
 
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class RefParser {
     public List<RefFactory> parse(final String reference) {
         final List<RefFactory> sections = new ArrayList<>();
 
-        if (reference != null && reference.length() > 0) {
+        if (reference != null && !reference.isEmpty()) {
             final char[] chars = reference.toCharArray();
             boolean inQuote = false;
             boolean inArray = false;

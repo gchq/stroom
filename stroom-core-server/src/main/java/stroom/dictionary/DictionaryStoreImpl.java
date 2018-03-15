@@ -294,7 +294,7 @@ class DictionaryStoreImpl implements DictionaryStore {
             if (doc.getImports() != null) {
                 for (final DocRef ref : doc.getImports()) {
                     final String data = doGetCombinedData(ref, visited);
-                    if (data != null && data.length() > 0) {
+                    if (data != null && !data.isEmpty()) {
                         if (sb.length() > 0) {
                             sb.append("\n");
                         }

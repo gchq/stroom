@@ -18,18 +18,7 @@ package stroom.elastic;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.connectors.elastic.StroomElasticProducerFactoryService;
-import stroom.pipeline.LocationFactoryProxy;
-import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.Element;
-import stroom.pipeline.state.PipelineHolder;
-import stroom.properties.StroomPropertyService;
-import stroom.security.SecurityContext;
-import stroom.util.cache.CacheManager;
-import stroom.util.spring.StroomScope;
 
 public class ElasticModule extends AbstractModule {
     @Override

@@ -21,7 +21,9 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.cluster.ClusterCallService;
 import stroom.node.shared.Node;
+import stroom.task.CurrentTaskState;
 import stroom.task.GenericServerTask;
+import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
@@ -30,7 +32,6 @@ import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
-import stroom.util.task.TaskScopeContextHolder;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -69,13 +70,13 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     @Override
     public <R extends SharedObject> void execAsync(final ClusterTask<R> task, final ClusterResultCollector<R> collector,
                                                    final Node sourceNode, final Set<Node> targetNodes) {
-        // Try and discover the parent task for this task as one hasn't been
-        // supplied.
-        if (!TaskScopeContextHolder.contextExists()) {
-            throw new IllegalStateException("Task scope context does not exist!");
-        }
+//        // Try and discover the parent task for this task as one hasn't been
+//        // supplied.
+//        if (!TaskScopeContextHolder.contextExists()) {
+//            throw new IllegalStateException("Task scope context does not exist!");
+//        }
 
-        final Task<?> parentTask = TaskScopeContextHolder.getContext().getTask();
+        final Task<?> parentTask = CurrentTaskState.currentTask();
         execAsync(parentTask, task, collector, sourceNode, targetNodes);
     }
 

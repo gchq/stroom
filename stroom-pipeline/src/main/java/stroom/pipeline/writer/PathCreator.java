@@ -16,7 +16,7 @@
 
 package stroom.pipeline.writer;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import stroom.node.NodeCache;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
@@ -167,7 +167,7 @@ public class PathCreator {
         Supplier<String> stringReplacementSupplier = () -> {
             String value = String.valueOf(replacementSupplier.getAsLong());
             if (pad > 0) {
-                value = StringUtils.leftPad(value, pad, '0');
+                value = Strings.padStart(value, pad, '0');
             }
             return value;
         };

@@ -24,9 +24,6 @@ import com.google.inject.util.Types;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.framework.Advised;
-import org.springframework.aop.support.AopUtils;
-import org.springframework.beans.BeansException;
 import stroom.util.spring.StroomBeanMethod;
 
 import javax.inject.Inject;
@@ -195,7 +192,7 @@ public class StroomBeanStore {
 //        return results;
 //    }
 
-    public <T> Set<T> getBeansOfType(Class<T> type) throws BeansException {
+    public <T> Set<T> getBeansOfType(Class<T> type) {
 //        final Set<T> set = new HashSet<>();
 //        final Binding<T> binding = injector.getBinding(type);
 //        if (binding instanceof MultibinderBinding) {
@@ -289,43 +286,43 @@ public class StroomBeanStore {
         final Method beanMethod = stroomBeanMethod.getBeanMethod();
 
         if (bean != null) {
-            // Test to see if the bean is an instance of JdkDynamicProxy. If it
-            // is then only the interface will be available on the proxy. We
-            // ideally want to execute a method on the proxy as the proxy may be
-            // providing transactional behaviour or security interception etc.
-            // If we really can't get the method off the proxy then we will need
-            // to get the proxy target and invoke the method on that directly.
-            if (AopUtils.isJdkDynamicProxy(bean)) {
-                Method method = null;
-
-                // Try and get the method from the proxied interfaces.
-                for (final Method m : bean.getClass().getMethods()) {
-                    if (m.getName().equals(beanMethod.getName())
-                            && Arrays.equals(m.getParameterTypes(), beanMethod.getParameterTypes())) {
-                        method = m;
-                        break;
-                    }
-                }
-
-                if (method == null) {
-                    // If we didn't manage to get the method from the proxied
-                    // interfaces then invoke them method on the proxy target
-                    // directly. This might result in errors as we will be
-                    // bypassing transaction interception etc.
-                    try {
-                        final Object o = ((Advised) bean).getTargetSource().getTarget();
-                        return beanMethod.invoke(o, args);
-                    } catch (final Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    return method.invoke(bean, args);
-                }
-
-            } else {
+//            // Test to see if the bean is an instance of JdkDynamicProxy. If it
+//            // is then only the interface will be available on the proxy. We
+//            // ideally want to execute a method on the proxy as the proxy may be
+//            // providing transactional behaviour or security interception etc.
+//            // If we really can't get the method off the proxy then we will need
+//            // to get the proxy target and invoke the method on that directly.
+//            if (AopUtils.isJdkDynamicProxy(bean)) {
+//                Method method = null;
+//
+//                // Try and get the method from the proxied interfaces.
+//                for (final Method m : bean.getClass().getMethods()) {
+//                    if (m.getName().equals(beanMethod.getName())
+//                            && Arrays.equals(m.getParameterTypes(), beanMethod.getParameterTypes())) {
+//                        method = m;
+//                        break;
+//                    }
+//                }
+//
+//                if (method == null) {
+//                    // If we didn't manage to get the method from the proxied
+//                    // interfaces then invoke them method on the proxy target
+//                    // directly. This might result in errors as we will be
+//                    // bypassing transaction interception etc.
+//                    try {
+//                        final Object o = ((Advised) bean).getTargetSource().getTarget();
+//                        return beanMethod.invoke(o, args);
+//                    } catch (final Exception e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                } else {
+//                    return method.invoke(bean, args);
+//                }
+//
+//            } else {
                 beanMethod.setAccessible(true);
                 beanMethod.invoke(bean, args);
-            }
+//            }
         }
 
         return null;

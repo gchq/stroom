@@ -20,7 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import stroom.dictionary.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
@@ -61,8 +60,7 @@ public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationT
 
     @Test
     public void testRowCount() throws SQLException {
-        final Connection connection = DataSourceUtils.getConnection(dataSource);
-        try {
+        try (final Connection connection = dataSource.getConnection()) {
             Feed feed = commonTestScenarioCreator.createSimpleFeed();
 
             final long now = System.currentTimeMillis();
@@ -89,8 +87,6 @@ public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationT
                 final long count = dataRetentionStreamFinder.getRowCount(ageRange, Collections.singleton(StreamDataSource.STREAM_ID));
                 Assert.assertEquals(1, count);
             }
-        } finally {
-            DataSourceUtils.releaseConnection(connection, dataSource);
         }
     }
 

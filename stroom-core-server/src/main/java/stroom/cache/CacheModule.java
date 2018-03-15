@@ -18,14 +18,8 @@ package stroom.cache;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.Clearable;
 import stroom.task.TaskHandler;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.util.cache.CacheManager;
-import stroom.util.spring.StroomScope;
 
 public class CacheModule extends AbstractModule {
     @Override
@@ -40,28 +34,4 @@ public class CacheModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.cache.FetchCacheNodeRowHandler.class);
         taskHandlerBinder.addBinding().to(stroom.cache.FetchCacheRowHandler.class);
     }
-
-
-    //    @Bean
-//    @Scope(StroomScope.TASK)
-//    public CacheClearHandler cacheClearHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new CacheClearHandler(dispatchHelper);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public FetchCacheNodeRowHandler fetchCacheNodeRowHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new FetchCacheNodeRowHandler(dispatchHelper);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public FetchCacheRowHandler fetchCacheRowHandler(final CacheManager cacheManager) {
-//        return new FetchCacheRowHandler(cacheManager);
-//    }
-//
-//    @Bean
-//    public StroomCacheManager stroomCacheManager(final CacheManager cacheManager) {
-//        return new StroomCacheManagerImpl(cacheManager);
-//    }
 }

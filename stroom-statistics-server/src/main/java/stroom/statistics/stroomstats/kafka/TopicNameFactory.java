@@ -1,6 +1,5 @@
 package stroom.statistics.stroomstats.kafka;
 
-import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.properties.StroomPropertyService;
@@ -24,7 +23,7 @@ public class TopicNameFactory {
         String propKey = PROP_KEY_PREFIX_KAFKA_TOPICS + statisticType.toString().toLowerCase();
         String topic = stroomPropertyService.getProperty(propKey);
 
-        if (Strings.isNullOrEmpty(topic)) {
+        if (topic == null || topic.isEmpty()) {
             throw new RuntimeException(
                     String.format("Missing value for property %s, unable to send internal statistics", topic));
         }

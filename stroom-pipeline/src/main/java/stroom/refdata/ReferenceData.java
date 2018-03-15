@@ -18,8 +18,6 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.entity.DocumentPermissionCache;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.errorhandler.ErrorReceiver;
@@ -33,7 +31,6 @@ import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 import stroom.xml.event.EventList;
 
 import javax.inject.Inject;

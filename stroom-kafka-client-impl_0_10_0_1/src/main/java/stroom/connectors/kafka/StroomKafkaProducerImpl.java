@@ -1,6 +1,5 @@
 package stroom.connectors.kafka;
 
-import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -41,7 +40,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                 : null;
 
         if (this.properties != null) {
-            if (Strings.isNullOrEmpty(bootstrapServers)) {
+            if (bootstrapServers == null || bootstrapServers.isEmpty()) {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Kafka: %s is required.",
                         StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG);

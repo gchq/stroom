@@ -19,8 +19,6 @@ package stroom.visualisation;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import stroom.dashboard.shared.Dashboard;
 import stroom.entity.FindService;
 import stroom.entity.StroomEntityManager;

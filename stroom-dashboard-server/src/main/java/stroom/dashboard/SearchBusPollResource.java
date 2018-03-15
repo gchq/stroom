@@ -19,7 +19,6 @@ package stroom.dashboard;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
-import stroom.util.task.TaskScopeContextHolder;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -44,12 +43,7 @@ public class SearchBusPollResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/poll")
     public Map<DashboardQueryKey, stroom.dashboard.shared.SearchResponse> poll(final Map<DashboardQueryKey, stroom.dashboard.shared.SearchRequest> searchActionMap) {
-        TaskScopeContextHolder.addContext(null);
-        try {
-            final SearchBusPollResult result = searchBusPollActionHandler.get().exec(new SearchBusPollAction(searchActionMap));
-            return result.getSearchResultMap();
-        } finally {
-            TaskScopeContextHolder.removeContext();
-        }
+        final SearchBusPollResult result = searchBusPollActionHandler.get().exec(new SearchBusPollAction(searchActionMap));
+        return result.getSearchResultMap();
     }
 }

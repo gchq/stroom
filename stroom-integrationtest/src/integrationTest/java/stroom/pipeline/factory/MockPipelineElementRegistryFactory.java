@@ -16,7 +16,6 @@
 
 package stroom.pipeline.factory;
 
-import org.springframework.context.annotation.Profile;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.filter.RecordCountFilter;
 import stroom.pipeline.filter.RecordOutputFilter;

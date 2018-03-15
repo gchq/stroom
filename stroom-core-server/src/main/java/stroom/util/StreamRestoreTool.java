@@ -16,7 +16,7 @@
 
 package stroom.util;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import org.apache.commons.lang.mutable.MutableInt;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.feed.MetaMap;
@@ -449,7 +449,7 @@ public class StreamRestoreTool extends DatabaseTool {
                         stream.setStreamType(
                                 StreamType.createStub(getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH))));
 
-                        final String logInfo = StringUtils.leftPad(String.valueOf(stream.getId()), 10) + " "
+                        final String logInfo = Strings.padStart(String.valueOf(stream.getId()), 10, ' ') + " "
                                 + DateUtil.createNormalDateTimeString(stream.getCreateMs());
 
                         writeLine("Restore " + logInfo + " for file " + line);
@@ -512,8 +512,8 @@ public class StreamRestoreTool extends DatabaseTool {
         sort(list);
 
         for (final KeyCount keyCount : list) {
-            writeLine(StringUtils.rightPad(keyCount.getKey().toString(), KEY_PAD)
-                    + StringUtils.leftPad(ModelStringUtil.formatCsv(keyCount.getCount()), COUNT_PAD));
+            writeLine(Strings.padEnd(keyCount.getKey().toString(), KEY_PAD, ' ')
+                    + Strings.padStart(ModelStringUtil.formatCsv(keyCount.getCount()), COUNT_PAD, ' '));
         }
         writeLine("========================");
         return list;
@@ -544,8 +544,8 @@ public class StreamRestoreTool extends DatabaseTool {
 
         @Override
         public String toString() {
-            return StringUtils.rightPad(getKey().toString(), KEY_PAD)
-                    + StringUtils.leftPad(ModelStringUtil.formatCsv(getCount()), COUNT_PAD);
+            return Strings.padEnd(getKey().toString(), KEY_PAD, ' ')
+                    + Strings.padStart(ModelStringUtil.formatCsv(getCount()), COUNT_PAD, ' ');
         }
     }
 

@@ -276,7 +276,7 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(description = "How long to wait before we abort sending data due to connection timeout")
     public void setConnectionTimeout(final String string) {
         connectionTimeout = null;
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             connectionTimeout = ModelStringUtil.parseDurationString(string);
         }
     }

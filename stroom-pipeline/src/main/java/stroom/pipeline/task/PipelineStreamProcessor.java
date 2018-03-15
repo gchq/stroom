@@ -405,7 +405,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     // If the task requires specific events to be processed then
                     // add them.
                     final String data = streamTask.getData();
-                    if (data != null && data.length() > 0) {
+                    if (data != null && !data.isEmpty()) {
                         final List<InclusiveRange> ranges = InclusiveRanges.rangesFromString(data);
                         final RASegmentInputStream raSegmentInputStream = mainProvider.getSegmentInputStream(streamNo);
                         raSegmentInputStream.include(0);

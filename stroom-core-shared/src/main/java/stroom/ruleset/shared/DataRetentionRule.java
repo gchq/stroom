@@ -154,7 +154,7 @@ public class DataRetentionRule implements SharedObject {
     public String toString() {
         // Create a rule name that includes the rule number.
         String ruleName;
-        if (name != null && name.length() > 0) {
+        if (name != null && !name.isEmpty()) {
             ruleName = ruleNumber + " " + name;
         } else {
             ruleName = String.valueOf(ruleNumber);

@@ -18,20 +18,11 @@ package stroom.docstore.db;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import stroom.docstore.Persistence;
-
-import javax.sql.DataSource;
 
 public class DBPersistenceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Persistence.class).to(DBPersistence.class).in(Singleton.class);
     }
-
-//    @Bean
-//    public DBPersistence dBPersistence(final DataSource dataSource) {
-//        return new DBPersistence(dataSource);
-//    }
 }

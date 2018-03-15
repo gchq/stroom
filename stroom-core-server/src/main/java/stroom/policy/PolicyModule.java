@@ -18,18 +18,7 @@ package stroom.policy;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.dictionary.DictionaryStore;
-import stroom.entity.StroomEntityManager;
-import stroom.jobsystem.ClusterLockService;
-import stroom.properties.StroomPropertyService;
 import stroom.task.TaskHandler;
-import stroom.util.spring.StroomScope;
-import stroom.task.TaskContext;
-
-import javax.sql.DataSource;
 
 public class PolicyModule extends AbstractModule {
     @Override

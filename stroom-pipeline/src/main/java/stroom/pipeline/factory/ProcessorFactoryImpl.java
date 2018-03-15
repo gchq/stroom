@@ -19,6 +19,7 @@ package stroom.pipeline.factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
+import stroom.guice.PipelineScoped;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
@@ -26,13 +27,10 @@ import stroom.pipeline.errorhandler.ExpectedProcessException;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskCallback;
+import stroom.task.TaskContext;
 import stroom.task.TaskManager;
-import stroom.guice.PipelineScoped;
 import stroom.util.shared.Severity;
-import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.TaskScopeContext;
-import stroom.util.task.TaskScopeContextHolder;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -44,11 +42,15 @@ class ProcessorFactoryImpl implements ProcessorFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
     private final TaskManager taskManager;
     private final ErrorReceiverProxy errorReceiverProxy;
+    private final TaskContext taskContext;
 
     @Inject
-    public ProcessorFactoryImpl(final TaskManager taskManager, final ErrorReceiverProxy errorReceiverProxy) {
+    public ProcessorFactoryImpl(final TaskManager taskManager,
+                                final ErrorReceiverProxy errorReceiverProxy,
+                                final TaskContext taskContext) {
         this.taskManager = taskManager;
         this.errorReceiverProxy = errorReceiverProxy;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -61,27 +63,27 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             return processors.get(0);
         }
 
-        return new MultiWayProcessor(processors, taskManager, errorReceiverProxy);
+        return new MultiWayProcessor(processors, taskManager, errorReceiverProxy, taskContext);
     }
 
     static class MultiWayProcessor implements Processor {
         private final List<Processor> processors;
         private final TaskManager taskManager;
         private final ErrorReceiver errorReceiver;
+        private final TaskContext taskContext;
 
-        MultiWayProcessor(final List<Processor> processors, final TaskManager taskManager,
-                          final ErrorReceiver errorReceiver) {
+        MultiWayProcessor(final List<Processor> processors,
+                          final TaskManager taskManager,
+                          final ErrorReceiver errorReceiver,
+                          final TaskContext taskContext) {
             this.processors = processors;
             this.taskManager = taskManager;
             this.errorReceiver = errorReceiver;
+            this.taskContext = taskContext;
         }
 
         @Override
         public void process() {
-            // Try and get the parent task context.
-            final TaskScopeContext context = TaskScopeContextHolder.getContext();
-            final Task<?> parentTask = context.getTask();
-
             final CountDownLatch countDownLatch = new CountDownLatch(processors.size());
             for (final Processor processor : processors) {
                 final TaskCallback<VoidResult> taskCallback = new TaskCallback<VoidResult>() {
@@ -110,14 +112,16 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                     }
                 };
 
-                final GenericServerTask task = GenericServerTask.create(parentTask, "Process",
+                // Try and get the parent task context.
+                // TODO : @66 add links to parent task context
+                final GenericServerTask task = GenericServerTask.create(null, "Process",
                         null);
                 task.setRunnable(processor::process);
                 taskManager.execAsync(task, taskCallback);
             }
 
             try {
-                while (!parentTask.isTerminated() && countDownLatch.getCount() > 0) {
+                while (!taskContext.isTerminated() && countDownLatch.getCount() > 0) {
                     countDownLatch.await(10, TimeUnit.SECONDS);
                 }
             } catch (final InterruptedException e) {

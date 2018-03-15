@@ -18,7 +18,6 @@ package stroom.statistics.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.jobsystem.ClusterLockService;

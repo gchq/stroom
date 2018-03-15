@@ -16,7 +16,6 @@
 
 package stroom.datasource;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +52,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
         final String annotationsPath = stroomPropertyService.getProperty(PROP_KEY_ANNOTATIONS_PATH);
         final String elasticPath = stroomPropertyService.getProperty(PROP_KEY_ELASTIC_PATH);
 
-        if (!Strings.isNullOrEmpty(basePath)) {
+        if (basePath != null && !basePath.isEmpty()) {
             //TODO the path strings are defined in ResourcePaths but this is not accessible from here
             //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
             urlMap = new HashMap<>();

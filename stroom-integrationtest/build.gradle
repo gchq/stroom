@@ -16,6 +16,10 @@ dependencies {
     permitUnusedDeclared project(':stroom-statistics-server')
     compile project(':stroom-headless')
     permitUnusedDeclared project(':stroom-headless')
+    compile project(':stroom-elastic-server')
+    permitUnusedDeclared project(':stroom-elastic-server')
+    compile project(':stroom-externaldoc-server')
+    permitUnusedDeclared project(':stroom-externaldoc-server')
 
     integrationTestCompile libs.stroomQueryApi
     integrationTestCompile libs.stroomQueryCommon

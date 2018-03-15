@@ -22,7 +22,7 @@ import stroom.util.shared.Task;
 import java.util.Deque;
 import java.util.LinkedList;
 
-final class CurrentTaskState {
+public final class CurrentTaskState {
     private static final ThreadLocal<Deque<TaskState>> THREAD_LOCAL = InheritableThreadLocal.withInitial(LinkedList::new);
 
     private CurrentTaskState() {
@@ -44,7 +44,7 @@ final class CurrentTaskState {
         return deque.peek();
     }
 
-    static Task<?> currentTask() {
+    public static Task<?> currentTask() {
         final TaskState taskState = currentState();
         if (taskState != null) {
             return taskState.task;

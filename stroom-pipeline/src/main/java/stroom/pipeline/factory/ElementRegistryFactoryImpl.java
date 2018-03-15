@@ -19,7 +19,6 @@ package stroom.pipeline.factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.guice.StroomBeanStore;
-import stroom.util.task.TaskScopeContextHolder;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -62,26 +61,21 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
 
         // Fudge a task scope context as many of the beans require one before
         // they can be created.
-        TaskScopeContextHolder.addContext(null);
-        try {
-            LOGGER.info("Initialising pipeline element registry.");
-            final Set<Element> elements = beanStore.getBeansOfType(Element.class);
-            final List<Class<?>> elementClasses = new ArrayList<>();
-            for (final Element element : elements) {
-                final Class<?> clazz = element.getClass();
-                elementClasses.add(clazz);
+        LOGGER.info("Initialising pipeline element registry.");
+        final Set<Element> elements = beanStore.getBeansOfType(Element.class);
+        final List<Class<?>> elementClasses = new ArrayList<>();
+        for (final Element element : elements) {
+            final Class<?> clazz = element.getClass();
+            elementClasses.add(clazz);
 
-                if (LOGGER.isDebugEnabled()) {
-                    final ConfigurableElement pipelineElement = clazz.getAnnotation(ConfigurableElement.class);
-                    LOGGER.debug("Registering pipeline element " + pipelineElement.type());
-                }
+            if (LOGGER.isDebugEnabled()) {
+                final ConfigurableElement pipelineElement = clazz.getAnnotation(ConfigurableElement.class);
+                LOGGER.debug("Registering pipeline element " + pipelineElement.type());
             }
-
-            registry = new ElementRegistry(elementClasses);
-            LOGGER.info("Finished initialising pipeline element registry.");
-        } finally {
-            TaskScopeContextHolder.removeContext();
         }
+
+        registry = new ElementRegistry(elementClasses);
+        LOGGER.info("Finished initialising pipeline element registry.");
 
         return registry;
     }

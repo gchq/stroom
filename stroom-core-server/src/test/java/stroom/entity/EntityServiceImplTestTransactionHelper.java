@@ -18,7 +18,6 @@
 package stroom.entity;
 
 import org.junit.Assert;
-import org.springframework.transaction.annotation.Propagation;
 
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;

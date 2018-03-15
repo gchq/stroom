@@ -21,7 +21,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dictionary.DictionaryStore;
 import stroom.index.IndexService;

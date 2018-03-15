@@ -17,10 +17,9 @@
 package stroom.util.config;
 
 import com.google.common.base.CaseFormat;
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.DefaultResourceLoader;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 
@@ -60,16 +59,6 @@ public class StroomProperties {
     private synchronized static void doInit() {
         if (!doneInit) {
             doneInit = true;
-
-            final DefaultResourceLoader resourceLoader = new DefaultResourceLoader(
-                    StroomProperties.class.getClassLoader());
-
-//            // Started up as a WAR file?
-//            final String warName = ServletContextUtil
-//                    .getWARName(UpgradeDispatcherSingleton.instance().getServletConfig());
-//            if (warName != null) {
-//                loadResource(resourceLoader, "classpath:/" + warName + ".properties", Source.WAR);
-//            }
 
             // Get properties for the current user if there are any.
             final Path file = Paths.get(System.getProperty("user.home") + "/" + USER_CONF_PATH);
@@ -164,7 +153,7 @@ public class StroomProperties {
         int value = defaultValue;
 
         final String string = getProperty(key);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             try {
                 value = Integer.parseInt(string);
             } catch (final NumberFormatException e) {
@@ -180,7 +169,7 @@ public class StroomProperties {
         long value = defaultValue;
 
         final String string = getProperty(key);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             try {
                 value = Long.parseLong(string);
             } catch (final NumberFormatException e) {
@@ -196,7 +185,7 @@ public class StroomProperties {
         boolean value = defaultValue;
 
         final String string = getProperty(propertyName);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             value = Boolean.valueOf(string);
         }
 
@@ -411,13 +400,9 @@ public class StroomProperties {
         // Environment variable names are transformations of property names.
         // E.g. stroom.temp => STROOM_TEMP.
         // E.g. stroom.jdbcDriverUsername => STROOM_JDBC_DRIVER_USERNAME
-        String environmentVariableName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, propertyName.replace('.', '_'));
-        String environmentVariable = System.getenv(environmentVariableName);
-        if (StringUtils.isNotBlank(environmentVariable)) {
-            return environmentVariable;
-        }
-
-        return null;
+        final String environmentVariableName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, propertyName.replace('.', '_'));
+        final String environmentVariable = System.getenv(environmentVariableName);
+        return Strings.emptyToNull(environmentVariable);
     }
 
     private static void logEstablished(final String key, final String value, final String source) {

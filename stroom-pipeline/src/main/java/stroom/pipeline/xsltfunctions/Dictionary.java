@@ -46,7 +46,7 @@ class Dictionary extends StroomExtensionFunctionCall {
 
         try {
             final String name = getSafeString(functionName, context, arguments, 0);
-            if (name != null && name.length() > 0) {
+            if (name != null && !name.isEmpty()) {
                 if (cachedData == null) {
                     cachedData = new HashMap<>();
                 }

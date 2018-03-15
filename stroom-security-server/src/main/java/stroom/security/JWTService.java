@@ -1,6 +1,5 @@
 package stroom.security;
 
-import com.google.common.base.Strings;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
@@ -154,7 +153,7 @@ class JWTService {
 
     private static Optional<String> getAuthHeader(HttpServletRequest httpServletRequest) {
         String authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
-        return Strings.isNullOrEmpty(authHeader) ? Optional.empty() : Optional.of(authHeader);
+        return authHeader == null || authHeader.isEmpty() ? Optional.empty() : Optional.of(authHeader);
     }
 
     private JwtClaims toClaims(String token) throws InvalidJwtException {

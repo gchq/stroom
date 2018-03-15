@@ -62,7 +62,7 @@ public class StroomPropertyServiceImpl implements StroomPropertyService {
 //        int value = defaultValue;
 //
 //        final String string = getProperty(name);
-//        if (string != null && string.length() > 0) {
+//        if (string != null && !string.isEmpty()) {
 //            try {
 //                value = Integer.parseInt(string);
 //            } catch (final NumberFormatException e) {
@@ -82,7 +82,7 @@ public class StroomPropertyServiceImpl implements StroomPropertyService {
 //        long value = defaultValue;
 //
 //        final String string = getProperty(name);
-//        if (string != null && string.length() > 0) {
+//        if (string != null && !string.isEmpty()) {
 //            try {
 //                value = Long.parseLong(string);
 //            } catch (final NumberFormatException e) {
@@ -102,7 +102,7 @@ public class StroomPropertyServiceImpl implements StroomPropertyService {
 //        boolean value = defaultValue;
 //
 //        final String string = getProperty(name);
-//        if (string != null && string.length() > 0) {
+//        if (string != null && !string.isEmpty()) {
 //            value = Boolean.valueOf(string);
 //        }
 //

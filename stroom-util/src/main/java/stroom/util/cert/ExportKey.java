@@ -16,7 +16,7 @@
 
 package stroom.util.cert;
 
-import org.springframework.util.Base64Utils;
+import org.apache.commons.codec.binary.Base64;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -60,11 +60,11 @@ public class ExportKey {
         }
 
         System.out.println("-----BEGIN PRIVATE KEY-----");
-        System.out.println(Base64Utils.encodeToString(key.getEncoded()));
+        System.out.println(new String(Base64.encodeBase64(key.getEncoded())));
         System.out.println("-----END PRIVATE KEY-----");
 
         System.out.println("-----BEGIN CERTIFICATE-----");
-        System.out.println(Base64Utils.encodeToString(ks.getCertificate(alias).getEncoded()));
+        System.out.println(new String(Base64.encodeBase64(ks.getCertificate(alias).getEncoded())));
         System.out.println("-----END CERTIFICATE-----");
     }
 }

@@ -53,7 +53,7 @@ public class ProxyRepositoryManager {
     private static Path getPath(final String repoDir) {
         Path path;
 
-        if (repoDir != null && repoDir.length() > 0) {
+        if (repoDir != null && !repoDir.isEmpty()) {
             path = Paths.get(repoDir);
         } else {
             path = FileUtil.getTempDir().resolve("stroom-proxy");
@@ -64,7 +64,7 @@ public class ProxyRepositoryManager {
     }
 
     private static String getFormat(final String repositoryFormat) {
-        if (repositoryFormat != null && repositoryFormat.length() > 0) {
+        if (repositoryFormat != null && !repositoryFormat.isEmpty()) {
             return repositoryFormat;
         }
 
@@ -72,7 +72,7 @@ public class ProxyRepositoryManager {
     }
 
     private static Scheduler createScheduler(final String simpleCron) {
-        if (simpleCron != null && simpleCron.length() > 0) {
+        if (simpleCron != null && !simpleCron.isEmpty()) {
             return SimpleCron.compile(simpleCron).createScheduler();
         }
 

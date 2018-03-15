@@ -18,13 +18,7 @@ package stroom.entity.event;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 import stroom.task.TaskHandler;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.TargetNodeSetFactory;
-import stroom.util.spring.StroomScope;
 
 public class EntityEventModule extends AbstractModule {
     @Override
@@ -33,17 +27,4 @@ public class EntityEventModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.entity.event.ClusterEntityEventTaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.entity.event.DispatchEntityEventTaskHandler.class);
     }
-
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public ClusterEntityEventTaskHandler clusterEntityEventTaskHandler(final EntityEventBusImpl entityEventBusImpl) {
-//        return new ClusterEntityEventTaskHandler(entityEventBusImpl);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public DispatchEntityEventTaskHandler dispatchEntityEventTaskHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-//                                                                         final TargetNodeSetFactory targetNodeSetFactory) {
-//        return new DispatchEntityEventTaskHandler(dispatchHelper, targetNodeSetFactory);
-//    }
 }

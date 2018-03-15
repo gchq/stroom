@@ -19,7 +19,6 @@ package stroom.internalstatistics;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
@@ -74,7 +73,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
 
         Long timeMs = null;
         final String timeValue = metaData.get(template.getTimeMsAttribute());
-        if (StringUtils.hasText(timeValue)) {
+        if (timeValue != null && !timeValue.isEmpty()) {
             try {
                 timeMs = DateUtil.parseNormalDateTimeString(timeValue);
             } catch (final Exception ex) {
@@ -91,7 +90,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
         for (final String tagName : template.getTagAttributeList()) {
             final String tagValue = metaData.get(tagName);
 
-            if (StringUtils.hasText(tagValue)) {
+            if (tagValue != null && !tagValue.isEmpty()) {
                 statisticTags.put(tagName, tagValue);
             } else {
                 // Quit!
@@ -102,7 +101,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
         long increment = 1;
         if (template.getIncrementAttribute() != null) {
             final String incrementValue = metaData.get(template.getIncrementAttribute());
-            if (StringUtils.hasText(incrementValue)) {
+            if (incrementValue != null && !incrementValue.isEmpty()) {
                 try {
                     increment = Long.parseLong(incrementValue);
                 } catch (final Exception ex) {

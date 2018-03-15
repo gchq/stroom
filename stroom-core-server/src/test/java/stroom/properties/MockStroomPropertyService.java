@@ -18,15 +18,12 @@ package stroom.properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import stroom.util.spring.PropertyProvider;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
-        implements StroomPropertyService, PropertyProvider {
-
+public class MockStroomPropertyService implements StroomPropertyService, PropertyProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(MockStroomPropertyService.class);
 
     private final Map<String, String> properties = new HashMap<>();
@@ -45,7 +42,7 @@ public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
         String value = defaultValue;
 
         final String string = getProperty(propertyName);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             value = string;
         }
 
@@ -57,7 +54,7 @@ public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
         int value = defaultValue;
 
         final String string = getProperty(propertyName);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             try {
                 value = Integer.parseInt(string);
             } catch (final NumberFormatException e) {
@@ -74,7 +71,7 @@ public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
         long value = defaultValue;
 
         final String string = getProperty(propertyName);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             try {
                 value = Long.parseLong(string);
             } catch (final NumberFormatException e) {
@@ -91,7 +88,7 @@ public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
         boolean value = defaultValue;
 
         final String string = getProperty(propertyName);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             value = Boolean.valueOf(string);
         }
 

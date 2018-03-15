@@ -17,8 +17,6 @@
 package stroom.security;
 
 import com.google.inject.AbstractModule;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.event.EntityEventBus;
 import stroom.explorer.ExplorerService;

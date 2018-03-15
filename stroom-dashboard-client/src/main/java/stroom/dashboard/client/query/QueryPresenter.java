@@ -264,7 +264,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     public void setErrors(final String errors) {
         currentWarnings = errors;
-        warningsButton.setVisible(currentWarnings != null && currentWarnings.length() > 0);
+        warningsButton.setVisible(currentWarnings != null && !currentWarnings.isEmpty());
     }
 
     private void setButtonsEnabled() {
@@ -414,7 +414,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void showWarnings() {
-        if (currentWarnings != null && currentWarnings.length() > 0) {
+        if (currentWarnings != null && !currentWarnings.isEmpty()) {
             AlertEvent.fireWarn(this, "The following warnings have been created while running this search:",
                     currentWarnings, null);
         }

@@ -19,8 +19,6 @@ package stroom.entity.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
@@ -71,59 +69,59 @@ public final class SendStreamDataClient {
     }
 
     public static void main(final String[] args) throws IOException {
-        // Load up the args
-        final Map<String, String> argsMap = ArgsUtil.parse(args);
-
-        // Boot up spring
-        final ApplicationContext appContext = new ClassPathXmlApplicationContext(
-                new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml"});
-
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-        // Check Args
-        if (!argsMap.containsKey(FEED)) {
-            throw new RuntimeException("Expecting Feed= Argument");
-        }
-        if (!argsMap.containsKey(STREAM_TYPE)) {
-            throw new RuntimeException("Expecting Stream Type= Argument");
-        }
-        if (!argsMap.containsKey(SEND_URL)) {
-            throw new RuntimeException("Expecting SendUrl= Argument");
-        }
-
-        // Set args on filter
-        if (argsMap.containsKey(RECEIVED_PERIOD_FROM) || argsMap.containsKey(RECEIVED_PERIOD_TO)) {
-            final String createStartTime = argsMap.get(RECEIVED_PERIOD_FROM);
-            final String createEndTime = argsMap.get(RECEIVED_PERIOD_TO);
-            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
-        }
-        final URL url = new URL(argsMap.get(SEND_URL));
-        final StreamStore streamStore = (StreamStore) appContext.getBean("streamStore");
-        final FeedService feedService = appContext.getBean(FeedService.class);
-        final Feed definition = feedService.loadByName(argsMap.get(FEED));
-        if (definition == null) {
-            throw new RuntimeException("Unable to locate Feed " + argsMap.get(FEED));
-        }
-        final StreamTypeService streamTypeService = appContext.getBean(StreamTypeService.class);
-        final StreamType streamType = streamTypeService.loadByName(argsMap.get(STREAM_TYPE));
-        if (streamType == null) {
-            throw new RuntimeException("Unknown stream type " + argsMap.get(STREAM_TYPE));
-        }
-        builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, definition.getName());
-        builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType.getDisplayValue());
-
-        // Query the stream store
-        final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.setExpression(builder.build());
-        final List<Stream> results = streamStore.find(criteria);
-
-        for (final Stream stream : results) {
-            // Bug in the API ... check we get back what we expect.
-            if (stream.getFeed().getId() == definition.getId()) {
-                sendStream(url, streamStore, definition, stream.getId());
-            } else {
-                LOGGER.info("Skipping invalid stream");
-            }
-        }
+//        // Load up the args
+//        final Map<String, String> argsMap = ArgsUtil.parse(args);
+//
+//        // Boot up spring
+//        final ApplicationContext appContext = new ClassPathXmlApplicationContext(
+//                new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml"});
+//
+//        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+//        // Check Args
+//        if (!argsMap.containsKey(FEED)) {
+//            throw new RuntimeException("Expecting Feed= Argument");
+//        }
+//        if (!argsMap.containsKey(STREAM_TYPE)) {
+//            throw new RuntimeException("Expecting Stream Type= Argument");
+//        }
+//        if (!argsMap.containsKey(SEND_URL)) {
+//            throw new RuntimeException("Expecting SendUrl= Argument");
+//        }
+//
+//        // Set args on filter
+//        if (argsMap.containsKey(RECEIVED_PERIOD_FROM) || argsMap.containsKey(RECEIVED_PERIOD_TO)) {
+//            final String createStartTime = argsMap.get(RECEIVED_PERIOD_FROM);
+//            final String createEndTime = argsMap.get(RECEIVED_PERIOD_TO);
+//            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
+//        }
+//        final URL url = new URL(argsMap.get(SEND_URL));
+//        final StreamStore streamStore = (StreamStore) appContext.getBean("streamStore");
+//        final FeedService feedService = appContext.getBean(FeedService.class);
+//        final Feed definition = feedService.loadByName(argsMap.get(FEED));
+//        if (definition == null) {
+//            throw new RuntimeException("Unable to locate Feed " + argsMap.get(FEED));
+//        }
+//        final StreamTypeService streamTypeService = appContext.getBean(StreamTypeService.class);
+//        final StreamType streamType = streamTypeService.loadByName(argsMap.get(STREAM_TYPE));
+//        if (streamType == null) {
+//            throw new RuntimeException("Unknown stream type " + argsMap.get(STREAM_TYPE));
+//        }
+//        builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, definition.getName());
+//        builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType.getDisplayValue());
+//
+//        // Query the stream store
+//        final FindStreamCriteria criteria = new FindStreamCriteria();
+//        criteria.setExpression(builder.build());
+//        final List<Stream> results = streamStore.find(criteria);
+//
+//        for (final Stream stream : results) {
+//            // Bug in the API ... check we get back what we expect.
+//            if (stream.getFeed().getId() == definition.getId()) {
+//                sendStream(url, streamStore, definition, stream.getId());
+//            } else {
+//                LOGGER.info("Skipping invalid stream");
+//            }
+//        }
     }
 
     /**
@@ -183,7 +181,7 @@ public final class SendStreamDataClient {
             final String msg = connection.getResponseMessage();
 
             LOGGER.info("Client Got Response " + response + " Stream Id " + stream.getId());
-            if (msg != null && msg.length() > 0) {
+            if (msg != null && !msg.isEmpty()) {
                 LOGGER.info(msg);
             }
             connection.disconnect();

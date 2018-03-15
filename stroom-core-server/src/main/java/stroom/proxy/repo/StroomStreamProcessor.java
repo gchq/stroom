@@ -21,7 +21,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
@@ -100,7 +99,7 @@ public class StroomStreamProcessor {
             // allocated.
 
             // Allocate remote address if not set.
-            if (StringUtils.hasText(httpServletRequest.getRemoteAddr())) {
+            if (httpServletRequest.getRemoteAddr() != null && !httpServletRequest.getRemoteAddr().isEmpty()) {
                 globalMetaMap.put(StroomHeaderArguments.REMOTE_ADDRESS, httpServletRequest.getRemoteAddr());
             }
 
@@ -108,7 +107,7 @@ public class StroomStreamProcessor {
             globalMetaMap.put(StroomHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString());
 
             // Allocate remote address if not set.
-            if (StringUtils.hasText(httpServletRequest.getRemoteHost())) {
+            if (httpServletRequest.getRemoteHost() != null && !httpServletRequest.getRemoteHost().isEmpty()) {
                 globalMetaMap.put(StroomHeaderArguments.REMOTE_HOST, httpServletRequest.getRemoteHost());
             }
         }
@@ -126,7 +125,7 @@ public class StroomStreamProcessor {
 
             String compression = globalMetaMap.get(StroomHeaderArguments.COMPRESSION);
 
-            if (StringUtils.hasText(compression)) {
+            if (compression != null && !compression.isEmpty()) {
                 compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
                 if (!StroomHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
                     throw new StroomStreamException(StroomStatusCode.UNKNOWN_COMPRESSION, compression);

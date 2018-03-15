@@ -16,7 +16,8 @@
 
 package stroom.util;
 
-import org.apache.commons.lang.StringUtils;
+
+import com.google.common.base.Strings;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -131,7 +132,7 @@ public abstract class AbstractCommandLineTool {
 
                     }
                 }
-                printStream.println(StringUtils.rightPad(pd.getName(), maxPropLength) + " = " + value + suffix);
+                printStream.println(Strings.padEnd(pd.getName(), maxPropLength, ' ') + " = " + value + suffix);
             }
         }
     }

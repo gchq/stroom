@@ -186,7 +186,7 @@ public class IndexShardSearchTaskHandler {
         int value = defaultValue;
 
         final String string = propertyService.getProperty(propertyName);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             try {
                 value = Integer.parseInt(string);
             } catch (final NumberFormatException e) {

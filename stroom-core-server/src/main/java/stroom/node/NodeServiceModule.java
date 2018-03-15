@@ -21,8 +21,6 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import stroom.entity.CachingEntityManager;
 import stroom.entity.StroomEntityManager;
 import stroom.properties.StroomPropertyService;

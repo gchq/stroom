@@ -176,7 +176,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
     }
 
     private void processTime(final String timeString) {
-        if (timeString != null && timeString.length() > 0) {
+        if (timeString != null && !timeString.isEmpty()) {
             currentEventTimeMs = DateUtil.parseNormalDateTimeString(timeString);
         }
     }

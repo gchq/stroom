@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.TransactionException;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.IndexService;
@@ -102,7 +101,7 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
         for (final String permission : permissions) {
             try {
                 documentPermissionService.addPermission(user, docRef, permission);
-            } catch (final PersistenceException | TransactionException e) {
+            } catch (final PersistenceException e) {
                 LOGGER.info(e.getMessage());
             }
         }

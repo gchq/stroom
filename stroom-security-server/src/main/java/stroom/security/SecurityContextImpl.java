@@ -19,7 +19,6 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.TransactionException;
 import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
@@ -325,7 +324,7 @@ class SecurityContextImpl implements SecurityContext {
                     // Make the current user the owner of the new document.
                     try {
                         documentPermissionService.addPermission(userRef, docRef, DocumentPermissionNames.OWNER);
-                    } catch (final RollbackException | TransactionException e) {
+                    } catch (final RollbackException e) {
                         LOGGER.debug(e.getMessage(), e);
                     } catch (final Exception e) {
                         LOGGER.error(e.getMessage(), e);
@@ -361,7 +360,7 @@ class SecurityContextImpl implements SecurityContext {
                             if (permissions.contains(allowedPermission)) {
                                 try {
                                     documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
-                                } catch (final RollbackException | TransactionException e) {
+                                } catch (final RollbackException e) {
                                     LOGGER.debug(e.getMessage(), e);
                                 } catch (final Exception e) {
                                     LOGGER.error(e.getMessage(), e);

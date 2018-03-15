@@ -20,7 +20,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.Insecure;
 import stroom.util.concurrent.ModelCache;
-import stroom.util.task.TaskScopeRunnable;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -48,15 +47,8 @@ class ExplorerTreeModel {
 
     private TreeModel createModel() {
         final TreeModel newTreeModel = new TreeModelImpl();
-        final TaskScopeRunnable runnable = new TaskScopeRunnable(null) {
-            @Override
-            protected void exec() {
-                final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-                addChildren(newTreeModel, sort(roots), null);
-            }
-        };
-
-        runnable.run();
+        final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
+        addChildren(newTreeModel, sort(roots), null);
         return newTreeModel;
     }
 

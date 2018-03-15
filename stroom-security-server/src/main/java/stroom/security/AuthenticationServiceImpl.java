@@ -18,7 +18,6 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessException;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
@@ -76,7 +75,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return userRef;
     }
 
-    private UserRef loadUserByUsername(final String username) throws DataAccessException {
+    private UserRef loadUserByUsername(final String username) {
         UserRef userRef;
 
         try {

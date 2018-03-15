@@ -29,7 +29,7 @@ public class JSONUtil {
     }
 
     public static JSONValue parse(final String json) {
-        if (json != null && json.length() > 0) {
+        if (json != null && !json.isEmpty()) {
             return JSONParser.parseStrict(json);
         }
 

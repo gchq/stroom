@@ -16,7 +16,6 @@
 
 package stroom.security;
 
-import com.google.common.base.Strings;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.slf4j.Logger;
@@ -279,7 +278,7 @@ public class SecurityFilter implements Filter {
         // this will have. We need this so that we can bypass certificate logins, e.g. for when we need to
         // log in as the 'admin' user but the browser is always presenting a certificate.
         String prompt = request.getParameter("prompt");
-        if(!Strings.isNullOrEmpty(prompt)){
+        if(prompt != null && !prompt.isEmpty()){
             authenticationRequestParams += "&prompt=" + prompt;
         }
 

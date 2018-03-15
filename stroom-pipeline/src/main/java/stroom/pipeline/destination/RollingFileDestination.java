@@ -16,7 +16,7 @@
 
 package stroom.pipeline.destination;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.writer.PathCreator;
@@ -124,7 +124,7 @@ public class RollingFileDestination extends RollingDestination {
                 int attempt = 1;
                 while (!success && attempt <= MAX_FAILED_RENAME_ATTEMPTS) {
                     // Try to rename the file to something else.
-                    final String suffix = StringUtils.leftPad(String.valueOf(attempt), 3, '0');
+                    final String suffix = Strings.padStart(String.valueOf(attempt), 3, '0');
                     final Path failedFile = dir.resolve(file.getFileName().toString() + "." + suffix);
                     dest = failedFile;
 

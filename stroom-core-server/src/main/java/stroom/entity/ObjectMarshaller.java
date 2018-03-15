@@ -57,7 +57,7 @@ public class ObjectMarshaller<E> {
 
     public E unmarshal(final String xml) {
         E object = null;
-        if (xml != null && xml.length() > 0) {
+        if (xml != null && !xml.isEmpty()) {
             try {
                 object = XMLMarshallerUtil.unmarshal(jaxbContext, clazz, xml);
             } catch (final Exception e) {

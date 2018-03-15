@@ -10,7 +10,6 @@ dependencies {
     compile libs.stroomQueryApi
     compile libs.stroomQueryAudit
 
-    compile libs.spring_context
     compile libs.guice4
 
     compile libs.javax_inject

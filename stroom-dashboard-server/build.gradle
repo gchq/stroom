@@ -35,7 +35,6 @@ dependencies {
     compile libs.poi
     compile libs.poi_ooxml
     compile libs.slf4j_api
-    compile libs.spring_context
     compile libs.ws_rs_api
     compile libs.guice4
 

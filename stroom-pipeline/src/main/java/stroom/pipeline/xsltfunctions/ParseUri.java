@@ -29,7 +29,7 @@ class ParseUri extends StroomExtensionFunctionCall {
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {
         try {
             final String value = getSafeString(functionName, context, arguments, 0);
-            if (value != null && value.length() > 0) {
+            if (value != null && !value.isEmpty()) {
                 final URI uri = URI.create(value);
 
                 final Configuration configuration = context.getConfiguration();

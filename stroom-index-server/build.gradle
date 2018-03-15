@@ -35,7 +35,6 @@ dependencies {
     compile libs.lucene_core
     compile libs.lucene_queryparser
     compile libs.slf4j_api
-    compile libs.spring_context
     compile libs.xml_apis
     compile libs.swagger_annotations
     compile libs.ws_rs_api

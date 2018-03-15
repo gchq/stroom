@@ -16,35 +16,23 @@
 
 package stroom.test;
 
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.security.SecuritySpringConfig;
-import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.task.TaskScopeContextHolder;
-
 /**
  * Script to create some base data for testing.
  */
 public final class SetupSampleData {
     public static void main(final String[] args) throws Exception {
-        FileUtil.useDevTempDir();
-        System.setProperty("stroom.connectionTesterClassName",
-                "stroom.entity.util.StroomConnectionTesterOkOnException");
-
-        TaskScopeContextHolder.addContext();
-        try {
-            @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
-            appContext.register(SetupSampleDataSpringConfig.class);
-            appContext.refresh();
-            final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
-
-            commonTestControl.setup();
-
-            final SetupSampleDataBean setupSampleDataBean = appContext.getBean(SetupSampleDataBean.class);
-            setupSampleDataBean.run(true);
-
-        } finally {
-            TaskScopeContextHolder.removeContext();
-        }
+//        FileUtil.useDevTempDir();
+//        System.setProperty("stroom.connectionTesterClassName",
+//                "stroom.entity.util.StroomConnectionTesterOkOnException");
+//
+//        @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
+//        appContext.register(SetupSampleDataSpringConfig.class);
+//        appContext.refresh();
+//        final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
+//
+//        commonTestControl.setup();
+//
+//        final SetupSampleDataBean setupSampleDataBean = appContext.getBean(SetupSampleDataBean.class);
+//        setupSampleDataBean.run(true);
     }
 }

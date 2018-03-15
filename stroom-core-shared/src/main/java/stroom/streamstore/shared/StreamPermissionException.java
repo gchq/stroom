@@ -16,6 +16,7 @@
 
 package stroom.streamstore.shared;
 
+
 public class StreamPermissionException extends RuntimeException {
     private static final long serialVersionUID = -4440960036445588068L;
 
@@ -33,7 +34,7 @@ public class StreamPermissionException extends RuntimeException {
         if (message != null) {
             message = message.replace("You do", "User does");
 
-            if (user != null && user.length() > 0) {
+            if (user != null && !user.isEmpty()) {
                 message = message.replace("User does", "User '" + user + "' does");
             }
         }

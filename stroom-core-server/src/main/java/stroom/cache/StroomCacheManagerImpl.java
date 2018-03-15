@@ -121,7 +121,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     }
 
     private void addEntries(final Map<String, String> map, String string) {
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
 
             string = string.replaceAll("^[^{]*\\{", "");
             string = string.replaceAll("}.*", "");

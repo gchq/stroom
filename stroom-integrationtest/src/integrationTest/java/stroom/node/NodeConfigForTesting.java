@@ -114,13 +114,13 @@ public class NodeConfigForTesting implements NodeConfig {
                 if (realRack != null) {
                     realRackList.add(realRack);
                 } else {
-                    realRackList.add(stroomEntityManager.saveEntity(BaseEntityUtil.clone(rack)));
+                    realRackList.add(stroomEntityManager.saveEntity(rack.copy()));
                 }
             }
             for (final Node node : initialNodeList) {
                 Node realNode = nodeService.getNode(node.getName());
                 if (realNode == null) {
-                    realNode = BaseEntityUtil.clone(node);
+                    realNode = node.copy();
                     realNode.setRack(BaseEntityUtil.findByName(realRackList, realNode.getRack().getName()));
                     LOGGER.debug("Persisting node {}", realNode);
                     realNode = stroomEntityManager.saveEntity(realNode);
@@ -147,7 +147,7 @@ public class NodeConfigForTesting implements NodeConfig {
                     VolumeState volumeState = new VolumeState();
                     volumeState = stroomEntityManager.saveEntity(volumeState);
 
-                    final Volume realVolume = BaseEntityUtil.clone(volume);
+                    final Volume realVolume = volume.copy();
                     realVolume.setNode(node);
                     realVolume.setVolumeState(volumeState);
 

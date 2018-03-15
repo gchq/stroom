@@ -18,11 +18,7 @@ package stroom.statistics.sql.rollup;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 import stroom.task.TaskHandler;
-import stroom.util.spring.StroomScope;
 
 public class SQLStatisticRollupModule extends AbstractModule {
     @Override
@@ -32,21 +28,4 @@ public class SQLStatisticRollupModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.statistics.sql.rollup.RollUpBitMaskPermGenerationHandler.class);
         taskHandlerBinder.addBinding().to(stroom.statistics.sql.rollup.StatisticsDataSourceFieldChangeHandler.class);
     }
-    //    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public RollUpBitMaskConversionHandler rollUpBitMaskConversionHandler() {
-//        return new RollUpBitMaskConversionHandler();
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public RollUpBitMaskPermGenerationHandler rollUpBitMaskPermGenerationHandler() {
-//        return new RollUpBitMaskPermGenerationHandler();
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public StatisticsDataSourceFieldChangeHandler statisticsDataSourceFieldChangeHandler() {
-//        return new StatisticsDataSourceFieldChangeHandler();
-//    }
 }

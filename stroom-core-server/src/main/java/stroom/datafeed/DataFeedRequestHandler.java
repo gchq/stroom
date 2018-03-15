@@ -19,7 +19,6 @@ package stroom.datafeed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
@@ -83,7 +82,7 @@ public class DataFeedRequestHandler implements RequestHandler {
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
         if (metaMapFilter == null) {
             final String receiptPolicyUuid = stroomPropertyService.getProperty("stroom.feed.receiptPolicyUuid");
-            if (receiptPolicyUuid != null && receiptPolicyUuid.length() > 0) {
+            if (receiptPolicyUuid != null && !receiptPolicyUuid.isEmpty()) {
                 this.metaMapFilter = metaMapFilterFactory.create(receiptPolicyUuid);
             }
         }
@@ -94,7 +93,7 @@ public class DataFeedRequestHandler implements RequestHandler {
                 debug("Receiving data", metaMap);
                 final String feedName = metaMap.get(StroomHeaderArguments.FEED);
 
-                if (!StringUtils.hasText(feedName)) {
+                if (feedName == null || feedName.isEmpty()) {
                     throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
                 }
 

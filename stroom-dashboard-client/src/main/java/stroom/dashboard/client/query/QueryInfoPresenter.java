@@ -65,7 +65,7 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                         public void onHideRequest(final boolean autoClose, final boolean ok) {
                             if (ok) {
                                 boolean valid = true;
-                                if (queryInfoPopupValidationRegex != null && queryInfoPopupValidationRegex.length() > 0) {
+                                if (queryInfoPopupValidationRegex != null && !queryInfoPopupValidationRegex.isEmpty()) {
                                     valid = false;
                                     try {
                                         valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);

@@ -163,7 +163,7 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
             // Set effective time.
             try {
                 final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
-                if (effectiveTime != null && effectiveTime.length() > 0) {
+                if (effectiveTime != null && !effectiveTime.isEmpty()) {
                     stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
                 }
             } catch (final Exception e) {

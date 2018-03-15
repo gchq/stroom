@@ -16,7 +16,6 @@
 
 package stroom.entity;
 
-import org.springframework.beans.factory.annotation.Value;
 import stroom.properties.StroomPropertyService;
 import stroom.util.io.StreamUtil;
 

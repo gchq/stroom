@@ -18,29 +18,7 @@ package stroom.refdata;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.entity.DocumentPermissionCache;
-import stroom.feed.FeedService;
-import stroom.io.StreamCloser;
-import stroom.pipeline.LocationFactoryProxy;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.factory.PipelineDataCache;
-import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.StreamHolder;
-import stroom.security.SecurityContext;
-import stroom.streamstore.StreamStore;
 import stroom.task.TaskHandler;
-import stroom.task.TaskManager;
-import stroom.util.cache.CacheManager;
-import stroom.util.spring.StroomScope;
-import stroom.task.TaskContext;
-
-import javax.inject.Named;
 
 public class ReferenceDataModule extends AbstractModule {
     @Override

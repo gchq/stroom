@@ -24,7 +24,6 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
@@ -521,7 +520,7 @@ public class SQLStatisticEventStore implements Statistics {
         final String eventProcessingThresholdStr = propertyService
                 .getProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE);
 
-        if (StringUtils.hasText(eventProcessingThresholdStr)) {
+        if (eventProcessingThresholdStr != null && !eventProcessingThresholdStr.isEmpty()) {
             final long duration = ModelStringUtil.parseDurationString(eventProcessingThresholdStr);
             return Long.valueOf(System.currentTimeMillis() - duration);
         } else {

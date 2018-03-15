@@ -45,7 +45,7 @@ public class CacheControlFilter implements Filter {
     @Override
     public void init(final FilterConfig filterConfig) {
         final String value = filterConfig.getInitParameter("seconds");
-        if (value != null && value.length() > 0) {
+        if (value != null && !value.isEmpty()) {
             seconds = Long.valueOf(value);
         }
     }

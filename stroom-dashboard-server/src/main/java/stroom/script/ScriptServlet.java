@@ -21,10 +21,8 @@ import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.util.task.TaskScopeContextHolder;
 
 import javax.inject.Inject;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -58,10 +56,7 @@ public class ScriptServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
-            throws ServletException, IOException {
-        TaskScopeContextHolder.addContext();
-
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             response.setContentType("text/javascript");
@@ -72,7 +67,7 @@ public class ScriptServlet extends HttpServlet {
                 final Map<String, String> queryParamMap = createQueryParamMap(query);
 
                 final String uuid = queryParamMap.get("uuid");
-                if (uuid != null && uuid.length() > 0) {
+                if (uuid != null && !uuid.isEmpty()) {
                     final Script script = getScript(uuid);
                     final Res res = script.getResource();
                     if (res != null && res.getData() != null) {
@@ -80,7 +75,6 @@ public class ScriptServlet extends HttpServlet {
                         pw.write(res.getData());
                         pw.close();
                     }
-
                 }
             }
         }

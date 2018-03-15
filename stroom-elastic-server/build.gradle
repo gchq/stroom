@@ -12,7 +12,6 @@ dependencies {
     compile libs.ws_rs_api
     compile libs.guava
     compile libs.slf4j_api
-    compile libs.spring_context
     compile libs.xml_apis
     compile libs.guice4
 

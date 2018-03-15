@@ -18,7 +18,6 @@ package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Propagation;
 
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.HqlBuilder;

@@ -19,7 +19,6 @@ package stroom.importexport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.entity.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
@@ -269,7 +268,7 @@ public class ImportExportHelper {
                 if (obj != null) {
                     if (obj instanceof String) {
                         final String string = (String) obj;
-                        if (StringUtils.hasText(string)) {
+                        if (string != null && !string.isEmpty()) {
                             setStringProperty(entity, property, string, importState, importMode);
                         }
                     } else if (obj instanceof DocRef) {
@@ -301,7 +300,7 @@ public class ImportExportHelper {
 //                        for (final Object obj : values) {
 //                            if (obj instanceof String) {
 //                                final String string = (String) obj;
-//                                if (StringUtils.hasText(string)) {
+//                                if (string != null && !string.isEmpty()) {
 //                                    final BaseEntity entity = resolveEntityByPath(beanWrapper, clazz, string);
 //                                    newSet.add(entity);
 //                                }

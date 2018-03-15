@@ -9,7 +9,7 @@ dependencies {
     compile project(':stroom-docstore-server')
 
     compile libs.slf4j_api
-    compile libs.commons_lang
+    compile libs.guava
     compile libs.jackson_annotations
 
     compile libs.javax_inject

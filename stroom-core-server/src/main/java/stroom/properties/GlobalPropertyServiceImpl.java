@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -63,8 +64,10 @@ class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProperty, F
 
     @Override
     public BaseResultList<GlobalProperty> find(final FindGlobalPropertyCriteria criteria) throws RuntimeException {
-        final Map<String, GlobalProperty> allDatabase = BaseEntityUtil
-                .toNameMap(super.find(new FindGlobalPropertyCriteria()));
+        final BaseResultList<GlobalProperty> allProperties = super.find(new FindGlobalPropertyCriteria());
+        final Map<String, GlobalProperty> allDatabase = allProperties
+                .stream()
+                .collect(Collectors.toMap(GlobalProperty::getName, Function.identity()));
         final Map<String, GlobalProperty> allDefault = GlobalProperties.getInstance().getGlobalProperties();
 
         final Set<String> keySet = new HashSet<>();

@@ -1,6 +1,6 @@
 package stroom.proxy.repo;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import stroom.feed.MetaMap;
 
 import java.time.ZoneOffset;
@@ -49,7 +49,7 @@ class PathCreator {
     private static String replace(final String path, final String type, final long replacement, final int pad) {
         String value = String.valueOf(replacement);
         if (pad > 0) {
-            value = StringUtils.leftPad(value, pad, '0');
+            value = Strings.padStart(value, pad, '0');
         }
         return replace(path, type, value);
     }

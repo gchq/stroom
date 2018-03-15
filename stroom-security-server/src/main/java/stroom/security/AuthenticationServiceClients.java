@@ -19,7 +19,6 @@ package stroom.security;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import stroom.auth.service.ApiClient;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;

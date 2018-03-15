@@ -17,11 +17,10 @@
 package stroom.test;
 
 import org.junit.Assert;
-import org.springframework.dao.DataIntegrityViolationException;
-import stroom.entity.util.ConnectionUtil;
-import stroom.entity.util.HqlBuilder;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
+import stroom.entity.util.ConnectionUtil;
+import stroom.entity.util.HqlBuilder;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -90,7 +89,7 @@ public class DatabaseCommonTestControlTransactionHelper {
                 try {
                     entityManager.deleteEntity(baseEntity);
                     results.remove(i);
-                } catch (final DataIntegrityViolationException e) {
+                } catch (final Exception e) {
                     foundError = true;
 
                     if (tryCount == maxTryCount) {

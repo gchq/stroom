@@ -20,9 +20,7 @@ package stroom.streamstore.fs;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Propagation;
 
-import org.springframework.util.StringUtils;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SupportsCriteriaLogging;
@@ -217,7 +215,7 @@ public class FileSystemStreamMaintenanceService
         final Map<String, StreamVolume> streamsKeyedByBaseName = new HashMap<>();
         final Path directory;
 
-        if (StringUtils.hasText(repoPath)) {
+        if (repoPath != null && !repoPath.isEmpty()) {
             directory = FileSystemUtil.createFileTypeRoot(volume).resolve(repoPath);
         } else {
             directory = FileSystemUtil.createFileTypeRoot(volume);
@@ -249,7 +247,7 @@ public class FileSystemStreamMaintenanceService
         // directories.
         buildFilesKeyedByBaseName(result, repoPath, filesKeyedByBaseName, directory, kids);
 
-        if (StringUtils.hasText(repoPath)) {
+        if (repoPath != null && !repoPath.isEmpty()) {
             buildStreamsKeyedByBaseName(volume, repoPath, streamsKeyedByBaseName);
 
             deleteUnknownFiles(result, doDelete, directory, oldFileTime, filesKeyedByBaseName, streamsKeyedByBaseName);
@@ -287,7 +285,7 @@ public class FileSystemStreamMaintenanceService
                 final Path kidFile = directory.resolve(kid);
 
                 if (Files.isDirectory(kidFile)) {
-                    if (StringUtils.hasText(repoPath)) {
+                    if (repoPath != null && !repoPath.isEmpty()) {
                         result.addChildDirectory(repoPath + FileSystemUtil.SEPERATOR_CHAR + kid);
                     } else {
                         result.addChildDirectory(kid);

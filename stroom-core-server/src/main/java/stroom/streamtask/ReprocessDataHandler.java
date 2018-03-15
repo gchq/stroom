@@ -17,7 +17,7 @@
 
 package stroom.streamtask;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityIdSet;
 import stroom.pipeline.shared.PipelineEntity;
@@ -123,7 +123,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                         unableListSB.append("\n");
 
                     } else {
-                        final String padded = StringUtils.rightPad(streamProcessor.getPipeline().getName(), 40, ' ');
+                        final String padded = Strings.padEnd(streamProcessor.getPipeline().getName(), 40, ' ');
                         submittedListSB.append(padded);
                         submittedListSB.append("\t");
                         submittedListSB.append(streamSet.size());

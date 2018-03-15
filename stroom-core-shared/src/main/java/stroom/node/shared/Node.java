@@ -117,4 +117,13 @@ public class Node extends NamedEntity {
     public final String getType() {
         return ENTITY_TYPE;
     }
+
+    public Node copy() {
+        final Node node = new Node();
+        node.setName(getName());
+        node.priority = priority;
+        node.rack = rack;
+        node.enabled = enabled;
+        return node;
+    }
 }

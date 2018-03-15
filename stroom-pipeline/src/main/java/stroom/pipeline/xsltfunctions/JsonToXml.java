@@ -41,7 +41,7 @@ class JsonToXml extends StroomExtensionFunctionCall {
             // Get the json string.
             final String json = getSafeString(functionName, context, arguments, 0);
 
-            if (json != null && json.length() > 0) {
+            if (json != null && !json.isEmpty()) {
                 try {
                     result = jsonToXml(context, json);
                 } catch (final Throwable t) {

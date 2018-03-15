@@ -1,7 +1,6 @@
 package stroom.spring;
 
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
-import org.springframework.context.annotation.Configuration;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.pipeline.factory.Element;

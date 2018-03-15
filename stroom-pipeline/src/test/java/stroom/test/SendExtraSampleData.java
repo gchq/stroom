@@ -63,7 +63,7 @@ public class SendExtraSampleData {
                 connection.disconnect();
 
                 System.out.println("Client Got Response " + response);
-                if (msg != null && msg.length() > 0) {
+                if (msg != null && !msg.isEmpty()) {
                     System.out.println(msg);
                 }
 

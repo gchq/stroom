@@ -35,9 +35,6 @@ dependencies {
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.slf4j_api
-    compile libs.spring_context
-    compile libs.spring_core
-    compile libs.spring_tx
     compile libs.jose4j
     compile libs.ws_rs_api
     compile libs.swagger_annotations

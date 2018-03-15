@@ -681,7 +681,7 @@ public class SearchRequestMapper {
             Map<String, String> map = new HashMap<>();
 
             try {
-                if (json != null && json.length() > 0) {
+                if (json != null && !json.isEmpty()) {
                     ObjectMapper objectMapper = new ObjectMapper();
                     final JsonNode node = objectMapper.readTree(json);
 

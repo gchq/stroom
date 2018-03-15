@@ -18,21 +18,7 @@ package stroom.statistics.sql;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.entity.StroomDatabaseInfo;
-import stroom.jobsystem.ClusterLockService;
-import stroom.properties.StroomPropertyService;
-import stroom.statistics.sql.datasource.StatisticStoreCache;
-import stroom.statistics.sql.datasource.StatisticStoreValidator;
-import stroom.task.TaskContext;
 import stroom.task.TaskHandler;
-import stroom.task.TaskManager;
-import stroom.util.spring.StroomScope;
-
-import javax.inject.Named;
-import javax.sql.DataSource;
 
 public class SQLStatisticModule extends AbstractModule {
     @Override

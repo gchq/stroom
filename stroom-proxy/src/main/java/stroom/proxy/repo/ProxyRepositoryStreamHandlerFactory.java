@@ -1,6 +1,6 @@
 package stroom.proxy.repo;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
 
@@ -23,7 +23,7 @@ public class ProxyRepositoryStreamHandlerFactory implements StreamHandlerFactory
 
     @Override
     public List<StreamHandler> addReceiveHandlers(final List<StreamHandler> handlers) {
-        if (proxyRepositoryConfig != null && StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir())) {
+        if (proxyRepositoryConfig != null && !Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir())) {
             handlers.add(proxyRepositoryStreamHandlerProvider.get());
         }
         return handlers;

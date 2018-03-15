@@ -17,38 +17,10 @@
 package stroom.datafeed;
 
 import com.google.inject.AbstractModule;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.feed.FeedService;
-import stroom.internalstatistics.MetaDataStatistic;
-import stroom.properties.StroomPropertyService;
-import stroom.security.SecurityContext;
-import stroom.streamstore.StreamStore;
-import stroom.util.spring.StroomScope;
-
-import javax.inject.Named;
-import javax.inject.Provider;
 
 public class DataFeedModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(RequestHandler.class).to(DataFeedRequestHandler.class);
     }
-
-//    @Bean
-//    @Scope(StroomScope.PROTOTYPE)
-//    public DataFeedRequestHandler dataFeedRequestHandler(final SecurityContext securityContext,
-//                                                         final StreamStore streamStore,
-//                                                         @Named("cachedFeedService") final FeedService feedService,
-//                                                         final MetaDataStatistic metaDataStatistics,
-//                                                         final MetaMapFilterFactory metaMapFilterFactory,
-//                                                         final StroomPropertyService stroomPropertyService) {
-//        return new DataFeedRequestHandler(securityContext, streamStore, feedService, metaDataStatistics, metaMapFilterFactory, stroomPropertyService);
-//    }
-//
-//    @Bean
-//    public DataFeedServlet dataFeedServlet(final Provider<RequestHandler> requestHandlerProvider) {
-//        return new DataFeedServlet(requestHandlerProvider);
-//    }
 }

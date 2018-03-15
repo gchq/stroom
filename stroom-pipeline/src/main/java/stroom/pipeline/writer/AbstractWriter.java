@@ -77,7 +77,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
             }
 
             Charset charset = StreamUtil.DEFAULT_CHARSET;
-            if (encoding != null && encoding.length() > 0) {
+            if (encoding != null && !encoding.isEmpty()) {
                 try {
                     charset = Charset.forName(encoding);
                 } catch (final Exception e) {
@@ -93,7 +93,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
 
     protected Charset getCharset() {
         Charset charset = StreamUtil.DEFAULT_CHARSET;
-        if (encoding != null && encoding.length() > 0) {
+        if (encoding != null && !encoding.isEmpty()) {
             try {
                 charset = Charset.forName(encoding);
             } catch (final Exception e) {
