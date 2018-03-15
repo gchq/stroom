@@ -410,6 +410,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                 .map(fieldName -> {
                     int idx = fieldIndexMap.get(fieldName);
                     if (idx == -1) {
+                        LOGGER.debug("Field {} is not in fieldIndexMap", fieldName);
                         return Optional.<ValueExtractor>empty();
                     } else {
                         ValueExtractor extractor;

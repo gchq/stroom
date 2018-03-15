@@ -16,6 +16,8 @@
 
 package stroom.statistics.server.common.search;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import io.reactivex.Flowable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,14 +25,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
+import stroom.dashboard.expression.Generator;
 import stroom.dashboard.shared.ParamUtil;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.FolderService;
-import stroom.query.CoprocessorMap;
-import stroom.query.ResultStore;
-import stroom.query.SearchResultHandler;
+import stroom.query.*;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.ComponentSettings;
 import stroom.query.shared.ExpressionBuilder;
@@ -74,6 +75,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStatStoreSearchTaskHandler.class);
@@ -87,9 +89,25 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
     private static final String TAG2_OTHER_VALUE_2 = "Tag2OtherValue2";
     private static final String DATE_RANGE = "2000-01-01T00:00:00.000Z,3000-01-01T00:00:00.000Z";
 
+    private static final String COMPONENT_ID_1 = "1";
+    private static final String COMPONENT_ID_2 = "2";
+    private static final List<String> COMPONENT_IDS = Arrays.asList(COMPONENT_ID_1, COMPONENT_ID_2);
+
+    private static final Map<String, List<String>> COMPONENT_ID_TO_FIELDS_MAP = ImmutableMap.of(
+            COMPONENT_ID_1, Arrays.asList(
+                    StatisticStoreEntity.FIELD_NAME_DATE_TIME,
+                    StatisticStoreEntity.FIELD_NAME_VALUE,
+                    StatisticStoreEntity.FIELD_NAME_PRECISION_MS,
+                    TAG1),
+            COMPONENT_ID_2, Arrays.asList(
+                    StatisticStoreEntity.FIELD_NAME_DATE_TIME,
+                    StatisticStoreEntity.FIELD_NAME_COUNT,
+                    StatisticStoreEntity.FIELD_NAME_PRECISION_MS,
+                    TAG1,
+                    TAG2));
+
 //    private static final DocRef DOC_REF = new DocRef(StatisticStoreEntity.ENTITY_TYPE, UUID.randomUUID().toString(), STAT_NAME);
 
-    public static final List<String> COMPONENT_IDS = Arrays.asList("1", "2");
 
     @Resource
     private CommonTestControl commonTestControl;
@@ -134,26 +152,12 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
             commonTestControl.teardown();
             commonTestControl.setup();
 
-//            statisticStoreEntity = new StatisticStoreEntity();
-//            statisticStoreEntity.setUuid(DOC_REF.getUuid());
-//            statisticStoreEntity.setStatisticType(StatisticType.COUNT);
-//            statisticStoreEntity.setName(STAT_NAME);
-//            statisticStoreEntity.setRollUpType(StatisticRollUpType.NONE);
-//            StatisticsDataSourceData statisticsDataSourceData = new StatisticsDataSourceData();
-//            List<StatisticField> fields = Stream
-//                    .of(TAG1, TAG2)
-//                    .map(StatisticField::new)
-//                    .collect(Collectors.toList());
-//            statisticsDataSourceData.setStatisticFields(fields);
-//
-//
-//            statisticStoreEntityService.create(Folder.)
             final DocRef folder = DocRef.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
 
             final StatisticStoreEntity statisticStoreEntity = statisticStoreEntityService.create(folder, STAT_NAME);
             statisticStoreEntity.setEngineName("EngineName1");
             statisticStoreEntity.setDescription("My Description");
-            statisticStoreEntity.setStatisticType(StatisticType.COUNT);
+            statisticStoreEntity.setStatisticType(StatisticType.VALUE);
             statisticStoreEntity.setStatisticDataSourceDataObject(new StatisticsDataSourceData());
             statisticStoreEntity.getStatisticDataSourceDataObject().addStatisticField(new StatisticField(TAG1));
             statisticStoreEntity.getStatisticDataSourceDataObject().addStatisticField(new StatisticField(TAG2));
@@ -171,24 +175,11 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
             tags.add(new StatisticTag(TAG2, TAG2_VAL));
 
             fillStatValSrc(tags);
-
             StatStoreSearchResultCollector collector = doSearch(tags);
-            
-            COMPONENT_IDS.forEach(id -> {
-                ResultStore resultStore = collector.getResultStore(id);
-                LOGGER.debug(resultStore.getChildMap().toString());
-            });
-
-
-//            final StatisticDataSet dataSet = doSearch(tags);
-//
-//            assertDataSetSize(dataSet, 1);
-//
-//            final StatisticDataPoint dataPoint = dataSet.iterator().next();
-//            Assert.assertEquals(tags, dataPoint.getTags());
+            doAsserts(collector, 1);
         }
-
     }
+
 
     @Test
     public void testSearchStatisticsData_OneTagTwoOptions() throws SQLException {
@@ -203,10 +194,8 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
             searchTags.add(new StatisticTag(TAG2, TAG2_VAL));
             searchTags.add(new StatisticTag(TAG2, TAG2_OTHER_VALUE_1));
 
-//            final StatisticDataSet dataSet = doSearch(searchTags, ExpressionOperator.Op.OR);
-//
-//            assertDataSetSize(dataSet, 2);
-//
+            StatStoreSearchResultCollector collector = doSearch(searchTags, ExpressionOperator.Op.OR);
+            doAsserts(collector, 2);
 //            for (final StatisticDataPoint dataPoint : dataSet) {
 //
 //                final String tag2Value = dataPoint.getTagsAsMap().get(TAG2);
@@ -262,6 +251,33 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
         }
     }
 
+    private void doAsserts(final StatStoreSearchResultCollector collector,
+                           final int expectedRowCount) {
+
+        COMPONENT_IDS.forEach(id -> {
+            ResultStore resultStore = collector.getResultStore(id);
+
+            Assert.assertNotNull(resultStore);
+//            Assert.assertEquals(expectedRowCount, resultStore.getTotalSize());
+
+            int fieldCount = COMPONENT_ID_TO_FIELDS_MAP.get(id).size();
+
+            //get the root level
+            Items<Item> items = resultStore.getChildMap().get(null);
+
+            //row count
+            Assert.assertEquals(expectedRowCount, items.size());
+
+            items.forEach(item -> {
+                Assert.assertEquals(fieldCount, item.getValues().length);
+                String valuesStr = Arrays.stream(item.getValues())
+                        .map(obj -> ((Generator) obj).eval().toString())
+                        .collect(Collectors.joining(","));
+                LOGGER.debug("component: {} - [{}]", id, valuesStr);
+            });
+        });
+    }
+
     private StatStoreSearchResultCollector doSearch(final List<StatisticTag> searchTags) {
         return doSearch(searchTags, ExpressionOperator.Op.AND);
     }
@@ -280,7 +296,7 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
 
         //TODO make the table settings different
         COMPONENT_IDS.forEach(componentId -> {
-            final TableSettings tableSettings = createTableSettings(searchTags);
+            final TableSettings tableSettings = createTableSettings(componentId);
 
             resultComponentMap.put(componentId, tableSettings);
 
@@ -325,15 +341,12 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
         return searchResultCollector;
     }
 
-    private TableSettings createTableSettings(final List<StatisticTag> tags) {
+    private TableSettings createTableSettings(final String componentId) {
         final TableSettings tableSettings = new TableSettings();
 
-        addField(StatisticStoreEntity.FIELD_NAME_DATE_TIME, tableSettings);
-        addField(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, tableSettings);
-        addField(StatisticStoreEntity.FIELD_NAME_VALUE, tableSettings);
-        addField(StatisticStoreEntity.FIELD_NAME_COUNT, tableSettings);
-        addField(TAG1, tableSettings);
-        addField(TAG2, tableSettings);
+        List<String> fields = COMPONENT_ID_TO_FIELDS_MAP.get(componentId);
+        Preconditions.checkNotNull(fields);
+        fields.forEach(field -> addField(field, tableSettings));
 
         return tableSettings;
     }

@@ -22,7 +22,7 @@
     </logger>
 
     <logger name="stroom.statistics">
-        <level value="debug"/>
+        <level value="trace"/>
     </logger>
 
     <logger name="org.springframework">
