@@ -51,15 +51,10 @@ public class PipelineScope implements Scope {
                         " explicitly seeded in this scope by calling" +
                         " SimpleScope.seed(), but was not.");
             };
-    private final ThreadLocal<Deque<Map<Key<?>, Object>>> threadLocal = new ThreadLocal<>();
+    private final ThreadLocal<Deque<Map<Key<?>, Object>>> threadLocal = ThreadLocal.withInitial(ArrayDeque::new);
 
     public void enter() {
-        Deque<Map<Key<?>, Object>> deque = threadLocal.get();
-        if (deque == null) {
-            deque = new ArrayDeque<>();
-            threadLocal.set(deque);
-        }
-
+        final Deque<Map<Key<?>, Object>> deque = threadLocal.get();
         deque.offerLast(Maps.newHashMap());
     }
 

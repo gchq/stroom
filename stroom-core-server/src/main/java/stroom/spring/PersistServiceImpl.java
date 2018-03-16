@@ -29,7 +29,7 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
     private final DataSource dataSource;
 
     private volatile EntityManagerFactory emFactory;
-    private final ThreadLocal<Deque<Context>> threadLocal = new ThreadLocal<>();
+    private final ThreadLocal<Deque<Context>> threadLocal = ThreadLocal.withInitial(ArrayDeque::new);
 
     @Inject
     PersistServiceImpl(final DataSource dataSource) {
@@ -50,8 +50,7 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
     }
 
     public void begin() {
-        final Deque<Context> deque = getDeque();
-
+        final Deque<Context> deque = threadLocal.get();
         final Context currentContext = getContext();
 
         Context context;
@@ -65,7 +64,7 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
     }
 
     public void end() {
-        final Deque<Context> deque = getDeque();
+        final Deque<Context> deque = threadLocal.get();
         final Context context = deque.pollLast();
 
         Preconditions.checkState(context != null, "Attempt to pop context when there is no context");
@@ -177,17 +176,8 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
     }
 
     private Context getContext() {
-        final Deque<Context> deque = getDeque();
+        final Deque<Context> deque = threadLocal.get();
         return deque.peekLast();
-    }
-
-    private Deque<Context> getDeque() {
-        Deque<Context> deque = threadLocal.get();
-        if (deque == null) {
-            deque = new ArrayDeque<>();
-            threadLocal.set(deque);
-        }
-        return deque;
     }
 
     private interface Context {

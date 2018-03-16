@@ -2,11 +2,11 @@ package stroom.security;
 
 import stroom.security.shared.UserRef;
 
+import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedList;
 
 public final class CurrentUserState {
-    private static final ThreadLocal<Deque<State>> THREAD_LOCAL = InheritableThreadLocal.withInitial(LinkedList::new);
+    private static final ThreadLocal<Deque<State>> THREAD_LOCAL = ThreadLocal.withInitial(ArrayDeque::new);
 
     private CurrentUserState() {
         // Utility.

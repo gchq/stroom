@@ -19,11 +19,11 @@ package stroom.task;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 
+import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedList;
 
 public final class CurrentTaskState {
-    private static final ThreadLocal<Deque<TaskState>> THREAD_LOCAL = InheritableThreadLocal.withInitial(LinkedList::new);
+    private static final ThreadLocal<Deque<TaskState>> THREAD_LOCAL = ThreadLocal.withInitial(ArrayDeque::new);
 
     private CurrentTaskState() {
         // Utility.
