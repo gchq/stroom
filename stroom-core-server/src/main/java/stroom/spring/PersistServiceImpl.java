@@ -2,7 +2,6 @@ package stroom.spring;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Provider;
-import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import org.hibernate.integrator.spi.Integrator;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.hibernate.jpa.boot.spi.IntegratorProvider;
@@ -10,13 +9,11 @@ import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.sql.DataSource;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
@@ -27,7 +24,7 @@ import java.util.Properties;
 
 @Singleton
 public class PersistServiceImpl implements Provider<EntityManager>, PersistService {
-    private static final String PACKAGE = "stroom";
+//    private static final String PACKAGE = "stroom";
 
     private final DataSource dataSource;
 
@@ -93,11 +90,6 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
         emFactory = null;
     }
 
-//    private EntityManager entityManager(final Provider<EntityManagerFactory> entityManagerFactoryProvider) {
-//        final EntityManagerFactory entityManagerFactory = entityManagerFactoryProvider.get();
-//        return entityManagerFactory.createEntityManager();
-//    }
-
     private EntityManagerFactory entityManagerFactory(final DataSource dataSource) {
         final PersistenceUnitInfo persistenceUnitInfo = persistenceUnitInfo(getClass().getSimpleName(), dataSource);
         final Map<String, Object> configuration = new HashMap<>();
@@ -111,169 +103,57 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
         }
 
         return new HibernatePersistenceProvider().createContainerEntityManagerFactory(persistenceUnitInfo, configuration);
-
-
-//
-//
-//        final Configuration configuration = new Configuration()
-//////                .addAnnotatedClass(stroom.security.Permission.class)
-//////        .addAnnotatedClass(stroom.security.AppPermission.class)
-//////        .addAnnotatedClass(stroom.security.DocumentPermission.class)
-//////        .addAnnotatedClass(stroom.security.User.class)
-//////        .addAnnotatedClass(stroom.security.UserGroupUser.class)
-////
-////        .addAnnotatedClass(stroom.streamtask.shared.StreamProcessor.class)
-////        .addAnnotatedClass(stroom.streamtask.shared.StreamProcessorFilter.class)
-////        .addAnnotatedClass(stroom.streamtask.shared.StreamProcessorFilterTracker.class)
-////        .addAnnotatedClass(stroom.streamtask.shared.StreamTask.class)
-////
-////        .addAnnotatedClass(stroom.node.shared.Volume.class)
-////        .addAnnotatedClass(stroom.node.shared.VolumeState.class)
-////
-////        .addAnnotatedClass(stroom.streamstore.shared.Stream.class)
-////        .addAnnotatedClass(stroom.streamstore.shared.StreamVolume.class)
-////        .addAnnotatedClass(stroom.streamstore.shared.StreamAttributeKey.class)
-////        .addAnnotatedClass(stroom.streamstore.shared.StreamAttributeValue.class)
-////        .addAnnotatedClass(stroom.feed.shared.Feed.class)
-////        .addAnnotatedClass(stroom.streamstore.shared.StreamType.class)
-////
-////        .addAnnotatedClass(stroom.jobsystem.shared.Job.class)
-////        .addAnnotatedClass(stroom.jobsystem.shared.JobNode.class)
-////        .addAnnotatedClass(stroom.jobsystem.shared.ClusterLock.class)
-////
-//////        .addAnnotatedClass(stroom.index.shared.Index.class)
-//////        .addAnnotatedClass(stroom.index.shared.IndexShard.class)
-//////
-//////        .addAnnotatedClass(stroom.statistics.shared.StatisticStoreEntity.class)
-//////        .addAnnotatedClass(stroom.stats.shared.StroomStatsStoreEntity.class)
-////
-////        .addAnnotatedClass(stroom.xmlschema.shared.XMLSchema.class)
-////
-//////        .addAnnotatedClass(stroom.visualisation.shared.Visualisation.class)
-//////
-//////        .addAnnotatedClass(stroom.script.shared.Script.class)
-//////        .addAnnotatedClass(stroom.entity.shared.Res.class)
-////
-////        .addAnnotatedClass(stroom.pipeline.shared.PipelineEntity.class)
-////
-//////        .addAnnotatedClass(stroom.dashboard.shared.Dashboard.class)
-//////
-//////        .addAnnotatedClass(stroom.dashboard.shared.QueryEntity.class)
-////
-//////        addAnnotatedClass(stroom.stream.OldFolder)
-////
-////        .addAnnotatedClass(stroom.node.shared.Node.class)
-////        .addAnnotatedClass(stroom.node.shared.Rack.class)
-////
-////        .addAnnotatedClass(stroom.node.shared.GlobalProperty.class)
-////
-////        .addAnnotatedClass(stroom.ruleset.shared.Policy.class)
-//                .addPackage("stroom")
-//            .setProperty("hibernate.dialect" , "org.hibernate.dialect.MySQLInnoDBDialect" )
-//            .setProperty("hibernate.show_sql" , "true" )
-//            .setProperty("hibernate.format_sql" , "true" )
-//            .setProperty("hibernate.hbm2ddl.auto" , "validate" )
-//                .setProperty("hibernate.connection.datasource", "java:/stroom");
-//
-//        // A SessionFactory is set up once for an application!
-//        final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
-//                .applySettings(configuration.getProperties())
-//                .build();
-////
-////        return configuration.buildSessionFactory(registry);
-//
-//        try {
-//        return new MetadataSources(registry).buildMetadata().buildSessionFactory();
-//        }        catch (Exception e) {
-//            // The registry would be destroyed by the SessionFactory, but we had trouble building the SessionFactory
-//            // so destroy it manually.
-//            StandardServiceRegistryBuilder.destroy( registry );
-//        }
-//
-//        throw new RuntimeException("Unable to create session factory");
     }
 
     private PersistenceUnitInfoImpl persistenceUnitInfo(final String name, final DataSource dataSource) {
-        final List<String> entityClassNames = new ArrayList<>();
-        new FastClasspathScanner(PACKAGE)
-                .matchClassesWithAnnotation(Entity.class, classWithAnnotation -> entityClassNames.add(classWithAnnotation.getName()))
-                .scan();
-//
-//        List<String> entityClassNames = Arrays.asList(
-//                "stroom.security.Permission",
-//                "stroom.security.AppPermission",
-//                "stroom.security.DocumentPermission",
-//                "stroom.security.User",
-//                "stroom.security.UserGroupUser",
-//
-//                "stroom.streamtask.shared.StreamProcessor",
-//                "stroom.streamtask.shared.StreamProcessorFilter",
-//                "stroom.streamtask.shared.StreamProcessorFilterTracker",
-//                "stroom.streamtask.shared.StreamTask",
-//
-//                "stroom.node.shared.Volume",
-//                "stroom.node.shared.VolumeState",
-//
-//                "stroom.streamstore.shared.Stream",
-//                "stroom.streamstore.shared.StreamVolume",
-//                "stroom.streamstore.shared.StreamAttributeKey",
-//                "stroom.streamstore.shared.StreamAttributeValue",
-//                "stroom.feed.shared.Feed",
-//                "stroom.streamstore.shared.StreamType",
-//
-//                "stroom.jobsystem.shared.Job",
-//                "stroom.jobsystem.shared.JobNode",
-//                "stroom.jobsystem.shared.ClusterLock",
-//
-//                "stroom.index.shared.Index",
-//                "stroom.index.shared.IndexShard",
-//
-//                "stroom.statistics.shared.StatisticStoreEntity",
-//                "stroom.stats.shared.StroomStatsStoreEntity",
-//
-//                "stroom.xmlschema.shared.XMLSchema",
-//
-//                "stroom.visualisation.shared.Visualisation",
-//
-//                "stroom.script.shared.Script",
-//                "stroom.entity.shared.Res",
-//
-//                "stroom.pipeline.shared.PipelineEntity",
-//                "stroom.pipeline.shared.XSLT",
-//                stroom.pipeline.shared.TextConverter.class.getName(),
-//
-//                "stroom.dashboard.shared.Dashboard",
-//
-//                "stroom.dashboard.shared.QueryEntity",
-//
-////        addAnnotatedClass(stroom.stream.OldFolder)
-//
-//                "stroom.node.shared.Node",
-//                "stroom.node.shared.Rack",
-//
-//                "stroom.node.shared.GlobalProperty",
-//
-//                "stroom.ruleset.shared.Policy",
-//
-//                "stroom.explorer.ExplorerTreeNode",
-//                "stroom.explorer.ExplorerTreePath"
-//        );
+//        final List<String> entityClassNames = new ArrayList<>();
+//        new FastClasspathScanner(PACKAGE)
+//                .matchClassesWithAnnotation(Entity.class, classWithAnnotation -> entityClassNames.add(classWithAnnotation.getName()))
+//                .scan();
 
+        final List<String> entityClassNames = Arrays.asList(
+                "stroom.dashboard.shared.Dashboard",
+                "stroom.dashboard.shared.QueryEntity",
+                "stroom.entity.shared.Res",
+                "stroom.explorer.ExplorerTreeNode",
+                "stroom.explorer.ExplorerTreePath",
+                "stroom.feed.shared.Feed",
+                "stroom.index.shared.Index",
+                "stroom.index.shared.IndexShard",
+                "stroom.jobsystem.shared.ClusterLock",
+                "stroom.jobsystem.shared.Job",
+                "stroom.jobsystem.shared.JobNode",
+                "stroom.node.shared.GlobalProperty",
+                "stroom.node.shared.Node",
+                "stroom.node.shared.Rack",
+                "stroom.node.shared.Volume",
+                "stroom.node.shared.VolumeState",
+                "stroom.pipeline.shared.PipelineEntity",
+                "stroom.pipeline.shared.TextConverter",
+                "stroom.pipeline.shared.XSLT",
+                "stroom.ruleset.shared.Policy",
+                "stroom.script.shared.Script",
+                "stroom.security.AppPermission",
+                "stroom.security.DocumentPermission",
+                "stroom.security.Permission",
+                "stroom.security.User",
+                "stroom.security.UserGroupUser",
+                "stroom.statistics.shared.StatisticStoreEntity",
+                "stroom.stats.shared.StroomStatsStoreEntity",
+                "stroom.streamstore.shared.Stream",
+                "stroom.streamstore.shared.StreamAttributeKey",
+                "stroom.streamstore.shared.StreamAttributeValue",
+                "stroom.streamstore.shared.StreamType",
+                "stroom.streamstore.shared.StreamVolume",
+                "stroom.streamtask.shared.StreamProcessor",
+                "stroom.streamtask.shared.StreamProcessorFilter",
+                "stroom.streamtask.shared.StreamProcessorFilterTracker",
+                "stroom.streamtask.shared.StreamTask",
+                "stroom.visualisation.shared.Visualisation",
+                "stroom.xmlschema.shared.XMLSchema"
+        );
 
-        PersistenceUnitInfoImpl persistenceUnitInfo = new PersistenceUnitInfoImpl(name, entityClassNames, properties(dataSource));
-
-        String[] resources = resources();
-        if (resources != null) {
-            persistenceUnitInfo.getMappingFileNames().addAll(
-                    Arrays.asList(resources)
-            );
-        }
-
-        return persistenceUnitInfo;
-    }
-
-    private String[] resources() {
-        return null;
+        return new PersistenceUnitInfoImpl(name, entityClassNames, properties(dataSource));
     }
 
     private Properties properties(final DataSource dataSource) {
@@ -339,214 +219,4 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
             return entityManager;
         }
     }
-
-
-//    @Provides
-//    public EntityManagerFactory entityManagerFactory(final ComboPooledDataSource dataSource, final Flyway flyway) {
-//        final EntityManagerFactory emf = Persistence.createEntityManagerFactory("test");
-//
-//        final LocalContainerEntityManagerFactoryBean entityManagerFactory = new LocalContainerEntityManagerFactoryBean();
-//        entityManagerFactory.setDataSource(dataSource);
-//        entityManagerFactory.setPersistenceUnitName("StroomPersistenceUnit");
-//        entityManagerFactory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
-//        entityManagerFactory.setPackagesToScan("stroom");
-//
-//        final Properties jpaProperties = new Properties();
-//        jpaProperties.put("hibernate.hbm2ddl.auto", StroomProperties.getProperty("stroom.jpaHbm2DdlAuto"));
-//        jpaProperties.put("hibernate.show_sql", StroomProperties.getProperty("stroom.showSql"));
-//        jpaProperties.put("hibernate.dialect", StroomProperties.getProperty("stroom.jpaDialect"));
-//        entityManagerFactory.setJpaProperties(jpaProperties);
-//        return entityManagerFactory.getNativeEntityManagerFactory();
-//
-//    }
-
-//    @Provides
-//    @Singleton
-//    ComboPooledDataSource dataSource(final GlobalProperties globalProperties, final StroomPropertyService stroomPropertyService) throws PropertyVetoException {
-//        final ComboPooledDataSource dataSource = new ComboPooledDataSource();
-//        dataSource.setDriverClass(StroomProperties.getProperty("stroom.jdbcDriverClassName"));
-//        dataSource.setJdbcUrl(StroomProperties.getProperty("stroom.jdbcDriverUrl|trace"));
-//        dataSource.setUser(StroomProperties.getProperty("stroom.jdbcDriverUsername"));
-//        dataSource.setPassword(StroomProperties.getProperty("stroom.jdbcDriverPassword"));
-//
-//        final C3P0Config config = new C3P0Config("stroom.db.connectionPool.", stroomPropertyService);
-//        dataSource.setMaxStatements(config.getMaxStatements());
-//        dataSource.setMaxStatementsPerConnection(config.getMaxStatementsPerConnection());
-//        dataSource.setInitialPoolSize(config.getInitialPoolSize());
-//        dataSource.setMinPoolSize(config.getMinPoolSize());
-//        dataSource.setMaxPoolSize(config.getMaxPoolSize());
-//        dataSource.setIdleConnectionTestPeriod(config.getIdleConnectionTestPeriod());
-//        dataSource.setMaxIdleTime(config.getMaxIdleTime());
-//        dataSource.setAcquireIncrement(config.getAcquireIncrement());
-//        dataSource.setAcquireRetryAttempts(config.getAcquireRetryAttempts());
-//        dataSource.setAcquireRetryDelay(config.getAcquireRetryDelay());
-//        dataSource.setCheckoutTimeout(config.getCheckoutTimeout());
-//        dataSource.setMaxAdministrativeTaskTime(config.getMaxAdministrativeTaskTime());
-//        dataSource.setMaxIdleTimeExcessConnections(config.getMaxIdleTimeExcessConnections());
-//        dataSource.setMaxConnectionAge(config.getMaxConnectionAge());
-//        dataSource.setUnreturnedConnectionTimeout(config.getUnreturnedConnectionTimeout());
-//        dataSource.setStatementCacheNumDeferredCloseThreads(config.getStatementCacheNumDeferredCloseThreads());
-//        dataSource.setNumHelperThreads(config.getNumHelperThreads());
-//
-//        dataSource.setPreferredTestQuery("select 1");
-//        dataSource.setConnectionTesterClassName(StroomProperties.getProperty("stroom.connectionTesterClassName"));
-//        return dataSource;
-//    }
-//
-//    @Provides
-//    @Singleton
-//    Flyway flyway(final DataSource dataSource) {
-//        final String jpaHbm2DdlAuto = StroomProperties.getProperty("stroom.jpaHbm2DdlAuto", "validate");
-//        if (!"update".equals(jpaHbm2DdlAuto)) {
-//            final Flyway flyway = new Flyway();
-//            flyway.setDataSource(dataSource);
-//
-//            final String driver = StroomProperties.getProperty("stroom.jdbcDriverClassName");
-//            if (driver.toLowerCase().contains("hsqldb")) {
-//                flyway.setLocations("stroom/db/migration/hsqldb");
-//            } else {
-//                flyway.setLocations("stroom/db/migration/mysql");
-//            }
-//
-//            Version version = null;
-//            boolean usingFlyWay = false;
-//            LOGGER.info("Testing installed Stroom schema version");
-//
-//            try (final Connection connection = dataSource.getConnection()) {
-//                try {
-//                    try (final Statement statement = connection.createStatement()) {
-//                        try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
-//                            if (resultSet.next()) {
-//                                usingFlyWay = true;
-//
-//                                final String ver = resultSet.getString(1);
-//                                final String[] parts = ver.split("\\.");
-//                                int maj = 0;
-//                                int min = 0;
-//                                int pat = 0;
-//                                if (parts.length > 0) {
-//                                    maj = Integer.valueOf(parts[0]);
-//                                }
-//                                if (parts.length > 1) {
-//                                    min = Integer.valueOf(parts[1]);
-//                                }
-//                                if (parts.length > 2) {
-//                                    pat = Integer.valueOf(parts[2]);
-//                                }
-//
-//                                version = new Version(maj, min, pat);
-//                                LOGGER.info("Found schema_version.version " + ver);
-//                            }
-//                        }
-//                    }
-//                } catch (final Exception e) {
-//                    LOGGER.debug(e.getMessage());
-//                    // Ignore.
-//                }
-//
-//                if (version == null) {
-//                    try {
-//                        try (final Statement statement = connection.createStatement()) {
-//                            try (final ResultSet resultSet = statement.executeQuery("SELECT VER_MAJ, VER_MIN, VER_PAT FROM STROOM_VER ORDER BY VER_MAJ DESC, VER_MIN DESC, VER_PAT DESC LIMIT 1")) {
-//                                if (resultSet.next()) {
-//                                    version = new Version(resultSet.getInt(1), resultSet.getInt(2), resultSet.getInt(3));
-//                                    LOGGER.info("Found STROOM_VER.VER_MAJ/VER_MIN/VER_PAT " + version);
-//                                }
-//                            }
-//                        }
-//                    } catch (final Exception e) {
-//                        LOGGER.debug(e.getMessage(), e);
-//                        // Ignore.
-//                    }
-//                }
-//
-//                if (version == null) {
-//                    try {
-//                        try (final Statement statement = connection.createStatement()) {
-//                            try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FD LIMIT 1")) {
-//                                if (resultSet.next()) {
-//                                    version = new Version(2, 0, 0);
-//                                }
-//                            }
-//                        }
-//                    } catch (final Exception e) {
-//                        LOGGER.debug(e.getMessage(), e);
-//                        // Ignore.
-//                    }
-//                }
-//
-//                if (version == null) {
-//                    try {
-//                        try (final Statement statement = connection.createStatement()) {
-//                            try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FEED LIMIT 1")) {
-//                                if (resultSet.next()) {
-//                                    version = new Version(2, 0, 0);
-//                                }
-//                            }
-//                        }
-//                    } catch (final Exception e) {
-//                        LOGGER.debug(e.getMessage(), e);
-//                        // Ignore.
-//                    }
-//                }
-//            } catch (final SQLException e) {
-//                LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
-//                throw new RuntimeException(e.getMessage(), e);
-//            }
-//
-//            if (version != null) {
-//                LOGGER.info("Detected current Stroom version is v" + version.toString());
-//            } else {
-//                LOGGER.info("This is a new installation!");
-//            }
-//
-//            if (version == null) {
-//                // If we have no version then this is a new Stroom instance so perform full FlyWay migration.
-//                flyway.migrate();
-//            } else if (usingFlyWay) {
-//                // If we are already using FlyWay then allow FlyWay to attempt migration.
-//                flyway.migrate();
-//            } else if (version.getMajor() == 4 && version.getMinor() == 0 && version.getPatch() >= 60) {
-//                // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
-//                flyway.setBaselineVersionAsString("4.0.60");
-//                flyway.baseline();
-//                flyway.migrate();
-//            } else {
-//                final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
-//                LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
-//                throw new RuntimeException(message);
-//            }
-//
-//            return flyway;
-//
-//        }
-//
-//        return null;
-//    }
-//
-//    @Provides
-//    @Singleton
-//    LocalContainerEntityManagerFactoryBean entityManagerFactory(
-//            final ComboPooledDataSource dataSource, final Flyway flyway) {
-//        final LocalContainerEntityManagerFactoryBean entityManagerFactory = new LocalContainerEntityManagerFactoryBean();
-//        entityManagerFactory.setDataSource(dataSource);
-//        entityManagerFactory.setPersistenceUnitName("StroomPersistenceUnit");
-//        entityManagerFactory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
-//        entityManagerFactory.setPackagesToScan("stroom");
-//
-//        final Properties jpaProperties = new Properties();
-//        jpaProperties.put("hibernate.hbm2ddl.auto", StroomProperties.getProperty("stroom.jpaHbm2DdlAuto"));
-//        jpaProperties.put("hibernate.show_sql", StroomProperties.getProperty("stroom.showSql"));
-//        jpaProperties.put("hibernate.dialect", StroomProperties.getProperty("stroom.jpaDialect"));
-//        entityManagerFactory.setJpaProperties(jpaProperties);
-//        return entityManagerFactory;
-//    }
-//
-//    @Provides
-//    @Singleton
-//    PlatformTransactionManager transactionManager(final EntityManagerFactory entityManagerFactory) {
-//        final JpaTransactionManager transactionManager = new JpaTransactionManager();
-//        transactionManager.setEntityManagerFactory(entityManagerFactory);
-//        return transactionManager;
-//    }
 }

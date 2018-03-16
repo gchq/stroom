@@ -18,6 +18,9 @@ package stroom.search.extraction;
 
 import stroom.search.taskqueue.TaskExecutor;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class ExtractionTaskExecutor extends TaskExecutor {
     public ExtractionTaskExecutor() {
         super("Extraction Task Executor");
