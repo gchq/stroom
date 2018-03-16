@@ -18,7 +18,6 @@ package stroom.statistics.server.common.search;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import io.reactivex.Flowable;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -31,7 +30,11 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.FolderService;
-import stroom.query.*;
+import stroom.query.CoprocessorMap;
+import stroom.query.Item;
+import stroom.query.Items;
+import stroom.query.ResultStore;
+import stroom.query.SearchResultHandler;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.ComponentSettings;
 import stroom.query.shared.ExpressionBuilder;
@@ -74,7 +77,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest {
@@ -458,95 +460,4 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
 //        }
 //    }
 
-    @Test
-    public void testFlowable() {
-
-        AtomicInteger counter = new AtomicInteger();
-        Flowable
-                .generate(
-                        () -> {
-                            LOGGER.debug("Init state");
-                            return counter;
-                        },
-                        (i, emitter) -> {
-                            int j = i.incrementAndGet();
-                            if (j <= 10) {
-                                LOGGER.debug("emit");
-                                emitter.onNext(j);
-                            } else {
-                                LOGGER.debug("complete");
-                                emitter.onComplete();
-                            }
-
-                        })
-                .map(i -> {
-                    LOGGER.debug("mapping");
-                    return "xxx" + i;
-                })
-                .subscribe(
-                        data -> {
-                            LOGGER.debug("onNext called: {}", data);
-                        },
-                        throwable -> {
-                            LOGGER.debug("onError called");
-                            throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
-                        },
-                        () -> {
-                            LOGGER.debug("onComplete called");
-                        });
-
-    }
-
-    @Test
-    public void testFlowableWithUsing() {
-
-        Flowable<Integer> flowableInt = Flowable
-                .using(
-                        () -> {
-                            LOGGER.debug("Init resource");
-                            return new AtomicInteger();
-                        },
-                        atomicInt -> {
-                            LOGGER.debug("Converting resource to flowable");
-                            return Flowable.generate(
-                                    () -> {
-                                        LOGGER.debug("Init state");
-                                        return atomicInt;
-                                    },
-                                    (i, emitter) -> {
-                                        int j = i.incrementAndGet();
-                                        if (j <= 10) {
-                                            LOGGER.debug("emit");
-                                            emitter.onNext(j);
-                                        } else {
-                                            LOGGER.debug("complete");
-                                            emitter.onComplete();
-                                        }
-
-                                    });
-                        },
-                        atomicInt -> {
-                            LOGGER.debug("Close resource");
-                        });
-
-        LOGGER.debug("About to subscribe");
-
-        flowableInt
-                .map(i -> {
-                    LOGGER.debug("mapping");
-                    return "xxx" + i;
-                })
-                .subscribe(
-                        data -> {
-                            LOGGER.debug("onNext called: {}", data);
-                        },
-                        throwable -> {
-                            LOGGER.debug("onError called");
-                            throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
-                        },
-                        () -> {
-                            LOGGER.debug("onComplete called");
-                        });
-
-    }
 }

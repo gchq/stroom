@@ -1,0 +1,221 @@
+package stroom.statistics.common.search;
+
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.util.thread.ThreadUtil;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+public class TestFlowable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestFlowable.class);
+
+    @Test
+    public void testFlowable() {
+
+        AtomicInteger counter = new AtomicInteger();
+        Flowable
+                .generate(
+                        () -> {
+                            LOGGER.debug("Init state");
+                            return counter;
+                        },
+                        (i, emitter) -> {
+                            int j = i.incrementAndGet();
+                            if (j <= 10) {
+                                LOGGER.debug("emit");
+                                emitter.onNext(j);
+                            } else {
+                                LOGGER.debug("complete");
+                                emitter.onComplete();
+                            }
+
+                        })
+                .map(i -> {
+                    LOGGER.debug("mapping");
+                    return "xxx" + i;
+                })
+                .subscribe(
+                        data -> {
+                            LOGGER.debug("onNext called: {}", data);
+                        },
+                        throwable -> {
+                            LOGGER.debug("onError called");
+                            throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
+                        },
+                        () -> {
+                            LOGGER.debug("onComplete called");
+                        });
+
+    }
+
+    @Test
+    public void testFlowableWithUsing() {
+
+        Flowable<Integer> flowableInt = Flowable
+                .using(
+                        () -> {
+                            LOGGER.debug("Init resource");
+                            return new AtomicInteger();
+                        },
+                        atomicInt -> {
+                            LOGGER.debug("Converting resource to flowable");
+                            return Flowable.generate(
+                                    () -> {
+                                        LOGGER.debug("Init state");
+                                        return atomicInt;
+                                    },
+                                    (i, emitter) -> {
+                                        int j = i.incrementAndGet();
+                                        if (j <= 10) {
+                                            LOGGER.debug("emit");
+                                            emitter.onNext(j);
+                                        } else {
+                                            LOGGER.debug("complete");
+                                            emitter.onComplete();
+                                        }
+
+                                    });
+                        },
+                        atomicInt -> {
+                            LOGGER.debug("Close resource");
+                        });
+
+        LOGGER.debug("About to subscribe");
+
+        flowableInt
+                .map(i -> {
+                    LOGGER.debug("mapping");
+                    return "xxx" + i;
+                })
+                .subscribe(
+                        data -> {
+                            LOGGER.debug("onNext called: {}", data);
+                        },
+                        throwable -> {
+                            LOGGER.debug("onError called");
+                            throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
+                        },
+                        () -> {
+                            LOGGER.debug("onComplete called");
+                        });
+
+    }
+
+    @Test
+    public void testFlowableWithDispose() throws ExecutionException, InterruptedException {
+
+        final AtomicInteger counter = new AtomicInteger();
+        final Disposable disposable = Flowable
+                .generate(
+                        () -> {
+                            LOGGER.debug("Generator init");
+                            return counter;
+                        },
+                        (i, emitter) -> {
+                            int j = i.incrementAndGet();
+                            ThreadUtil.sleep(500);
+                            if (j <= 20) {
+                                LOGGER.debug("emitting {}", j);
+                                emitter.onNext(j);
+                            } else {
+                                LOGGER.debug("Generator complete");
+                                emitter.onComplete();
+                            }
+                        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.computation())
+                .map(i -> {
+                    String str = "xxx" + i;
+                    LOGGER.debug("mapping {} to {}", i, str);
+                    return str;
+                })
+                .subscribe(
+                        str -> {
+                            LOGGER.debug("onNext called with: {}", str);
+                        },
+                        throwable -> {
+                            LOGGER.debug("onError called");
+                            throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
+                        },
+                        () -> {
+                            LOGGER.debug("onComplete called");
+                        });
+
+        LOGGER.debug("Subscribed");
+        ThreadUtil.sleep(2250);
+        LOGGER.debug("calling dispose");
+        disposable.dispose();
+        LOGGER.debug("disposed");
+    }
+
+    @Test
+    public void testFlowableWithUsingAndDispose() throws ExecutionException, InterruptedException {
+
+        Flowable<Integer> flowableInt = Flowable
+                .using(
+                        () -> {
+                            LOGGER.debug("Init resource");
+                            //atomic ref acts like a resource for the life of the flow
+                            return new AtomicReference<>(new AtomicInteger());
+                        },
+                        atomicRef -> {
+                            LOGGER.debug("Converting resource to flowable");
+                            return Flowable.generate(
+                                    () -> {
+                                        LOGGER.debug("Init state");
+                                        return atomicRef;
+                                    },
+                                    (i, emitter) -> {
+                                        int j = i.get().incrementAndGet();
+                                        ThreadUtil.sleep(500);
+                                        if (j <= 20) {
+                                            LOGGER.debug("emitting {}", j);
+                                            emitter.onNext(j);
+                                        } else {
+                                            LOGGER.debug("complete");
+                                            emitter.onComplete();
+                                        }
+
+                                    });
+                        },
+                        atomicRef -> {
+                            LOGGER.debug("Close resource");
+                            atomicRef.set(null);
+                        });
+
+        LOGGER.debug("About to subscribe");
+
+        final Disposable disposable = flowableInt
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.computation())
+                .map(i -> {
+                    String str = "xxx" + i;
+                    LOGGER.debug("mapping {} to {}", i, str);
+                    return str;
+                })
+                .subscribe(
+                        str -> {
+                            LOGGER.debug("onNext called with: {}", str);
+                        },
+                        throwable -> {
+                            LOGGER.debug("onError called");
+                            throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
+                        },
+                        () -> {
+                            LOGGER.debug("onComplete called");
+                        });
+
+        LOGGER.debug("Subscribed");
+        ThreadUtil.sleep(2250);
+        LOGGER.debug("calling dispose");
+        disposable.dispose();
+        LOGGER.debug("disposed");
+    }
+}
