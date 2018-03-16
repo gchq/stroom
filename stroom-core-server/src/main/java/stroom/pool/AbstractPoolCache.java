@@ -22,6 +22,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.Clearable;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
@@ -31,7 +32,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public abstract class AbstractPoolCache<K, V> {
+public abstract class AbstractPoolCache<K, V> implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCache.class);
 
     private static final int MAX_CACHE_ENTRIES = 1000;
@@ -138,7 +139,7 @@ public abstract class AbstractPoolCache<K, V> {
         }
     }
 
-    protected void clear() {
+    public void clear() {
         CacheUtil.clear(cache);
     }
 

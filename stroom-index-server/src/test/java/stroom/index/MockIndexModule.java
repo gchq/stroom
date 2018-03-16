@@ -20,12 +20,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
-import stroom.entity.event.EntityEvent;
-import stroom.explorer.ExplorerActionHandler;
+import stroom.entity.shared.Clearable;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.index.shared.Index;
 import stroom.pipeline.factory.Element;
-import stroom.task.TaskHandler;
 
 public class MockIndexModule extends AbstractModule {
     @Override
@@ -45,6 +43,11 @@ public class MockIndexModule extends AbstractModule {
 //        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
 //        entityEventHandlerBinder.addBinding().to(IndexConfigCacheEntityEventHandler.class);
 //
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(MockIndexService.class);
+        clearableBinder.addBinding().to(MockIndexShardService.class);
+
         final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
         elementBinder.addBinding().to(IndexingFilter.class);
 //

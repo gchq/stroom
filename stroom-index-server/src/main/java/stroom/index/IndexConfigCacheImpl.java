@@ -20,18 +20,20 @@ package stroom.index;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import stroom.entity.shared.Clearable;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.DocRef;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class IndexConfigCacheImpl implements IndexConfigCache {
+public class IndexConfigCacheImpl implements IndexConfigCache, Clearable {
     private static final int MAX_CACHE_ENTRIES = 100;
 
     private final LoadingCache<DocRef, IndexConfig> cache;
@@ -75,5 +77,10 @@ public class IndexConfigCacheImpl implements IndexConfigCache {
     @Override
     public void remove(final DocRef key) {
         cache.invalidate(key);
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

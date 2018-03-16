@@ -18,6 +18,7 @@ package stroom.pipeline.factory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.Clearable;
 
 public class FactoryModule extends AbstractModule {
     @Override
@@ -27,6 +28,9 @@ public class FactoryModule extends AbstractModule {
         bind(PipelineDataCache.class).to(PipelineDataCacheImpl.class);
         bind(PipelineStackLoader.class).to(PipelineStackLoaderImpl.class);
         bind(ProcessorFactory.class).to(ProcessorFactoryImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(PipelineDataCacheImpl.class);
 
         final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.HttpPostFilter.class);

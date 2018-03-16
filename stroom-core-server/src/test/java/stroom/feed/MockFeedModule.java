@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import stroom.entity.FindService;
+import stroom.entity.shared.Clearable;
 
 public class MockFeedModule extends AbstractModule {
     @Override
@@ -27,20 +28,10 @@ public class MockFeedModule extends AbstractModule {
         bind(FeedService.class).to(MockFeedService.class);
         bind(FeedService.class).annotatedWith(Names.named("cachedFeedService")).to(MockFeedService.class);
 
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(MockFeedService.class);
+
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(MockFeedService.class);
     }
-//
-//    @Provides
-//    @Singleton
-//    public FeedService feedService(final ImportExportHelper importExportHelper) {
-//        return new MockFeedService(importExportHelper);
-//    }
-//
-//    @Provides
-//    @Singleton
-//    @Named("cachedFeedService")
-//    public FeedService cachedFeedService(final FeedService feedService) {
-//        return feedService;
-//    }
 }

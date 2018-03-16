@@ -17,17 +17,16 @@
 package stroom.security;
 
 import com.google.inject.AbstractModule;
-import stroom.entity.StroomEntityManager;
-import stroom.entity.event.EntityEventBus;
-import stroom.explorer.ExplorerService;
-import stroom.util.cache.CacheManager;
-
-import javax.inject.Provider;
+import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.Clearable;
 
 public class MockSecurityModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(UserService.class).to(MockUserService.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(MockUserService.class);
     }
 
 //    @Bean("userService")

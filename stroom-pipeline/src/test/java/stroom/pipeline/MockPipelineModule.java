@@ -17,25 +17,16 @@
 package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import stroom.entity.CachingEntityManager;
 import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
-import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
-import stroom.security.SecurityContext;
-import stroom.spring.EntityManagerSupport;
-import stroom.task.TaskHandler;
-import stroom.task.cluster.ClusterResultCollectorCache;
 
-import javax.inject.Named;
 import javax.xml.transform.URIResolver;
 
 public class MockPipelineModule extends AbstractModule {

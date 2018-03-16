@@ -17,27 +17,27 @@
 package stroom.streamtask;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import stroom.entity.CachingEntityManager;
-import stroom.jobsystem.DistributedTaskFactory;
-import stroom.spring.EntityManagerSupport;
+import stroom.entity.shared.Clearable;
 import stroom.task.TaskHandler;
-
-import javax.inject.Named;
 
 public class MockStreamTaskModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StreamTaskCreator.class).to(MockStreamTaskCreator.class);
-        bind(StreamProcessorFilterService.class).to(MockStreamProcessorFilterService.class);
         bind(StreamProcessorService.class).to(MockStreamProcessorService.class);
+        bind(StreamProcessorFilterService.class).to(MockStreamProcessorFilterService.class);
         bind(StreamTaskService.class).to(MockStreamTaskService.class);
 
         bind(StreamProcessorService.class).annotatedWith(Names.named("cachedStreamProcessorService")).to(MockStreamProcessorService.class);
         bind(StreamProcessorFilterService.class).annotatedWith(Names.named("cachedStreamProcessorFilterService")).to(MockStreamProcessorFilterService.class);
-//
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(MockStreamProcessorService.class);
+        clearableBinder.addBinding().to(MockStreamProcessorFilterService.class);
+        clearableBinder.addBinding().to(MockStreamTaskService.class);
+
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
 //        taskHandlerBinder.addBinding().to(CreateProcessorHandler.class);
 //        taskHandlerBinder.addBinding().to(CreateStreamTasksTaskHandler.class);

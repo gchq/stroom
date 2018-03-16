@@ -25,11 +25,13 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityAction;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -43,7 +45,7 @@ import java.util.concurrent.TimeUnit;
                 EntityAction.CREATE,
                 EntityAction.UPDATE,
                 EntityAction.DELETE})
-class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.Handler {
+class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.Handler, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceCacheImpl.class);
 
     private static final String STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID = "StatisticDataSourceCacheById";
@@ -167,6 +169,16 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
             }
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void clear() {
+        if (cacheByName != null) {
+            CacheUtil.clear(cacheByName);
+        }
+        if (cacheByRef != null) {
+            CacheUtil.clear(cacheByRef);
         }
     }
 }

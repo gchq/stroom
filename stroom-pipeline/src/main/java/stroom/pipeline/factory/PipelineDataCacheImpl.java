@@ -20,6 +20,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import stroom.entity.DocumentPermissionCache;
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.pipeline.shared.PipelineDataMerger;
@@ -32,6 +33,7 @@ import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -41,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 @Insecure
-public class PipelineDataCacheImpl implements PipelineDataCache {
+public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final PipelineStackLoader pipelineStackLoader;
@@ -99,5 +101,10 @@ public class PipelineDataCacheImpl implements PipelineDataCache {
 
             return pipelineDataMerger.createMergedData();
         }
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

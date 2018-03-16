@@ -23,11 +23,13 @@ import com.google.common.cache.LoadingCache;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Clearable;
 import stroom.entity.util.FieldMap;
 import stroom.security.Insecure;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -38,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 @Insecure
 class StreamAttributeKeyServiceImpl
         extends SystemEntityServiceImpl<StreamAttributeKey, FindStreamAttributeKeyCriteria>
-        implements StreamAttributeKeyService {
+        implements StreamAttributeKeyService, Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<String, BaseResultList<StreamAttributeKey>> cache;
@@ -75,5 +77,10 @@ class StreamAttributeKeyServiceImpl
     protected FieldMap createFieldMap() {
         return super.createFieldMap()
                 .add(FindStreamAttributeKeyCriteria.FIELD_NAME, StreamAttributeKey.NAME, "name");
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

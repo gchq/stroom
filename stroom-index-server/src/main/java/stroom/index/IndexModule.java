@@ -21,6 +21,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.entity.event.EntityEvent;
+import stroom.entity.shared.Clearable;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.index.shared.Index;
@@ -36,6 +37,9 @@ public class IndexModule extends AbstractModule {
         bind(IndexService.class).to(IndexServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(IndexConfigCacheImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.index.CloseIndexShardActionHandler.class);

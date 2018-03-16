@@ -32,7 +32,6 @@ import stroom.util.test.TestState;
 import stroom.util.test.TestState.State;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.nio.file.Path;
 
 /**
@@ -61,13 +60,13 @@ public abstract class StroomIntegrationTest implements StroomTest {
     private ContentImportService contentImportService;
 
     @BeforeClass
-    public static void beforeClass() throws IOException {
+    public static void beforeClass() {
         final State state = TestState.getState();
         state.reset();
     }
 
     @AfterClass
-    public static void afterClass() throws IOException {
+    public static void afterClass() {
     }
 
     protected void onBefore() {
@@ -149,22 +148,11 @@ public abstract class StroomIntegrationTest implements StroomTest {
         }
     }
 
-    public void importSchemas() {
-        importSchemas(false);
-    }
-
-    public void importSchemas(final boolean force) {
+    void importSchemas(final boolean force) {
         if (force || !XML_SCHEMAS_DOWNLOADED) {
             contentImportService.importXmlSchemas();
             XML_SCHEMAS_DOWNLOADED = true;
         }
-    }
-
-    /**
-     * Remove all entities from the database.
-     */
-    private void teardown() {
-        teardown(false);
     }
 
     /**
@@ -178,7 +166,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
         }
     }
 
-    public static int getTestCount() {
+    private static int getTestCount() {
         final State state = TestState.getState();
         return state.getClassTestCount();
     }
@@ -187,8 +175,4 @@ public abstract class StroomIntegrationTest implements StroomTest {
     public Path getCurrentTestDir() {
         return FileUtil.getTempDir();
     }
-
-//    public Path getCurrentTestDir() {
-//        return FileUtil.getTempDir();
-//    }
 }

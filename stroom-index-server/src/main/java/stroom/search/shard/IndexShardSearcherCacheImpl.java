@@ -21,6 +21,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import org.apache.lucene.index.IndexWriter;
+import stroom.entity.shared.Clearable;
 import stroom.index.IndexShardService;
 import stroom.index.IndexShardWriter;
 import stroom.index.IndexShardWriterCache;
@@ -49,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
-public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache {
+public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Clearable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearcherCacheImpl.class);
     private static final int MAX_CACHE_ENTRIES = 2;
 

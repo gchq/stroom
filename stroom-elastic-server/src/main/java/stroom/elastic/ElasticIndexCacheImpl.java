@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.http.HttpStatus;
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
@@ -13,6 +14,7 @@ import stroom.query.audit.client.DocRefResourceHttpClient;
 import stroom.query.audit.security.ServiceUser;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -20,7 +22,7 @@ import javax.ws.rs.core.Response;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class ElasticIndexCacheImpl implements ElasticIndexCache {
+public class ElasticIndexCacheImpl implements ElasticIndexCache, Clearable {
     private static final int MAX_CACHE_ENTRIES = 100;
 
     private final LoadingCache<DocRef, ElasticIndexDocRefEntity> cache;
@@ -76,5 +78,10 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
     @Override
     public void remove(final DocRef key) {
         cache.invalidate(key);
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

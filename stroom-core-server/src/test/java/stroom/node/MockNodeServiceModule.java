@@ -17,12 +17,18 @@
 package stroom.node;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.Clearable;
 import stroom.properties.MockGlobalPropertyService;
+import stroom.streamtask.MockStreamProcessorService;
 
 public class MockNodeServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(NodeServiceGetDefaultNode.class).to(MockNodeService.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(MockNodeService.class);
     }
     //    @Bean
 ////    @Profile(StroomSpringProfiles.TEST)

@@ -19,9 +19,11 @@ package stroom.entity;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import stroom.entity.shared.Clearable;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -29,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 @Insecure
-class DocumentPermissionCacheImpl implements DocumentPermissionCache {
+class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final SecurityContext securityContext;
@@ -54,6 +56,11 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache {
     public boolean hasDocumentPermission(final String documentType, final String documentUuid, final String permission) {
         final DocumentPermission documentPermission = new DocumentPermission(securityContext.getUserId(), documentType, documentUuid, permission);
         return cache.getUnchecked(documentPermission);
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 
     private static class DocumentPermission {

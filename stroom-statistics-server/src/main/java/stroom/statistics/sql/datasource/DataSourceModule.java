@@ -22,10 +22,10 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEvent.Handler;
+import stroom.entity.shared.Clearable;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.stats.shared.StroomStatsStoreEntity;
 
 public class DataSourceModule extends AbstractModule {
     @Override
@@ -34,6 +34,9 @@ public class DataSourceModule extends AbstractModule {
         bind(StatisticStoreCache.class).to(StatisticsDataSourceCacheImpl.class);
         bind(StatisticsDataSourceProvider.class).to(StatisticsDataSourceProviderImpl.class);
         bind(StatisticStoreValidator.class).to(StatisticsDataSourceValidatorImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(StatisticsDataSourceCacheImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(StatisticsDataSourceCacheImpl.class);

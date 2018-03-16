@@ -17,7 +17,6 @@
 
 package stroom.pipeline;
 
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.MockDocumentEntityService;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;

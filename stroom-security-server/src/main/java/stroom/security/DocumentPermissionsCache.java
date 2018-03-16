@@ -22,6 +22,7 @@ import com.google.common.cache.LoadingCache;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventBus;
 import stroom.entity.event.EntityEventHandler;
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissions;
@@ -35,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 @EntityEventHandler(action = EntityAction.CLEAR_CACHE)
-class DocumentPermissionsCache implements EntityEvent.Handler {
+class DocumentPermissionsCache implements EntityEvent.Handler, Clearable {
     private static final int MAX_CACHE_ENTRIES = 10000;
 
     private final Provider<EntityEventBus> eventBusProvider;
@@ -67,7 +68,8 @@ class DocumentPermissionsCache implements EntityEvent.Handler {
         EntityEvent.fire(entityEventBus, docRef, EntityAction.CLEAR_CACHE);
     }
 
-    void clear() {
+    @Override
+    public void clear() {
         CacheUtil.clear(cache);
     }
 

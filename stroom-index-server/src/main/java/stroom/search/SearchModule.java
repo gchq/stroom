@@ -18,12 +18,16 @@ package stroom.search;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.Clearable;
 import stroom.pipeline.factory.Element;
 import stroom.task.TaskHandler;
 
 public class SearchModule extends AbstractModule {
     @Override
     protected void configure() {
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(SearchResultCreatorManager.class);
+
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.search.AsyncSearchTaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.search.ClusterSearchTaskHandler.class);

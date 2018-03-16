@@ -21,6 +21,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.dashboard.shared.Dashboard;
 import stroom.entity.FindService;
+import stroom.entity.shared.Clearable;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.task.TaskHandler;
@@ -30,6 +31,9 @@ public class DashboardModule extends AbstractModule {
     protected void configure() {
         bind(QueryService.class).to(QueryServiceImpl.class);
         bind(DashboardService.class).to(DashboardServiceImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(ActiveQueriesManager.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.dashboard.DownloadQueryActionHandler.class);

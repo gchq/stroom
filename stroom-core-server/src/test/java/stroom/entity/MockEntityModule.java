@@ -31,8 +31,9 @@ public class MockEntityModule extends AbstractModule {
 //        bind(EntityEventBus.class).to(EntityEventBusImpl.class);
         bind(DocumentPermissionCache.class).to(DocumentPermissionCacheImpl.class);
 //
-//        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
 //        clearableBinder.addBinding().to(CachingEntityManager.class);
+        clearableBinder.addBinding().to(DocumentPermissionCacheImpl.class);
 //
 //        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
 //        taskHandlerBinder.addBinding().to(EntityReferenceFindHandler.class);
@@ -43,12 +44,4 @@ public class MockEntityModule extends AbstractModule {
 //        taskHandlerBinder.addBinding().to(EntityServiceFindSummaryHandler.class);
 //        taskHandlerBinder.addBinding().to(EntityServiceSaveHandler.class);
     }
-
-//
-// TODO: @66 DON'T THINK THIS IS NEEDED ANYMORE SO DELETE IT
-//    @Bean
-//    public GenericEntityMarshaller genericEntityMarshaller() {
-//        return new GenericEntityMarshallerImpl();
-//    }
-//
 }

@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEvent.Handler;
+import stroom.entity.shared.Clearable;
 
 public class PipelineCacheModule extends AbstractModule {
     @Override
@@ -28,6 +29,11 @@ public class PipelineCacheModule extends AbstractModule {
         bind(SchemaLoader.class).to(SchemaLoaderImpl.class);
         bind(ParserFactoryPool.class).to(ParserFactoryPoolImpl.class);
         bind(XSLTPool.class).to(XSLTPoolImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(SchemaPoolImpl.class);
+        clearableBinder.addBinding().to(ParserFactoryPoolImpl.class);
+        clearableBinder.addBinding().to(XSLTPoolImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(SchemaPoolImpl.class);

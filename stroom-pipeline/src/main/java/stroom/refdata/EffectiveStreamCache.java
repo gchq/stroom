@@ -21,6 +21,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.SecurityContext;
@@ -29,6 +30,7 @@ import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,7 +41,7 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class EffectiveStreamCache {
+public class EffectiveStreamCache implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
 
     //    // = 86 400 000
@@ -162,5 +164,10 @@ public class EffectiveStreamCache {
 
     long size() {
         return cache.size();
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

@@ -20,17 +20,21 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
+import stroom.entity.shared.Clearable;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Store;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
-public class SearchResultCreatorManager {
+@Singleton
+public class SearchResultCreatorManager implements Clearable {
     private static final int MAX_ACTIVE_QUERIES = 10000;
 
     private final LuceneSearchStoreFactory luceneSearchStoreFactory;
@@ -75,6 +79,11 @@ public class SearchResultCreatorManager {
     @StroomFrequencySchedule("10s")
     public void evictExpiredElements() {
         cache.cleanUp();
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 
     public static class Key {

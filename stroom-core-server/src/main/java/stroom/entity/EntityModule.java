@@ -33,6 +33,7 @@ public class EntityModule extends AbstractModule {
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(CachingEntityManager.class);
+        clearableBinder.addBinding().to(DocumentPermissionCacheImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.entity.EntityReferenceFindHandler.class);

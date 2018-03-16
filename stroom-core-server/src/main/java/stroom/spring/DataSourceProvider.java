@@ -20,13 +20,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+@Singleton
 public class DataSourceProvider implements Provider<DataSource> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceProvider.class);
 
     private final StroomPropertyService stroomPropertyService;
-    private static volatile DataSourceConfig dataSourceConfig;
-    private static volatile C3P0Config c3P0Config;
-    private static volatile ComboPooledDataSource dataSource;
+    private volatile DataSource dataSource;
 
     @Inject
     DataSourceProvider(final GlobalProperties globalProperties, final StroomPropertyService stroomPropertyService) {
@@ -79,13 +78,7 @@ public class DataSourceProvider implements Provider<DataSource> {
         if (!"update".equals(jpaHbm2DdlAuto)) {
             final Flyway flyway = new Flyway();
             flyway.setDataSource(dataSource);
-
-            final String driver = StroomProperties.getProperty("stroom.jdbcDriverClassName");
-            if (driver.toLowerCase().contains("hsqldb")) {
-                flyway.setLocations("stroom/db/migration/hsqldb");
-            } else {
-                flyway.setLocations("stroom/db/migration/mysql");
-            }
+            flyway.setLocations("stroom/db/migration/mysql");
 
             Version version = null;
             boolean usingFlyWay = false;
@@ -205,48 +198,21 @@ public class DataSourceProvider implements Provider<DataSource> {
 
     @Override
     public DataSource get() {
-        if (dataSource == null || isNewConfig()) {
+        if (dataSource == null) {
             synchronized (this) {
-                if (dataSource == null || isNewConfig()) {
-
-                    try {
-                        // Close the existing data source.
-                        if (dataSource != null) {
-                            dataSource.close();
-                            dataSource = null;
-                        }
-                    } catch (final Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-
+                if (dataSource == null) {
                     // Create a data source.
-                    final ComboPooledDataSource ds = dataSource();
+                    final DataSource ds = dataSource();
                     // Run flyway migrations.
                     flyway(ds);
 
                     // Assign.
                     dataSource = ds;
-                    dataSourceConfig = getDataSourceConfig();
-                    c3P0Config = getC3P0Config();
                 }
             }
         }
 
         return dataSource;
-    }
-
-    private boolean isNewConfig() {
-        if (dataSourceConfig == null || c3P0Config == null) {
-            return true;
-        }
-
-        final DataSourceConfig dsc = getDataSourceConfig();
-        if (!dataSourceConfig.equals(dsc)) {
-            return true;
-        }
-
-        final C3P0Config c3 = getC3P0Config();
-        return !c3P0Config.equals(c3);
     }
 
     private DataSourceConfig getDataSourceConfig() {

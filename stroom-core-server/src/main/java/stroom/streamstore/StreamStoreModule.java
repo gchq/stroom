@@ -40,6 +40,7 @@ public class StreamStoreModule extends AbstractModule {
         bind(StreamTypeService.class).to(StreamTypeServiceImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(StreamAttributeKeyServiceImpl.class);
         clearableBinder.addBinding().to(StreamAttributeValueFlushImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);

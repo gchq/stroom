@@ -17,11 +17,8 @@
 package stroom.streamstore;
 
 import com.google.inject.AbstractModule;
-import stroom.dictionary.DictionaryStore;
-import stroom.feed.FeedService;
-import stroom.pipeline.PipelineService;
-
-import javax.inject.Named;
+import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.Clearable;
 
 public class MockStreamStoreModule extends AbstractModule {
     @Override
@@ -29,6 +26,11 @@ public class MockStreamStoreModule extends AbstractModule {
         bind(StreamStore.class).to(MockStreamStore.class);
         bind(StreamTypeService.class).to(MockStreamTypeService.class);
         bind(StreamAttributeKeyService.class).to(MockStreamAttributeKeyService.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(MockStreamStore.class);
+        clearableBinder.addBinding().to(MockStreamTypeService.class);
+        clearableBinder.addBinding().to(MockStreamAttributeKeyService.class);
     }
     //    @Bean
 //    public ExpressionToFindCriteria expressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,

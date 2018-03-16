@@ -21,14 +21,16 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import stroom.datasource.DataSourceProviderRegistry;
+import stroom.entity.shared.Clearable;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-class ActiveQueriesManager {
+class ActiveQueriesManager implements Clearable {
     private static final int MAX_ACTIVE_QUERIES = 100;
 
     private final LoadingCache<String, ActiveQueries> cache;
@@ -50,5 +52,10 @@ class ActiveQueriesManager {
 
     public ActiveQueries get(final String key) {
         return cache.getUnchecked(key);
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

@@ -5,7 +5,6 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.properties.GlobalProperties;
 import stroom.properties.StroomPropertyService;
 import stroom.spring.C3P0Config;
 import stroom.spring.DataSourceConfig;
@@ -19,7 +18,6 @@ import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 
 @Singleton
@@ -27,7 +25,7 @@ public class DataSourceProvider implements Provider<DataSource> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceProvider.class);
 
     private final StroomPropertyService stroomPropertyService;
-    private static volatile DataSource dataSource;
+    private volatile DataSource dataSource;
 
     @Inject
     DataSourceProvider(final StroomPropertyService stroomPropertyService) {
@@ -40,13 +38,13 @@ public class DataSourceProvider implements Provider<DataSource> {
             dataSource.setDataSourceName("statistics");
             dataSource.setDescription("SQL statistics data source");
 
-            final DataSourceConfig dataSourceConfig = new DataSourceConfig("stroom.statistics.sql.", stroomPropertyService);
+            final DataSourceConfig dataSourceConfig = getDataSourceConfig();
             dataSource.setDriverClass(dataSourceConfig.getJdbcDriverClassName());
             dataSource.setJdbcUrl(dataSourceConfig.getJdbcDriverUrl());
             dataSource.setUser(dataSourceConfig.getJdbcDriverUsername());
             dataSource.setPassword(dataSourceConfig.getJdbcDriverPassword());
 
-            final C3P0Config config = new C3P0Config("stroom.statistics.sql.db.connectionPool.", stroomPropertyService);
+            final C3P0Config config = getC3P0Config();
             dataSource.setMaxStatements(config.getMaxStatements());
             dataSource.setMaxStatementsPerConnection(config.getMaxStatementsPerConnection());
             dataSource.setInitialPoolSize(config.getInitialPoolSize());
@@ -160,5 +158,13 @@ public class DataSourceProvider implements Provider<DataSource> {
         }
 
         return dataSource;
+    }
+
+    private DataSourceConfig getDataSourceConfig() {
+        return new DataSourceConfig("stroom.statistics.sql.", stroomPropertyService);
+    }
+
+    private C3P0Config getC3P0Config() {
+        return new C3P0Config("stroom.statistics.sql.db.connectionPool.", stroomPropertyService);
     }
 }

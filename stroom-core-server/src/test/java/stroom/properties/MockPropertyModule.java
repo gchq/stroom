@@ -17,6 +17,9 @@
 package stroom.properties;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.Clearable;
+import stroom.node.MockNodeService;
 import stroom.node.shared.ClientPropertiesService;
 
 public class MockPropertyModule extends AbstractModule {
@@ -25,6 +28,9 @@ public class MockPropertyModule extends AbstractModule {
         bind(StroomPropertyService.class).to(MockStroomPropertyService.class);
 //        bind(ClientPropertiesService.class).to(ClientPropertiesServiceImpl.class);
         bind(GlobalPropertyService.class).to(MockGlobalPropertyService.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(MockGlobalPropertyService.class);
     }
 
 

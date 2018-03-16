@@ -19,8 +19,10 @@ package stroom.security;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import stroom.entity.shared.Clearable;
 import stroom.security.shared.UserRef;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -28,7 +30,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-class UserCache {
+class UserCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<String, Optional<UserRef>> cache;
@@ -48,5 +50,10 @@ class UserCache {
     @SuppressWarnings("unchecked")
     Optional<UserRef> get(final String name) {
         return cache.getUnchecked(name);
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

@@ -20,15 +20,15 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import stroom.guice.PipelineScopeModule;
 import stroom.spring.PersistService;
 import stroom.task.TaskManager;
 
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
-    private Injector injector;
+    private static final Injector injector;
 
-    @Before
-    public void before() {
+    static {
         injector = Guice.createInjector(
                 new stroom.entity.EntityModule(),
                 new stroom.datafeed.DataFeedModule(),
@@ -96,23 +96,30 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
                 new stroom.statistics.stroomstats.rollup.StroomStatsRollupModule(),
                 new stroom.statistics.stroomstats.internal.InternalModule()
         );
-        injector.injectMembers(this);
 
         // Start persistance
         injector.getInstance(PersistService.class).start();
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();
+    }
 
+
+    @Before
+    public void before() {
+//        final Injector childInjector = injector.createChildInjector();
+//        childInjector.injectMembers(this);
+
+        injector.injectMembers(this);
         super.before();
     }
-
-    @After
-    public void after() {
-        // Stop task manager
-        injector.getInstance(TaskManager.class).shutdown();
-
-        // Stop persistance
-        injector.getInstance(PersistService.class).stop();
-    }
+//
+//    @After
+//    public void after() {
+//        // Stop task manager
+//        injector.getInstance(TaskManager.class).shutdown();
+//
+//        // Stop persistance
+//        injector.getInstance(PersistService.class).stop();
+//    }
 }

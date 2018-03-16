@@ -21,9 +21,11 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.Clearable;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -35,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * </p>
  */
 @Singleton
-public final class MapStoreCache {
+public final class MapStoreCache implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapStoreCache.class);
 
     private static final int MAX_CACHE_ENTRIES = 100;
@@ -99,5 +101,10 @@ public final class MapStoreCache {
 
             return mapStore;
         }
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

@@ -21,8 +21,12 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.entity.event.EntityEvent.Handler;
+import stroom.entity.shared.Clearable;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
+import stroom.pipeline.MockPipelineService;
+import stroom.pipeline.MockTextConverterService;
+import stroom.pipeline.MockXSLTService;
 import stroom.xmlschema.shared.XMLSchema;
 
 public class MockXmlSchemaModule extends AbstractModule {
@@ -35,7 +39,10 @@ public class MockXmlSchemaModule extends AbstractModule {
 //
 //        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
 //        explorerActionHandlerBinder.addBinding().to(XMLSchemaServiceImpl.class);
-//
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(MockXMLSchemaService.class);
+
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(MockXMLSchemaService.class);
 
