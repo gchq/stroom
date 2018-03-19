@@ -27,48 +27,4 @@ public class DatabaseTestControlModule extends AbstractModule {
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
     }
-    //    @Bean
-//    public CommonTestScenarioCreator commonTestScenarioCreator(final FeedService feedService,
-//                                                               final StreamStore streamStore,
-//                                                               final StreamProcessorService streamProcessorService,
-//                                                               final StreamProcessorFilterService streamProcessorFilterService,
-//                                                               final IndexService indexService,
-//                                                               final VolumeService volumeService,
-//                                                               final NodeCache nodeCache) {
-//        return new CommonTestScenarioCreator(feedService, streamStore, streamProcessorService, streamProcessorFilterService, indexService, volumeService, nodeCache);
-//    }
-//
-//    @Bean
-////    @Profile(StroomSpringProfiles.IT)
-//    public CommonTranslationTest commonTranslationTest(final NodeCache nodeCache,
-//                                                       final StreamTaskCreator streamTaskCreator,
-//                                                       final StoreCreationTool storeCreationTool,
-//                                                       final TaskManager taskManager,
-//                                                       final StreamStore streamStore) {
-//        return new CommonTranslationTest(nodeCache, streamTaskCreator, storeCreationTool, taskManager, streamStore);
-//    }
-//
-//    @Bean
-//    public ContentImportService contentImportService(final ImportExportService importExportService) {
-//        return new ContentImportService(importExportService);
-//    }
-//
-//    @Bean
-//    public CommonTestControl commonTestControl(final VolumeService volumeService,
-//                                               final ContentImportService contentImportService,
-//                                               final StreamAttributeKeyService streamAttributeKeyService,
-//                                               final IndexShardManager indexShardManager,
-//                                               final IndexShardWriterCache indexShardWriterCache,
-//                                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
-//                                               final NodeConfig nodeConfig,
-//                                               final StreamTaskCreator streamTaskCreator,
-//                                               final StroomCacheManager stroomCacheManager,
-//                                               final StroomBeanStore beanStore) {
-//        return new DatabaseCommonTestControl(volumeService, contentImportService, streamAttributeKeyService, indexShardManager, indexShardWriterCache, databaseCommonTestControlTransactionHelper, nodeConfig, streamTaskCreator, stroomCacheManager, beanStore);
-//    }
-//
-//    @Bean
-//    public DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper(final StroomEntityManager entityManager) {
-//        return new DatabaseCommonTestControlTransactionHelper(entityManager);
-//    }
 }

@@ -26,27 +26,4 @@ public class MockClusterModule extends AbstractModule {
         bind(ClusterCallService.class).annotatedWith(Names.named("clusterCallServiceRemote")).to(ClusterCallServiceRemote.class);
         bind(ClusterNodeManager.class).to(MockClusterNodeManager.class);
     }
-    //    @Bean("clusterCallServiceLocal")
-//    public ClusterCallServiceLocal clusterCallServiceLocal(final StroomBeanStore beanStore, final NodeCache nodeCache) {
-//        return new ClusterCallServiceLocal(beanStore, nodeCache);
-//    }
-//
-//    @Bean
-//    public ClusterCallServiceRPC clusterCallServiceRPC(@Named("clusterCallServiceLocal") final ClusterCallService clusterCallService) {
-//        return new ClusterCallServiceRPC(clusterCallService);
-//    }
-//
-//    @Bean("clusterCallServiceRemote")
-//    public ClusterCallServiceRemote clusterCallServiceRemote(final NodeCache nodeCache,
-//                                                             final StroomBeanStore beanStore,
-//                                                             final StroomPropertyService propertyService) {
-//        return new ClusterCallServiceRemote(nodeCache, beanStore, propertyService);
-//    }
-//
-//    @Bean
-////    @Profile(StroomSpringProfiles.IT)
-//    public ClusterNodeManager clusterNodeManager(final NodeCache nodeCache) {
-//        return new MockClusterNodeManager(nodeCache);
-//    }
-
 }
