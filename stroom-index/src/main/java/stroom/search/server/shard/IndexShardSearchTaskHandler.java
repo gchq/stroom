@@ -31,11 +31,14 @@ import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -45,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 @Scope(StroomScope.TASK)
 public class IndexShardSearchTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
 
     private final IndexShardSearcherCache indexShardSearcherCache;
     private final StroomPropertyService propertyService;
@@ -63,21 +67,25 @@ public class IndexShardSearchTaskHandler {
     }
 
     public VoidResult exec(final IndexShardSearchTask task) {
-        try {
-            taskContext.setName("Search Index Shard");
-            if (!taskContext.isTerminated()) {
-                taskContext.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
-                        + task.getIndexShardId() + ")");
+        LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                () -> {
+                    try {
+                        taskContext.setName("Search Index Shard");
+                        if (!taskContext.isTerminated()) {
+                            taskContext.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
+                                    + task.getIndexShardId() + ")");
 
-                // Borrow a searcher from the pool.
-                final IndexShardSearcher indexShardSearcher = indexShardSearcherCache.get(task.getIndexShardId());
+                            // Borrow a searcher from the pool.
+                            final IndexShardSearcher indexShardSearcher = indexShardSearcherCache.get(task.getIndexShardId());
 
-                // Start searching.
-                searchShard(task, indexShardSearcher);
-            }
-        } catch (final Throwable t) {
-            error(task, t.getMessage(), t);
-        }
+                            // Start searching.
+                            searchShard(task, indexShardSearcher);
+                        }
+                    } catch (final Throwable t) {
+                        error(task, t.getMessage(), t);
+                    }
+                },
+                () -> LambdaLogger.buildMessage("exec() for shard {}", task.getShardNumber()));
 
         return VoidResult.INSTANCE;
     }
@@ -93,7 +101,8 @@ public class IndexShardSearchTaskHandler {
         // If there is an error building the query then it will be null here.
         if (query != null) {
             final int maxDocIdQueueSize = getIntProperty("stroom.search.shard.maxDocIdQueueSize", 1000);
-            final LinkedBlockingQueue<Integer> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
+            LOGGER.debug("Creating docIdStore with size {}", maxDocIdQueueSize);
+            final LinkedBlockingQueue<OptionalInt> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
 
             // Create a collector.
             final IndexShardHitCollector collector = new IndexShardHitCollector(taskContext, docIdStore,
@@ -104,29 +113,38 @@ public class IndexShardSearchTaskHandler {
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
                     final Executor executor = executorProvider.getExecutor(IndexShardSearchTaskProducer.THREAD_POOL);
-                    final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
-                        try {
-                            taskContext.setName("Index Searcher");
-                            searcher.search(query, collector);
-                        } catch (final Throwable t) {
-                            error(task, t.getMessage(), t);
-                        }
+                    CompletableFuture.runAsync(() -> {
+                        taskContext.setName("Index Searcher");
+                        LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                                () -> {
+                                    try {
+                                        searcher.search(query, collector);
+                                        boolean wasOffered = false;
+                                        while (!wasOffered && !taskContext.isTerminated()) {
+                                            //add empty optional to end of queue to indicate completion
+                                            wasOffered = docIdStore.offer(OptionalInt.empty(), 5, TimeUnit.SECONDS);
+                                        }
+                                    } catch (final Throwable t) {
+                                        error(task, t.getMessage(), t);
+                                    }
+                                },
+                                () -> "searcher.search()");
                     }, executor);
 
-                    // Start retrieving stored data from the shard.
-                    boolean complete = false;
-                    while (!complete && !taskContext.isTerminated()) {
-                        // Check if search is finished before polling for doc ids.
-                        final boolean searchFinished = completableFuture.isDone();
-                        // Poll for the next doc id.
-                        final Integer docId = docIdStore.poll(1, TimeUnit.SECONDS);
-
-                        if (docId != null) {
-                            // If we have a doc id then retrieve the stored data for it.
-                            getStoredData(task, searcher, docId);
-                        } else {
-                            // If we did not get a doc id then this search is complete if the shard has finished being searched.
-                            complete = searchFinished;
+                    // Start converting found docIds into stored data values
+                    while (!taskContext.isTerminated()) {
+                        final OptionalInt optDocId;
+                        // Poll for the next item
+                        optDocId = docIdStore.poll(5, TimeUnit.SECONDS);
+                        //if we get null back the queue is empty and we need to try polling again
+                        if (optDocId != null) {
+                            if (optDocId.isPresent()) {
+                                // If we have a doc id then retrieve the stored data for it.
+                                getStoredData(task, searcher, optDocId.getAsInt());
+                            } else {
+                                //empty optional which indicates the end of the queue.
+                                break;
+                            }
                         }
                     }
                 } catch (final Throwable t) {
