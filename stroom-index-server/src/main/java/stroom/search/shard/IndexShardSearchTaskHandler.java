@@ -33,6 +33,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -88,7 +89,7 @@ public class IndexShardSearchTaskHandler {
         // If there is an error building the query then it will be null here.
         if (query != null) {
             final int maxDocIdQueueSize = getIntProperty("stroom.search.shard.maxDocIdQueueSize", 1000);
-            final LinkedBlockingQueue<Integer> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
+            final LinkedBlockingQueue<Optional<Integer>> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
 
             // Create a collector.
             final IndexShardHitCollector collector = new IndexShardHitCollector(taskContext, docIdStore,
@@ -105,6 +106,14 @@ public class IndexShardSearchTaskHandler {
                             searcher.search(query, collector);
                         } catch (final Throwable t) {
                             error(task, t.getMessage(), t);
+                        } finally {
+                            try {
+                                while (!docIdStore.offer(Optional.empty(), 1, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
+                                    // Loop
+                                }
+                            } catch (final InterruptedException e) {
+                                // Ignore.
+                            }
                         }
                     }, executor);
 
@@ -114,11 +123,16 @@ public class IndexShardSearchTaskHandler {
                         // Check if search is finished before polling for doc ids.
                         final boolean searchFinished = completableFuture.isDone();
                         // Poll for the next doc id.
-                        final Integer docId = docIdStore.poll(1, TimeUnit.SECONDS);
+                        final Optional<Integer> docId = docIdStore.poll(1, TimeUnit.SECONDS);
 
                         if (docId != null) {
-                            // If we have a doc id then retrieve the stored data for it.
-                            getStoredData(task, searcher, docId);
+                            if (docId.isPresent()) {
+                                // If we have a doc id then retrieve the stored data for it.
+                                getStoredData(task, searcher, docId.get());
+                            } else {
+                                // If we did not get a doc id then this search is complete if we got an empty optional.
+                                complete = true;
+                            }
                         } else {
                             // If we did not get a doc id then this search is complete if the shard has finished being searched.
                             complete = searchFinished;
@@ -167,7 +181,7 @@ public class IndexShardSearchTaskHandler {
             }
 
             if (values != null) {
-                task.getResultReceiver().receive(task.getIndexShardId(), values);
+                task.getResultReceiver().receive(task.getIndexShardId(), Optional.of(values));
             }
         } catch (final Exception e) {
             error(task, e.getMessage(), e);

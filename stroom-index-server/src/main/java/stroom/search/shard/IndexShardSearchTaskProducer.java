@@ -29,6 +29,7 @@ import stroom.util.shared.ThreadPool;
 
 import javax.inject.Provider;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -48,7 +49,7 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
 
     public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
                                         final ClusterSearchTask clusterSearchTask,
-                                        final LinkedBlockingQueue<String[]> storedData,
+                                        final LinkedBlockingQueue<Optional<String[]>> storedData,
                                         final IndexShardSearcherCache indexShardSearcherCache,
                                         final List<Long> shards,
                                         final IndexShardQueryFactory queryFactory,

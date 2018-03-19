@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -62,7 +63,7 @@ public class ExtractionTaskProducer extends TaskProducer {
     public ExtractionTaskProducer(final TaskExecutor taskExecutor,
                                   final ClusterSearchTask clusterSearchTask,
                                   final StreamMapCreator streamMapCreator,
-                                  final LinkedBlockingQueue<String[]> storedData,
+                                  final LinkedBlockingQueue<Optional<String[]>> storedData,
                                   final FieldIndexMap extractionFieldIndexMap,
                                   final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,
                                   final ErrorReceiver errorReceiver,
@@ -86,11 +87,15 @@ public class ExtractionTaskProducer extends TaskProducer {
                     // Check if search is finished before attempting to add to the stream map.
                     final boolean searchFinished = searchTaskProducer.isComplete();
                     // Poll for the next set of values.
-                    final String[] values = storedData.poll(1, TimeUnit.SECONDS);
+                    final Optional<String[]> values = storedData.poll(1, TimeUnit.SECONDS);
 
                     if (values != null) {
-                        // If we have some values then map them.
-                        streamMapCreator.addEvent(streamEventMap, values);
+                        if (values.isPresent()) {
+                            // If we have some values then map them.
+                            streamMapCreator.addEvent(streamEventMap, values.get());
+                        } else {
+                            complete = true;
+                        }
 
                         // Tell the supplied executor that we are ready to deliver tasks.
                         signalAvailable();

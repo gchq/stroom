@@ -295,7 +295,7 @@ public class DefaultProperties {
         // SEARCH PROPERTIES 
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.maxStoredDataQueueSize")
-                .value("1000000")
+                .value("1000")
                 .description("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
                 .editable(true)
                 .build());

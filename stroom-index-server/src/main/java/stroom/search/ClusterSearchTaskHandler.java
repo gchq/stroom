@@ -74,6 +74,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -93,7 +94,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
      * default. When the queue is full the index shard data tasks will pause
      * until the docs are drained from the queue.
      */
-    private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000000;
+    private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Result Sender", 5, 0, Integer.MAX_VALUE);
@@ -120,7 +121,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     private ClusterSearchTask task;
 
-    private LinkedBlockingQueue<String[]> storedData;
+    private LinkedBlockingQueue<Optional<String[]>> storedData;
 
     @Inject
     ClusterSearchTaskHandler(final IndexService indexService,
@@ -473,7 +474,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                                         extractionTaskProducer.getRemainingTasks() +
                                         " extractions remaining");
 
-                        ThreadUtil.sleep(1000);
+                        ThreadUtil.sleep(100);
                     }
                 }
             }
@@ -492,12 +493,16 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 // Check if search is finished before polling for stored data.
                 final boolean searchComplete = indexShardSearchTaskProducer.isComplete();
                 // Poll for the next stored data result.
-                final String[] values = storedData.poll(1, TimeUnit.SECONDS);
+                final Optional<String[]> values = storedData.poll(1, TimeUnit.SECONDS);
 
                 if (values != null) {
-                    // Send the data to all coprocessors.
-                    for (final Coprocessor coprocessor : coprocessors) {
-                        coprocessor.receive(values);
+                    if (values.isPresent()) {
+                        // Send the data to all coprocessors.
+                        for (final Coprocessor coprocessor : coprocessors) {
+                            coprocessor.receive(values.get());
+                        }
+                    } else {
+                        complete = true;
                     }
                 } else {
                     complete = searchComplete;

@@ -25,6 +25,7 @@ import stroom.task.TaskContext;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,12 +34,12 @@ public class IndexShardHitCollector extends SimpleCollector {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardHitCollector.class);
 
     private final TaskContext taskContext;
-    private final LinkedBlockingQueue<Integer> docIdStore;
+    private final LinkedBlockingQueue<Optional<Integer>> docIdStore;
     private final AtomicLong hitCount;
     private int docBase;
     private Long pauseTime;
 
-    public IndexShardHitCollector(final TaskContext taskContext, final LinkedBlockingQueue<Integer> docIdStore,
+    IndexShardHitCollector(final TaskContext taskContext, final LinkedBlockingQueue<Optional<Integer>> docIdStore,
                                   final AtomicLong hitCount) {
         this.docIdStore = docIdStore;
         this.taskContext = taskContext;
@@ -57,7 +58,7 @@ public class IndexShardHitCollector extends SimpleCollector {
         final int docId = docBase + doc;
 
         try {
-            while (!docIdStore.offer(docId, 1, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
+            while (!docIdStore.offer(Optional.of(docId), 1, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
                 if (isProvidingInfo()) {
                     if (pauseTime == null) {
                         pauseTime = System.currentTimeMillis();
