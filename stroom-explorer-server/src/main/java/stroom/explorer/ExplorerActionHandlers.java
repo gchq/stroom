@@ -89,7 +89,7 @@ class ExplorerActionHandlers {
                     });
 
             // Add internal handlers.
-            final Set<ExplorerActionHandler> set = beanStore.getBeansOfType(ExplorerActionHandler.class);
+            final Set<ExplorerActionHandler> set = beanStore.getInstancesOfType(ExplorerActionHandler.class);
             set.forEach(this::addExplorerActionHandler);
 
             final List<DocumentType> list = allTypes.values().stream()

@@ -52,7 +52,7 @@ public class GlobalProperties {
 
     /**
      * This method exists so that tests and other classes that are not able to
-     * inject this object using Spring can get the current instance or create
+     * inject this object using Guice can get the current instance or create
      * it. It is recommended that most code injects GlobalProperties instead.
      *
      * @return Either the current instance of GlobalProperties or a new instance
@@ -75,7 +75,7 @@ public class GlobalProperties {
                 globalProperties.put(globalProperty.getName(), globalProperty);
 
                 if (globalProperty.getValue() != null) {
-                    StroomProperties.setProperty(globalProperty.getName(), globalProperty.getValue(), StroomProperties.Source.SPRING);
+                    StroomProperties.setProperty(globalProperty.getName(), globalProperty.getValue(), StroomProperties.Source.GUICE);
                 }
             }
         } catch (final Exception e) {

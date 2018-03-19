@@ -29,7 +29,7 @@ import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

@@ -27,6 +27,8 @@ import stroom.security.shared.UserRef;
 import stroom.servlet.HttpSessionUtil;
 import stroom.util.io.StreamUtil;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -50,6 +52,7 @@ import java.util.regex.Pattern;
  * Filter to avoid posts to the wrong place (e.g. the root of the app)
  * </p>
  */
+@Singleton
 public class SecurityFilter implements Filter {
     private static final String IGNORE_URI_REGEX = "ignoreUri";
 
@@ -62,6 +65,7 @@ public class SecurityFilter implements Filter {
 
     private Pattern pattern = null;
 
+    @Inject
     public SecurityFilter(
             final SecurityConfig config,
             final JWTService jwtService,

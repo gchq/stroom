@@ -24,11 +24,11 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.node.NodeCache;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 import stroom.task.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;
-import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

@@ -27,7 +27,7 @@ import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheManager.CacheHolder;
 import stroom.util.cache.CacheUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

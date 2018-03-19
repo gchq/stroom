@@ -39,7 +39,7 @@ public class MockCommonTestControl implements CommonTestControl {
 
     @Override
     public void teardown() {
-        final Set<Clearable> set = beanStore.getBeansOfType(Clearable.class);
+        final Set<Clearable> set = beanStore.getInstancesOfType(Clearable.class);
         set.forEach(Clearable::clear);
     }
 

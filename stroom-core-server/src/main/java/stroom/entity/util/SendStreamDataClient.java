@@ -72,10 +72,6 @@ public final class SendStreamDataClient {
 //        // Load up the args
 //        final Map<String, String> argsMap = ArgsUtil.parse(args);
 //
-//        // Boot up spring
-//        final ApplicationContext appContext = new ClassPathXmlApplicationContext(
-//                new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml"});
-//
 //        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 //        // Check Args
 //        if (!argsMap.containsKey(FEED)) {
@@ -95,13 +91,13 @@ public final class SendStreamDataClient {
 //            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
 //        }
 //        final URL url = new URL(argsMap.get(SEND_URL));
-//        final StreamStore streamStore = (StreamStore) appContext.getBean("streamStore");
-//        final FeedService feedService = appContext.getBean(FeedService.class);
+//        final StreamStore streamStore = (StreamStore) appContext.getInstance("streamStore");
+//        final FeedService feedService = appContext.getInstance(FeedService.class);
 //        final Feed definition = feedService.loadByName(argsMap.get(FEED));
 //        if (definition == null) {
 //            throw new RuntimeException("Unable to locate Feed " + argsMap.get(FEED));
 //        }
-//        final StreamTypeService streamTypeService = appContext.getBean(StreamTypeService.class);
+//        final StreamTypeService streamTypeService = appContext.getInstance(StreamTypeService.class);
 //        final StreamType streamType = streamTypeService.loadByName(argsMap.get(STREAM_TYPE));
 //        if (streamType == null) {
 //            throw new RuntimeException("Unknown stream type " + argsMap.get(STREAM_TYPE));

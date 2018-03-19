@@ -20,10 +20,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.apache.xmlgraphics                    | batik-util                                   | 1.7              | APL 2.0       |         |               |
 | cglib                                     | cglib-nodep                                  | 3.1              | APL 2.0       |         |               |
 | com.fasterxml                             | classmate                                    | 1.0.0            | APL 2.0       |         |               |
-| commons-beanutils                         | commons-beanutils                            | 1.7.0            | APL 2.0       |         |               |
-| commons-beanutils                         | commons-beanutils                            | 1.8.3            | APL 2.0       |         |               |
-| commons-beanutils                         | commons-beanutils-core                       | 1.7.0            | APL 2.0       |         |               |
-| commons-beanutils                         | commons-beanutils-core                       | 1.8.0            | APL 2.0       |         |               |
 | commons-cli                               | commons-cli                                  | 1.2              | APL 2.0       |         |               |
 | commons-codec                             | commons-codec                                | 1.4              | APL 2.0       |         |               |
 | commons-codec                             | commons-codec                                | 1.9              | APL 2.0       |         |               |
@@ -63,7 +59,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | com.gwtplatform                           | gwtp-dispatch-client                         | 0.7              | APL 2.0       |         |               |
 | com.gwtplatform                           | gwtp-dispatch-server                         | 0.7              | APL 2.0       |         |               |
 | com.gwtplatform                           | gwtp-dispatch-server-guice                   | 0.7              | APL 2.0       |         |               |
-| com.gwtplatform                           | gwtp-dispatch-server-spring                  | 0.7              | APL 2.0       |         |               |
 | com.gwtplatform                           | gwtp-dispatch-shared                         | 0.7              | APL 2.0       |         |               |
 | com.gwtplatform                           | gwtp-mvp-client                              | 0.7              | APL 2.0       |         |               |
 | com.gwtplatform                           | gwtp-processors                              | 0.7              | APL 2.0       |         |               |
@@ -146,16 +141,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.apache.poi                            | poi-ooxml                                    | 3.11             | APL 2.0       |         |               |
 | org.apache.poi                            | poi-ooxml-schemas                            | 3.11             | APL 2.0       |         |               |
 | org.xerial.snappy                         | snappy-java                                  | 1.0.4.1          | APL 2.0       |         |               |
-| org.springframework                       | spring-aop                                   | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-beans                                 | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-context                               | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-context-support                       | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-core                                  | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-expression                            | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-jdbc                                  | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-orm                                   | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-test                                  | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-tx                                    | 4.2.4.RELEASE    | APL 2.0       |         |               |
 | stax                                      | stax-api                                     | 1.0.1            | APL 2.0       |         |               |
 | javax.validation                          | validation-api                               | 1.1.0.Final      | APL 2.0       |         |               |
 | javax.validation                          | validation-api                               | sources          | APL 2.0       |         |               |

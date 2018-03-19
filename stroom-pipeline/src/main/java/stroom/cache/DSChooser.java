@@ -47,7 +47,7 @@ public class DSChooser {
 
             // if (VERSION2.equals(version)) {
             // final DS2ParserFactory dataSplitterParserFactory =
-            // beanStore.getBean(DS2ParserFactory.class);
+            // beanStore.getInstance(DS2ParserFactory.class);
             // dataSplitterParserFactory.configure(new StringReader(xml),
             // errorHandler);
             // return dataSplitterParserFactory;

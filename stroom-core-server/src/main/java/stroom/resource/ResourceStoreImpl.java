@@ -18,9 +18,9 @@ package stroom.resource;
 
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
-import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomShutdown;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Singleton;
 import java.io.IOException;

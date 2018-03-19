@@ -17,19 +17,12 @@
 package stroom.dictionary;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
-import com.google.inject.multibindings.MapBinder;
-import com.google.inject.multibindings.Multibinder;
-import stroom.dictionary.shared.DictionaryDoc;
-import stroom.explorer.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
-import stroom.task.TaskHandler;
 
 
 public class MockDictionaryModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(DictionaryStore.class).to(DictionaryStoreImpl.class).in(Singleton.class);
+        bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
 
 //        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
 //        taskHandlerBinder.addBinding().to(DownloadDictionaryHandler.class);

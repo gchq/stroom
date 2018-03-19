@@ -41,7 +41,7 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.SecurityContext;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;

@@ -17,19 +17,6 @@
 
 package stroom.test;
 
-import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.feed.FeedService;
-import stroom.importexport.ImportExportSerializer;
-import stroom.node.NodeCache;
-import stroom.proxy.repo.ProxyRepositoryCreator;
-import stroom.proxy.repo.StroomZipRepository;
-import stroom.streamstore.fs.FileSystemUtil;
-import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomSpringProfiles;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * Script to create some base data for testing.
@@ -45,22 +32,19 @@ public final class SampleRepositoryCreator {
 //    public SampleRepositoryCreator() {
 //        FileUtil.deleteContents(FileUtil.getTempDir());
 //
-//        System.setProperty("spring.profiles.active", StroomSpringProfiles.TEST);
-//        final String[] context = new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml",
-//                "classpath:META-INF/spring/stroomDatabaseCommonTestControl.xml",
-//                "classpath:META-INF/spring/stroomCoreServerLocalTestingContext.xml"};
+
 //        appContext = new ClassPathXmlApplicationContext(context);
 //
-//        nodeCache = (NodeCache) appContext.getBean("nodeCache");
+//        nodeCache = (NodeCache) appContext.getInstance("nodeCache");
 //
 //        // Force nodes to be created
 //        nodeCache.getDefaultNode();
 //
-//        feedService = (FeedService) appContext.getBean("feedService");
+//        feedService = (FeedService) appContext.getInstance("feedService");
 //
-//        commonTestControl = (CommonTestControl) appContext.getBean("commonTestControl");
+//        commonTestControl = (CommonTestControl) appContext.getInstance("commonTestControl");
 //
-//        importExportSerializer = appContext.getBean(ImportExportSerializer.class);
+//        importExportSerializer = appContext.getInstance(ImportExportSerializer.class);
 //
 //        testDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config");
 //    }

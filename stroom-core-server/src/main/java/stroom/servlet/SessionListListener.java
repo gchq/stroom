@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * There are 2 instances of this class as spring has no HttpSessionListener
+ * There are 2 instances of this class as Guice has no HttpSessionListener
  * functionality so we use 2 instances and some statics
  */
 public class SessionListListener implements HttpSessionListener, SessionListService {
@@ -149,9 +149,9 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
 
     private TaskManager getTaskManager() {
         if (beanStore != null) {
-            final StroomBeanStore stroomBeanStore = beanStore.getBean(StroomBeanStore.class);
+            final StroomBeanStore stroomBeanStore = beanStore.getInstance(StroomBeanStore.class);
             if (stroomBeanStore != null) {
-                return stroomBeanStore.getBean(TaskManager.class);
+                return stroomBeanStore.getInstance(TaskManager.class);
             }
         }
 

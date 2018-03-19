@@ -28,7 +28,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 import stroom.stats.shared.StroomStatsStoreEntity;
 
 import javax.inject.Inject;

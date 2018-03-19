@@ -30,7 +30,7 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 

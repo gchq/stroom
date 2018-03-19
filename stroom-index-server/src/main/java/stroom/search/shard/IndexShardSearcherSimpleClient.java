@@ -37,14 +37,10 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
 
     @Override
     public void run() {
-//        // Boot up spring
-//        final ApplicationContext appContext = new ClassPathXmlApplicationContext(
-//                new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml"});
-//
 //        final Query query = new TermQuery(new Term(searchField, searchValue));
 //
-//        final IndexShardService indexShardService = appContext.getBean(IndexShardService.class);
-//        final StreamStore streamStore = appContext.getBean(StreamStore.class);
+//        final IndexShardService indexShardService = appContext.getInstance(IndexShardService.class);
+//        final StreamStore streamStore = appContext.getInstance(StreamStore.class);
 //
 //        final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
 //        findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.READABLE_INDEX_SHARD_STATUS);

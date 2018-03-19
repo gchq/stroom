@@ -35,7 +35,7 @@ import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.util.SqlUtil;
 import stroom.security.SecurityContext;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.EqualsUtil;
 import stroom.guice.StroomBeanStore;
@@ -75,7 +75,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
 
     private String getCurrentUser() {
         try {
-            final SecurityContext securityContext = beanStore.getBean(SecurityContext.class);
+            final SecurityContext securityContext = beanStore.getInstance(SecurityContext.class);
             if (securityContext != null) {
                 return securityContext.getUserId();
             }

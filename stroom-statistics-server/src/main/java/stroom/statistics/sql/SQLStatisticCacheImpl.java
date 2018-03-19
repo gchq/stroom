@@ -23,8 +23,8 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomShutdown;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

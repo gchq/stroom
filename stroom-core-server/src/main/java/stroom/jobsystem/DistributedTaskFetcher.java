@@ -36,8 +36,8 @@ import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 import stroom.guice.StroomBeanStore;
-import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomShutdown;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -177,7 +177,7 @@ public class DistributedTaskFetcher {
                                     lastFetch = now;
 
                                     // Perform a fetch from the master node.
-                                    final ClusterDispatchAsyncHelper dispatchHelper = beanStore.getBean(ClusterDispatchAsyncHelper.class);
+                                    final ClusterDispatchAsyncHelper dispatchHelper = beanStore.getInstance(ClusterDispatchAsyncHelper.class);
                                     if (dispatchHelper.isClusterStateInitialised()) {
                                         final DefaultClusterResultCollector<DistributedTaskRequestResult> collector = dispatchHelper
                                                 .execAsync(request, WAIT_TIME, TimeUnit.MINUTES, TargetType.MASTER);

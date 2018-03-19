@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.util.shared.Task;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;

@@ -56,8 +56,8 @@ public class DBTableServiceImpl implements DBTableService {
         final List<DBTableStatus> rtnList = new ArrayList<>();
 
         if (beanStore != null) {
-            final Object dataSource = beanStore.getBean("dataSource");
-            final Object statisticsDataSource = beanStore.getBean("statisticsDataSource");
+            final Object dataSource = beanStore.getInstance("dataSource");
+            final Object statisticsDataSource = beanStore.getInstance("statisticsDataSource");
 
             addTableStatus(dataSource, rtnList);
             addTableStatus(statisticsDataSource, rtnList);

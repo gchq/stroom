@@ -129,7 +129,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                     final String taskType = destStreamProcessor.getTaskType();
 
                     final StreamProcessorTaskExecutor streamProcessorTaskExecutor = (StreamProcessorTaskExecutor) beanStore
-                            .getBean(taskType);
+                            .getInstance(taskType);
 
                     // Used as a hook for the test code
                     task.setStreamProcessorTaskExecutor(streamProcessorTaskExecutor);

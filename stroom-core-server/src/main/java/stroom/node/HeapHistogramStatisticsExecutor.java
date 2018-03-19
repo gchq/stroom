@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import java.time.Duration;

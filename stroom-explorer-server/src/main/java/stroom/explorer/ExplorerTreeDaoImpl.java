@@ -22,7 +22,7 @@ import fri.util.database.jpa.tree.closuretable.ClosureTableTreeDao;
 import fri.util.database.jpa.tree.closuretable.ClosureTableTreeNode;
 import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationException;
 import fri.util.database.jpa.tree.uniqueconstraints.UniqueTreeConstraint;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 
 import javax.inject.Inject;
 import java.io.Serializable;

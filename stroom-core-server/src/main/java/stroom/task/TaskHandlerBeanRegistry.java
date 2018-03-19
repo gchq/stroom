@@ -61,7 +61,7 @@ public class TaskHandlerBeanRegistry {
                 if (taskHandlerMap == null) {
                     final Map<Class<?>, Class<TaskHandler>> map = new HashMap<>();
 
-                    final Set<TaskHandler> taskHandlers = beanStore.getBeansOfType(TaskHandler.class);
+                    final Set<TaskHandler> taskHandlers = beanStore.getInstancesOfType(TaskHandler.class);
                     taskHandlers.forEach(taskHandler -> {
                         final Class<TaskHandler> taskHandlerClazz = (Class<TaskHandler>) taskHandler.getClass();
                         final TaskHandlerBean taskHandlerBean = taskHandlerClazz.getAnnotation(TaskHandlerBean.class);
@@ -81,7 +81,7 @@ public class TaskHandlerBeanRegistry {
             throw new RuntimeException("No handler for " + task.getClass().getName());
         }
 
-        return (H) beanStore.getBean(taskHandlerClazz);
+        return (H) beanStore.getInstance(taskHandlerClazz);
     }
 
 //    private <T> Collection<Provider<T>> getProviders(Class<T> type) {
@@ -122,7 +122,7 @@ public class TaskHandlerBeanRegistry {
 //        private final Map<Class<?>, TaskHandlerBean> taskHandlerMap = new HashMap<>();
 //
 //        Handlers(final StroomBeanStore beanStore) {
-//            final Set<String> beanList = beanStore.getAnnotatedStroomBeans(TaskHandlerBean.class);
+//            final Set<String> beanList = beanStore.getAnnotatedClasses(TaskHandlerBean.class);
 //
 //            for (final String handlerName : beanList) {
 //                final TaskHandlerBean handlerBean = beanStore.findAnnotationOnBean(handlerName, TaskHandlerBean.class);

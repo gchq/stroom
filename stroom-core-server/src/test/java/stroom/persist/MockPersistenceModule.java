@@ -17,7 +17,6 @@
 package stroom.persist;
 
 import com.google.inject.AbstractModule;
-import stroom.spring.EntityManagerSupport;
 
 /**
  * Configures anything related to persistence, e.g. transaction management, the

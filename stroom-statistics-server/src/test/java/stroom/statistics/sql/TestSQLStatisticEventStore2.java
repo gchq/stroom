@@ -24,7 +24,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.statistics.sql.datasource.StatisticStoreEntityService;
+import stroom.statistics.sql.entity.StatisticStoreEntityService;
 import stroom.statistics.sql.rollup.RollUpBitMask;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.sql.search.FilterTermsTree;

@@ -37,7 +37,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;

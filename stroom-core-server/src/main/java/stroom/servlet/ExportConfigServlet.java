@@ -25,7 +25,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -48,7 +47,7 @@ public class ExportConfigServlet extends HttpServlet {
 
     @Inject
     ExportConfigServlet(final ImportExportService importExportService,
-                        @Named("resourceStore") final ResourceStore resourceStore,
+                        final ResourceStore resourceStore,
                         final StroomPropertyService propertyService) {
         this.importExportService = importExportService;
         this.resourceStore = resourceStore;

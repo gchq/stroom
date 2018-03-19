@@ -33,6 +33,7 @@ import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
+@Singleton
 public class LifecycleServiceImpl implements LifecycleService {
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleServiceImpl.class);
     private static final String STROOM_LIFECYCLE_THREAD_POOL = "Stroom Lifecycle#";

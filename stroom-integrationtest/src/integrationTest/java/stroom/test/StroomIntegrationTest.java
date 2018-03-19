@@ -36,9 +36,6 @@ import java.nio.file.Path;
 
 /**
  * This class should be common to all component and integration tests.
- * <p>
- * It is safer if all test classes destroy the Spring context after running
- * tests in the class to avoid knock on effects in other tests.
  */
 public abstract class StroomIntegrationTest implements StroomTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomIntegrationTest.class);

@@ -34,15 +34,14 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.util.ProcessorUtil;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.Statistics;
-import stroom.statistics.sql.datasource.FindStatisticsEntityCriteria;
-import stroom.statistics.sql.datasource.StatisticStoreEntityService;
+import stroom.statistics.sql.entity.FindStatisticsEntityCriteria;
+import stroom.statistics.sql.entity.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.util.date.DateUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.ByteArrayInputStream;

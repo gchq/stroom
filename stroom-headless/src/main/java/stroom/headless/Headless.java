@@ -21,7 +21,6 @@ import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.util.XMLUtil;
-import stroom.guice.PipelineScopeModule;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;
 import stroom.node.NodeCache;
@@ -33,7 +32,7 @@ import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.spring.PersistService;
+import stroom.persist.PersistService;
 import stroom.task.TaskManager;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.config.StroomProperties;
@@ -292,45 +291,7 @@ public class Headless extends AbstractCommandLineTool {
     }
 
     private Injector createInjector() {
-        final Injector injector = Guice.createInjector(
-                new stroom.entity.EntityModule(),
-                new stroom.security.MockSecurityContextModule(),
-                new stroom.dictionary.DictionaryStoreModule(),
-                new stroom.dictionary.DictionaryHandlerModule(),
-                new stroom.docstore.db.DBPersistenceModule(),
-                new stroom.spring.PersistenceModule(),
-                new stroom.properties.PropertyModule(),
-                new stroom.importexport.ImportExportModule(),
-                new stroom.explorer.MockExplorerModule(),
-                new stroom.cache.CacheModule(),
-                new stroom.node.NodeServiceModule(),
-                new stroom.node.NodeModule(),
-                new stroom.volume.VolumeModule(),
-                new stroom.streamstore.StreamStoreModule(),
-                new stroom.streamstore.fs.FSModule(),
-                new stroom.streamtask.StreamTaskModule(),
-                new stroom.task.TaskModule(),
-                new stroom.task.cluster.ClusterTaskModule(),
-                new stroom.cluster.ClusterModule(),
-                new stroom.jobsystem.JobSystemModule(),
-                new stroom.pipeline.PipelineModule(),
-                new stroom.cache.PipelineCacheModule(),
-                new stroom.pipeline.stepping.PipelineSteppingModule(),
-                new stroom.pipeline.task.PipelineStreamTaskModule(),
-                new stroom.document.DocumentModule(),
-                new stroom.entity.cluster.EntityClusterModule(),
-                new stroom.entity.event.EntityEventModule(),
-                new stroom.feed.FeedModule(),
-                new stroom.lifecycle.LifecycleModule(),
-                new stroom.policy.PolicyModule(),
-                new stroom.refdata.ReferenceDataModule(),
-                new stroom.logging.LoggingModule(),
-                new stroom.pipeline.factory.FactoryModule(),
-                new PipelineScopeModule(),
-                new stroom.resource.ResourceModule(),
-                new stroom.xmlschema.XmlSchemaModule(),
-                new HeadlessModule()
-        );
+        final Injector injector = Guice.createInjector(new HeadlessModule());
         injector.injectMembers(this);
 
         return injector;

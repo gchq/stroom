@@ -17,28 +17,21 @@
 package stroom.feed;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Key;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import stroom.entity.CachingEntityManager;
-import stroom.entity.EntityServiceBeanRegistry;
 import stroom.entity.FindService;
-import stroom.entity.shared.BaseCriteria;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.security.SecurityContext;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 import stroom.task.TaskHandler;
 
 import javax.inject.Named;
-
-import static com.google.inject.name.Names.named;
 
 public class FeedModule extends AbstractModule {
     @Override

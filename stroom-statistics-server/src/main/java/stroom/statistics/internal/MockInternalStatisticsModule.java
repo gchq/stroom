@@ -23,18 +23,5 @@ public class MockInternalStatisticsModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(InternalStatisticsReceiver.class).to(MockInternalStatisticsReceiver.class);
-
-//        final Multibinder<InternalStatisticsService> multibinder = Multibinder.newSetBinder(binder(), InternalStatisticsService.class);
     }
-
-//    @Bean
-//    public InternalStatisticDocRefCache internalStatisticDocRefCache(final StroomPropertyService stroomPropertyService) {
-//        return new InternalStatisticDocRefCache(stroomPropertyService);
-//    }
-//
-//    @Bean
-//    public InternalStatisticsReceiver internalStatisticsReceiver(final StroomBeanStore stroomBeanStore,
-//                                                                 final InternalStatisticDocRefCache internalStatisticDocRefCache) {
-//        return new InternalStatisticsReceiverImpl(stroomBeanStore, internalStatisticDocRefCache);
-//    }
 }

@@ -25,8 +25,8 @@ import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.statistics.sql.SQLStatisticEventStore;
 import stroom.statistics.sql.StatisticsQueryService;
-import stroom.statistics.sql.datasource.StatisticStoreCache;
-import stroom.statistics.sql.datasource.StatisticsDataSourceProvider;
+import stroom.statistics.sql.entity.StatisticStoreCache;
+import stroom.statistics.sql.entity.StatisticsDataSourceProvider;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.util.shared.HasTerminate;
@@ -41,7 +41,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class StatisticsQueryServiceImpl implements StatisticsQueryService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsQueryServiceImpl.class);
 
     private static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";

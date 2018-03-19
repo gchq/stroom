@@ -8,7 +8,7 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomShutdown;
+import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import java.io.IOException;

@@ -112,12 +112,7 @@ public class MockServletModule extends AbstractModule {
 //    public SessionListServlet sessionListServlet(final TaskManager taskManager) {
 //        return new SessionListServletImpl(taskManager);
 //    }
-//
-//    @Bean(SpringRequestFactoryServlet.BEAN_NAME)
-//    public SpringRequestFactoryServlet springRequestFactoryServlet() {
-//        return new SpringRequestFactoryServlet();
-//    }
-//
+
 //    @Bean(StatusServletImpl.BEAN_NAME)
 //    public StatusServlet statusServlet(final NodeService nodeService,
 //                                       final ClientPropertiesService clientPropertiesService,

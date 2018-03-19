@@ -23,7 +23,7 @@ import stroom.properties.StroomPropertyService;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamtask.AbstractBatchDeleteExecutor;
 import stroom.streamtask.BatchIdTransactionHelper;
-import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;

@@ -28,7 +28,6 @@ import stroom.properties.StroomPropertyService;
 public class NodeServiceModule extends AbstractModule {
     @Override
     protected void configure() {
-//        bind(NodeServiceImpl.class).in(Singleton.class);
         bind(NodeService.class).to(NodeServiceImpl.class);
         bind(NodeServiceGetDefaultNode.class).to(NodeServiceImpl.class);
     }

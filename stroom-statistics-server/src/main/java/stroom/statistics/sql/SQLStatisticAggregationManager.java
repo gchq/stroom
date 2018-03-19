@@ -26,11 +26,10 @@ import stroom.properties.StroomPropertyService;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.sql.SQLException;
 import java.util.concurrent.locks.ReentrantLock;
 

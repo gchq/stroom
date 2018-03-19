@@ -27,7 +27,7 @@ import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
 import stroom.security.SecurityContext;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

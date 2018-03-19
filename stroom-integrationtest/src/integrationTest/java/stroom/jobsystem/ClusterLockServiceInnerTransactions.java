@@ -18,7 +18,7 @@ package stroom.jobsystem;
 
 import org.junit.Assert;
 
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;

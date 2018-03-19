@@ -62,7 +62,7 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
         // Fudge a task scope context as many of the beans require one before
         // they can be created.
         LOGGER.info("Initialising pipeline element registry.");
-        final Set<Element> elements = beanStore.getBeansOfType(Element.class);
+        final Set<Element> elements = beanStore.getInstancesOfType(Element.class);
         final List<Class<?>> elementClasses = new ArrayList<>();
         for (final Element element : elements) {
             final Class<?> clazz = element.getClass();
@@ -83,7 +83,7 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
     @Override
     public <T extends Element> T getElementInstance(final Class<T> elementClass) {
         try {
-            return beanStore.getBean(elementClass);
+            return beanStore.getInstance(elementClass);
         } catch (final RuntimeException rex) {
             LOGGER.error("Failed to load {}", elementClass, rex);
             throw rex;

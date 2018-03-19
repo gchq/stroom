@@ -35,36 +35,4 @@ public class ClusterModule extends AbstractModule {
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(ClusterNodeManagerImpl.class);
     }
-    //    @Bean("clusterCallServiceLocal")
-//    public ClusterCallServiceLocal clusterCallServiceLocal(final StroomBeanStore beanStore, final NodeCache nodeCache) {
-//        return new ClusterCallServiceLocal(beanStore, nodeCache);
-//    }
-//
-//    @Bean
-//    public ClusterCallServiceRPC clusterCallServiceRPC(@Named("clusterCallServiceLocal") final ClusterCallService clusterCallService) {
-//        return new ClusterCallServiceRPC(clusterCallService);
-//    }
-//
-//    @Bean("clusterCallServiceRemote")
-//    public ClusterCallServiceRemote clusterCallServiceRemote(final NodeCache nodeCache,
-//                                                             final StroomBeanStore beanStore,
-//                                                             final StroomPropertyService propertyService) {
-//        return new ClusterCallServiceRemote(nodeCache, beanStore, propertyService);
-//    }
-//
-//    @Bean(ClusterNodeManager.BEAN_NAME)
-//    public ClusterNodeManager clusterNodeManager(final ClientPropertiesService clientPropertiesService,
-//                                                 final NodeCache nodeCache,
-//                                                 final TaskManager taskManager) {
-//        return new ClusterNodeManagerImpl(clientPropertiesService, nodeCache, taskManager);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public UpdateClusterStateTaskHandler updateClusterStateTaskHandler(final NodeService nodeService,
-//                                                                       final NodeCache nodeCache,
-//                                                                       final ClusterCallServiceRemote clusterCallServiceRemote,
-//                                                                       final TaskManager taskManager) {
-//        return new UpdateClusterStateTaskHandler(nodeService, nodeCache, clusterCallServiceRemote, taskManager);
-//    }
 }

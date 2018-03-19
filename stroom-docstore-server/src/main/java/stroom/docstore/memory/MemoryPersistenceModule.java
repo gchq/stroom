@@ -17,18 +17,11 @@
 package stroom.docstore.memory;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
 import stroom.docstore.Persistence;
-import stroom.docstore.db.DBPersistence;
 
 public class MemoryPersistenceModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(Persistence.class).to(MemoryPersistence.class).in(Singleton.class);
+        bind(Persistence.class).to(MemoryPersistence.class);
     }
-
-//    @Bean
-//    public DBPersistence dBPersistence(final DataSource dataSource) {
-//        return new DBPersistence(dataSource);
-//    }
 }

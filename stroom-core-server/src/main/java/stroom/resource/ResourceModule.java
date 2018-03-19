@@ -23,8 +23,4 @@ public class ResourceModule extends AbstractModule {
     protected void configure() {
         bind(ResourceStore.class).to(ResourceStoreImpl.class);
     }
-    //    @Bean
-//    public ResourceStore resourceStore() {
-//        return new ResourceStoreImpl();
-//    }
 }

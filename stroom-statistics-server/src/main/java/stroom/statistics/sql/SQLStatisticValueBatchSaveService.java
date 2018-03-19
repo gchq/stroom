@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.sql.SQLSafe;
 
 import javax.inject.Inject;
 import javax.inject.Named;

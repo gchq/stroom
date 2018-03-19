@@ -85,7 +85,7 @@ public class TestEventSearch extends AbstractSearchTest {
 
     private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount, final List<String> componentIds,
                       final boolean extractValues) {
-        // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
+        // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
         StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 

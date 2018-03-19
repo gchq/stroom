@@ -39,27 +39,5 @@ public class DictionaryHandlerModule extends AbstractModule {
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
         entityServiceByTypeBinder.addBinding(DictionaryDoc.ENTITY_TYPE).to(stroom.dictionary.DictionaryStoreImpl.class);
-
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(stroom.dictionary.DictionaryStoreImpl.class);
     }
-//
-//    @Bean
-//    public DictionaryResource dictionaryResource(final DictionaryStore dictionaryStore) {
-//        return new DictionaryResource(dictionaryStore);
-//    }
-
-//    @Bean
-//    @Singleton
-//    public DictionaryStore dictionaryStore(final Store<DictionaryDoc> store, final SecurityContext securityContext, final Persistence persistence) {
-//        return new DictionaryStoreImpl(store, securityContext, persistence);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.PROTOTYPE)
-//    public DownloadDictionaryHandler downloadDictionaryHandler(final ResourceStore resourceStore,
-//                                                               final DocumentEventLog documentEventLog,
-//                                                               final DictionaryStore dictionaryStore) {
-//        return new DownloadDictionaryHandler(resourceStore, documentEventLog, dictionaryStore);
-//    }
 }

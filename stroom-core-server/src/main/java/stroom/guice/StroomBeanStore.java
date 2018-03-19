@@ -24,7 +24,7 @@ import com.google.inject.util.Types;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomBeanMethod;
+import stroom.util.lifecycle.MethodReference;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -44,7 +44,7 @@ public class StroomBeanStore {
     private static final String PACKAGE = "stroom";
 
     private final Map<Class<? extends Annotation>, Set<Class<?>>> classMap = new ConcurrentHashMap<>();
-    private final Map<Class<? extends Annotation>, Set<StroomBeanMethod>> methodMap = new ConcurrentHashMap<>();
+    private final Map<Class<? extends Annotation>, Set<MethodReference>> methodMap = new ConcurrentHashMap<>();
 
     private final Injector injector;
 
@@ -53,7 +53,7 @@ public class StroomBeanStore {
         this.injector = injector;
     }
 
-    public Set<Class<?>> getAnnotatedStroomBeans(final Class<? extends Annotation> annotation) {
+    public Set<Class<?>> getAnnotatedClasses(final Class<? extends Annotation> annotation) {
         return classMap.computeIfAbsent(annotation, a -> {
             final Set<Class<?>> classes = new HashSet<>();
             new FastClasspathScanner(PACKAGE)
@@ -63,14 +63,14 @@ public class StroomBeanStore {
         });
     }
 
-    public Set<StroomBeanMethod> getAnnotatedStroomBeanMethods(final Class<? extends Annotation> annotation) {
+    public Set<MethodReference> getAnnotatedMethods(final Class<? extends Annotation> annotation) {
         return methodMap.computeIfAbsent(annotation, a -> {
-            final Set<StroomBeanMethod> set = new HashSet<>();
+            final Set<MethodReference> set = new HashSet<>();
             new FastClasspathScanner(PACKAGE)
                     .matchClassesWithMethodAnnotation(a, (matchingClass, matchingMethodOrConstructor) -> {
                         for (final Method method : matchingClass.getMethods()) {
                             if (method.isAnnotationPresent(a)) {
-                                set.add(new StroomBeanMethod(matchingClass, method));
+                                set.add(new MethodReference(matchingClass, method));
                             }
                         }
                     })
@@ -79,7 +79,7 @@ public class StroomBeanStore {
         });
     }
 
-    public <T> Set<T> getBeansOfType(Class<T> type) {
+    public <T> Set<T> getInstancesOfType(Class<T> type) {
         return getBindings(type);
     }
 
@@ -94,53 +94,46 @@ public class StroomBeanStore {
         return (TypeLiteral<Set<T>>) TypeLiteral.get(Types.setOf(type));
     }
 
-    public <T> T getBean(final Class<T> type) {
+    public <T> T getInstance(final Class<T> type) {
         T o = null;
         try {
             o = injector.getInstance(type);
         } catch (final Throwable t) {
-            LOGGER.error("Unable to get bean!", t);
+            LOGGER.error("Unable to get instance!", t);
         }
 
         if (o == null) {
-            LOGGER.error("getBean() - {} returned null !!", type);
+            LOGGER.error("getInstance() - {} returned null !!", type);
         }
 
         return o;
     }
 
-    public Object getBean(final String name) {
+    public Object getInstance(final String name) {
         Object o = null;
         try {
             o = injector.getInstance(Key.get(Object.class, Names.named(name)));
         } catch (final Throwable t) {
-            LOGGER.error("Unable to get bean!", t);
+            LOGGER.error("Unable to get instance!", t);
         }
 
         if (o == null) {
-            LOGGER.error("getBean() - {} returned null !!", name);
+            LOGGER.error("getInstance() - {} returned null !!", name);
         }
 
         return o;
     }
 
-    public Object invoke(final StroomBeanMethod stroomBeanMethod, final Object... args) throws InvocationTargetException, IllegalAccessException {
-        // Get the bean.
-        final Object bean = getBean(stroomBeanMethod.getBeanClass());
-        final Method beanMethod = stroomBeanMethod.getBeanMethod();
+    public Object invoke(final MethodReference methodReference, final Object... args) throws InvocationTargetException, IllegalAccessException {
+        // Get the instance.
+        final Object instance = getInstance(methodReference.getClazz());
+        final Method method = methodReference.getMethod();
 
-        if (bean != null) {
-            beanMethod.setAccessible(true);
-            beanMethod.invoke(bean, args);
+        if (instance != null) {
+            method.setAccessible(true);
+            method.invoke(instance, args);
         }
 
         return null;
-    }
-
-    public Object getBean(final StroomBeanMethod stroomBeanMethod) {
-        if (stroomBeanMethod.getBeanClass() != null) {
-            return getBean(stroomBeanMethod.getBeanClass());
-        }
-        return getBean(stroomBeanMethod.getBeanClass());
     }
 }

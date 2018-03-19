@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityAction;
 import stroom.task.TaskManager;
 import stroom.guice.StroomBeanStore;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -175,7 +175,7 @@ public class EntityEventBusImpl implements EntityEventBus {
     private synchronized void initialise() {
         if (!initialised) {
             try {
-                for (final EntityEvent.Handler handler : stroomBeanStore.getBeansOfType(EntityEvent.Handler.class)) {
+                for (final EntityEvent.Handler handler : stroomBeanStore.getInstancesOfType(EntityEvent.Handler.class)) {
                     final EntityEventHandler annotation = handler.getClass().getAnnotation(EntityEventHandler.class);
                     if (annotation != null) {
                         final String type = annotation.type();

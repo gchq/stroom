@@ -36,7 +36,7 @@ import stroom.statistics.sql.SQLStatisticsEventValidator;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.StatisticTag;
 import stroom.statistics.sql.Statistics;
-import stroom.statistics.sql.datasource.StatisticStoreEntityService;
+import stroom.statistics.sql.entity.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.StatisticField;

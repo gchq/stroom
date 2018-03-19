@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,40 +17,13 @@
 package stroom.statistics.sql.datasource;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
-import com.google.inject.multibindings.Multibinder;
-import stroom.entity.FindService;
-import stroom.entity.event.EntityEvent;
-import stroom.entity.event.EntityEvent.Handler;
-import stroom.entity.shared.Clearable;
-import stroom.explorer.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
-import stroom.statistics.shared.StatisticStoreEntity;
+import com.google.inject.name.Names;
+
+import javax.sql.DataSource;
 
 public class DataSourceModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(StatisticStoreEntityService.class).to(StatisticStoreEntityServiceImpl.class);
-        bind(StatisticStoreCache.class).to(StatisticsDataSourceCacheImpl.class);
-        bind(StatisticsDataSourceProvider.class).to(StatisticsDataSourceProviderImpl.class);
-        bind(StatisticStoreValidator.class).to(StatisticsDataSourceValidatorImpl.class);
-
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(StatisticsDataSourceCacheImpl.class);
-
-        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(StatisticsDataSourceCacheImpl.class);
-
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.statistics.sql.datasource.StatisticStoreEntityServiceImpl.class);
-
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.statistics.sql.datasource.StatisticStoreEntityServiceImpl.class);
-
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(StatisticStoreEntity.ENTITY_TYPE).to(stroom.statistics.sql.datasource.StatisticStoreEntityServiceImpl.class);
-
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(stroom.statistics.sql.datasource.StatisticStoreEntityServiceImpl.class);
+        bind(DataSource.class).annotatedWith(Names.named("statisticsDataSource")).toProvider(DataSourceProvider.class);
     }
 }

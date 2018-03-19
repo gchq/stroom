@@ -20,26 +20,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.guice.StroomBeanStore;
 import stroom.util.shared.Task;
-import stroom.util.spring.StroomBeanMethod;
+import stroom.util.lifecycle.MethodReference;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StroomBeanMethodExecutable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanMethodExecutable.class);
 
-    private final StroomBeanMethod stroomBeanMethod;
+    private final MethodReference methodReference;
     private final StroomBeanStore stroomBeanStore;
     private final String message;
     private final AtomicBoolean running;
 
-    public StroomBeanMethodExecutable(final StroomBeanMethod stroomBeanMethod, final StroomBeanStore stroomBeanStore,
+    public StroomBeanMethodExecutable(final MethodReference methodReference, final StroomBeanStore stroomBeanStore,
                                       final String message) {
-        this(stroomBeanMethod, stroomBeanStore, message, new AtomicBoolean());
+        this(methodReference, stroomBeanStore, message, new AtomicBoolean());
     }
 
-    public StroomBeanMethodExecutable(final StroomBeanMethod stroomBeanMethod, final StroomBeanStore stroomBeanStore,
+    public StroomBeanMethodExecutable(final MethodReference methodReference, final StroomBeanStore stroomBeanStore,
                                       final String message, final AtomicBoolean running) {
-        this.stroomBeanMethod = stroomBeanMethod;
+        this.methodReference = methodReference;
         this.stroomBeanStore = stroomBeanStore; 
         this.message = message;
         this.running = running;
@@ -47,8 +47,8 @@ public class StroomBeanMethodExecutable {
 
     public void exec(final Task<?> task) {
         try {
-            LOGGER.debug(message + " " + stroomBeanMethod.getBeanClass().getName() + "." + stroomBeanMethod.getBeanMethod().getName());
-            final Class<?>[] paramTypes = stroomBeanMethod.getBeanMethod().getParameterTypes();
+            LOGGER.debug(message + " " + methodReference.getClazz().getName() + "." + methodReference.getMethod().getName());
+            final Class<?>[] paramTypes = methodReference.getMethod().getParameterTypes();
             if (paramTypes.length > 0) {
                 if (paramTypes.length > 1) {
                     throw new IllegalArgumentException(
@@ -58,14 +58,14 @@ public class StroomBeanMethodExecutable {
                     if (!Task.class.isAssignableFrom(firstParam)) {
                         throw new IllegalArgumentException("Method can only have a task argument");
                     } else {
-                        stroomBeanStore.invoke(stroomBeanMethod, task);
+                        stroomBeanStore.invoke(methodReference, task);
                     }
                 }
             } else {
-                stroomBeanStore.invoke(stroomBeanMethod);
+                stroomBeanStore.invoke(methodReference);
             }
         } catch (final Throwable t) {
-            LOGGER.error("Error calling {}", stroomBeanMethod, t);
+            LOGGER.error("Error calling {}", methodReference, t);
         } finally {
             running.set(false);
         }
@@ -73,6 +73,6 @@ public class StroomBeanMethodExecutable {
 
     @Override
     public String toString() {
-        return stroomBeanMethod.toString();
+        return methodReference.toString();
     }
 }

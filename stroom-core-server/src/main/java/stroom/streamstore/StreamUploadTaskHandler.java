@@ -25,7 +25,7 @@ import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
-import stroom.internalstatistics.MetaDataStatistic;
+import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
@@ -40,9 +40,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
-import stroom.util.shared.Monitor;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.MonitorImpl;
 import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;

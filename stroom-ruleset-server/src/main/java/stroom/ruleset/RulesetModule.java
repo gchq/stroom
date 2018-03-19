@@ -32,7 +32,7 @@ import stroom.xmlschema.shared.XMLSchema;
 public class RulesetModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(RuleSetService.class).to(RuleSetServiceImpl.class).in(Singleton.class);
+        bind(RuleSetService.class).to(RuleSetServiceImpl.class);
         bind(MetaMapFilterFactory.class).to(MetaMapFilterFactoryImpl.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);

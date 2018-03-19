@@ -25,13 +25,12 @@ import stroom.proxy.repo.RepositoryProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.ExecutorProvider;
 import stroom.task.ThreadPoolImpl;
-import stroom.util.config.PropertyUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;

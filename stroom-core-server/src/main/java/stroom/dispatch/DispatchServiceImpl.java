@@ -73,8 +73,10 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
     private final transient HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
-    public DispatchServiceImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry, final TaskManager taskManager,
-                               final SecurityContext securityContext, final HttpServletRequestHolder httpServletRequestHolder) {
+    public DispatchServiceImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
+                               final TaskManager taskManager,
+                               final SecurityContext securityContext,
+                               final HttpServletRequestHolder httpServletRequestHolder) {
         this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
         this.taskManager = taskManager;
         this.securityContext = securityContext;

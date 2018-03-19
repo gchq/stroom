@@ -27,11 +27,11 @@ import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.Task;
-import stroom.util.spring.StroomBeanMethod;
+import stroom.util.lifecycle.MethodReference;
 import stroom.lifecycle.StroomBeanMethodExecutable;
 import stroom.guice.StroomBeanStore;
-import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -43,14 +43,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Singleton
 public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutorImpl.class);
-    private final ConcurrentHashMap<StroomBeanMethod, AtomicBoolean> runningMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<StroomBeanMethod, Scheduler> schedulerMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<MethodReference, AtomicBoolean> runningMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<MethodReference, Scheduler> schedulerMap = new ConcurrentHashMap<>();
 
     private final StroomBeanStore stroomBeanStore;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final TaskManager taskManager;
 
-    private volatile Set<StroomBeanMethod> scheduledMethods;
+    private volatile Set<MethodReference> scheduledMethods;
 
     @Inject
     ScheduledTaskExecutorImpl(final StroomBeanStore stroomBeanStore,
@@ -66,17 +66,17 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         if (scheduledMethods == null) {
             synchronized (this) {
                 if (scheduledMethods == null) {
-                    final Set<StroomBeanMethod> set = new HashSet<>();
+                    final Set<MethodReference> set = new HashSet<>();
                     try {
                         // Find all methods that are annotated with a cron or
                         // frequency schedule.
-                        for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore
-                                .getAnnotatedStroomBeanMethods(StroomSimpleCronSchedule.class)) {
-                            set.add(stroomBeanMethod);
+                        for (final MethodReference methodReference : stroomBeanStore
+                                .getAnnotatedMethods(StroomSimpleCronSchedule.class)) {
+                            set.add(methodReference);
                         }
-                        for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore
-                                .getAnnotatedStroomBeanMethods(StroomFrequencySchedule.class)) {
-                            set.add(stroomBeanMethod);
+                        for (final MethodReference methodReference : stroomBeanStore
+                                .getAnnotatedMethods(StroomFrequencySchedule.class)) {
+                            set.add(methodReference);
                         }
                     } catch (final Throwable t) {
                         LOGGER.error(t.getMessage(), t);
@@ -87,9 +87,9 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         }
 
         try {
-            for (final StroomBeanMethod stroomBeanMethod : scheduledMethods) {
+            for (final MethodReference methodReference : scheduledMethods) {
                 try {
-                    final StroomBeanMethodExecutable executable = create(stroomBeanMethod);
+                    final StroomBeanMethodExecutable executable = create(methodReference);
                     if (executable != null) {
                         taskManager.execAsync(new LifecycleTask(executable));
                     }
@@ -102,10 +102,10 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         }
     }
 
-    private StroomBeanMethodExecutable create(final StroomBeanMethod stroomBeanMethod) {
+    private StroomBeanMethodExecutable create(final MethodReference methodReference) {
         StroomBeanMethodExecutable executable = null;
 
-        final AtomicBoolean running = getRunningState(stroomBeanMethod);
+        final AtomicBoolean running = getRunningState(methodReference);
 
         // Only run one instance of this method at a time.
         if (running.compareAndSet(false, true)) {
@@ -114,7 +114,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                 Scheduler scheduler = null;
                 JobNodeTracker jobNodeTracker = null;
 
-                final JobTrackedSchedule jobTrackedSchedule = stroomBeanMethod.getBeanMethod()
+                final JobTrackedSchedule jobTrackedSchedule = methodReference.getMethod()
                         .getAnnotation(JobTrackedSchedule.class);
                 if (jobTrackedSchedule != null) {
                     enabled = false;
@@ -135,45 +135,45 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                     }
 
                 } else {
-                    scheduler = getOrCreateScheduler(stroomBeanMethod);
+                    scheduler = getOrCreateScheduler(methodReference);
                 }
 
                 if (enabled && scheduler != null && scheduler.execute()) {
-                    LOGGER.trace("Returning runnable for method: {} - {} - {}", new Object[]{stroomBeanMethod, enabled, scheduler});
+                    LOGGER.trace("Returning runnable for method: {} - {} - {}", new Object[]{methodReference, enabled, scheduler});
                     if (jobNodeTracker != null) {
-                        executable = new JobNodeTrackedExecutable(stroomBeanMethod, stroomBeanStore, "Executing", running,
+                        executable = new JobNodeTrackedExecutable(methodReference, stroomBeanStore, "Executing", running,
                                 jobNodeTracker);
                     } else {
-                        executable = new StroomBeanMethodExecutable(stroomBeanMethod, stroomBeanStore, "Executing", running);
+                        executable = new StroomBeanMethodExecutable(methodReference, stroomBeanStore, "Executing", running);
                     }
                 } else {
-                    LOGGER.trace("Not returning runnable for method: {} - {} - {}", new Object[]{stroomBeanMethod, enabled, scheduler});
+                    LOGGER.trace("Not returning runnable for method: {} - {} - {}", new Object[]{methodReference, enabled, scheduler});
                     running.set(false);
                 }
             } catch (final Throwable t) {
                 LOGGER.error(MarkerFactory.getMarker("FATAL"), t.getMessage());
             }
         } else {
-            LOGGER.trace("Skipping as method still running: {}", stroomBeanMethod);
+            LOGGER.trace("Skipping as method still running: {}", methodReference);
         }
 
         return executable;
     }
 
-    private Scheduler getOrCreateScheduler(final StroomBeanMethod stroomBeanMethod) {
-        Scheduler scheduler = schedulerMap.get(stroomBeanMethod);
+    private Scheduler getOrCreateScheduler(final MethodReference methodReference) {
+        Scheduler scheduler = schedulerMap.get(methodReference);
         if (scheduler == null) {
             scheduler = new InvalidScheduler();
 
             try {
-                final StroomSimpleCronSchedule stroomSimpleCronSchedule = stroomBeanMethod.getBeanMethod()
+                final StroomSimpleCronSchedule stroomSimpleCronSchedule = methodReference.getMethod()
                         .getAnnotation(StroomSimpleCronSchedule.class);
                 if (stroomSimpleCronSchedule != null) {
                     final SimpleCron simpleCron = SimpleCron.compile(stroomSimpleCronSchedule.cron());
                     scheduler = simpleCron.createScheduler();
 
                 } else {
-                    final StroomFrequencySchedule stroomFrequencySchedule = stroomBeanMethod.getBeanMethod()
+                    final StroomFrequencySchedule stroomFrequencySchedule = methodReference.getMethod()
                             .getAnnotation(StroomFrequencySchedule.class);
                     scheduler = new FrequencyScheduler(stroomFrequencySchedule.value());
                 }
@@ -181,7 +181,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                 LOGGER.error(t.getMessage(), t);
             }
 
-            schedulerMap.put(stroomBeanMethod, scheduler);
+            schedulerMap.put(methodReference, scheduler);
         }
 
         if (scheduler != null && scheduler instanceof InvalidScheduler) {
@@ -191,11 +191,11 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         return scheduler;
     }
 
-    private AtomicBoolean getRunningState(final StroomBeanMethod stroomBeanMethod) {
-        AtomicBoolean running = runningMap.get(stroomBeanMethod);
+    private AtomicBoolean getRunningState(final MethodReference methodReference) {
+        AtomicBoolean running = runningMap.get(methodReference);
         if (running == null) {
-            runningMap.putIfAbsent(stroomBeanMethod, new AtomicBoolean(false));
-            running = runningMap.get(stroomBeanMethod);
+            runningMap.putIfAbsent(methodReference, new AtomicBoolean(false));
+            running = runningMap.get(methodReference);
         }
         return running;
     }
@@ -205,9 +205,9 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
 
         private final JobNodeTracker jobNodeTracker;
 
-        public JobNodeTrackedExecutable(final StroomBeanMethod stroomBeanMethod, final StroomBeanStore stroomBeanStore,
+        public JobNodeTrackedExecutable(final MethodReference methodReference, final StroomBeanStore stroomBeanStore,
                                         final String message, final AtomicBoolean running, final JobNodeTracker jobNodeTracker) {
-            super(stroomBeanMethod, stroomBeanStore, message, running);
+            super(methodReference, stroomBeanStore, message, running);
             this.jobNodeTracker = jobNodeTracker;
         }
 

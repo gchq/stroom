@@ -23,14 +23,14 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.shared.FindGlobalPropertyCriteria;
 import stroom.node.shared.GlobalProperty;
 import stroom.util.config.StroomProperties;
-import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import java.util.List;
 
 /**
- * A Spring bean that is responsible for periodically polling the database to
+ * A class that is responsible for periodically polling the database to
  * get current settings for global properties and updating both the current
  * GlobalProperties instance and StroomProperties.
  */

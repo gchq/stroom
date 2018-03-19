@@ -27,7 +27,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.properties.MockStroomPropertyService;
 import stroom.query.api.v2.DocRef;
-import stroom.statistics.sql.datasource.StatisticStoreCache;
+import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.concurrent.SimpleExecutor;

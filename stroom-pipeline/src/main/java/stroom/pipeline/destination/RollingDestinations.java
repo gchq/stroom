@@ -22,8 +22,8 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
-import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomShutdown;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomShutdown;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;

@@ -26,15 +26,4 @@ public class InternalStatisticsModule extends AbstractModule {
 
         final Multibinder<InternalStatisticsService> multibinder = Multibinder.newSetBinder(binder(), InternalStatisticsService.class);
     }
-
-//    @Bean
-//    public InternalStatisticDocRefCache internalStatisticDocRefCache(final StroomPropertyService stroomPropertyService) {
-//        return new InternalStatisticDocRefCache(stroomPropertyService);
-//    }
-//
-//    @Bean
-//    public InternalStatisticsReceiver internalStatisticsReceiver(final StroomBeanStore stroomBeanStore,
-//                                                                 final InternalStatisticDocRefCache internalStatisticDocRefCache) {
-//        return new InternalStatisticsReceiverImpl(stroomBeanStore, internalStatisticDocRefCache);
-//    }
 }

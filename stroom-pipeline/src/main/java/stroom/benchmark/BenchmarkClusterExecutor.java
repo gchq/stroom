@@ -65,7 +65,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
 import stroom.util.thread.ThreadUtil;
 

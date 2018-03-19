@@ -40,9 +40,11 @@ import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.shared.DispatchService;
 import stroom.feed.RemoteFeedServiceRPC;
+import stroom.guice.AppModule;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.index.StroomIndexQueryResource;
 import stroom.lifecycle.LifecycleService;
+import stroom.persist.PersistService;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
@@ -70,7 +72,6 @@ import stroom.servlet.ImportFileServlet;
 import stroom.servlet.RejectPostFilter;
 import stroom.servlet.SessionListListener;
 import stroom.servlet.SessionListServlet;
-import stroom.servlet.SpringRequestFactoryServlet;
 import stroom.servlet.StatusServlet;
 import stroom.servlet.StroomServlet;
 import stroom.statistics.sql.search.SqlStatisticsQueryResource;
@@ -171,11 +172,8 @@ public class App extends Application<Config> {
     }
 
     private void startApp(final Config configuration, final Environment environment) {
-//        // Start the spring context.
-//        LOGGER.info("Loading Spring context");
-//        final injector injector = loadApplcationContext(configuration, environment);
-        final ProxyModule proxyModule = new ProxyModule(configuration.getProxyConfig());
-        final Injector injector = Guice.createInjector(proxyModule);
+        final AppModule appModule = new AppModule();
+        final Injector injector = Guice.createInjector(appModule);
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
@@ -207,7 +205,6 @@ public class App extends Application<Config> {
         GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug");
         GuiceUtil.addServlet(servletContextHandler, injector, SessionListServlet.class, ResourcePaths.ROOT_PATH + "/sessionList");
         GuiceUtil.addServlet(servletContextHandler, injector, SessionResourceStoreImpl.class, ResourcePaths.ROOT_PATH + "/resourcestore/*");
-        GuiceUtil.addServlet(servletContextHandler, injector, SpringRequestFactoryServlet.class, ResourcePaths.ROOT_PATH + "/gwtRequest");
         GuiceUtil.addServlet(servletContextHandler, injector, RemoteFeedServiceRPC.class, ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc");
         GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed");
         GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*");
@@ -226,15 +223,6 @@ public class App extends Application<Config> {
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, LifecycleService.class);
     }
-
-//    private injector loadApplcationContext(final Configuration configuration, final Environment environment) {
-//        final AnnotationConfiginjector injector = new AnnotationConfiginjector();
-//        injector.getBeanFactory().registerSingleton("dwConfiguration", configuration);
-//        injector.getBeanFactory().registerSingleton("dwEnvironment", environment);
-//        injector.register(AppSpringConfig.class);
-//        injector.refresh();
-//        return injector;
-//    }
 
     private static void configureCors(io.dropwizard.setup.Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);

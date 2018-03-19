@@ -23,10 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A service that can be injected with spring that caches and delegates property
+ * A service that can be injected that caches and delegates property
  * lookups to StroomProperties.
  */
-public interface StroomPropertyService {
+public interface StroomPropertyService extends PropertyProvider {
     /**
      * @param name The property name or key
      * @return The property value which could be null or an empty string

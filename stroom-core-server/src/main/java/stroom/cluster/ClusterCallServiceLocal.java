@@ -57,7 +57,7 @@ class ClusterCallServiceLocal implements ClusterCallService {
         }
 
         try {
-            final Object service = beanStore.getBean(beanName);
+            final Object service = beanStore.getInstance(beanName);
             final Method method = service.getClass().getMethod(methodName, parameterTypes);
 
             return method.invoke(service, args);

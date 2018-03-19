@@ -18,9 +18,6 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.Insecure;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
@@ -38,8 +35,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
     private final UserAppPermissionService userAppPermissionService;
     private final SecurityContext securityContext;
 
-    private volatile boolean doneCreateOrRefreshAdminRole = false;
-
     @Inject
     AuthenticationServiceImpl(
             final UserService userService,
@@ -48,9 +43,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
         this.securityContext = securityContext;
-
-        createOrRefreshAdminUser();
-        createOrRefreshStroomServiceUser();
     }
 
     @Override
@@ -79,16 +71,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
         UserRef userRef;
 
         try {
-            if (!doneCreateOrRefreshAdminRole) {
-                doneCreateOrRefreshAdminRole = true;
-                createOrRefreshAdminUserGroup();
-            }
-
             userRef = userService.getUserByName(username);
             if (userRef == null) {
                 // The requested system user does not exist.
                 if (UserService.ADMIN_USER_NAME.equals(username)) {
-                    userRef = createOrRefreshAdminUser();
+                    userRef = createOrRefreshUser(UserService.ADMIN_USER_NAME);
+                } else if (UserService.STROOM_SERVICE_USER_NAME.equals(username)) {
+                    userRef = createOrRefreshUser(UserService.STROOM_SERVICE_USER_NAME);
                 }
             }
 
@@ -98,20 +87,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         return userRef;
-    }
-
-    /**
-     * @return a new admin user
-     */
-    public UserRef createOrRefreshAdminUser() {
-        return createOrRefreshUser(UserService.ADMIN_USER_NAME);
-    }
-
-    /**
-     * @return a new stroom service user in the admin group
-     */
-    public UserRef createOrRefreshStroomServiceUser() {
-        return createOrRefreshUser(UserService.STROOM_SERVICE_USER_NAME);
     }
 
     private UserRef createOrRefreshUser(String name) {

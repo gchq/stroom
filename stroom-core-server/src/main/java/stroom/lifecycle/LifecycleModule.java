@@ -23,22 +23,9 @@ import stroom.task.TaskHandler;
 public class LifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind(LifecycleService.class).to(LifecycleServiceImpl.class);
+
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.lifecycle.LifecycleTaskHandler.class);
     }
-    //    @Bean
-//    public LifecycleServiceImpl lifecycleService(final TaskManager taskManager,
-//                                             final StroomBeanLifeCycle stroomBeanLifeCycle,
-//                                             final StroomEntityManager entityManager,
-//                                             final ScheduledTaskExecutor scheduledTaskExecutor,
-//                                             final SecurityContext securityContext,
-//                                                 final StroomPropertyService propertyService) {
-//        return new LifecycleServiceImpl(taskManager, stroomBeanLifeCycle, entityManager, scheduledTaskExecutor, securityContext, propertyService);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public LifecycleTaskHandler lifecycleTaskHandler() {
-//        return new LifecycleTaskHandler();
-//    }
 }

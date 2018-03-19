@@ -65,61 +65,6 @@ public class ImportExportHelper {
         this.genericEntityServiceProvider = genericEntityServiceProvider;
     }
 
-//    /**
-//     * Registers all the entities in the ClassTypeMap if they have not already
-//     * been registered.
-//     */
-//    private void init() {
-////        if (!entitiesInitialised) {
-////            synchronized (this) {
-////                if (!entitiesInitialised) {
-////                    registerEntities();
-////                    entitiesInitialised = true;
-////                }
-////            }
-////        }
-//    }
-
-//    /**
-//     * Use the spring registered instances of DocumentEntityServiceImpl to work
-//     * out which GroupedEntities to register into the ClassTypeMap The order we
-//     * register them in is important as some are dependent on others.
-//     */
-//    private void registerEntities() {
-//        // Stream type is a special case so explicitly register it first.
-//        classTypeMap.registerEntityReference(StreamType.class);
-//
-//        // get all the spring grouped entity service beans.
-//        final Collection<DocumentEntityService<?>> services = genericEntityService.findAll();
-//
-//        final ArrayList<Class<? extends DocumentEntity>> entityClasses = new ArrayList<>(services.size());
-//        for (final DocumentEntityService<?> service : services) {
-//            final Class<? extends DocumentEntity> clazz = service.getEntityClass();
-//            if (clazz == null) {
-//                throw new NullPointerException("No entity class provided");
-//            } else {
-//                entityClasses.add(clazz);
-//            }
-//        }
-//
-//        // Sort the list of entity classes to ensure consistent behaviour.
-//        Collections.sort(entityClasses, new EntityClassComparator());
-//        // Make sure folders are first
-//        entityClasses.remove(Folder.class);
-//        entityClasses.add(0, Folder.class);
-//        // Make sure pipelines are last.
-//        entityClasses.remove(PipelineEntity.class);
-//        entityClasses.add(PipelineEntity.class);
-//
-//        // Keep repeating the services loop to ensure all dependencies are
-//        // loaded.
-//        for (int i = 0; i < entityClasses.size(); i++) {
-//            // No dependencies and not already registered.
-//            entityClasses.stream().filter(entityClass -> classTypeMap.getEntityType(entityClass) == null)
-//                    .forEach(classTypeMap::registerEntity);
-//        }
-//    }
-
     @SuppressWarnings("unchecked")
     public <E extends DocumentEntity> void performImport(final E entity, final Map<String, String> dataMap,
                                                          final ImportState importState, final ImportMode importMode) {

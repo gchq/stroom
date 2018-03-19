@@ -17,7 +17,7 @@
 package stroom.explorer;
 
 import fri.util.database.jpa.commons.DbSession;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;

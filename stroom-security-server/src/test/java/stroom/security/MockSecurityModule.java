@@ -28,35 +28,4 @@ public class MockSecurityModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(MockUserService.class);
     }
-
-//    @Bean("userService")
-////    @Profile(StroomSpringProfiles.TEST)
-//    public UserService userService() {
-//        return new MockUserService();
-//    }
-//
-//    @Bean
-//    public UserGroupsCache userGroupsCache(final CacheManager cacheManager,
-//                                           final UserService userService,
-//                                           final Provider<EntityEventBus> eventBusProvider) {
-//        return new UserGroupsCache(cacheManager, userService, eventBusProvider);
-//    }
-//
-//    @Bean
-//    public DocumentPermissionsCache documentPermissionsCache(final CacheManager cacheManager,
-//                                                             final DocumentPermissionService documentPermissionService,
-//                                                             final Provider<EntityEventBus> eventBusProvider) {
-//        return new DocumentPermissionsCache(cacheManager, documentPermissionService, eventBusProvider);
-//    }
-//
-//    @Bean
-//    public DocumentPermissionService documentPermissionService(final StroomEntityManager entityManager,
-//                                                               final DocumentTypePermissions documentTypePermissions) {
-//        return new DocumentPermissionServiceImpl(entityManager, documentTypePermissions);
-//    }
-//
-//    @Bean
-//    public DocumentTypePermissions documentTypePermissions(final ExplorerService explorerService) {
-//        return new DocumentTypePermissions(explorerService);
-//    }
 }

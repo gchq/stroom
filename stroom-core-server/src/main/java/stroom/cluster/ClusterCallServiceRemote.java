@@ -29,6 +29,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
@@ -40,6 +41,7 @@ import java.util.Map;
  * makes a local JVM call if the remote call is to it's self. This helps with
  * performance and testing.
  */
+@Singleton
 class ClusterCallServiceRemote implements ClusterCallService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCallServiceRemote.class);
 
@@ -117,7 +119,7 @@ class ClusterCallServiceRemote implements ClusterCallService {
         }
 
         if (local) {
-            final Object service = beanStore.getBean(beanName);
+            final Object service = beanStore.getInstance(beanName);
             final Method method = service.getClass().getMethod(methodName, parameterTypes);
             result = method.invoke(service, args);
 

@@ -29,6 +29,7 @@ import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
+import stroom.guice.StroomBeanStore;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.FindJobNodeCriteria;
 import stroom.jobsystem.shared.Job;
@@ -36,15 +37,14 @@ import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
+import stroom.persist.EntityManagerSupport;
 import stroom.security.Secured;
-import stroom.spring.EntityManagerSupport;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomBeanMethod;
-import stroom.guice.StroomBeanStore;
-import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.MethodReference;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -156,18 +156,18 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
             final Set<String> validJobNames = new HashSet<>();
 
-            for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore.getAnnotatedStroomBeanMethods(JobTrackedSchedule.class)) {
-                final JobTrackedSchedule jobScheduleDescriptor = stroomBeanMethod.getBeanMethod()
+            for (final MethodReference methodReference : stroomBeanStore.getAnnotatedMethods(JobTrackedSchedule.class)) {
+                final JobTrackedSchedule jobScheduleDescriptor = methodReference.getMethod()
                         .getAnnotation(JobTrackedSchedule.class);
-                final StroomSimpleCronSchedule stroomSimpleCronSchedule = stroomBeanMethod.getBeanMethod()
+                final StroomSimpleCronSchedule stroomSimpleCronSchedule = methodReference.getMethod()
                         .getAnnotation(StroomSimpleCronSchedule.class);
-                final StroomFrequencySchedule stroomFrequencySchedule = stroomBeanMethod.getBeanMethod()
+                final StroomFrequencySchedule stroomFrequencySchedule = methodReference.getMethod()
                         .getAnnotation(StroomFrequencySchedule.class);
 
                 validJobNames.add(jobScheduleDescriptor.jobName());
 
                 if (stroomFrequencySchedule == null && stroomSimpleCronSchedule == null) {
-                    LOGGER.error("Invalid annotations on {}", stroomBeanMethod);
+                    LOGGER.error("Invalid annotations on {}", methodReference);
                     continue;
                 }
 

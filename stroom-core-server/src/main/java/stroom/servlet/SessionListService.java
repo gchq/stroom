@@ -20,5 +20,5 @@ package stroom.servlet;
 import stroom.entity.FindService;
 import stroom.entity.shared.BaseCriteria;
 
-public interface SessionListService extends FindService<SessionDetails, BaseCriteria> {
+interface SessionListService extends FindService<SessionDetails, BaseCriteria> {
 }

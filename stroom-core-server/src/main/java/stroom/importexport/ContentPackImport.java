@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.properties.StroomPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import java.io.IOException;

@@ -44,16 +44,12 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
     public void run() {
 //        FileUtil.deleteContents(FileUtil.getTempDir());
 //
-//        @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
-//        appContext.register(SetupSampleDataSpringConfig.class);
-//        appContext.refresh();
-//
 //        // Force nodes to be created
-//        appContext.getBean(NodeCache.class).getDefaultNode();
+//        appContext.getInstance(NodeCache.class).getDefaultNode();
 //
-//        final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
-//        final CommonTestScenarioCreator commonTestScenarioCreator = appContext.getBean(CommonTestScenarioCreator.class);
-//        final StreamStore streamStore = appContext.getBean(StreamStore.class);
+//        final CommonTestControl commonTestControl = appContext.getInstance(CommonTestControl.class);
+//        final CommonTestScenarioCreator commonTestScenarioCreator = appContext.getInstance(CommonTestScenarioCreator.class);
+//        final StreamStore streamStore = appContext.getInstance(StreamStore.class);
 //
 //        final Feed feed = commonTestScenarioCreator.createSimpleFeed();
 //

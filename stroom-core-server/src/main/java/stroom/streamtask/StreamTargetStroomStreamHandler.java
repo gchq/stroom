@@ -24,7 +24,7 @@ import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
-import stroom.internalstatistics.MetaDataStatistic;
+import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.proxy.repo.StroomHeaderStreamHandler;
 import stroom.proxy.repo.StroomStreamHandler;
 import stroom.proxy.repo.StroomZipEntry;

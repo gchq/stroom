@@ -45,13 +45,13 @@ import stroom.node.shared.VolumeState;
 import stroom.properties.StroomPropertyService;
 import stroom.security.Insecure;
 import stroom.security.Secured;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

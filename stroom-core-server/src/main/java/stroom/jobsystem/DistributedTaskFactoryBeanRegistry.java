@@ -33,7 +33,7 @@ class DistributedTaskFactoryBeanRegistry {
 
     @Inject
     DistributedTaskFactoryBeanRegistry(final StroomBeanStore stroomBeanStore) {
-        Set<DistributedTaskFactory> distributedTaskFactories = stroomBeanStore.getBeansOfType(DistributedTaskFactory.class);
+        Set<DistributedTaskFactory> distributedTaskFactories = stroomBeanStore.getInstancesOfType(DistributedTaskFactory.class);
         for (final DistributedTaskFactory distributedTaskFactory : distributedTaskFactories) {
             DistributedTaskFactoryBean annotation = distributedTaskFactory.getClass().getAnnotation(DistributedTaskFactoryBean.class);
             final String jobName = annotation.jobName();

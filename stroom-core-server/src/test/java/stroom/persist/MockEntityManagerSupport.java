@@ -1,9 +1,5 @@
 package stroom.persist;
 
-import stroom.spring.EntityManagerCallable;
-import stroom.spring.EntityManagerRunnable;
-import stroom.spring.EntityManagerSupport;
-
 import javax.inject.Singleton;
 
 @Singleton

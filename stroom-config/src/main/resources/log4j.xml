@@ -20,10 +20,6 @@
         <level value="info"/>
     </logger>
 
-    <!--   <logger name="org.springframework"> -->
-    <!--     <level value="debug" /> -->
-    <!--   </logger>   -->
-
     <root>
         <level value="error"/>
         <appender-ref ref="STDOUT"/>

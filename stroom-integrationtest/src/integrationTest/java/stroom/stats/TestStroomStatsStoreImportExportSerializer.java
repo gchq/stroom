@@ -27,7 +27,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticType;
-import stroom.statistics.sql.datasource.StatisticsDataSourceProvider;
+import stroom.statistics.sql.entity.StatisticsDataSourceProvider;
 import stroom.statistics.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreEntityService;
 import stroom.stats.shared.StatisticField;

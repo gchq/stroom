@@ -126,7 +126,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
                               final InputStream inputStream) {
         validate(textConverterType, textConverterLocation);
 
-        final F2XTestUtil f2xTestUtil = beanStore.getBean(F2XTestUtil.class);
+        final F2XTestUtil f2xTestUtil = beanStore.getInstance(F2XTestUtil.class);
         final String xml = f2xTestUtil.runF2XTest(textConverterType, textConverterLocation, inputStream);
         return xml;
     }
@@ -136,14 +136,14 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
                                final int expectedWarnings) {
         validate(textConverterType, textConverterLocation);
 
-        final F2XTestUtil f2xTestUtil = beanStore.getBean(F2XTestUtil.class);
+        final F2XTestUtil f2xTestUtil = beanStore.getInstance(F2XTestUtil.class);
         final String xml = f2xTestUtil.runFullTest(feed, textConverterType, textConverterLocation, xsltLocation,
                 dataLocation, expectedWarnings);
         return xml;
     }
 
     private void validate(final TextConverterType textConverterType, final String textConverterLocation) {
-        final XMLValidator xmlValidator = beanStore.getBean(XMLValidator.class);
+        final XMLValidator xmlValidator = beanStore.getInstance(XMLValidator.class);
         // Start by validating the resource.
         if (textConverterType == TextConverterType.DATA_SPLITTER) {
             final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);

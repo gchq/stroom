@@ -21,7 +21,7 @@ import com.google.common.cache.CacheBuilder;
 import stroom.entity.shared.Clearable;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
-import stroom.util.spring.StroomShutdown;
+import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

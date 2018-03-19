@@ -44,14 +44,14 @@ class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceCluster
             throw new RuntimeException("No task supplied");
         }
         if (task.getBeanClass() == null) {
-            final Set<Clearable> set = stroomBeanStore.getBeansOfType(Clearable.class);
+            final Set<Clearable> set = stroomBeanStore.getInstancesOfType(Clearable.class);
             set.forEach(clearable -> {
                 LOGGER.info("Calling clear on {}", clearable);
                 clearable.clear();
             });
         } else {
             LOGGER.info("Calling clear on {}", task.getBeanClass());
-            final Object obj = stroomBeanStore.getBean(task.getBeanClass());
+            final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
             if (obj == null) {
                 throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
             }

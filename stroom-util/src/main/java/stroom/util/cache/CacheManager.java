@@ -18,7 +18,7 @@ package stroom.util.cache;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import stroom.util.spring.StroomShutdown;
+import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Singleton;
 import java.util.Map;

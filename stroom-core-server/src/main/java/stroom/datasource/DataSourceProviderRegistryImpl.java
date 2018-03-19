@@ -34,7 +34,7 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
                 false);
 
         if (isServiceDiscoveryEnabled) {
-            ServiceDiscoverer serviceDiscoverer = stroomBeanStore.getBean(ServiceDiscoverer.class);
+            ServiceDiscoverer serviceDiscoverer = stroomBeanStore.getInstance(ServiceDiscoverer.class);
             LOGGER.debug("Using service discovery for service lookup");
             delegateDataSourceProviderRegistry = new ServiceDiscoveryDataSourceProviderRegistry(
                     securityContext,

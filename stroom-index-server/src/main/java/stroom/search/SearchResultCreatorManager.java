@@ -27,7 +27,7 @@ import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Store;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
-import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

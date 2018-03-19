@@ -73,7 +73,7 @@ class ImportExportActionHandlers {
                     });
 
             // Add internal handlers.
-            final Set<ImportExportActionHandler> set = beanStore.getBeansOfType(ImportExportActionHandler.class);
+            final Set<ImportExportActionHandler> set = beanStore.getInstancesOfType(ImportExportActionHandler.class);
             set.forEach(this::addImportExportActionHandler);
         }
 

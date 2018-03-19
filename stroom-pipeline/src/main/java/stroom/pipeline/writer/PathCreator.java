@@ -22,7 +22,6 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.util.SystemPropertyUtil;
 import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;

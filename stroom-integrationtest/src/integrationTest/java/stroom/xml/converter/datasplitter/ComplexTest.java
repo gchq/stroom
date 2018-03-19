@@ -50,7 +50,7 @@ public class ComplexTest extends AbstractProcessIntegrationTest {
 //		final LocationFactory locationFactory = new DefaultLocationFactory();
 //		final ErrorHandlerAdaptor errorHandler = new ErrorHandlerAdaptor("DataSplitterParserFactory", locationFactory,
 //				errorReceiver);
-//		final DataSplitterParserFactory factory = beanStore.getBean(DataSplitterParserFactory.class);
+//		final DataSplitterParserFactory factory = beanStore.getInstance(DataSplitterParserFactory.class);
 //		factory.configure(splitter, errorHandler);
 //		final DataSplitterParser parser = new DataSplitterParser(factory);
 //

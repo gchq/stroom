@@ -26,9 +26,9 @@ import stroom.jobsystem.ClusterLockService;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.util.spring.StroomBeanMethod;
+import stroom.util.lifecycle.MethodReference;
 import stroom.guice.StroomBeanStore;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -267,26 +267,26 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         final Set<String> requiredPermissionSet = new HashSet<>();
 
         // Add class level permissions
-        final Set<Class<?>> securityBeans = beanStore.getAnnotatedStroomBeans(Secured.class);
+        final Set<Class<?>> securityBeans = beanStore.getAnnotatedClasses(Secured.class);
 
         for (final Class<?> securityBean : securityBeans) {
             requiredPermissionSet.addAll(buildAppPermissionKey(securityBean));
         }
 
         // Add all method level permissions
-        final Set<StroomBeanMethod> securityMethods = beanStore.getAnnotatedStroomBeanMethods(Secured.class);
+        final Set<MethodReference> securityMethods = beanStore.getAnnotatedMethods(Secured.class);
 
-        for (final StroomBeanMethod stroomBeanMethod : securityMethods) {
-            requiredPermissionSet.addAll(buildAppPermissionKey(stroomBeanMethod));
+        for (final MethodReference methodReference : securityMethods) {
+            requiredPermissionSet.addAll(buildAppPermissionKey(methodReference));
         }
 
         return requiredPermissionSet;
     }
 
-    private Set<String> buildAppPermissionKey(final StroomBeanMethod stroomBeanMethod) {
+    private Set<String> buildAppPermissionKey(final MethodReference methodReference) {
         final Set<String> appPermissionSet = new HashSet<>();
 
-        final Secured secured = stroomBeanMethod.getBeanMethod().getAnnotation(Secured.class);
+        final Secured secured = methodReference.getMethod().getAnnotation(Secured.class);
 
         final String name = secured.value();
         if (name != null && !name.isEmpty()) {

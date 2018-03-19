@@ -65,7 +65,7 @@ public class DataFeedServlet extends HttpServlet {
     }
 
     /**
-     * Do handle the request.... spring from here on.
+     * Do handle the request.
      *
      * @param request
      * @param response

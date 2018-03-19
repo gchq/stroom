@@ -28,14 +28,13 @@ import stroom.properties.StroomPropertyService;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
-import stroom.util.config.PropertyUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
 import stroom.util.thread.ThreadUtil;
 

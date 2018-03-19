@@ -20,7 +20,7 @@ import stroom.security.Insecure;
 import stroom.util.config.StroomProperties;
 
 /**
- * A service that can be injected with spring that caches and delegates property
+ * A service that can be injected that caches and delegates property
  * lookups to StroomProperties.
  */
 public class StroomPropertyServiceImpl implements StroomPropertyService {

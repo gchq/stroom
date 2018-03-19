@@ -20,293 +20,54 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import stroom.explorer.ExplorerActionHandlerFactory;
-import stroom.importexport.ImportExportActionHandlerFactory;
-import stroom.internalstatistics.MetaDataStatistic;
-import stroom.pipeline.factory.Element;
+import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.task.TaskHandler;
-//
-//@ComponentScan("ignore")
-//@Configuration
-////@Import({//                DashboardConfiguration.class,
-//////                EventLoggingConfiguration.class,
-//////                IndexConfiguration.class,
-//////                MetaDataStatisticConfiguration.class,
-////        PersistenceConfiguration.class,
-////        DictionarySpringConfig.class,
-////        PipelineConfiguration.class,
-////        ScopeConfiguration.class,
-//////                ScriptConfiguration.class,
-//////                SearchConfiguration.class,
-//////                SecurityConfiguration.class,
-//////        ExplorerSpringConfig,
-////        ServerConfiguration.class,
-//////                StatisticsConfiguration.class,
-//////                VisualisationConfiguration.class,
-//////        HeadlessConfiguration.class})
-////
-////
-////
-////
-////
-////
-////
-////
-//
-//
-////@OldScan(basePackages = {
-////        "stroom.docstore.server",
-////        "stroom.dictionary",
-////        "stroom.logging",
-////        "stroom.entity",
-////        "stroom.explorer",
-////        "stroom.feed",
-////        "stroom.folder",
-////        "stroom.importexport",
-////        "stroom.io",
-////        "stroom.jobsystem",
-////        "stroom.lifecycle",
-////        "stroom.node",
-////        "stroom.pipeline",
-////        "stroom.pool",
-////        "stroom.process",
-////        "stroom.resource",
-////        "stroom.spring",
-////        "stroom.streamstore",
-////        "stroom.streamtask",
-////        "stroom.task",
-////        "stroom.util",
-////        "stroom.volume",
-////        "stroom.xmlschema",
-////        "stroom.headless"
-////}, excludeFilters = {
-////        // Exclude other configurations that might be found accidentally during
-////        // a component scan as configurations should be specified explicitly.
-////        @OldFilter(type = FilterType.ANNOTATION, value = Configuration.class),})
-////
-//
-//
-////        "stroom.docstore.server",
-////                "stroom.dictionary",
-////                "stroom.logging",
-////                "stroom.entity",
-////                "stroom.explorer",
-////                "stroom.feed",
-////                "stroom.folder",
-////                "stroom.importexport",
-////                "stroom.io",
-////                "stroom.jobsystem",
-////                "stroom.lifecycle",
-////                "stroom.node",
-////                "stroom.pipeline",
-////                "stroom.pool",
-////                "stroom.process",
-////                "stroom.resource",
-////                "stroom.spring",
-////                "stroom.streamstore",
-////                "stroom.streamtask",
-////                "stroom.task",
-////                "stroom.util",
-////                "stroom.volume",
-////                "stroom.xmlschema",
-////                "stroom.headless"
-//
-//@Import({
-//
-//
-////        stroom.benchmark.BenchmarkSpringConfig.class,
-////        stroom.cache.CacheSpringConfig.class,
-//        stroom.cache.PipelineCacheSpringConfig.class,
-//        stroom.cluster.ClusterSpringConfig.class,
-////        stroom.cluster.MockClusterSpringConfig.class,
-////        stroom.connectors.ConnectorsSpringConfig.class,
-////        stroom.connectors.elastic.ElasticSpringConfig.class,
-////        stroom.connectors.kafka.KafkaSpringConfig.class,
-////        stroom.connectors.kafka.filter.FilterSpringConfig.class,
-////        stroom.dashboard.DashboardSpringConfig.class,
-////        stroom.dashboard.MockDashboardSpringConfig.class,
-////        stroom.dashboard.logging.LoggingSpringConfig.class,
-////        stroom.datafeed.DataFeedSpringConfig.class,
-////        stroom.datafeed.MockDataFeedSpringConfig.class,
-////        stroom.datafeed.TestDataFeedServiceImplConfiguration.class,
-////        stroom.datasource.DatasourceSpringConfig.class,
-//        stroom.dictionary.DictionarySpringConfig.class,
-////        stroom.dispatch.DispatchSpringConfig.class,
-//        stroom.docstore.DocstoreSpringConfig.class,
-//        stroom.docstore.db.DBSpringConfig.class,
-////        stroom.document.DocumentSpringConfig.class,
-////        stroom.elastic.ElasticSpringConfig.class,
-//        stroom.entity.EntitySpringConfig.class,
-////        stroom.entity.EntityTestSpringConfig.class,
-////        stroom.entity.cluster.EntityClusterSpringConfig.class,
-////        stroom.entity.event.EntityEventSpringConfig.class,
-////        stroom.entity.util.EntityUtilSpringConfig.class,
-//        stroom.explorer.ExplorerSpringConfig.class,
-////        stroom.externaldoc.ExternalDocRefConfiguration.class,
-//        stroom.feed.FeedSpringConfig.class,
-////        stroom.feed.MockFeedSpringConfig.class,
-////        stroom.headless.HeadlessConfiguration.class,
-////        stroom.headless.HeadlessSpringConfig.class,
-//        stroom.importexport.ImportExportSpringConfig.class,
-////        stroom.index.IndexSpringConfig.class,
-////        stroom.index.MockIndexSpringConfig.class,
-////        stroom.internalstatistics.MockInternalStatisticsSpringConfig.class,
-//        stroom.io.IOSpringConfig.class,
-////        stroom.jobsystem.ClusterLockTestSpringConfig.class,
-//        stroom.jobsystem.JobSystemSpringConfig.class,
-////        stroom.jobsystem.MockJobSystemSpringConfig.class,
-//        stroom.lifecycle.LifecycleSpringConfig.class,
-//        stroom.logging.LoggingSpringConfig.class,
-////        stroom.node.MockNodeSpringConfig.class,
-//        stroom.node.NodeServiceSpringConfig.class,
-//        stroom.node.NodeSpringConfig.class,
-//        stroom.node.NodeProdSpringConfig.class,
-////        stroom.node.NodeTestSpringConfig.class,
-////        stroom.pipeline.MockPipelineSpringConfig.class,
-//        stroom.pipeline.PipelineSpringConfig.class,
-//        stroom.pipeline.destination.DestinationSpringConfig.class,
-//        stroom.pipeline.errorhandler.ErrorHandlerSpringConfig.class,
-//        stroom.pipeline.factory.FactorySpringConfig.class,
-//        stroom.pipeline.filter.FilterSpringConfig.class,
-//        stroom.pipeline.parser.ParserSpringConfig.class,
-//        stroom.pipeline.reader.ReaderSpringConfig.class,
-//        stroom.pipeline.source.SourceSpringConfig.class,
-//        stroom.pipeline.state.PipelineStateSpringConfig.class,
-//        stroom.pipeline.stepping.PipelineSteppingSpringConfig.class,
-//        stroom.pipeline.task.PipelineStreamTaskSpringConfig.class,
-//        stroom.pipeline.writer.WriterSpringConfig.class,
-//        stroom.pipeline.xsltfunctions.XsltFunctionsSpringConfig.class,
-////        stroom.policy.PolicySpringConfig.class,
-//        stroom.properties.PropertySpringConfig.class,
-////        stroom.proxy.repo.RepoSpringConfig.class,
-////        stroom.query.QuerySpringConfig.class,
-//        stroom.refdata.ReferenceDataSpringConfig.class,
-////        stroom.resource.MockResourceSpringConfig.class,
-//        stroom.resource.ResourceSpringConfig.class,
-////        stroom.ruleset.RulesetSpringConfig.class,
-////        stroom.script.ScriptSpringConfig.class,
-////        stroom.search.SearchSpringConfig.class,
-////        stroom.search.SearchTestSpringConfig.class,
-////        stroom.search.extraction.ExtractionSpringConfig.class,
-////        stroom.search.shard.ShardSpringConfig.class,
-//        stroom.security.MockSecurityContextSpringConfig.class,
-////        stroom.security.SecuritySpringConfig.class,
-////        stroom.servicediscovery.ServiceDiscoverySpringConfig.class,
-////        stroom.servlet.ServletSpringConfig.class,
-//        stroom.spring.MetaDataStatisticConfiguration.class,
-//        stroom.spring.PersistenceConfiguration.class,
-////        stroom.spring.ProcessTestServerComponentScanConfiguration.class,
-//        stroom.spring.ScopeConfiguration.class,
-////        stroom.spring.ScopeTestConfiguration.class,
-////        stroom.spring.ServerConfiguration.class,
-////        stroom.startup.AppSpringConfig.class,
-////        stroom.statistics.internal.InternalStatisticsSpringConfig.class,
-////        stroom.statistics.spring.StatisticsConfiguration.class,
-////        stroom.statistics.sql.SQLStatisticSpringConfig.class,
-////        stroom.statistics.sql.datasource.DataSourceSpringConfig.class,
-////        stroom.statistics.sql.internal.InternalSpringConfig.class,
-////        stroom.statistics.sql.pipeline.filter.FilterSpringConfig.class,
-////        stroom.statistics.sql.rollup.SQLStatisticRollupSpringConfig.class,
-////        stroom.statistics.sql.search.SearchSpringConfig.class,
-////        stroom.statistics.stroomstats.entity.StroomStatsEntitySpringConfig.class,
-////        stroom.statistics.stroomstats.internal.InternalSpringConfig.class,
-////        stroom.statistics.stroomstats.kafka.KafkaSpringConfig.class,
-////        stroom.statistics.stroomstats.pipeline.filter.FilterSpringConfig.class,
-////        stroom.statistics.stroomstats.rollup.StroomStatsRollupSpringConfig.class,
-////        stroom.streamstore.MockStreamStoreSpringConfig.class,
-//        stroom.streamstore.StreamStoreSpringConfig.class,
-//        stroom.streamstore.fs.FSSpringConfig.class,
-////        stroom.streamstore.tools.ToolsSpringConfig.class,
-////        stroom.streamtask.MockStreamTaskSpringConfig.class,
-//        stroom.streamtask.StreamTaskSpringConfig.class,
-//        stroom.task.TaskSpringConfig.class,
-//        stroom.task.cluster.ClusterTaskSpringConfig.class,
-////        stroom.test.AbstractCoreIntegrationTestSpringConfig.class,
-////        stroom.test.AbstractProcessIntegrationTestSpringConfig.class,
-////        stroom.test.SetupSampleDataComponentScanConfiguration.class,
-////        stroom.test.SetupSampleDataSpringConfig.class,
-////        stroom.test.TestSpringConfig.class,
-////        stroom.upgrade.UpgradeSpringConfig.class,
-//        stroom.util.cache.CacheManagerSpringConfig.class,
-////        stroom.util.spring.MockUtilSpringConfig.class,
-////        stroom.util.spring.StroomBeanLifeCycleTestConfiguration.class,
-//        stroom.util.spring.UtilSpringConfig.class,
-////        stroom.util.task.TaskScopeTestConfiguration.class,
-////        stroom.visualisation.VisualisationSpringConfig.class,
-////        stroom.volume.MockVolumeSpringConfig.class,
-//        stroom.volume.VolumeSpringConfig.class,
-////        stroom.xml.XmlSpringConfig.class,
-//        stroom.xml.converter.ds3.DS3SpringConfig.class,
-//        stroom.xml.converter.json.JsonSpringConfig.class,
-////        stroom.xmlschema.MockXmlSchemaSpringConfig.class,
-//        stroom.xmlschema.XmlSchemaSpringConfig.class
-//
-//
-//})
-//
-//
-/////**
-//// * Defines the component scanning required for the server module.
-//// * <p>
-//// * Defined separately from the main configuration so it can be easily
-//// * overridden.
-//// */
-////@Configuration
-//////@OldScan(basePackages = {
-//////        "stroom.datafeed",
-//////        "stroom.datasource",
-//////        "stroom.db",
-//////        "stroom.dispatch",
-//////        "stroom.document.server",
-//////        "stroom.docstore.server",
-//////        "stroom.entity",
-//////        "stroom.feed.server",
-//////        "stroom.folder",
-//////        "stroom.importexport",
-//////        "stroom.internalstatistics",
-//////        "stroom.io",
-//////        "stroom.jobsystem",
-//////        "stroom.connectors.kafka",
-//////        "stroom.lifecycle",
-//////        "stroom.logging",
-//////        "stroom.node",
-//////        "stroom.pipeline",
-//////        "stroom.policy",
-//////        "stroom.pool",
-//////        "stroom.process",
-//////        "stroom.proxy",
-//////        "stroom.query",
-//////        "stroom.resource",
-//////        "stroom.servicediscovery",
-//////        "stroom.servlet",
-//////        "stroom.spring",
-//////        "stroom.streamstore",
-//////        "stroom.streamtask",
-//////        "stroom.task",
-//////        "stroom.test",
-//////        "stroom.upgrade",
-//////        "stroom.util",
-//////        "stroom.volume",
-//////        "stroom.xmlschema"
-//////}, excludeFilters = {
-//////        // Exclude other configurations that might be found accidentally during
-//////        // a component scan as configurations should be specified explicitly.
-//////        @OldFilter(type = FilterType.ANNOTATION, value = Configuration.class),})
-//////@Import({ClusterSpringConfig.class, ClusterTaskSpringConfig.class, ConnectorsSpringConfig.class})
-////public class ServerComponentScanConfiguration {
-////}
-
 
 public class HeadlessModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new stroom.cache.CacheModule());
+        install(new stroom.cache.PipelineCacheModule());
+        install(new stroom.cluster.ClusterModule());
+        install(new stroom.dictionary.DictionaryModule());
+        install(new stroom.dictionary.DictionaryHandlerModule());
+        install(new stroom.docstore.db.DBPersistenceModule());
+        install(new stroom.document.DocumentModule());
+        install(new stroom.entity.EntityModule());
+        install(new stroom.entity.cluster.EntityClusterModule());
+        install(new stroom.entity.event.EntityEventModule());
+        install(new stroom.explorer.MockExplorerModule());
+        install(new stroom.feed.FeedModule());
+        install(new stroom.guice.PipelineScopeModule());
+        install(new stroom.importexport.ImportExportModule());
+        install(new stroom.jobsystem.JobSystemModule());
+        install(new stroom.lifecycle.LifecycleModule());
+        install(new stroom.logging.LoggingModule());
+        install(new stroom.node.NodeModule());
+        install(new stroom.node.NodeServiceModule());
+        install(new stroom.persist.PersistenceModule());
+        install(new stroom.pipeline.PipelineModule());
+        install(new stroom.pipeline.factory.FactoryModule());
+        install(new stroom.pipeline.stepping.PipelineSteppingModule());
+        install(new stroom.pipeline.task.PipelineStreamTaskModule());
+        install(new stroom.policy.PolicyModule());
+        install(new stroom.properties.PropertyModule());
+        install(new stroom.refdata.ReferenceDataModule());
+        install(new stroom.resource.ResourceModule());
+        install(new stroom.security.MockSecurityContextModule());
+        install(new stroom.streamstore.StreamStoreModule());
+        install(new stroom.streamstore.fs.FSModule());
+        install(new stroom.streamtask.StreamTaskModule());
+        install(new stroom.task.TaskModule());
+        install(new stroom.task.cluster.ClusterTaskModule());
+        install(new stroom.volume.VolumeModule());
+        install(new stroom.xmlschema.XmlSchemaModule());
+
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.headless.HeadlessTranslationTaskHandler.class);
-
-//        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
-//        elementBinder.addBinding().to(stroom.headless.HeadlessFilter.class);
     }
 
     @Provides
@@ -314,50 +75,9 @@ public class HeadlessModule extends AbstractModule {
         return type -> null;
     }
 
-//    @Provides
-//    public ImportExportActionHandlerFactory importExportActionHandlerFactory() {
-//        return type -> null;
-//    }
-
     @Provides
     public MetaDataStatistic metaDataStatistic() {
         return metaData -> {
         };
     }
-
-    //    @Bean
-//    @Scope(StroomScope.TASK)
-//    public HeadlessTranslationTaskHandler headlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
-//                                                                         @Named("cachedFeedService") final FeedService feedService,
-//                                                                         @Named("cachedPipelineService") final PipelineService pipelineService,
-//                                                                         final MetaData metaData,
-//                                                                         final PipelineHolder pipelineHolder,
-//                                                                         final FeedHolder feedHolder,
-//                                                                         final ErrorReceiverProxy errorReceiverProxy,
-//                                                                         final ErrorWriterProxy errorWriterProxy,
-//                                                                         final RecordErrorReceiver recordErrorReceiver,
-//                                                                         final PipelineDataCache pipelineDataCache,
-//                                                                         final StreamHolder streamHolder) {
-//        return new HeadlessTranslationTaskHandler(pipelineFactory,
-//                feedService,
-//                pipelineService,
-//                metaData,
-//                pipelineHolder,
-//                feedHolder,
-//                errorReceiverProxy,
-//                errorWriterProxy,
-//                recordErrorReceiver,
-//                pipelineDataCache,
-//                streamHolder);
-//    }
-//
-//    @Bean
-//    public HeadlessInternalStatisticsReceiver headlessInternalStatisticsReceiver() {
-//        return new HeadlessInternalStatisticsReceiver();
-//    }
-//
-//    @Bean
-//    public StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper(final StroomEntityManager stroomEntityManager) {
-//        return new StreamTypeServiceTransactionHelper(stroomEntityManager);
-//    }
 }

@@ -23,10 +23,4 @@ public class MockSecurityContextModule extends AbstractModule {
     protected void configure() {
         bind(SecurityContext.class).to(MockSecurityContext.class);
     }
-
-//    @Bean
-////    @Profile(SecuritySpringConfig.MOCK_SECURITY)
-//    public SecurityContext securityContext() {
-//        return new MockSecurityContext();
-//    }
 }

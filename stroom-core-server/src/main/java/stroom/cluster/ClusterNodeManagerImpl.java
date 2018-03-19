@@ -30,7 +30,7 @@ import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;

@@ -37,7 +37,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;

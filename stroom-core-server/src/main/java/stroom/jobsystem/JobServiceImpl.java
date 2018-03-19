@@ -30,9 +30,9 @@ import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.security.Secured;
 import stroom.util.shared.CompareUtil;
-import stroom.util.spring.StroomBeanMethod;
+import stroom.util.lifecycle.MethodReference;
 import stroom.guice.StroomBeanStore;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -88,8 +88,8 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
         LOGGER.info("startup()");
 
         final JobQueryAppender queryAppender = (JobQueryAppender) getQueryAppender();
-        for (final StroomBeanMethod stroomBeanMethod : stroomBeanStore.getAnnotatedStroomBeanMethods(JobTrackedSchedule.class)) {
-            final JobTrackedSchedule jobScheduleDescriptor = stroomBeanMethod.getBeanMethod()
+        for (final MethodReference methodReference : stroomBeanStore.getAnnotatedMethods(JobTrackedSchedule.class)) {
+            final JobTrackedSchedule jobScheduleDescriptor = methodReference.getMethod()
                     .getAnnotation(JobTrackedSchedule.class);
             queryAppender.getJobDescriptionMap().put(jobScheduleDescriptor.jobName(), jobScheduleDescriptor.description());
             if (jobScheduleDescriptor.advanced()) {

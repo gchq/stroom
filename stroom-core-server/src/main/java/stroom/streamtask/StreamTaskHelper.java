@@ -21,7 +21,7 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.thread.ThreadUtil;

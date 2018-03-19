@@ -17,12 +17,11 @@
 package stroom.docstore.db;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
 import stroom.docstore.Persistence;
 
 public class DBPersistenceModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(Persistence.class).to(DBPersistence.class).in(Singleton.class);
+        bind(Persistence.class).to(DBPersistence.class);
     }
 }

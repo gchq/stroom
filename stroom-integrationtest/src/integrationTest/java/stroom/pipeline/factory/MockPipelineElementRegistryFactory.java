@@ -35,12 +35,10 @@ import stroom.pipeline.writer.StreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.pipeline.state.PipelineContext;
-import stroom.util.spring.StroomSpringProfiles;
 
 import java.util.ArrayList;
 import java.util.List;
 
-// @Profile(StroomSpringProfiles.TEST)
 public class MockPipelineElementRegistryFactory implements ElementRegistryFactory, ElementFactory {
     private final ElementRegistry registry;
 

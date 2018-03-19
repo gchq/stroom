@@ -19,7 +19,6 @@ package stroom.statistics.sql;
 import stroom.statistics.sql.search.FilterOperationMode;
 import stroom.statistics.sql.search.FilterTermsTree;
 import stroom.statistics.sql.search.PrintableNode;
-import stroom.util.sql.SQLSafe;
 
 import java.util.EnumMap;
 import java.util.List;

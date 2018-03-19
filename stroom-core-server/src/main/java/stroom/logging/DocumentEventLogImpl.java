@@ -72,7 +72,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 if (objectInfoAppenders == null) {
                     final StroomBeanStore stroomBeanStore = stroomBeanStoreProvider.get();
                     final Map<Class<?>, EventInfoProvider> appenders = new HashMap<>();
-                    final Set<EventInfoProvider> eventInfoProviders = stroomBeanStore.getBeansOfType(EventInfoProvider.class);
+                    final Set<EventInfoProvider> eventInfoProviders = stroomBeanStore.getInstancesOfType(EventInfoProvider.class);
                     eventInfoProviders.forEach(eventInfoProvider -> {
                         appenders.put(eventInfoProvider.getType(), eventInfoProvider);
                     });

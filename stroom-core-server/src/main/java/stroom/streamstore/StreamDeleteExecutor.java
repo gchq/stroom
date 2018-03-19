@@ -28,11 +28,10 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.AbstractBatchDeleteExecutor;
 import stroom.streamtask.BatchIdTransactionHelper;
 import stroom.streamtask.shared.StreamTask;
-import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     private static final String TASK_NAME = "Stream Delete Executor";

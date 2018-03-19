@@ -22,7 +22,7 @@ import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedBoolean;
-import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Singleton;
 import java.util.concurrent.ConcurrentHashMap;

@@ -19,9 +19,9 @@ package stroom.lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.guice.StroomBeanStore;
-import stroom.util.spring.StroomBeanMethod;
-import stroom.util.spring.StroomShutdown;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.MethodReference;
+import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -37,8 +37,8 @@ public class StroomBeanLifeCycle {
     private volatile boolean shuttingDown;
     private volatile boolean initialised = false;
 
-    private volatile List<StroomBeanMethod> startPendingBeans = null;
-    private volatile List<StroomBeanMethod> stopPendingBeans = null;
+    private volatile List<MethodReference> startPendingBeans = null;
+    private volatile List<MethodReference> stopPendingBeans = null;
 
     @Inject
     StroomBeanLifeCycle(final StroomBeanStore stroomBeanStore) {
@@ -63,9 +63,9 @@ public class StroomBeanLifeCycle {
                 return null;
             }
 
-            for (final StroomBeanMethod stroomBeanMethod : startPendingBeans) {
-                addBeanStarting(stroomBeanMethod);
-                return new StroomBeanMethodExecutable(stroomBeanMethod, stroomBeanStore, "Starting");
+            for (final MethodReference methodReference : startPendingBeans) {
+                addBeanStarting(methodReference);
+                return new StroomBeanMethodExecutable(methodReference, stroomBeanStore, "Starting");
             }
         }
     }
@@ -83,19 +83,19 @@ public class StroomBeanLifeCycle {
                 return null;
             }
 
-            for (final StroomBeanMethod stroomBeanMethod : stopPendingBeans) {
-                addBeanStopping(stroomBeanMethod);
-                return new StroomBeanMethodExecutable(stroomBeanMethod, stroomBeanStore, "Stopping");
+            for (final MethodReference methodReference : stopPendingBeans) {
+                addBeanStopping(methodReference);
+                return new StroomBeanMethodExecutable(methodReference, stroomBeanStore, "Stopping");
             }
         }
     }
 
-    private synchronized void addBeanStarting(final StroomBeanMethod stroomBeanMethod) {
-        startPendingBeans.remove(stroomBeanMethod);
+    private synchronized void addBeanStarting(final MethodReference methodReference) {
+        startPendingBeans.remove(methodReference);
     }
 
-    private synchronized void addBeanStopping(final StroomBeanMethod stroomBeanMethod) {
-        stopPendingBeans.remove(stroomBeanMethod);
+    private synchronized void addBeanStopping(final MethodReference methodReference) {
+        stopPendingBeans.remove(methodReference);
     }
 
     private synchronized void init() {
@@ -103,12 +103,12 @@ public class StroomBeanLifeCycle {
             return;
         }
 
-        startPendingBeans = new ArrayList<>(stroomBeanStore.getAnnotatedStroomBeanMethods(StroomStartup.class));
-        Collections.sort(startPendingBeans, new Comparator<StroomBeanMethod>() {
+        startPendingBeans = new ArrayList<>(stroomBeanStore.getAnnotatedMethods(StroomStartup.class));
+        Collections.sort(startPendingBeans, new Comparator<MethodReference>() {
             @Override
-            public int compare(final StroomBeanMethod o1, final StroomBeanMethod o2) {
-                final StroomStartup stroomStartup1 = o1.getBeanMethod().getAnnotation(StroomStartup.class);
-                final StroomStartup stroomStartup2 = o2.getBeanMethod().getAnnotation(StroomStartup.class);
+            public int compare(final MethodReference o1, final MethodReference o2) {
+                final StroomStartup stroomStartup1 = o1.getMethod().getAnnotation(StroomStartup.class);
+                final StroomStartup stroomStartup2 = o2.getMethod().getAnnotation(StroomStartup.class);
 
                 int compare = Integer.compare(stroomStartup2.priority(), stroomStartup1.priority());
                 if (compare != 0) {
@@ -117,21 +117,21 @@ public class StroomBeanLifeCycle {
                     return compare;
                 }
 
-                compare = o1.getBeanClass().getName().compareTo(o2.getBeanClass().getName());
+                compare = o1.getClazz().getName().compareTo(o2.getClazz().getName());
                 if (compare != 0) {
                     return compare;
                 }
 
-                return o1.getBeanMethod().getName().compareTo(o2.getBeanMethod().getName());
+                return o1.getMethod().getName().compareTo(o2.getMethod().getName());
             }
         });
 
-        stopPendingBeans = new ArrayList<>(stroomBeanStore.getAnnotatedStroomBeanMethods(StroomShutdown.class));
-        Collections.sort(stopPendingBeans, new Comparator<StroomBeanMethod>() {
+        stopPendingBeans = new ArrayList<>(stroomBeanStore.getAnnotatedMethods(StroomShutdown.class));
+        Collections.sort(stopPendingBeans, new Comparator<MethodReference>() {
             @Override
-            public int compare(final StroomBeanMethod o1, final StroomBeanMethod o2) {
-                final StroomShutdown stroomShutdown1 = o1.getBeanMethod().getAnnotation(StroomShutdown.class);
-                final StroomShutdown stroomShutdown2 = o2.getBeanMethod().getAnnotation(StroomShutdown.class);
+            public int compare(final MethodReference o1, final MethodReference o2) {
+                final StroomShutdown stroomShutdown1 = o1.getMethod().getAnnotation(StroomShutdown.class);
+                final StroomShutdown stroomShutdown2 = o2.getMethod().getAnnotation(StroomShutdown.class);
 
                 int compare = Integer.compare(stroomShutdown2.priority(), stroomShutdown1.priority());
                 if (compare != 0) {
@@ -140,12 +140,12 @@ public class StroomBeanLifeCycle {
                     return compare;
                 }
 
-                compare = o1.getBeanClass().getName().compareTo(o2.getBeanClass().getName());
+                compare = o1.getClazz().getName().compareTo(o2.getClazz().getName());
                 if (compare != 0) {
                     return compare;
                 }
 
-                return o1.getBeanMethod().getName().compareTo(o2.getBeanMethod().getName());
+                return o1.getMethod().getName().compareTo(o2.getMethod().getName());
             }
         });
 

@@ -307,7 +307,7 @@ public class StroomXSLTFunctionLibrary {
         if (beanStore != null) {
             for (final DelegateExtensionFunctionCall call : callsInUse) {
                 final Class<?> delegateClass = call.getDelegateClass();
-                final StroomExtensionFunctionCall bean = (StroomExtensionFunctionCall) beanStore.getBean(delegateClass);
+                final StroomExtensionFunctionCall bean = (StroomExtensionFunctionCall) beanStore.getInstance(delegateClass);
                 bean.configure(errorReceiver, locationFactory, pipelineReferences);
                 call.setDelegate(bean);
             }

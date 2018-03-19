@@ -24,12 +24,10 @@ import stroom.refdata.MapStoreBuilder;
 import stroom.refdata.MapStoreBuilderImpl;
 import stroom.refdata.MapStoreCacheKey;
 import stroom.refdata.ReferenceDataLoader;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
 
-//@Profile(StroomSpringProfiles.TEST)
 public class MockReferenceDataLoader implements ReferenceDataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(MockReferenceDataLoader.class);
 

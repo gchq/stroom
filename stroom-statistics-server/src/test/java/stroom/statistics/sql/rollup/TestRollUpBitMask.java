@@ -18,7 +18,6 @@ package stroom.statistics.sql.rollup;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.statistics.util.ByteArrayUtils;
 import stroom.util.test.StroomUnitTest;
 
 import javax.xml.bind.DatatypeConverter;

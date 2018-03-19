@@ -431,7 +431,7 @@ public class StroomProperties {
 
     public enum Source {
         DEFAULT(0, "Java property defaults"),
-        SPRING(1, "Spring context"),
+        GUICE(1, "Guice context"),
         DB(2, "Database"),
         WAR(3, "WAR property file"),
         USER_CONF(4, USER_CONF_PATH),

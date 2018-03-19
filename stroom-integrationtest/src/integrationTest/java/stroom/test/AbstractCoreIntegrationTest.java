@@ -18,84 +18,15 @@ package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
-import stroom.guice.PipelineScopeModule;
-import stroom.spring.PersistService;
+import stroom.persist.PersistService;
 import stroom.task.TaskManager;
 
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
     private static final Injector injector;
 
     static {
-        injector = Guice.createInjector(
-                new stroom.entity.EntityModule(),
-                new stroom.datafeed.DataFeedModule(),
-                new stroom.security.MockSecurityContextModule(),
-                new stroom.ruleset.RulesetModule(),
-                new stroom.dictionary.DictionaryStoreModule(),
-                new stroom.dictionary.DictionaryHandlerModule(),
-                new stroom.docstore.db.DBPersistenceModule(),
-                new stroom.spring.PersistenceModule(),
-                new stroom.internalstatistics.MockMetaDataStatisticModule(),
-                new stroom.properties.PropertyModule(),
-                new stroom.importexport.ImportExportModule(),
-                new stroom.explorer.ExplorerModule(),
-                new stroom.servlet.ServletModule(),
-                new stroom.test.DatabaseTestControlModule(),
-                new stroom.cache.CacheModule(),
-                new stroom.index.IndexModule(),
-                new stroom.node.NodeServiceModule(),
-                new stroom.node.NodeTestConfigModule(),
-                new stroom.node.NodeModule(),
-                new stroom.node.NodeHandlerModule(),
-                new stroom.volume.VolumeModule(),
-                new stroom.statistics.internal.MockInternalStatisticsModule(),
-                new stroom.streamstore.StreamStoreModule(),
-                new stroom.streamstore.fs.FSModule(),
-                new stroom.streamtask.StreamTaskModule(),
-                new stroom.task.TaskModule(),
-                new stroom.task.cluster.ClusterTaskModule(),
-                new stroom.jobsystem.JobSystemModule(),
-                new stroom.pipeline.PipelineModule(),
-                new stroom.cache.PipelineCacheModule(),
-                new stroom.pipeline.stepping.PipelineSteppingModule(),
-                new stroom.pipeline.task.PipelineStreamTaskModule(),
-                new stroom.dashboard.DashboardModule(),
-                new stroom.document.DocumentModule(),
-                new stroom.entity.cluster.EntityClusterModule(),
-                new stroom.entity.event.EntityEventModule(),
-                new stroom.feed.FeedModule(),
-                new stroom.lifecycle.LifecycleModule(),
-                new stroom.policy.PolicyModule(),
-                new stroom.query.QueryModule(),
-                new stroom.refdata.ReferenceDataModule(),
-                new stroom.script.ScriptModule(),
-                new stroom.search.SearchModule(),
-                new stroom.security.SecurityModule(),
-                new stroom.cluster.MockClusterModule(),
-                new stroom.dashboard.logging.LoggingModule(),
-                new stroom.datasource.DatasourceModule(),
-                new stroom.logging.LoggingModule(),
-                new stroom.pipeline.factory.FactoryModule(),
-                new PipelineScopeModule(),
-                new stroom.resource.ResourceModule(),
-                new stroom.search.shard.ShardModule(),
-                new stroom.visualisation.VisualisationModule(),
-                new stroom.xmlschema.XmlSchemaModule(),
-                new stroom.elastic.ElasticModule(),
-                new stroom.kafka.KafkaModule(),
-                new stroom.externaldoc.ExternalDocRefModule(),
-                new stroom.statistics.spring.PersistenceModule(),
-                new stroom.statistics.sql.SQLStatisticModule(),
-                new stroom.statistics.sql.rollup.SQLStatisticRollupModule(),
-                new stroom.statistics.sql.internal.InternalModule(),
-                new stroom.statistics.sql.datasource.DataSourceModule(),
-                new stroom.statistics.stroomstats.entity.StroomStatsEntityModule(),
-                new stroom.statistics.stroomstats.rollup.StroomStatsRollupModule(),
-                new stroom.statistics.stroomstats.internal.InternalModule()
-        );
+        injector = Guice.createInjector(new CoreTestModule());
 
         // Start persistance
         injector.getInstance(PersistService.class).start();
@@ -103,7 +34,6 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();
     }
-
 
     @Before
     public void before() {

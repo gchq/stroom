@@ -35,9 +35,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ThreadPool;
-import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomShutdown;
-import stroom.util.spring.StroomStartup;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;

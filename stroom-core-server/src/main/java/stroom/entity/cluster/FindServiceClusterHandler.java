@@ -47,7 +47,7 @@ class FindServiceClusterHandler
             throw new RuntimeException("No task bean class supplied");
         }
 
-        final Object obj = stroomBeanStore.getBean(task.getBeanClass());
+        final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
         if (obj == null) {
             throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
         }

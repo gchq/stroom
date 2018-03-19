@@ -247,6 +247,6 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     }
 
     private ReferenceData createReferenceData() {
-        return beanStore.getBean(ReferenceData.class);
+        return beanStore.getInstance(ReferenceData.class);
     }
 }

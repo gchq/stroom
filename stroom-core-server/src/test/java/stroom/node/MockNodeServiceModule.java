@@ -30,26 +30,4 @@ public class MockNodeServiceModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(MockNodeService.class);
     }
-    //    @Bean
-////    @Profile(StroomSpringProfiles.TEST)
-//    public MockGlobalPropertyService mockGlobalPropertyService() {
-//        return new MockGlobalPropertyService();
-//    }
-
-//
-//    @Bean("nodeService")
-//    public MockNodeService nodeService() {
-//        return new MockNodeService();
-//    }
-//
-//    @Bean("cachedNodeService")
-//    public NodeService cachedNodeService(final NodeService nodeService) {
-//        return nodeService;
-//    }
-
-//    @Bean
-////    @Profile(StroomSpringProfiles.TEST)
-//    public MockRecordCountService mockRecordCountService() {
-//        return new MockRecordCountService();
-//    }
 }

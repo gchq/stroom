@@ -34,7 +34,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
-import stroom.spring.EntityManagerSupport;
+import stroom.persist.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

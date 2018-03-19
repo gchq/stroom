@@ -22,7 +22,7 @@ import org.junit.Test;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.statistics.sql.datasource.StatisticStoreEntityService;
+import stroom.statistics.sql.entity.StatisticStoreEntityService;
 import stroom.statistics.sql.search.FilterTermsTree.OperatorNode;
 import stroom.statistics.sql.search.FilterTermsTree.TermNode;
 import stroom.statistics.shared.StatisticStoreEntity;

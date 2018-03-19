@@ -10,7 +10,7 @@ import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.properties.StroomPropertyService;
-import stroom.util.spring.StroomShutdown;
+import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import java.io.Closeable;

@@ -205,7 +205,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         //ensure all the caches are empty
         stroomCacheManager.clear();
 
-        final Set<Clearable> set = beanStore.getBeansOfType(Clearable.class);
+        final Set<Clearable> set = beanStore.getInstancesOfType(Clearable.class);
         set.forEach(Clearable::clear);
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
     }

@@ -60,9 +60,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * NB: we also define this in Spring XML so we can set some of the properties.
- */
 @Singleton
 class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskManagerImpl.class);
@@ -392,7 +389,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
 
             try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, userToken)) {
                 // Create a task monitor bean to be injected inside the handler.
-                final TaskMonitorImpl taskContext = beanStore.getBean(TaskMonitorImpl.class);
+                final TaskMonitorImpl taskContext = beanStore.getInstance(TaskMonitorImpl.class);
                 if (task instanceof HasMonitor) {
                     final HasMonitor hasMonitor = (HasMonitor) task;
                     taskContext.setMonitor(hasMonitor.getMonitor());
