@@ -31,6 +31,7 @@ import stroom.query.shared.v2.ParamUtil;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
+import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.UserTokenUtil;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
@@ -54,69 +55,4 @@ import java.util.function.Function;
 public class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
 
-
-    public void testInteractive(final ExpressionOperator.Builder expressionIn,
-                                final int expectResultCount,
-                                final List<String> componentIds,
-                                final Function<Boolean, TableSettings> tableSettingsCreator,
-                                final boolean extractValues,
-                                final Consumer<Map<String, List<Row>>> resultMapConsumer,
-                                final long sleepTimeMs,
-                                final int maxShardTasks,
-                                final int maxExtractionTasks,
-                                final IndexService indexService) {
-
-        // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
-        StroomProperties.setOverrideProperty(
-                "stroom.search.shard.concurrentTasks",
-                Integer.toString(maxShardTasks),
-                StroomProperties.Source.TEST);
-
-        StroomProperties.setOverrideProperty(
-                "stroom.search.extraction.concurrentTasks",
-                Integer.toString(maxExtractionTasks),
-                StroomProperties.Source.TEST);
-
-        final Index index = indexService.find(new FindIndexCriteria()).getFirst();
-        Assert.assertNotNull("Index is null", index);
-        final DocRef dataSourceRef = DocRefUtil.create(index);
-
-        final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
-
-        for (final String componentId : componentIds) {
-            final TableSettings tableSettings = tableSettingsCreator.apply(extractValues);
-
-            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
-            resultRequests.add(tableResultRequest);
-        }
-
-        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query(dataSourceRef, expressionIn.build());
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
-        final SearchResponse searchResponse = search(searchRequest);
-
-        final Map<String, List<Row>> rows = new HashMap<>();
-        if (searchResponse != null && searchResponse.getResults() != null) {
-            for (final Result result : searchResponse.getResults()) {
-                final String componentId = result.getComponentId();
-                final TableResult tableResult = (TableResult) result;
-
-                if (tableResult.getResultRange() != null && tableResult.getRows() != null) {
-                    final stroom.query.api.v2.OffsetRange range = tableResult.getResultRange();
-
-                    for (long i = range.getOffset(); i < range.getLength(); i++) {
-                        final List<Row> values = rows.computeIfAbsent(componentId, k -> new ArrayList<>());
-                        values.add(tableResult.getRows().get((int) i));
-                    }
-                }
-            }
-        }
-
-        if (expectResultCount == 0) {
-            Assert.assertEquals(0, rows.size());
-        } else {
-            Assert.assertEquals(componentIds.size(), rows.size());
-        }
-        resultMapConsumer.accept(rows);
-    }
 }

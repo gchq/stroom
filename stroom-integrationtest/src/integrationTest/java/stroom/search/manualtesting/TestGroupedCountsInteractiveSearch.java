@@ -52,6 +52,7 @@ import stroom.search.AbstractInteractiveSearchTest;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTest;
 import stroom.search.TestInteractiveSearch;
+import stroom.search.server.SearchResultCreatorManager;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.spring.MetaDataStatisticConfiguration;
@@ -62,6 +63,7 @@ import stroom.spring.ServerComponentScanTestConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.task.server.TaskManager;
+import stroom.test.CommonTestControl;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
@@ -107,7 +109,7 @@ import java.util.stream.IntStream;
         VisualisationConfiguration.class})
 @RunWith(NoTeardownStroomSpringJUnit4ClassRunner.class)
 @Category(IntegrationTest.class)
-public class TestGroupedCountsInteractiveSearch extends AbstractInteractiveSearchTest {
+public class TestGroupedCountsInteractiveSearch {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestGroupedCountsInteractiveSearch.class);
 
     public static final String DATA_FILE_NAME_PREFIX = "NetworkMonitoringBulkData_";
@@ -126,6 +128,10 @@ public class TestGroupedCountsInteractiveSearch extends AbstractInteractiveSearc
     private DictionaryStore dictionaryStore;
     @Resource
     private TaskManager taskManager;
+    @Resource
+    private SearchResultCreatorManager searchResultCreatorManager;
+    @Resource
+    private CommonTestControl commonTestControl;
 
     Path testDir = FileUtil.getTempDir();
 
@@ -207,7 +213,7 @@ public class TestGroupedCountsInteractiveSearch extends AbstractInteractiveSearc
 
         setProperties();
 
-        testInteractive(
+        AbstractSearchTest.testInteractive(
                 expressionBuilder,
                 expectedResultCount,
                 componentIds,
@@ -217,7 +223,8 @@ public class TestGroupedCountsInteractiveSearch extends AbstractInteractiveSearc
                 1_000,
                 5,
                 5,
-                indexService);
+                indexService,
+                searchResultCreatorManager);
 
         LOGGER.info("Completed search");
     }
