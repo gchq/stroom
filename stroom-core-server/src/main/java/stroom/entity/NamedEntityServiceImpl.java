@@ -33,8 +33,8 @@ import java.util.Set;
 
 public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends FindNamedEntityCriteria>
         extends SystemEntityServiceImpl<E, C> implements NamedEntityService<E> {
-    public static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
-    public static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
+    private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
+    private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
     protected NamedEntityServiceImpl(final StroomEntityManager entityManager) {
         super(entityManager);

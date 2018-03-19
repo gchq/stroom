@@ -18,6 +18,7 @@ package stroom.jobsystem;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
 import stroom.jobsystem.shared.JobManager;
 import stroom.task.TaskHandler;
@@ -43,38 +44,9 @@ public class JobSystemModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.jobsystem.FetchJobDataHandler.class);
         taskHandlerBinder.addBinding().to(stroom.jobsystem.GetScheduledTimesHandler.class);
         taskHandlerBinder.addBinding().to(stroom.jobsystem.JobNodeInfoClusterHandler.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(JobServiceImpl.class);
+        findServiceBinder.addBinding().to(JobNodeServiceImpl.class);
     }
-
-
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public ClusterLockHandler clusterLockHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new ClusterLockHandler(dispatchHelper);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public DistributedTaskRequestClusterHandler distributedTaskRequestClusterHandler(final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
-//        return new DistributedTaskRequestClusterHandler(distributedTaskFactoryBeanRegistry);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public FetchJobDataHandler fetchJobDataHandler(final JobService jobService,
-//                                                   final JobNodeService jobNodeService,
-//                                                   final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new FetchJobDataHandler(jobService, jobNodeService, dispatchHelper);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public GetScheduledTimesHandler getScheduledTimesHandler(final ScheduleService scheduleService) {
-//        return new GetScheduledTimesHandler(scheduleService);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public JobNodeInfoClusterHandler jobNodeInfoClusterHandler(final JobNodeTrackerCache jobNodeTrackerCache) {
-//        return new JobNodeInfoClusterHandler(jobNodeTrackerCache);
-//    }
 }

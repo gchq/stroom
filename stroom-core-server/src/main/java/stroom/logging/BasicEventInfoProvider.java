@@ -35,7 +35,7 @@ import stroom.streamstore.shared.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-public class BasicEventInfoProvider implements EventInfoProvider {
+class BasicEventInfoProvider implements EventInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicEventInfoProvider.class);
 
     private final StreamTypeService streamTypeService;

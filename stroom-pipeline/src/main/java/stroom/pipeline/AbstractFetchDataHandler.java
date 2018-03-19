@@ -18,21 +18,19 @@ package stroom.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.logging.StreamEventLog;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
+import stroom.logging.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.writer.AbstractWriter;
-import stroom.pipeline.writer.OutputStreamAppender;
-import stroom.pipeline.writer.TextWriter;
-import stroom.pipeline.writer.XMLWriter;
+import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
@@ -42,10 +40,13 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.security.SecurityHelper;
+import stroom.pipeline.writer.AbstractWriter;
+import stroom.pipeline.writer.OutputStreamAppender;
+import stroom.pipeline.writer.TextWriter;
+import stroom.pipeline.writer.XMLWriter;
 import stroom.query.api.v2.DocRef;
-import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.FileSystemUtil;
@@ -62,6 +63,7 @@ import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
 
+import javax.inject.Provider;
 import javax.xml.transform.TransformerException;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -83,15 +85,16 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
     private final StreamStore streamStore;
     private final FeedService feedService;
-    private final FeedHolder feedHolder;
-    private final PipelineHolder pipelineHolder;
-    private final StreamHolder streamHolder;
+    private final Provider<FeedHolder> feedHolderProvider;
+    private final Provider<PipelineHolder> pipelineHolderProvider;
+    private final Provider<StreamHolder> streamHolderProvider;
     private final PipelineService pipelineService;
-    private final PipelineFactory pipelineFactory;
-    private final ErrorReceiverProxy errorReceiverProxy;
+    private final Provider<PipelineFactory> pipelineFactoryProvider;
+    private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final PipelineDataCache pipelineDataCache;
     private final StreamEventLog streamEventLog;
     private final SecurityContext securityContext;
+    private final PipelineScopeRunnable pipelineScopeRunnable;
 
     private Long streamsOffset = 0L;
     private Long streamsTotal = 0L;
@@ -102,26 +105,28 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
     AbstractFetchDataHandler(final StreamStore streamStore,
                              final FeedService feedService,
-                             final FeedHolder feedHolder,
-                             final PipelineHolder pipelineHolder,
-                             final StreamHolder streamHolder,
+                             final Provider<FeedHolder> feedHolderProvider,
+                             final Provider<PipelineHolder> pipelineHolderProvider,
+                             final Provider<StreamHolder> streamHolderProvider,
                              final PipelineService pipelineService,
-                             final PipelineFactory pipelineFactory,
-                             final ErrorReceiverProxy errorReceiverProxy,
+                             final Provider<PipelineFactory> pipelineFactoryProvider,
+                             final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                              final PipelineDataCache pipelineDataCache,
                              final StreamEventLog streamEventLog,
-                             final SecurityContext securityContext) {
+                             final SecurityContext securityContext,
+                             final PipelineScopeRunnable pipelineScopeRunnable) {
         this.streamStore = streamStore;
         this.feedService = feedService;
-        this.feedHolder = feedHolder;
-        this.pipelineHolder = pipelineHolder;
-        this.streamHolder = streamHolder;
+        this.feedHolderProvider = feedHolderProvider;
+        this.pipelineHolderProvider = pipelineHolderProvider;
+        this.streamHolderProvider = streamHolderProvider;
         this.pipelineService = pipelineService;
-        this.pipelineFactory = pipelineFactory;
-        this.errorReceiverProxy = errorReceiverProxy;
+        this.pipelineFactoryProvider = pipelineFactoryProvider;
+        this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.pipelineDataCache = pipelineDataCache;
         this.streamEventLog = streamEventLog;
         this.securityContext = securityContext;
+        this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
     protected AbstractFetchDataResult getData(final Long streamId, final StreamType childStreamType,
@@ -335,7 +340,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     }
 
     private String getSegmentedData(final Feed feed, final StreamType streamType, final OffsetRange<Long> pageRange,
-                                    final RASegmentInputStream segmentInputStream) throws IOException {
+                                    final RASegmentInputStream segmentInputStream) {
         // Get the appropriate encoding for the stream type.
         final String encoding = EncodingSelection.select(feed, streamType);
 
@@ -421,95 +426,107 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     }
 
     private String usePipeline(final StreamSource streamSource, final String string, final Feed feed,
-                               final DocRef pipelineRef) throws IOException, TransformerException {
-        String data;
-
-        final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
-        errorReceiverProxy.setErrorReceiver(errorReceiver);
-
-        // Set the pipeline so it can be used by a filter if needed.
-        final PipelineEntity loadedPipeline = pipelineService.loadByUuid(pipelineRef.getUuid());
-        if (loadedPipeline == null) {
-            throw new EntityServiceException("Unable to load pipeline");
-        }
-
-        feedHolder.setFeed(feed);
-        pipelineHolder.setPipeline(loadedPipeline);
-        // Get the stream providers.
-        streamHolder.setStream(streamSource.getStream());
-        streamHolder.addProvider(streamSource);
-        streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
-        streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
-
-        final PipelineData pipelineData = pipelineDataCache.get(loadedPipeline);
-        if (pipelineData == null) {
-            throw new EntityServiceException("Pipeline has no data");
-        }
-        final Pipeline pipeline = pipelineFactory.create(pipelineData);
-
-        // Try and find the writer on this pipeline.
-        AbstractWriter writer = null;
-        final List<XMLWriter> xmlWriters = pipeline.findFilters(XMLWriter.class);
-        if (xmlWriters != null && xmlWriters.size() > 0) {
-            writer = xmlWriters.get(0);
-        } else {
-            final List<TextWriter> textWriters = pipeline.findFilters(TextWriter.class);
-            if (textWriters != null && textWriters.size() > 0) {
-                writer = textWriters.get(0);
-            }
-        }
-        if (writer == null) {
-            throw new ProcessException("Pipeline has no writer");
-        }
-
-        // Create an output stream and give it to the writer.
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final BufferedOutputStream bos = new BufferedOutputStream(baos);
-        final OutputStreamAppender appender = new OutputStreamAppender(errorReceiverProxy, bos);
-        writer.setTarget(appender);
-
-        // Process the input.
-        final ByteArrayInputStream inputStream = new ByteArrayInputStream(string.getBytes());
-        ProcessException processException = null;
-        try {
-            pipeline.startProcessing();
-        } catch (final Exception e) {
-            processException = new ProcessException(e.getMessage());
-            throw processException;
-        } finally {
+                               final DocRef pipelineRef) {
+        return pipelineScopeRunnable.scopeResult(() -> {
             try {
-                pipeline.process(inputStream, StreamUtil.DEFAULT_CHARSET_NAME);
-            } catch (final Exception e) {
-                if (processException != null) {
-                    processException.addSuppressed(e);
+                String data;
+
+                final FeedHolder feedHolder = feedHolderProvider.get();
+                final PipelineHolder pipelineHolder = pipelineHolderProvider.get();
+                final StreamHolder streamHolder = streamHolderProvider.get();
+                final PipelineFactory pipelineFactory = pipelineFactoryProvider.get();
+                final ErrorReceiverProxy errorReceiverProxy = errorReceiverProxyProvider.get();
+
+                final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
+                errorReceiverProxy.setErrorReceiver(errorReceiver);
+
+                // Set the pipeline so it can be used by a filter if needed.
+                final PipelineEntity loadedPipeline = pipelineService.loadByUuid(pipelineRef.getUuid());
+                if (loadedPipeline == null) {
+                    throw new EntityServiceException("Unable to load pipeline");
+                }
+
+                feedHolder.setFeed(feed);
+                pipelineHolder.setPipeline(loadedPipeline);
+                // Get the stream providers.
+                streamHolder.setStream(streamSource.getStream());
+                streamHolder.addProvider(streamSource);
+                streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
+                streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
+
+                final PipelineData pipelineData = pipelineDataCache.get(loadedPipeline);
+                if (pipelineData == null) {
+                    throw new EntityServiceException("Pipeline has no data");
+                }
+                final Pipeline pipeline = pipelineFactory.create(pipelineData);
+
+                // Try and find the writer on this pipeline.
+                AbstractWriter writer = null;
+                final List<XMLWriter> xmlWriters = pipeline.findFilters(XMLWriter.class);
+                if (xmlWriters != null && xmlWriters.size() > 0) {
+                    writer = xmlWriters.get(0);
                 } else {
+                    final List<TextWriter> textWriters = pipeline.findFilters(TextWriter.class);
+                    if (textWriters != null && textWriters.size() > 0) {
+                        writer = textWriters.get(0);
+                    }
+                }
+                if (writer == null) {
+                    throw new ProcessException("Pipeline has no writer");
+                }
+
+                // Create an output stream and give it to the writer.
+                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                final BufferedOutputStream bos = new BufferedOutputStream(baos);
+                final OutputStreamAppender appender = new OutputStreamAppender(errorReceiverProxy, bos);
+                writer.setTarget(appender);
+
+                // Process the input.
+                final ByteArrayInputStream inputStream = new ByteArrayInputStream(string.getBytes());
+                ProcessException processException = null;
+                try {
+                    pipeline.startProcessing();
+                } catch (final Exception e) {
                     processException = new ProcessException(e.getMessage());
                     throw processException;
-                }
-            } finally {
-                try {
-                    pipeline.endProcessing();
-                } catch (final Exception e) {
-                    if (processException != null) {
-                        processException.addSuppressed(e);
-                    } else {
-                        processException = new ProcessException(e.getMessage());
-                        throw processException;
-                    }
                 } finally {
-                    bos.flush();
-                    bos.close();
+                    try {
+                        pipeline.process(inputStream, StreamUtil.DEFAULT_CHARSET_NAME);
+                    } catch (final Exception e) {
+                        if (processException != null) {
+                            processException.addSuppressed(e);
+                        } else {
+                            processException = new ProcessException(e.getMessage());
+                            throw processException;
+                        }
+                    } finally {
+                        try {
+                            pipeline.endProcessing();
+                        } catch (final Exception e) {
+                            if (processException != null) {
+                                processException.addSuppressed(e);
+                            } else {
+                                processException = new ProcessException(e.getMessage());
+                                throw processException;
+                            }
+                        } finally {
+                            bos.flush();
+                            bos.close();
+                        }
+                    }
                 }
+
+                data = baos.toString(StreamUtil.DEFAULT_CHARSET_NAME);
+
+                if (!errorReceiver.isAllOk()) {
+                    throw new TransformerException(errorReceiver.toString());
+                }
+
+                return data;
+            } catch (final IOException | TransformerException e) {
+                throw new RuntimeException(e.getMessage(), e);
             }
-        }
-
-        data = baos.toString(StreamUtil.DEFAULT_CHARSET_NAME);
-
-        if (!errorReceiver.isAllOk()) {
-            throw new TransformerException(errorReceiver.toString());
-        }
-
-        return data;
+        });
     }
 
     private List<StreamType> getAvailableChildStreamTypes(final StreamSource streamSource) {

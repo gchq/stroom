@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 @Singleton
 // @Transactional
 @Secured(GlobalProperty.MANAGE_PROPERTIES_PERMISSION)
-class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProperty, FindGlobalPropertyCriteria>
+public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProperty, FindGlobalPropertyCriteria>
         implements GlobalPropertyService {
 
     @Inject

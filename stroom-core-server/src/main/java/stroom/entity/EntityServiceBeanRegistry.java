@@ -19,6 +19,7 @@ package stroom.entity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 
@@ -48,21 +49,17 @@ public class EntityServiceBeanRegistry {
 
         findServiceProviders.forEach(findServiceProvider -> {
             final FindService findService = findServiceProvider.get();
-            for (final Method method : findService.getClass().getMethods()) {
-                if (method.getName().equals("find")) {
-                    if (method.getParameterTypes().length == 1) {
-                        findServiceMap.put(method.getParameterTypes()[0], findServiceProvider);
-                    }
-                }
-            }
+            final BaseCriteria criteria = findService.createCriteria();
+            findServiceMap.put(criteria.getClass(), findServiceProvider);
         });
     }
 
     public Object getEntityServiceByType(final String type) {
         final Provider<Object> serviceProvider = entityServiceByType.get(type);
         if (serviceProvider == null) {
-            LOGGER.error("No Service provider found for '" + type + "'");
-            return null;
+            final String message = "No Service provider found for '" + type + "'";
+            LOGGER.error(message);
+            throw new RuntimeException(message);
         }
 
         return serviceProvider.get();
@@ -71,8 +68,9 @@ public class EntityServiceBeanRegistry {
     public FindService getEntityServiceByCriteria(final Class<?> criteriaClazz) {
         final Provider<FindService> serviceProvider = findServiceMap.get(criteriaClazz);
         if (serviceProvider == null) {
-            LOGGER.error("No Service provider found for '" + criteriaClazz + "'");
-            return null;
+            final String message = "No Service provider found for '" + criteriaClazz + "'";
+            LOGGER.error(message);
+            throw new RuntimeException(message);
         }
 
         return serviceProvider.get();

@@ -22,7 +22,6 @@ import stroom.entity.shared.Entity;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 
-
 import java.util.List;
 
 public class FindServiceHelper<E extends Entity, C extends BaseCriteria> {
@@ -30,7 +29,7 @@ public class FindServiceHelper<E extends Entity, C extends BaseCriteria> {
     private final Class<E> entityClass;
     private final QueryAppender queryAppender;
 
-    public FindServiceHelper(final StroomEntityManager entityManager, final Class<E> entityClass, final QueryAppender queryAppender) {
+    FindServiceHelper(final StroomEntityManager entityManager, final Class<E> entityClass, final QueryAppender queryAppender) {
         this.entityManager = entityManager;
         this.entityClass = entityClass;
         this.queryAppender = queryAppender;
@@ -41,12 +40,12 @@ public class FindServiceHelper<E extends Entity, C extends BaseCriteria> {
         return doBasicFind(criteria, sqlFieldMap);
     }
 
-    protected BaseResultList<E> doBasicFind(final C criteria, final FieldMap sqlFieldMap) throws RuntimeException {
+    private BaseResultList<E> doBasicFind(final C criteria, final FieldMap sqlFieldMap) throws RuntimeException {
         return doBasicFind(criteria, sqlFieldMap, "e");
     }
 
     @SuppressWarnings("unchecked")
-    protected BaseResultList<E> doBasicFind(final C criteria, final FieldMap sqlFieldMap, final String alias) throws RuntimeException {
+    private BaseResultList<E> doBasicFind(final C criteria, final FieldMap sqlFieldMap, final String alias) throws RuntimeException {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT ");
         sql.append(alias);

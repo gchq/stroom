@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.CachingEntityManager;
+import stroom.entity.FindService;
 import stroom.jobsystem.DistributedTaskFactory;
 import stroom.persist.EntityManagerSupport;
 import stroom.task.TaskHandler;
@@ -43,6 +44,9 @@ public class StreamTaskModule extends AbstractModule {
 
         final Multibinder<DistributedTaskFactory> distributedTaskFactoryBinder = Multibinder.newSetBinder(binder(), DistributedTaskFactory.class);
         distributedTaskFactoryBinder.addBinding().to(stroom.streamtask.StreamProcessorTaskFactory.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(StreamTaskServiceImpl.class);
     }
 
     @Provides

@@ -18,6 +18,7 @@
 package stroom.pipeline;
 
 import stroom.feed.FeedService;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.logging.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;
@@ -34,6 +35,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 @TaskHandlerBean(task = FetchDataAction.class)
 @Secured(Stream.VIEW_DATA_PERMISSION)
@@ -41,26 +43,28 @@ class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
     @Inject
     FetchDataHandler(final StreamStore streamStore,
                      final FeedService feedService,
-                     final FeedHolder feedHolder,
-                     final PipelineHolder pipelineHolder,
-                     final StreamHolder streamHolder,
+                     final Provider<FeedHolder> feedHolderProvider,
+                     final Provider<PipelineHolder> pipelineHolderProvider,
+                     final Provider<StreamHolder> streamHolderProvider,
                      final PipelineService pipelineService,
-                     final PipelineFactory pipelineFactory,
-                     final ErrorReceiverProxy errorReceiverProxy,
+                     final Provider<PipelineFactory> pipelineFactoryProvider,
+                     final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                      final PipelineDataCache pipelineDataCache,
                      final StreamEventLog streamEventLog,
-                     final SecurityContext securityContext) {
+                     final SecurityContext securityContext,
+                     final PipelineScopeRunnable pipelineScopeRunnable) {
         super(streamStore,
                 feedService,
-                feedHolder,
-                pipelineHolder,
-                streamHolder,
+                feedHolderProvider,
+                pipelineHolderProvider,
+                streamHolderProvider,
                 pipelineService,
-                pipelineFactory,
-                errorReceiverProxy,
+                pipelineFactoryProvider,
+                errorReceiverProxyProvider,
                 pipelineDataCache,
                 streamEventLog,
-                securityContext);
+                securityContext,
+                pipelineScopeRunnable);
     }
 
     @Override

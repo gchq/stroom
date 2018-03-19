@@ -17,6 +17,7 @@
 package stroom.logging;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.servlet.HttpServletRequestHolderImpl;
 
@@ -25,8 +26,10 @@ public class LoggingModule extends AbstractModule {
     protected void configure() {
         bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
         bind(HttpServletRequestHolder.class).to(HttpServletRequestHolderImpl.class);
-    }
 
+        final Multibinder<EventInfoProvider> eventInfoProviderBinder = Multibinder.newSetBinder(binder(), EventInfoProvider.class);
+        eventInfoProviderBinder.addBinding().to(BasicEventInfoProvider.class);
+    }
 
 
 //    @Bean

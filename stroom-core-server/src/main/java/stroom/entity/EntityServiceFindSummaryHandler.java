@@ -57,9 +57,8 @@ class EntityServiceFindSummaryHandler
 
         try {
             final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
-
             try {
-                if (entityService != null && entityService instanceof SupportsCriteriaLogging<?>) {
+                if (entityService instanceof SupportsCriteriaLogging<?>) {
                     final SupportsCriteriaLogging<BaseCriteria> usesCriteria = (SupportsCriteriaLogging<BaseCriteria>) entityService;
                     usesCriteria.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
                 }

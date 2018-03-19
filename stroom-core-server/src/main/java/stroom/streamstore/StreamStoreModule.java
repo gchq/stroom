@@ -55,6 +55,7 @@ public class StreamStoreModule extends AbstractModule {
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(stroom.streamstore.StreamTypeServiceImpl.class);
+        findServiceBinder.addBinding().to(stroom.streamstore.StreamAttributeMapServiceImpl.class);
     }
 
     @Provides

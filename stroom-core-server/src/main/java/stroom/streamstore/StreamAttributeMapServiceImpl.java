@@ -66,7 +66,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-class StreamAttributeMapServiceImpl implements StreamAttributeMapService {
+public class StreamAttributeMapServiceImpl implements StreamAttributeMapService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
     private final FeedService feedService;

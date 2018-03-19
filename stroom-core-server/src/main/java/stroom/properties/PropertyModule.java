@@ -17,7 +17,8 @@
 package stroom.properties;
 
 import com.google.inject.AbstractModule;
-import stroom.entity.StroomEntityManager;
+import com.google.inject.multibindings.Multibinder;
+import stroom.entity.FindService;
 import stroom.node.shared.ClientPropertiesService;
 
 public class PropertyModule extends AbstractModule {
@@ -26,13 +27,8 @@ public class PropertyModule extends AbstractModule {
         bind(StroomPropertyService.class).to(StroomPropertyServiceImpl.class);
         bind(ClientPropertiesService.class).to(ClientPropertiesServiceImpl.class);
         bind(GlobalPropertyService.class).to(GlobalPropertyServiceImpl.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(GlobalPropertyServiceImpl.class);
     }
-
-
-
-//    @Bean
-//    public GlobalPropertyUpdater globalPropertyUpdater(final GlobalPropertyService globalPropertyService) {
-//        return new GlobalPropertyUpdater(globalPropertyService);
-//    }
-//
 }

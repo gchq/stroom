@@ -21,6 +21,7 @@ import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
+import stroom.logging.EventInfoProvider;
 import stroom.properties.StroomPropertyService;
 import stroom.task.TaskHandler;
 
@@ -32,6 +33,9 @@ public class SecurityModule extends AbstractModule {
         bind(AuthorisationService.class).to(AuthorisationServiceImpl.class);
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
+
+        final Multibinder<EventInfoProvider> eventInfoProviderBinder = Multibinder.newSetBinder(binder(), EventInfoProvider.class);
+        eventInfoProviderBinder.addBinding().to(UserEventInfoProvider.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(DocumentPermissionsCache.class);

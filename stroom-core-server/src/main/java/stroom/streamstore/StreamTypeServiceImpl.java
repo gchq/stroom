@@ -32,7 +32,7 @@ import java.util.List;
 
 // @Transactional
 @Insecure
-class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria> implements StreamTypeService {
+public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria> implements StreamTypeService {
     @Inject
     StreamTypeServiceImpl(final StroomEntityManager entityManager) {
         super(entityManager);
@@ -81,7 +81,7 @@ class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStrea
     }
 
     private static class StreamTypeQueryAppender extends QueryAppender<StreamType, FindStreamTypeCriteria> {
-        public StreamTypeQueryAppender(final StroomEntityManager entityManager) {
+        StreamTypeQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 
