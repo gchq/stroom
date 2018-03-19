@@ -1,4 +1,5 @@
 dependencies {
+    compile project(':stroom-entity-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-util-shared')
@@ -16,4 +17,4 @@ dependencies {
     compile libs.guice4
 
     compile libs.javax_inject
-    }
+}
