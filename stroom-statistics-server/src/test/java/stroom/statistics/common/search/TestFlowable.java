@@ -3,6 +3,7 @@ package stroom.statistics.common.search;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ public class TestFlowable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFlowable.class);
 
+    @Ignore //manual test
     @Test
     public void testFlowable() {
 
@@ -55,6 +57,7 @@ public class TestFlowable {
 
     }
 
+    @Ignore //manual test
     @Test
     public void testFlowableWithUsing() {
 
@@ -108,6 +111,7 @@ public class TestFlowable {
 
     }
 
+    @Ignore //manual test
     @Test
     public void testFlowableWithDispose() throws ExecutionException, InterruptedException {
 
@@ -155,6 +159,7 @@ public class TestFlowable {
         LOGGER.debug("disposed");
     }
 
+    @Ignore //manual test
     @Test
     public void testFlowableWithUsingAndDispose() throws ExecutionException, InterruptedException {
 

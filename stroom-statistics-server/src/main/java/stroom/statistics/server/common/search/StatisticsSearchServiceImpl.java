@@ -10,9 +10,7 @@ import stroom.dashboard.expression.FieldIndexMap;
 import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.node.server.StroomPropertyService;
-import stroom.security.SecurityContext;
 import stroom.statistics.common.FindEventCriteria;
-import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.statistics.server.common.AbstractStatistics;
 import stroom.statistics.shared.StatisticStoreEntity;
@@ -31,7 +29,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -44,6 +48,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
+    private final TaskMonitor taskMonitor;
 
     //defines how the entity fields relate to the table columns
 //    private static final Map<String, List<String>> fieldToColumnsMap = ImmutableMap.<String, List<String>>builder()
@@ -80,14 +85,18 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
-    StatisticsSearchServiceImpl( @Named("statisticsDataSource") final DataSource statisticsDataSource,
-                               final StroomPropertyService propertyService) {
+    StatisticsSearchServiceImpl(@Named("statisticsDataSource") final DataSource statisticsDataSource,
+                                final StroomPropertyService propertyService,
+                                final TaskMonitor taskMonitor) {
         this.statisticsDataSource = statisticsDataSource;
         this.propertyService = propertyService;
+        this.taskMonitor = taskMonitor;
     }
 
     @Override
-    public Flowable<String[]> search(final StatisticStoreEntity statisticStoreEntity, final FindEventCriteria criteria, final FieldIndexMap fieldIndexMap) {
+    public Flowable<String[]> search(final StatisticStoreEntity statisticStoreEntity,
+                                     final FindEventCriteria criteria,
+                                     final FieldIndexMap fieldIndexMap) {
         // build the sql from the criteria
         // TODO currently all cols are returned even if we don't need them as we have to handle the
         // needs of multiple coprocessors
@@ -372,7 +381,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                     },
                                     (rs, emitter) -> {
                                         //advance the resultSet, if it is a row emit it, else finish the flow
-                                        if (rs.next()) {
+                                        if (rs.next() && !taskMonitor.isTerminated()) {
                                             LOGGER.trace("calling onNext");
                                             emitter.onNext(rs);
                                         } else {
@@ -421,12 +430,13 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private interface ValueExtractor {
         /**
          * Function for extracting values from a {@link ResultSet} and placing them into the passed String[]
-         * @param resultSet The {@link ResultSet} instance to extract data from. It is assumed the {@link ResultSet}
-         *                  has already been positioned at the desired row. next() should not be called on the
-         *                  resultSet.
-         * @param data      The data array to populate
-         * @param fieldValueCache   A map of fieldName=>fieldValue that can be used to hold state while
-         *                          processing a row
+         *
+         * @param resultSet       The {@link ResultSet} instance to extract data from. It is assumed the {@link ResultSet}
+         *                        has already been positioned at the desired row. next() should not be called on the
+         *                        resultSet.
+         * @param data            The data array to populate
+         * @param fieldValueCache A map of fieldName=>fieldValue that can be used to hold state while
+         *                        processing a row
          */
         void extract(final ResultSet resultSet,
                      final String[] data,
