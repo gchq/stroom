@@ -26,11 +26,13 @@ import stroom.util.thread.ThreadUtil;
 import javax.annotation.Resource;
 
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
+
     @Resource
     private SearchResultCreatorManager searchResultCreatorManager;
 
     protected SearchResponse search(SearchRequest searchRequest) {
-        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(new SearchResultCreatorManager.Key(searchRequest));
+        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(
+                new SearchResultCreatorManager.Key(searchRequest));
 
         SearchResponse response = searchResponseCreator.create(searchRequest);
         try {

@@ -16,6 +16,8 @@
 
 package stroom.search.server.shard;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.search.server.ClusterSearchTask;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
@@ -24,6 +26,8 @@ import stroom.search.server.taskqueue.TaskExecutor;
 import stroom.search.server.taskqueue.TaskProducer;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.ThreadPoolImpl;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 import stroom.util.shared.ThreadPool;
 
@@ -37,6 +41,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class IndexShardSearchTaskProducer extends TaskProducer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
 
     static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
             "Search Index Shard",
@@ -87,6 +94,7 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
             final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
             taskQueue.add(runnable);
         }
+        LAMBDA_LOGGER.debug(() -> String.format("Queued %s index shard search tasks", shards.size()));
 
         // Attach to the supplied executor.
         attach();
