@@ -16,14 +16,14 @@
 
 package stroom.test;
 
+import stroom.statistics.shared.StatisticType;
+import stroom.util.date.DateUtil;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
-
-import stroom.statistics.shared.StatisticType;
-import stroom.util.date.DateUtil;
 
 public class GenerateSampleStatisticsData {
     private static final String USER1 = "user1";

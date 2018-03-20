@@ -21,8 +21,12 @@
         <level value="INFO"/>
     </logger>
 
+    <logger name="stroom.search">
+        <level value="info"/>
+    </logger>
+
     <logger name="stroom.statistics">
-        <level value="trace"/>
+        <level value="info"/>
     </logger>
 
     <logger name="org.springframework">

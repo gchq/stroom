@@ -16,20 +16,11 @@
 
 package stroom;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.annotation.Resource;
-
-import org.springframework.context.annotation.Profile;
-import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 import stroom.feed.shared.Feed;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
@@ -41,11 +32,23 @@ import stroom.streamtask.server.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.spring.StroomSpringProfiles;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Component
 @Profile(StroomSpringProfiles.IT)
 public class CommonTranslationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTest.class);
+
     private static final String DIR = "CommonTranslationTest/";
 
     public static final String FEED_NAME = "TEST_FEED";
@@ -107,10 +110,22 @@ public class CommonTranslationTest {
     }
 
     public void setup() throws IOException {
-        setup(FEED_NAME, VALID_RESOURCE_NAME);
+        setup(FEED_NAME, Collections.singletonList(VALID_RESOURCE_NAME));
+    }
+
+    public void setup(final File dataLocation) throws IOException {
+        setup(FEED_NAME, Collections.singletonList(dataLocation));
+    }
+
+    public void setup(final List<File> dataLocations) throws IOException {
+        setup(FEED_NAME, dataLocations);
     }
 
     public void setup(final String feedName, final File dataLocation) throws IOException {
+        setup(feedName, Collections.singletonList(dataLocation));
+    }
+
+    public void setup(final String feedName, final List<File> dataLocations) throws IOException {
         // commonTestControl.setup();
 
         // Setup the feed definitions.
@@ -127,8 +142,16 @@ public class CommonTranslationTest {
         referenceFeeds.add(hostNameToLocation);
         referenceFeeds.add(idToUser);
 
-        storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
-                XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
+        dataLocations.forEach(dataLocation -> {
+            try {
+                LOGGER.info("Adding data from file {}", dataLocation.getAbsolutePath());
+                storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
+                        XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
+            } catch (IOException e) {
+                throw new RuntimeException(String.format("Error adding event data for file %s",
+                        dataLocation.getAbsolutePath()), e);
+            }
+        });
 
         Assert.assertEquals(0, streamStore.getLockCount());
     }

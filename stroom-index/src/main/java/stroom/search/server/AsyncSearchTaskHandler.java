@@ -16,6 +16,8 @@
 
 package stroom.search.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.Sort.Direction;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -40,6 +42,8 @@ import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
@@ -57,6 +61,9 @@ import java.util.Set;
 @TaskHandlerBean(task = AsyncSearchTask.class)
 @Scope(value = StroomScope.TASK)
 class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidResult> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSearchTaskHandler.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
+
     private final TaskMonitor taskMonitor;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final ClusterDispatchAsync dispatcher;
@@ -148,6 +155,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         if (targetNodes.contains(node)) {
                             final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getUserToken(), "Cluster Search", search, shards, sourceNode, storedFields,
                                     task.getResultSendFrequency(), task.getCoprocessorMap(), task.getNow());
+                            LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
                             dispatcher.execAsync(clusterSearchTask, resultCollector, sourceNode,
                                     Collections.singleton(node));
                             expectedNodeResultCount++;
@@ -160,17 +168,23 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     taskMonitor.info(task.getSearchName() + " - searching...");
 
                     // Keep waiting until search completes.
-                    while (!task.isTerminated() && !resultHandler.shouldTerminateSearch() && !resultHandler.isComplete()) {
-                        ThreadUtil.sleep(1000);
-                        final boolean complete = resultCollector.getCompletedNodes().size() >= expectedNodeResultCount;
-                        resultHandler.setComplete(complete);
+                    final int finalExpectedNodeResultCount = expectedNodeResultCount;
+                    LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                            () -> {
+                                while (!task.isTerminated() && !resultHandler.shouldTerminateSearch() && !resultHandler.isComplete()) {
+                                    ThreadUtil.sleep(1000);
+                                    final boolean complete = resultCollector.getCompletedNodes().size() >= finalExpectedNodeResultCount;
+                                    resultHandler.setComplete(complete);
 
-                        // If the collector is no longer in the cache then terminate
-                        // this search task.
-                        if (clusterResultCollectorCache.get(resultCollector.getId()) == null) {
-                            terminateTasks(task);
-                        }
-                    }
+                                    // If the collector is no longer in the cache then terminate
+                                    // this search task.
+                                    if (clusterResultCollectorCache.get(resultCollector.getId()) == null) {
+                                        terminateTasks(task);
+                                    }
+                                }
+                            },
+                            () -> LambdaLogger.buildMessage("wait loop for task {}", task.getId()));
+
                     taskMonitor.info(task.getSearchName() + " - complete");
 
                     // Make sure we try and terminate any child tasks on worker

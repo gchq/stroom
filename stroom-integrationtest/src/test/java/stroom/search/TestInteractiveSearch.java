@@ -73,12 +73,15 @@ import stroom.util.thread.ThreadUtil;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestInteractiveSearch.class);
@@ -386,40 +389,119 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void testBug173() {
-        final ExpressionBuilder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
-                "2016-01-02T00:00:00.000Z", "Command", "!");
+        final ExpressionBuilder expression = buildExpression(
+                "UserId",
+                "use*5",
+                "2000-01-01T00:00:00.000Z",
+                "2016-01-02T00:00:00.000Z",
+                "Command",
+                "!");
         test(expression, 5);
     }
 
     private void test(final ExpressionBuilder expressionIn, final int expectResultCount) {
-        final List<String> componentIds = Arrays.asList("table-1");
+        final List<String> componentIds = Collections.singletonList("table-1");
         test(expressionIn, expectResultCount, componentIds, true);
     }
 
-    private void test(final ExpressionBuilder expressionIn, final int expectResultCount, final List<String> componentIds,
+    private void test(final ExpressionBuilder expressionIn,
+                      final int expectResultCount,
+                      final List<String> componentIds,
                       final boolean extractValues) {
+
         testInteractive(expressionIn, expectResultCount, componentIds, extractValues);
-        testEvents(expressionIn, expectResultCount);
+        testEvents(expressionIn, expectResultCount, indexService, queryMarshaller, taskManager);
     }
 
-    private void testInteractive(final ExpressionBuilder expressionIn, final int expectResultCount,
-                                 final List<String> componentIds, final boolean extractValues) {
+    private void testInteractive(final ExpressionBuilder expressionIn,
+                                 final int expectResultCount,
+                                 final List<String> componentIds,
+                                 final boolean extractValues) {
+
+        // code to test the results when they come back
+        Consumer<Map<String, List<Row>>> resultMapConsumer =  resultMap -> {
+            for (final List<Row> values : resultMap.values()) {
+                if (expectResultCount == 0) {
+                    Assert.assertEquals(0, values.size());
+
+                } else {
+                    // Make sure we got what we expected.
+                    Row firstResult = null;
+                    if (values != null && values.size() > 0) {
+                        firstResult = values.get(0);
+                    }
+                    Assert.assertNotNull("No results found", firstResult);
+
+                    if (extractValues) {
+                        final SharedObject time = firstResult.getValues()[1];
+                        Assert.assertNotNull("Incorrect heading", time);
+                        Assert.assertEquals("Incorrect number of hits found", expectResultCount, values.size());
+                        boolean found = false;
+                        for (final Row hit : values) {
+                            final SharedObject obj = hit.getValues()[1];
+                            final String str = obj.toString();
+                            if ("2007-03-18T14:34:41.000".equals(str)) {
+                                found = true;
+                            }
+                        }
+                        Assert.assertTrue("Unable to find expected hit", found);
+                    }
+                }
+            }
+        };
+
+        testInteractive(expressionIn,
+                expectResultCount,
+                componentIds,
+                this::createTableSettings,
+                extractValues,
+                resultMapConsumer,
+                10L,
+                1,
+                1,
+                indexService,
+                queryMarshaller,
+                searchDataSourceProviderRegistry,
+                searchResultCreator);
+    }
+
+    public static void testInteractive(final ExpressionBuilder expressionIn,
+                                       final int expectResultCount,
+                                       final List<String> componentIds,
+                                       final Supplier<TableSettings> tableSettingsCreator,
+                                       final boolean extractValues,
+                                       final Consumer<Map<String, List<Row>>> resultMapConsumer,
+                                       final long sleepTimeMs,
+                                       final int maxShardTasks,
+                                       final int maxExtractionTasks,
+                                       final IndexService indexService,
+                                       final QueryMarshaller queryMarshaller,
+                                       final SearchDataSourceProviderRegistry searchDataSourceProviderRegistry,
+                                       final SearchResultCreator searchResultCreator) {
+
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
-        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
-        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
+        StroomProperties.setOverrideProperty(
+                "stroom.search.shard.concurrentTasks",
+                Integer.toString(maxShardTasks),
+                StroomProperties.Source.TEST);
+
+        StroomProperties.setOverrideProperty(
+                "stroom.search.extraction.concurrentTasks",
+                Integer.toString(maxExtractionTasks),
+                StroomProperties.Source.TEST);
 
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();
         Assert.assertNotNull("Index is null", index);
         final DocRef dataSourceRef = DocRef.create(index);
 
-        final Query query = buildQuery(dataSourceRef, expressionIn);
+        final Query query = buildQuery(dataSourceRef, expressionIn, queryMarshaller);
         final QueryData searchData = query.getQueryData();
         final ExpressionOperator expression = searchData.getExpression();
 
         final Map<String, ComponentSettings> resultComponentMap = new HashMap<String, ComponentSettings>();
         final Map<String, ComponentResultRequest> componentResultRequests = new HashMap<String, ComponentResultRequest>();
         for (final String componentId : componentIds) {
-            final TableSettings tableSettings = createTableSettings(index);
+            final TableSettings tableSettings = tableSettingsCreator.get();
             tableSettings.setExtractValues(extractValues);
             resultComponentMap.put(componentId, tableSettings);
 
@@ -438,8 +520,10 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
 
         final SearchDataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
                 .getProvider(LuceneSearchDataSourceProvider.ENTITY_TYPE);
-        final SearchResultCollector searchResultCollector = dataSourceProvider.createCollector(ServerTask.INTERNAL_PROCESSING_USER_TOKEN,
-                new BasicQueryKey(query.getName()), searchRequest);
+        final SearchResultCollector searchResultCollector = dataSourceProvider.createCollector(
+                ServerTask.INTERNAL_PROCESSING_USER_TOKEN,
+                new BasicQueryKey(query.getName()),
+                searchRequest);
         final ActiveQuery activeQuery = new ActiveQuery(searchResultCollector);
 
         // Start asynchronous search execution.
@@ -464,7 +548,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
                 complete = result.isComplete();
 
                 if (!complete) {
-                    ThreadUtil.sleep(10);
+                    ThreadUtil.sleep(sleepTimeMs);
                 }
             }
             LOGGER.info("Search completed");
@@ -501,37 +585,16 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
             Assert.assertEquals(componentIds.size(), resultMap.size());
         }
 
-        for (final List<Row> values : resultMap.values()) {
-            if (expectResultCount == 0) {
-                Assert.assertEquals(0, values.size());
-
-            } else {
-                // Make sure we got what we expected.
-                Row firstResult = null;
-                if (values != null && values.size() > 0) {
-                    firstResult = values.get(0);
-                }
-                Assert.assertNotNull("No results found", firstResult);
-
-                if (extractValues) {
-                    final SharedObject time = firstResult.getValues()[1];
-                    Assert.assertNotNull("Incorrect heading", time);
-                    Assert.assertEquals("Incorrect number of hits found", expectResultCount, values.size());
-                    boolean found = false;
-                    for (final Row hit : values) {
-                        final SharedObject obj = hit.getValues()[1];
-                        final String str = obj.toString();
-                        if ("2007-03-18T14:34:41.000".equals(str)) {
-                            found = true;
-                        }
-                    }
-                    Assert.assertTrue("Unable to find expected hit", found);
-                }
-            }
-        }
+        resultMapConsumer.accept(resultMap);
     }
 
-    private void testEvents(final ExpressionBuilder expressionIn, final int expectResultCount) {
+    static void testEvents(
+            final ExpressionBuilder expressionIn,
+            final int expectResultCount,
+            final IndexService indexService,
+            final QueryMarshaller queryMarshaller,
+            final TaskManager taskManager) {
+
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
         StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
@@ -540,7 +603,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         Assert.assertNotNull("Index is null", index);
         final DocRef dataSourceRef = DocRef.create(index);
 
-        final Query query = buildQuery(dataSourceRef, expressionIn);
+        final Query query = buildQuery(dataSourceRef, expressionIn, queryMarshaller);
         final QueryData searchData = query.getQueryData();
         final ExpressionOperator expression = searchData.getExpression();
 
@@ -579,7 +642,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         Assert.assertEquals(expectResultCount, count);
     }
 
-    private TableSettings createTableSettings(final Index index) {
+    private TableSettings createTableSettings() {
         final TableSettings tableSettings = new TableSettings();
 
         final Field idField = new Field("Id");
@@ -597,7 +660,9 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         return tableSettings;
     }
 
-    private Query buildQuery(final DocRef dataSourceRef, final ExpressionBuilder expression) {
+    static Query buildQuery(final DocRef dataSourceRef,
+                            final ExpressionBuilder expression,
+                            final QueryMarshaller queryMarshaller) {
         final QueryData queryData = new QueryData();
         queryData.setExpression(expression.build());
         queryData.setDataSource(dataSourceRef);
