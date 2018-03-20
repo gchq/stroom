@@ -52,7 +52,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-public class TestInteractiveSearch extends AbstractInteractiveSearchTest {
+public class TestInteractiveSearch extends AbstractSearchTest {
     @Resource
     private CommonIndexingTest commonIndexingTest;
     @Resource
