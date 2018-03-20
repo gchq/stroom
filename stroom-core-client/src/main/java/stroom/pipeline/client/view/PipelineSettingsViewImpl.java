@@ -36,8 +36,7 @@ public class PipelineSettingsViewImpl extends ViewWithUiHandlers<PipelineSetting
     private final Widget widget;
     @UiField
     TextArea description;
-    @UiField
-    ItemListBox<PipelineEntity.PipelineType> type;
+
     @Inject
     public PipelineSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -58,35 +57,8 @@ public class PipelineSettingsViewImpl extends ViewWithUiHandlers<PipelineSetting
         this.description.setText(description);
     }
 
-    @Override
-    public PipelineEntity.PipelineType getType() {
-        return type.getSelectedItem();
-    }
-
-    @Override
-    public void setType(final PipelineEntity.PipelineType type) {
-        this.type.setSelectedItem(type);
-    }
-
-    @Override
-    public void clearTypes() {
-        type.clear();
-    }
-
-    @Override
-    public void addType(final PipelineEntity.PipelineType type) {
-        this.type.addItem(type);
-    }
-
     @UiHandler("description")
     void onDescriptionKeyDown(final KeyDownEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().setDirty(true);
-        }
-    }
-
-    @UiHandler("type")
-    void onTypeSelection(final SelectionEvent<PipelineEntity.PipelineType> event) {
         if (getUiHandlers() != null) {
             getUiHandlers().setDirty(true);
         }
@@ -99,7 +71,6 @@ public class PipelineSettingsViewImpl extends ViewWithUiHandlers<PipelineSetting
 
     @Override
     public void setReadOnly(final boolean readOnly) {
-        type.setEnabled(!readOnly);
         description.setEnabled(!readOnly);
     }
 

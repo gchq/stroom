@@ -39,8 +39,6 @@ import javax.xml.bind.annotation.XmlTransient;
 public class PipelineEntity extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.PIPELINE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String CONTEXT_PIPELINE = FK_PREFIX + SQLNameConstants.CONTEXT + "_" + TABLE_NAME + ID_SUFFIX;
-    public static final String PIPELINE_TYPE = SQLNameConstants.PIPELINE + SEP + SQLNameConstants.TYPE;
     public static final String PARENT_PIPELINE = SQLNameConstants.PARENT + SEP + SQLNameConstants.PIPELINE;
     public static final String DATA = SQLNameConstants.DATA;
 
@@ -54,17 +52,10 @@ public class PipelineEntity extends DocumentEntity {
     private String parentPipelineXML;
     private DocRef parentPipeline;
 
-    private String pipelineType = PipelineType.EVENT_DATA.getDisplayValue();
     private String data;
     private PipelineData pipelineData;
 
     public PipelineEntity() {
-    }
-
-    public static final PipelineEntity createStub(final long pk) {
-        final PipelineEntity pipelineEntity = new PipelineEntity();
-        pipelineEntity.setStub(pk);
-        return pipelineEntity;
     }
 
     @Column(name = SQLNameConstants.DESCRIPTION)
@@ -95,15 +86,6 @@ public class PipelineEntity extends DocumentEntity {
 
     public void setParentPipeline(final DocRef parentPipeline) {
         this.parentPipeline = parentPipeline;
-    }
-
-    @Column(name = PIPELINE_TYPE)
-    public String getPipelineType() {
-        return pipelineType;
-    }
-
-    public void setPipelineType(final String pipelineType) {
-        this.pipelineType = pipelineType;
     }
 
     @Column(name = DATA, length = Integer.MAX_VALUE)
@@ -140,21 +122,5 @@ public class PipelineEntity extends DocumentEntity {
     @Override
     public final String getType() {
         return ENTITY_TYPE;
-    }
-
-    public enum PipelineType implements HasDisplayValue {
-        EVENT_DATA("Event Data"), REFERENCE_DATA("Reference Data"), CONTEXT_DATA("Context Data"), REFERENCE_LOADER(
-                "Reference Loader"), INDEXING("Indexing"), SEARCH_EXTRACTION("Search Extraction");
-
-        private final String displayValue;
-
-        PipelineType(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
     }
 }

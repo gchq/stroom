@@ -13,6 +13,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.stream.OldFindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.util.date.DateUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -25,8 +26,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -48,6 +51,8 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
     }
 
     public V6_0_0_9__ProcessingFilter(final boolean writeUpdates) {
+        System.setProperty("javax.xml.transform.TransformerFactory",
+                "net.sf.saxon.TransformerFactoryImpl");
         this.writeUpdates = writeUpdates;
         try {
             findStreamCriteriaJaxb = JAXBContext.newInstance(OldFindStreamCriteria.class);
@@ -67,62 +72,29 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
 
             try (final ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    final long id = rs.getLong(1);
-                    final Blob datBlob = rs.getBlob(2);
+                    try {
+                        final long id = rs.getLong(1);
+                        final Blob datBlob = rs.getBlob(2);
 
-                    int blobLength = (int) datBlob.length();
-                    byte[] blobAsBytes = datBlob.getBytes(1, blobLength);
+                        int blobLength = (int) datBlob.length();
+                        byte[] blobAsBytes = datBlob.getBytes(1, blobLength);
 
-                    datBlob.free();
+                        datBlob.free();
 
-                    final String datAsString = new String(blobAsBytes);
+                        final String datAsString = new String(blobAsBytes);
 
-                    final OldFindStreamCriteria streamCriteria = unmarshalCriteria(datAsString);
+                        final OldFindStreamCriteria streamCriteria = unmarshalCriteria(datAsString);
 
-                    findStreamCriteriaStrById.put(id, datAsString);
-                    findStreamCriteriaById.put(id, streamCriteria);
-                }
-            }
-        }
-
-        // Convert the existing criteria to query data/expression based
-        final Map<Long, String> queryDataStrById = new HashMap<>();
-        for (final Map.Entry<Long, OldFindStreamCriteria> criteriaEntry : findStreamCriteriaById.entrySet()) {
-            final QueryData queryData = this.convertFindStreamCriteria(connection, criteriaEntry.getValue());
-            final String queryDataStr = this.marshalQueryData(queryData);
-            queryDataStrById.put(criteriaEntry.getKey(), queryDataStr);
-        }
-
-        // Write out the updated data
-        if (writeUpdates) {
-            for (Map.Entry<Long, String> entry : queryDataStrById.entrySet()) {
-                final byte[] queryDataBytes = entry.getValue().getBytes();
-
-                final Blob blob = connection.createBlob();
-                blob.setBytes(1, queryDataBytes);
-
-                try (final PreparedStatement stmt = connection.prepareStatement("UPDATE STRM_PROC_FILT SET DAT=? WHERE id=?")) {
-                    stmt.setBlob(1, blob);
-                    stmt.setLong(2, entry.getKey());
-                    int rowsAffected = stmt.executeUpdate();
-                    if (rowsAffected != 1) {
-                        throw new Exception(String.format("Wrong number of rows affected by update %d", rowsAffected));
+                        findStreamCriteriaStrById.put(id, datAsString);
+                        findStreamCriteriaById.put(id, streamCriteria);
+                    } catch (final Exception e) {
+                        LOGGER.error("Could not get old stream criteria {}", e.getLocalizedMessage());
+                        throw e;
                     }
                 }
             }
-        } else {
-            // Just log the updates out
-            LOGGER.info("Logging all updates instead of applying them");
-
-            findStreamCriteriaStrById.forEach((id, criteriaStr) -> {
-                final String queryDataStr = queryDataStrById.get(id);
-                LOGGER.info(String.format("%d\n%s\n%s\n-----------+", id, criteriaStr, queryDataStr));
-            });
         }
-    }
 
-    private QueryData convertFindStreamCriteria(final Connection connection,
-                                               final OldFindStreamCriteria criteria) throws Exception {
         // Get all the feed ID's to Names
         final Map<Long, String> feedNamesById = getNamesById(connection, "FD");
 
@@ -138,10 +110,80 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         // Get all the folder parenting information
         final Map<Long, IdTreeNode> folders = getIdentifiedTree(connection, "FOLDER", "FK_FOLDER_ID");
 
+        // Convert the existing criteria to query data/expression based
+        final Map<Long, String> queryDataStrById = new HashMap<>();
+
+        // Keep track of the dictionaries created for folder ID sets
+        final ConcurrentHashMap<Long, Optional<DocRef>> dictionariesByFolder = new ConcurrentHashMap<>();
+
+        for (final Map.Entry<Long, OldFindStreamCriteria> criteriaEntry : findStreamCriteriaById.entrySet()) {
+            try {
+                final QueryData queryData = this.convertFindStreamCriteria(connection,
+                        criteriaEntry.getValue(),
+                        feedNamesById,
+                        streamTypeNamesById,
+                        pipeNamesById,
+                        folderByFeedId,
+                        folders,
+                        dictionariesByFolder);
+                final String queryDataStr = this.marshalQueryData(queryData);
+                queryDataStrById.put(criteriaEntry.getKey(), queryDataStr);
+
+            } catch (final Exception e) {
+                LOGGER.error("Could not convert stream criteria {}, {}",
+                        criteriaEntry.getKey(),
+                        e.getLocalizedMessage());
+                throw e;
+            }
+        }
+
+        // Write out the updated data
+        if (writeUpdates) {
+            for (Map.Entry<Long, String> entry : queryDataStrById.entrySet()) {
+                final byte[] queryDataBytes = entry.getValue().getBytes();
+
+                final Blob blob = connection.createBlob();
+                blob.setBytes(1, queryDataBytes);
+
+                try (final PreparedStatement stmt = connection.prepareStatement("UPDATE STRM_PROC_FILT SET DAT=? WHERE id=?")) {
+                    stmt.setBlob(1, blob);
+                    stmt.setLong(2, entry.getKey());
+                    int rowsAffected = stmt.executeUpdate();
+                    if (rowsAffected != 1) {
+                        LOGGER.error(String.format("Could not update filter %s with %s, wrong number rows affected ",
+                                entry.getKey(),
+                                new String(queryDataBytes)));
+                        throw new Exception(String.format("Wrong number of rows affected by update %d", rowsAffected));
+                    }
+                } catch (final Exception e) {
+                    LOGGER.error("Could not update filter: {}", e.getLocalizedMessage());
+                    throw e;
+                }
+            }
+        } else {
+            // Just log the updates out
+            LOGGER.info("Logging all updates instead of applying them");
+
+            findStreamCriteriaStrById.forEach((id, criteriaStr) -> {
+                final String queryDataStr = queryDataStrById.get(id);
+                LOGGER.info("{}\n{}\n{}\n-----------+", id, criteriaStr, queryDataStr);
+            });
+        }
+    }
+
+    private QueryData convertFindStreamCriteria(final Connection connection,
+                                                final OldFindStreamCriteria criteria,
+                                                final Map<Long, String> feedNamesById,
+                                                final Map<Long, String> streamTypeNamesById,
+                                                final Map<Long, String> pipeNamesById,
+                                                final Map<Long, Long> folderByFeedId,
+                                                final Map<Long, IdTreeNode> folders,
+                                                final ConcurrentHashMap<Long, Optional<DocRef>> dictionariesByFolder) {
+
         final ExpressionOperator.Builder rootAnd = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
 
         // Feed Folders
-        final List<DocRef> feedDictionariesToInclude = new ArrayList<>();
+        final List<Optional<DocRef>> feedDictionariesToInclude = new ArrayList<>();
 
         for (final Long folderId : criteria.obtainFolderIdSet()) {
             final IdTreeNode folderNode = folders.get(folderId);
@@ -154,7 +196,9 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     .map(feedNamesById::get)
                     .collect(Collectors.toSet());
 
-            final DocRef feedIdDict = createDictionary(connection, folderId, criteria.obtainFolderIdSet().isDeep(), feedNames);
+            final Optional<DocRef> feedIdDict = dictionariesByFolder.computeIfAbsent(folderId,
+                    fid -> createDictionary(connection, fid, criteria.obtainFolderIdSet().isDeep(), feedNames)
+            );
             feedDictionariesToInclude.add(feedIdDict);
         }
 
@@ -164,25 +208,33 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         if ((includeFeedIds.size() > 0) && (feedDictionariesToInclude.size() > 0)) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
             applyIncludesTerm(or, includeFeedIds, feedNamesById::get, StreamDataSource.FEED);
-            feedDictionariesToInclude.forEach(dict ->
-                    or.addOperator(new ExpressionTerm.Builder()
-                            .field(StreamDataSource.FEED)
-                            .condition(ExpressionTerm.Condition.IN_DICTIONARY)
-                            .dictionary(dict)
-                            .build())
-            );
+            feedDictionariesToInclude.stream()
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .forEach(dict ->
+                            or.addOperator(new ExpressionTerm.Builder()
+                                    .field(StreamDataSource.FEED)
+                                    .condition(ExpressionTerm.Condition.IN_DICTIONARY)
+                                    .dictionary(dict)
+                                    .build()
+                            )
+                    );
             rootAnd.addOperator(or.build());
         } else if (includeFeedIds.size() > 0) {
             applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById::get, StreamDataSource.FEED);
         } else if (feedDictionariesToInclude.size() > 0) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-            feedDictionariesToInclude.forEach(dict ->
-                or.addOperator(new ExpressionTerm.Builder()
-                        .field(StreamDataSource.FEED)
-                        .condition(ExpressionTerm.Condition.IN_DICTIONARY)
-                        .dictionary(dict)
-                        .build())
-            );
+            feedDictionariesToInclude.stream()
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .forEach(dict ->
+                            or.addOperator(new ExpressionTerm.Builder()
+                            .field(StreamDataSource.FEED)
+                            .condition(ExpressionTerm.Condition.IN_DICTIONARY)
+                            .dictionary(dict)
+                            .build()
+                            )
+                    );
             rootAnd.addOperator(or.build());
         }
 
@@ -224,13 +276,13 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         });
 
         // Created Period
-        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), StreamDataSource.CREATE_TIME, Object::toString);
+        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), StreamDataSource.CREATE_TIME, DateUtil::createNormalDateTimeString);
 
         // Effective Period
-        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), StreamDataSource.EFFECTIVE_TIME, Object::toString);
+        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), StreamDataSource.EFFECTIVE_TIME, DateUtil::createNormalDateTimeString);
 
         // Status Time Period
-        applyBoundedTerm(rootAnd, criteria.obtainStatusPeriod(), StreamDataSource.STATUS_TIME, Object::toString);
+        applyBoundedTerm(rootAnd, criteria.obtainStatusPeriod(), StreamDataSource.STATUS_TIME, DateUtil::createNormalDateTimeString);
 
         // Build and return
         return new QueryData.Builder()
@@ -239,10 +291,10 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                 .build();
     }
 
-    private DocRef createDictionary(final Connection connection,
-                                    final Long folderId,
-                                    final boolean isDeep,
-                                    final Set<String> feedNames) throws Exception {
+    private Optional<DocRef> createDictionary(final Connection connection,
+                                              final Long folderId,
+                                              final boolean isDeep,
+                                              final Set<String> feedNames) {
         final DocRef dict = new DocRef.Builder()
                 .uuid(UUID.randomUUID().toString())
                 .name(String.format("_feeds_folder_%d_%s", folderId, isDeep ? "deep" : "shallow"))
@@ -255,33 +307,39 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                 .map(Object::toString)
                 .collect(Collectors.joining("\n"));
 
-        final Blob dictDataBlob = connection.createBlob();
-        dictDataBlob.setBytes(1, dictDataStr.getBytes());
+        try {
+            final Blob dictDataBlob = connection.createBlob();
+            dictDataBlob.setBytes(1, dictDataStr.getBytes());
 
-        if (writeUpdates) {
-            final String sql = "INSERT INTO DICT (VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DAT, FK_FOLDER_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setInt(1, 0);
-                stmt.setLong(2, now);
-                stmt.setString(3, UPGRADE_USER);
-                stmt.setLong(4, now);
-                stmt.setString(5, UPGRADE_USER);
-                stmt.setString(6, dict.getName());
-                stmt.setString(7, dict.getUuid());
-                stmt.setBlob(8, dictDataBlob);
-                stmt.setLong(9, folderId);
+            if (writeUpdates) {
+                final String sql = "INSERT INTO DICT (VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DAT, FK_FOLDER_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
+                    stmt.setInt(1, 0);
+                    stmt.setLong(2, now);
+                    stmt.setString(3, UPGRADE_USER);
+                    stmt.setLong(4, now);
+                    stmt.setString(5, UPGRADE_USER);
+                    stmt.setString(6, dict.getName());
+                    stmt.setString(7, dict.getUuid());
+                    stmt.setBlob(8, dictDataBlob);
+                    stmt.setLong(9, folderId);
 
-                int rowsAffected = stmt.executeUpdate();
-                if (rowsAffected != 1) {
-                    throw new Exception(String.format("Wrong number of rows affected by update %d", rowsAffected));
+                    int rowsAffected = stmt.executeUpdate();
+                    if (rowsAffected != 1) {
+                        throw new Exception(String.format("Wrong number of rows affected by update %d", rowsAffected));
+                    }
                 }
+            } else {
+                LOGGER.info("Creating Dictionary: {}, {}, {}", folderId, dict, dictDataStr);
             }
-        } else {
-            LOGGER.info(String.format("Creating Dictionary: %d, %s, %s", folderId, dict, dictDataStr));
+
+
+            return Optional.of(dict);
+
+        } catch (final Exception e) {
+            LOGGER.error("Could not create dictionary for folder Id {}", folderId);
+            return Optional.empty();
         }
-
-
-        return dict;
     }
 
     private <T extends Number> void applyBoundedTerm(final ExpressionOperator.Builder parentTerm,
@@ -289,7 +347,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                                                      final String fieldName,
                                                      final Function<T, String> toString) {
         if (range.isBounded()) {
-            final String boundTerm = String.format("%s,%s", range.getFrom(), range.getTo());
+            final String boundTerm = String.format("%s,%s", toString.apply(range.getFrom()), toString.apply(range.getTo()));
             parentTerm.addTerm(fieldName, ExpressionTerm.Condition.BETWEEN, boundTerm);
         } else if (null != range.getFrom()) {
             parentTerm.addTerm(fieldName, ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO, toString.apply(range.getFrom()));

@@ -17,6 +17,8 @@
 package stroom.test;
 
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
@@ -33,11 +35,13 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class CommonTranslationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTest.class);
     public static final String FEED_NAME = "TEST_FEED";
     private static final String DIR = "CommonTranslationTest/";
     public static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
@@ -106,10 +110,22 @@ public class CommonTranslationTest {
     }
 
     public void setup() throws IOException {
-        setup(FEED_NAME, VALID_RESOURCE_NAME);
+        setup(FEED_NAME, Collections.singletonList(VALID_RESOURCE_NAME.toFile()));
     }
 
-    public void setup(final String feedName, final Path dataLocation) throws IOException {
+    public void setup(final File dataLocation) throws IOException {
+        setup(FEED_NAME, Collections.singletonList(dataLocation));
+    }
+
+    public void setup(final List<File> dataLocations) throws IOException {
+        setup(FEED_NAME, dataLocations);
+    }
+
+    public void setup(final String feedName, final File dataLocation) throws IOException {
+        setup(feedName, Collections.singletonList(dataLocation));
+    }
+
+    public void setup(final String feedName, final List<File> dataLocations) throws IOException {
         // commonTestControl.setup();
 
         // Setup the feed definitions.
@@ -126,8 +142,16 @@ public class CommonTranslationTest {
         referenceFeeds.add(hostNameToLocation);
         referenceFeeds.add(idToUser);
 
-        storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
-                XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
+        dataLocations.forEach(dataLocation -> {
+            try {
+                LOGGER.info("Adding data from file {}", dataLocation.getAbsolutePath());
+                storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
+                        XSLT_NETWORK_MONITORING, dataLocation.toPath(), referenceFeeds);
+            } catch (IOException e) {
+                throw new RuntimeException(String.format("Error adding event data for file %s",
+                        dataLocation.getAbsolutePath()), e);
+            }
+        });
 
         Assert.assertEquals(0, streamStore.getLockCount());
     }

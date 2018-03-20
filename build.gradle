@@ -66,14 +66,14 @@ ext.versions = [
     hadoopHdfsShaded: 'v2.6.4',
     stroomAuth: 'v0.1-alpha.3',
     stroomExpression: 'v1.0.3',
-    stroomQuery: 'v2.0.0-alpha.27', //same version for both stroom-query-api and stroom-query-common
+    stroomQuery: 'v2.0.0-alpha.28', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
 
     //------------3rd-party------------
     curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
     dropwizard: '1.1.0', //if you change this version you should check the versions below that need to move in sync with it
     dropwizard_metrics: '3.2.2', //should be kept in step with dropwizard
-    gwt: '2.8.0',
+    gwt: '2.8.2',
     hibernate: '5.2.13.Final', //dropwiz 1.1.0 uses -validator 5.3.4.Final and -core 5.2.8.Final
     jackson: '2.8.6',
     jersey: '2.25.1',
@@ -108,7 +108,7 @@ ext.libs = [
     aopalliance: "aopalliance:aopalliance:1.0",
     aspectjrt: "org.aspectj:aspectjrt:1.8.10",
     aspectjweaver: "org.aspectj:aspectjweaver:1.8.10",
-    assertj_core: "org.assertj:assertj-core:3.6.2",
+    assertj_core: "org.assertj:assertj-core:3.8.0",
     c3p0: "com.mchange:c3p0:0.9.5.2",
     commons_codec: "commons-codec:commons-codec:1.11",
     commons_compress: "org.apache.commons:commons-compress:1.12",
@@ -163,6 +163,7 @@ ext.libs = [
     javax_servlet_api: "javax.servlet:javax.servlet-api:3.1.0",
     javax_validation: 'javax.validation:validation-api:1.1.0.Final',
     jcl_over_slf4j: "org.slf4j:jcl-over-slf4j:$versions.slf4j",
+    jcommander: 'com.beust:jcommander:1.72',
     jersey_client: "org.glassfish.jersey.core:jersey-client:$versions.jersey",
     jersey_common: "org.glassfish.jersey.core:jersey-common:$versions.jersey",
     jersey_server: "org.glassfish.jersey.core:jersey-server:$versions.jersey", //was 2.25 now 2.25.1

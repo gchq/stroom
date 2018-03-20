@@ -30,13 +30,14 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.OptionalInt;
+import java.util.stream.Collectors;
 
 /**
  * Class to create test data for use in all search tests.
  */
 public class CommonIndexingTest {
     private static final int N1 = 1;
-    private static final int N4 = 4;
 
     private static final String DIR = "CommonIndexingTest/";
 
@@ -60,12 +61,39 @@ public class CommonIndexingTest {
     }
 
     public void setup() {
+        setup(OptionalInt.empty());
+    }
+    public void setup(OptionalInt maxDocsPerShard) {
         try {
             // Add data.
             commonTranslationTest.setup();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        runProcessing(1, maxDocsPerShard);
+    }
+
+    public void setup(List<Path> dataFiles, OptionalInt maxDocsPerShard) {
+        try {
+            // Add data.
+            commonTranslationTest.setup(dataFiles.stream()
+                    .map(Path::toFile)
+                    .collect(Collectors.toList()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        runProcessing(dataFiles.size(), maxDocsPerShard);
+    }
+
+    private void runProcessing(final int dataFileCount, final OptionalInt maxDocsPerShard) {
+        try {
             // Translate data.
             List<StreamProcessorTaskExecutor> results = commonTranslationTest.processAll();
-            Assert.assertEquals(N4, results.size());
+
+            // 3 ref data streams pluss our data streams
+            int expectedTaskCount = 3 + dataFileCount;
+
+            Assert.assertEquals(expectedTaskCount, results.size());
             for (final StreamProcessorTaskExecutor result : results) {
                 final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
                 Assert.assertTrue(result.toString(), processor.getWritten() > 0);
@@ -74,7 +102,7 @@ public class CommonIndexingTest {
             }
 
             // Add index.
-            storeCreationTool.addIndex("Test index", INDEX_XSLT);
+            storeCreationTool.addIndex("Test index", INDEX_XSLT, maxDocsPerShard);
             // Translate data.
             results = commonTranslationTest.processAll();
             Assert.assertEquals(N1, results.size());

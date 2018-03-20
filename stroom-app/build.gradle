@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        jcenter()
+    }
+    dependencies {
+        classpath libs.mysql_connector_java
+    }
+}
+
 plugins {
     //id 'com.github.johnrengelman.shadow' version '2.0.0'
     id "com.benjaminsproule.swagger" version "0.1.9"
@@ -6,6 +16,7 @@ plugins {
     //usage: honkerCheck honkerGenNotice honkerGenDependencies
     //search for NOTICE.txt and DEPENDENCIES.txt
     //id "org.nosphere.honker" version "0.3.0"
+    id 'org.flywaydb.flyway' version '5.0.7'
 }
 
 def uiDir = project.file('src/main/resources/ui')
@@ -73,6 +84,7 @@ dependencies {
     compile libs.guice3
     compile libs.jackson_annotations
     compile libs.javax_inject
+    compile libs.jcommander
     compile libs.jetty_servlet
 
     compile(libs.dropwizard_assets) {
@@ -87,6 +99,7 @@ dependencies {
     compile libs.dropwizard_servlets
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_configuration
+    compile libs.flyway_core
     compile libs.guava
 //    compile libs.jackson_annotations
     compile libs.javax_inject
@@ -131,6 +144,7 @@ clean {
 task copyFilesForDockerBuild() {
     dependsOn shadowJar
     dependsOn tasks.getByPath(':stroom-kafka-client-impl_0_10_0_1:shadowJar')
+    dependsOn tasks.getByPath(':stroom-elastic-client-impl_5_6_4:shadowJar')
     doFirst {
         new File(stroomPluginsDir).mkdirs()
 
@@ -143,6 +157,12 @@ task copyFilesForDockerBuild() {
         //Copy the kafka client fat jar
         copy {
             from project(':stroom-kafka-client-impl_0_10_0_1').file('build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar')
+            into dockerBuildDir
+        }
+
+        //Copy the elastic client fat jar
+        copy {
+            from project(':stroom-elastic-client-impl_5_6_4').file('build/libs/stroom-elastic-client-impl_5_6_4-all.jar')
             into dockerBuildDir
         }
 

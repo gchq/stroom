@@ -29,6 +29,7 @@ dependencies {
     integrationTestCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
     integrationTestCompile project(':stroom-test-common')
+    integrationTestCompile project(':stroom-util')
     integrationTestCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
     integrationTestCompile libs.slf4j_api

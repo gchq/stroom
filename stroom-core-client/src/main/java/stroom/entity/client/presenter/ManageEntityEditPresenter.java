@@ -65,7 +65,6 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
         };
 
         final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
-        // new entity
         setEntity(entity);
         read();
         ShowPopupEvent.fire(ManageEntityEditPresenter.this, ManageEntityEditPresenter.this, popupType,

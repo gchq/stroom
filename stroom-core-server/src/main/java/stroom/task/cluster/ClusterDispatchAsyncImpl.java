@@ -165,7 +165,8 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
      *                     execution in the result of task failure.
      * @param success      Whether or not the remote task executed successfully.
      */
-    @SuppressWarnings("unchecked")
+    //This method is * executed by spring using a named bean/method, hence 'unused' suppression
+    @SuppressWarnings({"unchecked", "unused"})
     public <R extends SharedObject> Boolean receiveResult(final stroom.task.cluster.ClusterTask<R> task,
                                                           final Node targetNode, final TaskId sourceTaskId, final CollectorId collectorId, final R result,
                                                           final Throwable throwable, final Boolean success) {

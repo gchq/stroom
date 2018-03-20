@@ -3,6 +3,5 @@
    <description/>
    <name>Common Test Event Pipeline</name>
    <parentPipelineXML/>
-   <pipelineType>Event Data</pipelineType>
    <uuid>bd7be478-632b-40fe-8fda-f578ec57e959</uuid>
 </pipeline>
