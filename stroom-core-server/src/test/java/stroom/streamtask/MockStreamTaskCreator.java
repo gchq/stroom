@@ -17,11 +17,10 @@
 
 package stroom.streamtask;
 
-import stroom.entity.util.BaseEntityUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
+import stroom.entity.util.BaseEntityUtil;
 import stroom.node.shared.Node;
-import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
@@ -42,15 +41,12 @@ import java.util.List;
 public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     private final StreamStore streamStore;
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final ExpressionToFindCriteria expressionToFindCriteria;
 
     @Inject
     MockStreamTaskCreator(final StreamStore streamStore,
-                          final StreamProcessorFilterService streamProcessorFilterService,
-                          final ExpressionToFindCriteria expressionToFindCriteria) {
+                          final StreamProcessorFilterService streamProcessorFilterService) {
         this.streamStore = streamStore;
         this.streamProcessorFilterService = streamProcessorFilterService;
-        this.expressionToFindCriteria = expressionToFindCriteria;
     }
 
     @Override
