@@ -19,12 +19,12 @@ package stroom.node;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import stroom.entity.CachingEntityManager;
+import stroom.entity.FindService;
 import stroom.node.shared.Node;
 import stroom.properties.StroomPropertyService;
-
-import javax.inject.Singleton;
 
 public class NodeServiceModule extends AbstractModule {
     @Override
@@ -34,6 +34,9 @@ public class NodeServiceModule extends AbstractModule {
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
         entityServiceByTypeBinder.addBinding(Node.ENTITY_TYPE).to(NodeServiceImpl.class);
+
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+        findServiceBinder.addBinding().to(NodeServiceImpl.class);
     }
 
     @Provides
