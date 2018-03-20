@@ -96,7 +96,7 @@ public class LifecycleServiceImpl implements LifecycleService {
      * Called when the application context is initialised.
      */
     @Override
-    public void start() throws Exception {
+    public void start() {
         if (enabled.get()) {
             // Do this async so that we don't delay starting the web app up
             new Thread(() -> {
@@ -112,7 +112,7 @@ public class LifecycleServiceImpl implements LifecycleService {
      * Called when the application context is destroyed.
      */
     @Override
-    public void stop() throws Exception {
+    public void stop() {
         LOGGER.debug("contextDestroyed()");
         if (enabled.get()) {
             doStop();

@@ -23,8 +23,6 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.CachingEntityManager;
 import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
-import stroom.feed.shared.Feed;
-import stroom.jobsystem.ClusterLockServiceTransactionHelperImpl;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.TaskHandler;
 

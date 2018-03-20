@@ -1,5 +1,7 @@
 package stroom.importexport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
@@ -16,6 +18,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DependencyServiceImpl implements DependencyService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DependencyServiceImpl.class);
+
     private final ImportExportActionHandlers importExportActionHandlers;
 
     @Inject
@@ -26,12 +30,19 @@ public class DependencyServiceImpl implements DependencyService {
     @Override
     public BaseResultList<Dependency> getDependencies(final DependencyCriteria criteria) {
         final Map<DocRef, Set<DocRef>> allDependencies = new ConcurrentHashMap<>();
-        importExportActionHandlers.getAllHandlers().values().forEach(handler -> {
-            final Map<DocRef, Set<DocRef>> deps = handler.getDependencies();
-            if (deps != null) {
-                allDependencies.putAll(deps);
-            }
-        });
+        importExportActionHandlers.getAllHandlers()
+                .values()
+                .parallelStream()
+                .forEach(handler -> {
+                    try {
+                        final Map<DocRef, Set<DocRef>> deps = handler.getDependencies();
+                        if (deps != null) {
+                            allDependencies.putAll(deps);
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                });
 
         final List<Dependency> dependencies = new ArrayList<>();
         allDependencies.forEach((key, value) -> value.forEach(to -> dependencies.add(new Dependency(key, to, allDependencies.containsKey(to)))));

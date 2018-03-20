@@ -17,10 +17,13 @@
 package stroom.jobsystem;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
+import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobManager;
+import stroom.jobsystem.shared.JobNode;
 import stroom.task.TaskHandler;
 
 public class JobSystemModule extends AbstractModule {
@@ -44,6 +47,10 @@ public class JobSystemModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.jobsystem.FetchJobDataHandler.class);
         taskHandlerBinder.addBinding().to(stroom.jobsystem.GetScheduledTimesHandler.class);
         taskHandlerBinder.addBinding().to(stroom.jobsystem.JobNodeInfoClusterHandler.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(Job.ENTITY_TYPE).to(JobServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(JobNode.ENTITY_TYPE).to(JobNodeServiceImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(JobServiceImpl.class);

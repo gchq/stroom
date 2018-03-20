@@ -17,9 +17,11 @@
 package stroom.properties;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.node.shared.ClientPropertiesService;
+import stroom.node.shared.GlobalProperty;
 
 public class PropertyModule extends AbstractModule {
     @Override
@@ -27,6 +29,9 @@ public class PropertyModule extends AbstractModule {
         bind(StroomPropertyService.class).to(StroomPropertyServiceImpl.class);
         bind(ClientPropertiesService.class).to(ClientPropertiesServiceImpl.class);
         bind(GlobalPropertyService.class).to(GlobalPropertyServiceImpl.class);
+
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(GlobalProperty.ENTITY_TYPE).to(GlobalPropertyServiceImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(GlobalPropertyServiceImpl.class);

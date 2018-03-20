@@ -17,6 +17,7 @@
 package stroom.persist;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.name.Names;
 
 import javax.sql.DataSource;
 
@@ -30,5 +31,7 @@ public class PersistenceModule extends AbstractModule {
         bind(DataSource.class).toProvider(DataSourceProvider.class);
         bind(PersistService.class).to(PersistServiceImpl.class);
         bind(EntityManagerSupport.class).to(EntityManagerSupportImpl.class);
+
+        bind(Object.class).annotatedWith(Names.named("dataSource")).toProvider(DataSourceProvider.class);
     }
 }

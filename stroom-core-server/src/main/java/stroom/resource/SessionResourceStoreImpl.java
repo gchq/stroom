@@ -44,7 +44,7 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
     private final HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
-    SessionResourceStoreImpl(final ResourceStore resourceStore,
+    SessionResourceStoreImpl(final ResourceStoreImpl resourceStore,
                              final HttpServletRequestHolder httpServletRequestHolder) {
         this.resourceStore = resourceStore;
         this.httpServletRequestHolder = httpServletRequestHolder;

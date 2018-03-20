@@ -227,7 +227,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
 
         if (response.getStatus() != HttpStatus.OK_200) {
             response.close();
-            throw new EntityServiceException("Invalid HTTP status returned from delete: " + response.getStatus());
+            throw new EntityServiceException("Invalid HTTP status returned from listDocuments: " + response.getStatus());
         }
 
 

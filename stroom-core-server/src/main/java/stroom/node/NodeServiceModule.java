@@ -18,27 +18,23 @@ package stroom.node;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import stroom.entity.CachingEntityManager;
-import stroom.entity.StroomEntityManager;
+import stroom.node.shared.Node;
 import stroom.properties.StroomPropertyService;
+
+import javax.inject.Singleton;
 
 public class NodeServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(NodeService.class).to(NodeServiceImpl.class);
         bind(NodeServiceGetDefaultNode.class).to(NodeServiceImpl.class);
-    }
 
-//    @Provides
-//    public NodeService nodeServiceImpl(final StroomEntityManager entityManager,
-//                                           final NodeServiceTransactionHelper nodeServiceTransactionHelper,
-//                                           @Value(propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
-//                                           @Value(propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
-//        return new NodeServiceImpl(entityManager, nodeServiceTransactionHelper, nodeName, rackName);
-//    }
+        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder.addBinding(Node.ENTITY_TYPE).to(NodeServiceImpl.class);
+    }
 
     @Provides
     @Named("cachedNodeService")
@@ -47,25 +43,4 @@ public class NodeServiceModule extends AbstractModule {
                                          final StroomPropertyService propertyService) {
         return new NodeServiceImpl(entityManager, nodeServiceTransactionHelper, propertyService);
     }
-
-//    @Bean("nodeService")
-//    public NodeServiceImpl nodeServiceImpl(final StroomEntityManager entityManager,
-//                                           final NodeServiceTransactionHelper nodeServiceTransactionHelper,
-//                                           @Value(propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
-//                                           @Value(propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
-//        return new NodeServiceImpl(entityManager, nodeServiceTransactionHelper, nodeName, rackName);
-//    }
-//
-//    @Bean("cachedNodeService")
-//    public NodeService cachedNodeService(final CachingEntityManager entityManager,
-//                                         final NodeServiceTransactionHelper nodeServiceTransactionHelper,
-//                                         @Value(propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
-//                                         @Value(propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
-//        return new NodeServiceImpl(entityManager, nodeServiceTransactionHelper, nodeName, rackName);
-//    }
-//
-//    @Bean
-//    public NodeServiceTransactionHelper nodeServiceTransactionHelper(final StroomEntityManager entityManager) {
-//        return new NodeServiceTransactionHelper(entityManager);
-//    }
 }

@@ -25,5 +25,6 @@ public class DataSourceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DataSource.class).annotatedWith(Names.named("statisticsDataSource")).toProvider(DataSourceProvider.class);
+        bind(Object.class).annotatedWith(Names.named("statisticsDataSource")).toProvider(DataSourceProvider.class);
     }
 }

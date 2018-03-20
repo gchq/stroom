@@ -17,6 +17,7 @@
 package stroom.search.shard;
 
 import stroom.search.taskqueue.TaskExecutor;
+import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,5 +27,11 @@ public class IndexShardSearchTaskExecutor extends TaskExecutor {
     @Inject
     IndexShardSearchTaskExecutor() {
         super("Stroom Search Index Shard Task Executor");
+    }
+
+    @StroomShutdown
+    @Override
+    public void shutdown() {
+        super.shutdown();
     }
 }
