@@ -129,25 +129,24 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                         entity, criteria, fieldIndexMap);
 
                 // subscribe to the flowable, mapping each resultSet to a String[]
+                // If the task is canceled, the flowable produced by search() will stop emitting
                 Disposable searchResultsDisposable = searchResultsFlowable
                         .subscribe(
                                 data -> {
                                     LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
+
                                     // give the data array to each of our coprocessor consumers
                                     dataArrayConsumers.forEach(dataArrayConsumer ->
                                             dataArrayConsumer.accept(data));
+
+                                    // give the processed results to the collector
+                                    resultCollector.handle(payloadMap);
                                 },
                                 throwable -> {
                                     throw new RuntimeException(String.format("Error in flow, %s",
                                             throwable.getMessage()), throwable);
                                 },
                                 () -> LOGGER.debug("onComplete called"));
-
-                // halt the flow if the task is terminated
-                taskMonitor.addTerminateHandler(searchResultsDisposable::dispose);
-
-                // give the processed results to the collector
-                resultCollector.handle(payloadMap);
             }
 
             // Let the result handler know search has finished.

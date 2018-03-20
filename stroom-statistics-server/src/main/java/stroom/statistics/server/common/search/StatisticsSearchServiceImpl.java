@@ -296,9 +296,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                             .forEach(cache::put);
                                 }
                                 value = cache.get(fieldName);
-                                if (value == null) {
-                                    throw new RuntimeException("Value should never be null");
-                                }
+//                                if (value == null) {
+//                                    throw new RuntimeException("Value should never be null");
+//                                }
                                 arr[idx] = value;
                             };
                         } else {

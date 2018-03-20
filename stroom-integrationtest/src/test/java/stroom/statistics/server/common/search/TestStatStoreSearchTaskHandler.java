@@ -18,6 +18,7 @@ package stroom.statistics.server.common.search;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -74,9 +75,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest {
@@ -86,9 +91,9 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
     private static final String TAG1 = "Tag1";
     private static final String TAG1_VAL = "Tag1Value1";
     private static final String TAG2 = "Tag2";
-    private static final String TAG2_VAL = "Tag2Value2";
-    private static final String TAG2_OTHER_VALUE_1 = "Tag2OtherValue1";
-    private static final String TAG2_OTHER_VALUE_2 = "Tag2OtherValue2";
+    private static final String TAG2_VAL = "Tag2Value1";
+    private static final String TAG2_OTHER_VALUE_1 = "Tag2Value2";
+    private static final String TAG2_OTHER_VALUE_2 = "Tag2Value3";
     private static final String DATE_RANGE = "2000-01-01T00:00:00.000Z,3000-01-01T00:00:00.000Z";
 
     private static final String COMPONENT_ID_1 = "1";
@@ -97,16 +102,20 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
 
     private static final Map<String, List<String>> COMPONENT_ID_TO_FIELDS_MAP = ImmutableMap.of(
             COMPONENT_ID_1, Arrays.asList(
-                    StatisticStoreEntity.FIELD_NAME_DATE_TIME,
-                    StatisticStoreEntity.FIELD_NAME_VALUE,
-                    StatisticStoreEntity.FIELD_NAME_PRECISION_MS,
-                    TAG1),
+                    StatisticStoreEntity.FIELD_NAME_DATE_TIME, //0
+                    StatisticStoreEntity.FIELD_NAME_VALUE, //1
+                    StatisticStoreEntity.FIELD_NAME_PRECISION_MS, //2
+                    TAG1), //3
             COMPONENT_ID_2, Arrays.asList(
                     StatisticStoreEntity.FIELD_NAME_DATE_TIME,
-                    StatisticStoreEntity.FIELD_NAME_COUNT,
+                    StatisticStoreEntity.FIELD_NAME_COUNT, //4
                     StatisticStoreEntity.FIELD_NAME_PRECISION_MS,
                     TAG1,
-                    TAG2));
+                    TAG2)); //5
+
+    private static final Map<String, Integer> FIELD_POSITION_MAP = ImmutableMap.of(
+            TAG1, 3,
+            TAG2, 5);
 
 //    private static final DocRef DOC_REF = new DocRef(StatisticStoreEntity.ENTITY_TYPE, UUID.randomUUID().toString(), STAT_NAME);
 
@@ -178,7 +187,11 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
 
             fillStatValSrc(tags);
             StatStoreSearchResultCollector collector = doSearch(tags);
-            doAsserts(collector, 1);
+            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+                    TAG1, ImmutableSet.of(TAG1_VAL),
+                    TAG2, ImmutableSet.of(TAG2_VAL));
+
+            doAsserts(collector, 1, expectedValuesMap);
         }
     }
 
@@ -196,14 +209,12 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
             searchTags.add(new StatisticTag(TAG2, TAG2_VAL));
             searchTags.add(new StatisticTag(TAG2, TAG2_OTHER_VALUE_1));
 
+            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+                    TAG1, ImmutableSet.of(TAG1_VAL),
+                    TAG2, ImmutableSet.of(TAG2_VAL, TAG2_OTHER_VALUE_1));
+
             StatStoreSearchResultCollector collector = doSearch(searchTags, ExpressionOperator.Op.OR);
-            doAsserts(collector, 2);
-//            for (final StatisticDataPoint dataPoint : dataSet) {
-//
-//                final String tag2Value = dataPoint.getTagsAsMap().get(TAG2);
-//
-//                Assert.assertTrue(tag2Value.equals(TAG2_VAL) || tag2Value.equals(TAG2_OTHER_VALUE_1));
-//            }
+            doAsserts(collector, 2, expectedValuesMap);
         }
     }
 
@@ -216,16 +227,16 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
 
             fillStatValSrc(tags);
 
-            // only search on the first tag
+            // only search on the second tag
             final List<StatisticTag> searchTags = new ArrayList<>();
             searchTags.add(tags.get(1));
 
-//            final StatisticDataSet dataSet = doSearch(searchTags);
-//
-//            assertDataSetSize(dataSet, 1);
-//
-//            final StatisticDataPoint dataPoint = dataSet.iterator().next();
-//            Assert.assertEquals(tags, dataPoint.getTags());
+            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+                    TAG1, Collections.singleton(null),
+                    TAG2, Collections.singleton(TAG2_VAL));
+
+            StatStoreSearchResultCollector collector = doSearch(searchTags, ExpressionOperator.Op.OR);
+            doAsserts(collector, 1, expectedValuesMap);
         }
     }
 
@@ -235,7 +246,8 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
             // search on a tag value with loads of regex special chars in
-            tags.add(new StatisticTag(TAG1, "xxx\\^$.|?*+()[{xxx"));
+            String nastyVal = "xxx\\^$.|?*+()[{xxx";
+            tags.add(new StatisticTag(TAG1, nastyVal));
             tags.add(new StatisticTag(TAG2, TAG2_VAL));
 
             fillStatValSrc(tags);
@@ -244,25 +256,29 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
             final List<StatisticTag> searchTags = new ArrayList<>();
             searchTags.add(tags.get(0));
 
-//            final StatisticDataSet dataSet = doSearch(searchTags);
-//
-//            assertDataSetSize(dataSet, 1);
-//
-//            final StatisticDataPoint dataPoint = dataSet.iterator().next();
-//            Assert.assertEquals(tags, dataPoint.getTags());
+            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+                    TAG1, Collections.singleton(nastyVal),
+                    TAG2, Collections.singleton(TAG2_VAL));
+
+            StatStoreSearchResultCollector collector = doSearch(searchTags, ExpressionOperator.Op.OR);
+            doAsserts(collector, 1, expectedValuesMap);
         }
     }
 
     private void doAsserts(final StatStoreSearchResultCollector collector,
-                           final int expectedRowCount) {
+                           final int expectedRowCount,
+                           final Map<String, Set<String>> expectedValuesMap) {
 
+        Map<String, Set<String>> actualValuesMap = new HashMap<>();
         COMPONENT_IDS.forEach(id -> {
             ResultStore resultStore = collector.getResultStore(id);
 
             Assert.assertNotNull(resultStore);
-//            Assert.assertEquals(expectedRowCount, resultStore.getTotalSize());
+            Assert.assertEquals(expectedRowCount, resultStore.getTotalSize());
 
-            int fieldCount = COMPONENT_ID_TO_FIELDS_MAP.get(id).size();
+            List<String> fields = COMPONENT_ID_TO_FIELDS_MAP.get(id);
+            int fieldCount = fields.size();
+
 
             //get the root level
             Items<Item> items = resultStore.getChildMap().get(null);
@@ -270,13 +286,42 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
             //row count
             Assert.assertEquals(expectedRowCount, items.size());
 
+            AtomicInteger counter = new AtomicInteger(0);
             items.forEach(item -> {
                 Assert.assertEquals(fieldCount, item.getValues().length);
+
+//                expectedValuesMap.forEach((tagField, expectedValues) -> {
+//
+//                });
+//                if (fields.contains())
+
+                //capture actual values for fields of interest
+                expectedValuesMap.keySet().forEach(tagField -> {
+                    int idx = fields.indexOf(tagField);
+                    if (idx != -1) {
+                        Object val = item.getValues()[idx];
+                        Object evaluatedVal = ((Generator) val).eval();
+                        String strVal = evaluatedVal == null ? null : evaluatedVal.toString();
+                        actualValuesMap.computeIfAbsent(tagField, k -> new HashSet<>()).add(strVal);
+                    }
+                });
+
                 String valuesStr = Arrays.stream(item.getValues())
-                        .map(obj -> ((Generator) obj).eval().toString())
+                        .map(obj -> ((Generator) obj).eval())
+                        .map(evaluatedObj -> evaluatedObj == null ? "" : evaluatedObj.toString())
                         .collect(Collectors.joining(","));
-                LOGGER.debug("component: {} - [{}]", id, valuesStr);
+
+                LOGGER.debug("component: {} - [{}]", String.valueOf(id), valuesStr);
             });
+        });
+
+        expectedValuesMap.forEach((tagField, expectedValues) -> {
+            List<String> exp = new ArrayList<>(expectedValues);
+            Collections.sort(exp);
+            List<String> act = new ArrayList<>(actualValuesMap.get(tagField));
+            Collections.sort(act);
+            LOGGER.debug("Comparing {} and {}", exp.toString(), act.toString());
+            Assert.assertEquals(exp, act);
         });
     }
 
