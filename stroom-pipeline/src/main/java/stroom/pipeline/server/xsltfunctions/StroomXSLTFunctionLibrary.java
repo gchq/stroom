@@ -155,6 +155,20 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("hash")
+                .library(this)
+                .delegateClass(Hash.class)
+                .minArgs(1)
+                .maxArgs(3)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("json-to-xml")
                 .library(this)
                 .delegateClass(JsonToXml.class)

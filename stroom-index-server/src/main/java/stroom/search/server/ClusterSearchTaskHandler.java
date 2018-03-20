@@ -348,6 +348,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     if (complete) {
                         // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
                         sendingData.set(false);
+                        LOGGER.debug("sendingData is false");
 
                     } else {
                         // If we aren't complete then send more using the supplied sending frequency.

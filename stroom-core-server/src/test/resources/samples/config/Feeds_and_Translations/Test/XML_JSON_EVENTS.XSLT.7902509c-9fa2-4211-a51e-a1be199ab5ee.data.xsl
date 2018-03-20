@@ -82,6 +82,21 @@
         <Id>
           <xsl:value-of select="$user" />
         </Id>
+        <Data Name="SHA256Hash">
+          <xsl:attribute name="Value" select="stroom:hash($user)" />
+        </Data>
+        <Data Name="SHA256HashWithSalt">
+          <xsl:attribute name="Value" select="stroom:hash($user, 'SHA-256', 'mysalt')" />
+        </Data>
+        <Data Name="MD5HashWithSalt">
+          <xsl:attribute name="Value" select="stroom:hash($user, 'MD5', 'mysalt')" />
+        </Data>
+        <Data Name="TestDateMissingYear">
+          <xsl:attribute name="Value" select="stroom:format-date('12/03', 'dd/MM')" />
+        </Data>
+        <Data Name="TestDateMissingYearAndMonth">
+          <xsl:attribute name="Value" select="stroom:format-date('12', 'dd')" />
+        </Data>
       </User>
     </EventSource>
   </xsl:template>
