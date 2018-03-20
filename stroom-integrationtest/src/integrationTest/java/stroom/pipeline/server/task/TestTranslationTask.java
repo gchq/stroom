@@ -91,7 +91,9 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
      */
     @Test
     public void testInvalidResource() throws Exception {
-        commonPipelineTest.setup(CommonTranslationTest.FEED_NAME, CommonTranslationTest.INVALID_RESOURCE_NAME);
+        commonPipelineTest.setup(
+                CommonTranslationTest.FEED_NAME,
+                CommonTranslationTest.INVALID_RESOURCE_NAME.toFile());
 
         final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();
         Assert.assertEquals(N4, results.size());

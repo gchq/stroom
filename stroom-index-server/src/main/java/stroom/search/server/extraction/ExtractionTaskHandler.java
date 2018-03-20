@@ -48,6 +48,8 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
@@ -62,6 +64,7 @@ import java.util.List;
 @Scope(value = StroomScope.TASK)
 public class ExtractionTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
 
     private final StreamStore streamStore;
     private final FeedService feedService;
@@ -107,13 +110,17 @@ public class ExtractionTaskHandler {
 
     public VoidResult exec(final ExtractionTask task) {
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            taskMonitor.setName("Extraction");
-            if (!taskMonitor.isTerminated()) {
-                final String streamId = String.valueOf(task.getStreamId());
-                taskMonitor.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
+            LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                () -> {
+                    taskMonitor.setName("Extraction");
+                    if (!taskMonitor.isTerminated()) {
+                        final String streamId = String.valueOf(task.getStreamId());
+                        taskMonitor.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
 
-                extract(task);
-            }
+                        extract(task);
+                    }
+                },
+                () -> "ExtractionTaskHandler.exec()");
         }
 
         return VoidResult.INSTANCE;
@@ -255,7 +262,10 @@ public class ExtractionTaskHandler {
                 final String encoding = StreamUtil.DEFAULT_CHARSET_NAME;
 
                 // Process the boundary.
-                pipeline.process(inputStream, encoding);
+                LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                        () -> pipeline.process(inputStream, encoding),
+                        () -> LambdaLogger.buildMessage("Processing pipeline {}, stream {}",
+                                pipelineEntity.getUuid(), source.getStream().getId()));
 
             } catch (final TerminatedException e) {
                 // Ignore stopped pipeline exceptions as we are meant to get
