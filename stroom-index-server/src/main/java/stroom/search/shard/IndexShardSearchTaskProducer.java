@@ -16,6 +16,8 @@
 
 package stroom.search.shard;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.search.ClusterSearchTask;
 import stroom.search.shard.IndexShardSearchTask.IndexShardQueryFactory;
@@ -24,12 +26,13 @@ import stroom.search.taskqueue.TaskExecutor;
 import stroom.search.taskqueue.TaskProducer;
 import stroom.task.ExecutorProvider;
 import stroom.task.ThreadPoolImpl;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 import stroom.util.shared.ThreadPool;
 
 import javax.inject.Provider;
 import java.util.List;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -38,7 +41,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class IndexShardSearchTaskProducer extends TaskProducer {
-    static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Index Shard", 5, 0, Integer.MAX_VALUE);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
+
+    static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Search Index Shard",
+            5,
+            0,
+            Integer.MAX_VALUE);
 
     private final ClusterSearchTask clusterSearchTask;
     private final IndexShardSearcherCache indexShardSearcherCache;
@@ -49,7 +59,7 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
 
     public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
                                         final ClusterSearchTask clusterSearchTask,
-                                        final LinkedBlockingQueue<Optional<String[]>> storedData,
+                                        final LinkedBlockingQueue<String[]> storedData,
                                         final IndexShardSearcherCache indexShardSearcherCache,
                                         final List<Long> shards,
                                         final IndexShardQueryFactory queryFactory,
@@ -83,6 +93,7 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
             final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
             taskQueue.add(runnable);
         }
+        LAMBDA_LOGGER.debug(() -> String.format("Queued %s index shard search tasks", shards.size()));
 
         // Attach to the supplied executor.
         attach();

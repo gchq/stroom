@@ -36,7 +36,6 @@ import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntity.PipelineType;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.XSLT;
@@ -74,6 +73,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.Set;
 
 /**
@@ -102,7 +102,7 @@ public final class StoreCreationTool {
     private final PipelineService pipelineService;
     private final CommonTestScenarioCreator commonTestScenarioCreator;
     private final CommonTestControl commonTestControl;
-    private final  StreamProcessorService streamProcessorService;
+    private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final IndexService indexService;
 
@@ -583,7 +583,7 @@ public final class StoreCreationTool {
                 data);
     }
 
-    public Index addIndex(final String name, final Path translationXsltLocation) {
+    public Index addIndex(final String name, final Path translationXsltLocation, final OptionalInt maxDocsPerShard) {
         final FindIndexCriteria criteria = new FindIndexCriteria();
         criteria.getName().setString(name);
         final BaseResultList<Index> list = indexService.find(criteria);
@@ -591,7 +591,10 @@ public final class StoreCreationTool {
             return list.getFirst();
         }
 
-        final Index index = commonTestScenarioCreator.createIndex(name, createIndexFields());
+        final Index index = commonTestScenarioCreator.createIndex(
+                name,
+                createIndexFields(),
+                maxDocsPerShard.orElse(Index.DEFAULT_MAX_DOCS_PER_SHARD));
 
         // Create the indexing pipeline.
         final PipelineEntity pipeline = getIndexingPipeline(index, translationXsltLocation);
@@ -640,7 +643,6 @@ public final class StoreCreationTool {
 
     public PipelineEntity getSearchResultPipeline(final String name, final Path xsltLocation) {
         final PipelineEntity pipeline = getPipeline(name, StreamUtil.fileToString(searchExtractionPipeline));
-        pipeline.setPipelineType(PipelineType.SEARCH_EXTRACTION.getDisplayValue());
 
         // Setup the xslt.
         final XSLT xslt = getXSLT(name, xsltLocation);

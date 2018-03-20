@@ -5,8 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.datasource.api.v2.DataSource;
-import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Param;
@@ -23,12 +23,12 @@ import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.StoreSize;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.statistics.sql.SQLStatisticEventStore;
 import stroom.statistics.sql.StatisticsQueryService;
 import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.statistics.sql.entity.StatisticsDataSourceProvider;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.util.shared.HasTerminate;
 
 import javax.inject.Inject;
@@ -191,10 +191,12 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
         StoreSize storeSize = new StoreSize(getStoreSizes());
         List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-        SqlStatisticsStore store = new SqlStatisticsStore(defaultMaxResultsSizes, storeSize);
-        store.process(coprocessorSettingsMap);
-        store.coprocessorMap(coprocessorMap);
-        store.payloadMap(payloadMap);
+        SqlStatisticsStore store = new SqlStatisticsStore(
+                defaultMaxResultsSizes,
+                storeSize,
+                coprocessorSettingsMap,
+                coprocessorMap,
+                payloadMap);
 
         SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);
         SearchResponse searchResponse = searchResponseCreator.create(searchRequest);

@@ -18,10 +18,10 @@ package stroom.pipeline.xsltfunctions;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.value.SequenceType;
+import stroom.guice.StroomBeanStore;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.guice.StroomBeanStore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -150,6 +150,20 @@ public class StroomXSLTFunctionLibrary {
                 .maxArgs(1)
                 .argTypes(new SequenceType[]{
                         SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("hash")
+                .library(this)
+                .delegateClass(Hash.class)
+                .minArgs(1)
+                .maxArgs(3)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_STRING
                 })
                 .resultType(SequenceType.OPTIONAL_STRING)
                 .build());

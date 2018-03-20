@@ -22,7 +22,6 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
-import stroom.logging.DocumentEventLog;
 import stroom.node.shared.ClientProperties;
 import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
@@ -46,22 +45,19 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntityService {
-
     private final String type;
     private final SecurityContext securityContext;
-    private final DocumentEventLog documentEventLog;
     private final DocRefResourceHttpClient docRefHttpClient;
 
     ExternalDocumentEntityServiceImpl(final String type,
                                       final SecurityContext securityContext,
-                                      final DocumentEventLog documentEventLog,
                                       final StroomPropertyService propertyService) {
         this.type = type;
         this.securityContext = securityContext;
-        this.documentEventLog = documentEventLog;
 
         final String urlPropKey = ClientProperties.URL_DOC_REF_SERVICE_BASE + type;
-        this.docRefHttpClient = new DocRefResourceHttpClient(propertyService.getProperty(urlPropKey));
+        final String serviceUrl = propertyService.getProperty(String.format("%s|trace", urlPropKey));
+        this.docRefHttpClient = new DocRefResourceHttpClient(serviceUrl);
     }
 
     private ServiceUser serviceUser() {

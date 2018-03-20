@@ -24,9 +24,10 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
+import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Secured;
-import stroom.persist.EntityManagerSupport;
+import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
@@ -48,15 +49,24 @@ class StreamProcessorFilterServiceImpl
     private final EntityManagerSupport entityManagerSupport;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterMarshaller marshaller;
+    private final ExpressionToFindCriteria expressionToFindCriteria;
 
     @Inject
     StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
                                      final EntityManagerSupport entityManagerSupport,
-                                     final StreamProcessorService streamProcessorService) {
+                                     final StreamProcessorService streamProcessorService,
+                                     final ExpressionToFindCriteria expressionToFindCriteria) {
         super(entityManager);
         this.entityManagerSupport = entityManagerSupport;
         this.streamProcessorService = streamProcessorService;
         this.marshaller = new StreamProcessorFilterMarshaller();
+        this.expressionToFindCriteria = expressionToFindCriteria;
+    }
+
+    @Override
+    public StreamProcessorFilter save(final StreamProcessorFilter entity) throws RuntimeException {
+        expressionToFindCriteria.convert(entity.getQueryData());
+        return super.save(entity);
     }
 
     @Override
@@ -90,34 +100,34 @@ class StreamProcessorFilterServiceImpl
                                                  final boolean enabled,
                                                  final int priority) {
         return entityManagerSupport.transactionResult(entityManager -> {
-        // First see if we can find a stream processor for this pipeline.
-        final FindStreamProcessorCriteria findStreamProcessorCriteria = new FindStreamProcessorCriteria(pipelineEntity);
-        final List<StreamProcessor> list = streamProcessorService.find(findStreamProcessorCriteria);
-        StreamProcessor processor = null;
-        if (list == null || list.size() == 0) {
-            // We couldn't find one so create a new one.
-            processor = new StreamProcessor(pipelineEntity);
-            processor.setEnabled(enabled);
-            processor = streamProcessorService.save(processor);
-        } else {
-            processor = list.get(0);
-        }
+            // First see if we can find a stream processor for this pipeline.
+            final FindStreamProcessorCriteria findStreamProcessorCriteria = new FindStreamProcessorCriteria(pipelineEntity);
+            final List<StreamProcessor> list = streamProcessorService.find(findStreamProcessorCriteria);
+            StreamProcessor processor = null;
+            if (list == null || list.size() == 0) {
+                // We couldn't find one so create a new one.
+                processor = new StreamProcessor(pipelineEntity);
+                processor.setEnabled(enabled);
+                processor = streamProcessorService.save(processor);
+            } else {
+                processor = list.get(0);
+            }
 
-        StreamProcessorFilter filter = new StreamProcessorFilter();
-        // Blank tracker
-        filter.setEnabled(enabled);
-        filter.setPriority(priority);
-        filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
-        filter.setStreamProcessor(processor);
-        filter.setQueryData(queryData);
-        filter = marshaller.marshal(filter);
-        // Save initial tracker
-        getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());
-        getEntityManager().flush();
-        filter = save(filter);
-        filter = marshaller.unmarshal(filter);
+            StreamProcessorFilter filter = new StreamProcessorFilter();
+            // Blank tracker
+            filter.setEnabled(enabled);
+            filter.setPriority(priority);
+            filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
+            filter.setStreamProcessor(processor);
+            filter.setQueryData(queryData);
+            filter = marshaller.marshal(filter);
+            // Save initial tracker
+            getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());
+            getEntityManager().flush();
+            filter = save(filter);
+            filter = marshaller.unmarshal(filter);
 
-        return filter;
+            return filter;
         });
     }
 

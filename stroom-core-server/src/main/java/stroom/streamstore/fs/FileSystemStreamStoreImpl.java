@@ -716,8 +716,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
-        final Context context = new Context(null, System.currentTimeMillis());
-        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
+        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
         return find(oldFindStreamCriteria);
     }
 

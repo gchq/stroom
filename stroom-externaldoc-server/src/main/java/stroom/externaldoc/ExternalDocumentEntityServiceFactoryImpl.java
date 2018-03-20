@@ -25,7 +25,6 @@ public class ExternalDocumentEntityServiceFactoryImpl implements ExternalDocumen
     public ExternalDocumentEntityService create(final String type) {
         return new ExternalDocumentEntityServiceImpl(type,
                 securityContextProvider.get(),
-                documentEventLogProvider.get(),
                 propertyServiceProvider.get());
     }
 }

@@ -46,7 +46,8 @@ public class SearchResultCreatorManager implements Clearable {
                                       final LuceneSearchStoreFactory luceneSearchStoreFactory) {
         this.luceneSearchStoreFactory = luceneSearchStoreFactory;
 
-        final RemovalListener<SearchResultCreatorManager.Key, SearchResponseCreator> removalListener = notification -> destroy(notification.getKey(), notification.getValue());
+        final RemovalListener<SearchResultCreatorManager.Key, SearchResponseCreator> removalListener = notification ->
+                destroy(notification.getKey(), notification.getValue());
         final CacheLoader<SearchResultCreatorManager.Key, SearchResponseCreator> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_ACTIVE_QUERIES)

@@ -19,8 +19,8 @@ package stroom.search;
 import org.junit.Assert;
 import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.pipeline.task.PipelineStreamProcessor;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.task.PipelineStreamProcessor;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.CommonTranslationTest;
@@ -28,6 +28,7 @@ import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalInt;
@@ -63,6 +64,7 @@ public class CommonIndexingTest {
     public void setup() {
         setup(OptionalInt.empty());
     }
+
     public void setup(OptionalInt maxDocsPerShard) {
         try {
             // Add data.
@@ -77,7 +79,6 @@ public class CommonIndexingTest {
         try {
             // Add data.
             commonTranslationTest.setup(dataFiles.stream()
-                    .map(Path::toFile)
                     .collect(Collectors.toList()));
         } catch (IOException e) {
             throw new RuntimeException(e);

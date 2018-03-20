@@ -30,6 +30,7 @@ import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.SimpleTaskContext;
 import stroom.task.TaskManager;
+import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -110,22 +111,22 @@ public class CommonTranslationTest {
     }
 
     public void setup() throws IOException {
-        setup(FEED_NAME, Collections.singletonList(VALID_RESOURCE_NAME.toFile()));
+        setup(FEED_NAME, Collections.singletonList(VALID_RESOURCE_NAME));
     }
 
-    public void setup(final File dataLocation) throws IOException {
+    public void setup(final Path dataLocation) throws IOException {
         setup(FEED_NAME, Collections.singletonList(dataLocation));
     }
 
-    public void setup(final List<File> dataLocations) throws IOException {
+    public void setup(final List<Path> dataLocations) throws IOException {
         setup(FEED_NAME, dataLocations);
     }
 
-    public void setup(final String feedName, final File dataLocation) throws IOException {
+    public void setup(final String feedName, final Path dataLocation) throws IOException {
         setup(feedName, Collections.singletonList(dataLocation));
     }
 
-    public void setup(final String feedName, final List<File> dataLocations) throws IOException {
+    public void setup(final String feedName, final List<Path> dataLocations) throws IOException {
         // commonTestControl.setup();
 
         // Setup the feed definitions.
@@ -144,12 +145,12 @@ public class CommonTranslationTest {
 
         dataLocations.forEach(dataLocation -> {
             try {
-                LOGGER.info("Adding data from file {}", dataLocation.getAbsolutePath());
+                LOGGER.info("Adding data from file {}", FileUtil.getCanonicalPath(dataLocation));
                 storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
-                        XSLT_NETWORK_MONITORING, dataLocation.toPath(), referenceFeeds);
+                        XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
             } catch (IOException e) {
                 throw new RuntimeException(String.format("Error adding event data for file %s",
-                        dataLocation.getAbsolutePath()), e);
+                        FileUtil.getCanonicalPath(dataLocation)), e);
             }
         });
 

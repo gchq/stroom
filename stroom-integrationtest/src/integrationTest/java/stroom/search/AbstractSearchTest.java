@@ -18,7 +18,7 @@ package stroom.search;
 
 import org.junit.Assert;
 import stroom.entity.shared.DocRefUtil;
-import stroom.index.server.IndexService;
+import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.query.api.v2.DocRef;
@@ -34,7 +34,6 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchResponseCreator;
-import stroom.search.server.SearchResultCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
 import stroom.util.thread.ThreadUtil;

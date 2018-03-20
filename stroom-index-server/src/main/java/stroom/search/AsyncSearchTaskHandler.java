@@ -17,6 +17,8 @@
 
 package stroom.search;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Sort.Direction;
 import stroom.index.IndexService;
 import stroom.index.IndexShardService;
@@ -30,20 +32,21 @@ import stroom.query.api.v2.Query;
 import stroom.query.common.v2.ResultHandler;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.GenericServerTask;
+import stroom.task.TaskContext;
+import stroom.task.TaskHandlerBean;
+import stroom.task.TaskManager;
 import stroom.task.cluster.ClusterDispatchAsync;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.cluster.TargetNodeSetFactory;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.cluster.TerminateTaskClusterTask;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.GenericServerTask;
-import stroom.task.TaskHandlerBean;
-import stroom.task.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.VoidResult;
-import stroom.task.TaskContext;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -54,9 +57,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 @TaskHandlerBean(task = AsyncSearchTask.class)
 class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidResult> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSearchTaskHandler.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
+
     private final TaskContext taskContext;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
@@ -151,6 +160,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         if (targetNodes.contains(node)) {
                             final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
                                     task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
+                            LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
                             dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
                                     Collections.singleton(node));
                             expectedNodeResultCount++;
@@ -162,10 +172,46 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     }
                     taskContext.info(task.getSearchName() + " - searching...");
 
-                    // Keep waiting until search completes.
-                    while (!task.isTerminated() && !resultHandler.shouldTerminateSearch() && !resultHandler.isComplete()) {
-                        ThreadUtil.sleep(1000);
+                    ReentrantLock reentrantLock = new ReentrantLock();
+                    Condition condition = reentrantLock.newCondition();
+
+                    final Runnable signalCondition = () -> {
+                        try {
+                            reentrantLock.lock();
+                            condition.signalAll();
+                        } finally {
+                            reentrantLock.unlock();
+                        }
+                    };
+
+                    //if it has completed or something has changed on the resultCollector then
+                    //test the conditions, else sleep
+                    resultHandler.registerCompletionListener(signalCondition::run);
+                    resultCollector.registerChangeListner(signalCondition);
+
+                    while (!task.isTerminated() &&
+                            !resultHandler.shouldTerminateSearch() &&
+                            !resultHandler.isComplete()) {
+
+                        boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
+                                () -> {
+                                    try {
+                                        reentrantLock.lock();
+                                        return condition.await(30, TimeUnit.SECONDS);
+                                    } catch (InterruptedException e) {
+                                        //Don't reset the interrupt status as we are at the top level of
+                                        //the task execution
+                                        throw new RuntimeException("Thread interrupted");
+                                    } finally {
+                                        reentrantLock.unlock();
+                                    }
+                                },
+                                "waiting for completion condition");
+
+                        LOGGER.trace("await finished with result {}", awaitResult);
                         final boolean complete = resultCollector.getCompletedNodes().size() >= expectedNodeResultCount;
+
+                        // TODO why call setComplete if false?
                         resultHandler.setComplete(complete);
 
                         // If the collector is no longer in the cache then terminate

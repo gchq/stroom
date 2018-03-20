@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.xsltfunctions;
+package stroom.pipeline.xsltfunctions;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.pipeline.xsltfunctions.Hash;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 

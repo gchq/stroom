@@ -44,7 +44,12 @@ public class SearchRequestTestData {
         stroom.dashboard.shared.SearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
         SearchRequestMapper searchRequestMapper = new SearchRequestMapper(new MockVisualisationService());
-        stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(DashboardQueryKey.create("queryKeyUuid", 1l, "queryId-1"), dashboardSearchRequest);
+        stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
+                DashboardQueryKey.create(
+                        "queryKeyUuid",
+                        1l,
+                        "queryId-1"),
+                dashboardSearchRequest);
 
         return apiSearchRequest;
     }
@@ -62,13 +67,18 @@ public class SearchRequestTestData {
         tableSettings.addField(new Field("name1", "expression1",
                 new Sort(1, Sort.SortDirection.ASCENDING),
                 new Filter("include1", "exclude1"),
-                new Format(Format.Type.NUMBER, new NumberFormatSettings(1, false)), 1, 200, true));
+                new Format(
+                        Format.Type.NUMBER,
+                        new NumberFormatSettings(1, false)), 1, 200, true));
         tableSettings.addField(new Field("name2", "expression2",
                 new Sort(2, Sort.SortDirection.DESCENDING),
                 new Filter("include2", "exclude2"),
-                new Format(Format.Type.DATE_TIME, createDateTimeFormat()), 2, 200, true));
+                new Format(
+                        Format.Type.DATE_TIME,
+                        createDateTimeFormat()), 2, 200, true));
         tableSettings.setExtractValues(false);
-        tableSettings.setExtractionPipeline(new SharedDocRef("docRefType2", "docRefUuid2", "docRefName2"));
+        tableSettings.setExtractionPipeline(
+                new SharedDocRef("docRefType2", "docRefUuid2", "docRefName2"));
         tableSettings.setMaxResults(new int[]{1, 2});
         tableSettings.setShowDetail(false);
 
@@ -96,7 +106,8 @@ public class SearchRequestTestData {
             componentResultRequestMap.put(entry.getKey(), tableResultRequest);
         }
 
-        stroom.dashboard.shared.SearchRequest searchRequest = new stroom.dashboard.shared.SearchRequest(search, componentResultRequestMap, "en-gb");
+        stroom.dashboard.shared.SearchRequest searchRequest = new stroom.dashboard.shared.SearchRequest(
+                search, componentResultRequestMap, "en-gb");
 
         return searchRequest;
     }

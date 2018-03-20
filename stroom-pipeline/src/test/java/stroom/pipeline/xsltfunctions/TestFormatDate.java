@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.xsltfunctions;
+package stroom.pipeline.xsltfunctions;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class TestFormatDate extends StroomUnitTest {
         final Stream stream = new Stream();
         stream.setCreateMs(DateUtil.parseNormalDateTimeString("2010-03-01T12:45:22.643Z"));
 
-        final StreamHolder streamHolder = new StreamHolder();
+        final StreamHolder streamHolder = new StreamHolder(null);
         streamHolder.setStream(stream);
 
         final FormatDate formatDate = new FormatDate(streamHolder);

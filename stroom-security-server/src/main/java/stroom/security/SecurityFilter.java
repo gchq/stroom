@@ -16,6 +16,7 @@
 
 package stroom.security;
 
+import com.google.common.base.Strings;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.slf4j.Logger;
@@ -119,10 +120,15 @@ public class SecurityFilter implements Filter {
 
         } else {
             // We need to distinguish between requests from an API client and from the UI.
-            // If a request is from the UI and fails authentication then we need to redirect to the login page.
-            // If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
-            final String servletPath = request.getServletPath();
+            // - If a request is from the UI and fails authentication then we need to redirect to the login page.
+            // - If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
+            // - If a request is for clustercall.rpc then it's a back-channel stroom-to-stroom request and we want to
+            //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
+            //   blocks requests that look like '.*clustercall.rpc$'.
+            final String servletPath = request.getServletPath().toLowerCase();
             final boolean isApiRequest = servletPath.contains("/api");
+            final boolean isDatafeedRequest = servletPath.contains("/datafeed");
+            final boolean isClusterCallRequest = servletPath.contains("clustercall.rpc");
 
             if (isApiRequest) {
                 if (!config.isAuthenticationRequired()) {
@@ -133,6 +139,8 @@ public class SecurityFilter implements Filter {
                     continueAsUser(request, response, chain, userRef);
                 }
 
+            } else if (isClusterCallRequest | isDatafeedRequest) {
+                bypassAuthentication(request, response, chain, false);
             } else {
                 // Authenticate requests from the UI.
 
@@ -282,7 +290,7 @@ public class SecurityFilter implements Filter {
         // this will have. We need this so that we can bypass certificate logins, e.g. for when we need to
         // log in as the 'admin' user but the browser is always presenting a certificate.
         String prompt = request.getParameter("prompt");
-        if(prompt != null && !prompt.isEmpty()){
+        if (!Strings.isNullOrEmpty(prompt)) {
             authenticationRequestParams += "&prompt=" + prompt;
         }
 
@@ -321,8 +329,7 @@ public class SecurityFilter implements Filter {
                 // If we can't exchange the accessCode for an idToken then this probably means the
                 // accessCode doesn't exist any more, or has already been used. so we can't proceed.
                 LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?", e);
-            }
-            else {
+            } else {
                 LOGGER.error("Unable to retrieve idToken!", e);
             }
         } catch (final MalformedClaimException e) {

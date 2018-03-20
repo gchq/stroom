@@ -19,18 +19,19 @@ package stroom.search;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.NodeCache;
-import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.StoreSize;
-import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.task.TaskManager;
-import stroom.util.thread.ThreadUtil;
+import stroom.task.cluster.ClusterResultCollectorCache;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -38,11 +39,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = EventSearchTask.class)
 class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventRefs> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchTaskHandler.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(EventSearchTaskHandler.class);
 
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
@@ -62,7 +66,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
 
     @Override
     public EventRefs exec(final EventSearchTask task) {
-        EventRefs eventRefs = null;
+        EventRefs eventRefs;
 
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
@@ -101,12 +105,37 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         asyncSearchTask.setResultCollector(searchResultCollector);
 
         try {
+            final CountDownLatch completionLatch = new CountDownLatch(1);
+
+            //when the search completes reduce our latch to zero to release the block below
+            resultHandler.registerCompletionListener(completionLatch::countDown);
+
             // Start asynchronous search execution.
             searchResultCollector.start();
 
-            // Wait for completion.
+            LOGGER.debug("Started searchResultCollector {}", searchResultCollector);
+
+            // Wait for completion or termination
             while (!task.isTerminated() && !resultHandler.isComplete()) {
-                ThreadUtil.sleep(task.getResultSendFrequency());
+                //Drop out of the waiting state every 30s to check we haven't been terminated.
+                //This is a bit of extra protection as the resultHandler should notify our
+                //completion listener if it is terminated.
+                //If the search completes while waiting we will drop out of the wait immediately
+                boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
+                        () -> {
+                            try {
+                                return completionLatch.await(30, TimeUnit.SECONDS);
+                            } catch (InterruptedException e) {
+                                //Don't want to reset interrupt status as this thread will go back into
+                                //the executor's pool. Throwing an exception will terminate the task
+                                throw new RuntimeException(
+                                        LambdaLogger.buildMessage("Thread {} interrupted executing task {}",
+                                                Thread.currentThread().getName(), task));
+                            }
+                        },
+                        "waiting for completionLatch");
+
+                LOGGER.trace("await finished with result {}", awaitResult);
             }
 
             eventRefs = resultHandler.getStreamReferences();

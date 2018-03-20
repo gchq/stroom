@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.xsltfunctions;
+package stroom.pipeline.xsltfunctions;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 class Hash extends StroomExtensionFunctionCall {
     private static final String DEFAULT_ALGORITHM = "SHA-256";
 

@@ -23,6 +23,7 @@ import stroom.entity.CachingEntityManager;
 import stroom.entity.FindService;
 import stroom.jobsystem.DistributedTaskFactory;
 import stroom.persist.EntityManagerSupport;
+import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.task.TaskHandler;
 
 import javax.inject.Named;
@@ -53,8 +54,9 @@ public class StreamTaskModule extends AbstractModule {
     @Named("cachedStreamProcessorFilterService")
     public StreamProcessorFilterService cachedStreamProcessorFilterService(final CachingEntityManager entityManager,
                                                                            final EntityManagerSupport entityManagerSupport,
-                                                                           final StreamProcessorService streamProcessorService) {
-        return new StreamProcessorFilterServiceImpl(entityManager, entityManagerSupport, streamProcessorService);
+                                                                           final StreamProcessorService streamProcessorService,
+                                                                           final ExpressionToFindCriteria expressionToFindCriteria) {
+        return new StreamProcessorFilterServiceImpl(entityManager, entityManagerSupport, streamProcessorService, expressionToFindCriteria);
     }
 
     @Provides

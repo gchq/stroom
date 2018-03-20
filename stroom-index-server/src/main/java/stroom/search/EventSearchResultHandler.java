@@ -18,6 +18,7 @@ package stroom.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.query.common.v2.CompletionListener;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
@@ -26,6 +27,9 @@ import stroom.util.shared.HasTerminate;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -36,6 +40,7 @@ public class EventSearchResultHandler implements ResultHandler {
     private final LinkedBlockingQueue<EventRefs> pendingMerges = new LinkedBlockingQueue<>();
     private final AtomicBoolean merging = new AtomicBoolean();
     private volatile EventRefs streamReferences;
+    private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
 
     @Override
     public void handle(final Map<CoprocessorKey, Payload> payloadMap, final HasTerminate hasTerminate) {
@@ -54,8 +59,7 @@ public class EventSearchResultHandler implements ResultHandler {
     public void add(final EventRefs eventRefs, final HasTerminate hasTerminate) {
         if (eventRefs != null) {
             if (hasTerminate.isTerminated()) {
-                // Clear the queue if we should terminate.
-                pendingMerges.clear();
+                terminate();
 
             } else {
                 // Add the new queue to the pending merge queue ready for merging.
@@ -78,8 +82,7 @@ public class EventSearchResultHandler implements ResultHandler {
         if (merging.compareAndSet(false, true)) {
             try {
                 if (hasTerminate.isTerminated()) {
-                    // Clear the queue if we should terminate.
-                    pendingMerges.clear();
+                    terminate();
 
                 } else {
                     EventRefs eventRefs = pendingMerges.poll();
@@ -92,8 +95,7 @@ public class EventSearchResultHandler implements ResultHandler {
                         }
 
                         if (hasTerminate.isTerminated()) {
-                            // Clear the queue if we should terminate.
-                            pendingMerges.clear();
+                            terminate();
                         }
 
                         eventRefs = pendingMerges.poll();
@@ -104,8 +106,7 @@ public class EventSearchResultHandler implements ResultHandler {
             }
 
             if (hasTerminate.isTerminated()) {
-                // Clear the queue if we should terminate.
-                pendingMerges.clear();
+                terminate();
             }
 
             // Make sure we don't fail to merge items from the queue that have
@@ -137,7 +138,25 @@ public class EventSearchResultHandler implements ResultHandler {
 
     @Override
     public void setComplete(final boolean complete) {
+        boolean previousValue = this.complete.get();
         this.complete.set(complete);
+        if (complete && previousValue != complete) {
+            //now notify any listeners
+            for (CompletionListener listener; (listener = completionListeners.poll()) != null; ) {
+                //when notified they will check isComplete
+                listener.onCompletion();
+            }
+        }
+    }
+
+    @Override
+    public void registerCompletionListener(final CompletionListener completionListener) {
+        if (isComplete()) {
+            //immediate notification
+            completionListener.onCompletion();
+        } else {
+            completionListeners.add(Objects.requireNonNull(completionListener));
+        }
     }
 
     public EventRefs getStreamReferences() {
@@ -147,5 +166,11 @@ public class EventSearchResultHandler implements ResultHandler {
     @Override
     public Data getResultStore(final String componentId) {
         return null;
+    }
+
+    private void terminate() {
+        // Clear the queue if we should terminate.
+        pendingMerges.clear();
+        completionListeners.clear();
     }
 }

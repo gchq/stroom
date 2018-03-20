@@ -6,7 +6,7 @@ import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.util.shared.HasType;
 
-public interface ExternalDocumentEntityService extends
+interface ExternalDocumentEntityService extends
         ExplorerActionHandler,
         ImportExportActionHandler,
         DocumentActionHandler<SharedDocRef>,

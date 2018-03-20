@@ -25,7 +25,7 @@ import stroom.task.TaskContext;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
-import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,12 +34,14 @@ public class IndexShardHitCollector extends SimpleCollector {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardHitCollector.class);
 
     private final TaskContext taskContext;
-    private final LinkedBlockingQueue<Optional<Integer>> docIdStore;
+    //an empty optional is used as a marker to indicate no more items will be added
+    private final LinkedBlockingQueue<OptionalInt> docIdStore;
     private final AtomicLong hitCount;
     private int docBase;
     private Long pauseTime;
 
-    IndexShardHitCollector(final TaskContext taskContext, final LinkedBlockingQueue<Optional<Integer>> docIdStore,
+    public IndexShardHitCollector(final TaskContext taskContext,
+                                  final LinkedBlockingQueue<OptionalInt> docIdStore,
                                   final AtomicLong hitCount) {
         this.docIdStore = docIdStore;
         this.taskContext = taskContext;
@@ -58,7 +60,7 @@ public class IndexShardHitCollector extends SimpleCollector {
         final int docId = docBase + doc;
 
         try {
-            while (!docIdStore.offer(Optional.of(docId), 1, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
+            while (!docIdStore.offer(OptionalInt.of(docId), 5, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
                 if (isProvidingInfo()) {
                     if (pauseTime == null) {
                         pauseTime = System.currentTimeMillis();
@@ -66,6 +68,7 @@ public class IndexShardHitCollector extends SimpleCollector {
 
                     final long elapsed = System.currentTimeMillis() - pauseTime;
                     provideInfo("Paused for " + ModelStringUtil.formatDurationString(elapsed));
+                    LOGGER.trace("elapsed [{}]", elapsed);
                 }
             }
         } catch (final Throwable e) {

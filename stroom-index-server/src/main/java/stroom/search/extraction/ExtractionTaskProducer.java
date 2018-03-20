@@ -16,6 +16,8 @@
 
 package stroom.search.extraction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.query.api.v2.DocRef;
@@ -35,7 +37,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -46,7 +47,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class ExtractionTaskProducer extends TaskProducer {
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Extraction", 5, 0, Integer.MAX_VALUE);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Extraction",
+            5,
+            0,
+            Integer.MAX_VALUE);
 
     private final ClusterSearchTask clusterSearchTask;
     private final FieldIndexMap extractionFieldIndexMap;
@@ -63,7 +69,7 @@ public class ExtractionTaskProducer extends TaskProducer {
     public ExtractionTaskProducer(final TaskExecutor taskExecutor,
                                   final ClusterSearchTask clusterSearchTask,
                                   final StreamMapCreator streamMapCreator,
-                                  final LinkedBlockingQueue<Optional<String[]>> storedData,
+                                  final LinkedBlockingQueue<String[]> storedData,
                                   final FieldIndexMap extractionFieldIndexMap,
                                   final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,
                                   final ErrorReceiver errorReceiver,
@@ -81,21 +87,18 @@ public class ExtractionTaskProducer extends TaskProducer {
         // Start mapping streams.
         final Executor executor = executorProvider.getExecutor(THREAD_POOL);
         streamEventMapperCompletableFuture = CompletableFuture.runAsync(() -> {
+            LOGGER.debug("Starting extraction task producer");
             try {
                 boolean complete = false;
                 while (!complete && !clusterSearchTask.isTerminated()) {
                     // Check if search is finished before attempting to add to the stream map.
                     final boolean searchFinished = searchTaskProducer.isComplete();
                     // Poll for the next set of values.
-                    final Optional<String[]> values = storedData.poll(1, TimeUnit.SECONDS);
+                    final String[] values = storedData.poll(1, TimeUnit.SECONDS);
 
                     if (values != null) {
-                        if (values.isPresent()) {
-                            // If we have some values then map them.
-                            streamMapCreator.addEvent(streamEventMap, values.get());
-                        } else {
-                            complete = true;
-                        }
+                        // If we have some values then map them.
+                        streamMapCreator.addEvent(streamEventMap, values);
 
                         // Tell the supplied executor that we are ready to deliver tasks.
                         signalAvailable();

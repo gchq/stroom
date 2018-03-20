@@ -32,6 +32,8 @@ import stroom.security.UserTokenUtil;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
@@ -63,6 +65,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Singleton
 class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskManagerImpl.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TaskManagerImpl.class);
 
     private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
     private final NodeCache nodeCache;
@@ -448,16 +451,21 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
 
     private void doTerminated(final boolean kill, final long timeNowMs, final List<TaskProgress> taskProgressList,
                               final List<TaskThread<?>> itemsToKill) {
+        LAMBDA_LOGGER.trace(() ->
+                LambdaLogger.buildMessage("doTerminated() - itemsToKill.size() {}", itemsToKill.size()));
+
         for (final TaskThread<?> taskThread : itemsToKill) {
             final Task<?> task = taskThread.getTask();
-            LOGGER.info("doTerminated() 1 - {}", taskThread.getTask());
             // First try and terminate the task.
             if (!task.isTerminated()) {
+                LOGGER.trace("terminating task {}", task);
                 taskThread.terminate();
             }
 
             // If we are forced to kill then kill the associated thread.
             if (kill) {
+                LAMBDA_LOGGER.trace(() ->
+                        LambdaLogger.buildMessage("killing task {} on thread {}", task, taskThread.getThreadName()));
                 taskThread.kill();
             }
             final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskThread, taskThread.getTask());

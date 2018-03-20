@@ -82,7 +82,7 @@ class ExplorerActionHandlers {
                  final ExplorerActionHandlerFactory explorerActionHandlerFactory,
                  final StroomPropertyService propertyService) {
             // Add external handlers.
-            propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES)
+            propertyService.getCsvProperty(String.format("%s|trace", ClientProperties.EXTERNAL_DOC_REF_TYPES))
                     .forEach(type -> {
                         final ExplorerActionHandler explorerActionHandler = explorerActionHandlerFactory.create(type);
                         addExplorerActionHandler(explorerActionHandler);

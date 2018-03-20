@@ -19,6 +19,8 @@ package stroom.datasource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.ExternalDocRefConstants;
+import stroom.node.shared.ClientProperties;
 import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
