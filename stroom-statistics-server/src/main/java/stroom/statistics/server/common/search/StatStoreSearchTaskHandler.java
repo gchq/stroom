@@ -17,8 +17,6 @@
 package stroom.statistics.server.common.search;
 
 import com.google.common.base.Preconditions;
-import io.reactivex.Flowable;
-import io.reactivex.disposables.Disposable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -47,12 +45,14 @@ import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") // Instantiated by TaskManager
 @TaskHandlerBean(task = StatStoreSearchTask.class)
@@ -62,6 +62,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
     private static final Logger LOGGER = LoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
 
+    public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
 
 
     private final TaskMonitor taskMonitor;
@@ -92,63 +93,72 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
                 Preconditions.checkNotNull(entity);
 
-                // Produce payloads for each coprocessor.
-                final Map<Integer, Payload> payloadMap = new HashMap<>();
-
-
-                // each coporcessor will have its own consumer of the String[]
-                List<Consumer<String[]>> dataArrayConsumers = new ArrayList<>();
-
                 //fieldIndexMap is common across all coprocessors as we will have a single String[] that will
                 //be returned from the query and used by all coprocessors. The map is populated by the expression
                 //parsing on each coprocessor
                 final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
 
                 //each coprocessor has its own settings and field requirements
-                task.getCoprocessorMap().forEach((id, coprocessorSettings) -> {
-
-                    //build a consumer that will accept a String[] and feed it into the
-                    //item mapper for the coprocessor
-                    Consumer<String[]> dataArrayConsumer = buildDataArrayConsumer(
-                            task,
-                            payloadMap,
-                            fieldIndexMap,
-                            id,
-                            (TableCoprocessorSettings) coprocessorSettings);
-
-                    dataArrayConsumers.add(dataArrayConsumer);
-                });
+                final List<StatStoreTableCoprocessor> tableCoprocessors = task.getCoprocessorMap().entrySet().stream()
+                        .map(entry ->
+                                new StatStoreTableCoprocessor(
+                                        entry.getKey(),
+                                        (TableCoprocessorSettings) entry.getValue(),
+                                        fieldIndexMap,
+                                        task.getMonitor(),
+                                        task.getSearch().getParamMap()))
+                        .collect(Collectors.toList());
 
                 // convert the search into something stats understands
-                FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(
+                final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(
                         task.getSearch(),
                         entity);
 
-                // Set up the results flowable, the serach wont be executed until subscribe is called
-                Flowable<String[]> searchResultsFlowable = statisticsSearchService.search(
-                        entity, criteria, fieldIndexMap, task);
-
+                AtomicLong counter = new AtomicLong(0);
                 taskMonitor.info(task.getSearchName() + " - executing database query");
 
                 // subscribe to the flowable, mapping each resultSet to a String[]
+                // After the window period has elapsed a new flowable is create for those rows received 
+                // in that window, which can all be processed and sent
                 // If the task is canceled, the flowable produced by search() will stop emitting
-                Disposable searchResultsDisposable = searchResultsFlowable
+                // Set up the results flowable, the serach wont be executed until subscribe is called
+                statisticsSearchService.search(entity, criteria, fieldIndexMap)
+                        .window(PROCESS_PAYLOAD_INTERVAL_SECS, TimeUnit.SECONDS)
                         .subscribe(
-                                data -> {
-                                    LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
+                                windowedFlowable -> {
+                                    LOGGER.trace("onNext called for outer flowable");
+                                    windowedFlowable.subscribe(
+                                            data -> {
+                                                LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
+                                                counter.incrementAndGet();
 
-                                    // give the data array to each of our coprocessor consumers
-                                    dataArrayConsumers.forEach(dataArrayConsumer ->
-                                            dataArrayConsumer.accept(data));
-
-                                    // give the processed results to the collector
-                                    resultCollector.handle(payloadMap);
+                                                // give the data array to each of our coprocessors
+                                                tableCoprocessors.forEach(tableCoprocessor ->
+                                                        tableCoprocessor.receive(data));
+                                            },
+                                            throwable -> {
+                                                throw new RuntimeException(String.format("Error in flow, %s",
+                                                        throwable.getMessage()), throwable);
+                                            },
+                                            () -> {
+                                                //completed our timed window so create and pass on a payload for the
+                                                //data we have gathered so far
+                                                LOGGER.trace("onComplete of inner flowable called");
+                                                processPayloads(resultCollector, tableCoprocessors);
+                                                taskMonitor.info(task.getSearchName() +
+                                                        " - running database query (" + counter.get() + " rows fetched)");
+                                            });
                                 },
                                 throwable -> {
                                     throw new RuntimeException(String.format("Error in flow, %s",
                                             throwable.getMessage()), throwable);
                                 },
-                                () -> LOGGER.debug("onComplete called"));
+                                () -> LOGGER.debug("onComplete of outer flowable called"));
+
+                //flows all complete, so process any remaining data
+                processPayloads(resultCollector, tableCoprocessors);
+                taskMonitor.info(task.getSearchName() +
+                        " - completed database query (" + counter.get() + " rows fetched)");
             }
 
             // Let the result handler know search has finished.
@@ -161,6 +171,24 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         } finally {
             securityContext.restorePermissions();
         }
+    }
+
+    private void processPayloads(final StatStoreSearchResultCollector resultCollector,
+                                 final List<StatStoreTableCoprocessor> tableCoprocessors) {
+
+        Map<Integer, Payload> payloadMap = null;
+
+        for (StatStoreTableCoprocessor tableCoprocessor : tableCoprocessors) {
+            Payload payload = tableCoprocessor.createPayload();
+            if (payload != null) {
+                if (payloadMap == null) {
+                    payloadMap = new HashMap<>();
+                }
+                payloadMap.put(tableCoprocessor.getId(), payload);
+            }
+        }
+        // give the processed results to the collector, it will handle nulls
+        resultCollector.handle(payloadMap);
     }
 
     private Consumer<String[]> buildDataArrayConsumer(

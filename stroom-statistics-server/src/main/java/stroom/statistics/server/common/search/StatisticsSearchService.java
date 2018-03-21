@@ -9,6 +9,5 @@ public interface StatisticsSearchService {
 
     Flowable<String[]> search(final StatisticStoreEntity statisticStoreEntity,
                               final FindEventCriteria criteria,
-                              final FieldIndexMap fieldIndexMap,
-                              final StatStoreSearchTask task);
+                              final FieldIndexMap fieldIndexMap);
 }

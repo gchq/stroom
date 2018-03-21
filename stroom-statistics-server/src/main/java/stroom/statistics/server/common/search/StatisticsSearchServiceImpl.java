@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Component
@@ -100,8 +99,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @Override
     public Flowable<String[]> search(final StatisticStoreEntity statisticStoreEntity,
                                      final FindEventCriteria criteria,
-                                     final FieldIndexMap fieldIndexMap,
-                                     final StatStoreSearchTask task) {
+                                     final FieldIndexMap fieldIndexMap) {
         // build the sql from the criteria
         // TODO currently all cols are returned even if we don't need them as we have to handle the
         // needs of multiple coprocessors
@@ -111,7 +109,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         // required by all coprocessors
         Function<ResultSet, String[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
 
-        Flowable<ResultSet> flowableQueryResults = getFlowableQueryResults(sql, task);
+        Flowable<ResultSet> flowableQueryResults = getFlowableQueryResults(sql);
 
         // the query will not be executed until somebody subscribes to the flowable
         return flowableQueryResults
@@ -363,9 +361,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-    private Flowable<ResultSet> getFlowableQueryResults(final SqlBuilder sql, final StatStoreSearchTask task) {
+    private Flowable<ResultSet> getFlowableQueryResults(final SqlBuilder sql) {
 
-        AtomicLong counter = new AtomicLong(0);
+//        AtomicLong counter = new AtomicLong(0);
         //Not thread safe as each onNext will get the same ResultSet instance, however its position
         // will have mode on each time.
         Flowable<ResultSet> resultSetFlowable = Flowable
@@ -389,16 +387,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                         //advance the resultSet, if it is a row emit it, else finish the flow
                                         if (rs.next() && !taskMonitor.isTerminated()) {
                                             LOGGER.trace("calling onNext");
-                                            long currentCount = counter.incrementAndGet();
-                                            if (currentCount % 1000 == 0) {
-                                                taskMonitor.info(task.getSearchName() +
-                                                        " - running database query (" + currentCount + " rows fetched)");
-                                            }
                                             emitter.onNext(rs);
                                         } else {
                                             LOGGER.debug("calling onComplete");
-                                            taskMonitor.info(task.getSearchName() +
-                                                    " - completed database query (" + counter.get() + " rows fetched)");
                                             emitter.onComplete();
                                         }
                                     });
