@@ -1,6 +1,7 @@
 package stroom.statistics.server.common.search;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import org.slf4j.Logger;
@@ -48,43 +49,27 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
 
     private static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
+    private static final String PROP_KEY_SQL_SEARCH_FETCH_SIZE = "stroom.statistics.sql.search.fetchSize";
+
+    public static final String KEY_TABLE_ALIAS = "K";
+    public static final String VALUE_TABLE_ALIAS = "V";
+    private static final String ALIASED_TIME_MS_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.TIME_MS;
+    private static final String ALIASED_PRECISION_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.PRECISION;
+    private static final String ALIASED_COUNT_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.COUNT;
+    private static final String ALIASED_VALUE_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.VALUE;
 
     private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
     private final TaskMonitor taskMonitor;
 
     //defines how the entity fields relate to the table columns
-//    private static final Map<String, List<String>> fieldToColumnsMap = ImmutableMap.<String, List<String>>builder()
-//            .put(StatisticStoreEntity.FIELD_NAME_DATE_TIME,
-//                    Collections.singletonList(SQLStatisticNames.TIME_MS))
-//            .put(StatisticStoreEntity.FIELD_NAME_PRECISION_MS,
-//                    Collections.singletonList(SQLStatisticNames.PRECISION))
-//            .put(StatisticStoreEntity.FIELD_NAME_PRECISION,
-//                    Collections.singletonList(SQLStatisticNames.PRECISION))
-//            .put(StatisticStoreEntity.FIELD_NAME_COUNT,
-//                    Collections.singletonList(SQLStatisticNames.COUNT))
-//            .put(StatisticStoreEntity.FIELD_NAME_VALUE,
-//                    Arrays.asList(SQLStatisticNames.COUNT, SQLStatisticNames.VALUE))
-//            .build();
-
-
-//    private static final String STAT_QUERY_SKELETON =
-//            "SELECT " +
-//                    "K." + SQLStatisticNames.NAME + ", " +
-//                    "V." + SQLStatisticNames.PRECISION + ", " +
-//                    "V." + SQLStatisticNames.TIME_MS + ", " +
-//                    "V." + SQLStatisticNames.VALUE_TYPE + ", " +
-//                    "V." + SQLStatisticNames.VALUE + ", " +
-//                    "V." + SQLStatisticNames.COUNT + " ";
-//
-//    private static final String STAT_QUERY_FROM_AND_WHERE_PARTS =
-//            "FROM " + SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME + " K " +
-//                    "JOIN " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME + " V " +
-//                    "ON (K." + SQLStatisticNames.ID + " = V." + SQLStatisticNames.SQL_STATISTIC_KEY_FOREIGN_KEY + ") " +
-//                    "WHERE K." + SQLStatisticNames.NAME + " LIKE ? " +
-//                    "AND K." + SQLStatisticNames.NAME + " REGEXP ? " +
-//                    "AND V." + SQLStatisticNames.TIME_MS + " >= ? " +
-//                    "AND V." + SQLStatisticNames.TIME_MS + " < ?";
+    private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
+            .put(StatisticStoreEntity.FIELD_NAME_DATE_TIME, Collections.singletonList(ALIASED_TIME_MS_COL))
+            .put(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, Collections.singletonList(ALIASED_PRECISION_COL))
+            .put(StatisticStoreEntity.FIELD_NAME_PRECISION, Collections.singletonList(ALIASED_PRECISION_COL))
+            .put(StatisticStoreEntity.FIELD_NAME_COUNT, Collections.singletonList(ALIASED_COUNT_COL))
+            .put(StatisticStoreEntity.FIELD_NAME_VALUE, Arrays.asList(ALIASED_COUNT_COL, ALIASED_VALUE_COL))
+            .build();
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
@@ -100,27 +85,52 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     public Flowable<String[]> search(final StatisticStoreEntity statisticStoreEntity,
                                      final FindEventCriteria criteria,
                                      final FieldIndexMap fieldIndexMap) {
-        // build the sql from the criteria
-        // TODO currently all cols are returned even if we don't need them as we have to handle the
-        // needs of multiple coprocessors
-        SqlBuilder sql = buildSql(statisticStoreEntity, criteria);
+
+        List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndexMap);
+        SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndexMap);
 
         // build a mapper function to convert a resultSet row into a String[] based on the fields
         // required by all coprocessors
         Function<ResultSet, String[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
 
-        Flowable<ResultSet> flowableQueryResults = getFlowableQueryResults(sql);
-
         // the query will not be executed until somebody subscribes to the flowable
-        return flowableQueryResults
+        return getFlowableQueryResults(sql)
                 .map(resultSetMapper); // convert the ResultSet into a String[]
+    }
+
+    private List<String> getSelectColumns(final StatisticStoreEntity statisticStoreEntity,
+                                          final FieldIndexMap fieldIndexMap) {
+        //assemble a map of how fields map to 1-* select cols
+
+        //get all the static field mappings
+        final Map<String, List<String>> fieldToColumnsMap = new HashMap<>(STATIC_FIELDS_TO_COLUMNS_MAP);
+
+        //now add in all the dynamic tag field mappings
+        statisticStoreEntity.getFieldNames().forEach(tagField ->
+                fieldToColumnsMap.computeIfAbsent(tagField, k -> new ArrayList<>())
+                        .add(KEY_TABLE_ALIAS + "." + SQLStatisticNames.NAME));
+
+        //now map the fields in use to a distinct list of columns
+        final List<String> selectCols = fieldToColumnsMap.entrySet().stream()
+                .flatMap(entry ->
+                        entry.getValue().stream()
+                                .map(colName ->
+                                        getOptFieldIndexPosition(fieldIndexMap, entry.getKey())
+                                                .map(val -> colName))
+                                .filter(Optional::isPresent)
+                                .map(Optional::get))
+                .distinct()
+                .collect(Collectors.toList());
+
+        return selectCols;
     }
 
     /**
      * Construct the sql select for the query's criteria
      */
-    private SqlBuilder buildSql(final StatisticStoreEntity dataSource,
-                                final FindEventCriteria criteria) {
+    private SqlBuilder buildSql(final StatisticStoreEntity statisticStoreEntity,
+                                final FindEventCriteria criteria,
+                                final FieldIndexMap fieldIndexMap) {
         /**
          * SQL for testing querying the stat/tag names
          * <p>
@@ -138,35 +148,17 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
          * select * from test where name REGEXP '¬Tag1¬Val1(¬|$)';
          */
 
-        final RollUpBitMask rollUpBitMask = AbstractStatistics.buildRollUpBitMaskFromCriteria(criteria, dataSource);
+        final RollUpBitMask rollUpBitMask = AbstractStatistics.buildRollUpBitMaskFromCriteria(criteria, statisticStoreEntity);
 
-        final String statNameWithMask = dataSource.getName() + rollUpBitMask.asHexString();
+        final String statNameWithMask = statisticStoreEntity.getName() + rollUpBitMask.asHexString();
 
         SqlBuilder sql = new SqlBuilder();
-        sql.append("SELECT");
-        sql.append(" K." + SQLStatisticNames.NAME + ",");
-        sql.append(" V." + SQLStatisticNames.PRECISION + ",");
-        sql.append(" V." + SQLStatisticNames.TIME_MS + ",");
-        sql.append(" V." + SQLStatisticNames.VALUE + ",");
-        sql.append(" V." + SQLStatisticNames.COUNT);
+        sql.append("SELECT ");
 
-        // determine which columns we want to come back as an optimisation
-        // to reduce the data being process that will not be used in the query results
-        // TODO if we use this optimisation then we can't rely on the fieldIndexMap
-        // as each entry in the coprocessor map will have different field needs
+        String selectColsStr = getSelectColumns(statisticStoreEntity, fieldIndexMap).stream()
+                .collect(Collectors.joining(", "));
 
-//        final String selectCols = fieldToColumnsMap.entrySet().stream()
-//                .flatMap(entry ->
-//                        entry.getValue().stream()
-//                                .map(colName ->
-//                                        getOptFieldIndexPosition(fieldIndexMap, entry.getKey())
-//                                                .map(val -> colName))
-//                                .filter(Optional::isPresent)
-//                                .map(Optional::get))
-//                .distinct()
-//                .map(col -> "V." + col)
-//                .collect(Collectors.joining(","));
-//        sql.append(selectCols);
+        sql.append(selectColsStr);
 
         // join to key table
         sql.append(" FROM " + SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME + " K");
@@ -203,14 +195,17 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     }
 
     private Optional<Integer> getOptFieldIndexPosition(final FieldIndexMap fieldIndexMap, final String fieldName) {
-        return Optional.of(fieldIndexMap.get(fieldName));
+        int idx = fieldIndexMap.get(fieldName);
+        if (idx == -1) {
+            return Optional.empty();
+        } else {
+            return Optional.of(idx);
+        }
     }
 
-    private void addSelectColIfRequired(final SqlBuilder sql,
-                                        final FieldIndexMap fieldIndexMap,
-                                        final String fieldName) {
-        getOptFieldIndexPosition(fieldIndexMap, fieldName)
-                .ifPresent(idx -> sql.append(fieldName));
+    private ValueExtractor buildLongValueExtractor(final String columnName, final int fieldIndex) {
+        return (rs, arr, cache) ->
+                arr[fieldIndex] = getResultSetLong(rs, columnName);
     }
 
     /**
@@ -261,6 +256,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                     throw new RuntimeException("Error extracting precision field", e);
                                 }
                                 arr[idx] = Long.toString(precisionMs);
+                            };
+                        } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_PRECISION)) {
+                            extractor = (rs, arr, cache) -> {
+                                //can't do precision for sql stats
+                                arr[idx] = "-";
                             };
                         } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_VALUE)) {
                             if (statisticStoreEntity.getStatisticType().equals(StatisticType.COUNT)) {
@@ -368,7 +368,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         // will have mode on each time.
         Flowable<ResultSet> resultSetFlowable = Flowable
                 .using(
-                        () -> new PreparedStatementResourceHolder(statisticsDataSource, sql),
+                        () -> new PreparedStatementResourceHolder(statisticsDataSource, sql, propertyService),
                         factory -> {
                             LOGGER.debug("Converting factory to a flowable");
                             Preconditions.checkNotNull(factory);
@@ -396,7 +396,6 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         },
                         PreparedStatementResourceHolder::dispose);
 
-        LOGGER.debug("Returning flowable");
         return resultSetFlowable;
     }
 
@@ -450,14 +449,35 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         private Connection connection;
         private PreparedStatement preparedStatement;
 
-        PreparedStatementResourceHolder(final DataSource dataSource, final SqlBuilder sql) {
+        PreparedStatementResourceHolder(final DataSource dataSource,
+                                        final SqlBuilder sql,
+                                        final StroomPropertyService propertyService) {
             try {
                 connection = dataSource.getConnection();
             } catch (SQLException e) {
                 throw new RuntimeException("Error getting connection", e);
             }
             try {
-                preparedStatement = connection.prepareStatement(sql.toString());
+                //settings ot prevent mysql from reading the whole resultset into memory
+                //see https://github.com/ontop/ontop/wiki/WorkingWithMySQL
+                //Also needs 'useCursorFetch=true' on the jdbc connect string
+                preparedStatement = connection.prepareStatement(
+                        sql.toString(),
+                        ResultSet.TYPE_FORWARD_ONLY,
+                        ResultSet.CONCUR_READ_ONLY,
+                        ResultSet.CLOSE_CURSORS_AT_COMMIT);
+
+                String fetchSizeStr = propertyService.getProperty(PROP_KEY_SQL_SEARCH_FETCH_SIZE);
+                if (fetchSizeStr != null && !fetchSizeStr.isEmpty()) {
+                    try {
+                        int fetchSize = Integer.valueOf(fetchSizeStr);
+                        LOGGER.debug("Setting fetch size to {}", fetchSize);
+                        preparedStatement.setFetchSize(fetchSize);
+                    } catch (NumberFormatException e) {
+                        throw new RuntimeException(String.format("Error converting value [%s] for property %s to an integer",
+                                fetchSizeStr, PROP_KEY_SQL_SEARCH_FETCH_SIZE), e);
+                    }
+                }
 
                 PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
                 LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement.toString()));
@@ -472,6 +492,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
 
         void dispose() {
+            LOGGER.debug("dispose called");
             if (preparedStatement != null) {
                 try {
                     LOGGER.debug("Closing preparedStatement");
