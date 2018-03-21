@@ -17,6 +17,8 @@
 package stroom.statistics.server.common.search;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.mapreduce.BlockingPairQueue;
@@ -30,41 +32,51 @@ import stroom.query.ItemPartitioner;
 import stroom.query.Payload;
 import stroom.query.TableCoprocessorSettings;
 import stroom.query.TablePayload;
-import stroom.query.shared.CoprocessorSettings;
 import stroom.query.shared.TableSettings;
 import stroom.security.SecurityContext;
-import stroom.statistics.common.StatisticDataPoint;
-import stroom.statistics.common.StatisticDataSet;
-import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsFactory;
-import stroom.statistics.server.common.AbstractStatistics;
-import stroom.statistics.shared.EventStoreTimeIntervalEnum;
+import stroom.statistics.common.FindEventCriteria;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+@SuppressWarnings("unused") // Instantiated by TaskManager
 @TaskHandlerBean(task = StatStoreSearchTask.class)
 @Scope(value = StroomScope.TASK)
 public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSearchTask, VoidResult> {
-    private final TaskMonitor taskMonitor;
-    private final StatisticsFactory statisticsFactory;
-    private final SecurityContext securityContext;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
+
+    public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
+
+
+    private final TaskMonitor taskMonitor;
+    private final SecurityContext securityContext;
+    private final StatisticsSearchService statisticsSearchService;
+
+    @SuppressWarnings("unused") // Called by DI
     @Inject
-    StatStoreSearchTaskHandler(final TaskMonitor taskMonitor, final StatisticsFactory statisticsFactory, final SecurityContext securityContext) {
+    StatStoreSearchTaskHandler(final TaskMonitor taskMonitor,
+                               final SecurityContext securityContext,
+                               final StatisticsSearchService statisticsSearchService) {
         this.taskMonitor = taskMonitor;
-        this.statisticsFactory = statisticsFactory;
         this.securityContext = securityContext;
+        this.statisticsSearchService = statisticsSearchService;
     }
 
     @Override
@@ -81,66 +93,78 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
                 Preconditions.checkNotNull(entity);
 
-                // Get the statistic store service class based on the engine of the
-                // datasource being searched
-                final Statistics statisticEventStore;
-                statisticEventStore =  statisticsFactory.instance(entity.getEngineName());
-
-                final StatisticDataSet statisticDataSet;
-                if (statisticEventStore instanceof AbstractStatistics) {
-                    statisticDataSet = ((AbstractStatistics)statisticEventStore)
-                            .searchStatisticsData(task.getSearch(), entity);
-                } else {
-                    throw new RuntimeException(String.format("Unable to cast %s to %s for engineName %s",
-                            statisticEventStore.getClass().getName(),
-                            AbstractStatistics.class.getName(),
-                            entity.getEngineName()));
-                }
-
-                // Produce payloads for each coprocessor.
-                Map<Integer, Payload> payloadMap = null;
-
+                //fieldIndexMap is common across all coprocessors as we will have a single String[] that will
+                //be returned from the query and used by all coprocessors. The map is populated by the expression
+                //parsing on each coprocessor
                 final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
-                for (final Entry<Integer, CoprocessorSettings> entry : task.getCoprocessorMap().entrySet()) {
-                    final TableSettings tableSettings = ((TableCoprocessorSettings) entry.getValue()).getTableSettings();
-                    final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(),
-                            tableSettings.showDetail());
-                    final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(),
-                            fieldIndexMap, task.getSearch().getParamMap());
 
-                    // Create a queue of string arrays.
-                    final PairQueue<String, Item> queue = new BlockingPairQueue<>(taskMonitor);
-                    final ItemMapper mapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
-                            compiledDepths.getMaxGroupDepth());
+                //each coprocessor has its own settings and field requirements
+                final List<StatStoreTableCoprocessor> tableCoprocessors = task.getCoprocessorMap().entrySet().stream()
+                        .map(entry ->
+                                new StatStoreTableCoprocessor(
+                                        entry.getKey(),
+                                        (TableCoprocessorSettings) entry.getValue(),
+                                        fieldIndexMap,
+                                        task.getMonitor(),
+                                        task.getSearch().getParamMap()))
+                        .collect(Collectors.toList());
 
-                    performSearch(entity, mapper, statisticDataSet, fieldIndexMap);
+                // convert the search into something stats understands
+                final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(
+                        task.getSearch(),
+                        entity);
 
-                    // partition and reduce based on table settings.
-                    final UnsafePairQueue<String, Item> outputQueue = new UnsafePairQueue<>();
+                AtomicLong counter = new AtomicLong(0);
+                taskMonitor.info(task.getSearchName() + " - executing database query");
 
-                    // Create a partitioner to perform result reduction if needed.
-                    final ItemPartitioner partitioner = new ItemPartitioner(compiledDepths.getDepths(),
-                            compiledDepths.getMaxDepth());
-                    partitioner.setOutputCollector(outputQueue);
+                // subscribe to the flowable, mapping each resultSet to a String[]
+                // After the window period has elapsed a new flowable is create for those rows received 
+                // in that window, which can all be processed and sent
+                // If the task is canceled, the flowable produced by search() will stop emitting
+                // Set up the results flowable, the serach wont be executed until subscribe is called
+                statisticsSearchService.search(entity, criteria, fieldIndexMap)
+                        .window(PROCESS_PAYLOAD_INTERVAL_SECS, TimeUnit.SECONDS)
+                        .subscribe(
+                                windowedFlowable -> {
+                                    LOGGER.trace("onNext called for outer flowable");
+                                    windowedFlowable.subscribe(
+                                            data -> {
+                                                LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
+                                                counter.incrementAndGet();
 
-                    // Partition the data prior to forwarding to the target node.
-                    partitioner.read(queue);
+                                                // give the data array to each of our coprocessors
+                                                tableCoprocessors.forEach(tableCoprocessor ->
+                                                        tableCoprocessor.receive(data));
+                                            },
+                                            throwable -> {
+                                                throw new RuntimeException(String.format("Error in flow, %s",
+                                                        throwable.getMessage()), throwable);
+                                            },
+                                            () -> {
+                                                //completed our timed window so create and pass on a payload for the
+                                                //data we have gathered so far
+                                                LOGGER.trace("onComplete of inner flowable called");
+                                                processPayloads(resultCollector, tableCoprocessors);
+                                                taskMonitor.info(task.getSearchName() +
+                                                        " - running database query (" + counter.get() + " rows fetched)");
+                                            });
+                                },
+                                throwable -> {
+                                    throw new RuntimeException(String.format("Error in flow, %s",
+                                            throwable.getMessage()), throwable);
+                                },
+                                () -> LOGGER.debug("onComplete of outer flowable called"));
 
-                    // Perform partitioning.
-                    partitioner.partition();
-
-                    final Payload payload = new TablePayload(outputQueue);
-                    if (payloadMap == null) {
-                        payloadMap = new HashMap<>();
-                    }
-                    payloadMap.put(entry.getKey(), payload);
-                }
-
-                resultCollector.handle(payloadMap);
+                //flows all complete, so process any remaining data
+                processPayloads(resultCollector, tableCoprocessors);
+                taskMonitor.info(task.getSearchName() +
+                        " - completed database query (" + counter.get() + " rows fetched)");
             }
 
             // Let the result handler know search has finished.
             resultCollector.getResultHandler().setComplete(true);
+
+            taskMonitor.info(task.getSearchName() + " - complete");
 
             return VoidResult.INSTANCE;
 
@@ -149,86 +173,71 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         }
     }
 
-    private void performSearch(final StatisticStoreEntity dataSource, final ItemMapper mapper, final StatisticDataSet statisticDataSet,
-                               final FieldIndexMap fieldIndexMap) {
-        final List<String> tagsForStatistic = dataSource.getFieldNames();
+    private void processPayloads(final StatStoreSearchResultCollector resultCollector,
+                                 final List<StatStoreTableCoprocessor> tableCoprocessors) {
 
-        final int[] indexes = new int[7 + tagsForStatistic.size()];
-        int i = 0;
+        Map<Integer, Payload> payloadMap = null;
 
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_DATE_TIME);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_COUNT);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_VALUE);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_MIN_VALUE);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_MAX_VALUE);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_PRECISION);
-        indexes[i++] = fieldIndexMap.get(StatisticStoreEntity.FIELD_NAME_PRECISION_MS);
-
-        for (final String tag : tagsForStatistic) {
-            indexes[i++] = fieldIndexMap.get(tag);
-        }
-
-        for (final StatisticDataPoint dataPoint : statisticDataSet) {
-            final Map<String, String> tagMap = dataPoint.getTagsAsMap();
-
-            final long precisionMs = dataPoint.getPrecisionMs();
-
-            final EventStoreTimeIntervalEnum interval = EventStoreTimeIntervalEnum.fromColumnInterval(precisionMs);
-            String precisionText;
-            if (interval != null) {
-                precisionText = interval.longName();
-            } else {
-                // could be a precision that doesn't match one of our interval
-                // sizes
-                precisionText = "-";
-            }
-
-            final String[] data = new String[fieldIndexMap.size()];
-            i = 0;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = DateUtil.createNormalDateTimeString(dataPoint.getTimeMs());
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = String.valueOf(dataPoint.getCount());
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = String.valueOf(dataPoint.getValue());
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = String.valueOf(dataPoint.getMinValue());
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = String.valueOf(dataPoint.getMaxValue());
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = precisionText;
-            }
-            i++;
-
-            if (indexes[i] != -1) {
-                data[indexes[i]] = Long.toString(precisionMs);
-            }
-            i++;
-
-            for (final String tag : tagsForStatistic) {
-                if (indexes[i] != -1) {
-                    data[indexes[i]] = tagMap.get(tag);
+        for (StatStoreTableCoprocessor tableCoprocessor : tableCoprocessors) {
+            Payload payload = tableCoprocessor.createPayload();
+            if (payload != null) {
+                if (payloadMap == null) {
+                    payloadMap = new HashMap<>();
                 }
-                i++;
+                payloadMap.put(tableCoprocessor.getId(), payload);
             }
-
-            mapper.collect(null, data);
         }
+        // give the processed results to the collector, it will handle nulls
+        resultCollector.handle(payloadMap);
     }
+
+    private Consumer<String[]> buildDataArrayConsumer(
+            final StatStoreSearchTask task,
+            final Map<Integer, Payload> payloadMap,
+            final FieldIndexMap fieldIndexMap,
+            final Integer id,
+            final TableCoprocessorSettings coprocessorSettings) {
+
+        final TableSettings tableSettings = coprocessorSettings.getTableSettings();
+
+        final CompiledDepths compiledDepths = new CompiledDepths(
+                tableSettings.getFields(),
+                tableSettings.showDetail());
+
+        final CompiledFields compiledFields = new CompiledFields(
+                tableSettings.getFields(),
+                fieldIndexMap, task.getSearch().getParamMap());
+
+        // Create a queue of string arrays.
+        final PairQueue<String, Item> queue = new BlockingPairQueue<>(taskMonitor);
+        final ItemMapper mapper = new ItemMapper(
+                queue,
+                compiledFields,
+                compiledDepths.getMaxDepth(),
+                compiledDepths.getMaxGroupDepth());
+
+        //create a consumer of the data array that will ultimately be returned from the database query
+        return (String[] data) -> {
+            mapper.collect(null, data);
+
+            // partition and reduce based on table settings.
+            final UnsafePairQueue<String, Item> outputQueue = new UnsafePairQueue<>();
+
+            // Create a partitioner to perform result reduction if needed.
+            final ItemPartitioner partitioner = new ItemPartitioner(compiledDepths.getDepths(),
+                    compiledDepths.getMaxDepth());
+            partitioner.setOutputCollector(outputQueue);
+
+            // Partition the data prior to forwarding to the target node.
+            partitioner.read(queue);
+
+            // Perform partitioning.
+            partitioner.partition();
+
+            final Payload payload = new TablePayload(outputQueue);
+            payloadMap.put(id, payload);
+        };
+    }
+
+
 }

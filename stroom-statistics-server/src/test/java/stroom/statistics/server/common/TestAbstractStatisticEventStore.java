@@ -21,9 +21,7 @@ import org.junit.Test;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionTerm.Condition;
-import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.Search;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FilterTermsTree;
@@ -34,6 +32,7 @@ import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.TimeAgnosticStatisticEvent;
 import stroom.statistics.common.rollup.RollUpBitMask;
+import stroom.statistics.server.common.search.StatStoreCriteriaBuilder;
 import stroom.statistics.shared.CustomRollUpMask;
 import stroom.statistics.shared.StatisticField;
 import stroom.statistics.shared.StatisticRollUpType;
@@ -300,7 +299,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(search, dataSource);
+        StatStoreCriteriaBuilder.buildCriteria(search, dataSource);
 
     }
 
@@ -320,7 +319,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(search, dataSource);
+        StatStoreCriteriaBuilder.buildCriteria(search, dataSource);
 
     }
 
@@ -344,7 +343,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(search, dataSource);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(search, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());
@@ -373,7 +372,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(search, dataSource);
+        StatStoreCriteriaBuilder.buildCriteria(search, dataSource);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -397,7 +396,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(search, dataSource);
+        StatStoreCriteriaBuilder.buildCriteria(search, dataSource);
     }
 
     @Test
@@ -421,7 +420,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(search, dataSource);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(search, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals("[]", criteria.getFilterTermsTree().toString());
@@ -449,7 +448,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(search, dataSource);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(search, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());

@@ -24,21 +24,14 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.shared.Search;
-import stroom.statistics.common.FindEventCriteria;
 import stroom.statistics.common.RolledUpStatisticEvent;
-import stroom.statistics.common.StatisticDataPoint;
-import stroom.statistics.common.StatisticDataSet;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticStoreCache;
 import stroom.statistics.common.StatisticStoreValidator;
-import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
-import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.statistics.server.common.AbstractStatistics;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.StatisticType;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -46,11 +39,6 @@ import stroom.util.spring.StroomFrequencySchedule;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -61,13 +49,9 @@ import java.util.concurrent.TimeUnit;
 public class SQLStatisticEventStore extends AbstractStatistics {
     public static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticEventStore.class);
 
-    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
-
     public static final String ENGINE_NAME = "sql";
 
     private final SQLStatisticCache statisticCache;
-
-    private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
 
     private static final int DEFAULT_POOL_SIZE = 10;
@@ -92,22 +76,6 @@ public class SQLStatisticEventStore extends AbstractStatistics {
             + "AND V." + SQLStatisticNames.TIME_MS + " < ?";
 
     // @formatter:on
-    /**
-     * SQL for testing querying the stat/tag names
-     * <p>
-     * create table test (name varchar(255)) ENGINE=InnoDB DEFAULT
-     * CHARSET=latin1;
-     * <p>
-     * insert into test values ('StatName1');
-     * <p>
-     * insert into test values ('StatName2¬Tag1¬Val1¬Tag2¬Val2');
-     * <p>
-     * insert into test values ('StatName2¬Tag2¬Val2¬Tag1¬Val1');
-     * <p>
-     * select * from test where name REGEXP '^StatName1(¬|$)';
-     * <p>
-     * select * from test where name REGEXP '¬Tag1¬Val1(¬|$)';
-     */
 
     private long poolAgeMsThreshold = DEFAULT_AGE_MS_THRESHOLD;
     private long aggregatorSizeThreshold = DEFAULT_SIZE_THRESHOLD;
@@ -179,10 +147,9 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     @Inject
     SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
                            final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
-                           @Named("statisticsDataSource") final DataSource statisticsDataSource, final StroomPropertyService propertyService) {
+                           final StroomPropertyService propertyService) {
         super(statisticsDataSourceValidator, statisticsDataSourceCache, propertyService);
         this.statisticCache = statisticCache;
-        this.statisticsDataSource = statisticsDataSource;
         this.propertyService = propertyService;
 
         initPool(getObjectPoolConfig());
@@ -191,10 +158,9 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     public SQLStatisticEventStore(final int poolSize, final long aggregatorSizeThreshold, final long poolAgeMsThreshold,
                                   final StatisticStoreValidator statisticsDataSourceValidator,
                                   final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
-                                  final DataSource statisticsDataSource, final StroomPropertyService propertyService) {
+                                  final StroomPropertyService propertyService) {
         super(statisticsDataSourceValidator, statisticsDataSourceCache, propertyService);
         this.statisticCache = statisticCache;
-        this.statisticsDataSource = statisticsDataSource;
 
         this.aggregatorSizeThreshold = aggregatorSizeThreshold;
         this.poolAgeMsThreshold = poolAgeMsThreshold;
@@ -335,12 +301,6 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     }
 
     @Override
-    public StatisticDataSet searchStatisticsData(final Search search, final StatisticStoreEntity dataSource) {
-        final FindEventCriteria criteria = buildCriteria(search, dataSource);
-        return performStatisticQuery(dataSource, criteria);
-    }
-
-    @Override
     public List<String> getValuesByTag(final String tagName) {
         throw new UnsupportedOperationException("Code waiting to be written");
     }
@@ -355,11 +315,6 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         throw new UnsupportedOperationException("Code waiting to be written");
     }
 
-    // @Override
-    // public void refreshMetadata() {
-    // throw new UnsupportedOperationException("Code waiting to be written");
-    // }
-
     @Override
     public String toString() {
         return "numActive=" + objectPool.getNumActive() + ", numIdle=" + objectPool.getNumIdle();
@@ -371,133 +326,5 @@ public class SQLStatisticEventStore extends AbstractStatistics {
 
     public int getNumIdle() {
         return objectPool.getNumIdle();
-    }
-
-    private StatisticDataSet performStatisticQuery(final StatisticStoreEntity dataSource,
-                                                   final FindEventCriteria criteria) {
-        final Set<StatisticDataPoint> dataPoints = new HashSet<StatisticDataPoint>();
-
-        // TODO need to fingure out how we get the precision
-        final StatisticDataSet statisticDataSet = new StatisticDataSet(dataSource.getName(),
-                dataSource.getStatisticType(), 1000L, dataPoints);
-
-        try (final Connection connection = statisticsDataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = buildSearchPreparedStatement(dataSource, criteria, connection)) {
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        final StatisticType statisticType = StatisticType.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(resultSet.getByte(SQLStatisticNames.VALUE_TYPE));
-
-                        final List<StatisticTag> statisticTags = extractStatisticTagsFromColumn(
-                                resultSet.getString(SQLStatisticNames.NAME));
-                        final long timeMs = resultSet.getLong(SQLStatisticNames.TIME_MS);
-
-                        // the precision in the table represents the number of zeros
-                        // of millisecond precision, e.g.
-                        // 6=1,000,000ms
-                        final long precisionMs = (long) Math.pow(10, resultSet.getInt(SQLStatisticNames.PRECISION));
-
-                        StatisticDataPoint statisticDataPoint;
-
-                        if (StatisticType.COUNT.equals(statisticType)) {
-                            statisticDataPoint = StatisticDataPoint.countInstance(timeMs, precisionMs, statisticTags,
-                                    resultSet.getLong(SQLStatisticNames.COUNT));
-                        } else {
-                            final double aggregatedValue = resultSet.getDouble(SQLStatisticNames.VALUE);
-                            final long count = resultSet.getLong(SQLStatisticNames.COUNT);
-
-                            // the aggregateValue is sum of all values against that
-                            // key/time. We therefore need to get the
-                            // average using the count column
-                            final double averagedValue = count != 0 ? (aggregatedValue / count) : 0;
-
-                            // min/max are not supported by SQL stats so use -1
-                            statisticDataPoint = StatisticDataPoint.valueInstance(timeMs, precisionMs, statisticTags,
-                                    averagedValue, count, -1, -1);
-                        }
-
-                        statisticDataSet.addDataPoint(statisticDataPoint);
-                    }
-                }
-            }
-        } catch (final SQLException sqlEx) {
-            LOGGER.error("performStatisticQuery failed", sqlEx);
-            throw new RuntimeException("performStatisticQuery failed", sqlEx);
-        }
-        return statisticDataSet;
-    }
-
-    /**
-     * @param columnValue The value from the STAT_KEY.NAME column which could be of the
-     *                    form 'StatName' or 'StatName¬Tag1¬Tag1Val1¬Tag2¬Tag2Val1'
-     * @return A list of {@link StatisticTag} objects built from the tag/value
-     * token pairs in the string or an empty list if there are none.
-     */
-    private List<StatisticTag> extractStatisticTagsFromColumn(final String columnValue) {
-        final String[] tokens = columnValue.split(SQLStatisticConstants.NAME_SEPARATOR);
-        final List<StatisticTag> statisticTags = new ArrayList<StatisticTag>();
-
-        if (tokens.length == 1) {
-            // no separators so there are no tags
-        } else if (tokens.length % 2 == 0) {
-            throw new RuntimeException(
-                    String.format("Expecting an odd number of tokens, columnValue: %s", columnValue));
-        } else {
-            // stat name will be at pos 0 so start at 1
-            for (int i = 1; i < tokens.length; i++) {
-                final String tag = tokens[i++];
-                String value = tokens[i];
-                if (value.equals(SQLStatisticConstants.NULL_VALUE_STRING)) {
-                    value = null;
-                }
-                final StatisticTag statisticTag = new StatisticTag(tag, value);
-                statisticTags.add(statisticTag);
-            }
-        }
-
-        return statisticTags;
-    }
-
-    private PreparedStatement buildSearchPreparedStatement(final StatisticStoreEntity dataSource,
-                                                           final FindEventCriteria criteria, final Connection connection) throws SQLException {
-        final RollUpBitMask rollUpBitMask = AbstractStatistics.buildRollUpBitMaskFromCriteria(criteria, dataSource);
-
-        final String statNameWithMask = dataSource.getName() + rollUpBitMask.asHexString();
-
-        final List<String> bindVariables = new ArrayList<>();
-
-        String sqlQuery = STAT_QUERY_SKELETON + " ";
-
-        final String whereClause = SQLTagValueWhereClauseConverter
-                .buildTagValueWhereClause(criteria.getFilterTermsTree(), bindVariables);
-
-        if (whereClause != null && whereClause.length() != 0) {
-            sqlQuery += " AND " + whereClause;
-        }
-
-        final int maxResults = propertyService.getIntProperty(PROP_KEY_SQL_SEARCH_MAX_RESULTS, 100000);
-        sqlQuery += " LIMIT " + maxResults;
-
-        LOGGER.debug("Search query: %s", sqlQuery);
-
-        final PreparedStatement ps = connection.prepareStatement(sqlQuery);
-        int position = 1;
-
-        // do a like on the name first so we can hit the index before doing the
-        // slow regex matches
-        ps.setString(position++, statNameWithMask + "%");
-        // regex to match on the stat name which is always at the start of the
-        // string and either has a
-        ps.setString(position++, "^" + statNameWithMask + "(" + SQLStatisticConstants.NAME_SEPARATOR + "|$)");
-
-        // set the start/end dates
-        ps.setLong(position++, criteria.getPeriod().getFromMs());
-        ps.setLong(position++, criteria.getPeriod().getToMs());
-
-        for (final String bindVariable : bindVariables) {
-            ps.setString(position++, bindVariable);
-        }
-
-        return ps;
     }
 }

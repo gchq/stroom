@@ -16,17 +16,12 @@
 
 package stroom.statistics.sql;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-
+import stroom.entity.server.util.SqlBuilder;
 import stroom.statistics.common.FilterOperationMode;
 import stroom.statistics.common.FilterTermsTree;
 import stroom.statistics.common.FilterTermsTree.OperatorNode;
@@ -34,24 +29,10 @@ import stroom.statistics.common.FilterTermsTree.TermNode;
 import stroom.statistics.common.PrintableNode;
 import stroom.util.test.StroomUnitTest;
 
+import java.util.Arrays;
+import java.util.regex.Matcher;
+
 public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
-    private static class Result {
-        private final String whereClause;
-        private final List<String> bindVariables;
-
-        public Result(final String whereClause, final List<String> bindVariables) {
-            this.whereClause = whereClause;
-            this.bindVariables = bindVariables;
-        }
-
-        public String getWhereClause() {
-            return whereClause;
-        }
-
-        public List<String> getBindVariables() {
-            return bindVariables;
-        }
-    }
 
     @Rule
     public TestName testName = new TestName();
@@ -68,9 +49,9 @@ public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
 
         final FilterTermsTree tree = new FilterTermsTree(termNode);
 
-        final Result result = convertAndDump(tree);
+        final SqlBuilder sqlBuilder = convertAndDump(tree);
 
-        checkExpectedBinds(1, result);
+        checkExpectedBinds(1, sqlBuilder);
     }
 
     @Test
@@ -81,10 +62,10 @@ public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
 
         final FilterTermsTree tree = new FilterTermsTree(opNode);
 
-        final Result result = convertAndDump(tree);
+        final SqlBuilder sqlBuilder = convertAndDump(tree);
 
-        checkExpectedBinds(2, result);
-        checkExpectedOperatorCount(1, "AND", result);
+        checkExpectedBinds(2, sqlBuilder);
+        checkExpectedOperatorCount(2, "AND", sqlBuilder);
     }
 
     @Test
@@ -100,32 +81,33 @@ public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
 
         final FilterTermsTree tree = new FilterTermsTree(rootOpNode);
 
-        final Result result = convertAndDump(tree);
+        final SqlBuilder sqlBuilder = convertAndDump(tree);
 
-        checkExpectedBinds(3, result);
-        checkExpectedOperatorCount(2, "AND", result);
-        checkExpectedOperatorCount(1, "NOT", result);
+        checkExpectedBinds(3, sqlBuilder);
+        checkExpectedOperatorCount(3, "AND", sqlBuilder);
+        checkExpectedOperatorCount(1, "NOT", sqlBuilder);
     }
 
-    private void checkExpectedBinds(final int expectedCount, final Result result) {
-        Assert.assertEquals(expectedCount, result.getBindVariables().size());
-        Assert.assertEquals(expectedCount, getNumOfOccurrences(result.getWhereClause(), "?"));
+    private void checkExpectedBinds(final int expectedCount, final SqlBuilder sqlBuilder) {
+        Assert.assertEquals(expectedCount, sqlBuilder.getArgCount());
+        Assert.assertEquals(expectedCount, getNumOfOccurrences(sqlBuilder.toString(), "?"));
     }
 
-    private void checkExpectedOperatorCount(final int expectedCount, final String operator, final Result result) {
-        Assert.assertEquals(expectedCount, getNumOfOccurrences(result.getWhereClause(), operator));
+    private void checkExpectedOperatorCount(final int expectedCount, final String operator, final SqlBuilder sqlBuilder) {
+        Assert.assertEquals(expectedCount, getNumOfOccurrences(sqlBuilder.toString(), operator));
     }
 
-    private Result convertAndDump(final FilterTermsTree tree) {
-        final List<String> bindVariables = new ArrayList<>();
+    private SqlBuilder convertAndDump(final FilterTermsTree tree) {
+        SqlBuilder sqlBuilder = new SqlBuilder();
 
-        final String whereClause = SQLTagValueWhereClauseConverter.buildTagValueWhereClause(tree, bindVariables);
-        String sql = whereClause;
+        SQLTagValueWhereClauseConverter.buildTagValueWhereClause(tree, sqlBuilder);
 
-        System.out.println(whereClause);
+        String sql = sqlBuilder.toString();
+
+        System.out.println(sql);
 
         int i = 1;
-        for (final String bindVariable : bindVariables) {
+        for (final Object bindVariable : sqlBuilder.getArgs()) {
             System.out.println("bind " + i + ": " + bindVariable);
             i++;
 
@@ -136,7 +118,7 @@ public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
 
         System.out.println("SQL: " + sql);
 
-        return new Result(whereClause, bindVariables);
+        return sqlBuilder;
 
     }
 
