@@ -126,7 +126,9 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
                 // Set up the results flowable, the serach wont be executed until subscribe is called
                 Flowable<String[]> searchResultsFlowable = statisticsSearchService.search(
-                        entity, criteria, fieldIndexMap);
+                        entity, criteria, fieldIndexMap, task);
+
+                taskMonitor.info(task.getSearchName() + " - executing database query");
 
                 // subscribe to the flowable, mapping each resultSet to a String[]
                 // If the task is canceled, the flowable produced by search() will stop emitting
@@ -151,6 +153,8 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
             // Let the result handler know search has finished.
             resultCollector.getResultHandler().setComplete(true);
+
+            taskMonitor.info(task.getSearchName() + " - complete");
 
             return VoidResult.INSTANCE;
 

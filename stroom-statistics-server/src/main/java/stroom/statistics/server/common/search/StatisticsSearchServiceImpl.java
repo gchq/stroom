@@ -5,6 +5,7 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.entity.server.util.PreparedStatementUtil;
@@ -20,6 +21,7 @@ import stroom.statistics.sql.SQLStatisticNames;
 import stroom.statistics.sql.SQLTagValueWhereClauseConverter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
@@ -36,9 +38,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Component
+@Scope(value = StroomScope.TASK)
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
@@ -96,7 +100,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @Override
     public Flowable<String[]> search(final StatisticStoreEntity statisticStoreEntity,
                                      final FindEventCriteria criteria,
-                                     final FieldIndexMap fieldIndexMap) {
+                                     final FieldIndexMap fieldIndexMap,
+                                     final StatStoreSearchTask task) {
         // build the sql from the criteria
         // TODO currently all cols are returned even if we don't need them as we have to handle the
         // needs of multiple coprocessors
@@ -106,7 +111,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         // required by all coprocessors
         Function<ResultSet, String[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
 
-        Flowable<ResultSet> flowableQueryResults = getFlowableQueryResults(sql);
+        Flowable<ResultSet> flowableQueryResults = getFlowableQueryResults(sql, task);
 
         // the query will not be executed until somebody subscribes to the flowable
         return flowableQueryResults
@@ -358,8 +363,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-    private Flowable<ResultSet> getFlowableQueryResults(final SqlBuilder sql) {
+    private Flowable<ResultSet> getFlowableQueryResults(final SqlBuilder sql, final StatStoreSearchTask task) {
 
+        AtomicLong counter = new AtomicLong(0);
         //Not thread safe as each onNext will get the same ResultSet instance, however its position
         // will have mode on each time.
         Flowable<ResultSet> resultSetFlowable = Flowable
@@ -383,13 +389,19 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                         //advance the resultSet, if it is a row emit it, else finish the flow
                                         if (rs.next() && !taskMonitor.isTerminated()) {
                                             LOGGER.trace("calling onNext");
+                                            long currentCount = counter.incrementAndGet();
+                                            if (currentCount % 1000 == 0) {
+                                                taskMonitor.info(task.getSearchName() +
+                                                        " - running database query (" + currentCount + " rows fetched)");
+                                            }
                                             emitter.onNext(rs);
                                         } else {
                                             LOGGER.debug("calling onComplete");
+                                            taskMonitor.info(task.getSearchName() +
+                                                    " - completed database query (" + counter.get() + " rows fetched)");
                                             emitter.onComplete();
                                         }
                                     });
-
                         },
                         PreparedStatementResourceHolder::dispose);
 
@@ -455,7 +467,6 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             }
             try {
                 preparedStatement = connection.prepareStatement(sql.toString());
-                preparedStatement.setFetchSize(200);
 
                 PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
                 LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement.toString()));
