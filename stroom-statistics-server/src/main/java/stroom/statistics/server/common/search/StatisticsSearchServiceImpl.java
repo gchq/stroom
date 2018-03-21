@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unused") //called by DI
 @Component
 @Scope(value = StroomScope.TASK)
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
@@ -208,6 +209,19 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 arr[fieldIndex] = getResultSetLong(rs, columnName);
     }
 
+    private ValueExtractor buildTagFieldValueExtractor(final String fieldName, final int fieldIndex) {
+        return (rs, arr, cache) -> {
+            String value = cache.get(fieldName);
+            if (value == null) {
+                //populate our cache of
+                extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME))
+                        .forEach(cache::put);
+            }
+            value = cache.get(fieldName);
+            arr[fieldIndex] = value;
+        };
+    }
+
     /**
      * Build a mapper function that will only extarct the bits of the row
      * of interest.
@@ -238,11 +252,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                     } else {
                         ValueExtractor extractor;
                         if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
-                            extractor = (rs, arr, cache) ->
-                                    arr[idx] = getResultSetLong(rs, SQLStatisticNames.TIME_MS);
+                            extractor = buildLongValueExtractor(SQLStatisticNames.TIME_MS, idx);
                         } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_COUNT)) {
-                            extractor = (rs, arr, cache) ->
-                                    arr[idx] = getResultSetLong(rs, SQLStatisticNames.COUNT);
+                            extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
                         } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_PRECISION_MS)) {
                             extractor = (rs, arr, cache) -> {
 
@@ -264,9 +276,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             };
                         } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_VALUE)) {
                             if (statisticStoreEntity.getStatisticType().equals(StatisticType.COUNT)) {
-                                extractor = (rs, arr, cache) ->
-                                        arr[idx] = getResultSetLong(rs, SQLStatisticNames.COUNT);
+                                extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
                             } else {
+                                //value stat
                                 extractor = (rs, arr, cache) -> {
 
                                     final double aggregatedValue;
@@ -285,25 +297,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
                                     arr[idx] = Double.toString(averagedValue);
                                 };
-
                             }
                         } else if (statisticStoreEntity.getFieldNames().contains(fieldName)) {
                             // this is a tag field so need to extract the tags/values from the NAME col.
                             // We only want to do this extraction once so we cache the values
-
-                            extractor = (rs, arr, cache) -> {
-                                String value = cache.get(fieldName);
-                                if (value == null) {
-                                    //populate our cache of
-                                    extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME))
-                                            .forEach(cache::put);
-                                }
-                                value = cache.get(fieldName);
-//                                if (value == null) {
-//                                    throw new RuntimeException("Value should never be null");
-//                                }
-                                arr[idx] = value;
-                            };
+                            extractor = buildTagFieldValueExtractor(fieldName, idx);
                         } else {
                             throw new RuntimeException(String.format("Unexpected fieldName %s", fieldName));
                         }
@@ -319,7 +317,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
         final int arrSize = fieldIndexMap.size();
 
-        //the mapping function that will be used on each row in the resultSet
+        //the mapping function that will be used on each row in the resultSet, that makes use of the ValueExtractors
+        //created above
         return rs -> {
             Preconditions.checkNotNull(rs);
             if (rs.isClosed()) {
@@ -327,10 +326,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             }
             //the data array we are populating
             final String[] data = new String[arrSize];
-            //state to hold while mapping this row
+            //state to hold while mapping this row, used to save parsing the NAME col multiple times
             final Map<String, String> fieldValueCache = new HashMap<>();
 
-            //run each of our field extractors against the resultSet to fill up the data arr
+            //run each of our field value extractors against the resultSet to fill up the data arr
             valueExtractors.forEach(valueExtractor ->
                     valueExtractor.extract(rs, data, fieldValueCache));
 
@@ -363,7 +362,6 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private Flowable<ResultSet> getFlowableQueryResults(final SqlBuilder sql) {
 
-//        AtomicLong counter = new AtomicLong(0);
         //Not thread safe as each onNext will get the same ResultSet instance, however its position
         // will have mode on each time.
         Flowable<ResultSet> resultSetFlowable = Flowable
@@ -444,6 +442,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                      final String[] data,
                      final Map<String, String> fieldValueCache);
     }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     private static class PreparedStatementResourceHolder {
         private Connection connection;
