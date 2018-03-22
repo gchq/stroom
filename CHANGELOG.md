@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-alpha.18]
+
+* Issue **#698** : Migration of Processing Filters now protects against folders that have since been deleted
+
 * Issue **#634** : Remove excessive thread sleeping in index shard searching. Sleeps were causing a significant percentage of inactivity and increasing memory use as data backed up. Add more logging and logging of durations of chunks of code. Add an integration test for testing index searching for large data volumes.
 
 * Issue **#659** : Made format-date XSLT function default year if none specified to the year the data was received unless this would make the date later then the received time in which case a year is subtracted.
@@ -834,7 +838,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.17...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.18...6.0
+[v6.0-alpha.18]: https://github.com/gchq/stroom/compare/v6.0-alpha.17...v6.0-alpha.18
 [v6.0-alpha.17]: https://github.com/gchq/stroom/compare/v6.0-alpha.16...v6.0-alpha.17
 [v6.0-alpha.16]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...v6.0-alpha.16
 [v6.0-alpha.15]: https://github.com/gchq/stroom/compare/v6.0-alpha.14...v6.0-alpha.15
