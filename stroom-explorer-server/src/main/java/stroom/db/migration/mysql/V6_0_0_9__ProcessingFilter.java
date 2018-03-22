@@ -120,11 +120,11 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
             try {
                 final QueryData queryData = this.convertFindStreamCriteria(connection,
                         criteriaEntry.getValue(),
-                        feedNamesById,
-                        streamTypeNamesById,
-                        pipeNamesById,
+                        l -> Optional.ofNullable(feedNamesById.get(l)),
+                        l -> Optional.ofNullable(streamTypeNamesById.get(l)),
+                        l -> Optional.ofNullable(pipeNamesById.get(l)),
                         folderByFeedId,
-                        folders,
+                        l -> Optional.ofNullable(folders.get(l)),
                         dictionariesByFolder);
                 final String queryDataStr = this.marshalQueryData(queryData);
                 queryDataStrById.put(criteriaEntry.getKey(), queryDataStr);
@@ -173,11 +173,11 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
 
     private QueryData convertFindStreamCriteria(final Connection connection,
                                                 final OldFindStreamCriteria criteria,
-                                                final Map<Long, String> feedNamesById,
-                                                final Map<Long, String> streamTypeNamesById,
-                                                final Map<Long, String> pipeNamesById,
+                                                final Function<Long, Optional<String>> feedNamesById,
+                                                final Function<Long, Optional<String>> streamTypeNamesById,
+                                                final Function<Long, Optional<String>> pipeNamesById,
                                                 final Map<Long, Long> folderByFeedId,
-                                                final Map<Long, IdTreeNode> folders,
+                                                final Function<Long, Optional<IdTreeNode>> folders,
                                                 final ConcurrentHashMap<Long, Optional<DocRef>> dictionariesByFolder) {
 
         final ExpressionOperator.Builder rootAnd = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
@@ -186,20 +186,29 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         final List<Optional<DocRef>> feedDictionariesToInclude = new ArrayList<>();
 
         for (final Long folderId : criteria.obtainFolderIdSet()) {
-            final IdTreeNode folderNode = folders.get(folderId);
-            final List<Long> folderIds = new ArrayList<>();
-            folderNode.recurse(folderIds::add, criteria.obtainFolderIdSet().isDeep());
+            final Optional<IdTreeNode> folderNodeOpt = folders.apply(folderId);
 
-            final Set<String> feedNames = folderByFeedId.entrySet().stream()
-                    .filter(e -> folderIds.contains(e.getValue()))
-                    .map(Map.Entry::getKey)
-                    .map(feedNamesById::get)
-                    .collect(Collectors.toSet());
+            if (folderNodeOpt.isPresent()) {
+                IdTreeNode folderNode = folderNodeOpt.get();
 
-            final Optional<DocRef> feedIdDict = dictionariesByFolder.computeIfAbsent(folderId,
-                    fid -> createDictionary(connection, fid, criteria.obtainFolderIdSet().isDeep(), feedNames)
-            );
-            feedDictionariesToInclude.add(feedIdDict);
+                final List<Long> folderIds = new ArrayList<>();
+                folderNode.recurse(folderIds::add, criteria.obtainFolderIdSet().isDeep());
+
+                final Set<String> feedNames = folderByFeedId.entrySet().stream()
+                        .filter(e -> folderIds.contains(e.getValue()))
+                        .map(Map.Entry::getKey)
+                        .map(feedNamesById)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toSet());
+
+                final Optional<DocRef> feedIdDict = dictionariesByFolder.computeIfAbsent(folderId,
+                        fid -> createDictionary(connection, fid, criteria.obtainFolderIdSet().isDeep(), feedNames)
+                );
+                feedDictionariesToInclude.add(feedIdDict);
+            } else {
+                LOGGER.warn("Could not find folder for ID {}", folderId);
+            }
         }
 
         // Include Feeds
@@ -207,7 +216,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         final Set<Long> includeFeedIds = criteria.obtainFeeds().obtainInclude().getSet();
         if ((includeFeedIds.size() > 0) && (feedDictionariesToInclude.size() > 0)) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-            applyIncludesTerm(or, includeFeedIds, feedNamesById::get, StreamDataSource.FEED);
+            applyIncludesTerm(or, includeFeedIds, feedNamesById, StreamDataSource.FEED);
             feedDictionariesToInclude.stream()
                     .filter(Optional::isPresent)
                     .map(Optional::get)
@@ -221,7 +230,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     );
             rootAnd.addOperator(or.build());
         } else if (includeFeedIds.size() > 0) {
-            applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById::get, StreamDataSource.FEED);
+            applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById, StreamDataSource.FEED);
         } else if (feedDictionariesToInclude.size() > 0) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
             feedDictionariesToInclude.stream()
@@ -242,21 +251,21 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         final Set<Long> excludeFeedIds = criteria.obtainFeeds().obtainExclude().getSet();
         if (excludeFeedIds.size() > 0) {
             final ExpressionOperator.Builder not = new ExpressionOperator.Builder(ExpressionOperator.Op.NOT);
-            applyIncludesTerm(not, excludeFeedIds, feedNamesById::get, StreamDataSource.FEED);
+            applyIncludesTerm(not, excludeFeedIds, feedNamesById, StreamDataSource.FEED);
             rootAnd.addOperator(not.build());
         }
 
         // Stream Types
         final Set<Long> streamTypeIds = criteria.obtainStreamTypeIdSet().getSet();
-        applyIncludesTerm(rootAnd, streamTypeIds, streamTypeNamesById::get, StreamDataSource.STREAM_TYPE);
+        applyIncludesTerm(rootAnd, streamTypeIds, streamTypeNamesById, StreamDataSource.STREAM_TYPE);
 
         // Pipeline
         final Set<Long> pipelineIds = criteria.obtainPipelineIdSet().getSet();
-        applyIncludesTerm(rootAnd, pipelineIds, pipeNamesById::get, StreamDataSource.PIPELINE);
+        applyIncludesTerm(rootAnd, pipelineIds, pipeNamesById, StreamDataSource.PIPELINE);
 
         // Parent Stream ID
         final Set<Long> parentStreamIds = criteria.obtainParentStreamIdSet().getSet();
-        applyIncludesTerm(rootAnd, parentStreamIds, Object::toString, StreamDataSource.PARENT_STREAM_ID);
+        applyIncludesTerm(rootAnd, parentStreamIds, i -> Optional.of(i.toString()), StreamDataSource.PARENT_STREAM_ID);
 
         // Stream ID, two clauses feed into this, absolute stream ID values and ranges
         final Set<Long> streamIds = criteria.obtainStreamIdSet().getSet();
@@ -264,7 +273,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         if ((streamIds.size() > 0) || streamIdRange.isConstrained()) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
 
-            applyIncludesTerm(or, streamIds, Object::toString, StreamDataSource.STREAM_ID);
+            applyIncludesTerm(or, streamIds, i -> Optional.of(i.toString()), StreamDataSource.STREAM_ID);
             applyBoundedTerm(or, streamIdRange, StreamDataSource.STREAM_ID, Object::toString);
 
             rootAnd.addOperator(or.build());
@@ -449,14 +458,25 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
 
     private <T> void applyIncludesTerm(final ExpressionOperator.Builder parentTerm,
                                       final Set<T> rawTerms,
-                                      final Function<T, String> toString,
+                                      final Function<T, Optional<String>> toString,
                                       final String fieldName) {
         if (rawTerms.size() > 1) {
-            final String values = rawTerms.stream().map(toString).collect(Collectors.joining(IN_CONDITION_DELIMITER));
+            final String values = rawTerms.stream()
+                    .map(l -> {
+                        final Optional<String> value = toString.apply(l);
+                        if (!value.isPresent()) {
+                            LOGGER.warn("Could not find value for {} in field {}", l, fieldName);
+                        }
+                        return value;
+                    })
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.joining(IN_CONDITION_DELIMITER));
             parentTerm.addTerm(fieldName, ExpressionTerm.Condition.IN, values);
         } else if (rawTerms.size() == 1) {
-            final String value = toString.apply(rawTerms.iterator().next());
-            parentTerm.addTerm(fieldName, ExpressionTerm.Condition.EQUALS, value);
+            toString.apply(rawTerms.iterator().next()).ifPresent(value ->
+                parentTerm.addTerm(fieldName, ExpressionTerm.Condition.EQUALS, value)
+            );
         }
     }
 
