@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#700** : The format-date XSLT function now defaults years, months and days to the stream receipt time regardless of whether the input date pattern specifies them.
 
-* Issue **#657** : Change SQL Stats query code to process/transform the data as it comes back from the database rather than holding the full resultset before processing. This will reduce memory overhead and improv performance.
+* Issue **#657** : Change SQL Stats query code to process/transform the data as it comes back from the database rather than holding the full resultset before processing. This will reduce memory overhead and improve performance.
 
 * Issue **#634** : Remove excessive thread sleeping in index shard searching. Sleeps were causing a significant percentage of inactivity and increasing memory use as data backed up. Add more logging and logging of durations of chunks of code. Add an integration test for testing index searching for large data volumes.
 
