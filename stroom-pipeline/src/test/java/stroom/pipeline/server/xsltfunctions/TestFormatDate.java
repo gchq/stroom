@@ -46,6 +46,6 @@ public class TestFormatDate extends StroomUnitTest {
     }
 
     private String test(final FormatDate formatDate, final String pattern, final String date) {
-        return DateUtil.createNormalDateTimeString(formatDate.parseDateWithoutYear(null, "UTC", pattern, date));
+        return DateUtil.createNormalDateTimeString(formatDate.parseDate(null, "UTC", pattern, date));
     }
 }
