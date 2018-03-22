@@ -462,7 +462,13 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                                       final String fieldName) {
         if (rawTerms.size() > 1) {
             final String values = rawTerms.stream()
-                    .map(toString)
+                    .map(l -> {
+                        final Optional<String> value = toString.apply(l);
+                        if (!value.isPresent()) {
+                            LOGGER.warn("Could not find value for {} in field {}", l, fieldName);
+                        }
+                        return value;
+                    })
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .collect(Collectors.joining(IN_CONDITION_DELIMITER));
