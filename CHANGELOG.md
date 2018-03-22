@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#701** : The search `maxDocIdQueueSize` is now 1000 by default.
+
 * Issue **#700** : The format-date XSLT function now defaults years, months and days to the stream receipt time regardless of whether the input date pattern specifies them.
 
 * Issue **#657** : Change SQL Stats query code to process/transform the data as it comes back from the database rather than holding the full resultset before processing. This will reduce memory overhead and improv performance.

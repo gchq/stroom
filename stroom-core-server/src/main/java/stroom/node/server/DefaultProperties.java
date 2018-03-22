@@ -346,7 +346,7 @@ public class DefaultProperties {
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.shard.maxDocIdQueueSize")
-                .value("1000000")
+                .value("1000")
                 .description("The maximum number of doc ids that will be queued ready for stored data to be retrieved from the index shard")
                 .editable(true)
                 .build());
