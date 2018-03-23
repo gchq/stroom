@@ -18,10 +18,13 @@ package stroom.search.taskqueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.task.StroomThreadGroup;
+import stroom.util.thread.CustomThreadFactory;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
@@ -42,17 +45,22 @@ public abstract class TaskExecutor {
     private final ReentrantLock taskLock = new ReentrantLock();
     private final Condition condition = taskLock.newCondition();
 
-    private final Executor executor;
+    private final String name;
+    private volatile ExecutorService executor;
     private volatile boolean running;
     private volatile boolean shutdown;
 
-    public TaskExecutor(final Executor executor) {
-        this.executor = executor;
+    public TaskExecutor(final String name) {
+        this.name = name;
     }
 
     private synchronized void start() {
         if (!running && !shutdown) {
             running = true;
+
+            final ThreadGroup poolThreadGroup = new ThreadGroup(StroomThreadGroup.instance(), name);
+            final CustomThreadFactory threadFactory = new CustomThreadFactory(name, poolThreadGroup, 5);
+            executor = Executors.newSingleThreadExecutor(threadFactory);
             executor.execute(() -> {
                 while (running) {
                     taskLock.lock();
@@ -79,6 +87,7 @@ public abstract class TaskExecutor {
             running = false;
             // Wake up any waiting threads.
             signalAll();
+            executor.shutdown();
         }
     }
 
