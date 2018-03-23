@@ -169,7 +169,6 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
                 this::createTableSettings,
                 extractValues,
                 resultMapConsumer,
-                1_000,
                 5,
                 5,
                 indexService,

@@ -32,11 +32,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-@Singleton
 public class ClusterWorkerImpl implements ClusterWorker {
     public static final String BEAN_NAME = "clusterWorker";
     static final String EXEC_ASYNC_METHOD = "execAsync";
     static final Class<?>[] EXEC_ASYNC_METHOD_ARGS = {ClusterTask.class, Node.class, TaskId.class, CollectorId.class};
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterWorkerImpl.class);
     private static final Long DEBUG_RESPONSE_DELAY = null;
     private static final String EXEC_ASYNC = "execAsync";
@@ -137,12 +137,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
             while (!done && tryCount <= 10) {
                 try {
                     // Trace attempt to send result.
-                    LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})",
-                            new Object[]{
-                                    task.getTaskName(),
-                                    sourceNode.getName(),
-                                    tryCount
-                            });
+                    LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})", task.getTaskName(), sourceNode.getName(), tryCount);
                     // Send result.
                     ok = clusterCallService.call(targetNode, sourceNode, ClusterDispatchAsyncImpl.BEAN_NAME,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD,

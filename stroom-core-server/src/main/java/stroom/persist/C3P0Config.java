@@ -23,12 +23,12 @@ import java.util.Objects;
 public class C3P0Config {
     private static final int MAX_STATEMENTS = 0;
     private static final int MAX_STATEMENTS_PER_CONNECTION = 0;
-    private static final int INITIAL_POOL_SIZE = 3;
-    private static final int MIN_POOL_SIZE = 3;
-    private static final int MAX_POOL_SIZE = 15;
+    private static final int INITIAL_POOL_SIZE = 1;
+    private static final int MIN_POOL_SIZE = 1;
+    private static final int MAX_POOL_SIZE = 10;
     private static final int IDLE_CONNECTION_TEST_PERIOD = 0;  //idle connections never tested
     private static final int MAX_IDLE_TIME = 0;  //seconds, 0 means connections never expire
-    private static final int ACQUIRE_INCREMENT = 3;
+    private static final int ACQUIRE_INCREMENT = 1;
     private static final int ACQUIRE_RETRY_ATTEMPTS = 30;
     private static final int ACQUIRE_RETRY_DELAY = 1000; //milliseconds
     private static final int CHECKOUT_TIMEOUT = 0;    //milliseconds
@@ -37,7 +37,7 @@ public class C3P0Config {
     private static final int MAX_CONNECTION_AGE = 0;    //seconds
     private static final int UNRETURNED_CONNECTION_TIMEOUT = 0;    //seconds
     private static final int STATEMENT_CACHE_NUM_DEFERRED_CLOSE_THREADS = 0;
-    private static final int NUM_HELPER_THREADS = 3;
+    private static final int NUM_HELPER_THREADS = 1;
 
     private static final String PROP_MAX_STATEMENTS = "maxStatements";
     private static final String PROP_MAX_STATEMENTS_PER_CONNECTION = "maxStatementsPerConnection";

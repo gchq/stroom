@@ -21,8 +21,6 @@ import org.apache.lucene.search.SearcherManager;
 import stroom.index.shared.IndexShard;
 
 public interface IndexShardSearcher {
-    IndexWriter getWriter();
-
     SearcherManager getSearcherManager();
 
     IndexShard getIndexShard();

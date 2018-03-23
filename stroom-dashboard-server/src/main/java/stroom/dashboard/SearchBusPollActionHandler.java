@@ -118,7 +118,7 @@ public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPol
     }
 
     private SearchResponse processRequest(final ActiveQueries activeQueries, final DashboardQueryKey queryKey, final SearchRequest searchRequest) {
-        SearchResponse result = null;
+        SearchResponse result;
 
         boolean newSearch = false;
         final Search search = searchRequest.getSearch();
@@ -128,7 +128,7 @@ public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPol
                 // Make sure we have active queries for all current UI queries.
                 // Note: This also ensures that the active query cache is kept alive
                 // for all open UI components.
-                ActiveQuery activeQuery = activeQueries.getExistingQuery(queryKey);
+                final ActiveQuery activeQuery = activeQueries.getExistingQuery(queryKey);
 
                 // If the query doesn't have an active query for this query key then
                 // this is new.
@@ -136,7 +136,7 @@ public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPol
                     newSearch = true;
 
                     // Store the new active query for this query.
-                    activeQuery = activeQueries.addNewQuery(queryKey, search.getDataSourceRef());
+                    activeQueries.addNewQuery(queryKey, search.getDataSourceRef());
 
                     // Add this search to the history so the user can get back to this
                     // search again.

@@ -27,6 +27,4 @@ public interface IndexShardSearcherCache extends Clearable {
     long getMaxOpenShards();
 
     void setMaxOpenShards(long maxOpenShards);
-
-    void refresh();
 }

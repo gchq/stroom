@@ -23,7 +23,6 @@ import stroom.cluster.ClusterCallService;
 import stroom.node.shared.Node;
 import stroom.task.CurrentTaskState;
 import stroom.task.GenericServerTask;
-import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
@@ -36,17 +35,16 @@ import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Singleton;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Entry to point to distribute cluster tasks in system.
  */
-@Singleton
 public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
-    public static final String BEAN_NAME = "clusterDispatchAsync";
-    public static final String RECEIVE_RESULT_METHOD = "receiveResult";
-    public static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
+    static final String BEAN_NAME = "clusterDispatchAsync";
+    static final String RECEIVE_RESULT_METHOD = "receiveResult";
+    private static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
     static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = {ClusterTask.class, Node.class, TaskId.class,
             CollectorId.class, SharedObject.class, Throwable.class, Boolean.class};
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncImpl.class);
@@ -56,7 +54,6 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     private final TaskManager taskManager;
     private final ClusterResultCollectorCache collectorCache;
     private final ClusterCallService clusterCallService;
-    private String receiveResult;
 
     @Inject
     ClusterDispatchAsyncImpl(final TaskManager taskManager,
@@ -120,13 +117,11 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
             }
 
             // Create a task to make the cluster call.
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Calling node '");
-            sb.append(targetNode.getName());
-            sb.append("' for task '");
-            sb.append(clusterTask.getTaskName());
-            sb.append("'");
-            final String message = sb.toString();
+            final String message = "Calling node '" +
+                    targetNode.getName() +
+                    "' for task '" +
+                    clusterTask.getTaskName() +
+                    "'";
 
             final GenericServerTask clusterCallTask = GenericServerTask.create(sourceTask, clusterTask.getUserToken(), "Cluster call", message);
             // Create a runnable so we can execute the remote call
@@ -170,11 +165,11 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     public <R extends SharedObject> Boolean receiveResult(final stroom.task.cluster.ClusterTask<R> task,
                                                           final Node targetNode, final TaskId sourceTaskId, final CollectorId collectorId, final R result,
                                                           final Throwable throwable, final Boolean success) {
-        boolean successfullyReceived = false;
+        final AtomicBoolean successfullyReceived = new AtomicBoolean();
 
-        DebugTrace.debugTraceIn(task, receiveResult, success);
+        DebugTrace.debugTraceIn(task, RECEIVE_RESULT, success);
         try {
-            LOGGER.debug("{}() - {} {}", new Object[]{RECEIVE_RESULT, task, targetNode});
+            LOGGER.debug("{}() - {} {}", RECEIVE_RESULT, task, targetNode);
 
             // Get the source id and check it is valid.
             if (sourceTaskId == null) {
@@ -195,8 +190,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                 final ClusterResultCollector<R> collector = (ClusterResultCollector<R>) collectorCache.get(collectorId);
                 if (collector == null) {
                     // There is no collector to receive this result.
-                    LOGGER.error("{}() - collector gone away - {} {}",
-                            new Object[]{RECEIVE_RESULT, task.getTaskName(), sourceTask});
+                    LOGGER.error("{}() - collector gone away - {} {}", RECEIVE_RESULT, task.getTaskName(), sourceTask);
 
                 } else {
                     // Make sure the collector is happy to receive this result.
@@ -228,22 +222,10 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                                 }
                             } finally {
                                 if (LOGGER.isDebugEnabled()) {
-                                    LOGGER.debug("{}() - collector {} {} took {}",
-                                            new Object[]{
-                                                    RECEIVE_RESULT,
-                                                    task.getTaskName(),
-                                                    sourceTask,
-                                                    logExecutionTime
-                                            });
+                                    LOGGER.debug("{}() - collector {} {} took {}", RECEIVE_RESULT, task.getTaskName(), sourceTask, logExecutionTime);
                                 }
                                 if (logExecutionTime.getDuration() > 1000) {
-                                    LOGGER.warn("{}() - collector {} {} took {}",
-                                            new Object[]{
-                                                    RECEIVE_RESULT,
-                                                    task.getTaskName(),
-                                                    sourceTask,
-                                                    logExecutionTime
-                                            });
+                                    LOGGER.warn("{}() - collector {} {} took {}", RECEIVE_RESULT, task.getTaskName(), sourceTask, logExecutionTime);
                                 }
                             }
                         });
@@ -253,7 +235,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                         // HTTP connection longer than necessary.
                         LOGGER.trace(message);
                         taskManager.execAsync(genericServerTask, THREAD_POOL);
-                        successfullyReceived = true;
+                        successfullyReceived.set(true);
                     }
                 }
             }
@@ -264,6 +246,6 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
             DebugTrace.debugTraceOut(task, RECEIVE_RESULT, success);
         }
 
-        return successfullyReceived;
+        return successfullyReceived.get();
     }
 }

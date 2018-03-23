@@ -18,7 +18,6 @@ package stroom.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.common.v2.CompletionListener;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
@@ -27,20 +26,15 @@ import stroom.util.shared.HasTerminate;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EventSearchResultHandler implements ResultHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchResultHandler.class);
 
-    private final AtomicBoolean complete = new AtomicBoolean();
     private final LinkedBlockingQueue<EventRefs> pendingMerges = new LinkedBlockingQueue<>();
     private final AtomicBoolean merging = new AtomicBoolean();
     private volatile EventRefs streamReferences;
-    private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
 
     @Override
     public void handle(final Map<CoprocessorKey, Payload> payloadMap, final HasTerminate hasTerminate) {
@@ -59,7 +53,7 @@ public class EventSearchResultHandler implements ResultHandler {
     public void add(final EventRefs eventRefs, final HasTerminate hasTerminate) {
         if (eventRefs != null) {
             if (hasTerminate.isTerminated()) {
-                terminate();
+                throw new RuntimeException("Terminated");
 
             } else {
                 // Add the new queue to the pending merge queue ready for merging.
@@ -67,6 +61,7 @@ public class EventSearchResultHandler implements ResultHandler {
                     pendingMerges.put(eventRefs);
                 } catch (final InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
+                    throw new RuntimeException(e.getMessage(), e);
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
@@ -82,7 +77,7 @@ public class EventSearchResultHandler implements ResultHandler {
         if (merging.compareAndSet(false, true)) {
             try {
                 if (hasTerminate.isTerminated()) {
-                    terminate();
+                    throw new RuntimeException("Terminated");
 
                 } else {
                     EventRefs eventRefs = pendingMerges.poll();
@@ -95,7 +90,7 @@ public class EventSearchResultHandler implements ResultHandler {
                         }
 
                         if (hasTerminate.isTerminated()) {
-                            terminate();
+                            throw new RuntimeException("Terminated");
                         }
 
                         eventRefs = pendingMerges.poll();
@@ -106,7 +101,7 @@ public class EventSearchResultHandler implements ResultHandler {
             }
 
             if (hasTerminate.isTerminated()) {
-                terminate();
+                throw new RuntimeException("Terminated");
             }
 
             // Make sure we don't fail to merge items from the queue that have
@@ -126,39 +121,6 @@ public class EventSearchResultHandler implements ResultHandler {
         }
     }
 
-    @Override
-    public boolean shouldTerminateSearch() {
-        return false;
-    }
-
-    @Override
-    public boolean isComplete() {
-        return complete.get();
-    }
-
-    @Override
-    public void setComplete(final boolean complete) {
-        boolean previousValue = this.complete.get();
-        this.complete.set(complete);
-        if (complete && previousValue != complete) {
-            //now notify any listeners
-            for (CompletionListener listener; (listener = completionListeners.poll()) != null; ) {
-                //when notified they will check isComplete
-                listener.onCompletion();
-            }
-        }
-    }
-
-    @Override
-    public void registerCompletionListener(final CompletionListener completionListener) {
-        if (isComplete()) {
-            //immediate notification
-            completionListener.onCompletion();
-        } else {
-            completionListeners.add(Objects.requireNonNull(completionListener));
-        }
-    }
-
     public EventRefs getStreamReferences() {
         return streamReferences;
     }
@@ -166,11 +128,5 @@ public class EventSearchResultHandler implements ResultHandler {
     @Override
     public Data getResultStore(final String componentId) {
         return null;
-    }
-
-    private void terminate() {
-        // Clear the queue if we should terminate.
-        pendingMerges.clear();
-        completionListeners.clear();
     }
 }

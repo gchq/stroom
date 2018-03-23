@@ -19,36 +19,40 @@ package stroom.search;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
-import stroom.query.common.v2.CompletionListener;
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreSize;
+import stroom.task.GenericServerTask;
 import stroom.task.TaskCallback;
+import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.task.TaskTerminatedException;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.cluster.CollectorId;
 import stroom.task.cluster.CollectorIdFactory;
-import stroom.util.shared.Task;
+import stroom.task.cluster.TargetNodeSetFactory.TargetType;
+import stroom.task.cluster.TerminateTaskClusterTask;
+import stroom.task.shared.FindTaskCriteria;
 import stroom.util.shared.VoidResult;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult>, CompletionListener {
+public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
 
     public static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
@@ -56,53 +60,45 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final CollectorId id;
     private final ConcurrentHashMap<Node, Set<String>> errors = new ConcurrentHashMap<>();
-    private final Set<Node> completedNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Map<Node, AtomicLong> remainingNodes = new ConcurrentHashMap<>();
+    private final AtomicInteger remainingNodeCount = new AtomicInteger();
     private final TaskManager taskManager;
-    private final Task<VoidResult> task;
+    private final TaskContext taskContext;
+    private final AsyncSearchTask task;
+    private final ClusterDispatchAsyncHelper dispatchHelper;
     private final Node node;
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
     private final List<Integer> defaultMaxResultsSizes;
     private final StoreSize storeSize;
+    private final CompletionState completionState;
 
-    private volatile boolean terminated;
-
-    private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
-    private final Queue<Runnable> changeListeners = new ConcurrentLinkedQueue<>();
-
-    private ClusterSearchResultCollector(final TaskManager taskManager,
-                                         final Task<VoidResult> task,
-                                         final Node node,
-                                         final Set<String> highlights,
-                                         final ClusterResultCollectorCache clusterResultCollectorCache,
-                                         final ResultHandler resultHandler,
-                                         final List<Integer> defaultMaxResultsSizes,
-                                         final StoreSize storeSize) {
+    ClusterSearchResultCollector(final TaskManager taskManager,
+                                 final TaskContext taskContext,
+                                 final AsyncSearchTask task,
+                                 final ClusterDispatchAsyncHelper dispatchHelper,
+                                 final Node node,
+                                 final Set<String> highlights,
+                                 final ClusterResultCollectorCache clusterResultCollectorCache,
+                                 final ResultHandler resultHandler,
+                                 final List<Integer> defaultMaxResultsSizes,
+                                 final StoreSize storeSize,
+                                 final CompletionState completionState) {
         this.taskManager = taskManager;
+        this.taskContext = taskContext;
         this.task = task;
+        this.dispatchHelper = dispatchHelper;
         this.node = node;
         this.highlights = highlights;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.resultHandler = resultHandler;
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
-        this.resultHandler.registerCompletionListener(this);
+        this.completionState = completionState;
 
         id = CollectorIdFactory.create();
 
         clusterResultCollectorCache.put(id, this);
-    }
-
-    public static ClusterSearchResultCollector create(final TaskManager taskManager,
-                                                      final Task<VoidResult> task,
-                                                      final Node node,
-                                                      final Set<String> highlights,
-                                                      final ClusterResultCollectorCache clusterResultCollectorCache,
-                                                      final ResultHandler resultHandler,
-                                                      final List<Integer> defaultMaxResultsSizes,
-                                                      final StoreSize storeSize) {
-        return new ClusterSearchResultCollector(taskManager, task, node, highlights,
-                clusterResultCollectorCache, resultHandler, defaultMaxResultsSizes, storeSize);
     }
 
     public void start() {
@@ -120,11 +116,11 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                 if (!(t instanceof TaskTerminatedException)) {
                     LOGGER.error(t.getMessage(), t);
                     getErrorSet(node).add(t.getMessage());
-                    resultHandler.setComplete(true);
+                    completionState.complete();
                     throw new RuntimeException(t.getMessage(), t);
                 }
 
-                resultHandler.setComplete(true);
+                completionState.complete();
             }
         });
     }
@@ -132,13 +128,43 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     @Override
     public void destroy() {
         clusterResultCollectorCache.remove(id);
+        complete();
+    }
+
+    public void complete() {
+        completionState.complete();
+
         task.terminate();
-        completionListeners.clear();
+
+        // We have to wrap the cluster termination task in another task or
+        // ClusterDispatchAsyncImpl
+        // will not execute it if the parent task is terminated.
+        final GenericServerTask outerTask = GenericServerTask.create(null, task.getUserToken(), "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
+        outerTask.setRunnable(() -> {
+            taskContext.info(task.getSearchName() + " - terminating child tasks");
+            final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
+            findTaskCriteria.addAncestorId(task.getId());
+            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(task.getUserToken(), "Terminate: " + task.getTaskName(), findTaskCriteria, false);
+
+            // Terminate matching tasks.
+            dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);
+        });
+        taskManager.execAsync(outerTask);
     }
 
     @Override
     public boolean isComplete() {
-        return terminated || resultHandler.isComplete();
+        return completionState.isComplete();
+    }
+
+    @Override
+    public void awaitCompletion() throws InterruptedException {
+        completionState.awaitCompletion();
+    }
+
+    @Override
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completionState.awaitCompletion(timeout, unit);
     }
 
     @Override
@@ -153,33 +179,57 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     @Override
     public void onSuccess(final Node node, final NodeResult result) {
-        final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
-        final List<String> errors = result.getErrors();
+        try {
+            final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
+            final List<String> errors = result.getErrors();
 
-        if (payloadMap != null) {
-            resultHandler.handle(payloadMap, task);
+            if (payloadMap != null) {
+                resultHandler.handle(payloadMap, task);
+            }
+
+            if (errors != null) {
+                getErrorSet(node).addAll(errors);
+            }
+
+        } finally {
+            if (result.isComplete()) {
+                nodeComplete(node);
+            } else {
+                final AtomicLong atomicLong = remainingNodes.get(node);
+                if (atomicLong == null) {
+                    LOGGER.error("Received an unexpected node result from " + node);
+                } else {
+                    atomicLong.set(System.currentTimeMillis());
+                }
+            }
+
+            if (remainingNodeCount.compareAndSet(0, 0)) {
+                completionState.complete();
+            }
         }
-        if (errors != null) {
-            getErrorSet(node).addAll(errors);
-        }
-        if (result.isComplete()) {
-            completedNodes.add(node);
-        }
-        notifyListenersOfChange();
     }
 
     @Override
     public void onFailure(final Node node, final Throwable throwable) {
-        completedNodes.add(node);
-        getErrorSet(node).add(throwable.getMessage());
-        notifyListenersOfChange();
+        try {
+            nodeComplete(node);
+            getErrorSet(node).add(throwable.getMessage());
+        } finally {
+            if (remainingNodeCount.compareAndSet(0, 0)) {
+                completionState.complete();
+            }
+        }
+    }
+
+    private void nodeComplete(final Node node) {
+        if (remainingNodes.remove(node) != null) {
+            remainingNodeCount.decrementAndGet();
+        }
     }
 
     @Override
     public void terminate() {
-        terminated = true;
-        notifyListenersOfCompletion();
-        notifyListenersOfChange();
+        complete();
     }
 
     public Set<String> getErrorSet(final Node node) {
@@ -243,55 +293,15 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         return resultHandler.getResultStore(componentId);
     }
 
-    public Set<Node> getCompletedNodes() {
-        return completedNodes;
-    }
-
-    public ResultHandler getResultHandler() {
-        return resultHandler;
-    }
-
-    @Override
-    public void registerCompletionListener(final CompletionListener completionListener) {
-        if (isComplete()) {
-            //immediate notification
-            completionListener.onCompletion();
-        } else {
-            completionListeners.add(Objects.requireNonNull(completionListener));
-        }
-    }
-
-    @Override
-    public void onCompletion() {
-        //fired on completion of the resultHandler that we registered an in interest in
-        //'this' is both a completion listener (on the ResultHandler) and has completionListeners of its own
-        notifyListenersOfCompletion();
-    }
-
-    private void notifyListenersOfCompletion() {
-        //Call isComplete to ensure we are complete and not terminated
-        if (isComplete()) {
-            for (CompletionListener listener; (listener = completionListeners.poll()) != null; ) {
-                //when notified they will check isComplete
-                LOGGER.debug("Notifying {} {} that we are complete", listener.getClass().getName(), listener);
-                listener.onCompletion();
-            }
-        }
-    }
-
-    public void registerChangeListner(final Runnable changeListener) {
-        changeListeners.add(Objects.requireNonNull(changeListener));
-    }
-
-    private void notifyListenersOfChange() {
-        changeListeners.forEach(Runnable::run);
-    }
-
     @Override
     public String toString() {
         return "ClusterSearchResultCollector{" +
                 "task=" + task +
-                ", terminated=" + terminated +
                 '}';
+    }
+
+    void setExpectedNodes(final Set<Node> expectedNodes) {
+        expectedNodes.forEach(node -> remainingNodes.put(node, new AtomicLong()));
+        remainingNodeCount.set(expectedNodes.size());
     }
 }

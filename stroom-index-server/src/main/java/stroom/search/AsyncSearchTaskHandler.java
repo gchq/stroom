@@ -57,20 +57,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = AsyncSearchTask.class)
 class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSearchTaskHandler.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
 
     private final TaskContext taskContext;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final IndexService indexService;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
@@ -81,7 +77,6 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                            final TargetNodeSetFactory targetNodeSetFactory,
                            final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
                            final ClusterDispatchAsyncHelper dispatchHelper,
-                           final ClusterResultCollectorCache clusterResultCollectorCache,
                            final IndexService indexService,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
@@ -90,7 +85,6 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.dispatchAsyncProvider = dispatchAsyncProvider;
         this.dispatchHelper = dispatchHelper;
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.indexService = indexService;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
@@ -101,7 +95,6 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
     public VoidResult exec(final AsyncSearchTask task) {
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
-            final ResultHandler resultHandler = resultCollector.getResultHandler();
 
             if (!task.isTerminated()) {
                 final Node sourceNode = targetNodeSetFactory.getSourceNode();
@@ -142,97 +135,58 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                                     "Attempt to search an index shard marked as corrupt: id=" + indexShard.getId() + ".");
                         } else {
                             final Node node = indexShard.getNode();
-                            List<Long> shards = shardMap.get(node);
-                            if (shards == null) {
-                                shards = new ArrayList<>();
-                                shardMap.put(node, shards);
-                            }
-                            shards.add(indexShard.getId());
+                            shardMap.computeIfAbsent(node, k -> new ArrayList<>()).add(indexShard.getId());
                         }
                     }
 
                     // Start remote cluster search execution.
-                    int expectedNodeResultCount = 0;
-                    for (final Entry<Node, List<Long>> entry : shardMap.entrySet()) {
-                        final Node node = entry.getKey();
-                        final List<Long> shards = entry.getValue();
+                    final Map<Node, List<Long>> filteredShardNodes = shardMap.entrySet().stream()
+                            .filter(entry -> {
+                                final Node node = entry.getKey();
+                                if (targetNodes.contains(node)) {
+                                    return true;
+                                } else {
+                                    resultCollector.getErrorSet(node)
+                                            .add("Node is not enabled or active. Some search results may be missing.");
+                                    return false;
+                                }
+                            })
+                            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
-                        if (targetNodes.contains(node)) {
-                            final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
-                                    task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
-                            LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
-                            dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
-                                    Collections.singleton(node));
-                            expectedNodeResultCount++;
+                    // Tell the result collector which nodes we expect to get results from.
+                    resultCollector.setExpectedNodes(filteredShardNodes.keySet());
 
-                        } else {
-                            resultCollector.getErrorSet(node)
-                                    .add("Node is not enabled or active. Some search results may be missing.");
-                        }
-                    }
+                    // Now send out distributed search tasks to each worker node.
+                    filteredShardNodes.forEach((node, shards) -> {
+                        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
+                                task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
+                        LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
+                        dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
+                                Collections.singleton(node));
+                    });
                     taskContext.info(task.getSearchName() + " - searching...");
 
-                    ReentrantLock reentrantLock = new ReentrantLock();
-                    Condition condition = reentrantLock.newCondition();
+                    // Await completion.
+                    resultCollector.awaitCompletion();
 
-                    final Runnable signalCondition = () -> {
-                        try {
-                            reentrantLock.lock();
-                            condition.signalAll();
-                        } finally {
-                            reentrantLock.unlock();
-                        }
-                    };
+//                        // If the collector is no longer in the cache then terminate
+//                        // this search task.
+//                        if (clusterResultCollectorCache.get(resultCollector.getId()) == null) {
+//                            terminateTasks(task);
+//                        }
 
-                    //if it has completed or something has changed on the resultCollector then
-                    //test the conditions, else sleep
-                    resultHandler.registerCompletionListener(signalCondition::run);
-                    resultCollector.registerChangeListner(signalCondition);
-
-                    while (!task.isTerminated() &&
-                            !resultHandler.shouldTerminateSearch() &&
-                            !resultHandler.isComplete()) {
-
-                        boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
-                                () -> {
-                                    try {
-                                        reentrantLock.lock();
-                                        return condition.await(30, TimeUnit.SECONDS);
-                                    } catch (InterruptedException e) {
-                                        //Don't reset the interrupt status as we are at the top level of
-                                        //the task execution
-                                        throw new RuntimeException("Thread interrupted");
-                                    } finally {
-                                        reentrantLock.unlock();
-                                    }
-                                },
-                                "waiting for completion condition");
-
-                        LOGGER.trace("await finished with result {}", awaitResult);
-                        final boolean complete = resultCollector.getCompletedNodes().size() >= expectedNodeResultCount;
-
-                        // TODO why call setComplete if false?
-                        resultHandler.setComplete(complete);
-
-                        // If the collector is no longer in the cache then terminate
-                        // this search task.
-                        if (clusterResultCollectorCache.get(resultCollector.getId()) == null) {
-                            terminateTasks(task);
-                        }
-                    }
                     taskContext.info(task.getSearchName() + " - complete");
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
-                    if (task.isTerminated() || resultHandler.shouldTerminateSearch()) {
-                        terminateTasks(task);
-                    }
+                    terminateTasks(task);
+
                 } catch (final Exception e) {
                     resultCollector.getErrorSet(sourceNode).add(e.getMessage());
                 }
 
                 // Let the result handler know search has finished.
-                resultHandler.setComplete(true);
+                resultCollector.complete();
 
                 // We need to wait here for the client to keep getting results if
                 // this is an interactive search.

@@ -66,10 +66,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         try {
             while (!response.complete()) {
                 response = searchResponseCreator.create(searchRequest);
-
-                if (!response.complete()) {
-                    ThreadUtil.sleep(1000);
-                }
             }
         } finally {
             searchResultCreatorManager.remove(new SearchResultCreatorManager.Key(searchRequest.getKey()));
@@ -85,12 +81,11 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final long sleepTimeMs,
             final int maxShardTasks,
             final int maxExtractionTasks,
             final IndexService indexService) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, sleepTimeMs, maxShardTasks,
+                extractValues, resultMapConsumer, maxShardTasks,
                 maxExtractionTasks, indexService, searchResultCreatorManager);
     }
 
@@ -101,7 +96,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final long sleepTimeMs,
             final int maxShardTasks,
             final int maxExtractionTasks,
             final IndexService indexService,

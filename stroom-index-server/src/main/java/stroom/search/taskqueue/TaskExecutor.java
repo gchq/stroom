@@ -18,19 +18,16 @@ package stroom.search.taskqueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.task.StroomThreadGroup;
-import stroom.util.thread.CustomThreadFactory;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class TaskExecutor {
+public abstract class TaskExecutor {
     private static final int DEFAULT_MAX_THREADS = 5;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskExecutor.class);
@@ -45,22 +42,17 @@ public class TaskExecutor {
     private final ReentrantLock taskLock = new ReentrantLock();
     private final Condition condition = taskLock.newCondition();
 
-    private final String name;
-    private volatile ExecutorService executor;
+    private final Executor executor;
     private volatile boolean running;
     private volatile boolean shutdown;
 
-    public TaskExecutor(final String name) {
-        this.name = name;
+    public TaskExecutor(final Executor executor) {
+        this.executor = executor;
     }
 
     private synchronized void start() {
         if (!running && !shutdown) {
             running = true;
-
-            final ThreadGroup poolThreadGroup = new ThreadGroup(StroomThreadGroup.instance(), name);
-            final CustomThreadFactory threadFactory = new CustomThreadFactory(name, poolThreadGroup, 5);
-            executor = Executors.newSingleThreadExecutor(threadFactory);
             executor.execute(() -> {
                 while (running) {
                     taskLock.lock();
@@ -87,7 +79,6 @@ public class TaskExecutor {
             running = false;
             // Wake up any waiting threads.
             signalAll();
-            executor.shutdown();
         }
     }
 

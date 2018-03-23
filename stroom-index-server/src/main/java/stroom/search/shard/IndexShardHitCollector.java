@@ -18,33 +18,21 @@ package stroom.search.shard;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.SimpleCollector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.pipeline.errorhandler.TerminatedException;
-import stroom.task.TaskContext;
-import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
 import java.util.OptionalInt;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class IndexShardHitCollector extends SimpleCollector {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardHitCollector.class);
-
-    private final TaskContext taskContext;
+class IndexShardHitCollector extends SimpleCollector {
     //an empty optional is used as a marker to indicate no more items will be added
     private final LinkedBlockingQueue<OptionalInt> docIdStore;
     private final AtomicLong hitCount;
     private int docBase;
-    private Long pauseTime;
 
-    public IndexShardHitCollector(final TaskContext taskContext,
-                                  final LinkedBlockingQueue<OptionalInt> docIdStore,
-                                  final AtomicLong hitCount) {
+    IndexShardHitCollector(final LinkedBlockingQueue<OptionalInt> docIdStore,
+                           final AtomicLong hitCount) {
         this.docIdStore = docIdStore;
-        this.taskContext = taskContext;
         this.hitCount = hitCount;
     }
 
@@ -56,58 +44,17 @@ public class IndexShardHitCollector extends SimpleCollector {
 
     @Override
     public void collect(final int doc) {
-        // Pause the current search if the deque is full.
-        final int docId = docBase + doc;
-
         try {
-            while (!docIdStore.offer(OptionalInt.of(docId), 5, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
-                if (isProvidingInfo()) {
-                    if (pauseTime == null) {
-                        pauseTime = System.currentTimeMillis();
-                    }
+            // Pause the current search if the deque is full.
+            final int docId = docBase + doc;
 
-                    final long elapsed = System.currentTimeMillis() - pauseTime;
-                    provideInfo("Paused for " + ModelStringUtil.formatDurationString(elapsed));
-                    LOGGER.trace("elapsed [{}]", elapsed);
-                }
-            }
-        } catch (final Throwable e) {
-            LOGGER.error(e.getMessage(), e);
+            docIdStore.put(OptionalInt.of(docId));
+
+            // Add to the hit count.
+            hitCount.incrementAndGet();
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
-
-        // Add to the hit count.
-        hitCount.incrementAndGet();
-
-        // Quit searching if the task monitor is set to stop.
-        if (taskContext.isTerminated()) {
-            if (isProvidingInfo()) {
-                if (pauseTime != null) {
-                    final long elapsed = System.currentTimeMillis() - pauseTime;
-                    provideInfo("Quitting search after pausing for " + ModelStringUtil.formatDurationString(elapsed));
-                } else {
-                    provideInfo("Quitting...");
-                }
-            }
-
-            throw new TerminatedException();
-        }
-
-        // If we are no longer paused then make sure the client knows we are still searching.
-        if (isProvidingInfo()) {
-            if (pauseTime != null) {
-                pauseTime = null;
-                provideInfo("Searching...");
-            }
-        }
-    }
-
-    private boolean isProvidingInfo() {
-        return true;
-    }
-
-    private void provideInfo(final String message) {
-        taskContext.info(message);
-        LOGGER.debug(message);
     }
 
     @Override

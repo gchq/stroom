@@ -35,6 +35,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -100,8 +101,7 @@ public class IndexShardSearchTaskHandler {
             final LinkedBlockingQueue<OptionalInt> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(taskContext, docIdStore,
-                    task.getHitCount());
+            final IndexShardHitCollector collector = new IndexShardHitCollector(docIdStore, task.getHitCount());
 
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
@@ -114,32 +114,29 @@ public class IndexShardSearchTaskHandler {
                                 () -> {
                                     try {
                                         searcher.search(query, collector);
-                                        boolean wasOffered = false;
-                                        while (!wasOffered && !taskContext.isTerminated()) {
-                                            //add empty optional to end of queue to indicate completion
-                                            wasOffered = docIdStore.offer(OptionalInt.empty(), 5, TimeUnit.SECONDS);
-                                        }
-                                    } catch (final Throwable t) {
-                                        error(task, t.getMessage(), t);
+                                    } catch (final IOException e) {
+                                        error(task, e.getMessage(), e);
+                                    }
+
+                                    try {
+                                        docIdStore.put(OptionalInt.empty());
+                                    } catch (final InterruptedException e) {
+                                        error(task, e.getMessage(), e);
                                     }
                                 },
                                 () -> "searcher.search()");
                     }, executor);
 
                     // Start converting found docIds into stored data values
-                    while (!taskContext.isTerminated()) {
-                        final OptionalInt optDocId;
-                        // Poll for the next item
-                        optDocId = docIdStore.poll(5, TimeUnit.SECONDS);
-                        //if we get null back the queue is empty and we need to try polling again
-                        if (optDocId != null) {
-                            if (optDocId.isPresent()) {
-                                // If we have a doc id then retrieve the stored data for it.
-                                getStoredData(task, searcher, optDocId.getAsInt());
-                            } else {
-                                //empty optional which indicates the end of the queue.
-                                break;
-                            }
+                    boolean complete = false;
+                    while (!complete) {
+                        // Take the next item
+                        final OptionalInt optDocId = docIdStore.take();
+                        if (optDocId.isPresent()) {
+                            // If we have a doc id then retrieve the stored data for it.
+                            getStoredData(task, searcher, optDocId.getAsInt());
+                        } else {
+                            complete = true;
                         }
                     }
                 } catch (final Throwable t) {

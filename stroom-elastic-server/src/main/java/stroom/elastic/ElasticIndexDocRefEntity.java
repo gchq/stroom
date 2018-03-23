@@ -1,6 +1,6 @@
 package stroom.elastic;
 
-import stroom.query.audit.service.DocRefEntity;
+import stroom.query.audit.model.DocRefEntity;
 
 /**
  * As loaded in from remote service
@@ -30,10 +30,11 @@ public class ElasticIndexDocRefEntity extends DocRefEntity {
     }
 
     /**
-     +     * This will operate as a read only field, if the user wants to modify the index itself, it
-     +     * is best done through Kibana
-     +     * @return The current state of the mappings in JSON
-     +     */
+     * +     * This will operate as a read only field, if the user wants to modify the index itself, it
+     * +     * is best done through Kibana
+     * +     * @return The current state of the mappings in JSON
+     * +
+     */
     public String getMappingsJson() {
         return mappingsJson;
     }

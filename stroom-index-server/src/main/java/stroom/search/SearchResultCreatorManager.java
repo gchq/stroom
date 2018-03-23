@@ -67,7 +67,7 @@ public class SearchResultCreatorManager implements Clearable {
     }
 
     private SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
-        Store store = luceneSearchStoreFactory.create(key.searchRequest);
+        final Store store = luceneSearchStoreFactory.create(key.searchRequest);
         return new SearchResponseCreator(store);
     }
 

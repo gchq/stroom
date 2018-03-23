@@ -195,7 +195,6 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 defaultMaxResultsSizes,
                 storeSize,
                 coprocessorSettingsMap,
-                coprocessorMap,
                 payloadMap);
 
         SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);

@@ -421,7 +421,6 @@ public class TestInteractiveSearch extends AbstractSearchTest {
                 this::createTableSettings,
                 extractValues,
                 resultMapConsumer,
-                10L,
                 1,
                 1,
                 indexService);

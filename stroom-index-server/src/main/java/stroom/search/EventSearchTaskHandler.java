@@ -23,15 +23,13 @@ import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
 import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.Query;
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.StoreSize;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
-import stroom.task.TaskManager;
-import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -39,29 +37,23 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = EventSearchTask.class)
 class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventRefs> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchTaskHandler.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(EventSearchTaskHandler.class);
 
     private final NodeCache nodeCache;
-    private final TaskManager taskManager;
-    private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final StroomPropertyService stroomPropertyService;
+    private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
 
     @Inject
-    EventSearchTaskHandler(final ClusterResultCollectorCache clusterResultCollectorCache,
-                           final TaskManager taskManager,
-                           final NodeCache nodeCache,
-                           final StroomPropertyService stroomPropertyService) {
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
-        this.taskManager = taskManager;
+    EventSearchTaskHandler(final NodeCache nodeCache,
+                           final StroomPropertyService stroomPropertyService,
+                           final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory) {
         this.nodeCache = nodeCache;
         this.stroomPropertyService = stroomPropertyService;
+        this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
     }
 
     @Override
@@ -89,59 +81,40 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
 
         // Create a collector to store search results.
         final StoreSize storeSize = new StoreSize(getStoreSizes());
+        final CompletionState completionState = new CompletionState();
         final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
-        final ClusterSearchResultCollector searchResultCollector = ClusterSearchResultCollector.create(
-                taskManager,
+        final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
                 asyncSearchTask,
                 nodeCache.getDefaultNode(),
                 null,
-                clusterResultCollectorCache,
                 resultHandler,
                 defaultMaxResultsSizes,
-                storeSize);
+                storeSize,
+                completionState);
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(searchResultCollector);
 
         try {
-            final CountDownLatch completionLatch = new CountDownLatch(1);
-
-            //when the search completes reduce our latch to zero to release the block below
-            resultHandler.registerCompletionListener(completionLatch::countDown);
-
             // Start asynchronous search execution.
             searchResultCollector.start();
 
             LOGGER.debug("Started searchResultCollector {}", searchResultCollector);
 
             // Wait for completion or termination
-            while (!task.isTerminated() && !resultHandler.isComplete()) {
-                //Drop out of the waiting state every 30s to check we haven't been terminated.
-                //This is a bit of extra protection as the resultHandler should notify our
-                //completion listener if it is terminated.
-                //If the search completes while waiting we will drop out of the wait immediately
-                boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
-                        () -> {
-                            try {
-                                return completionLatch.await(30, TimeUnit.SECONDS);
-                            } catch (InterruptedException e) {
-                                //Don't want to reset interrupt status as this thread will go back into
-                                //the executor's pool. Throwing an exception will terminate the task
-                                throw new RuntimeException(
-                                        LambdaLogger.buildMessage("Thread {} interrupted executing task {}",
-                                                Thread.currentThread().getName(), task));
-                            }
-                        },
-                        "waiting for completionLatch");
-
-                LOGGER.trace("await finished with result {}", awaitResult);
-            }
+            searchResultCollector.awaitCompletion();
 
             eventRefs = resultHandler.getStreamReferences();
             if (eventRefs != null) {
                 eventRefs.trim();
             }
+        } catch (final InterruptedException e) {
+            //Don't want to reset interrupt status as this thread will go back into
+            //the executor's pool. Throwing an exception will terminate the task
+            throw new RuntimeException(
+                    LambdaLogger.buildMessage("Thread {} interrupted executing task {}",
+                            Thread.currentThread().getName(), task));
         } finally {
             searchResultCollector.destroy();
         }

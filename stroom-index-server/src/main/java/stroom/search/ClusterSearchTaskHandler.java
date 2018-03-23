@@ -59,12 +59,9 @@ import stroom.task.TaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.task.TaskTerminatedException;
 import stroom.task.ThreadPoolImpl;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.ThreadPool;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -75,21 +72,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = ClusterSearchTask.class)
 class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
     /**
      * We don't want to collect more than 1 million doc's data into the queue by
@@ -98,12 +93,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
      */
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
-
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-            "Search Result Sender",
-            5,
-            0,
-            Integer.MAX_VALUE);
 
     private final IndexService indexService;
     private final DictionaryStore dictionaryStore;
@@ -119,16 +108,14 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final int maxBooleanClauseCount;
     private final int maxStoredDataQueueSize;
     private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
-    private final AtomicBoolean searchComplete = new AtomicBoolean();
     private final CountDownLatch searchCompleteLatch = new CountDownLatch(1);
-    private final AtomicBoolean sendingData = new AtomicBoolean();
     private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
     private final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider;
     private final ExecutorProvider executorProvider;
 
     private ClusterSearchTask task;
 
-    private LinkedBlockingQueue<String[]> storedData;
+    private LinkedBlockingQueue<Optional<String[]>> storedData;
 
     @Inject
     ClusterSearchTaskHandler(final IndexService indexService,
@@ -172,6 +159,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                 this.task = task;
                 final stroom.query.api.v2.Query query = task.getQuery();
+                ResultSender resultSender = null;
 
                 try {
                     final long frequency = task.getResultSendFrequency();
@@ -254,8 +242,9 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     }
 
                     // Start forwarding data to target node.
-                    final Executor executor = executorProvider.getExecutor(THREAD_POOL);
-                    sendData(coprocessorMap, callback, frequency, executor);
+                    final Executor executor = executorProvider.getExecutor(ResultSender.THREAD_POOL);
+                    resultSender = new ResultSender(searchCompleteLatch, coprocessorMap, callback, frequency, executor, taskContext, errors, task);
+                    resultSender.sendData();
 
                     // Start searching.
                     search(task, query, storedFieldNames, filterStreams, indexFieldsMap, extractionFieldIndexMap, extractionCoprocessorsMap);
@@ -269,123 +258,27 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         task.terminate();
                     }
                 } finally {
-                    // Tell the client that the search has completed.
-                    searchComplete.set(true);
-                    //countDown the latch so sendData knows we are complete
+                    // countDown the latch so sendData knows we are complete
                     searchCompleteLatch.countDown();
-                }
 
-                // Now we must wait for results to be sent to the requesting node.
-                taskContext.info("Sending final results");
-                while (!task.isTerminated() && sendingData.get()) {
-                    ThreadUtil.sleep(1000);
+                    try {
+                        if (resultSender != null) {
+                            // Now we must wait for results to be sent to the requesting node.
+                            taskContext.info("Sending final results");
+                            resultSender.awaitCompletion();
+                        }
+                    } catch (final Throwable t) {
+                        try {
+                            callback.onFailure(t);
+                        } catch (final Throwable t2) {
+                            // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
+                            LOGGER.info("Terminating search because we were unable to send result");
+                            task.terminate();
+                        }
+                    }
                 }
             }
         }
-    }
-
-    private void sendData(final Map<CoprocessorKey, Coprocessor> coprocessorMap,
-                          final TaskCallback<NodeResult> callback,
-                          final long frequency,
-                          final Executor executor) {
-        final long now = System.currentTimeMillis();
-
-        LOGGER.trace("sendData() called");
-
-        final Supplier<Boolean> supplier = () -> {
-            // Find out if searching is complete.
-            final boolean searchComplete = ClusterSearchTaskHandler.this.searchComplete.get();
-
-            if (!taskContext.isTerminated()) {
-                taskContext.setName("Search Result Sender");
-                taskContext.info("Creating search result");
-
-                // Produce payloads for each coprocessor.
-                Map<CoprocessorKey, Payload> payloadMap = null;
-                if (coprocessorMap != null && coprocessorMap.size() > 0) {
-                    for (final Entry<CoprocessorKey, Coprocessor> entry : coprocessorMap.entrySet()) {
-                        final Payload payload = entry.getValue().createPayload();
-                        if (payload != null) {
-                            if (payloadMap == null) {
-                                payloadMap = new HashMap<>();
-                            }
-
-                            payloadMap.put(entry.getKey(), payload);
-                        }
-                    }
-                }
-
-                // Drain all current errors to a list.
-                List<String> errorsSnapshot = new ArrayList<>();
-                errors.drainTo(errorsSnapshot);
-                if (errorsSnapshot.size() == 0) {
-                    errorsSnapshot = null;
-                }
-
-                // Only send a result if we have something new to send.
-                if (payloadMap != null || errorsSnapshot != null || searchComplete) {
-                    // Form a result to send back to the requesting node.
-                    final NodeResult result = new NodeResult(payloadMap, errorsSnapshot, searchComplete);
-
-                    // Give the result to the callback.
-                    taskContext.info("Sending search result");
-                    callback.onSuccess(result);
-                }
-            }
-
-            return searchComplete;
-        };
-
-        // Run the sending code asynchronously.
-        sendingData.set(true);
-        CompletableFuture.supplyAsync(supplier, executor)
-                .thenAccept(complete -> {
-                    if (complete) {
-                        // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
-                        sendingData.set(false);
-                        LOGGER.debug("sendingData is false");
-
-                    } else {
-                        // If we aren't complete then send more using the supplied sending frequency.
-                        final long latestSendTimeMs = now + frequency;
-
-                        while (!taskContext.isTerminated() &&
-                                !searchComplete.get() &&
-                                System.currentTimeMillis() < latestSendTimeMs) {
-                            //wait until the next send frequency time or drop out as soon
-                            //as the search completes and the latch is counted down.
-                            //Compute the wait time as we may have used up some of the frequency getting to here
-                            long waitTime = latestSendTimeMs - System.currentTimeMillis() + 1;
-                            LOGGER.trace("frequency [{}], waitTime [{}]", frequency, waitTime);
-
-                            boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
-                                    () -> {
-                                        try {
-                                            return searchCompleteLatch.await(waitTime, TimeUnit.MILLISECONDS);
-                                        } catch (InterruptedException e) {
-                                            //Don't want to reset interrupt status as this thread will go back into
-                                            //the executor's pool. Throwing an exception will terminate the task
-                                            throw new RuntimeException("Thread interrupted");
-                                        }
-                                    },
-                                    "sendData wait");
-                            LOGGER.trace("await finished with result {}", awaitResult);
-                        }
-
-                        // Make sure we don't continue to execute this task if it should have terminated.
-                        if (!taskContext.isTerminated()) {
-                            // Try to send more data.
-                            sendData(coprocessorMap, callback, frequency, executor);
-                        }
-                    }
-                })
-                .exceptionally(t -> {
-                    // If we failed to send the result or the source node rejected the result because the source
-                    // task has been terminated then terminate the task.
-                    LOGGER.info("Terminating search because we were unable to send result");
-                    task.terminate();
-                    return null;
-                });
     }
 
     private void search(final ClusterSearchTask task,
@@ -429,6 +322,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 indexShardSearchTaskExecutor.setMaxThreads(indexShardSearchTaskProperties.getMaxThreads());
 
                 // Make a task producer that will create event data extraction tasks when requested by the executor.
+                final Executor searchExecutor = executorProvider.getExecutor(IndexShardSearchTaskProducer.THREAD_POOL);
                 final IndexShardSearchTaskProducer indexShardSearchTaskProducer = new IndexShardSearchTaskProducer(
                         indexShardSearchTaskExecutor,
                         task,
@@ -440,12 +334,12 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         this,
                         hitCount,
                         indexShardSearchTaskProperties.getMaxThreadsPerTask(),
-                        executorProvider,
+                        searchExecutor,
                         indexShardSearchTaskHandlerProvider);
 
                 if (!filterStreams) {
                     // If we aren't required to filter streams and aren't using pipelines to feed data to coprocessors then just do a simple data transfer to the coprocessors.
-                    transfer(extractionCoprocessorsMap, indexShardSearchTaskProducer);
+                    transfer(extractionCoprocessorsMap);
 
                 } else {
                     // Update config for extraction task executor.
@@ -456,6 +350,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             streamStore, securityContext);
 
                     // Make a task producer that will create event data extraction tasks when requested by the executor.
+                    final Executor extractionExecutor = executorProvider.getExecutor(ExtractionTaskProducer.THREAD_POOL);
                     final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
                             extractionTaskExecutor,
                             task,
@@ -465,21 +360,12 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             extractionCoprocessorsMap,
                             this,
                             extractionTaskProperties.getMaxThreadsPerTask(),
-                            executorProvider,
-                            extractionTaskHandlerProvider,
-                            indexShardSearchTaskProducer);
+                            extractionExecutor,
+                            extractionTaskHandlerProvider);
 
-                    // Wait for completion.
-                    while (!indexShardSearchTaskProducer.isComplete() || !extractionTaskProducer.isComplete()) {
-                        taskContext.info(
-                                "Searching... " +
-                                        indexShardSearchTaskProducer.getRemainingTasks() +
-                                        " shards and " +
-                                        extractionTaskProducer.getRemainingTasks() +
-                                        " extractions remaining");
-
-                        ThreadUtil.sleep(1000);
-                    }
+                    // Await completion.
+                    indexShardSearchTaskProducer.awaitCompletion();
+                    extractionTaskProducer.awaitCompletion();
                 }
             }
         } catch (final Exception pEx) {
@@ -533,25 +419,21 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         };
     }
 
-    private void transfer(final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,
-                          final IndexShardSearchTaskProducer indexShardSearchTaskProducer) {
+    private void transfer(final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {
         try {
             // If we aren't required to filter streams and aren't using pipelines to feed data to coprocessors then just do a simple data transfer to the coprocessors.
             final Set<Coprocessor> coprocessors = extractionCoprocessorsMap.get(null);
             boolean complete = false;
-            while (!complete && !task.isTerminated()) {
-                // Check if search is finished before polling for stored data.
-                final boolean searchComplete = indexShardSearchTaskProducer.isComplete();
-                // Poll for the next stored data result.
-                final String[] values = storedData.poll(1, TimeUnit.SECONDS);
-
-                if (values != null) {
+            while (!complete) {
+                // Take the next stored data result.
+                final Optional<String[]> values = storedData.take();
+                if (values.isPresent()) {
                     // Send the data to all coprocessors.
                     for (final Coprocessor coprocessor : coprocessors) {
-                        coprocessor.receive(values);
+                        coprocessor.receive(values.get());
                     }
                 } else {
-                    complete = searchComplete;
+                    complete = true;
                 }
             }
         } catch (final Exception e) {
@@ -572,11 +454,143 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
         if (e == null || !(e instanceof TaskTerminatedException)) {
             final String msg = MessageUtil.getMessage(message, e);
-            errors.offer(msg);
+            try {
+                errors.put(msg);
+            } catch (final InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
     public ClusterSearchTask getTask() {
         return task;
+    }
+
+    private static class ResultSender {
+        private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+                "Search Result Sender",
+                5,
+                0,
+                Integer.MAX_VALUE);
+
+        private final CountDownLatch searchCompleteLatch;
+        private final Map<CoprocessorKey, Coprocessor> coprocessorMap;
+        private final TaskCallback<NodeResult> callback;
+        private final long frequency;
+        private final Executor executor;
+        private final TaskContext taskContext;
+        private final LinkedBlockingQueue<String> errors;
+        private final ClusterSearchTask task;
+
+        private final CountDownLatch sendingDataComplete = new CountDownLatch(1);
+
+        ResultSender(final CountDownLatch searchCompleteLatch,
+                     final Map<CoprocessorKey, Coprocessor> coprocessorMap,
+                     final TaskCallback<NodeResult> callback,
+                     final long frequency,
+                     final Executor executor,
+                     final TaskContext taskContext,
+                     final LinkedBlockingQueue<String> errors,
+                     final ClusterSearchTask task) {
+            this.searchCompleteLatch = searchCompleteLatch;
+            this.coprocessorMap = coprocessorMap;
+            this.callback = callback;
+            this.frequency = frequency;
+            this.executor = executor;
+            this.taskContext = taskContext;
+            this.errors = errors;
+            this.task = task;
+        }
+
+        void sendData() {
+            final long now = System.currentTimeMillis();
+
+            LOGGER.trace("sendData() called");
+
+            final Runnable runnable = () -> {
+                try {
+                    // Wait until the next send frequency time or drop out as soon as the search completes and the latch is counted down.
+                    // Compute the wait time as we may have used up some of the frequency getting to here
+                    final long waitTime = System.currentTimeMillis() - now + frequency;
+                    LOGGER.trace("frequency [{}], waitTime [{}]", frequency, waitTime);
+                    final boolean searchComplete = searchCompleteLatch.await(waitTime, TimeUnit.MILLISECONDS);
+
+                    try{
+                        if (!taskContext.isTerminated()) {
+                            taskContext.setName("Search Result Sender");
+                            taskContext.info("Creating search result");
+
+                            // Produce payloads for each coprocessor.
+                            Map<CoprocessorKey, Payload> payloadMap = null;
+                            if (coprocessorMap != null && coprocessorMap.size() > 0) {
+                                for (final Entry<CoprocessorKey, Coprocessor> entry : coprocessorMap.entrySet()) {
+                                    final Payload payload = entry.getValue().createPayload();
+                                    if (payload != null) {
+                                        if (payloadMap == null) {
+                                            payloadMap = new HashMap<>();
+                                        }
+
+                                        payloadMap.put(entry.getKey(), payload);
+                                    }
+                                }
+                            }
+
+                            // Drain all current errors to a list.
+                            List<String> errorsSnapshot = new ArrayList<>();
+                            errors.drainTo(errorsSnapshot);
+                            if (errorsSnapshot.size() == 0) {
+                                errorsSnapshot = null;
+                            }
+
+                            // Only send a result if we have something new to send.
+                            if (payloadMap != null || errorsSnapshot != null || searchComplete) {
+                                // Form a result to send back to the requesting node.
+                                final NodeResult result = new NodeResult(payloadMap, errorsSnapshot, searchComplete);
+
+                                // Give the result to the callback.
+                                taskContext.info("Sending search result");
+                                callback.onSuccess(result);
+                            }
+                        }
+
+                        // Make sure we don't continue to execute this task if it should have terminated.
+                        if (taskContext.isTerminated() || searchComplete) {
+                            complete();
+                        } else {
+                            // Try to send more data.
+                            sendData();
+                        }
+
+                    } catch (final Exception e) {
+                        complete();
+
+                        // If we failed to send the result or the source node rejected the result because the source
+                        // task has been terminated then terminate the task.
+                        LOGGER.info("Terminating search because we were unable to send result");
+                        task.terminate();
+                    }
+
+                } catch (InterruptedException e) {
+                    complete();
+
+                    //Don't want to reset interrupt status as this thread will go back into
+                    //the executor's pool. Throwing an exception will terminate the task
+                    throw new RuntimeException("Thread interrupted");
+                }
+            };
+
+            // Run the sending code asynchronously.
+            CompletableFuture.runAsync(runnable, executor);
+        }
+
+        private void complete() {
+            // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
+            sendingDataComplete.countDown();
+            LOGGER.debug("sendingData is false");
+        }
+
+        public void awaitCompletion() throws InterruptedException {
+            sendingDataComplete.await();
+        }
     }
 }

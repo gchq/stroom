@@ -25,12 +25,13 @@ import stroom.index.LuceneVersionUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.node.NodeCache;
-import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap;
 import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.Store;
@@ -38,9 +39,10 @@ import stroom.query.common.v2.StoreSize;
 import stroom.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
 import stroom.security.UserTokenUtil;
-import stroom.task.cluster.ClusterResultCollectorCache;
+import stroom.task.TaskContext;
 import stroom.task.TaskManager;
-import stroom.util.config.PropertyUtil;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.ClusterResultCollectorCache;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -59,28 +61,25 @@ public class LuceneSearchStoreFactory {
     private final DictionaryStore dictionaryStore;
     private final StroomPropertyService stroomPropertyService;
     private final NodeCache nodeCache;
-    private final TaskManager taskManager;
-    private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final int maxBooleanClauseCount;
     private final SecurityContext securityContext;
+    private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
 
     @Inject
     public LuceneSearchStoreFactory(final IndexService indexService,
                                     final DictionaryStore dictionaryStore,
                                     final StroomPropertyService stroomPropertyService,
                                     final NodeCache nodeCache,
-                                    final TaskManager taskManager,
-                                    final ClusterResultCollectorCache clusterResultCollectorCache,
                                     final StroomPropertyService propertyService,
-                                    final SecurityContext securityContext) {
+                                    final SecurityContext securityContext,
+                                    final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory) {
         this.indexService = indexService;
         this.dictionaryStore = dictionaryStore;
         this.stroomPropertyService = stroomPropertyService;
         this.nodeCache = nodeCache;
-        this.taskManager = taskManager;
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.maxBooleanClauseCount = propertyService.getIntProperty("stroom.search.maxBooleanClauseCount", DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
         this.securityContext = securityContext;
+        this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
     }
 
     public Store create(final SearchRequest searchRequest) {
@@ -118,22 +117,23 @@ public class LuceneSearchStoreFactory {
 
         // Create a handler for search results.
         final StoreSize storeSize = new StoreSize(getStoreSizes());
+        final CompletionState completionState = new CompletionState();
         final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final SearchResultHandler resultHandler = new SearchResultHandler(
+                completionState,
                 coprocessorSettingsMap,
                 defaultMaxResultsSizes,
                 storeSize);
 
         // Create the search result collector.
-        final ClusterSearchResultCollector searchResultCollector = ClusterSearchResultCollector.create(
-                taskManager,
+        final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
                 asyncSearchTask,
                 node,
                 highlights,
-                clusterResultCollectorCache,
                 resultHandler,
                 defaultMaxResultsSizes,
-                storeSize);
+                storeSize,
+                completionState);
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(searchResultCollector);

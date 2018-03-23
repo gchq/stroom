@@ -79,10 +79,6 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator(null, Op.AND, Collections.emptyList())));
         queryService.save(refQuery);
 
-        // Ensure the two query creation times are separated by one second so that ordering by time works correctly in
-        // the test.
-        ThreadUtil.sleep(1000);
-
         final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.OR);
         root.addTerm("Some field", Condition.CONTAINS, "Some value");
 

@@ -17,14 +17,25 @@
 package stroom.search.extraction;
 
 import stroom.search.taskqueue.TaskExecutor;
+import stroom.task.ExecutorProvider;
+import stroom.task.ThreadPoolImpl;
 import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.shared.ThreadPool;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class ExtractionTaskExecutor extends TaskExecutor {
-    public ExtractionTaskExecutor() {
-        super("Extraction Task Executor");
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Extraction Task Executor",
+            5,
+            1,
+            1);
+
+    @Inject
+    ExtractionTaskExecutor(final ExecutorProvider executorProvider) {
+        super(executorProvider.getExecutor(THREAD_POOL));
     }
 
     @StroomShutdown
