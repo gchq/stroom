@@ -212,12 +212,12 @@ class FormatDate extends StroomExtensionFunctionCall {
 
         // Subtract a year if the date appears to be after our reference time.
         if (dateTime.isAfter(referenceDateTime)) {
-            if (!pattern.contains("d")) {
-                dateTime = dateTime.minusDays(1);
-            } else if (!pattern.contains("M")) {
-                dateTime = dateTime.minusMonths(1);
-            } else {
-                dateTime = dateTime.minusYears(1);
+            if (!pattern.contains("y")) {
+                if (!pattern.contains("M")) {
+                    dateTime = dateTime.minusMonths(1);
+                } else {
+                    dateTime = dateTime.minusYears(1);
+                }
             }
         }
         return dateTime.toInstant().toEpochMilli();
