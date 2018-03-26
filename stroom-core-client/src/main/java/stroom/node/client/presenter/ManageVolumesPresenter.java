@@ -26,6 +26,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.node.shared.Volume;
@@ -95,8 +96,11 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
     private void open(final PopupUiHandlers popupUiHandlers) {
         final Volume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final VolumeEditPresenter editor = editProvider.get();
-            editor.editVolume(volume, popupUiHandlers);
+            dispatcher.exec(new EntityServiceLoadAction<>(volume))
+                    .onSuccess(result -> {
+                        final VolumeEditPresenter editor = editProvider.get();
+                        editor.editVolume(result, popupUiHandlers);
+                    });
         }
     }
 
