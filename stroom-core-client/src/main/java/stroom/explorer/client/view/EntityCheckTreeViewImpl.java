@@ -20,7 +20,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -29,7 +29,7 @@ import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTree
 public class EntityCheckTreeViewImpl extends ViewImpl implements EntityCheckTreeView {
     private final Widget widget;
     @UiField
-    ScrollPanel scrollPanel;
+    MaxScrollPanel scrollPanel;
 
     @Inject
     public EntityCheckTreeViewImpl(final Binder binder) {

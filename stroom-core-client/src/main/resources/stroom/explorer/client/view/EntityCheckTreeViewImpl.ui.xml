@@ -6,5 +6,5 @@
 			background: white;
 		}
 	</ui:style>
-	<g:ScrollPanel styleName="{style.scrollPanel}" ui:field="scrollPanel" />
+	<g:MaxScrollPanel styleName="{style.scrollPanel}" ui:field="scrollPanel" />
 </ui:UiBinder> 
