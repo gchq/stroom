@@ -17,26 +17,22 @@
 package stroom.refdata;
 
 import stroom.entity.shared.DocRef;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
+import stroom.util.date.DateUtil;
 
-public class EffectiveStreamKey {
+import java.util.Objects;
+
+class EffectiveStreamKey {
     private final DocRef feed;
     private final String streamType;
     private final long effectiveMs;
 
     private final int hashCode;
 
-    public EffectiveStreamKey(final DocRef feed, final String streamType, final long effectiveMs) {
+    EffectiveStreamKey(final DocRef feed, final String streamType, final long effectiveMs) {
         this.feed = feed;
         this.streamType = streamType;
         this.effectiveMs = effectiveMs;
-
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(feed);
-        builder.append(streamType);
-        builder.append(effectiveMs);
-        hashCode = builder.toHashCode();
+        hashCode = Objects.hash(feed, streamType, effectiveMs);
     }
 
     public DocRef getFeed() {
@@ -52,29 +48,36 @@ public class EffectiveStreamKey {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final EffectiveStreamKey that = (EffectiveStreamKey) o;
+        return effectiveMs == that.effectiveMs &&
+                Objects.equals(feed, that.feed) &&
+                Objects.equals(streamType, that.streamType);
+    }
+
+    @Override
     public int hashCode() {
         return hashCode;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
+    public void append(final StringBuilder sb) {
+        if (feed != null) {
+            sb.append("feed=");
+            sb.append(feed.getName());
+            sb.append(", ");
         }
-        if (o == null || !(o instanceof EffectiveStreamKey)) {
-            return false;
-        }
-
-        final EffectiveStreamKey effectiveStreamKey = (EffectiveStreamKey) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(feed, effectiveStreamKey.feed);
-        builder.append(streamType, effectiveStreamKey.streamType);
-        builder.append(effectiveMs, effectiveStreamKey.effectiveMs);
-        return builder.isEquals();
+        sb.append("streamType=");
+        sb.append(streamType);
+        sb.append(", effectiveTime=");
+        sb.append(DateUtil.createNormalDateTimeString(effectiveMs));
     }
 
     @Override
     public String toString() {
-        return "feed=" + feed + ", streamType=" + streamType + ",effectiveMs=" + effectiveMs;
+        final StringBuilder sb = new StringBuilder();
+        append(sb);
+        return sb.toString();
     }
 }

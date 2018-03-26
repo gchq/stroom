@@ -36,7 +36,7 @@ public class StroomXSLTFunctionLibrary {
     public StroomXSLTFunctionLibrary(final Configuration config) {
         this.config = config;
         try {
-            register("bitmap-lookup", BitmapLookup.class, 2, 4, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN}, SequenceType.NODE_SEQUENCE);
+            register("bitmap-lookup", BitmapLookup.class, 2, 5, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN, SequenceType.OPTIONAL_BOOLEAN}, SequenceType.NODE_SEQUENCE);
             register("classification", Classification.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);
             register("current-time", CurrentTime.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);
             register("current-user", CurrentUser.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);
@@ -51,7 +51,7 @@ public class StroomXSLTFunctionLibrary {
             register("hash", Hash.class, 1, 3, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING}, SequenceType.OPTIONAL_STRING);
             register("json-to-xml", JsonToXml.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.NODE_SEQUENCE);
             register("log", Log.class, 2, 2, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING}, SequenceType.EMPTY_SEQUENCE);
-            register("lookup", Lookup.class, 2, 4, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN}, SequenceType.NODE_SEQUENCE);
+            register("lookup", Lookup.class, 2, 5, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN, SequenceType.OPTIONAL_BOOLEAN}, SequenceType.NODE_SEQUENCE);
             register("meta", Meta.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
             register("numeric-ip", NumericIP.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
             register("random", Random.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_DOUBLE);
