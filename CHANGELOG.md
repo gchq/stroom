@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#697** : Added a feature to trace XSLT `Lookup` attempts so that reference data lookups can be debugged.
+
 * Issue **#702** : Fix for hanging search extraction tasks
 
 * Issue **#701** : The search `maxDocIdQueueSize` is now 1000 by default.
