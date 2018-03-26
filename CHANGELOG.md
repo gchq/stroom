@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#588** : Fixed display of horizontal scrollbar on explorer tree in export, create, copy and move dialogs.
+
 * Issue **#691** : Volumes now reload on edit so that the entities are no longer stale the second time they are edited.
 
 * Issue **#692** : Properties now reload on edit so that the entities are no longer stale the second time they are edited.
