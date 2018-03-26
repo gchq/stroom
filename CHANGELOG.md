@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#691** : Volumes now reload on edit so that the entities are no longer stale the second time they are edited.
+
+* Issue **#692** : Properties now reload on edit so that the entities are no longer stale the second time they are edited.
+
 ## [v6.0-alpha.18]
 
 * Issue **#698** : Migration of Processing Filters now protects against folders that have since been deleted
