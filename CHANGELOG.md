@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#703** : Removed logging of InterruptedException stack trace on SQL stat queries, improved concurreny code.
+## [v5.2.3] - 2018-03-27
+
+* Issue **#703** : Removed logging of InterruptedException stack trace on SQL stat queries, improved concurrency code.
 
 * Issue **#697** : Improved XSLT `Lookup` trace messages.
 
@@ -761,7 +763,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.2.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.2.3...HEAD
+[v5.2.3]: https://github.com/gchq/stroom/compare/v5.2.2...v5.2.3
 [v5.2.2]: https://github.com/gchq/stroom/compare/v5.2.1...v5.2.2
 [v5.2.1]: https://github.com/gchq/stroom/compare/v5.2.0...v5.2.1
 [v5.2.0]: https://github.com/gchq/stroom/compare/v5.1.0...v5.2.0
