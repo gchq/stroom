@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#703** : Removed logging of InterruptedException stack trace on SQL stat queries, improved concurreny code.
+
 * Issue **#697** : Improved XSLT `Lookup` trace messages.
 
 ## [v5.2.2] - 2018-03-26
