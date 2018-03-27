@@ -23,7 +23,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
