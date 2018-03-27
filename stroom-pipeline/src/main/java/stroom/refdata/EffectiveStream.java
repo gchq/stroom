@@ -31,11 +31,11 @@ class EffectiveStream implements Comparable<EffectiveStream> {
         this.hashCode = Objects.hash(streamId, effectiveMs);
     }
 
-    public long getStreamId() {
+    long getStreamId() {
         return streamId;
     }
 
-    public long getEffectiveMs() {
+    long getEffectiveMs() {
         return effectiveMs;
     }
 
@@ -59,9 +59,9 @@ class EffectiveStream implements Comparable<EffectiveStream> {
     }
 
     public void append(final StringBuilder sb) {
-        sb.append("streamId=");
+        sb.append("streamId = ");
         sb.append(streamId);
-        sb.append(", effectiveTime=");
+        sb.append(", effectiveTime = ");
         sb.append(DateUtil.createNormalDateTimeString(effectiveMs));
     }
 

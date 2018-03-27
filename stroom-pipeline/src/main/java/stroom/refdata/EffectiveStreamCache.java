@@ -42,9 +42,6 @@ import java.util.concurrent.TimeUnit;
 public class EffectiveStreamCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
 
-    // Actually 11.5 days but this is fine for the purposes of reference data.
-    private static final long APPROX_TEN_DAYS = 1000000000;
-
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
@@ -105,12 +102,8 @@ public class EffectiveStreamCache {
                 criteria.setFeed(key.getFeed());
                 criteria.setStreamType(key.getStreamType());
 
-                // Limit the stream set to the day starting from the supplied
-                // effective time.
-                final long effectiveMs = key.getEffectiveMs();
-                // final Period window = new Period(effectiveMs, effectiveMs +
-                // ONE_DAY);
-                final Period window = new Period(effectiveMs, effectiveMs + APPROX_TEN_DAYS);
+                // Limit the stream set to the requested effective time window.
+                final Period window = new Period(key.getFromMs(), key.getToMs());
                 criteria.setEffectivePeriod(window);
 
                 // Locate all streams that fit the supplied criteria.
@@ -154,15 +147,6 @@ public class EffectiveStreamCache {
 
             return effectiveStreamSet;
         }
-    }
-
-    /**
-     * Gets a time less than the supplied time, rounded down to the nearest 11.5
-     * days (one billion milliseconds).
-     */
-    long getBaseTime(final long time) {
-        final long multiple = time / APPROX_TEN_DAYS;
-        return multiple * APPROX_TEN_DAYS;
     }
 
     long size() {

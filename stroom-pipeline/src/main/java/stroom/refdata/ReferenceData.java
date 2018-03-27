@@ -43,6 +43,9 @@ import java.util.NavigableSet;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class ReferenceData {
+    // Actually 11.5 days but this is fine for the purposes of reference data.
+    private static final long APPROX_TEN_DAYS = 1000000000;
+
     // Maps can be nested during the look up process e.g. "MAP1/MAP2"
     private static final String NEST_SEPARATOR = "/";
     private static final int MINIMUM_BYTE_COUNT = 10;
@@ -214,9 +217,10 @@ public class ReferenceData {
                                       final String mapName,
                                       final String keyName,
                                       final ReferenceDataResult result) {
-        // First round down the time to the nearest 10 days approx (actually
-        // more like 11.5, one billion milliseconds).
-        final long baseTime = effectiveStreamCache.getBaseTime(time);
+        // Create a window of approx 10 days to cache effective streams.
+        // First round down the time to the nearest 10 days approx (actually more like 11.5, one billion milliseconds).
+        final long fromMs = (time / APPROX_TEN_DAYS) * APPROX_TEN_DAYS;
+        final long toMs = fromMs + APPROX_TEN_DAYS;
 
         // Make sure the reference feed is persistent otherwise lookups will
         // fail as the equals method will only test for feeds that are the
@@ -228,12 +232,12 @@ public class ReferenceData {
         if (documentPermissionCache == null || documentPermissionCache.hasDocumentPermission(Feed.ENTITY_TYPE, pipelineReference.getFeed().getUuid(), DocumentPermissionNames.USE)) {
             // Create a key to find a set of effective times in the pool.
             final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
-                    pipelineReference.getStreamType(), baseTime);
+                    pipelineReference.getStreamType(), fromMs, toMs);
             // Try and fetch a tree set of effective streams for this key.
             final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
 
             if (streamSet != null && streamSet.size() > 0) {
-                result.log(Severity.INFO, () -> "Got " + streamSet.size() + " effective streams for " + effectiveStreamKey);
+                result.log(Severity.INFO, () -> "Got " + streamSet.size() + " effective streams (" + effectiveStreamKey + ")");
 
                 // Try and find the stream before the requested time that is less
                 // than or equal to it.
@@ -246,7 +250,7 @@ public class ReferenceData {
                     // Get the map store associated with this effective feed.
                     final MapStore mapStore = getMapStore(mapStorePoolKey);
                     if (mapStore != null) {
-                        result.log(Severity.INFO, () -> "Retrieved map store from " + effectiveStream);
+                        result.log(Severity.INFO, () -> "Retrieved map store (" + effectiveStream + ")");
 
                         if (mapStore.getErrorReceiver() != null) {
                             mapStore.getErrorReceiver().replay(result);
@@ -254,20 +258,20 @@ public class ReferenceData {
 
                         final EventList eventList = mapStore.getEvents(mapName, keyName);
                         if (eventList != null) {
-                            result.log(Severity.INFO, () -> "Map store contains reference data for " + effectiveStreamKey);
+                            result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
                             result.setEventList(eventList);
 
                         } else {
-                            result.log(Severity.WARNING, () -> "Map store has no reference data for " + effectiveStreamKey);
+                            result.log(Severity.WARNING, () -> "Map store has no reference data (" + effectiveStream + ")");
                         }
                     } else {
-                        result.log(Severity.WARNING, () -> "No map store can be retrieved for " + effectiveStream);
+                        result.log(Severity.WARNING, () -> "No map store can be retrieved (" + effectiveStream + ")");
                     }
                 } else {
-                    result.log(Severity.WARNING, () -> "No effective streams can be found in the returned set for " + effectiveStreamKey);
+                    result.log(Severity.WARNING, () -> "No effective streams can be found in the returned set (" + effectiveStreamKey + ")");
                 }
             } else {
-                result.log(Severity.WARNING, () -> "No effective streams can be found for " + effectiveStreamKey);
+                result.log(Severity.WARNING, () -> "No effective streams can be found (" + effectiveStreamKey + ")");
             }
         } else {
             result.log(Severity.ERROR, () -> "User does not have permission to use data from feed '" + pipelineReference.getFeed().getName() + "'");

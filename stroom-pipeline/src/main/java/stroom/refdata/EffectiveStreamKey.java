@@ -24,27 +24,32 @@ import java.util.Objects;
 class EffectiveStreamKey {
     private final DocRef feed;
     private final String streamType;
-    private final long effectiveMs;
-
+    private final long fromMs;
+    private final long toMs;
     private final int hashCode;
 
-    EffectiveStreamKey(final DocRef feed, final String streamType, final long effectiveMs) {
+    EffectiveStreamKey(final DocRef feed, final String streamType, final long fromMs, final long toMs) {
         this.feed = feed;
         this.streamType = streamType;
-        this.effectiveMs = effectiveMs;
-        hashCode = Objects.hash(feed, streamType, effectiveMs);
+        this.fromMs = fromMs;
+        this.toMs = toMs;
+        hashCode = Objects.hash(feed, streamType, fromMs, toMs);
     }
 
-    public DocRef getFeed() {
+    DocRef getFeed() {
         return feed;
     }
 
-    public String getStreamType() {
+    String getStreamType() {
         return streamType;
     }
 
-    public long getEffectiveMs() {
-        return effectiveMs;
+    long getFromMs() {
+        return fromMs;
+    }
+
+    long getToMs() {
+        return toMs;
     }
 
     @Override
@@ -52,7 +57,8 @@ class EffectiveStreamKey {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final EffectiveStreamKey that = (EffectiveStreamKey) o;
-        return effectiveMs == that.effectiveMs &&
+        return fromMs == that.fromMs &&
+                toMs == that.toMs &&
                 Objects.equals(feed, that.feed) &&
                 Objects.equals(streamType, that.streamType);
     }
@@ -64,14 +70,16 @@ class EffectiveStreamKey {
 
     public void append(final StringBuilder sb) {
         if (feed != null) {
-            sb.append("feed=");
+            sb.append("feed = ");
             sb.append(feed.getName());
             sb.append(", ");
         }
-        sb.append("streamType=");
+        sb.append("streamType = ");
         sb.append(streamType);
-        sb.append(", effectiveTime=");
-        sb.append(DateUtil.createNormalDateTimeString(effectiveMs));
+        sb.append(", effectiveTimeWindow >= ");
+        sb.append(DateUtil.createNormalDateTimeString(fromMs));
+        sb.append(" < ");
+        sb.append(DateUtil.createNormalDateTimeString(toMs));
     }
 
     @Override
