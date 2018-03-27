@@ -17,7 +17,6 @@
 package stroom.task;
 
 import stroom.util.shared.Monitor;
-import stroom.util.shared.TerminateHandler;
 import stroom.util.task.TaskMonitor;
 
 public final class TaskMonitorImpl implements TaskMonitor {
@@ -77,14 +76,6 @@ public final class TaskMonitorImpl implements TaskMonitor {
         final Monitor monitor = this.monitor;
         if (monitor != null) {
             monitor.terminate();
-        }
-    }
-
-    @Override
-    public void addTerminateHandler(final TerminateHandler handler) {
-        final Monitor monitor = this.monitor;
-        if (monitor != null) {
-            monitor.addTerminateHandler(handler);
         }
     }
 

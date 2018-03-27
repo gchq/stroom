@@ -18,7 +18,7 @@ package stroom.util.shared;
 
 import java.io.Serializable;
 
-public interface Monitor extends HasTerminateHandlers, HasTerminate, HasInfo, Serializable {
+public interface Monitor extends HasTerminate, HasInfo, Serializable {
     String getName();
 
     void setName(String name);
