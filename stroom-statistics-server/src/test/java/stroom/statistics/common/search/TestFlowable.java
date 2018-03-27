@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import stroom.util.thread.ThreadUtil;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -222,5 +223,103 @@ public class TestFlowable {
         LOGGER.debug("calling dispose");
         disposable.dispose();
         LOGGER.debug("disposed");
+    }
+
+    @Ignore //manual test
+    @Test
+    public void testFlowableWithWindow() {
+
+        AtomicInteger counter = new AtomicInteger();
+        Flowable
+                .generate(
+                        () -> {
+                            LOGGER.debug("Init state");
+                            return counter;
+                        },
+                        (i, emitter) -> {
+                            int j = i.incrementAndGet();
+                            if (j <= 20) {
+                                LOGGER.debug("sleeping");
+                                ThreadUtil.sleep(500);
+                                LOGGER.debug("emitting {}", j);
+                                emitter.onNext(j);
+                            } else {
+                                LOGGER.debug("complete");
+                                emitter.onComplete();
+                            }
+
+                        })
+                .map(i -> {
+                    LOGGER.debug("mapping");
+                    return "xxx" + i;
+                })
+                .window(1, TimeUnit.SECONDS, Schedulers.single())
+                .subscribe(
+                        windowedFlowable -> {
+                            LOGGER.debug("onNext called for windowedFlowable");
+                            windowedFlowable.subscribe(
+                                    data -> {
+                                        LOGGER.debug("onNext called for inner flowable {}", data);
+                                    },
+                                    throwable -> {
+                                        LOGGER.debug("onError called for inner flowable");
+                                    },
+                                    () -> {
+                                        LOGGER.debug("onComplete called for inner flowable");
+                                    }
+                            );
+                        },
+                        throwable -> {
+                            LOGGER.debug("onError called");
+                            throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
+                        },
+                        () -> {
+                            LOGGER.debug("onComplete called");
+                        });
+
+    }
+
+    @Ignore //manual test
+    @Test
+    public void testFlowableWithWindowImediateComplete() {
+
+        AtomicInteger counter = new AtomicInteger();
+        Flowable
+                .generate(
+                        () -> {
+                            LOGGER.debug("Init state");
+                            return counter;
+                        },
+                        (i, emitter) -> {
+                            //immediate complete
+                                emitter.onComplete();
+                        })
+                .map(i -> {
+                    LOGGER.debug("mapping");
+                    return "xxx" + i;
+                })
+                .window(1, TimeUnit.SECONDS, Schedulers.single())
+                .subscribe(
+                        windowedFlowable -> {
+                            LOGGER.debug("onNext called for windowedFlowable");
+                            windowedFlowable.subscribe(
+                                    data -> {
+                                        LOGGER.debug("onNext called for inner flowable {}", data);
+                                    },
+                                    throwable -> {
+                                        LOGGER.debug("onError called for inner flowable");
+                                    },
+                                    () -> {
+                                        LOGGER.debug("onComplete called for inner flowable");
+                                    }
+                            );
+                        },
+                        throwable -> {
+                            LOGGER.debug("onError called");
+                            throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
+                        },
+                        () -> {
+                            LOGGER.debug("onComplete called");
+                        });
     }
 }

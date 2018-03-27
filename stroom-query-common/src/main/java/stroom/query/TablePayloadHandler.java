@@ -16,24 +16,24 @@
 
 package stroom.query;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
-import stroom.query.Items.RemoveHandler;
-import stroom.query.shared.Field;
 import stroom.mapreduce.Pair;
 import stroom.mapreduce.PairQueue;
 import stroom.mapreduce.Reader;
 import stroom.mapreduce.Source;
 import stroom.mapreduce.UnsafePairQueue;
 import stroom.node.shared.ClientProperties;
+import stroom.query.Items.RemoveHandler;
+import stroom.query.shared.Field;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.HasTerminate;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TablePayloadHandler implements PayloadHandler {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(TablePayloadHandler.class);
@@ -190,13 +190,16 @@ public class TablePayloadHandler implements PayloadHandler {
                 try {
                     pendingMerges.put(newQueue);
                 } catch (final InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    Thread.currentThread().interrupt();
+                    LOGGER.warn("Thread interrupted while trying to put an item onto pendingMerges queue");
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
 
-                // Try and merge all of the items on the pending merge queue.
-                mergePending(hasTerminate);
+                if (!Thread.currentThread().isInterrupted()) {
+                    // Try and merge all of the items on the pending merge queue.
+                    mergePending(hasTerminate);
+                }
             }
         }
     }
