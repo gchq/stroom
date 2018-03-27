@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#697** : Improved XSLT `Lookup` trace messages.
+
 ## [v5.2.2] - 2018-03-26
 
 * Issue **#697** : Added a feature to trace XSLT `Lookup` attempts so that reference data lookups can be debugged.
