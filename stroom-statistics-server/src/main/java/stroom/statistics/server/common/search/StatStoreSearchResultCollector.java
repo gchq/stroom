@@ -16,10 +16,6 @@
 
 package stroom.statistics.server.common.search;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import stroom.query.Payload;
 import stroom.query.ResultHandler;
 import stroom.query.ResultStore;
@@ -30,6 +26,10 @@ import stroom.task.server.TaskTerminatedException;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class StatStoreSearchResultCollector implements SearchResultCollector {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(StatStoreSearchResultCollector.class);
@@ -82,7 +82,7 @@ public class StatStoreSearchResultCollector implements SearchResultCollector {
     }
 
     public void handle(final Map<Integer, Payload> payloadMap) {
-        if (payloadMap != null) {
+        if (payloadMap != null && !payloadMap.isEmpty()) {
             resultHandler.handle(payloadMap, task);
         }
     }

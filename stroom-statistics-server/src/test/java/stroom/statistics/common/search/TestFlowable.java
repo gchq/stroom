@@ -225,7 +225,7 @@ public class TestFlowable {
         LOGGER.debug("disposed");
     }
 
-    //    @Ignore //manual test
+    @Ignore //manual test
     @Test
     public void testFlowableWithWindow() {
 
@@ -239,8 +239,9 @@ public class TestFlowable {
                         (i, emitter) -> {
                             int j = i.incrementAndGet();
                             if (j <= 20) {
-                                LOGGER.debug("emit");
+                                LOGGER.debug("sleeping");
                                 ThreadUtil.sleep(500);
+                                LOGGER.debug("emitting {}", j);
                                 emitter.onNext(j);
                             } else {
                                 LOGGER.debug("complete");
@@ -252,7 +253,7 @@ public class TestFlowable {
                     LOGGER.debug("mapping");
                     return "xxx" + i;
                 })
-                .window(1, TimeUnit.SECONDS)
+                .window(1, TimeUnit.SECONDS, Schedulers.single())
                 .subscribe(
                         windowedFlowable -> {
                             LOGGER.debug("onNext called for windowedFlowable");
@@ -264,7 +265,7 @@ public class TestFlowable {
                                         LOGGER.debug("onError called for inner flowable");
                                     },
                                     () -> {
-                                        LOGGER.debug("onComplete called for inn");
+                                        LOGGER.debug("onComplete called for inner flowable");
                                     }
                             );
                         },
@@ -276,5 +277,49 @@ public class TestFlowable {
                             LOGGER.debug("onComplete called");
                         });
 
+    }
+
+    @Ignore //manual test
+    @Test
+    public void testFlowableWithWindowImediateComplete() {
+
+        AtomicInteger counter = new AtomicInteger();
+        Flowable
+                .generate(
+                        () -> {
+                            LOGGER.debug("Init state");
+                            return counter;
+                        },
+                        (i, emitter) -> {
+                            //immediate complete
+                                emitter.onComplete();
+                        })
+                .map(i -> {
+                    LOGGER.debug("mapping");
+                    return "xxx" + i;
+                })
+                .window(1, TimeUnit.SECONDS, Schedulers.single())
+                .subscribe(
+                        windowedFlowable -> {
+                            LOGGER.debug("onNext called for windowedFlowable");
+                            windowedFlowable.subscribe(
+                                    data -> {
+                                        LOGGER.debug("onNext called for inner flowable {}", data);
+                                    },
+                                    throwable -> {
+                                        LOGGER.debug("onError called for inner flowable");
+                                    },
+                                    () -> {
+                                        LOGGER.debug("onComplete called for inner flowable");
+                                    }
+                            );
+                        },
+                        throwable -> {
+                            LOGGER.debug("onError called");
+                            throw new RuntimeException(String.format("Error in flow, %s", throwable.getMessage()), throwable);
+                        },
+                        () -> {
+                            LOGGER.debug("onComplete called");
+                        });
     }
 }

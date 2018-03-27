@@ -17,6 +17,8 @@
 package stroom.statistics.server.common.search;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -46,7 +48,6 @@ import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -107,21 +108,21 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                                         fieldIndexMap,
                                         task.getMonitor(),
                                         task.getSearch().getParamMap()))
-                        .collect(Collectors.toList());
+                        .collect(ImmutableList.toImmutableList());
 
                 // convert the search into something stats understands
                 final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(
                         task.getSearch(),
                         entity);
 
-                AtomicLong counter = new AtomicLong(0);
+                final AtomicLong counter = new AtomicLong(0);
                 taskMonitor.info(task.getSearchName() + " - executing database query");
 
                 // subscribe to the flowable, mapping each resultSet to a String[]
                 // After the window period has elapsed a new flowable is create for those rows received 
                 // in that window, which can all be processed and sent
                 // If the task is canceled, the flowable produced by search() will stop emitting
-                // Set up the results flowable, the serach wont be executed until subscribe is called
+                // Set up the results flowable, the search wont be executed until subscribe is called
                 statisticsSearchService.search(entity, criteria, fieldIndexMap)
                         .window(PROCESS_PAYLOAD_INTERVAL_SECS, TimeUnit.SECONDS)
                         .subscribe(
@@ -141,9 +142,11 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                                                         throwable.getMessage()), throwable);
                                             },
                                             () -> {
+                                                LAMBDA_LOGGER.debug(() ->
+                                                        String.format("onComplete of inner flowable called, processing results so far, counter: %s",
+                                                                counter.get()));
                                                 //completed our timed window so create and pass on a payload for the
                                                 //data we have gathered so far
-                                                LOGGER.trace("onComplete of inner flowable called");
                                                 processPayloads(resultCollector, tableCoprocessors);
                                                 taskMonitor.info(task.getSearchName() +
                                                         " - running database query (" + counter.get() + " rows fetched)");
@@ -154,6 +157,8 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                                             throwable.getMessage()), throwable);
                                 },
                                 () -> LOGGER.debug("onComplete of outer flowable called"));
+
+                LOGGER.debug("Out of flowable");
 
                 //flows all complete, so process any remaining data
                 processPayloads(resultCollector, tableCoprocessors);
@@ -173,20 +178,23 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         }
     }
 
-    private void processPayloads(final StatStoreSearchResultCollector resultCollector,
-                                 final List<StatStoreTableCoprocessor> tableCoprocessors) {
+    /**
+     * Synchronized to ensure multiple threads don't fight over the coprocessors which is unlikely to
+     * happen anyway as it is mostly used in
+     */
+    private synchronized void processPayloads(final StatStoreSearchResultCollector resultCollector,
+                                              final List<StatStoreTableCoprocessor> tableCoprocessors) {
 
-        Map<Integer, Payload> payloadMap = null;
+        LOGGER.debug("processPayloads called for {} coprocessors", tableCoprocessors.size());
 
-        for (StatStoreTableCoprocessor tableCoprocessor : tableCoprocessors) {
-            Payload payload = tableCoprocessor.createPayload();
-            if (payload != null) {
-                if (payloadMap == null) {
-                    payloadMap = new HashMap<>();
-                }
-                payloadMap.put(tableCoprocessor.getId(), payload);
-            }
-        }
+        //build a payload map from whatever the coprocessors have in them, if anything
+        final Map<Integer, Payload> payloadMap = tableCoprocessors.stream()
+                .map(tableCoprocessor ->
+                        Maps.immutableEntry(tableCoprocessor.getId(), tableCoprocessor.createPayload()))
+                .filter(entry ->
+                        entry.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
         // give the processed results to the collector, it will handle nulls
         resultCollector.handle(payloadMap);
     }

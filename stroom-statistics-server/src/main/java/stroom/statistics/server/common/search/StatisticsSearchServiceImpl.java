@@ -3,7 +3,6 @@ package stroom.statistics.server.common.search;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.reactivex.Flowable;
-import io.reactivex.functions.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -24,6 +23,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
+import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") //called by DI
@@ -95,8 +96,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         Function<ResultSet, String[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
 
         // the query will not be executed until somebody subscribes to the flowable
-        return getFlowableQueryResults(sql)
-                .map(resultSetMapper); // convert the ResultSet into a String[]
+        return getFlowableQueryResults(sql, resultSetMapper);
     }
 
     private List<String> getSelectColumns(final StatisticStoreEntity statisticStoreEntity,
@@ -223,10 +223,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     }
 
     /**
-     * Build a mapper function that will only extarct the bits of the row
-     * of interest.
+     * Build a mapper function that will only extract the columns of interest from the resultSet row
      */
-    private io.reactivex.functions.Function<ResultSet, String[]> buildResultSetMapper(
+    private Function<ResultSet, String[]> buildResultSetMapper(
             final FieldIndexMap fieldIndexMap,
             final StatisticStoreEntity statisticStoreEntity) {
 
@@ -321,8 +320,12 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         //created above
         return rs -> {
             Preconditions.checkNotNull(rs);
-            if (rs.isClosed()) {
-                throw new RuntimeException("ResultSet is closed");
+            try {
+                if (rs.isClosed()) {
+                    throw new RuntimeException("ResultSet is closed");
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException("Error testing closed state of resultSet", e);
             }
             //the data array we are populating
             final String[] data = new String[arrSize];
@@ -360,11 +363,12 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-    private Flowable<ResultSet> getFlowableQueryResults(final SqlBuilder sql) {
+    private Flowable<String[]> getFlowableQueryResults(final SqlBuilder sql,
+                                                        final Function<ResultSet, String[]> resultSetMapper) {
 
         //Not thread safe as each onNext will get the same ResultSet instance, however its position
         // will have mode on each time.
-        Flowable<ResultSet> resultSetFlowable = Flowable
+        Flowable<String[]> resultSetFlowable = Flowable
                 .using(
                         () -> new PreparedStatementResourceHolder(statisticsDataSource, sql, propertyService),
                         factory -> {
@@ -383,12 +387,18 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                     },
                                     (rs, emitter) -> {
                                         //advance the resultSet, if it is a row emit it, else finish the flow
-                                        if (rs.next() && !taskMonitor.isTerminated()) {
-                                            LOGGER.trace("calling onNext");
-                                            emitter.onNext(rs);
-                                        } else {
-                                            LOGGER.debug("calling onComplete");
+                                        if (taskMonitor.isTerminated() || Thread.currentThread().isInterrupted()) {
+                                            LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
+                                        } else {
+                                            if (rs.next()) {
+                                                LOGGER.trace("calling onNext");
+                                                String[] values = resultSetMapper.apply(rs);
+                                                emitter.onNext(values);
+                                            } else {
+                                                LOGGER.debug("End of resultSet, calling onComplete");
+                                                emitter.onComplete();
+                                            }
                                         }
                                     });
                         },
