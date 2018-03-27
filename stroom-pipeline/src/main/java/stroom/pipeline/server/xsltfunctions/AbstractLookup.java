@@ -24,20 +24,21 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
+import stroom.refdata.ReferenceDataResult;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
-import stroom.xml.event.EventList;
 import stroom.xml.event.np.EventListConsumer;
 import stroom.xml.event.np.NPEventList;
 
 import java.util.List;
 
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractLookup.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
 
     private final ReferenceData referenceData;
     private final StreamHolder streamHolder;
@@ -76,6 +77,15 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 }
             }
 
+            // Find out if we are going to trace the lookup.
+            boolean traceLookup = false;
+            if (arguments.length > 4) {
+                final Boolean trace = getSafeBoolean(functionName, context, arguments, 4);
+                if (trace != null) {
+                    traceLookup = trace;
+                }
+            }
+
             // Make sure we can get the date ok.
             long ms = defaultMs;
             if (arguments.length > 2) {
@@ -101,18 +111,14 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             }
 
             // Create a lookup identifier if we are going to output debug.
-            StringBuilder lookupIdentifier = null;
-            if (LOGGER.isDebugEnabled()) {
-                lookupIdentifier = new StringBuilder();
-                getLookupIdentifier(lookupIdentifier, map, key, ms);
-            }
+            final LookupIdentifier lookupIdentifier = new LookupIdentifier(map, key, ms);
 
             // If we have got the date then continue to do the lookup.
             try {
-                result = doLookup(context, map, key, ms, ignoreWarnings, lookupIdentifier);
+                result = doLookup(context, map, key, ms, ignoreWarnings, traceLookup, lookupIdentifier);
             } catch (final Throwable t) {
                 if (!ignoreWarnings) {
-                    createLookupFailWarning(context, map, key, ms, t);
+                    createLookupFailWarning(context, lookupIdentifier, t);
                 }
             }
         } catch (final Exception e) {
@@ -122,50 +128,71 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         return result;
     }
 
-    protected abstract Sequence doLookup(final XPathContext context, final String map, final String key,
-                                         final long eventTime, final boolean ignoreWarnings, final StringBuilder lookupIdentifier)
+    abstract Sequence doLookup(final XPathContext context,
+                               final String map,
+                               final String key,
+                               final long eventTime,
+                               final boolean ignoreWarnings,
+                               final boolean trace,
+                               final LookupIdentifier lookupIdentifier)
             throws XPathException;
 
-    EventList getReferenceData(final String map, final String key, final long eventTime,
-                               final StringBuilder lookupIdentifier) {
-        EventList result = null;
+    ReferenceDataResult getReferenceData(final String map,
+                                         final String key,
+                                         final long eventTime,
+                                         final LookupIdentifier lookupIdentifier) {
+        final ReferenceDataResult result = new ReferenceDataResult();
 
-        final List<PipelineReference> pipelineReferences = getPipelineReferences();
-        if (key != null && pipelineReferences != null && pipelineReferences.size() > 0) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Doing lookup " + lookupIdentifier);
-            }
-            result = referenceData.getValue(pipelineReferences, getErrorReceiver(), eventTime, map, key);
-            if (LOGGER.isDebugEnabled()) {
-                if (result != null) {
-                    LOGGER.debug("Found lookup " + lookupIdentifier);
-                } else {
-                    LOGGER.debug("Lookup not found " + lookupIdentifier);
-                }
+        result.log(Severity.INFO, () -> "Doing lookup " + lookupIdentifier);
+        if (map == null) {
+            result.log(Severity.ERROR, () -> "No map name has been specified");
+        } else if (key == null) {
+            result.log(Severity.ERROR, () -> "No key name has been specified");
+        } else {
+            final List<PipelineReference> pipelineReferences = getPipelineReferences();
+            if (pipelineReferences == null || pipelineReferences.size() == 0) {
+                result.log(Severity.ERROR, () -> "No pipeline references have been added to this XSLT step to perform a lookup");
+            } else {
+                referenceData.getValue(pipelineReferences, eventTime, map, key, result);
             }
         }
 
         return result;
     }
 
-    void createLookupFailWarning(final XPathContext context, final String map, final String key, final long eventTime,
-                                 final Throwable e) {
+    private void createLookupFailWarning(final XPathContext context,
+                                         final LookupIdentifier lookupIdentifier,
+                                         final Throwable e) {
         // Create the message.
         final StringBuilder sb = new StringBuilder();
         sb.append("Lookup failed ");
-        getLookupIdentifier(sb, map, key, eventTime);
+        lookupIdentifier.append(sb);
 
         outputWarning(context, sb, e);
     }
 
-    private void getLookupIdentifier(final StringBuilder sb, final String map, final String key, final long eventTime) {
-        sb.append("(map = ");
-        sb.append(map);
-        sb.append(", key = ");
-        sb.append(key);
-        sb.append(", eventTime = ");
-        sb.append(DateUtil.createNormalDateTimeString(eventTime));
-        sb.append(")");
+    void outputInfo(final Severity severity,
+                    final String msg,
+                    final LookupIdentifier lookupIdentifier,
+                    final boolean trace,
+                    final ReferenceDataResult result,
+                    final XPathContext context) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(msg);
+        lookupIdentifier.append(sb);
+
+        if (trace) {
+            result.getMessages().forEach(message -> {
+                sb.append("\n > ");
+                sb.append(message.getSeverity().getDisplayValue());
+                sb.append(": ");
+                sb.append(message.getMessage().get());
+            });
+        }
+
+        final String message = sb.toString();
+        LOGGER.debug(message);
+        log(context, severity, message, null);
     }
 
     static class SequenceMaker {
@@ -217,6 +244,35 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             builder.reset();
 
             return sequence;
+        }
+    }
+
+    static class LookupIdentifier {
+        private final String map;
+        private final String key;
+        private final long eventTime;
+
+        LookupIdentifier(final String map, final String key, final long eventTime) {
+            this.map = map;
+            this.key = key;
+            this.eventTime = eventTime;
+        }
+
+        public void append(final StringBuilder sb) {
+            sb.append("(map = ");
+            sb.append(map);
+            sb.append(", key = ");
+            sb.append(key);
+            sb.append(", eventTime = ");
+            sb.append(DateUtil.createNormalDateTimeString(eventTime));
+            sb.append(")");
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder();
+            append(sb);
+            return sb.toString();
         }
     }
 }

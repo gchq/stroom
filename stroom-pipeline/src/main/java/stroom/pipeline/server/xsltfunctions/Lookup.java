@@ -23,6 +23,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
+import stroom.refdata.ReferenceDataResult;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.xml.event.np.NPEventList;
 
@@ -37,16 +39,26 @@ class Lookup extends AbstractLookup {
     }
 
     @Override
-    protected Sequence doLookup(final XPathContext context, final String map, final String key, final long eventTime,
-                                final boolean ignoreWarnings, final StringBuilder lookupIdentifier) throws XPathException {
+    protected Sequence doLookup(final XPathContext context,
+                                final String map,
+                                final String key,
+                                final long eventTime,
+                                final boolean ignoreWarnings,
+                                final boolean trace,
+                                final LookupIdentifier lookupIdentifier) throws XPathException {
         final SequenceMaker sequenceMaker = new SequenceMaker(context);
-        final NPEventList eventList = (NPEventList) getReferenceData(map, key, eventTime, lookupIdentifier);
+        final ReferenceDataResult result = getReferenceData(map, key, eventTime, lookupIdentifier);
+        final NPEventList eventList = (NPEventList) result.getEventList();
         if (eventList != null) {
             sequenceMaker.open();
             sequenceMaker.consume(eventList);
             sequenceMaker.close();
+
+            if (trace) {
+                outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
+            }
         } else if (!ignoreWarnings) {
-            createLookupFailWarning(context, map, key, eventTime, null);
+            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
         }
 
         return sequenceMaker.toSequence();

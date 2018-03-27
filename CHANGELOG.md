@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#697** : Improved XSLT `Lookup` trace messages.
+
+## [v5.2.2] - 2018-03-26
+
+* Issue **#697** : Added a feature to trace XSLT `Lookup` attempts so that reference data lookups can be debugged.
+
+* Issue **#702** : Fix for hanging search extraction tasks
+
+## [v5.2.1] - 2018-03-23
+
 * Issue **#701** : The search `maxDocIdQueueSize` is now 1000 by default.
 
 * Issue **#700** : The format-date XSLT function now defaults years, months and days to the stream receipt time regardless of whether the input date pattern specifies them.
@@ -749,7 +759,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.2.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.2.2...HEAD
+[v5.2.2]: https://github.com/gchq/stroom/compare/v5.2.1...v5.2.2
+[v5.2.1]: https://github.com/gchq/stroom/compare/v5.2.0...v5.2.1
 [v5.2.0]: https://github.com/gchq/stroom/compare/v5.1.0...v5.2.0
 [v5.1.0]: https://github.com/gchq/stroom/compare/v5.1-beta.16...v5.1.0
 [v5.1-beta.16]: https://github.com/gchq/stroom/compare/v5.1-beta.15...v5.1-beta.16
