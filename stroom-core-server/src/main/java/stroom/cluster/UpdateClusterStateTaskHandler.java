@@ -25,6 +25,7 @@ import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.GenericServerTask;
+import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
 import stroom.task.TaskManager;
 import stroom.util.shared.VoidResult;
@@ -43,16 +44,19 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
     private final NodeCache nodeCache;
     private final ClusterCallServiceRemote clusterCallServiceRemote;
     private final TaskManager taskManager;
+    private final TaskContext taskContext;
 
     @Inject
     UpdateClusterStateTaskHandler(final NodeService nodeService,
                                   final NodeCache nodeCache,
                                   final ClusterCallServiceRemote clusterCallServiceRemote,
-                                  final TaskManager taskManager) {
+                                  final TaskManager taskManager,
+                                  final TaskContext taskContext) {
         this.nodeService = nodeService;
         this.nodeCache = nodeCache;
         this.clusterCallServiceRemote = clusterCallServiceRemote;
         this.taskManager = taskManager;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -63,7 +67,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
         // to give other nodes some time to start also.
         if (task.getDelay() > 0) {
             int remaining = task.getDelay();
-            while (!task.isTerminated() && remaining > 0) {
+            while (!taskContext.isTerminated() && remaining > 0) {
                 ThreadUtil.sleep(100);
                 remaining -= 100;
             }
@@ -169,15 +173,13 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
     }
 
     private synchronized void addEnabledActiveNode(final ClusterState clusterState, final Node node) {
-        final Set<Node> enabledActiveNodes = new HashSet<>();
-        enabledActiveNodes.addAll(clusterState.getEnabledActiveNodes());
+        final Set<Node> enabledActiveNodes = new HashSet<>(clusterState.getEnabledActiveNodes());
         enabledActiveNodes.add(node);
         clusterState.setEnabledActiveNodes(enabledActiveNodes);
     }
 
     private synchronized void removeEnabledActiveNode(final ClusterState clusterState, final Node node) {
-        final Set<Node> enabledActiveNodes = new HashSet<>();
-        enabledActiveNodes.addAll(clusterState.getEnabledActiveNodes());
+        final Set<Node> enabledActiveNodes = new HashSet<>(clusterState.getEnabledActiveNodes());
         enabledActiveNodes.remove(node);
         clusterState.setEnabledActiveNodes(enabledActiveNodes);
     }

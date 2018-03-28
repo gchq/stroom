@@ -96,7 +96,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
-            if (!task.isTerminated()) {
+            if (!taskContext.isTerminated()) {
                 final Node sourceNode = targetNodeSetFactory.getSourceNode();
 
                 try {
@@ -158,7 +158,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // Now send out distributed search tasks to each worker node.
                     filteredShardNodes.forEach((node, shards) -> {
-                        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
+                        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task, task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
                                 task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
                         LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
                         dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
@@ -199,7 +199,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
     private void terminateTasks(final AsyncSearchTask task) {
         // Terminate this task.
-        task.terminate();
+        taskManager.terminate(task.getId());
 
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl

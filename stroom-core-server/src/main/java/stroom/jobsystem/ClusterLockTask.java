@@ -17,7 +17,7 @@
 package stroom.jobsystem;
 
 import stroom.util.shared.SharedBoolean;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 public class ClusterLockTask extends ServerTask<SharedBoolean> {
     private final ClusterLockKey key;

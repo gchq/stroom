@@ -24,7 +24,6 @@ import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Monitor;
 
 import java.io.IOException;
 import java.io.InputStream;

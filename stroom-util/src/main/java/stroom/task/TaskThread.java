@@ -16,21 +16,25 @@
 
 package stroom.task;
 
-import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
-import stroom.util.task.HasMonitor;
 
-public class TaskThread<R> {
+class TaskThread<R> {
     private final Task<?> task;
+    private final Monitor monitor;
     private final long submitTimeMs = System.currentTimeMillis();
     private volatile Thread thread;
 
-    public TaskThread(final Task<?> task) {
+    TaskThread(final Task<?> task, final Monitor monitor) {
         this.task = task;
+        this.monitor = monitor;
     }
 
     public Task<?> getTask() {
         return task;
+    }
+
+    Monitor getMonitor() {
+        return monitor;
     }
 
     public synchronized void setThread(final Thread thread) {
@@ -38,7 +42,11 @@ public class TaskThread<R> {
     }
 
     public void terminate() {
-        task.terminate();
+        monitor.terminate();
+    }
+
+    public boolean isTerminated() {
+        return monitor.isTerminated();
     }
 
     @SuppressWarnings("deprecation")
@@ -62,32 +70,26 @@ public class TaskThread<R> {
     }
 
     public String getName() {
-        String name = null;
-        if (task instanceof HasMonitor) {
-            final Monitor monitor = ((HasMonitor) task).getMonitor();
-            if (monitor != null) {
-                name = monitor.getName();
-            }
-        }
+        String name = monitor.getName();
         if (name == null) {
             name = task.getTaskName();
         }
-        if (task.isTerminated()) {
+        if (monitor.isTerminated()) {
             name = "<<terminated>> " + name;
         }
 
         return name;
     }
 
-    public String getInfo() {
-        String info = null;
-        if (task instanceof HasMonitor) {
-            final Monitor monitor = ((HasMonitor) task).getMonitor();
-            if (monitor != null) {
-                info = monitor.getInfo();
-            }
-        }
+    public void setName(final String name) {
+        monitor.setName(name);
+    }
 
-        return info;
+    public String getInfo() {
+        return monitor.getInfo();
+    }
+
+    public void info(final Object... args) {
+        monitor.info(args);
     }
 }

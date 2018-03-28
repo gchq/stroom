@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.util.task;
+package stroom.task;
 
-import stroom.util.shared.Monitor;
+import stroom.task.Monitor;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 public class MonitorInfoUtil {
@@ -36,9 +33,9 @@ public class MonitorInfoUtil {
         final Set<Monitor> allMonitors = new HashSet<>();
 
         // Build a tree map.
-        final Map<Monitor, List<Monitor>> map = new HashMap<>();
+        final Map<Monitor, Set<Monitor>> childMap = new HashMap<>();
         for (final Monitor monitor : monitors) {
-            map.computeIfAbsent(monitor.getParent(), k -> new ArrayList<>()).add(monitor);
+            childMap.put(monitor, monitor.getChildren());
             allMonitors.add(monitor);
         }
 
@@ -46,25 +43,19 @@ public class MonitorInfoUtil {
 
         // Get a list of monitors that have no parent monitor or who have a
         // parent monitor that no longer seems to exist.
-        final List<Monitor> roots = new ArrayList<>();
-        for (final Entry<Monitor, List<Monitor>> entry : map.entrySet()) {
-            final Monitor parent = entry.getKey();
-            final List<Monitor> children = entry.getValue();
-            if (parent == null) {
-                roots.addAll(children);
-            } else if (!allMonitors.contains(parent)) {
-                roots.addAll(children);
-            }
+        final Set<Monitor> roots = new HashSet<>(allMonitors);
+        for (final Monitor monitor : monitors) {
+            roots.removeAll(monitor.getChildren());
         }
 
         // Build the tree with the root monitors.
-        addLevel(sb, map, roots, "");
+        addLevel(sb, childMap, roots, "");
 
         return sb.toString();
     }
 
-    private static void addLevel(final StringBuilder sb, final Map<Monitor, List<Monitor>> map,
-                                 final List<Monitor> list, final String prefix) {
+    private static void addLevel(final StringBuilder sb, final Map<Monitor, Set<Monitor>> map,
+                                 final Set<Monitor> list, final String prefix) {
         if (list != null && list.size() > 0) {
             for (final Monitor monitor : list) {
                 // Indent the message if needed.
@@ -74,7 +65,7 @@ public class MonitorInfoUtil {
                 sb.append(monitor.getInfo());
                 sb.append("\n");
 
-                final List<Monitor> children = map.get(monitor);
+                final Set<Monitor> children = map.get(monitor);
                 addLevel(sb, map, children, "   +" + prefix);
             }
         }

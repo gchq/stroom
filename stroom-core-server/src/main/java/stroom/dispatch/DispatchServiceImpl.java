@@ -32,12 +32,11 @@ import stroom.security.UserTokenUtil;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.servlet.SessionListListener;
 import stroom.task.TaskHandler;
-import stroom.task.TaskHandlerBean;
 import stroom.task.TaskHandlerBeanRegistry;
 import stroom.task.TaskManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
-import stroom.util.task.TaskIdFactory;
+import stroom.task.TaskIdFactory;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;

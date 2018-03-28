@@ -17,7 +17,7 @@
 package stroom.lifecycle;
 
 import stroom.util.shared.VoidResult;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 public class LifecycleTask extends ServerTask<VoidResult> {
     private final StroomBeanMethodExecutable executable;

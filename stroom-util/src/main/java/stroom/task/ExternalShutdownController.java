@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.util.task;
+package stroom.task;
 
-import stroom.util.shared.Monitor;
+import stroom.util.shared.TerminateHandler;
 
-public interface HasMonitor {
-    Monitor getMonitor();
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class ExternalShutdownController {
+    private static final Map<Object, TerminateHandler> terminateHandlers = new ConcurrentHashMap<>();
+
+    public static void addTerminateHandler(final Object key, final TerminateHandler terminateHandler) {
+        terminateHandlers.put(key, terminateHandler);
+    }
+
+    public static void shutdown() {
+        terminateHandlers.values().forEach(TerminateHandler::onTerminate);
+    }
 }

@@ -14,35 +14,33 @@
  * limitations under the License.
  */
 
-package stroom.util.task;
+package stroom.task;
 
 import stroom.util.logging.LoggerUtil;
-import stroom.util.shared.Monitor;
+import stroom.util.shared.HasTerminate;
+import stroom.task.Monitor;
+
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MonitorImpl implements Monitor {
     private static final long serialVersionUID = 6158410874438193810L;
 
-    private final Monitor parent;
+    private final Set<Monitor> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private volatile boolean terminate;
     private volatile Object[] info;
     private volatile String name;
 
-    public MonitorImpl() {
-        this.parent = null;
-    }
-
-    MonitorImpl(final Monitor parent) {
-        this.parent = parent;
-    }
-
     @Override
     public boolean isTerminated() {
-        return parent != null && parent.isTerminated() || terminate;
+        return terminate;
     }
 
     @Override
     public void terminate() {
         this.terminate = true;
+        children.forEach(HasTerminate::terminate);
     }
 
     @Override
@@ -66,12 +64,25 @@ public class MonitorImpl implements Monitor {
     }
 
     @Override
-    public String toString() {
-        return getInfo();
+    public void addChild(final Monitor monitor) {
+        children.add(monitor);
+        if (terminate) {
+            monitor.terminate();
+        }
     }
 
     @Override
-    public Monitor getParent() {
-        return parent;
+    public void removeChild(final Monitor monitor) {
+        children.remove(monitor);
+    }
+
+    @Override
+    public Set<Monitor> getChildren() {
+        return children;
+    }
+
+    @Override
+    public String toString() {
+        return getInfo();
     }
 }

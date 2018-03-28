@@ -18,17 +18,25 @@ package stroom.jobsystem;
 
 import stroom.task.cluster.ClusterTask;
 import stroom.util.shared.SharedBoolean;
+import stroom.util.shared.Task;
 
 public class ClusterLockClusterTask extends ClusterTask<SharedBoolean> {
     private static final long serialVersionUID = -2025366263627949409L;
 
+    private final Task<?> parentTask;
     private final ClusterLockKey key;
     private final ClusterLockStyle lockStyle;
 
     public ClusterLockClusterTask(final ClusterLockTask parent) {
         super(parent.getUserToken(), "ClusterLockClusterTask");
+        this.parentTask = parent;
         this.key = parent.getKey();
         this.lockStyle = parent.getLockStyle();
+    }
+
+    @Override
+    public Task<?> getParentTask() {
+        return parentTask;
     }
 
     public ClusterLockKey getKey() {

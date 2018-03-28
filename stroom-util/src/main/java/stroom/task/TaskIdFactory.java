@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.util.task;
+package stroom.task;
 
-import stroom.util.shared.TerminateHandler;
+import stroom.util.shared.TaskId;
+import stroom.util.shared.TaskIdImpl;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.UUID;
 
-public class ExternalShutdownController {
-    private static final Map<Object, TerminateHandler> terminateHandlers = new ConcurrentHashMap<>();
-
-    public static void addTerminateHandler(final Object key, final TerminateHandler terminateHandler) {
-        terminateHandlers.put(key, terminateHandler);
+public class TaskIdFactory {
+    public static TaskId create() {
+        return new TaskIdImpl(createUUID(), null);
     }
 
-    public static void shutdown() {
-        terminateHandlers.values().forEach(TerminateHandler::onTerminate);
+    public static TaskId create(final TaskId parentTaskId) {
+        if (parentTaskId != null) {
+            return new TaskIdImpl(createUUID(), parentTaskId);
+        }
+
+        return create();
+    }
+
+    private static String createUUID() {
+        return UUID.randomUUID().toString();
     }
 }

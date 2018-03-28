@@ -14,14 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.task;
+
+import stroom.util.shared.HasInfo;
+import stroom.util.shared.HasTerminate;
 
 import java.io.Serializable;
+import java.util.Set;
 
 public interface Monitor extends HasTerminate, HasInfo, Serializable {
     String getName();
 
     void setName(String name);
 
-    Monitor getParent();
+    void addChild(Monitor monitor);
+
+    void removeChild(Monitor monitor);
+
+    Set<Monitor> getChildren();
 }

@@ -16,75 +16,64 @@
 
 package stroom.task;
 
-import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public final class CurrentTaskState {
-    private static final ThreadLocal<Deque<TaskState>> THREAD_LOCAL = ThreadLocal.withInitial(ArrayDeque::new);
+    private static final ThreadLocal<Deque<TaskThread>> THREAD_LOCAL = ThreadLocal.withInitial(ArrayDeque::new);
 
     private CurrentTaskState() {
         // Utility.
     }
 
-    static void pushState(final Task<?> task, final Monitor monitor) {
-        final Deque<TaskState> deque = THREAD_LOCAL.get();
-        deque.push(new TaskState(task, monitor));
+    static void pushState(final TaskThread taskThread) {
+        final Deque<TaskThread> deque = THREAD_LOCAL.get();
+        deque.push(taskThread);
     }
 
-    static TaskState popState() {
-        final Deque<TaskState> deque = THREAD_LOCAL.get();
+    static TaskThread popState() {
+        final Deque<TaskThread> deque = THREAD_LOCAL.get();
         return deque.pop();
     }
 
-    private static TaskState currentState() {
-        final Deque<TaskState> deque = THREAD_LOCAL.get();
+    private static TaskThread currentState() {
+        final Deque<TaskThread> deque = THREAD_LOCAL.get();
         return deque.peek();
     }
 
     public static Task<?> currentTask() {
-        final TaskState taskState = currentState();
-        if (taskState != null) {
-            return taskState.task;
+        final TaskThread taskThread = currentState();
+        if (taskThread != null) {
+            return taskThread.getTask();
         }
         return null;
     }
 
     static void setName(final String name) {
-        final TaskState taskState = currentState();
-        if (taskState != null) {
-            taskState.monitor.setName(name);
+        final TaskThread taskThread = currentState();
+        if (taskThread != null) {
+            taskThread.setName(name);
         }
     }
 
     static void info(final Object... args) {
-        final TaskState taskState = currentState();
-        if (taskState != null) {
-            taskState.monitor.info(args);
+        final TaskThread taskThread = currentState();
+        if (taskThread != null) {
+            taskThread.info(args);
         }
     }
 
     static boolean isTerminated() {
-        final TaskState taskState = currentState();
-        return taskState != null && taskState.task.isTerminated();
+        final TaskThread taskThread = currentState();
+        return taskThread != null && taskThread.isTerminated();
     }
 
     static void terminate() {
-        final TaskState taskState = currentState();
-        if (taskState != null) {
-            taskState.task.terminate();
-        }
-    }
-
-    private static class TaskState {
-        private final Task<?> task;
-        private final Monitor monitor;
-
-        TaskState(final Task<?> task, final Monitor monitor) {
-            this.task = task;
-            this.monitor = monitor;
+        final TaskThread taskThread = currentState();
+        if (taskThread != null) {
+            taskThread.terminate();
         }
     }
 }

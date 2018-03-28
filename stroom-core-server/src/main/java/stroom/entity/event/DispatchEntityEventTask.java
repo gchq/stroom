@@ -17,7 +17,7 @@
 package stroom.entity.event;
 
 import stroom.util.shared.VoidResult;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 import java.io.Serializable;
 

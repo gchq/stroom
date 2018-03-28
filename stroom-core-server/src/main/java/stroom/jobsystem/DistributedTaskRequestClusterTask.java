@@ -23,11 +23,13 @@ import stroom.util.shared.Task;
 class DistributedTaskRequestClusterTask extends ClusterTask<DistributedTaskRequestResult> {
     private static final long serialVersionUID = 8371445065601694269L;
 
+    private final Task<?> parentTask;
     private final Node node;
     private final DistributedRequiredTask[] requiredTasks;
 
     DistributedTaskRequestClusterTask(final Task<?> parentTask, final String taskName, final Node node, final DistributedRequiredTask[] requiredTasks) {
         super(parentTask.getUserToken(), taskName);
+        this.parentTask = parentTask;
         this.node = node;
         this.requiredTasks = requiredTasks;
     }
@@ -38,6 +40,11 @@ class DistributedTaskRequestClusterTask extends ClusterTask<DistributedTaskReque
 
     DistributedRequiredTask[] getRequiredTasks() {
         return requiredTasks;
+    }
+
+    @Override
+    public Task<?> getParentTask() {
+        return parentTask;
     }
 
     @Override

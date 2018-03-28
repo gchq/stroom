@@ -64,7 +64,7 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
     public boolean isMatch(final Task<?> task) {
         if (ancestorIdSet != null && ancestorIdSet.size() > 0) {
             for (final TaskId ancestorId : ancestorIdSet) {
-                if (task.getId().hasAncestor(ancestorId)) {
+                if (task.getId().isOrHasAncestor(ancestorId)) {
                     return true;
                 }
             }

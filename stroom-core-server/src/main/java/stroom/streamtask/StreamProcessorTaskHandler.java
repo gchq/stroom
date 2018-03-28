@@ -139,7 +139,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                                 streamSource);
                         // Only record completion for this task if it was not
                         // terminated.
-                        if (!task.isTerminated()) {
+                        if (!taskContext.isTerminated()) {
                             complete = true;
                         }
                     } catch (final Exception ex) {

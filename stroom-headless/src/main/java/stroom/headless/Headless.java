@@ -41,7 +41,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.task.ExternalShutdownController;
+import stroom.task.ExternalShutdownController;
 
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;

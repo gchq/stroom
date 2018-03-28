@@ -134,8 +134,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     public void complete() {
         completionState.complete();
 
-        task.terminate();
-
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
@@ -184,14 +182,13 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
             final List<String> errors = result.getErrors();
 
             if (payloadMap != null) {
-                resultHandler.handle(payloadMap, task);
+                resultHandler.handle(payloadMap);
             }
 
             if (errors != null) {
                 getErrorSet(node).addAll(errors);
             }
 
-        } finally {
             if (result.isComplete()) {
                 nodeComplete(node);
             } else {
@@ -203,6 +200,11 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                 }
             }
 
+        } catch (final RuntimeException e) {
+            nodeComplete(node);
+            getErrorSet(node).add(e.getMessage());
+
+        } finally {
             if (remainingNodeCount.compareAndSet(0, 0)) {
                 completionState.complete();
             }

@@ -18,7 +18,7 @@ package stroom.streamstore;
 
 import stroom.query.api.v2.DocRef;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 import java.nio.file.Path;
 

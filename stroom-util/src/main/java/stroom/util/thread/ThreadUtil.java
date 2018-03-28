@@ -18,10 +18,6 @@ package stroom.util.thread;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.task.ServerTask;
-
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 public final class ThreadUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ThreadUtil.class);
@@ -30,7 +26,7 @@ public final class ThreadUtil {
         // Utility class so hide constructor.
     }
 
-    public static final boolean sleepTenSeconds() {
+    public static boolean sleepTenSeconds() {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("sleepTenSeconds() - Sleeping");
         }
@@ -44,7 +40,7 @@ public final class ThreadUtil {
         return success;
     }
 
-    public static final boolean sleep(final long millis) {
+    public static boolean sleep(final long millis) {
         try {
             if (millis > 0) {
                 Thread.sleep(millis);
@@ -58,7 +54,7 @@ public final class ThreadUtil {
         return true;
     }
 
-    public static final boolean sleep(final Long millis) {
+    public static boolean sleep(final Long millis) {
         if (millis != null) {
             return sleep(millis.longValue());
         }
@@ -73,7 +69,7 @@ public final class ThreadUtil {
      * @param millis up to the many ms
      * @return actual sleep time
      */
-    public static final int sleepUpTo(final long millis) {
+    public static int sleepUpTo(final long millis) {
         try {
             if (millis > 0) {
                 int realSleep = (int) Math.floor(Math.random() * (millis + 1));
@@ -92,29 +88,5 @@ public final class ThreadUtil {
             return -1;
         }
         return 0;
-    }
-
-    /**
-     * Try repeatedly to acquire a lock but give up if the supplied task is
-     * terminated.
-     *
-     * @param lock The lock to acquire.
-     * @param task The task to check for termination.
-     * @return True if the lock is acquired successfully.
-     */
-    public static final boolean acquireLock(final ReentrantLock lock, final ServerTask<?> task) {
-        if (task == null) {
-            throw new NullPointerException("Null task");
-        }
-
-        boolean acquiredLock = false;
-        try {
-            while (!acquiredLock && !task.isTerminated()) {
-                acquiredLock = lock.tryLock(1, TimeUnit.SECONDS);
-            }
-        } catch (final InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-        return acquiredLock;
     }
 }

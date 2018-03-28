@@ -19,7 +19,7 @@ package stroom.streamstore.fs;
 import stroom.node.shared.Volume;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 class FileSystemCleanSubTask extends ServerTask<VoidResult> {
     private final Volume volume;

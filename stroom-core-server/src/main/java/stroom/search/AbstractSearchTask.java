@@ -18,7 +18,7 @@ package stroom.search;
 
 import stroom.query.api.v2.Query;
 import stroom.util.shared.Task;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 public abstract class AbstractSearchTask<R> extends ServerTask<R> {
     private final Query query;

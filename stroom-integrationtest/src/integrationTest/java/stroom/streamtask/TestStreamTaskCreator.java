@@ -18,8 +18,6 @@ package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
@@ -30,7 +28,6 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.SimpleTaskContext;
-import stroom.task.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -40,8 +37,6 @@ import javax.inject.Inject;
 import java.util.List;
 
 public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestStreamTaskCreator.class);
-
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -113,12 +108,12 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         final QueryData findStreamQueryData = new QueryData.Builder()
                 .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                    .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed1.getName())
-                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed2.getName())
+                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed1.getName())
+                                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed2.getName())
+                                .build())
+                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
                         .build())
-                    .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                    .build())
                 .build();
 
         commonTestScenarioCreator.createStreamProcessor(findStreamQueryData);

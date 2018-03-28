@@ -16,7 +16,6 @@
 
 package stroom.task;
 
-import stroom.security.SecurityContext;
 import stroom.security.UserTokenUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
@@ -26,13 +25,10 @@ import java.util.concurrent.Executor;
 
 class ExecutorProviderImpl implements ExecutorProvider {
     private final TaskManager taskManager;
-    private final SecurityContext securityContext;
 
     @Inject
-    ExecutorProviderImpl(final TaskManager taskManager,
-                         final SecurityContext securityContext) {
+    ExecutorProviderImpl(final TaskManager taskManager) {
         this.taskManager = taskManager;
-        this.securityContext = securityContext;
     }
 
     @Override
@@ -80,10 +76,6 @@ class ExecutorProviderImpl implements ExecutorProvider {
 
         @Override
         public void execute(final Runnable command) {
-            if (parentTask != null && parentTask.isTerminated()) {
-                return;
-            }
-
             final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, userToken, taskName, null);
             genericServerTask.setRunnable(command);
             if (threadPool == null) {

@@ -22,8 +22,8 @@ import stroom.ruleset.MetaMapFilterFactoryImpl;
 import stroom.ruleset.RuleSetService;
 import stroom.ruleset.RuleSetServiceImpl;
 import stroom.security.SecurityContext;
-import stroom.util.shared.Monitor;
-import stroom.util.task.MonitorImpl;
+import stroom.task.Monitor;
+import stroom.task.MonitorImpl;
 
 import java.nio.file.Paths;
 

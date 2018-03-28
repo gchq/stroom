@@ -14,27 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.util.task;
+package stroom.task;
 
 import stroom.security.UserTokenUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Monitor;
 import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
 
-public abstract class ServerTask<R> implements Task<R>, HasMonitor {
+public abstract class ServerTask<R> implements Task<R> {
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
     private final TaskId id;
     private final String userToken;
-    private final MonitorImpl monitor;
+    private final Task<?> parentTask;
     private volatile String taskName;
 
     public ServerTask() {
         this.id = TaskIdFactory.create();
         this.userToken = UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN;
-        this.monitor = new MonitorImpl();
+        this.parentTask = null;
     }
 
     public ServerTask(final Task<?> parentTask) {
@@ -48,16 +47,12 @@ public abstract class ServerTask<R> implements Task<R>, HasMonitor {
             this.id = TaskIdFactory.create(parentTask.getId());
         }
         this.userToken = userToken;
+        this.parentTask = parentTask;
+    }
 
-        // Rather than remember the parent task I just grab the parent monitor.
-        // This avoids some Hessian serialisation issues that can occur
-        // unexpectedly when sending parent tasks across the wire.
-        if (parentTask != null && parentTask instanceof HasMonitor) {
-            final HasMonitor hasMonitor = (HasMonitor) parentTask;
-            this.monitor = new MonitorImpl(hasMonitor.getMonitor());
-        } else {
-            this.monitor = new MonitorImpl();
-        }
+    @Override
+    public Task<?> getParentTask() {
+        return parentTask;
     }
 
     @Override
@@ -106,25 +101,6 @@ public abstract class ServerTask<R> implements Task<R>, HasMonitor {
     @Override
     public String toString() {
         return getTaskName() + " - " + id;
-    }
-
-    @Override
-    public Monitor getMonitor() {
-        return monitor;
-    }
-
-    /**
-     * CONVENIENCE METHODS TO SHORTCUT REFERENCES TO MONITOR TO CHECK
-     * TERMINATION ETC.
-     **/
-    @Override
-    public boolean isTerminated() {
-        return monitor.isTerminated();
-    }
-
-    @Override
-    public void terminate() {
-        monitor.terminate();
     }
 
     @Override

@@ -80,6 +80,17 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
      */
     Task<?> getTaskById(TaskId taskId);
 
+    /**
+     * Find out if the task with the given id is terminated.
+     */
+    boolean isTerminated(TaskId taskId);
+
+    /**
+     * Terminate a task by task id.
+     * @param taskId The id of the task to terminate.
+     */
+    void terminate(TaskId taskId);
+
     BaseResultList<TaskProgress> terminate(FindTaskCriteria criteria, boolean kill);
 
     int getCurrentTaskCount();

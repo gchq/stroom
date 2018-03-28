@@ -27,15 +27,15 @@ import stroom.node.shared.Volume;
 import stroom.properties.StroomPropertyService;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.TaskCallbackAdaptor;
+import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
-import stroom.task.TaskContext;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -52,7 +52,7 @@ import java.util.Map;
  * Task to clean the stream store.
  */
 public class FileSystemCleanExecutor {
-    public static final String DELETE_OUT = "delete.out";
+    private static final String DELETE_OUT = "delete.out";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemCleanExecutor.class);
     private final VolumeService volumeService;
@@ -67,9 +67,9 @@ public class FileSystemCleanExecutor {
 
     @Inject
     FileSystemCleanExecutor(final VolumeService volumeService,
-                                   final TaskContext taskContext,
-                                   final TaskManager taskManager,
-                                   final NodeCache nodeCache,
+                            final TaskContext taskContext,
+                            final TaskManager taskManager,
+                            final NodeCache nodeCache,
                             final StroomPropertyService propertyService) {
         this.volumeService = volumeService;
         this.taskContext = taskContext;
@@ -200,7 +200,7 @@ public class FileSystemCleanExecutor {
                             }
                         } catch (final Exception ex) {
                             LOGGER.error("exec() - Error writing " + DELETE_OUT, ex);
-                            task.terminate();
+                            taskContext.terminate();
                         }
                     }
                     logInfo(trace.toString());

@@ -29,7 +29,6 @@ import stroom.statistics.sql.SQLStatisticEventStore;
 import stroom.statistics.sql.StatisticsQueryService;
 import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.statistics.sql.entity.StatisticsDataSourceProvider;
-import stroom.util.shared.HasTerminate;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -61,14 +60,13 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
         this.stroomPropertyService = stroomPropertyService;
     }
 
-    public static Coprocessor createCoprocessor(final CoprocessorSettings settings,
+    private static Coprocessor createCoprocessor(final CoprocessorSettings settings,
                                                 final FieldIndexMap fieldIndexMap,
-                                                final Map<String, String> paramMap,
-                                                final HasTerminate taskContext) {
+                                                final Map<String, String> paramMap) {
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
-                    fieldIndexMap, taskContext, paramMap);
+                    fieldIndexMap, paramMap);
             return tableCoprocessor;
         }
         return null;
@@ -155,20 +153,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                     paramMap = Collections.emptyMap();
                 }
 
-                final Coprocessor coprocessor = createCoprocessor(
-                        coprocessorSettings, fieldIndexMap, paramMap, new HasTerminate() {
-                            //TODO do something about this
-                            @Override
-                            public void terminate() {
-                                System.out.println("terminating");
-                            }
-
-                            @Override
-                            public boolean isTerminated() {
-                                return false;
-                            }
-                        });
-
+                final Coprocessor coprocessor = createCoprocessor(coprocessorSettings, fieldIndexMap, paramMap);
                 if (coprocessor != null) {
                     coprocessorMap.put(coprocessorId, coprocessor);
                 }
@@ -197,10 +182,8 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 coprocessorSettingsMap,
                 payloadMap);
 
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);
-        SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
-
-        return searchResponse;
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);
+        return searchResponseCreator.create(searchRequest);
     }
 
     private Function<StatisticDataPoint, String[]> buildDataPointMapper(final FieldIndexMap fieldIndexMap,

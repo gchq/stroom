@@ -8,7 +8,6 @@ import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
-import stroom.util.shared.Monitor;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

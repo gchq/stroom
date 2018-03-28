@@ -3,7 +3,6 @@ package stroom.task;
 import stroom.security.UserTokenUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.ServerTask;
 
 public final class GenericServerTask extends ServerTask<VoidResult> {
     private final String message;

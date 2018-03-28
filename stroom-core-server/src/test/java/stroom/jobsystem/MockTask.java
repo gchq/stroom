@@ -17,7 +17,7 @@
 package stroom.jobsystem;
 
 import stroom.util.shared.VoidResult;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 /**
  * Mock Class.

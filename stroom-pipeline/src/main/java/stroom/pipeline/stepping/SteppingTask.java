@@ -23,7 +23,7 @@ import stroom.pipeline.shared.SteppingResult;
 import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 import java.util.Map;
 import java.util.Map.Entry;

@@ -22,6 +22,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.api.v2.Query;
 import stroom.task.cluster.ClusterTask;
+import stroom.util.shared.Task;
 
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import java.util.Map;
 public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private static final long serialVersionUID = -1305243739417365803L;
 
+    private final Task<?> parentTask;
     private final Query query;
     private final List<Long> shards;
     private final Node targetNode;
@@ -38,10 +40,19 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private final String dateTimeLocale;
     private final long now;
 
-    public ClusterSearchTask(final String userToken, final String taskName, final Query query,
-                             final List<Long> shards, final Node targetNode, final IndexField[] storedFields,
-                             final int resultSendFrequency, final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap, final String dateTimeLocale, final long now) {
+    public ClusterSearchTask(final Task<?> parentTask,
+                             final String userToken,
+                             final String taskName,
+                             final Query query,
+                             final List<Long> shards,
+                             final Node targetNode,
+                             final IndexField[] storedFields,
+                             final int resultSendFrequency,
+                             final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
+                             final String dateTimeLocale,
+                             final long now) {
         super(userToken, taskName);
+        this.parentTask = parentTask;
         this.query = query;
         this.shards = shards;
         this.targetNode = targetNode;
@@ -50,6 +61,11 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
         this.coprocessorMap = coprocessorMap;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
+    }
+
+    @Override
+    public Task<?> getParentTask() {
+        return parentTask;
     }
 
     public Node getTargetNode() {

@@ -22,16 +22,16 @@ import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.query.api.v2.DocRef;
 import stroom.query.common.v2.Coprocessor;
-import stroom.search.ClusterSearchTask;
 import stroom.search.Event;
 import stroom.search.extraction.ExtractionTask.ResultReceiver;
 import stroom.search.taskqueue.AbstractTaskProducer;
 import stroom.search.taskqueue.TaskExecutor;
 import stroom.search.taskqueue.TaskProducer;
+import stroom.task.TaskContext;
 import stroom.task.ThreadPoolImpl;
 import stroom.util.shared.Severity;
+import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Provider;
 import java.util.Arrays;
@@ -68,7 +68,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
     private final AtomicInteger tasksCompleted = new AtomicInteger();
     private final CountDownLatch completionLatch = new CountDownLatch(1);
 
-    private final ClusterSearchTask clusterSearchTask;
+    private final TaskContext taskContext;
     private final FieldIndexMap extractionFieldIndexMap;
     private final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap;
     private final ErrorReceiver errorReceiver;
@@ -81,7 +81,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
     private volatile boolean finishedAddingTasks;
 
     public ExtractionTaskProducer(final TaskExecutor taskExecutor,
-                                  final ClusterSearchTask clusterSearchTask,
+                                  final TaskContext taskContext,
                                   final StreamMapCreator streamMapCreator,
                                   final LinkedBlockingQueue<Optional<String[]>> storedData,
                                   final FieldIndexMap extractionFieldIndexMap,
@@ -91,7 +91,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
                                   final Executor executor,
                                   final Provider<ExtractionTaskHandler> handlerProvider) {
         super(taskExecutor, executor);
-        this.clusterSearchTask = clusterSearchTask;
+        this.taskContext = taskContext;
         this.extractionFieldIndexMap = extractionFieldIndexMap;
         this.extractionCoprocessorsMap = extractionCoprocessorsMap;
         this.errorReceiver = errorReceiver;
@@ -126,7 +126,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
                 }
 
                 // Clear the event map if we have terminated so that other processing does not occur.
-                if (clusterSearchTask.isTerminated()) {
+                if (taskContext.isTerminated()) {
                     terminate();
                 }
 
@@ -206,7 +206,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
 
 //        LOGGER.info("ExtractionTaskProducer - getNext {finishedAddingTasks=" + finishedAddingTasks + ", completedEventMapping="+ completedEventMapping.get() + "}");
 
-        if (clusterSearchTask.isTerminated()) {
+        if (taskContext.isTerminated()) {
 //            LOGGER.info("ExtractionTaskProducer - getNext isTerminated()");
             terminate();
         } else {
@@ -318,7 +318,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
     }
 
     private boolean testComplete() {
-        return clusterSearchTask.isTerminated() || (finishedAddingTasks && (tasksTotal.get() - tasksCompleted.get()) == 0);
+        return taskContext.isTerminated() || (finishedAddingTasks && (tasksTotal.get() - tasksCompleted.get()) == 0);
     }
 
     @Override

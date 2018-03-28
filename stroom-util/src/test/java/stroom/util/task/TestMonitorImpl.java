@@ -18,7 +18,9 @@ package stroom.util.task;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.util.shared.Monitor;
+import stroom.task.Monitor;
+import stroom.task.MonitorImpl;
+import stroom.task.MonitorInfoUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.util.ArrayList;
@@ -30,14 +32,18 @@ public class TestMonitorImpl {
     public void test_toString() {
         final MonitorImpl root = new MonitorImpl();
         root.info("root");
-        final MonitorImpl child1 = new MonitorImpl(root);
+        final MonitorImpl child1 = new MonitorImpl();
+        root.addChild(child1);
         child1.info("child1");
-        final MonitorImpl child1child1 = new MonitorImpl(child1);
+        final MonitorImpl child1child1 = new MonitorImpl();
         child1child1.info("child1child1");
-        final MonitorImpl child1child2 = new MonitorImpl(child1);
+        child1.addChild(child1child1);
+        final MonitorImpl child1child2 = new MonitorImpl();
+        child1.addChild(child1child2);
         child1child2.info("child1child2");
         child1child2.info("child1child2");
-        final MonitorImpl child2 = new MonitorImpl(root);
+        final MonitorImpl child2 = new MonitorImpl();
+        root.addChild(child2);
         child2.info("child2");
 
         final List<Monitor> list = new ArrayList<>();

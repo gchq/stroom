@@ -21,7 +21,7 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.ThreadPool;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 public class StreamProcessorTask extends ServerTask<VoidResult> implements DistributedTask<VoidResult> {
     public static final String JOB_NAME = "Stream Processor";

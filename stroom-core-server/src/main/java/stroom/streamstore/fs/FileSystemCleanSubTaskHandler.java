@@ -50,7 +50,7 @@ class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanS
     public VoidResult exec(final FileSystemCleanSubTask task) {
         taskContext.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
 
-        if (taskContext.isTerminated() || task.getParentTask().isTerminated()) {
+        if (taskContext.isTerminated()) {
             LOGGER.info("exec() - Been asked to Quit");
             return VoidResult.INSTANCE;
         }
@@ -69,7 +69,7 @@ class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanS
                     + task.getTaskProgress().traceInfo());
         }
 
-        if (taskContext.isTerminated() || task.getParentTask().isTerminated()) {
+        if (taskContext.isTerminated()) {
             LOGGER.info("exec() - Been asked to Quit");
             return VoidResult.INSTANCE;
         }

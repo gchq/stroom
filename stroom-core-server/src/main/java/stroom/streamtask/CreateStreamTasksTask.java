@@ -19,7 +19,7 @@ package stroom.streamtask;
 import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.ThreadPool;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 public class CreateStreamTasksTask extends ServerTask<VoidResult> {
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(3);

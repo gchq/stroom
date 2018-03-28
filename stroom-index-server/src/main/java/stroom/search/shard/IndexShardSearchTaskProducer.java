@@ -17,7 +17,6 @@
 package stroom.search.shard;
 
 import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.search.ClusterSearchTask;
 import stroom.search.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.shard.IndexShardSearchTask.ResultReceiver;
 import stroom.search.taskqueue.AbstractTaskProducer;
@@ -49,7 +48,6 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
             0,
             Integer.MAX_VALUE);
 
-    private final ClusterSearchTask clusterSearchTask;
     private final IndexShardSearcherCache indexShardSearcherCache;
     private final ErrorReceiver errorReceiver;
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
@@ -65,7 +63,6 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
     private final LinkedBlockingQueue<Optional<String[]>> storedData;
 
     public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
-                                        final ClusterSearchTask clusterSearchTask,
                                         final LinkedBlockingQueue<Optional<String[]>> storedData,
                                         final IndexShardSearcherCache indexShardSearcherCache,
                                         final List<Long> shards,
@@ -78,7 +75,6 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
                                         final Provider<IndexShardSearchTaskHandler> handlerProvider) {
         super(taskExecutor, executor);
         this.maxThreadsPerTask = maxThreadsPerTask;
-        this.clusterSearchTask = clusterSearchTask;
         this.storedData = storedData;
         this.indexShardSearcherCache = indexShardSearcherCache;
         this.errorReceiver = errorReceiver;
@@ -137,7 +133,7 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
                     } finally {
                         threadsUsed.decrementAndGet();
                         final int remaining = tasksRemaining.decrementAndGet();
-                        if (clusterSearchTask.isTerminated() || remaining <= 0) {
+                        if (remaining <= 0) {
                             complete();
                         }
                     }
@@ -154,9 +150,7 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
     }
 
     /**
-     * Test if this task producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
-     *
-     * @return True if this producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
+     * Wait for this task producer to not issue any further tasks and that all of the tasks it has issued have completed processing.
      */
     public void awaitCompletion() throws InterruptedException {
         completionLatch.await();
@@ -165,29 +159,25 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
     private Runnable getNext() {
         IndexShardSearchRunnable task = null;
 
-        if (clusterSearchTask.isTerminated()) {
-            complete();
-        } else {
-            // First try and get a task that will make use of an open shard.
-            for (final IndexShardSearchRunnable t : taskQueue) {
-                if (indexShardSearcherCache.isCached(t.getTask().getIndexShardId())) {
-                    if (taskQueue.remove(t)) {
-                        task = t;
-                        break;
-                    }
+        // First try and get a task that will make use of an open shard.
+        for (final IndexShardSearchRunnable t : taskQueue) {
+            if (indexShardSearcherCache.isCached(t.getTask().getIndexShardId())) {
+                if (taskQueue.remove(t)) {
+                    task = t;
+                    break;
                 }
             }
+        }
 
-            // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
-            if (task == null) {
-                task = taskQueue.poll();
-            }
+        // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
+        if (task == null) {
+            task = taskQueue.poll();
+        }
 
-            if (task != null) {
-                final int no = tasksRequested.incrementAndGet();
-                task.getTask().setShardTotal(tasksTotal);
-                task.getTask().setShardNumber(no);
-            }
+        if (task != null) {
+            final int no = tasksRequested.incrementAndGet();
+            task.getTask().setShardTotal(tasksTotal);
+            task.getTask().setShardNumber(no);
         }
 
         return task;

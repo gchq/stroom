@@ -26,14 +26,15 @@ import stroom.node.shared.Node;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.task.GenericServerTask;
+import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.io.FileUtil;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.lifecycle.StroomFrequencySchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -70,6 +71,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
     private final Provider<IndexShardWriterCache> indexShardWriterCacheProvider;
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
+    private final TaskContext taskContext;
 
     private final StripedLock shardUpdateLocks = new StripedLock();
     private final AtomicBoolean deletingShards = new AtomicBoolean();
@@ -80,11 +82,13 @@ public class IndexShardManagerImpl implements IndexShardManager {
     IndexShardManagerImpl(final IndexShardService indexShardService,
                           final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
                           final NodeCache nodeCache,
-                          final TaskManager taskManager) {
+                          final TaskManager taskManager,
+                          final TaskContext taskContext) {
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
+        this.taskContext = taskContext;
 
         allowedStateTransitions.put(IndexShardStatus.CLOSED, new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
         allowedStateTransitions.put(IndexShardStatus.OPEN, new HashSet<>(Arrays.asList(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
@@ -115,7 +119,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     try {
                         final LogExecutionTime logExecutionTime = new LogExecutionTime();
                         final Iterator<IndexShard> iter = shards.iterator();
-                        while (!task.isTerminated() && iter.hasNext()) {
+                        while (!taskContext.isTerminated() && iter.hasNext()) {
                             final IndexShard shard = iter.next();
                             final IndexShardWriter writer = indexShardWriterCache.getWriterByShardId(shard.getId());
                             try {

@@ -243,7 +243,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                     // Start forwarding data to target node.
                     final Executor executor = executorProvider.getExecutor(ResultSender.THREAD_POOL);
-                    resultSender = new ResultSender(searchCompleteLatch, coprocessorMap, callback, frequency, executor, taskContext, errors, task);
+                    resultSender = new ResultSender(searchCompleteLatch, coprocessorMap, callback, frequency, executor, taskContext, errors);
                     resultSender.sendData();
 
                     // Start searching.
@@ -255,7 +255,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     } catch (final Throwable t2) {
                         // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
                         LOGGER.info("Terminating search because we were unable to send result");
-                        task.terminate();
+                        taskContext.terminate();
                     }
                 } finally {
                     // countDown the latch so sendData knows we are complete
@@ -273,7 +273,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         } catch (final Throwable t2) {
                             // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
                             LOGGER.info("Terminating search because we were unable to send result");
-                            task.terminate();
+                            taskContext.terminate();
                         }
                     }
                 }
@@ -325,7 +325,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 final Executor searchExecutor = executorProvider.getExecutor(IndexShardSearchTaskProducer.THREAD_POOL);
                 final IndexShardSearchTaskProducer indexShardSearchTaskProducer = new IndexShardSearchTaskProducer(
                         indexShardSearchTaskExecutor,
-                        task,
                         storedData,
                         indexShardSearcherCache,
                         task.getShards(),
@@ -353,7 +352,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     final Executor extractionExecutor = executorProvider.getExecutor(ExtractionTaskProducer.THREAD_POOL);
                     final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
                             extractionTaskExecutor,
-                            task,
+                            taskContext,
                             streamMapCreator,
                             storedData,
                             extractionFieldIndexMap,
@@ -480,7 +479,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         private final Executor executor;
         private final TaskContext taskContext;
         private final LinkedBlockingQueue<String> errors;
-        private final ClusterSearchTask task;
 
         private final CountDownLatch sendingDataComplete = new CountDownLatch(1);
 
@@ -490,8 +488,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                      final long frequency,
                      final Executor executor,
                      final TaskContext taskContext,
-                     final LinkedBlockingQueue<String> errors,
-                     final ClusterSearchTask task) {
+                     final LinkedBlockingQueue<String> errors) {
             this.searchCompleteLatch = searchCompleteLatch;
             this.coprocessorMap = coprocessorMap;
             this.callback = callback;
@@ -499,7 +496,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             this.executor = executor;
             this.taskContext = taskContext;
             this.errors = errors;
-            this.task = task;
         }
 
         void sendData() {
@@ -515,7 +511,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     LOGGER.trace("frequency [{}], waitTime [{}]", frequency, waitTime);
                     final boolean searchComplete = searchCompleteLatch.await(waitTime, TimeUnit.MILLISECONDS);
 
-                    try{
+                    try {
                         if (!taskContext.isTerminated()) {
                             taskContext.setName("Search Result Sender");
                             taskContext.info("Creating search result");
@@ -567,15 +563,14 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         // If we failed to send the result or the source node rejected the result because the source
                         // task has been terminated then terminate the task.
                         LOGGER.info("Terminating search because we were unable to send result");
-                        task.terminate();
+                        taskContext.terminate();
                     }
 
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     complete();
 
-                    //Don't want to reset interrupt status as this thread will go back into
-                    //the executor's pool. Throwing an exception will terminate the task
-                    throw new RuntimeException("Thread interrupted");
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
                 }
             };
 
@@ -589,7 +584,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             LOGGER.debug("sendingData is false");
         }
 
-        public void awaitCompletion() throws InterruptedException {
+        void awaitCompletion() throws InterruptedException {
             sendingDataComplete.await();
         }
     }

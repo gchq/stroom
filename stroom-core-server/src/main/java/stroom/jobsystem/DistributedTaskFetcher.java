@@ -19,11 +19,11 @@ package stroom.jobsystem;
 import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.guice.StroomBeanStore;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNode.JobType;
-import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.streamtask.TaskStatusTraceLog;
 import stroom.task.GenericServerTask;
@@ -33,11 +33,10 @@ import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
-import stroom.util.shared.Task;
-import stroom.util.shared.VoidResult;
-import stroom.guice.StroomBeanStore;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.shared.Task;
+import stroom.util.shared.VoidResult;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -74,19 +73,16 @@ public class DistributedTaskFetcher {
     private final StroomBeanStore beanStore;
     private final TaskManager taskManager;
     private final JobNodeTrackerCache jobNodeTrackerCache;
-    private final NodeCache nodeCache;
 
     private long lastFetch;
 
     @Inject
     DistributedTaskFetcher(final StroomBeanStore beanStore,
                            final TaskManager taskManager,
-                           final JobNodeTrackerCache jobNodeTrackerCache,
-                           final NodeCache nodeCache) {
+                           final JobNodeTrackerCache jobNodeTrackerCache) {
         this.beanStore = beanStore;
         this.taskManager = taskManager;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
-        this.nodeCache = nodeCache;
     }
 
     /**
@@ -95,17 +91,23 @@ public class DistributedTaskFetcher {
      */
     @StroomShutdown(priority = 999)
     public void shutdown() {
-        stopping.set(true);
+        try {
+            stopping.set(true);
 
-        ThreadUtil.sleep(1000);
+            Thread.sleep(1000);
 
-        // Wait until we have stopped.
-        while (runningTasks.size() > 0) {
-            for (final Task<?> task : runningTasks) {
-                task.terminate();
+            // Wait until we have stopped.
+            while (runningTasks.size() > 0) {
+//            for (final Task<?> task : runningTasks) {
+//                task.terminate();
+//            }
+
+                Thread.sleep(1000);
+
+                ThreadUtil.sleep(1000);
             }
-
-            ThreadUtil.sleep(1000);
+        } catch (final InterruptedException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
     }
 

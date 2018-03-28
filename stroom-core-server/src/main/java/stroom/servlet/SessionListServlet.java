@@ -19,7 +19,7 @@ package stroom.servlet;
 import stroom.security.Insecure;
 import stroom.task.TaskManager;
 import stroom.util.date.DateUtil;
-import stroom.util.task.TaskIdFactory;
+import stroom.task.TaskIdFactory;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;

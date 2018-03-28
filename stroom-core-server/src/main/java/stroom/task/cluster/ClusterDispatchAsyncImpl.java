@@ -23,6 +23,7 @@ import stroom.cluster.ClusterCallService;
 import stroom.node.shared.Node;
 import stroom.task.CurrentTaskState;
 import stroom.task.GenericServerTask;
+import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
@@ -52,14 +53,17 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     private static final Long DEBUG_REQUEST_DELAY = null;
 
     private final TaskManager taskManager;
+    private final TaskContext taskContext;
     private final ClusterResultCollectorCache collectorCache;
     private final ClusterCallService clusterCallService;
 
     @Inject
     ClusterDispatchAsyncImpl(final TaskManager taskManager,
+                             final TaskContext taskContext,
                              final ClusterResultCollectorCache collectorCache,
                              @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
         this.taskManager = taskManager;
+        this.taskContext = taskContext;
         this.collectorCache = collectorCache;
         this.clusterCallService = clusterCallService;
     }
@@ -82,7 +86,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
         if (sourceTask == null) {
             throw new NullPointerException("A source task must be provided");
         }
-        if (sourceTask.isTerminated()) {
+        if (taskManager.isTerminated(sourceTask.getId())) {
             throw new RuntimeException("Task has been terminated");
         }
         if (sourceTask.getId() == null) {
@@ -178,7 +182,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
 
             // Try and get an active task for this source task id.
             final Task<?> sourceTask = taskManager.getTaskById(sourceTaskId);
-            if (sourceTask == null || sourceTask.isTerminated()) {
+            if (sourceTask == null || taskManager.isTerminated(sourceTaskId)) {
                 // If we can't get an active source task then ignore the result
                 // as we don't want to keep using the collector as it might not
                 // have gone from the cache for some reason and we will just end

@@ -37,23 +37,27 @@ public class EventSearchResultHandler implements ResultHandler {
     private volatile EventRefs streamReferences;
 
     @Override
-    public void handle(final Map<CoprocessorKey, Payload> payloadMap, final HasTerminate hasTerminate) {
-        if (payloadMap != null) {
-            for (final Entry<CoprocessorKey, Payload> entry : payloadMap.entrySet()) {
-                final Payload payload = entry.getValue();
-                if (payload != null && payload instanceof EventRefsPayload) {
-                    final EventRefsPayload eventRefsPayload = (EventRefsPayload) payload;
-                    add(eventRefsPayload.getEventRefs(), hasTerminate);
+    public void handle(final Map<CoprocessorKey, Payload> payloadMap) {
+        try {
+            if (payloadMap != null) {
+                for (final Entry<CoprocessorKey, Payload> entry : payloadMap.entrySet()) {
+                    final Payload payload = entry.getValue();
+                    if (payload != null && payload instanceof EventRefsPayload) {
+                        final EventRefsPayload eventRefsPayload = (EventRefsPayload) payload;
+                        add(eventRefsPayload.getEventRefs());
+                    }
                 }
             }
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
     // Non private for testing purposes.
-    public void add(final EventRefs eventRefs, final HasTerminate hasTerminate) {
+    public void add(final EventRefs eventRefs) throws InterruptedException {
         if (eventRefs != null) {
-            if (hasTerminate.isTerminated()) {
-                throw new RuntimeException("Terminated");
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
 
             } else {
                 // Add the new queue to the pending merge queue ready for merging.
@@ -67,17 +71,17 @@ public class EventSearchResultHandler implements ResultHandler {
                 }
 
                 // Try and merge all of the items on the pending merge queue.
-                mergePending(hasTerminate);
+                mergePending();
             }
         }
     }
 
-    private void mergePending(final HasTerminate hasTerminate) {
+    private void mergePending() throws InterruptedException {
         // Only 1 thread will get to do a merge.
         if (merging.compareAndSet(false, true)) {
             try {
-                if (hasTerminate.isTerminated()) {
-                    throw new RuntimeException("Terminated");
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new InterruptedException();
 
                 } else {
                     EventRefs eventRefs = pendingMerges.poll();
@@ -89,8 +93,8 @@ public class EventSearchResultHandler implements ResultHandler {
                             throw e;
                         }
 
-                        if (hasTerminate.isTerminated()) {
-                            throw new RuntimeException("Terminated");
+                        if (Thread.currentThread().isInterrupted()) {
+                            throw new InterruptedException();
                         }
 
                         eventRefs = pendingMerges.poll();
@@ -100,15 +104,15 @@ public class EventSearchResultHandler implements ResultHandler {
                 merging.set(false);
             }
 
-            if (hasTerminate.isTerminated()) {
-                throw new RuntimeException("Terminated");
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
             }
 
             // Make sure we don't fail to merge items from the queue that have
             // just been added by another thread that didn't get to do the
             // merge.
             if (pendingMerges.peek() != null) {
-                mergePending(hasTerminate);
+                mergePending();
             }
         }
     }
