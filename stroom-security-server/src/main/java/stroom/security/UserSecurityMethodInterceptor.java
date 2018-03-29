@@ -24,9 +24,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.PermissionException;
-import stroom.security.Insecure;
-import stroom.security.Secured;
-import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
@@ -94,9 +91,9 @@ public class UserSecurityMethodInterceptor {
             }
 
             return doSecured(joinPoint, currentCheckType, (Secured) securityAnnotation);
-        } catch (final Throwable t) {
-            LOGGER.debug(joinPoint.getSignature().toString(), t);
-            throw t;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(joinPoint.getSignature().toString(), e);
+            throw e;
         }
     }
 
@@ -104,7 +101,7 @@ public class UserSecurityMethodInterceptor {
         final String methodName = joinPoint.getSignature().toString();
         final String permission = securityAnnotation.value();
 
-        Object returnObj = null;
+        Object returnObj;
         try {
             // We must be logged in to access a secured service.
             if (!isLoggedIn()) {

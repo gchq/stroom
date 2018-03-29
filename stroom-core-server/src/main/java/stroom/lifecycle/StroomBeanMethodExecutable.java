@@ -22,6 +22,7 @@ import stroom.guice.StroomBeanStore;
 import stroom.util.shared.Task;
 import stroom.util.lifecycle.MethodReference;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StroomBeanMethodExecutable {
@@ -64,8 +65,8 @@ public class StroomBeanMethodExecutable {
             } else {
                 stroomBeanStore.invoke(methodReference);
             }
-        } catch (final Throwable t) {
-            LOGGER.error("Error calling {}", methodReference, t);
+        } catch (final InvocationTargetException | IllegalAccessException | RuntimeException e) {
+            LOGGER.error("Error calling {}", methodReference, e);
         } finally {
             running.set(false);
         }

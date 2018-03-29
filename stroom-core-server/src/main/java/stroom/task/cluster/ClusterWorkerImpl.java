@@ -98,7 +98,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
                     sendResult(task, sourceNode, targetNode, sourceTaskId, collectorId, null, t, false);
                 }
             });
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
         } finally {
@@ -151,7 +151,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
                     tryCount++;
                 }
             }
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
         } finally {

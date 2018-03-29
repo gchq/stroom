@@ -195,7 +195,7 @@ public class DistributedTaskFetcher {
                                                 LOGGER.warn(response.getError().getMessage());
                                             } catch (final ConnectException | HessianRuntimeException e) {
                                                 LOGGER.error(response.getError().getMessage());
-                                            } catch (final RuntimeException e) {
+                                            } catch (final Throwable e) {
                                                 LOGGER.error(response.getError().getMessage(), response.getError());
                                             }
                                         } else {
@@ -208,8 +208,8 @@ public class DistributedTaskFetcher {
                                         }
                                     }
                                 }
-                            } catch (final Throwable t) {
-                                LOGGER.error(t.getMessage(), t);
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e.getMessage(), e);
                             }
                         });
 
@@ -307,8 +307,8 @@ public class DistributedTaskFetcher {
                     }
                 });
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

@@ -143,8 +143,8 @@ public final class ProxyRepositoryReader {
 
                     try {
                         doRunWork();
-                    } catch (final Throwable ex) {
-                        LOGGER.error("run() - Unhandled exception coming out of doRunWork()", ex);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error("run() - Unhandled exception coming out of doRunWork()", e);
                     }
                 }
             }

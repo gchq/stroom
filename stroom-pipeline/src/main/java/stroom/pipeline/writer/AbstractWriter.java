@@ -33,6 +33,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.charset.Charset;
@@ -116,8 +117,8 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
                             outputStreams.add(outputStream);
                         }
                     }
-                } catch (final Throwable t) {
-                    fatal(t);
+                } catch (final IOException | RuntimeException e) {
+                    fatal(e);
                 }
             }
 
@@ -139,16 +140,16 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
         if (writer != null) {
             try {
                 writer.flush();
-            } catch (final Throwable t) {
-                fatal(t);
+            } catch (final IOException | RuntimeException e) {
+                fatal(e);
             }
         }
 
         for (final Entry<Destination, DestinationProvider> entry : borrowedDestinations.entrySet()) {
             try {
                 entry.getValue().returnDestination(entry.getKey());
-            } catch (final Throwable t) {
-                error(t);
+            } catch (final IOException | RuntimeException e) {
+                error(e);
             }
         }
         borrowedDestinations.clear();

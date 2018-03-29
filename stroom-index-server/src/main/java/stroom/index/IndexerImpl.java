@@ -25,6 +25,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.IOException;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -56,8 +57,8 @@ public class IndexerImpl implements Indexer {
                 final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
                 indexShardWriter.addDocument(document);
                 success = true;
-            } catch (final Throwable t) {
-                LOGGER.trace(t::getMessage, t);
+            } catch (final IOException | RuntimeException e) {
+                LOGGER.trace(e::getMessage, e);
             }
 
             // Attempt a few more times under lock.
@@ -77,12 +78,12 @@ public class IndexerImpl implements Indexer {
                         indexShardWriterCache.close(indexShardWriter);
                     }
 
-                } catch (final Throwable t) {
-                    LOGGER.trace(t::getMessage, t);
+                } catch (final RuntimeException e) {
+                    LOGGER.trace(e::getMessage, e);
 
                     // If we've already tried once already then give up.
                     if (attempt > 0) {
-                        throw t;
+                        throw e;
                     }
                 } finally {
                     lock.unlock();
@@ -96,7 +97,7 @@ public class IndexerImpl implements Indexer {
                     indexShardWriter.addDocument(document);
                 } catch (final IndexException e) {
                     throw e;
-                } catch (final Throwable e) {
+                } catch (final IOException | RuntimeException e) {
                     throw new IndexException(e.getMessage(), e);
                 }
             }
@@ -114,13 +115,13 @@ public class IndexerImpl implements Indexer {
         } catch (final AlreadyClosedException | IndexException e) {
             LOGGER.trace(e::getMessage, e);
 
-        } catch (final Throwable t) {
-            LOGGER.error(t::getMessage, t);
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
 
             // Mark the shard as corrupt as this should be the
             // only reason we can't add a document.
             if (indexShardManager != null) {
-                LOGGER.error(() -> "Setting index shard status to corrupt because (" + t.toString() + ")", t);
+                LOGGER.error(() -> "Setting index shard status to corrupt because (" + e.toString() + ")", e);
                 indexShardManager.setStatus(indexShardWriter.getIndexShardId(), IndexShardStatus.CORRUPT);
             }
         }

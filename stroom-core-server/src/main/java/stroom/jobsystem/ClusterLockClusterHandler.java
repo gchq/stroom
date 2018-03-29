@@ -85,8 +85,8 @@ class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTa
             }
 
             debug("lock()", clusterLockKey, currentLock, success);
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         return success;
@@ -127,8 +127,8 @@ class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTa
             }
 
             debug("unlock()", clusterLockKey, currentLock, success);
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         return success;
@@ -176,8 +176,8 @@ class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTa
             }
 
             debug("keepAlive()", clusterLockKey, currentLock, success);
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         return success;

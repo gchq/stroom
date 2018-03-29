@@ -183,8 +183,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         try {
             // Anything that we owned release
             streamTaskTransactionHelper.releaseOwnedTasks();
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         } finally {
             createTasksLock.unlock();
             allowFillTaskStore = true;
@@ -200,8 +200,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             allowFillTaskStore = false;
             clearTaskStore();
             streamTaskCreatorRecentStreamDetails = null;
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         } finally {
             createTasksLock.unlock();
         }
@@ -253,8 +253,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
             // Have a go at kicking off a fill
             fillTaskStore();
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         // Output some trace logging so we can see where tasks go.
@@ -277,8 +277,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         try {
             LOGGER.warn("abandon() - {}", streamTask);
             streamTaskHelper.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
-        } catch (final Throwable t) {
-            LOGGER.error("abandon() - {}", streamTask, t);
+        } catch (final RuntimeException e) {
+            LOGGER.error("abandon() - {}", streamTask, e);
         }
     }
 
@@ -286,8 +286,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         try {
             LOGGER.warn("release() - {}", streamTask);
             streamTaskHelper.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
-        } catch (final Throwable t) {
-            LOGGER.error("release() - {}", streamTask, t);
+        } catch (final RuntimeException e) {
+            LOGGER.error("release() - {}", streamTask, e);
         }
     }
 
@@ -350,8 +350,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                         filling.set(false);
                     }
                 }
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             }
         }
     }
@@ -390,8 +390,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             if (allowFillTaskStore) {
                 doCreateTasks(taskContext);
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         } finally {
             createTasksLock.unlock();
         }
@@ -471,8 +471,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     }
                 }
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         // Release items from the queue that no longer have an enabled filter
@@ -651,9 +651,9 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     }
                 }
             }
-        } catch (final Throwable t) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Error processing filter with id = " + filter.getId());
-            LOGGER.error(t.getMessage(), t);
+            LOGGER.error(e.getMessage(), e);
         } finally {
             if (!searching) {
                 queue.setFilling(false);
@@ -692,16 +692,16 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     if (taskContext.isTerminated()) {
                         break;
                     }
-                } catch (final Throwable t) {
-                    LOGGER.error("doCreateTasks() - Failed to grab non owned task {}", streamTask, t);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("doCreateTasks() - Failed to grab non owned task {}", streamTask, e);
                 }
             }
 
             if (count > 0) {
                 LOGGER.debug("doCreateTasks() - Added {} tasks that are no longer locked", count);
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         return count;
@@ -933,13 +933,13 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                 null,
                                 queueSize));
                     }
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
                 lastQueueSizeForStats = queueSize;
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

@@ -40,7 +40,6 @@ import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 public class IndexShardSearchTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
@@ -77,8 +76,8 @@ public class IndexShardSearchTaskHandler {
                             // Start searching.
                             searchShard(task, indexShardSearcher);
                         }
-                    } catch (final Throwable t) {
-                        error(task, t.getMessage(), t);
+                    } catch (final RuntimeException e) {
+                        error(task, e.getMessage(), e);
                     }
                 },
                 () -> LambdaLogger.buildMessage("exec() for shard {}", task.getShardNumber()));
@@ -139,13 +138,18 @@ public class IndexShardSearchTaskHandler {
                             complete = true;
                         }
                     }
-                } catch (final Throwable t) {
-                    error(task, t.getMessage(), t);
+                } catch (final RuntimeException e) {
+                    error(task, e.getMessage(), e);
                 } finally {
                     searcherManager.release(searcher);
                 }
-            } catch (final Throwable t) {
-                error(task, t.getMessage(), t);
+            } catch (final InterruptedException e) {
+                // Interrupt the thread again.
+                Thread.currentThread().interrupt();
+
+                error(task, e.getMessage(), e);
+            } catch (final IOException | RuntimeException e) {
+                error(task, e.getMessage(), e);
             }
         }
     }

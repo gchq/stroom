@@ -128,7 +128,7 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
                 runnable = () -> {
                     try {
                         task.run();
-                    } catch (final Throwable e) {
+                    } catch (final RuntimeException e) {
                         LAMBDA_LOGGER.debug(e::getMessage, e);
                     } finally {
                         threadsUsed.decrementAndGet();

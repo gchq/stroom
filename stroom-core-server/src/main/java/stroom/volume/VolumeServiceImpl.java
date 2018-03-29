@@ -369,9 +369,9 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                     addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
                     addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
                     receiver.putEvents(events);
-                } catch (final Throwable t) {
-                    LOGGER.warn(t.getMessage());
-                    LOGGER.debug(t.getMessage(), t);
+                } catch (final RuntimeException e) {
+                    LOGGER.warn(e.getMessage());
+                    LOGGER.debug(e.getMessage(), e);
                 }
             }
         }

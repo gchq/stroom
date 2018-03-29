@@ -91,10 +91,10 @@ public final class ImportFileServlet extends HttpServlet {
             uuid.write(propertyMap);
             fileItem.delete();
 
-        } catch (final Throwable t) {
-            streamEventLog.importStream(new Date(), "Import", null, t);
-            LOGGER.error(t.getMessage(), t);
-            propertyMap.put("exception", t.getMessage());
+        } catch (final RuntimeException e) {
+            streamEventLog.importStream(new Date(), "Import", null, e);
+            LOGGER.error(e.getMessage(), e);
+            propertyMap.put("exception", e.getMessage());
         }
 
         response.getWriter().write(propertyMap.toArgLine());

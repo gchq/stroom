@@ -96,7 +96,7 @@ public class StreamCloser implements Closeable {
                             if (ioException == null) {
                                 ioException = e;
                             }
-                        } catch (final Throwable e) {
+                        } catch (final RuntimeException e) {
                             LOGGER.error("Unable to flush stream!", e);
 
                             if (ioException == null) {
@@ -107,7 +107,7 @@ public class StreamCloser implements Closeable {
                         // Make sure writers get flushed.
                         try {
                             ((Writer) closeable).flush();
-                        } catch (final Throwable e) {
+                        } catch (final RuntimeException e) {
                             LOGGER.error("Unable to flush stream!", e);
 
                             if (ioException == null) {
@@ -139,7 +139,7 @@ public class StreamCloser implements Closeable {
                 if (ioException == null) {
                     ioException = e;
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to close stream!", e);
 
                 if (ioException == null) {

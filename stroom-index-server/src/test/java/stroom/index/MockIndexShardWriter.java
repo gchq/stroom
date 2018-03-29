@@ -63,7 +63,7 @@ public class MockIndexShardWriter implements IndexShardWriter {
             }
             documents.add(doc);
 
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             documentCount.decrementAndGet();
             throw e;
         }

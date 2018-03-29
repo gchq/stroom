@@ -20,6 +20,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 import stroom.entity.util.XMLUtil;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;
@@ -27,12 +28,13 @@ import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
+import stroom.persist.PersistService;
 import stroom.pipeline.filter.SafeXMLFilter;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.persist.PersistService;
+import stroom.task.ExternalShutdownController;
 import stroom.task.TaskManager;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.config.StroomProperties;
@@ -41,8 +43,8 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.task.ExternalShutdownController;
 
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedOutputStream;
@@ -223,7 +225,7 @@ public class Headless extends AbstractCommandLineTool {
             // Output the end root element.
             headlessFilter.endOutput();
 
-        } catch (final Throwable e) {
+        } catch (final IOException | TransformerConfigurationException | SAXException | RuntimeException e) {
             LOGGER.error("Unable to process headless", e);
         } finally {
             try {

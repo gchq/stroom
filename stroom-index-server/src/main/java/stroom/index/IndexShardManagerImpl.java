@@ -167,8 +167,8 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     indexShardService.delete(shard);
                 }
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t::getMessage, t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
         }
     }
 
@@ -281,8 +281,8 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     setStatus(shard.getId(), IndexShardStatus.DELETED);
                 }
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t::getMessage, t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
         }
     }
 

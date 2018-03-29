@@ -91,7 +91,7 @@ class ParserFactoryPoolImpl
 //                    throw new ProcessException(message);
             }
 
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         }

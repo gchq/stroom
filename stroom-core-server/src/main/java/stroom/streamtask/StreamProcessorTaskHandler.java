@@ -147,8 +147,8 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                     }
                 }
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         } finally {
             // Close the stream source.
             if (streamSource != null) {

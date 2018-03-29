@@ -105,8 +105,8 @@ public class ProxyRepositoryManager {
 
                             try {
                                 doRunWork();
-                            } catch (final Throwable th) {
-                                LOGGER.error("run() Exception", th);
+                            } catch (final RuntimeException e) {
+                                LOGGER.error("run() Exception", e);
                             }
                         }
                     }

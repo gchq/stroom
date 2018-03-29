@@ -105,15 +105,15 @@ class DistributedTaskRequestClusterHandler
 
             try {
                 callback.onSuccess(response);
-            } catch (final Throwable t) {
+            } catch (final RuntimeException e) {
                 // If we couldn't return the tasks for any reason then abandon them.
                 abandonTasks(node, tasksToReturn);
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final Throwable e) {
+            LOGGER.error(e.getMessage(), e);
             try {
-                callback.onFailure(t);
-            } catch (final Throwable t2) {
+                callback.onFailure(e);
+            } catch (final Throwable e2) {
                 abandonTasks(node, tasksToReturn);
             }
         }
@@ -134,12 +134,12 @@ class DistributedTaskRequestClusterHandler
 
                     final DistributedTaskFactory<DistributedTask<?>, ?> factory = getDistributedTaskFactory(jobName);
                     factory.abandon(node, tasks);
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
             }
-        } catch (final Throwable t) {
-            LOGGER.error("Error abandoning tasks that we failed to call back with", t);
+        } catch (final RuntimeException e) {
+            LOGGER.error("Error abandoning tasks that we failed to call back with", e);
         }
     }
 

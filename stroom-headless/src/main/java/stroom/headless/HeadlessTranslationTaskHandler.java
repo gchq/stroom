@@ -19,9 +19,9 @@ package stroom.headless;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.StringCriteria;
+import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.pipeline.ErrorWriterProxy;
@@ -188,10 +188,10 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
 
             try {
                 pipeline.process(dataStream, feed.getEncoding());
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 outputError(e);
             }
-        } catch (final Throwable e) {
+        } catch (final IOException | RuntimeException e) {
             outputError(e);
         }
 
@@ -244,7 +244,7 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
                 } else {
                     errorReceiverProxy.log(Severity.FATAL_ERROR, null, "PipelineStreamProcessor", ex.toString(), ex);
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 // Ignore exception as we generated it.
             }
 

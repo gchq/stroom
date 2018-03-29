@@ -111,8 +111,8 @@ public class DataRetentionExecutor {
                     try {
                         process();
                         info("Finished data retention process in " + logExecutionTime);
-                    } catch (final Throwable t) {
-                        LOGGER.error(t.getMessage(), t);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
                     } finally {
                         clusterLockService.releaseLock(LOCK_NAME);
                     }

@@ -89,7 +89,7 @@ public final class MapStoreCache implements Clearable {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Created reference data map store: " + mapStoreCacheKey.toString());
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
 

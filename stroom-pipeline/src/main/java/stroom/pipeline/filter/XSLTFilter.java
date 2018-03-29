@@ -59,6 +59,7 @@ import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.xml.transform.ErrorListener;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.TransformerHandler;
@@ -320,13 +321,13 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 super.startDocument();
             }
 
-        } catch (final Throwable throwable) {
-            final Throwable e = unwrapException(throwable);
+        } catch (final TransformerConfigurationException | RuntimeException e) {
+            final Throwable throwable = unwrapException(e);
 
-            errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(e), getElementId(), e.toString(), e);
+            errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(throwable), getElementId(), throwable.toString(), throwable);
             // If we aren't stepping then throw an exception to terminate early.
             if (!pipelineContext.isStepping()) {
-                throw new LoggedException(e.getMessage(), e);
+                throw new LoggedException(throwable.getMessage(), throwable);
             }
         }
     }
@@ -341,14 +342,14 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         if (handler != null) {
             try {
                 handler.endDocument();
-            } catch (final Throwable throwable) {
+            } catch (final RuntimeException e) {
                 try {
-                    final Throwable e = unwrapException(throwable);
+                    final Throwable throwable = unwrapException(e);
 
-                    errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(e), getElementId(), e.toString(), e);
+                    errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(throwable), getElementId(), throwable.toString(), throwable);
                     // If we aren't stepping then throw an exception to terminate early.
                     if (!pipelineContext.isStepping()) {
-                        throw new LoggedException(e.getMessage(), e);
+                        throw new LoggedException(throwable.getMessage(), throwable);
                     }
 
                 } finally {

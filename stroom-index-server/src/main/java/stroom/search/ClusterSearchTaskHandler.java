@@ -249,10 +249,10 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     // Start searching.
                     search(task, query, storedFieldNames, filterStreams, indexFieldsMap, extractionFieldIndexMap, extractionCoprocessorsMap);
 
-                } catch (final Throwable t) {
+                } catch (final RuntimeException e) {
                     try {
-                        callback.onFailure(t);
-                    } catch (final Throwable t2) {
+                        callback.onFailure(e);
+                    } catch (final RuntimeException e2) {
                         // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
                         LOGGER.info("Terminating search because we were unable to send result");
                         taskContext.terminate();
@@ -267,10 +267,22 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             taskContext.info("Sending final results");
                             resultSender.awaitCompletion();
                         }
-                    } catch (final Throwable t) {
+                    } catch (final InterruptedException e) {
+                        // Interrupt the thread again.
+                        Thread.currentThread().interrupt();
+
                         try {
-                            callback.onFailure(t);
-                        } catch (final Throwable t2) {
+                            callback.onFailure(e);
+                        } catch (final RuntimeException e2) {
+                            // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
+                            LOGGER.info("Terminating search because we have been interrupted");
+                            taskContext.terminate();
+                        }
+
+                    } catch (final RuntimeException e) {
+                        try {
+                            callback.onFailure(e);
+                        } catch (final RuntimeException e2) {
                             // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
                             LOGGER.info("Terminating search because we were unable to send result");
                             taskContext.terminate();

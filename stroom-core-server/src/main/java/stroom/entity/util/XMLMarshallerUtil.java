@@ -25,11 +25,13 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -125,8 +127,8 @@ public final class XMLMarshallerUtil {
             marshaller.marshal(obj, transformerHandler);
 
             return out.toString(StreamUtil.DEFAULT_CHARSET_NAME);
-        } catch (final Throwable t) {
-            throw new RuntimeException(t.getMessage(), t);
+        } catch (final IOException | JAXBException | TransformerConfigurationException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

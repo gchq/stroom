@@ -241,7 +241,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 //                        }
 //                    } catch (final SearchException e) {
 //                        System.out.println(e.getMessage());
-//                    } catch (final Throwable e) {
+//                    } catch (final RuntimeException e) {
 //                        System.err.println(e.getMessage());
 //                    }
 //                }

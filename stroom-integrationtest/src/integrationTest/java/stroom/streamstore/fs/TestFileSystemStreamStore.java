@@ -761,7 +761,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
             Assert.fail("Expecting an error");
 
-        } catch (final Throwable th) {
+        } catch (final RuntimeException e) {
             for (final Path dir : dirSet) {
                 FileUtil.addFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
             }

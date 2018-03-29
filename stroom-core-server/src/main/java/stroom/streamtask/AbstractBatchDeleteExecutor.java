@@ -73,8 +73,8 @@ public abstract class AbstractBatchDeleteExecutor {
                     }
                     LOGGER.info(taskName + " - finished in {}", logExecutionTime);
                 }
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             } finally {
                 clusterLockService.releaseLock(clusterLockName);
             }

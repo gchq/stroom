@@ -106,12 +106,12 @@ public class SimpleProcessorFactory implements ProcessorFactory {
                                 // Ignore any errors that come from handling success.
                                 LOGGER.trace(e.getMessage(), e);
                             }
-                        } catch (final Throwable t) {
+                        } catch (final RuntimeException e) {
                             try {
-                                taskCallback.onFailure(t);
-                            } catch (final RuntimeException e) {
+                                taskCallback.onFailure(e);
+                            } catch (final RuntimeException e2) {
                                 // Ignore any errors that come from handling failure.
-                                LOGGER.trace(e.getMessage(), e);
+                                LOGGER.trace(e2.getMessage(), e2);
                             }
                         }
                     }
@@ -140,7 +140,7 @@ public class SimpleProcessorFactory implements ProcessorFactory {
                     } else {
                         errorReceiver.log(Severity.FATAL_ERROR, null, "MultiWayProcessor", t.toString(), t);
                     }
-                } catch (final Throwable e) {
+                } catch (final RuntimeException e) {
                     // Ignore exception as we generated it.
                 }
 

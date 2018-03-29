@@ -129,8 +129,8 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                         // Query again.
                         doUpdate(0);
                     }
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
                 } finally {
                     updatingState.set(false);
                 }
@@ -165,7 +165,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
 
                 LOGGER.debug(builder.toString());
             }
-        } catch (final Throwable t) {
+        } catch (final RuntimeException e) {
             // Ignore exceptions.
         }
     }

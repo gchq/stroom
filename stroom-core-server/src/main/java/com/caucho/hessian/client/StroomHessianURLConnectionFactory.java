@@ -65,7 +65,7 @@ public class StroomHessianURLConnectionFactory implements HessianConnectionFacto
         if (readTimeout > 0) {
             try {
                 conn.setReadTimeout((int) readTimeout);
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
             }
         }
 

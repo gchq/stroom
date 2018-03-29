@@ -109,7 +109,7 @@ public class MapStoreImpl implements MapStore {
                         }
                     }
                 }
-            } catch (final Throwable t) {
+            } catch (final RuntimeException e) {
                 // Ignore.
             }
         }

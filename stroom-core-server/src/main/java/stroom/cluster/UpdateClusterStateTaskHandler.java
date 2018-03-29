@@ -152,8 +152,8 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
                                 new Object[]{thisNode});
                         addEnabledActiveNode(clusterState, node);
 
-                    } catch (final Throwable ex) {
-                        LOGGER.warn("discover() - unable to contact {} - {}", node.getName(), ex.getMessage());
+                    } catch (final RuntimeException e) {
+                        LOGGER.warn("discover() - unable to contact {} - {}", node.getName(), e.getMessage());
                         removeEnabledActiveNode(clusterState, node);
                     }
                 });

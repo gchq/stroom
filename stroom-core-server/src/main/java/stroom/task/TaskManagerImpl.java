@@ -209,10 +209,10 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
         pipelineScopeRunnable.scopeRunnable(() -> {
             try {
                 doExec(task, callback);
-            } catch (final Throwable t) {
+            } catch (final RuntimeException e) {
                 try {
-                    callback.onFailure(t);
-                } catch (final Throwable t2) {
+                    callback.onFailure(e);
+                } catch (final RuntimeException e2) {
                     // Ignore.
                 }
             }
@@ -277,19 +277,24 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 try {
                     doExec(task, callback);
 
-                } catch (final Throwable t) {
+                } catch (final ThreadDeath | TaskTerminatedException e) {
                     try {
-                        callback.onFailure(t);
-                    } catch (final Throwable t2) {
+                        callback.onFailure(e);
+                    } catch (final RuntimeException e2) {
                         // Ignore.
                     }
 
-                    if (t instanceof ThreadDeath || t instanceof TaskTerminatedException) {
-                        LOGGER.warn("exec() - Task killed! (" + task.getClass().getSimpleName() + ")");
-                        LOGGER.debug("exec() (" + task.getClass().getSimpleName() + ")", t);
-                    } else {
-                        LOGGER.error(t.getMessage() + " (" + task.getClass().getSimpleName() + ")", t);
+                    LOGGER.warn("exec() - Task killed! (" + task.getClass().getSimpleName() + ")");
+                    LOGGER.debug("exec() (" + task.getClass().getSimpleName() + ")", e);
+
+                } catch (final RuntimeException e) {
+                    try {
+                        callback.onFailure(e);
+                    } catch (final RuntimeException e2) {
+                        // Ignore.
                     }
+
+                    LOGGER.error(e.getMessage() + " (" + task.getClass().getSimpleName() + ")", e);
 
                 } finally {
                     // Decrease the count of the number of async tasks.
@@ -308,10 +313,10 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                     // exception from the thread pool.
                     executor.execute(runnable);
 
-                } catch (final Throwable t) {
+                } catch (final RuntimeException e) {
                     try {
-                        LOGGER.error(MarkerFactory.getMarker("FATAL"), "exec() - Unexpected Exception (" + task.getClass().getSimpleName() + ")", t);
-                        throw new RuntimeException(t.getMessage(), t);
+                        LOGGER.error(MarkerFactory.getMarker("FATAL"), "exec() - Unexpected Exception (" + task.getClass().getSimpleName() + ")", e);
+                        throw new RuntimeException(e.getMessage(), e);
 
                     } finally {
                         // Decrease the count of the number of async tasks.
@@ -320,10 +325,10 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 }
             }
 
-        } catch (final Throwable t) {
+        } catch (final RuntimeException e) {
             try {
-                callback.onFailure(t);
-            } catch (final Throwable t2) {
+                callback.onFailure(e);
+            } catch (final RuntimeException e2) {
                 // Ignore.
             }
         }

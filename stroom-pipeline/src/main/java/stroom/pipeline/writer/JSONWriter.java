@@ -82,7 +82,7 @@ public class JSONWriter extends AbstractWriter {
             } else {
                 jsonGenerator.setRootValueSeparator(new SerializedString(rootValueSeparator));
             }
-        } catch (final Throwable e) {
+        } catch (final IOException | RuntimeException e) {
             fatal(e);
             throw new LoggedException(e.getMessage(), e);
         }
@@ -102,7 +102,7 @@ public class JSONWriter extends AbstractWriter {
                 jsonGenerator.close();
                 jsonGenerator = null;
             }
-        } catch (final Throwable e) {
+        } catch (final IOException | RuntimeException e) {
             fatal(e);
         } finally {
             super.endProcessing();
@@ -160,7 +160,7 @@ public class JSONWriter extends AbstractWriter {
                 }
             }
 
-        } catch (final Throwable e) {
+        } catch (final IOException | RuntimeException e) {
             error(e);
         } finally {
             buffer.setLength(0);
@@ -258,7 +258,7 @@ public class JSONWriter extends AbstractWriter {
                 }
             }
 
-        } catch (final Throwable e) {
+        } catch (final IOException | RuntimeException e) {
             error(e);
         } finally {
             clearKey();
@@ -290,8 +290,8 @@ public class JSONWriter extends AbstractWriter {
 
         try {
             jsonGenerator.writeFieldName(currentKey);
-        } catch (final Throwable t) {
-            fatal(t);
+        } catch (final IOException e) {
+            fatal(e);
         }
 
         currentKey = null;

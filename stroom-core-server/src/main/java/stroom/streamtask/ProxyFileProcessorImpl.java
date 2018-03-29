@@ -157,7 +157,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
                 sequence = feedFileProcessorHelper.processFeedFile(handlers, stroomZipRepository, file, streamProgressMonitor, sequence);
                 deleteFileList.add(file);
 
-            } catch (final Throwable t) {
+            } catch (final IOException | RuntimeException e) {
                 handlers = closeDeleteStreamHandlers(handlers);
             }
         }

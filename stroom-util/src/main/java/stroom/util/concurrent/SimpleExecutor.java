@@ -54,7 +54,7 @@ public class SimpleExecutor {
         this.executorService = Executors.newFixedThreadPool(threadCount);
     }
 
-    public static final void defaultShortSleep() {
+    public static void defaultShortSleep() {
         ThreadUtil.sleep(THREAD_SLEEP_MS);
     }
 
@@ -63,16 +63,13 @@ public class SimpleExecutor {
      */
     public void execute(final Runnable runnable) {
         try {
-            executorService.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        runnable.run();
-                    } catch (final Throwable th) {
-                        LOGGER.error("run() - Uncaught exception from execution", th);
-                    } finally {
-                        executorCompleteCount.incrementAndGet();
-                    }
+            executorService.execute(() -> {
+                try {
+                    runnable.run();
+                } catch (final RuntimeException e) {
+                    LOGGER.error("run() - Uncaught exception from execution", e);
+                } finally {
+                    executorCompleteCount.incrementAndGet();
                 }
             });
 

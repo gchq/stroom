@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -165,7 +166,7 @@ public class VisPanel extends SimplePanel implements VisPane {
                         final RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.GET, url);
                         requestBuilder.setCallback(requestCallback);
                         requestBuilder.send();
-                    } catch (final Throwable e) {
+                    } catch (final RequestException | RuntimeException e) {
                         failure(function, "Failed to inject script '" + script.getName() + "' - " + e.getMessage());
                     }
 

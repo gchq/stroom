@@ -72,8 +72,8 @@ public class JobNodeTrackerCache {
                     // Create the initial trackers.
                     trackers = new Trackers(trackers, jobNodeService, getNode());
                 }
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             } finally {
                 refreshLock.unlock();
             }
@@ -89,14 +89,14 @@ public class JobNodeTrackerCache {
                         try {
                             // Refresh the trackers.
                             trackers = new Trackers(trackers, jobNodeService, getNode());
-                        } catch (final Throwable t) {
-                            LOGGER.error(t.getMessage(), t);
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e.getMessage(), e);
                         }
 
                         lastRefreshMs = System.currentTimeMillis();
                     }
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
                 } finally {
                     refreshLock.unlock();
                 }
@@ -169,9 +169,9 @@ public class JobNodeTrackerCache {
                                         } else if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
                                             schedulerMap.put(jobNode, new FrequencyScheduler(jobNode.getSchedule()));
                                         }
-                                    } catch (final Throwable t) {
+                                    } catch (final RuntimeException e) {
                                         LOGGER.error("Problem updating schedule for '" + jobName + "' job : "
-                                                + t.getMessage(), t);
+                                                + e.getMessage(), e);
                                     }
                                 }
                             }
@@ -180,8 +180,8 @@ public class JobNodeTrackerCache {
                         LOGGER.error("Problem updating schedule for '" + jobName + "' job : " + e.getMessage(), e);
                     }
                 }
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             }
         }
 

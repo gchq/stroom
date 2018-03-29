@@ -122,8 +122,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
             return key;
         } catch (final IOException e) {
             throw e;
-        } catch (final Throwable t) {
-            throw new IOException(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            throw new IOException(e.getMessage(), e);
         }
     }
 

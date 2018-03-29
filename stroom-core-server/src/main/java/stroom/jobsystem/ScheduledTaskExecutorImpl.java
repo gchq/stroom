@@ -19,19 +19,19 @@ package stroom.jobsystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
+import stroom.guice.StroomBeanStore;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
 import stroom.lifecycle.LifecycleTask;
+import stroom.lifecycle.StroomBeanMethodExecutable;
 import stroom.task.TaskManager;
+import stroom.util.lifecycle.MethodReference;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.Task;
-import stroom.util.lifecycle.MethodReference;
-import stroom.lifecycle.StroomBeanMethodExecutable;
-import stroom.guice.StroomBeanStore;
-import stroom.util.lifecycle.StroomFrequencySchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -70,35 +70,25 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                     try {
                         // Find all methods that are annotated with a cron or
                         // frequency schedule.
-                        for (final MethodReference methodReference : stroomBeanStore
-                                .getAnnotatedMethods(StroomSimpleCronSchedule.class)) {
-                            set.add(methodReference);
-                        }
-                        for (final MethodReference methodReference : stroomBeanStore
-                                .getAnnotatedMethods(StroomFrequencySchedule.class)) {
-                            set.add(methodReference);
-                        }
-                    } catch (final Throwable t) {
-                        LOGGER.error(t.getMessage(), t);
+                        set.addAll(stroomBeanStore.getAnnotatedMethods(StroomSimpleCronSchedule.class));
+                        set.addAll(stroomBeanStore.getAnnotatedMethods(StroomFrequencySchedule.class));
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
                     }
                     scheduledMethods = set;
                 }
             }
         }
 
-        try {
-            for (final MethodReference methodReference : scheduledMethods) {
-                try {
-                    final StroomBeanMethodExecutable executable = create(methodReference);
-                    if (executable != null) {
-                        taskManager.execAsync(new LifecycleTask(executable));
-                    }
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
+        for (final MethodReference methodReference : scheduledMethods) {
+            try {
+                final StroomBeanMethodExecutable executable = create(methodReference);
+                if (executable != null) {
+                    taskManager.execAsync(new LifecycleTask(executable));
                 }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
         }
     }
 
@@ -139,7 +129,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                 }
 
                 if (enabled && scheduler != null && scheduler.execute()) {
-                    LOGGER.trace("Returning runnable for method: {} - {} - {}", new Object[]{methodReference, enabled, scheduler});
+                    LOGGER.trace("Returning runnable for method: {} - {} - {}", methodReference, enabled, scheduler);
                     if (jobNodeTracker != null) {
                         executable = new JobNodeTrackedExecutable(methodReference, stroomBeanStore, "Executing", running,
                                 jobNodeTracker);
@@ -147,11 +137,11 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                         executable = new StroomBeanMethodExecutable(methodReference, stroomBeanStore, "Executing", running);
                     }
                 } else {
-                    LOGGER.trace("Not returning runnable for method: {} - {} - {}", new Object[]{methodReference, enabled, scheduler});
+                    LOGGER.trace("Not returning runnable for method: {} - {} - {}", methodReference, enabled, scheduler);
                     running.set(false);
                 }
-            } catch (final Throwable t) {
-                LOGGER.error(MarkerFactory.getMarker("FATAL"), t.getMessage());
+            } catch (final RuntimeException e) {
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage());
             }
         } else {
             LOGGER.trace("Skipping as method still running: {}", methodReference);
@@ -177,8 +167,8 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                             .getAnnotation(StroomFrequencySchedule.class);
                     scheduler = new FrequencyScheduler(stroomFrequencySchedule.value());
                 }
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             }
 
             schedulerMap.put(methodReference, scheduler);
@@ -225,8 +215,8 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                 } finally {
                     jobNodeTracker.decrementTaskCount();
                 }
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             }
         }
 

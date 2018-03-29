@@ -74,7 +74,7 @@ public class TestRoundRobinSet extends StroomUnitTest {
 
                     try {
                         getString(rrList);
-                    } catch (final Throwable e) {
+                    } catch (final RuntimeException e) {
                         System.err.println(e.getMessage());
                         failureCount.increment();
                     }

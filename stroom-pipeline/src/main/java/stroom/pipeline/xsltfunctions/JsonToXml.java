@@ -45,8 +45,8 @@ class JsonToXml extends StroomExtensionFunctionCall {
             if (json != null && !json.isEmpty()) {
                 try {
                     result = jsonToXml(context, json);
-                } catch (final Throwable t) {
-                    createWarning(context, t);
+                } catch (final IOException | SAXException e) {
+                    createWarning(context, e);
                 }
             }
         } catch (final XPathException | RuntimeException e) {

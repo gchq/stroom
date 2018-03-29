@@ -71,7 +71,7 @@ public class StoredErrorReceiver implements ErrorReceiver {
             t = t.getCause();
         }
 
-        if (t != null && t instanceof SAXParseException) {
+        if (t != null) {
             return t;
         }
 

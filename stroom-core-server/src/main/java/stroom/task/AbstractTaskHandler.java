@@ -32,18 +32,18 @@ public abstract class AbstractTaskHandler<T extends Task<R>, R> implements TaskH
             if (callback != null) {
                 try {
                     callback.onSuccess(result);
-                } catch (final Throwable t) {
+                } catch (final RuntimeException e) {
                     // Ignore any errors that come from handling success.
-                    LOGGER.trace(t.getMessage(), t);
+                    LOGGER.trace(e.getMessage(), e);
                 }
             }
-        } catch (final Throwable t) {
+        } catch (final RuntimeException e) {
             if (callback != null) {
-                LOGGER.debug(t.getMessage(), t);
-                callback.onFailure(t);
+                LOGGER.debug(e.getMessage(), e);
+                callback.onFailure(e);
             } else {
-                LOGGER.error(t.getMessage(), t);
-                LOGGER.error("exec() - No Call back for error", t);
+                LOGGER.error(e.getMessage(), e);
+                LOGGER.error("exec() - No Call back for error", e);
             }
         }
     }

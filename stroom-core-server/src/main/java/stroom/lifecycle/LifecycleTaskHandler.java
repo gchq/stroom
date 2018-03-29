@@ -34,8 +34,8 @@ class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, VoidResult
             LOGGER.debug("exec() - >>> {}", task.getTaskName());
             task.getExecutable().exec(task);
             LOGGER.debug("exec() - <<< {} took {}", task.getTaskName(), logExecutionTime);
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         return new VoidResult();

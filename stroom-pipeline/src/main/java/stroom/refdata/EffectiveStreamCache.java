@@ -145,7 +145,7 @@ public class EffectiveStreamCache implements Clearable {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Created effective stream set: " + key.toString());
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
 

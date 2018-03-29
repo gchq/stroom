@@ -81,8 +81,8 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
                     lockAndDelete();
                 }
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
@@ -145,18 +145,18 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
                         LOGGER.debug("deleteCompleteOrFailedTasks() - Removing old complete filter {}", filter);
                         streamProcessorFilterService.delete(filter);
 
-                    } catch (final Throwable t) {
+                    } catch (final RuntimeException e) {
                         // The database constraint will not allow filters to be
                         // deleted that still have associated tasks. This is
                         // what we want to happen but output debug here to help
                         // diagnose problems.
                         LOGGER.debug("deleteCompleteOrFailedTasks() - Failed as tasks still remain for this filter - "
-                                + t.getMessage(), t);
+                                + e.getMessage(), e);
                     }
                 }
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 }

@@ -33,10 +33,10 @@ import stroom.servlet.HttpServletRequestHolder;
 import stroom.servlet.SessionListListener;
 import stroom.task.TaskHandler;
 import stroom.task.TaskHandlerBeanRegistry;
+import stroom.task.TaskIdFactory;
 import stroom.task.TaskManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
-import stroom.task.TaskIdFactory;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -107,9 +107,9 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
         } catch (final PermissionException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new EntityServiceException(e.getGenericMessage());
-        } catch (final Throwable t) {
-            LOGGER.debug(t.getMessage(), t);
-            throw EntityServiceExceptionUtil.create(t);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw EntityServiceExceptionUtil.create(e);
         } finally {
             LOGGER.debug("exec() - << {} took {}", action.getClass().getName(),
                     ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
@@ -121,7 +121,7 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
         try {
             final BaseEntityDeProxyProcessor processor = new BaseEntityDeProxyProcessor(true);
             return (Action<R>) processor.process(action);
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             throw EntityServiceExceptionUtil.create(e);
         }
     }
@@ -131,7 +131,7 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
         try {
             final BaseEntityDeProxyProcessor processor = new BaseEntityDeProxyProcessor(false);
             return (R) processor.process(result);
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             throw EntityServiceExceptionUtil.create(e);
         }
     }

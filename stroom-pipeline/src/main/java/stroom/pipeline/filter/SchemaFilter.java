@@ -167,8 +167,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             if (validator != null) {
                 validator.setDocumentLocator(this.locator);
             }
-        } catch (final Throwable t) {
-            unexpectedError("setDocumentLocator()", t);
+        } catch (final RuntimeException e) {
+            unexpectedError("setDocumentLocator()", e);
         } finally {
             super.setDocumentLocator(locator);
         }
@@ -180,8 +180,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             if (validator != null) {
                 validator.startDocument();
             }
-        } catch (final Throwable t) {
-            unexpectedError("startDocument()", t);
+        } catch (final RuntimeException e) {
+            unexpectedError("startDocument()", e);
         } finally {
             super.startDocument();
         }
@@ -199,8 +199,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             if (validator != null) {
                 validator.endDocument();
             }
-        } catch (final Throwable t) {
-            unexpectedError("endDocument()", t);
+        } catch (final RuntimeException e) {
+            unexpectedError("endDocument()", e);
         } finally {
             super.endDocument();
         }
@@ -223,8 +223,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             if (validator != null) {
                 validator.startPrefixMapping(prefix, uri);
             }
-        } catch (final Throwable t) {
-            unexpectedError("startPrefixMapping()", t);
+        } catch (final RuntimeException e) {
+            unexpectedError("startPrefixMapping()", e);
         } finally {
             super.startPrefixMapping(prefix, uri);
         }
@@ -245,8 +245,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             if (validator != null) {
                 validator.endPrefixMapping(prefix);
             }
-        } catch (final Throwable t) {
-            unexpectedError("endPrefixMapping()", t);
+        } catch (final RuntimeException e) {
+            unexpectedError("endPrefixMapping()", e);
         } finally {
             super.endPrefixMapping(prefix);
         }
@@ -287,8 +287,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             if (validator != null) {
                 validator.startElement(uri, localName, qName, atts);
             }
-        } catch (final Throwable t) {
-            unexpectedError("startElement()", t);
+        } catch (final RuntimeException e) {
+            unexpectedError("startElement()", e);
         } finally {
             super.startElement(uri, localName, qName, atts);
         }
@@ -331,8 +331,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             if (validator != null) {
                 validator.endElement(uri, localName, qName);
             }
-        } catch (final Throwable t) {
-            unexpectedError("endElement()", t);
+        } catch (final RuntimeException e) {
+            unexpectedError("endElement()", e);
         } finally {
             super.endElement(uri, localName, qName);
         }
@@ -356,8 +356,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             if (validator != null) {
                 validator.characters(ch, start, length);
             }
-        } catch (final Throwable t) {
-            unexpectedError("characters()", t);
+        } catch (final RuntimeException e) {
+            unexpectedError("characters()", e);
         } finally {
             super.characters(ch, start, length);
         }

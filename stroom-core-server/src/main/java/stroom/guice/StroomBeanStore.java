@@ -98,8 +98,8 @@ public class StroomBeanStore {
         T o = null;
         try {
             o = injector.getInstance(type);
-        } catch (final Throwable t) {
-            LOGGER.error("Unable to get instance!", t);
+        } catch (final RuntimeException e) {
+            LOGGER.error("Unable to get instance!", e);
         }
 
         if (o == null) {
@@ -113,8 +113,8 @@ public class StroomBeanStore {
         Object o = null;
         try {
             o = injector.getInstance(Key.get(Object.class, Names.named(name)));
-        } catch (final Throwable t) {
-            LOGGER.error("Unable to get instance!", t);
+        } catch (final RuntimeException e) {
+            LOGGER.error("Unable to get instance!", e);
         }
 
         if (o == null) {

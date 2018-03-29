@@ -118,7 +118,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Finished loading context data " + contextIdentifier);
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, "Error loading context data: " + e.getMessage(), e);
             } finally {
                 try {

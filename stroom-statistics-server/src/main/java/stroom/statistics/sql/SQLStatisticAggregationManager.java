@@ -85,8 +85,8 @@ public class SQLStatisticAggregationManager {
             try {
                 aggregate(System.currentTimeMillis());
                 LOGGER.info("SQL Statistic Aggregation - finished in {}", logExecutionTime);
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             } finally {
                 clusterLockService.releaseLock(LOCK_NAME);
             }
@@ -139,8 +139,8 @@ public class SQLStatisticAggregationManager {
                     LOGGER.debug("aggregate() - Finished for SQL stats in {} timeNowOverride = {}", logExecutionTime,
                             DateUtil.createNormalDateTimeString(timeNow));
                 }
-            } catch (final Throwable t) {
-                throw EntityServiceExceptionUtil.create(t);
+            } catch (final RuntimeException e) {
+                throw EntityServiceExceptionUtil.create(e);
             } finally {
                 guard.unlock();
             }

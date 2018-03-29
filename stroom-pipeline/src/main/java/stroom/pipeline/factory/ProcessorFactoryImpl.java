@@ -140,7 +140,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                     } else {
                         errorReceiver.log(Severity.FATAL_ERROR, null, "MultiWayProcessor", t.toString(), t);
                     }
-                } catch (final Throwable e) {
+                } catch (final RuntimeException e) {
                     // Ignore exception as we generated it.
                 }
 

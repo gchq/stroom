@@ -77,7 +77,7 @@ public class TextRecordEmitter extends XMLFilterAdaptor {
         }
     }
 
-    protected void error(final String message, final RuntimeException e) {
+    protected void error(final String message, final Exception e) {
         errorReceiverProxy.log(Severity.ERROR, null, getElementId(), message, e);
     }
 }

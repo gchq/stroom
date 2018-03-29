@@ -113,15 +113,15 @@ public class ClusterDispatchAsyncHelper {
                 try {
                     dispatchAsyncProvider.get().execAsync(task, collector, sourceNode, targetNodes);
                     collector.waitToComplete(waitTime, timeUnit);
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
                 } finally {
                     // Forget the collector from the cache.
                     collectorCache.remove(collector.getId());
                 }
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         return collector;
@@ -153,8 +153,8 @@ public class ClusterDispatchAsyncHelper {
                 lastClusterStateWarn = now;
                 LOGGER.warn(e.getMessage());
             }
-        } catch (final Throwable t) {
-            LOGGER.debug(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
         return initialised;
     }

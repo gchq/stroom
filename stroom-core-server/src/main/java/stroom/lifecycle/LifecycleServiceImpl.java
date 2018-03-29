@@ -142,8 +142,8 @@ public class LifecycleServiceImpl implements LifecycleService {
                     try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
                         Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
                         scheduledTaskExecutor.execute();
-                    } catch (final Throwable t) {
-                        LOGGER.error(t.getMessage(), t);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
                     } finally {
 
                         lock.unlock();

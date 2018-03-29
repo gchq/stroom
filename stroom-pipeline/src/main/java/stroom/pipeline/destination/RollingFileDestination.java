@@ -113,8 +113,8 @@ public class RollingFileDestination extends RollingDestination {
                 try {
                     Files.move(source, dest);
                     success = true;
-                } catch (final Throwable t) {
-                    exceptionConsumer.accept(wrapRollException(file, destFile, t));
+                } catch (final IOException | RuntimeException e) {
+                    exceptionConsumer.accept(wrapRollException(file, destFile, e));
                 }
             }
         }
@@ -135,8 +135,8 @@ public class RollingFileDestination extends RollingDestination {
                         try {
                             Files.move(source, dest);
                             success = true;
-                        } catch (final Throwable t) {
-                            LOGGER.debug(t.getMessage(), t);
+                        } catch (final IOException | RuntimeException e) {
+                            LOGGER.debug(e.getMessage(), e);
                         }
                     }
                     attempt++;
@@ -154,8 +154,8 @@ public class RollingFileDestination extends RollingDestination {
                         LOGGER.error("Failed to delete file '{}'", getFullPath(file));
                     }
                 }
-            } catch (final Throwable t) {
-                LOGGER.debug(t.getMessage(), t);
+            } catch (final IOException | RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
             }
         }
     }

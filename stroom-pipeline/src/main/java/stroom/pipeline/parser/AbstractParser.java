@@ -119,7 +119,7 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
 
         } catch (final LoggedException e) {
             throw e;
-        } catch (final Throwable e) {
+        } catch (final SAXException | RuntimeException e) {
             fatal(e);
         }
     }
@@ -130,7 +130,7 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
             filter.endProcessing();
         } catch (final LoggedException e) {
             throw e;
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             throw ProcessException.wrap(e);
         } finally {
             // Make sure the error is added to the error count.
@@ -184,7 +184,11 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
 
             } catch (final TerminatedException | LoggedException e) {
                 throw e;
-            } catch (final Throwable e) {
+            } catch (final IOException | SAXException e) {
+                final ProcessException processException = ProcessException.wrap(e);
+                fatal(e);
+                throw processException;
+            } catch (final RuntimeException e) {
                 Throwable exception = e;
                 Throwable cause = e;
                 while (cause != null) {

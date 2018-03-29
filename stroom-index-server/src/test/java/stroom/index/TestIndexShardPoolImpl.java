@@ -36,7 +36,6 @@ import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
-import stroom.streamstore.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
@@ -192,8 +191,8 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                 // // Return the writer to the pool.
                 // indexShardManager.returnObject(poolItem, true);
 
-            } catch (final Throwable th) {
-                LOGGER.error("TEST ERROR " + testNumber, th);
+            } catch (final RuntimeException e) {
+                LOGGER.error("TEST ERROR " + testNumber, e);
                 failedThreads.incrementAndGet();
             }
         }

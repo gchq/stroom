@@ -83,7 +83,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 final String time = getSafeString(functionName, context, arguments, 2);
                 try {
                     ms = DateUtil.parseNormalDateTimeString(time);
-                } catch (final Throwable e) {
+                } catch (final RuntimeException e) {
                     if (!ignoreWarnings) {
                         if (time == null) {
                             final StringBuilder sb = new StringBuilder();
@@ -111,9 +111,9 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             // If we have got the date then continue to do the lookup.
             try {
                 result = doLookup(context, map, key, ms, ignoreWarnings, lookupIdentifier);
-            } catch (final Throwable t) {
+            } catch (final RuntimeException e) {
                 if (!ignoreWarnings) {
-                    createLookupFailWarning(context, map, key, ms, t);
+                    createLookupFailWarning(context, map, key, ms, e);
                 }
             }
         } catch (final XPathException | RuntimeException e) {

@@ -83,7 +83,7 @@ class FormatDate extends StroomExtensionFunctionCall {
             final long ms = Long.parseLong(milliseconds);
             result = DateUtil.createNormalDateTimeString(ms);
 
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Failed to parse date: \"");
             sb.append(milliseconds);
@@ -114,7 +114,7 @@ class FormatDate extends StroomExtensionFunctionCall {
             } else {
                 ms = DateUtil.parseDate(pattern, timeZone, date);
             }
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Failed to parse date: \"");
             sb.append(date);
@@ -155,7 +155,7 @@ class FormatDate extends StroomExtensionFunctionCall {
             } else {
                 ms = DateUtil.parseDate(patternIn, timeZoneIn, date);
             }
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Failed to parse date: \"");
             sb.append(date);
@@ -177,7 +177,7 @@ class FormatDate extends StroomExtensionFunctionCall {
                     final ZonedDateTime dateTime = Instant.ofEpochMilli(ms).atZone(zoneId);
                     final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(patternOut);
                     result = dateTimeFormatter.format(dateTime);
-                } catch (final Throwable e) {
+                } catch (final RuntimeException e) {
                     final StringBuilder sb = new StringBuilder();
                     sb.append("Failed to format date: \"");
                     sb.append(date);

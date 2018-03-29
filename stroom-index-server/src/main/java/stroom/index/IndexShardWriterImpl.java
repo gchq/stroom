@@ -211,7 +211,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     LAMBDA_LOGGER.warn(() -> "addDocument() - took " + ModelStringUtil.formatDurationString(duration) + " " + toString());
                 }
 
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 documentCount.decrementAndGet();
                 throw e;
             }
@@ -280,15 +280,15 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
                 try {
                     indexWriter.close();
-                } catch (final Throwable t) {
-                    LAMBDA_LOGGER.error(t::getMessage, t);
+                } catch (final IOException | RuntimeException e) {
+                    LAMBDA_LOGGER.error(e::getMessage, e);
                 } finally {
                     try {
                         if (directory != null) {
                             directory.close();
                         }
-                    } catch (final Throwable t) {
-                        LAMBDA_LOGGER.error(t::getMessage, t);
+                    } catch (final IOException | RuntimeException e) {
+                        LAMBDA_LOGGER.error(e::getMessage, e);
                     }
 
                     open.set(false);

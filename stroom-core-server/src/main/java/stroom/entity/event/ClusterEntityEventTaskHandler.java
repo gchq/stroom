@@ -46,9 +46,9 @@ class ClusterEntityEventTaskHandler implements TaskHandler<ClusterEntityEventTas
 
         try {
             callback.onSuccess(VoidResult.INSTANCE);
-        } catch (final Throwable t) {
+        } catch (final RuntimeException e) {
             // Ignore errors thrown returning result.
-            LOGGER.trace(t.getMessage(), t);
+            LOGGER.trace(e.getMessage(), e);
         }
     }
 }

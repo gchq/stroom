@@ -124,7 +124,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         }
     }
 
-    protected void log(final Severity severity, final String message, final RuntimeException e) {
+    protected void log(final Severity severity, final String message, final Exception e) {
         errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
     }
 }

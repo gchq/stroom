@@ -141,16 +141,16 @@ class ClusterCallServiceRemote implements ClusterCallService {
 
             try {
                 result = api.call(sourceNode, targetNode, beanName, methodName, parameterTypes, args);
-            } catch (final HessianRuntimeException t) {
-                if (t.getCause() != null && t.getCause() instanceof ConnectException) {
-                    LOGGER.error("Unable to connect to '" + targetNode.getClusterURL() + "' " + t.getCause().getMessage());
+            } catch (final HessianRuntimeException e) {
+                if (e.getCause() != null && e.getCause() instanceof ConnectException) {
+                    LOGGER.error("Unable to connect to '" + targetNode.getClusterURL() + "' " + e.getCause().getMessage());
                 } else {
-                    LOGGER.error(t.getMessage(), t);
+                    LOGGER.error(e.getMessage(), e);
                 }
-                throw t;
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
-                throw t;
+                throw e;
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw e;
             }
         }
 

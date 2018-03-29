@@ -229,14 +229,14 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
         if (data != null) {
             try {
                 data.close();
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to close data stream!", e);
             }
         }
         if (index != null) {
             try {
                 index.close();
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to close index stream!", e);
             }
         }

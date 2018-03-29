@@ -133,7 +133,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 final String string = contentBuffer.toString();
                 try {
                     rangeFrom = Long.parseLong(string);
-                } catch (final Throwable e) {
+                } catch (final RuntimeException e) {
                     errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
                             "Unable to parse string \"" + string + "\" as long for range from", e);
                 }
@@ -142,7 +142,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 final String string = contentBuffer.toString();
                 try {
                     rangeTo = Long.parseLong(string);
-                } catch (final Throwable e) {
+                } catch (final RuntimeException e) {
                     errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
                             "Unable to parse string \"" + string + "\" as long for range to", e);
                 }
@@ -182,9 +182,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                             }
                         }
                     }
-                } catch (final Throwable t) {
+                } catch (final RuntimeException e) {
                     if (warnOnDuplicateKeys) {
-                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), t.getMessage(), t);
+                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), e.getMessage(), e);
                     }
                 }
 

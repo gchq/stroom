@@ -130,8 +130,8 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
                     terminate();
                 }
 
-            } catch (final Throwable t) {
-                error(t.getMessage(), t);
+            } catch (final RuntimeException e) {
+                error(e.getMessage(), e);
             } finally {
                 completedEventMapping.set(true);
 
@@ -184,7 +184,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
                 runnable = () -> {
                     try {
                         task.run();
-                    } catch (final Throwable e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                     } finally {
                         threadsUsed.decrementAndGet();

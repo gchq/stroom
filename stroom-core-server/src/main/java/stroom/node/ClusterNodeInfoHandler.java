@@ -52,7 +52,7 @@ public class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoA
         try {
             return (ClusterNodeInfo) clusterCallService.call(sourceNode, targetNode, ClusterNodeManager.BEAN_NAME,
                     ClusterNodeManager.GET_CLUSTER_NODE_INFO_METHOD, new Class[]{}, new Object[]{});
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             throw EntityServiceExceptionUtil.create(e);
         }
     }

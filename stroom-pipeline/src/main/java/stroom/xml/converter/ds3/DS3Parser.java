@@ -240,19 +240,19 @@ public class DS3Parser extends AbstractParser {
             Match match = null;
             try {
                 match = expression.match();
-            } catch (final Throwable t) {
+            } catch (final RuntimeException e) {
                 messageBuffer.clear();
                 messageBuffer.append("Expression '");
                 messageBuffer.append(expression.getDebugId());
                 messageBuffer.append("' threw a '");
-                messageBuffer.append(t.getClass().getSimpleName());
+                messageBuffer.append(e.getClass().getSimpleName());
                 messageBuffer.append("' while matching");
                 final String message = messageBuffer.toString();
 
-                log(Severity.FATAL_ERROR, message, t);
+                log(Severity.FATAL_ERROR, message, e);
 
                 // We should never get exceptions here so log stack trace.
-                LOGGER.error(message, t);
+                LOGGER.error(message, e);
             }
 
             if (match != null) {
@@ -347,19 +347,19 @@ public class DS3Parser extends AbstractParser {
             Match recoveryMatch = null;
             try {
                 recoveryMatch = expression.match();
-            } catch (final Throwable t) {
+            } catch (final RuntimeException e) {
                 messageBuffer.clear();
                 messageBuffer.append("Expression '");
                 messageBuffer.append(expression.getDebugId());
                 messageBuffer.append("' threw a '");
-                messageBuffer.append(t.getClass().getSimpleName());
+                messageBuffer.append(e.getClass().getSimpleName());
                 messageBuffer.append("' while matching");
                 final String message = messageBuffer.toString();
 
-                log(Severity.FATAL_ERROR, message, t);
+                log(Severity.FATAL_ERROR, message, e);
 
                 // We should never get exceptions here so log stack trace.
-                LOGGER.error(message, t);
+                LOGGER.error(message, e);
             }
 
             if (recoveryMatch != null) {

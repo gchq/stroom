@@ -25,23 +25,24 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
-import stroom.properties.StroomPropertyService;
 import stroom.node.shared.Node;
+import stroom.properties.StroomPropertyService;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
 import stroom.task.ThreadPoolImpl;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.StroomStartup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ThreadPool;
-import stroom.util.lifecycle.StroomFrequencySchedule;
-import stroom.util.lifecycle.StroomShutdown;
-import stroom.util.lifecycle.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -197,9 +198,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         } catch (final LockObtainFailedException t) {
             LOGGER.error(t::getMessage, t);
 
-        } catch (final Throwable t) {
+        } catch (final IOException | RuntimeException e) {
             // Something unexpected went wrong.
-            LOGGER.error(() -> "Setting index shard status to corrupt because (" + t.toString() + ")", t);
+            LOGGER.error(() -> "Setting index shard status to corrupt because (" + e.toString() + ")", e);
             indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
         }
 

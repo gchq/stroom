@@ -85,8 +85,8 @@ public class StreamRetentionExecutor {
                     }
                 }
                 LOGGER.info("Stream Retention Executor - finished in {}", logExecutionTime);
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             } finally {
                 clusterLockService.releaseLock(LOCK_NAME);
             }

@@ -132,7 +132,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
             super.endProcessing();
         } catch (final LoggedException e) {
             throw e;
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             throw ProcessException.wrap(e);
         } finally {
             // Return the parser factory to the pool if we have used one.

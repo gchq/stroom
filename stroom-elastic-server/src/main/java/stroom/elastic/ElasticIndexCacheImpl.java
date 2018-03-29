@@ -51,7 +51,7 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, Clearable {
                 }
 
                 return response.readEntity(ElasticIndexDocRefEntity.class);
-            } catch (Throwable e) {
+            } catch (final RuntimeException e) {
                 throw new LoggedException(String.format("Failed to retrieve elastic index config for %s", k.getUuid()), e);
             }
         });
