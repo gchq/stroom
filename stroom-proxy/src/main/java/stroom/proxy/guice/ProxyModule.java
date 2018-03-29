@@ -22,8 +22,6 @@ import stroom.ruleset.MetaMapFilterFactoryImpl;
 import stroom.ruleset.RuleSetService;
 import stroom.ruleset.RuleSetServiceImpl;
 import stroom.security.SecurityContext;
-import stroom.task.Monitor;
-import stroom.task.MonitorImpl;
 
 import java.nio.file.Paths;
 
@@ -44,7 +42,6 @@ public class ProxyModule extends AbstractModule {
         bind(ContentSyncConfig.class).toProvider(proxyConfig::getContentSyncConfig);
 
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
-        bind(Monitor.class).to(MonitorImpl.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
         bind(ProxyRepositoryManager.class).asEagerSingleton();
         bind(ProxyRepositoryReader.class).asEagerSingleton();

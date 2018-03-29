@@ -16,56 +16,54 @@
 
 package stroom.task;
 
-import stroom.task.Monitor;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class MonitorInfoUtil {
-    public static String getInfo(final Collection<Monitor> monitors) {
-        if (monitors == null || monitors.size() == 0) {
+public class TaskThreadInfoUtil {
+    public static String getInfo(final Collection<TaskThread> taskThreads) {
+        if (taskThreads == null || taskThreads.size() == 0) {
             return "";
         }
 
-        final Set<Monitor> allMonitors = new HashSet<>();
+        final Set<TaskThread> allTaskThreads = new HashSet<>();
 
         // Build a tree map.
-        final Map<Monitor, Set<Monitor>> childMap = new HashMap<>();
-        for (final Monitor monitor : monitors) {
-            childMap.put(monitor, monitor.getChildren());
-            allMonitors.add(monitor);
+        final Map<TaskThread, Set<TaskThread>> childMap = new HashMap<>();
+        for (final TaskThread taskThread : taskThreads) {
+            childMap.put(taskThread, taskThread.getChildren());
+            allTaskThreads.add(taskThread);
         }
 
         final StringBuilder sb = new StringBuilder();
 
-        // Get a list of monitors that have no parent monitor or who have a
-        // parent monitor that no longer seems to exist.
-        final Set<Monitor> roots = new HashSet<>(allMonitors);
-        for (final Monitor monitor : monitors) {
-            roots.removeAll(monitor.getChildren());
+        // Get a list of taskThreads that have no parent taskThread or who have a
+        // parent taskThread that no longer seems to exist.
+        final Set<TaskThread> roots = new HashSet<>(allTaskThreads);
+        for (final TaskThread taskThread : taskThreads) {
+            roots.removeAll(taskThread.getChildren());
         }
 
-        // Build the tree with the root monitors.
+        // Build the tree with the root taskThreads.
         addLevel(sb, childMap, roots, "");
 
         return sb.toString();
     }
 
-    private static void addLevel(final StringBuilder sb, final Map<Monitor, Set<Monitor>> map,
-                                 final Set<Monitor> list, final String prefix) {
+    private static void addLevel(final StringBuilder sb, final Map<TaskThread, Set<TaskThread>> map,
+                                 final Set<TaskThread> list, final String prefix) {
         if (list != null && list.size() > 0) {
-            for (final Monitor monitor : list) {
+            for (final TaskThread taskThread : list) {
                 // Indent the message if needed.
                 sb.append(prefix);
                 // Add the progress message.
                 sb.append("---o ");
-                sb.append(monitor.getInfo());
+                sb.append(taskThread.getInfo());
                 sb.append("\n");
 
-                final Set<Monitor> children = map.get(monitor);
+                final Set<TaskThread> children = map.get(taskThread);
                 addLevel(sb, map, children, "   +" + prefix);
             }
         }

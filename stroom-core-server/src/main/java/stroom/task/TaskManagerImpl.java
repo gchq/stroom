@@ -65,7 +65,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
     private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
-    private final Map<TaskId, TaskThread<?>> currentTasks = new ConcurrentHashMap<>(1024, 0.75F, 1024);
+    private final Map<TaskId, TaskThread> currentTasks = new ConcurrentHashMap<>(1024, 0.75F, 1024);
     private final AtomicBoolean stop = new AtomicBoolean();
     // The thread pools that will be used to execute tasks.
     private final ConcurrentHashMap<ThreadPool, ThreadPoolExecutor> threadPoolMap = new ConcurrentHashMap<>();
@@ -168,7 +168,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 waiting = currentCount > 0;
                 if (waiting) {
                     final StringBuilder builder = new StringBuilder();
-                    for (final TaskThread<?> taskThread : currentTasks.values()) {
+                    for (final TaskThread taskThread : currentTasks.values()) {
                         builder.append(taskThread.getTask().getTaskName());
                         builder.append(" ");
                     }
@@ -343,7 +343,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
     private <R> void doExec(final Task<R> task, final TaskCallback<R> callback) {
         final Thread currentThread = Thread.currentThread();
         final String oldThreadName = currentThread.getName();
-        final TaskThread<R> taskThread = new TaskThread<>(task, new MonitorImpl());
+        final TaskThread taskThread = new TaskThread(task);
 
         currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
         try {
@@ -392,9 +392,9 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
         final List<TaskProgress> taskProgressList = new ArrayList<>();
 
         if (criteria != null && criteria.isConstrained()) {
-            final Iterator<TaskThread<?>> iter = currentTasks.values().iterator();
+            final Iterator<TaskThread> iter = currentTasks.values().iterator();
 
-            final List<TaskThread<?>> terminateList = new ArrayList<>();
+            final List<TaskThread> terminateList = new ArrayList<>();
 
             // Loop over all of the tasks that this node knows about and see if
             // it should be terminated.
@@ -417,11 +417,11 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
     }
 
     private void doTerminated(final boolean kill, final long timeNowMs, final List<TaskProgress> taskProgressList,
-                              final List<TaskThread<?>> itemsToKill) {
+                              final List<TaskThread> itemsToKill) {
         LAMBDA_LOGGER.trace(() ->
                 LambdaLogger.buildMessage("doTerminated() - itemsToKill.size() {}", itemsToKill.size()));
 
-        for (final TaskThread<?> taskThread : itemsToKill) {
+        for (final TaskThread taskThread : itemsToKill) {
             final Task<?> task = taskThread.getTask();
             // First try and terminate the task.
             if (!taskThread.isTerminated()) {
@@ -453,7 +453,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
 
         final List<TaskProgress> taskProgressList = new ArrayList<>();
 
-        final Iterator<TaskThread<?>> iter = currentTasks.values().iterator();
+        final Iterator<TaskThread> iter = currentTasks.values().iterator();
         iter.forEachRemaining(taskThread -> {
             final Task<?> task = taskThread.getTask();
 
@@ -468,7 +468,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
         return BaseResultList.createUnboundedList(taskProgressList);
     }
 
-    private TaskProgress buildTaskProgress(final long timeNowMs, final TaskThread<?> taskThread, final Task<?> task) {
+    private TaskProgress buildTaskProgress(final long timeNowMs, final TaskThread taskThread, final Task<?> task) {
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(task.getId());
         taskProgress.setTaskName(taskThread.getName());
@@ -484,7 +484,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
 
     @Override
     public Task<?> getTaskById(final TaskId taskId) {
-        final TaskThread<?> taskThread = currentTasks.get(taskId);
+        final TaskThread taskThread = currentTasks.get(taskId);
         if (taskThread != null) {
             return taskThread.getTask();
         }
@@ -493,7 +493,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
 
     @Override
     public boolean isTerminated(final TaskId taskId) {
-        final TaskThread<?> taskThread = currentTasks.get(taskId);
+        final TaskThread taskThread = currentTasks.get(taskId);
         if (taskThread != null) {
             return taskThread.isTerminated();
         }
@@ -502,7 +502,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
 
     @Override
     public void terminate(final TaskId taskId) {
-        final TaskThread<?> taskThread = currentTasks.get(taskId);
+        final TaskThread taskThread = currentTasks.get(taskId);
         if (taskThread != null) {
             taskThread.terminate();
         }
@@ -510,11 +510,8 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
 
     @Override
     public String toString() {
-        final List<Monitor> monitorList = new ArrayList<>();
-        final Iterator<TaskThread<?>> iter = currentTasks.values().iterator();
-        iter.forEachRemaining(taskThread -> monitorList.add(taskThread.getMonitor()));
-
-        final String serverTasks = MonitorInfoUtil.getInfo(monitorList);
+        final List<TaskThread> monitorList = new ArrayList<>(currentTasks.values());
+        final String serverTasks = TaskThreadInfoUtil.getInfo(monitorList);
 
         final StringBuilder sb = new StringBuilder();
         if (serverTasks.length() > 0) {
