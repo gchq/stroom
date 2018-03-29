@@ -112,7 +112,7 @@ public class DataSourceProvider implements Provider<DataSource> {
                         }
                     }
                 }
-            } catch (final SQLException | RuntimeException e) {
+            } catch (final SQLException e) {
                 LOGGER.debug(e.getMessage());
                 // Ignore.
             }
@@ -122,7 +122,6 @@ public class DataSourceProvider implements Provider<DataSource> {
             } else {
                 LOGGER.info("This is a new statistics installation!");
             }
-
 
             if (version == null) {
                 // If we have no version then this is a new statistics instance so perform full FlyWay migration.
