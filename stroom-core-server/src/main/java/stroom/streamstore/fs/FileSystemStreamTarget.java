@@ -43,13 +43,14 @@ import java.util.stream.Collectors;
  */
 public final class FileSystemStreamTarget implements StreamTarget {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
+
     private final Set<StreamVolume> metaDataVolume;
     private final StreamType streamType;
     private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<>();
     private Stream stream;
-    private boolean closed = false;
-    private boolean append = false;
-    private MetaMap attributeMap = null;
+    private boolean closed;
+    private boolean append;
+    private MetaMap attributeMap;
     private OutputStream outputStream;
     private Set<Path> files;
     private FileSystemStreamTarget parent;
@@ -92,25 +93,20 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     @Override
-    public void close() {
-        try {
-            if (outputStream != null && !closed) {
-                closed = true;
-                outputStream.close();
-            }
+    public void close() throws IOException {
+        if (outputStream != null && !closed) {
             closed = true;
-            // Close off any open kids .... closing the parent
-            // closes kids (the caller can also close the kid off if they like).
-            for (final FileSystemStreamTarget child : childrenAccessed) {
-                child.close();
-            }
-        } catch (final IOException ioEx) {
-            // Wrap it
-            throw new RuntimeException(ioEx);
+            outputStream.close();
+        }
+        closed = true;
+        // Close off any open kids .... closing the parent
+        // closes kids (the caller can also close the kid off if they like).
+        for (final FileSystemStreamTarget child : childrenAccessed) {
+            child.close();
         }
     }
 
-    public Long getStreamSize() {
+    Long getStreamSize() {
         try {
             long total = 0;
             if (outputStream != null) {
@@ -123,7 +119,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
         }
     }
 
-    public Long getTotalFileSize() {
+    Long getTotalFileSize() {
         long total = 0;
         final Set<Path> fileSet = getFiles(false);
 
@@ -142,11 +138,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
         return stream;
     }
 
-    public Set<StreamVolume> getMetaDataVolume() {
-        return metaDataVolume;
-    }
-
-    public Set<Path> getFiles(final boolean createPath) {
+    Set<Path> getFiles(final boolean createPath) {
         if (files == null) {
             files = new HashSet<>();
             if (parent == null) {

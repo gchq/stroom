@@ -79,6 +79,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -679,7 +680,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 ((FileSystemStreamTarget) streamTarget).setMetaData(
                         unLock(streamTarget.getStream(), streamTarget.getAttributeMap(), streamTarget.isAppend()));
             } else {
-                throw new RuntimeException(streamCloseException);
+                throw new UncheckedIOException(streamCloseException);
             }
         });
     }

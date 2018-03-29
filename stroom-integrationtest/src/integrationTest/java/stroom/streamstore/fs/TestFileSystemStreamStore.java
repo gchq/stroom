@@ -753,15 +753,17 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         for (final Path file : ((FileSystemStreamTarget) streamTarget).getFiles(true)) {
             dirSet.add(file.getParent());
         }
-        for (final Path dir : dirSet) {
-            FileUtil.addFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
-        }
+
         try {
+            for (final Path dir : dirSet) {
+                FileUtil.removeFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
+            }
+
             streamStore.closeStreamTarget(streamTarget);
-
             Assert.fail("Expecting an error");
-
         } catch (final RuntimeException e) {
+            // Expected.
+        } finally {
             for (final Path dir : dirSet) {
                 FileUtil.addFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
             }
