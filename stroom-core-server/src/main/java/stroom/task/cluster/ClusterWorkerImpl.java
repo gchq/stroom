@@ -36,7 +36,6 @@ public class ClusterWorkerImpl implements ClusterWorker {
     static final Class<?>[] EXEC_ASYNC_METHOD_ARGS = {ClusterTask.class, Node.class, TaskId.class, CollectorId.class};
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterWorkerImpl.class);
-    private static final Long DEBUG_RESPONSE_DELAY = null;
     private static final String EXEC_ASYNC = "execAsync";
     private static final String SEND_RESULT = "sendResult";
 
@@ -130,8 +129,6 @@ public class ClusterWorkerImpl implements ClusterWorker {
         DebugTrace.debugTraceIn(task, SEND_RESULT, true);
         try {
             LOGGER.debug("{}() - {}", SEND_RESULT, task);
-            Thread.sleep(DEBUG_RESPONSE_DELAY);
-
             while (!done && tryCount <= 10) {
                 try {
                     // Trace attempt to send result.
