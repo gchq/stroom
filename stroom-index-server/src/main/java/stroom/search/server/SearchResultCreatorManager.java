@@ -41,14 +41,14 @@ public class SearchResultCreatorManager {
     //TODO Would need to get rid of StroomFrequencySchedule anno and let the calling code do that
     //TODO May want an abstraction for the caching impl so we can replace it with something disk backed like LMDB
 
-    private final LuceneSearchStoreFactory luceneSearchStoreFactory;
+    private final StoreFactory storeFactory;
     private final LoadingCache<SearchResultCreatorManager.Key, SearchResponseCreator> cache;
 
     @Inject
     @SuppressWarnings("unchecked")
     public SearchResultCreatorManager(final CacheManager cacheManager,
-                                      final LuceneSearchStoreFactory luceneSearchStoreFactory) {
-        this.luceneSearchStoreFactory = luceneSearchStoreFactory;
+                                      final StoreFactory storeFactory) {
+        this.storeFactory = storeFactory;
 
         final RemovalListener<SearchResultCreatorManager.Key, SearchResponseCreator> removalListener = notification ->
                 destroy(notification.getKey(), notification.getValue());
@@ -71,7 +71,7 @@ public class SearchResultCreatorManager {
     }
 
     private SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
-        Store store = luceneSearchStoreFactory.create(key.searchRequest);
+        Store store = storeFactory.create(key.searchRequest);
         return new SearchResponseCreator(store);
     }
 

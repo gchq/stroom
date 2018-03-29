@@ -52,8 +52,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
+@SuppressWarnings("unused") //used by DI
 @Component
-public class LuceneSearchStoreFactory {
+public class LuceneSearchStoreFactory implements StoreFactory {
     public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
@@ -87,6 +88,7 @@ public class LuceneSearchStoreFactory {
         this.securityContext = securityContext;
     }
 
+    @Override
     public Store create(final SearchRequest searchRequest) {
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
