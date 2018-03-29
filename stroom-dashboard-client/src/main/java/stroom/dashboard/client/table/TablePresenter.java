@@ -410,7 +410,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 dataGrid.getSelectionModel().clear();
             }
 //        }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             GWT.log(e.getMessage());
         }
 

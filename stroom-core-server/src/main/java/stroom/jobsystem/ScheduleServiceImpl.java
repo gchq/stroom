@@ -36,7 +36,7 @@ class ScheduleServiceImpl implements ScheduleService {
     public ScheduledTimes getScheduledTimes(final JobType jobType,
                                             final Long scheduleReferenceTime,
                                             final Long lastExecutedTime,
-                                            final String expression) throws RuntimeException {
+                                            final String expression) {
         ScheduledTimes scheduledTimes = null;
 
         if (JobType.CRON.equals(jobType)) {

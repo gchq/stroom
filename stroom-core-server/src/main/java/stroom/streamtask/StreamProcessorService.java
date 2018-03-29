@@ -23,5 +23,5 @@ import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 
 public interface StreamProcessorService extends BaseEntityService<StreamProcessor>, FindService<StreamProcessor, FindStreamProcessorCriteria> {
-    StreamProcessor loadByIdInsecure(long id) throws RuntimeException;
+    StreamProcessor loadByIdInsecure(long id);
 }

@@ -246,7 +246,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 // Perform commit
                 indexWriter.commit();
 
-            } catch (final Exception e) {
+            } catch (final IOException | RuntimeException e) {
                 LAMBDA_LOGGER.error(e::getMessage, e);
 
             } finally {
@@ -268,9 +268,14 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             try {
                 // Perform close.
                 // Wait for us to stop adding docs.
-                while (adding.get() > 0) {
-                    LAMBDA_LOGGER.debug(() -> "Waiting for " + adding.get() + " docs to finish being added before we can close this shard");
-                    Thread.sleep(1000);
+                try {
+                    while (adding.get() > 0) {
+                        LAMBDA_LOGGER.debug(() -> "Waiting for " + adding.get() + " docs to finish being added before we can close this shard");
+                        Thread.sleep(1000);
+                    }
+                } catch (final InterruptedException e) {
+                    // Interrupt this thread again.
+                    Thread.currentThread().interrupt();
                 }
 
                 try {
@@ -289,7 +294,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     open.set(false);
                 }
 
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LAMBDA_LOGGER.error(e::getMessage, e);
 
             } finally {
@@ -318,7 +323,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             final Long fileSize = calcFileSize();
 
             update(indexShardId, lastDocumentCount, lastCommitDurationMs, lastCommitMs, fileSize);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LAMBDA_LOGGER.error(e::getMessage, e);
         }
     }
@@ -341,7 +346,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 }
                 fileSize = totalSize.get();
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LAMBDA_LOGGER.debug(e::getMessage, e);
         }
         return fileSize;

@@ -91,8 +91,8 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
             JsonUtil.writeValue(outputFile, apiSearchRequest);
 
             return new ResourceGeneration(resourceKey, new ArrayList<>());
-        } catch (final Exception ex) {
-            throw EntityServiceExceptionUtil.create(ex);
+        } catch (final RuntimeException e) {
+            throw EntityServiceExceptionUtil.create(e);
         }
     }
 }

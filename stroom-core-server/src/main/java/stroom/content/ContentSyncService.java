@@ -69,7 +69,7 @@ public class ContentSyncService implements Managed {
                         docRefs.getSet().forEach(docRef -> importDocument(url, docRef, importExportActionHandler));
                     }
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage());
             }
         });

@@ -454,7 +454,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         try {
             stringWriter.flush();
             charBuffer = stringWriter.getBuffer();
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.warn("Ignoring error %s", e.getMessage());
         }
         return charBuffer != null ? charBuffer.toString() : "";

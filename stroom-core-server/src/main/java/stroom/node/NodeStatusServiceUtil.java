@@ -96,7 +96,7 @@ public class NodeStatusServiceUtil {
     protected String readSystemStatsInfo() {
         try {
             return StreamUtil.fileToString(Paths.get("/proc/stat"));
-        } catch (Exception ex) {
+        } catch (final RuntimeException e) {
             return null;
         }
     }

@@ -175,7 +175,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
             }
 
             return processors;
-        } catch (final Exception e) {
+        } catch (final RuntimeException | IOException e) {
             throw ProcessException.wrap(e);
         }
     }
@@ -212,12 +212,12 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
         private final List<DestinationProvider> destinationProviders;
         private Map<DestinationProvider, Destination> destinationMap;
 
-        public DestinationProcessor(final List<DestinationProvider> destinationProviders) {
+        DestinationProcessor(final List<DestinationProvider> destinationProviders) {
             this.destinationProviders = destinationProviders;
         }
 
-        protected void borrowDestinations() throws Exception {
-            Exception exception = null;
+        void borrowDestinations() throws IOException {
+            IOException exception = null;
 
             if (destinationMap == null) {
                 destinationMap = new HashMap<>();
@@ -225,7 +225,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                     try {
                         final Destination destination = destinationProvider.borrowDestination();
                         destinationMap.put(destinationProvider, destination);
-                    } catch (final Exception e) {
+                    } catch (final IOException e) {
                         LOGGER.error(e.getMessage(), e);
                         exception = e;
                     }
@@ -237,14 +237,14 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
             }
         }
 
-        protected void returnDestinations() throws Exception {
-            Exception exception = null;
+        void returnDestinations() throws IOException {
+            IOException exception = null;
 
             if (destinationMap != null) {
                 for (final Entry<DestinationProvider, Destination> entry : destinationMap.entrySet()) {
                     try {
                         entry.getKey().returnDestination(entry.getValue());
-                    } catch (final Exception e) {
+                    } catch (final IOException e) {
                         LOGGER.error(e.getMessage(), e);
                         exception = e;
                     }
@@ -266,8 +266,8 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
         private final List<OutputStream> otherOutputStreams;
         private InputStream inputStream;
 
-        public DestinationOutputProcessor(final List<DestinationProvider> destinationProviders,
-                                          final List<OutputStream> otherOutputStreams) {
+        DestinationOutputProcessor(final List<DestinationProvider> destinationProviders,
+                                   final List<OutputStream> otherOutputStreams) {
             super(destinationProviders);
             this.otherOutputStreams = otherOutputStreams;
         }
@@ -306,12 +306,12 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                 } finally {
                     returnDestinations();
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException | IOException e) {
                 throw ProcessException.wrap(e);
             }
         }
 
-        public void setInputStream(final InputStream inputStream) throws IOException {
+        public void setInputStream(final InputStream inputStream) {
             this.inputStream = inputStream;
         }
     }
@@ -320,8 +320,8 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
         private final List<Writer> otherWriters;
         private Reader reader;
 
-        public DestinationWriterProcessor(final List<DestinationProvider> destinationProviders,
-                                          final List<Writer> otherWriters) {
+        DestinationWriterProcessor(final List<DestinationProvider> destinationProviders,
+                                   final List<Writer> otherWriters) {
             super(destinationProviders);
             this.otherWriters = otherWriters;
         }
@@ -357,7 +357,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                 } finally {
                     returnDestinations();
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException | IOException e) {
                 throw ProcessException.wrap(e);
             }
         }

@@ -186,7 +186,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
                     try {
                         test(p, feed, outputDir, stem, compareOutput, exceptions);
-                    } catch (final Exception e) {
+                    } catch (final IOException | RuntimeException e) {
                         Assert.fail(e.getMessage());
                     }
                 });
@@ -203,7 +203,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void test(final Path inputFile, final Feed feed, final Path outputDir, final String stem,
-                      final boolean compareOutput, final List<Exception> exceptions) throws Exception {
+                      final boolean compareOutput, final List<Exception> exceptions) throws IOException {
         LOGGER.info("Testing input {}, feed {}, output {}, stem {}",
                 inputFile.getFileName().toString(), feed.getName(), outputDir.getFileName().toString(), stem);
 
@@ -533,7 +533,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private void compareFiles(final Path expectedFile, final Path actualFile, final List<Exception> exceptions) {
         try {
             ComparisonHelper.compare(expectedFile, actualFile, false, true);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             exceptions.add(e);
         }
     }

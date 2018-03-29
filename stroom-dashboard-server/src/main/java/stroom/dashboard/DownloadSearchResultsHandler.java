@@ -160,9 +160,9 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
                     action.getPercent(), action.getDateTimeLocale());
 
             searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
-        } catch (final Exception ex) {
-            searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), ex);
-            throw EntityServiceExceptionUtil.create(ex);
+        } catch (final RuntimeException e) {
+            searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+            throw EntityServiceExceptionUtil.create(e);
         }
 
         return new ResourceGeneration(resourceKey, new ArrayList<>());

@@ -26,7 +26,7 @@ public class TestSQLStatisticsEventValidator {
     private final SQLStatisticsEventValidator validator = new SQLStatisticsEventValidator();
 
     @Test
-    public void testValidateEvent_NoTags() throws Exception {
+    public void testValidateEvent_NoTags() {
         final StatisticEvent event = StatisticEvent.createCount(123L, "statName", null, 1);
 
         final List<String> warnings = validator.validateEvent(event);
@@ -35,7 +35,7 @@ public class TestSQLStatisticsEventValidator {
     }
 
     @Test
-    public void testValidateEvent_badTag() throws Exception {
+    public void testValidateEvent_badTag() {
         final List<StatisticTag> tags = new ArrayList<>();
         tags.add(new StatisticTag("x" + SQLStatisticConstants.NAME_SEPARATOR + "x", "someValue1"));
         tags.add(new StatisticTag("yy", "someValue2"));
@@ -48,7 +48,7 @@ public class TestSQLStatisticsEventValidator {
     }
 
     @Test
-    public void testValidateEvent_badValue() throws Exception {
+    public void testValidateEvent_badValue() {
         final List<StatisticTag> tags = new ArrayList<>();
         tags.add(new StatisticTag("xx", "someValue1"));
         tags.add(new StatisticTag("yy", "some" + SQLStatisticConstants.NAME_SEPARATOR + "Value2"));
@@ -61,7 +61,7 @@ public class TestSQLStatisticsEventValidator {
     }
 
     @Test
-    public void testValidateEvent_badTagsAndValues() throws Exception {
+    public void testValidateEvent_badTagsAndValues() {
         final List<StatisticTag> tags = new ArrayList<>();
         tags.add(new StatisticTag("x" + SQLStatisticConstants.NAME_SEPARATOR + "x",
                 "some" + SQLStatisticConstants.NAME_SEPARATOR + "Value1"));
@@ -76,7 +76,7 @@ public class TestSQLStatisticsEventValidator {
     }
 
     @Test
-    public void testCleanString_dirty() throws Exception {
+    public void testCleanString_dirty() {
         final String dirtyString = "abc" + SQLStatisticConstants.NAME_SEPARATOR + "def";
 
         final String cleanString = validator.cleanString(dirtyString);
@@ -86,7 +86,7 @@ public class TestSQLStatisticsEventValidator {
     }
 
     @Test
-    public void testCleanString_clean() throws Exception {
+    public void testCleanString_clean() {
         final String stringToClean = "0123456789aAzZ .()-_$\\/[]{}_!\"'£$%^&*+-=~@";
 
         final String cleanString = validator.cleanString(stringToClean);
@@ -96,7 +96,7 @@ public class TestSQLStatisticsEventValidator {
     }
 
     @Test
-    public void testIsKeyToLong_tooLong() throws Exception {
+    public void testIsKeyToLong_tooLong() {
         final StringBuilder stringBuilder = new StringBuilder();
 
         for (int i = 0; i < SQLStatisticConstants.STAT_VAL_SRC_NAME_COLUMN_LENGTH + 1; i++) {
@@ -108,7 +108,7 @@ public class TestSQLStatisticsEventValidator {
     }
 
     @Test
-    public void testIsKeyToLong_notTooLong() throws Exception {
+    public void testIsKeyToLong_notTooLong() {
         final StringBuilder stringBuilder = new StringBuilder();
 
         stringBuilder.append("x");

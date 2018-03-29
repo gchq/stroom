@@ -56,8 +56,8 @@ class MetaDataStatisticImpl implements MetaDataStatistic {
                     } else {
                         LOGGER.trace("recordStatistics() - abort {} {}", metaData, template);
                     }
-                } catch (final Exception ex) {
-                    LOGGER.error("recordStatistics() - abort {} {}", metaData, template, ex);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("recordStatistics() - abort {} {}", metaData, template, e);
                 }
             }
         }
@@ -78,7 +78,7 @@ class MetaDataStatisticImpl implements MetaDataStatistic {
         if (timeValue != null && !timeValue.isEmpty()) {
             try {
                 timeMs = DateUtil.parseNormalDateTimeString(timeValue);
-            } catch (final Exception ex) {
+            } catch (final RuntimeException e) {
                 // Quit!
                 return null;
             }
@@ -106,7 +106,7 @@ class MetaDataStatisticImpl implements MetaDataStatistic {
             if (incrementValue != null && !incrementValue.isEmpty()) {
                 try {
                     increment = Long.parseLong(incrementValue);
-                } catch (final Exception ex) {
+                } catch (final RuntimeException e) {
                     // Quit!
                     return null;
                 }

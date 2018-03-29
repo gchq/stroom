@@ -28,7 +28,7 @@ import javax.inject.Singleton;
 public class MockStreamAttributeKeyService extends MockEntityService<StreamAttributeKey, FindStreamAttributeKeyCriteria>
         implements StreamAttributeKeyService {
     @Override
-    public BaseResultList<StreamAttributeKey> findAll() throws RuntimeException {
+    public BaseResultList<StreamAttributeKey> findAll() {
         return find(new FindStreamAttributeKeyCriteria());
     }
 

@@ -21,14 +21,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.statistics.shared.StatisticType;
 import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
-import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.sql.BatchUpdateException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -142,26 +143,26 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
             sqlStatisticValueBatchSaveService.saveBatchStatisticValueSource_String(batchInsert);
 
             savedCount += batchInsert.size();
-        } catch (final Exception ex) {
-            LOGGER.debug(ex.getMessage(), ex);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
             LOGGER.warn("doSaveBatch() - Failed to insert {} records will try slower PreparedStatement method - {}",
-                    batchInsert.size(), ex.getMessage());
+                    batchInsert.size(), e.getMessage());
 
             try {
                 sqlStatisticValueBatchSaveService.saveBatchStatisticValueSource_PreparedStatement(batchInsert);
                 savedCount += batchInsert.size();
-            } catch (final Exception e) {
-                int[] successfullInserts = new int[0];
+            } catch (final SQLException e2) {
+                int[] successfulInserts = new int[0];
                 int successCount = 0;
 
-                if (e instanceof BatchUpdateException) {
-                    successfullInserts = ((BatchUpdateException) e).getUpdateCounts();
+                if (e2 instanceof BatchUpdateException) {
+                    successfulInserts = ((BatchUpdateException) e2).getUpdateCounts();
                 }
 
                 final List<SQLStatisticValueSourceDO> revisedBatch = new ArrayList<>();
 
-                for (int i = 0, lenBatch = batchInsert.size(), lenArr = successfullInserts.length; i < lenBatch; i++) {
-                    if (i < lenArr && successfullInserts[i] == 1) {
+                for (int i = 0, lenBatch = batchInsert.size(), lenArr = successfulInserts.length; i < lenBatch; i++) {
+                    if (i < lenArr && successfulInserts[i] == 1) {
                         successCount++;
                         // ignore this item as it has already been processed
                     } else {
@@ -171,7 +172,7 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
 
                 LOGGER.error(
                         "doSaveBatch() - Failed to insert {} records out of a batch size of {} using PreparedStatement (though succeeded in inserting {}), will try much slower IndividualPreparedStatements method",
-                        batchInsert.size() - successCount, batchInsert.size(), successCount, e);
+                        batchInsert.size() - successCount, batchInsert.size(), successCount, e2);
 
                 final int insertedCount = sqlStatisticValueBatchSaveService
                         .saveBatchStatisticValueSource_IndividualPreparedStatements(revisedBatch);

@@ -26,6 +26,7 @@ import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 
 class StreamAttributeValueServiceTransactionHelper {
@@ -71,8 +72,8 @@ class StreamAttributeValueServiceTransactionHelper {
                     ps.executeBatch();
                 }
 
-            } catch (final Exception ex) {
-                LOGGER.error("saveBatch()", ex);
+            } catch (final SQLException e) {
+                LOGGER.error("saveBatch()", e);
             }
         }
         LOGGER.debug("saveBatch() - inserted {} records in {}", list.size(), logExecutionTime);

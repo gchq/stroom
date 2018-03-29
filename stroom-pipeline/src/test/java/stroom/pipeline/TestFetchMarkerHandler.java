@@ -25,13 +25,14 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
 import stroom.util.test.StroomUnitTest;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.List;
 
 public class TestFetchMarkerHandler extends StroomUnitTest {
     @Test
-    public void test() throws Exception {
+    public void test() throws IOException {
         doTest(4, 12);
 
         doTest(7, 12, Severity.WARNING);
@@ -41,7 +42,7 @@ public class TestFetchMarkerHandler extends StroomUnitTest {
         doTest(12, 12, Severity.WARNING, Severity.ERROR);
     }
 
-    private void doTest(final int expectedSize, final int expectedTotal, final Severity... expanded) throws Exception {
+    private void doTest(final int expectedSize, final int expectedTotal, final Severity... expanded) throws IOException {
         // Get the testing directory.
         final Path testDataDir = StroomCoreServerTestFileUtil.getTestResourcesDir();
         final Path testDir = testDataDir.resolve( "TestFetchMarkerHandler");

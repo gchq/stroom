@@ -87,7 +87,7 @@ public class VisPanel extends SimplePanel implements VisPane {
                             // Inject the next script in the list.
                             injectScriptDirectly(scripts, function);
 
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             failure(function, "Failed to inject script '" + script.getName() + "' - " + e.getMessage());
                         }
                     } else {
@@ -139,7 +139,7 @@ public class VisPanel extends SimplePanel implements VisPane {
                                         failure(function, "Failed to inject script '" + script.getName() + "' - Status "
                                                 + response.getStatusCode());
                                     }
-                                } catch (final Exception e) {
+                                } catch (final RuntimeException e) {
                                     failure(function,
                                             "Failed to inject script '" + script.getName() + "' - " + e.getMessage());
                                 } finally {
@@ -205,14 +205,14 @@ public class VisPanel extends SimplePanel implements VisPane {
                         }
 
                         @Override
-                        public void onFailure(final Exception reason) {
+                        public void onFailure(final Exception e) {
                             // Remember that we have loaded or at least
                             // attempted to load this script so we don't try and
                             // fetch it again.
                             loadedScripts.add(script.getId());
                             // Show failure message.
                             failure(function,
-                                    "Failed to inject script '" + script.getName() + "' - " + reason.getMessage());
+                                    "Failed to inject script '" + script.getName() + "' - " + e.getMessage());
                         }
                     };
 

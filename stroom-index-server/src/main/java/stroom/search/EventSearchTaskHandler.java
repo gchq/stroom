@@ -139,7 +139,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
                         .map(String::trim)
                         .map(Integer::valueOf)
                         .collect(Collectors.toList());
-            } catch (Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.warn(e.getMessage());
             }
         }

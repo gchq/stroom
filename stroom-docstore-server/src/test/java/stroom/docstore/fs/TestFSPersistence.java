@@ -17,7 +17,7 @@ import java.util.UUID;
 
 public class TestFSPersistence {
     @Test
-    public void test() throws Exception {
+    public void test() throws IOException {
         final Persistence persistence = new FSPersistence(Files.createTempDirectory("docstore").resolve("conf"));
 
         final String data = UUID.randomUUID().toString();

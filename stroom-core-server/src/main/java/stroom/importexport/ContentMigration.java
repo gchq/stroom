@@ -75,7 +75,7 @@ public class ContentMigration {
                                 renameFiles(file.getParent(), fileStem, newFileStem);
                             }
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException | IOException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);
@@ -97,7 +97,7 @@ public class ContentMigration {
                         if (fileName.matches("([^.]*\\.){2,}xml") && fileName.matches(".*\\.[A-Z][A-Za-z]+\\.xml$")) {
                             process(dir, file);
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);
@@ -169,7 +169,7 @@ public class ContentMigration {
                                 final String newFileName = newFileStem + extension;
                                 Files.move(file, file.getParent().resolve(newFileName));
                             }
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException | IOException e) {
                             LOGGER.error(e.getMessage(), e);
                         }
 

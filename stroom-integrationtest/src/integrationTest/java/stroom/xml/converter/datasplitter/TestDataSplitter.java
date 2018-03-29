@@ -39,11 +39,9 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
 
     /**
      * Tests a basic CSV file.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testBasicCSV() throws Exception {
+    public void testBasicCSV() {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/CSVWithHeading.ds",
                 new ByteArrayInputStream("h1,h2\ntoken1a,token1b\ntoken2a,token2b\n".getBytes()));
 
@@ -59,11 +57,9 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
 
     /**
      * Tests a sample network monitoring CSV file.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testNetworkMonitoringSample() throws Exception {
+    public void testNetworkMonitoringSample() {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/CSVWithHeading.ds",
                 StroomPipelineTestFileUtil.getInputStream("TestDataSplitter/NetworkMonitoringSample.in"));
 
@@ -73,11 +69,9 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
     /**
      * Tests a sample network monitoring CSV file and tries to transform it with
      * XSL.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testNetworkMonitoringSampleWithXSL() throws Exception {
+    public void testNetworkMonitoringSampleWithXSL() {
         runFullTest(new Feed("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
                 "TestDataSplitter/SimpleCSVSplitter.ds", "TestDataSplitter/NetworkMonitoring.xsl",
                 "TestDataSplitter/NetworkMonitoringSample.in", 0);
@@ -90,7 +84,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testDS3NetworkMonitoringSampleWithXSL() throws Exception {
+    public void testDS3NetworkMonitoringSampleWithXSL() {
         runFullTest(new Feed("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
                 "TestDataSplitter/CSVWithHeading.ds", "TestDataSplitter/DS3NetworkMonitoring.xsl",
                 "TestDataSplitter/NetworkMonitoringSample.in", 0);
@@ -98,11 +92,9 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
 
     /**
      * First stage ref data change.
-     *
-     * @throws Exception NA
      */
     @Test
-    public void testRefDataCSV() throws Exception {
+    public void testRefDataCSV() {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/SimpleCSVSplitter.ds",
                 StroomPipelineTestFileUtil.getInputStream("TestDataSplitter/SampleRefData-HostNameToIP.in"));
 
@@ -111,11 +103,9 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
 
     /**
      * Tests a sample ref data CSV file and tries to transform it with XSL.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testRefDataCSVWithXSL() throws Exception {
+    public void testRefDataCSVWithXSL() {
         final Feed refFeed = new Feed("HostNameToIP-REFERENCE");
         refFeed.setReference(true);
         runFullTest(refFeed, TextConverterType.DATA_SPLITTER, "TestDataSplitter/SimpleCSVSplitter.ds",

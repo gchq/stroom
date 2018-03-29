@@ -79,7 +79,7 @@ public class DataLoader {
                         } else if (fileName.endsWith(ZIP_EXTENSION)) {
                             loadZipFile(file, mandateEffectiveDate, effectiveMs);
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);

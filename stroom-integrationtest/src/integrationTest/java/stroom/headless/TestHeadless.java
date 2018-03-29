@@ -42,7 +42,7 @@ public class TestHeadless {
     private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(1, 0);
 
     @Test
-    public void test() throws Exception {
+    public void test() throws IOException {
         try {
             Path newTempDir = FileUtil.getTempDir().resolve("headless");
             StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);

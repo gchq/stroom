@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,7 +89,7 @@ public class StroomProperties {
             try {
                 final Path dir = file.getParent();
                 path = FileUtil.getCanonicalPath(dir);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 // Ignore.
             }
 
@@ -99,11 +100,11 @@ public class StroomProperties {
 //                    try {
 //                        final Path resourceFile = resource.getFile();
 //                        propertiesDir = resourceFile.getParentFile();
-//                    } catch (final Exception ex) {
+//                    } catch (final RuntimeException e) {
 //                        LOGGER.warn("Unable to locate properties dir ... maybe running in maven?");
 //                    }
 //                }
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }

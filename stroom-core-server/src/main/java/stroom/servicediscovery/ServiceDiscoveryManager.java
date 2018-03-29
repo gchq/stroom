@@ -14,6 +14,7 @@ import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -125,7 +126,7 @@ public class ServiceDiscoveryManager {
                 LOGGER.info("Successfully started ServiceDiscovery on path " + basePath);
             }
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(String.format("Error starting ServiceDiscovery with base path %s", basePath), e);
         }
     }
@@ -147,7 +148,7 @@ public class ServiceDiscoveryManager {
             if (closeable != null) {
                 try {
                     closeable.close();
-                } catch (Exception e) {
+                } catch (final IOException e) {
                     LOGGER.error("Error while closing {}", closeable.getClass().getCanonicalName(), e);
                 }
             }

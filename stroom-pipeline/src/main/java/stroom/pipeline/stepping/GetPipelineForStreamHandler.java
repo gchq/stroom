@@ -150,7 +150,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
                     // Ensure the current user is allowed to load this pipeline.
                     pipelineEntity = pipelineService.loadByUuid(pipelineEntity.getUuid());
                     docRef = DocRefUtil.create(pipelineEntity);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     // Ignore.
                 }
             }

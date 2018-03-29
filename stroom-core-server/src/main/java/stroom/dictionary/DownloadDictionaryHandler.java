@@ -29,6 +29,7 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAc
             documentEventLog.download(dictionary, null);
             return new ResourceGeneration(resourceKey, new ArrayList<>());
 
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             documentEventLog.download(dictionary, null);
             throw EntityServiceExceptionUtil.create(e);
         }

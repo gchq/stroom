@@ -51,8 +51,8 @@ public class UploadDataHandler extends AbstractTaskHandler<UploadDataAction, Res
             taskManager.exec(new StreamUploadTask(action.getUserToken(), action.getFileName(), file,
                     action.getFeed(), action.getStreamType(), action.getEffectiveMs(), action.getMetaData()));
 
-        } catch (final Exception ex) {
-            throw EntityServiceExceptionUtil.create(ex);
+        } catch (final RuntimeException e) {
+            throw EntityServiceExceptionUtil.create(e);
         } finally {
             // Delete the import if it was successful
             resourceStore.deleteTempFile(action.getKey());

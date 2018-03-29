@@ -64,7 +64,7 @@ class StreamProcessorFilterServiceImpl
     }
 
     @Override
-    public StreamProcessorFilter save(final StreamProcessorFilter entity) throws RuntimeException {
+    public StreamProcessorFilter save(final StreamProcessorFilter entity) {
         expressionToFindCriteria.convert(entity.getQueryData());
         return super.save(entity);
     }
@@ -137,7 +137,7 @@ class StreamProcessorFilterServiceImpl
     }
 
     @Override
-    public Boolean delete(final StreamProcessorFilter entity) throws RuntimeException {
+    public Boolean delete(final StreamProcessorFilter entity) {
         if (Boolean.TRUE.equals(super.delete(entity))) {
             return getEntityManager().deleteEntity(entity.getStreamProcessorFilterTracker());
         }
@@ -145,7 +145,7 @@ class StreamProcessorFilterServiceImpl
     }
 
     @Override
-    public BaseResultList<StreamProcessorFilter> find(final FindStreamProcessorFilterCriteria criteria) throws RuntimeException {
+    public BaseResultList<StreamProcessorFilter> find(final FindStreamProcessorFilterCriteria criteria) {
         return super.find(criteria);
     }
 

@@ -53,7 +53,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
     }
 
     @Override
-    public BaseResultList<IndexShard> find(final FindIndexShardCriteria criteria) throws RuntimeException {
+    public BaseResultList<IndexShard> find(final FindIndexShardCriteria criteria) {
         final BaseResultList<IndexShard> results = new BaseResultList<>();
         for (final IndexShard indexShard : map.values()) {
             boolean include = true;

@@ -29,6 +29,7 @@ import stroom.node.shared.VolumeState;
 import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -157,7 +158,7 @@ public class NodeConfigForTesting implements NodeConfig {
 
             nodeService.setNodeName(initialNodeList.get(0).getName());
             nodeService.setRackName(initialRackList.get(0).getName());
-        } catch (final Exception e) {
+        } catch (final IOException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }

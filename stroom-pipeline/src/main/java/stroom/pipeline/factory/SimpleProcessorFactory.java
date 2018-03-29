@@ -102,14 +102,14 @@ public class SimpleProcessorFactory implements ProcessorFactory {
 
                             try {
                                 taskCallback.onSuccess(VoidResult.INSTANCE);
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 // Ignore any errors that come from handling success.
                                 LOGGER.trace(e.getMessage(), e);
                             }
                         } catch (final Throwable t) {
                             try {
                                 taskCallback.onFailure(t);
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 // Ignore any errors that come from handling failure.
                                 LOGGER.trace(e.getMessage(), e);
                             }

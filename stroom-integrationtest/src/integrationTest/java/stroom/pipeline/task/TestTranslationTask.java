@@ -29,6 +29,7 @@ import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
@@ -47,10 +48,10 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
     /**
      * Tests Task with a valid resource and feed.
      *
-     * @throws Exception Could be thrown.
+     * @throws IOException Could be thrown.
      */
     @Test
-    public void testBothValid() throws Exception {
+    public void testBothValid() throws IOException {
         commonPipelineTest.setup();
 
         final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();
@@ -87,10 +88,10 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
     /**
      * Tests Task with an invalid resource and valid feed.
      *
-     * @throws Exception Could be thrown.
+     * @throws IOException Could be thrown.
      */
     @Test
-    public void testInvalidResource() throws Exception {
+    public void testInvalidResource() throws IOException {
         commonPipelineTest.setup(CommonTranslationTest.FEED_NAME, CommonTranslationTest.INVALID_RESOURCE_NAME);
 
         final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();

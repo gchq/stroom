@@ -82,7 +82,7 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
                     .build();
 
             LOGGER.info("All service instances created successfully.");
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             health = HealthCheck.Result.unhealthy("Service instance creation failed!", e);
             LOGGER.error("Service instance creation failed!", e);
             throw new RuntimeException("Service instance creation failed!", e);
@@ -111,7 +111,7 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
 
             LOGGER.info("Successfully registered '{}' service.", registeredService.getVersionedServiceName());
             return serviceInstance;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Failed to register service " + registeredService.getVersionedServiceName(), e);
         }
     }

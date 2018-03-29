@@ -25,7 +25,6 @@ import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
-import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
@@ -33,6 +32,7 @@ import stroom.streamstore.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
+import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
@@ -85,7 +85,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         return VoidResult.INSTANCE;
     }
 
-    private void uploadData(final StreamUploadTask task) throws RuntimeException {
+    private void uploadData(final StreamUploadTask task) {
         if (task.getFeed() == null) {
             throw new EntityServiceException("Feed not set!");
         }
@@ -147,8 +147,8 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                 uploadData(stroomZipFile, streamUploadTask, metaMap, groupedFileLists.get(i));
 
             }
-        } catch (final Exception ex) {
-            throw EntityServiceExceptionUtil.create(ex);
+        } catch (final RuntimeException | IOException e) {
+            throw EntityServiceExceptionUtil.create(e);
         } finally {
             CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
             taskContext.info("done");
@@ -169,8 +169,8 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                 stroomStreamProcessor.process(inputStream, "Upload");
                 stroomStreamProcessor.closeHandlers();
             }
-        } catch (final Exception ex) {
-            throw EntityServiceExceptionUtil.create(ex);
+        } catch (final RuntimeException | IOException e) {
+            throw EntityServiceExceptionUtil.create(e);
         }
     }
 
@@ -207,8 +207,8 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             rawNestedStreamTarget.close();
             streamStore.closeStreamTarget(streamTarget);
 
-        } catch (final Exception ex) {
-            LOGGER.error("importData() - aborting import ", ex);
+        } catch (final RuntimeException e) {
+            LOGGER.error("importData() - aborting import ", e);
             streamStore.deleteStreamTarget(streamTarget);
         }
     }

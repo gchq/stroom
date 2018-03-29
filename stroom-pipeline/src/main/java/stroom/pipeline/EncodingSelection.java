@@ -49,7 +49,7 @@ public final class EncodingSelection {
         boolean supported = false;
         try {
             supported = Charset.isSupported(encoding);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // Ignore.
         }
         if (!supported) {

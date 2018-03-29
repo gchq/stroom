@@ -184,7 +184,7 @@ public class IndexShardSearchTaskHandler {
             if (values != null) {
                 task.getResultReceiver().receive(task.getIndexShardId(), values);
             }
-        } catch (final Exception e) {
+        } catch (final IOException | RuntimeException e) {
             error(task, e.getMessage(), e);
         }
     }

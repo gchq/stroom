@@ -69,15 +69,15 @@ class BasicEventInfoProvider implements EventInfoProvider {
                 try {
                     final Feed feed = (Feed) entity;
                     description = feed.getDescription();
-                } catch (final Exception ex) {
-                    LOGGER.error("Unable to get feed description!", ex);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Unable to get feed description!", e);
                 }
             } else if (entity instanceof PipelineEntity) {
                 try {
                     final PipelineEntity pipelineEntity = (PipelineEntity) entity;
                     description = pipelineEntity.getDescription();
-                } catch (final Exception ex) {
-                    LOGGER.error("Unable to get pipeline description!", ex);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Unable to get pipeline description!", e);
                 }
             }
 
@@ -104,8 +104,8 @@ class BasicEventInfoProvider implements EventInfoProvider {
                             String.valueOf(feed.getRetentionDayAge())));
                     object.getData()
                             .add(EventLoggingUtil.createData("Reference", Boolean.toString(feed.isReference())));
-                } catch (final Exception ex) {
-                    LOGGER.error("Unable to add unknown but useful data!", ex);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Unable to add unknown but useful data!", e);
                 }
             } else if (entity instanceof Stream) {
                 try {
@@ -118,8 +118,8 @@ class BasicEventInfoProvider implements EventInfoProvider {
                         object.getData().add(EventLoggingUtil.createData("StreamType",
                                 streamTypeService.load(stream.getStreamType()).getDisplayValue()));
                     }
-                } catch (final Exception ex) {
-                    LOGGER.error("Unable to configure stream!", ex);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Unable to configure stream!", e);
                 }
             }
 

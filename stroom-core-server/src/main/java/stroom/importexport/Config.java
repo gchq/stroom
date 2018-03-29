@@ -24,9 +24,11 @@ import stroom.entity.util.XMLUtil;
 import stroom.query.api.v2.DocRef;
 import stroom.util.date.DateUtil;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
@@ -61,7 +63,7 @@ public class Config {
             xmlReader.parse(new InputSource(reader));
         } catch (final IOException e) {
             throw e;
-        } catch (final Exception e) {
+        } catch (final ParserConfigurationException | SAXException | RuntimeException e) {
             throw new IOException(e.getMessage());
         }
     }
@@ -134,7 +136,7 @@ public class Config {
 
         } catch (final IOException e) {
             throw e;
-        } catch (final Exception e) {
+        } catch (final TransformerConfigurationException | SAXException | RuntimeException e) {
             throw new IOException(e.getMessage());
         }
     }

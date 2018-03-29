@@ -67,7 +67,7 @@ public final class StreamFactory {
         if (value != null) {
             try {
                 return DateUtil.parseNormalDateTimeString(value);
-            } catch (Exception ex) {
+            } catch (final RuntimeException e) {
                 // Ignore if the format is wrong
             }
         }

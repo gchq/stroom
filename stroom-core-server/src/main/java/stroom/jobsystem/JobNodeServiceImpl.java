@@ -99,7 +99,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
     @Override
 //    @Secured(permission = DocumentPermissionNames.UPDATE)
-    public JobNode save(final JobNode entity) throws RuntimeException {
+    public JobNode save(final JobNode entity) {
         // We always want to update a job instance even if we have a stale
         // version.
         if (entity.isPersistent()) {

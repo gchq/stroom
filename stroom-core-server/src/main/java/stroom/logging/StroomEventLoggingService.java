@@ -148,7 +148,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
                     client.setIPAddress(ip);
                     return client;
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.warn("Problem getting client IP address and host name", e);
             }
         }
@@ -164,7 +164,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
                 user.setId(userId);
                 return user;
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.warn("Problem getting current user", e);
         }
 

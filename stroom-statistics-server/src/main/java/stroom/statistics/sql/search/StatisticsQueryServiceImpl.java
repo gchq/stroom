@@ -248,7 +248,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                         .map(String::trim)
                         .map(Integer::valueOf)
                         .collect(Collectors.toList());
-            } catch (Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.warn(e.getMessage());
             }
         }

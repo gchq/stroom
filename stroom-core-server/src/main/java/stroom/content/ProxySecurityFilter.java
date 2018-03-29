@@ -114,7 +114,7 @@ public class ProxySecurityFilter implements Filter {
 
                     chain.doFilter(request, response);
 
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                     response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
                 }

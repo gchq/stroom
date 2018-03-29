@@ -124,7 +124,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         if (file.getFileName().toString().endsWith(".node")) {
                             performImport(file, confirmMap, importMode);
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);
@@ -263,7 +263,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         for (final DocRef docRef : expandedDocRefs) {
             try {
                 performExport(dir, docRef, omitAuditFields, messageList);
-            } catch (final Exception e) {
+            } catch (final IOException | RuntimeException e) {
                 messageList.add(new Message(Severity.ERROR, "Error created while exporting (" + docRef.toString() + ") : " + e.getMessage()));
             }
         }
@@ -331,7 +331,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
                 docRefs.add(docRef);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // We might get a permission exception which is expected for some users.
             LOGGER.debug(e.getMessage(), e);
         }

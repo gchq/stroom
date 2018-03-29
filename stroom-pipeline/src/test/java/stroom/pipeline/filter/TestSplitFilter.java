@@ -72,63 +72,63 @@ public class TestSplitFilter extends StroomUnitTest {
     private static final int THREE = 3;
 
     @Test
-    public void testXMLSplitterDepth0Count1() throws Exception {
+    public void testXMLSplitterDepth0Count1() {
         final String expectedXml = getString(XML_OUTPUT_0);
         final String expectedSax = getString(SAX_OUTPUT_0);
         testXMLSplitter(0, 1, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth1Count1() throws Exception {
+    public void testXMLSplitterDepth1Count1() {
         final List<String> expectedXml = getStrings(XML_OUTPUT_1_x, 2);
         final String expectedSax = getString(SAX_OUTPUT_1);
         testXMLSplitter(1, 1, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth2Count1() throws Exception {
+    public void testXMLSplitterDepth2Count1() {
         final List<String> expectedXml = getStrings(XML_OUTPUT_2_x, 4);
         final String expectedSax = getString(SAX_OUTPUT_2);
         testXMLSplitter(2, 1, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth3Count1() throws Exception {
+    public void testXMLSplitterDepth3Count1() {
         final List<String> expectedXml = getStrings(XML_OUTPUT_3_x, 2);
         final String expectedSax = getString(SAX_OUTPUT_3);
         testXMLSplitter(THREE, 1, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth3Count2() throws Exception {
+    public void testXMLSplitterDepth3Count2() {
         final String expectedXml = getString(XML_OUTPUT_4);
         final String expectedSax = getString(SAX_OUTPUT_4);
         testXMLSplitter(THREE, 2, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth3Count0() throws Exception {
+    public void testXMLSplitterDepth3Count0() {
         final String expectedXml = getString(XML_OUTPUT_4);
         final String expectedSax = getString(SAX_OUTPUT_4);
         testXMLSplitter(THREE, 0, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth2Count2() throws Exception {
+    public void testXMLSplitterDepth2Count2() {
         final List<String> expectedXml = getStrings(XML_OUTPUT_5_x, 2);
         final String expectedSax = getString(SAX_OUTPUT_5);
         testXMLSplitter(2, 2, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterRootAndContent() throws Exception {
+    public void testXMLSplitterRootAndContent() {
         final String expectedXml = getString(XML_OUTPUT_6);
         final String expectedSax = getString(SAX_OUTPUT_6);
         testXMLSplitter(0, 0, INPUT_ROOT_AND_CONTENT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterRootOnly() throws Exception {
+    public void testXMLSplitterRootOnly() {
         final String expectedXml = getString(XML_OUTPUT_7);
         final String expectedSax = getString(SAX_OUTPUT_7);
         testXMLSplitter(0, 0, INPUT_ROOT_ONLY, expectedXml, expectedSax);
@@ -138,7 +138,7 @@ public class TestSplitFilter extends StroomUnitTest {
                                  final int splitCount,
                                  final String inputPath,
                                  final String expectedXml,
-                                 final String expectedSax) throws Exception {
+                                 final String expectedSax) {
         testXMLSplitter(splitDepth,
                 splitCount,
                 inputPath,
@@ -150,7 +150,7 @@ public class TestSplitFilter extends StroomUnitTest {
                                  final int splitCount,
                                  final String inputPath,
                                  final List<String> expectedXmlList,
-                                 final String expectedSax) throws Exception {
+                                 final String expectedSax) {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final SplitFilter splitter = new SplitFilter();

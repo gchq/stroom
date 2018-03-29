@@ -166,7 +166,7 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
                 if (effectiveTime != null && !effectiveTime.isEmpty()) {
                     stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 outputError(e);
             }
 

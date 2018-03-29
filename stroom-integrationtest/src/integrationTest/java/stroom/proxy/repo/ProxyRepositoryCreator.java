@@ -74,7 +74,7 @@ public class ProxyRepositoryCreator {
                         } else if (fileName.endsWith(ZIP_EXTENSION)) {
                             loadZip(file, mandateEffectiveDate, effectiveMs);
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         throw new RuntimeException(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);

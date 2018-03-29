@@ -18,6 +18,7 @@ import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 @Singleton
@@ -111,7 +112,7 @@ public class DataSourceProvider implements Provider<DataSource> {
                         }
                     }
                 }
-            } catch (final Exception e) {
+            } catch (final SQLException | RuntimeException e) {
                 LOGGER.debug(e.getMessage());
                 // Ignore.
             }

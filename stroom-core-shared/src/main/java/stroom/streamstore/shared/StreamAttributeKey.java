@@ -112,7 +112,7 @@ public class StreamAttributeKey extends AuditedEntity implements HasName, HasDis
                 valueString = ModelStringUtil.formatDurationString(valueLong) + " ("
                         + ModelStringUtil.formatCsv(valueLong) + " ms)";
             }
-        } catch (final Exception ex) {
+        } catch (final RuntimeException e) {
         }
 
         return valueString;

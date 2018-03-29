@@ -48,7 +48,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     private StroomDatabaseInfo stroomDatabaseInfo;
 
     @Test(expected = StatisticsEventValidationException.class)
-    public void testExec_tenGoodRowsTwoBad() throws Exception {
+    public void testExec_tenGoodRowsTwoBad() throws StatisticsEventValidationException, SQLException {
         if (!stroomDatabaseInfo.isMysql()) {
             LOGGER.warn("Database is not MySQL, skipping test");
             throw new StatisticsEventValidationException("Expected");
@@ -80,7 +80,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     }
 
     @Test
-    public void testExec_threeGoodRows() throws Exception {
+    public void testExec_threeGoodRows() throws StatisticsEventValidationException, SQLException {
         if (!stroomDatabaseInfo.isMysql()) {
             LOGGER.warn("Database is not MySQL, skipping test");
         } else {
@@ -106,7 +106,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     }
 
     @Test(expected = StatisticsEventValidationException.class)
-    public void testExec_twoBadRows() throws Exception {
+    public void testExec_twoBadRows() throws StatisticsEventValidationException, SQLException {
         if (!stroomDatabaseInfo.isMysql()) {
             LOGGER.warn("Database is not MySQL, skipping test");
             throw new StatisticsEventValidationException("Expected");
@@ -130,7 +130,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     }
 
     @Test
-    public void testExec_hugeNumbers() throws Exception {
+    public void testExec_hugeNumbers() throws StatisticsEventValidationException, SQLException {
         if (!stroomDatabaseInfo.isMysql()) {
             LOGGER.warn("Database is not MySQL, skipping test");
         } else {

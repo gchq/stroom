@@ -165,7 +165,7 @@ public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPol
                 searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
             }
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
 
             if (newSearch) {
@@ -209,7 +209,7 @@ public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPol
                 queryEntity.setQuery(query);
                 queryService.save(queryEntity);
 
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         }

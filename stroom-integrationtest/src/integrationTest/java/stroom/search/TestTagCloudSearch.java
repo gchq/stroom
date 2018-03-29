@@ -68,7 +68,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() {
         final String componentId = "table-1";
 
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();

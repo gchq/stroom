@@ -112,7 +112,7 @@ class ProxyAggregationExecutor {
             }
 
             LOGGER.info("exec() - completed in {}", logExecutionTime);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }

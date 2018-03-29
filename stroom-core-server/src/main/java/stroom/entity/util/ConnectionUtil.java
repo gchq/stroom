@@ -68,12 +68,11 @@ public class ConnectionUtil {
 
         try {
             Class.forName(driverClassname);
-        } catch (final Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
 
-        LOGGER.info("Connecting to database using classname: {}, url: {}, username: {}", new Object[]{driverClassname, driverUrl,
-                driverUsername});
+        LOGGER.info("Connecting to database using classname: {}, url: {}, username: {}", driverClassname, driverUrl, driverUsername);
 
         return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
     }
@@ -175,7 +174,7 @@ public class ConnectionUtil {
                     sqlStatements::toString,
                     Collections.emptyList());
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("executeStatement() - " + sqlStatements, e);
             throw e;
         }
@@ -248,6 +247,7 @@ public class ConnectionUtil {
         log(logExecutionTime, result::toString, () -> sql, args);
 
     }
+
     private static void log(final LogExecutionTime logExecutionTime,
                             final Supplier<String> resultSupplier,
                             final Supplier<String> sqlSupplier,
@@ -323,8 +323,8 @@ public class ConnectionUtil {
          * an insert with three rows so the cache quickly fills up with huge insert queries, each with
          * MANY param objects.
          *
-         * @param argsList    A List of args (in columnName order), one list of args for each row, will
-         *                    be inserted in list order. Each sub list must have the same size as columnNames
+         * @param argsList A List of args (in columnName order), one list of args for each row, will
+         *                 be inserted in list order. Each sub list must have the same size as columnNames
          */
         public void execute(final List<List<Object>> argsList) {
             execute(argsList, false);
@@ -337,8 +337,8 @@ public class ConnectionUtil {
          * an insert with three rows so the cache quickly fills up with huge insert queries, each with
          * MANY param objects.
          *
-         * @param argsList    A List of args (in columnName order), one list of args for each row, will
-         *                    be inserted in list order. Each sub list must have the same size as columnNames
+         * @param argsList A List of args (in columnName order), one list of args for each row, will
+         *                 be inserted in list order. Each sub list must have the same size as columnNames
          * @return The generated IDs for each row inserted
          */
         public List<Long> executeAndFetchKeys(final List<List<Object>> argsList) {
@@ -467,7 +467,7 @@ public class ConnectionUtil {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             final boolean allClosedWithoutError = preparedStatements.values().stream()
                     .filter(Objects::nonNull)
                     .allMatch(stmt -> {

@@ -87,38 +87,34 @@ public class CommonIndexingTest {
     }
 
     private void runProcessing(final int dataFileCount, final OptionalInt maxDocsPerShard) {
-        try {
-            // Translate data.
-            List<StreamProcessorTaskExecutor> results = commonTranslationTest.processAll();
+        // Translate data.
+        List<StreamProcessorTaskExecutor> results = commonTranslationTest.processAll();
 
-            // 3 ref data streams pluss our data streams
-            int expectedTaskCount = 3 + dataFileCount;
+        // 3 ref data streams pluss our data streams
+        int expectedTaskCount = 3 + dataFileCount;
 
-            Assert.assertEquals(expectedTaskCount, results.size());
-            for (final StreamProcessorTaskExecutor result : results) {
-                final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
-                Assert.assertTrue(result.toString(), processor.getWritten() > 0);
-                Assert.assertTrue(result.toString(), processor.getRead() <= processor.getWritten());
-                Assert.assertEquals(result.toString(), 0, processor.getMarkerCount(Severity.SEVERITIES));
-            }
-
-            // Add index.
-            storeCreationTool.addIndex("Test index", INDEX_XSLT, maxDocsPerShard);
-            // Translate data.
-            results = commonTranslationTest.processAll();
-            Assert.assertEquals(N1, results.size());
-            for (final StreamProcessorTaskExecutor result : results) {
-                final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
-                Assert.assertTrue(result.toString(), processor.getWritten() > 0);
-                Assert.assertTrue(result.toString(), processor.getRead() <= processor.getWritten());
-                Assert.assertEquals(result.toString(), 0, processor.getMarkerCount(Severity.SEVERITIES));
-            }
-
-            // Flush all newly created index shards.
-            indexShardManager.findFlush(new FindIndexShardCriteria());
-        } catch (final Exception ex) {
-            throw new RuntimeException(ex);
+        Assert.assertEquals(expectedTaskCount, results.size());
+        for (final StreamProcessorTaskExecutor result : results) {
+            final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
+            Assert.assertTrue(result.toString(), processor.getWritten() > 0);
+            Assert.assertTrue(result.toString(), processor.getRead() <= processor.getWritten());
+            Assert.assertEquals(result.toString(), 0, processor.getMarkerCount(Severity.SEVERITIES));
         }
+
+        // Add index.
+        storeCreationTool.addIndex("Test index", INDEX_XSLT, maxDocsPerShard);
+        // Translate data.
+        results = commonTranslationTest.processAll();
+        Assert.assertEquals(N1, results.size());
+        for (final StreamProcessorTaskExecutor result : results) {
+            final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
+            Assert.assertTrue(result.toString(), processor.getWritten() > 0);
+            Assert.assertTrue(result.toString(), processor.getRead() <= processor.getWritten());
+            Assert.assertEquals(result.toString(), 0, processor.getMarkerCount(Severity.SEVERITIES));
+        }
+
+        // Flush all newly created index shards.
+        indexShardManager.findFlush(new FindIndexShardCriteria());
     }
 
     public int flushIndex() {

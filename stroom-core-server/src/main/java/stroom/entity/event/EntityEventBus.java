@@ -19,7 +19,7 @@ package stroom.entity.event;
 import stroom.entity.shared.EntityAction;
 
 public interface EntityEventBus {
-    void addHandler(EntityEvent.Handler handler, String type, EntityAction... action) throws Exception;
+    void addHandler(EntityEvent.Handler handler, String type, EntityAction... action);
 
     void fire(EntityEvent event);
 }

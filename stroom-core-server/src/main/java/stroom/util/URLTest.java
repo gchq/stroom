@@ -21,7 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class URLTest {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         try {
             URL url = new URL(args[0]);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();

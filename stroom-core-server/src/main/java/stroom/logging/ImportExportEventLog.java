@@ -66,7 +66,7 @@ public class ImportExportEventLog {
             event.getEventDetail().setExport(exp);
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to export event!", e);
         }
     }
@@ -95,12 +95,12 @@ public class ImportExportEventLog {
                         event.getEventDetail().setImport(imp);
 
                         eventLoggingService.log(event);
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error("Unable to import event!", e);
                     }
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to import event!", e);
         }
     }

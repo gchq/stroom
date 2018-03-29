@@ -26,7 +26,7 @@ class Random extends StroomExtensionFunctionCall {
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         try {
             return new DoubleValue(Math.random());
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append(e.getMessage());
             outputWarning(context, sb, e);

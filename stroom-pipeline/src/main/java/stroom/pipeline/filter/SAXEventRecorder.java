@@ -251,7 +251,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                         }
                     }
                 }
-            } catch (final Exception e) {
+            } catch (final XPathExpressionException | RuntimeException e) {
                 throw ProcessException.wrap(e);
             }
         }

@@ -23,5 +23,5 @@ import stroom.node.shared.Node;
  */
 public interface ClusterCallService {
     Object call(Node sourceNode, Node targetNode, String beanName, String methodName, Class<?>[] parameterTypes,
-                Object[] args) throws Exception;
+                Object[] args);
 }

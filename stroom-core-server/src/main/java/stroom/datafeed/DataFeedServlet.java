@@ -79,8 +79,8 @@ public class DataFeedServlet extends HttpServlet {
         try {
             final RequestHandler requestHandler = requestHandlerProvider.get();
             requestHandler.handle(request, response);
-        } catch (final Exception ex) {
-            StroomStreamException.sendErrorResponse(response, ex);
+        } catch (final RuntimeException e) {
+            StroomStreamException.sendErrorResponse(response, e);
         }
     }
 

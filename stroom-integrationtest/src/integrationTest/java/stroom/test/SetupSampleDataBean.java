@@ -67,6 +67,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -147,8 +148,8 @@ public final class SetupSampleDataBean {
                 try {
                     streamAttributeKeyService.save(new StreamAttributeKey(name,
                             StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
-                } catch (final Exception ex) {
-                    ex.printStackTrace();
+                } catch (final RuntimeException e) {
+                    e.printStackTrace();
                 }
             }
         }

@@ -59,10 +59,10 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
     /**
      * Tests Task with a valid resource and feed.
      *
-     * @throws Exception Could be thrown.
+     * @throws IOException Could be thrown.
      */
     @Test
-    public void test() throws Exception {
+    public void test() throws IOException {
         setup(FEED_NAME, RESOURCE_NAME);
         Assert.assertEquals(0, streamStore.getLockCount());
 

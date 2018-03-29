@@ -51,8 +51,8 @@ public final class TransformerFactoryFactory {
             sb.append(IMP_USED);
             sb.append(factory.getClass().getName());
             LOGGER.info(sb.toString());
-        } catch (Exception ex) {
-            LOGGER.error("Unable to create new TransformerFactory!", ex);
+        } catch (final RuntimeException e) {
+            LOGGER.error("Unable to create new TransformerFactory!", e);
         }
     }
 

@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.test.StroomPipelineTestFileUtil;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -34,46 +35,46 @@ public class TestFullTranslationTaskAndStepping extends TranslationTest {
     }
 
     @Test
-    public void testDataSplitterEvents() throws Exception {
+    public void testDataSplitterEvents() throws IOException {
         testStepping("DATA_SPLITTER-EVENTS");
     }
 
     @Test
-    public void testFileToLocationReference() throws Exception {
+    public void testFileToLocationReference() throws IOException {
         testStepping("FILENO_TO_LOCATION-REFERENCE");
     }
 
     @Test
-    public void testJSONEvents() throws Exception {
+    public void testJSONEvents() throws IOException {
         testStepping("JSON-EVENTS");
     }
 
     @Test
-    public void testRawStreamingEvents() throws Exception {
+    public void testRawStreamingEvents() throws IOException {
         testStepping("RAW_STREAMING-EVENTS");
     }
 
     @Test
-    public void testRawStreamingForkEvents() throws Exception {
+    public void testRawStreamingForkEvents() throws IOException {
         testStepping("RAW_STREAMING_FORK-EVENTS");
     }
 
     @Test
-    public void testXMLFragmentEvents() throws Exception {
+    public void testXMLFragmentEvents() throws IOException {
         testStepping("XML_FRAGMENT-EVENTS");
     }
 
     @Test
-    public void testXMLEvents() throws Exception {
+    public void testXMLEvents() throws IOException {
         testStepping("XML-EVENTS");
     }
 
     @Test
-    public void testZipTestDataSplitterEvents() throws Exception {
+    public void testZipTestDataSplitterEvents() throws IOException {
         testStepping("ZIP_TEST-DATA_SPLITTER-EVENTS");
     }
 
-    private void testStepping(final String feedName) throws Exception {
+    private void testStepping(final String feedName) throws IOException {
         final Path outDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve("TestFullTranslationTaskAndStepping");
 
         final long time = System.currentTimeMillis();

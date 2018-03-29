@@ -69,7 +69,7 @@ public class SQLStatisticAggregationManager {
             if (batchSize == null || batchSize == 0) {
                 batchSize = DEFAULT_BATCH_SIZE;
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
 
         }
 

@@ -474,7 +474,7 @@ class ExplorerServiceImpl implements ExplorerService {
                                     childNodesByParent
                             )
                     );
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, e);
             resultMessage.append("Unable to copy '");
             resultMessage.append(sourceDocRef.getName());
@@ -527,7 +527,7 @@ class ExplorerServiceImpl implements ExplorerService {
                 explorerEventLog.move(docRef, folderRef, permissionInheritance, null);
                 resultDocRefs.add(result);
 
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 explorerEventLog.move(docRef, folderRef, permissionInheritance, e);
                 resultMessage.append("Unable to move '");
                 resultMessage.append(docRef.getName());
@@ -591,7 +591,7 @@ class ExplorerServiceImpl implements ExplorerService {
                 explorerEventLog.delete(docRef, null);
                 resultDocRefs.add(docRef);
 
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 explorerEventLog.delete(docRef, e);
                 resultMessage.append("Unable to delete '");
                 resultMessage.append(docRef.getName());

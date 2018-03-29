@@ -66,7 +66,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         }
         try {
             this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector().orElse(null);
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
             throw new LoggedException(msg);
@@ -114,7 +114,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     public abstract String getRecordKey();
 
-    protected void error(final Exception e) {
+    protected void error(final RuntimeException e) {
         if (locator != null) {
             errorReceiverProxy.log(Severity.ERROR,
                     locationFactory.create(locator.getLineNumber(), locator.getColumnNumber()), getElementId(),
@@ -124,7 +124,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         }
     }
 
-    protected void log(final Severity severity, final String message, final Exception e) {
+    protected void log(final Severity severity, final String message, final RuntimeException e) {
         errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
     }
 }

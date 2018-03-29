@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -104,7 +105,11 @@ public final class ProxyRepositoryReader {
                     waiting = false;
                 } catch (final TimeoutException e) {
                     // Ignore.
-                } catch (final Exception e) {
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOGGER.error(e.getMessage(), e);
+                    waiting = false;
+                } catch (final ExecutionException | RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                     waiting = false;
                 }

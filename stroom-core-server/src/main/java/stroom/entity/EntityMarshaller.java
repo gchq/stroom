@@ -47,13 +47,13 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
             // Strip out references to empty collections.
             try {
                 object = XMLMarshallerUtil.removeEmptyCollections(object);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
 
             final String data = XMLMarshallerUtil.marshal(jaxbContext, object);
             setData(entity, data);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.debug("Problem marshaling {} {}", new Object[]{entity.getClass(), entity.getId()}, e);
             LOGGER.warn("Problem marshaling {} {} - {} (enable debug for full trace)", new Object[]{entity.getClass(),
                     entity.getId(), String.valueOf(e)});
@@ -67,7 +67,7 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
             final String data = getData(entity);
             final O object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);
             setObject(entity, object);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.debug("Unable to unmarshal entity!", e);
             LOGGER.warn(e.getMessage());
         }

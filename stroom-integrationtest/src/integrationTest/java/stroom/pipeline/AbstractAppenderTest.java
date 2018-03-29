@@ -76,7 +76,7 @@ public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTes
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
 
-    void test(final String name, final String type) throws Exception {
+    void test(final String name, final String type) {
         // Ensure a test feed exists.
         commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
         final String dir = name + "/";
@@ -132,7 +132,7 @@ public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTes
               final String name,
               final String type,
               final String outputReference,
-              final String encoding) throws Exception {
+              final String encoding) {
         pipelineScopeRunnable.scopeRunnable(() -> {
             try {
                 // Setup the error handler.

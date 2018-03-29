@@ -129,7 +129,7 @@ public class EntityEventBusImpl implements EntityEventBus {
             for (final EntityEvent.Handler handler : list) {
                 try {
                     handler.onChange(event);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error("Unable to handle onChange event!", e);
                 }
             }
@@ -138,7 +138,7 @@ public class EntityEventBusImpl implements EntityEventBus {
 
     @Override
     public void addHandler(final EntityEvent.Handler handler, final String type, final EntityAction... action)
-            throws Exception {
+            {
         Map<EntityAction, List<EntityEvent.Handler>> map = handlers.get(type);
         if (map == null) {
             map = new HashMap<>();
@@ -155,7 +155,7 @@ public class EntityEventBusImpl implements EntityEventBus {
     }
 
     private void addHandlerForAction(final Map<EntityAction, List<EntityEvent.Handler>> map,
-                                     final EntityEvent.Handler handler, final EntityAction action) throws Exception {
+                                     final EntityEvent.Handler handler, final EntityAction action) {
         List<EntityEvent.Handler> list = map.get(action);
         if (list == null) {
             list = new ArrayList<>();
@@ -184,7 +184,7 @@ public class EntityEventBusImpl implements EntityEventBus {
                         LOGGER.error("Annotation not found");
                     }
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to initialise EntityEventBusImpl!", e);
             }
 

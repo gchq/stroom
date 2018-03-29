@@ -40,7 +40,7 @@ public class FileMetaGrep extends AbstractCommandLineTool {
     private String[] repoPathParts = null;
     private String feedId;
 
-    public FileMetaGrep(String[] args) throws Exception {
+    public FileMetaGrep(String[] args) {
         matchMap = ArgsUtil.parse(args);
         matchMap.remove("repoPath");
         matchMap.remove("feedId");
@@ -48,7 +48,7 @@ public class FileMetaGrep extends AbstractCommandLineTool {
         doMain(args);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         new FileMetaGrep(args);
     }
 
@@ -84,7 +84,7 @@ public class FileMetaGrep extends AbstractCommandLineTool {
                         if (matches(file.toAbsolutePath().normalize().toString())) {
                             scanFile(file);
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);

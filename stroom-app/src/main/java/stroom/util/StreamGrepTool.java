@@ -37,6 +37,7 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
@@ -79,7 +80,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         }
     }
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         new StreamGrepTool().doMain(args);
     }
 
@@ -233,8 +234,8 @@ public class StreamGrepTool extends AbstractCommandLineTool {
                 inputStream.close();
                 streamStore.closeStreamSource(streamSource);
             }
-        } catch (final Exception ex) {
-            ex.printStackTrace();
+        } catch (final IOException | RuntimeException e) {
+            e.printStackTrace();
         }
 
     }

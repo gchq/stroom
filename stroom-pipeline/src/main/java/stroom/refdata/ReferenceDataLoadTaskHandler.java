@@ -158,7 +158,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                     streamStore.closeStreamSource(streamSource);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             log(Severity.FATAL_ERROR, e.getMessage(), e);
         }
 
@@ -183,7 +183,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
             // Start processing.
             try {
                 pipeline.startProcessing();
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 // An exception during start processing is definitely a failure.
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
             }
@@ -208,21 +208,21 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                     // Process the boundary.
                     try {
                         pipeline.process(inputStream, encoding);
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         log(Severity.FATAL_ERROR, e.getMessage(), e);
                     }
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
             } finally {
                 try {
                     pipeline.endProcessing();
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);
                 }
             }
 
-        } catch (final Exception e) {
+        } catch (final IOException | RuntimeException e) {
             log(Severity.FATAL_ERROR, e.getMessage(), e);
         }
     }

@@ -46,7 +46,7 @@ public class ObjectMarshaller<E> {
         if (object != null) {
             try {
                 xml = XMLMarshallerUtil.marshal(jaxbContext, object);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.debug("Problem marshalling {}", object, e);
                 LOGGER.warn("Problem marshalling {} - {} (enable debug for full trace)", object, String.valueOf(e));
             }
@@ -60,7 +60,7 @@ public class ObjectMarshaller<E> {
         if (xml != null && !xml.isEmpty()) {
             try {
                 object = XMLMarshallerUtil.unmarshal(jaxbContext, clazz, xml);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.debug("Problem unmarshalling\n{}", xml, e);
                 LOGGER.warn("Problem unmarshalling - {}(enable debug for full trace)", String.valueOf(e));
             }

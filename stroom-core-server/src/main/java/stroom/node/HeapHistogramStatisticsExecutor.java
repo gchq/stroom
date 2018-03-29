@@ -67,7 +67,7 @@ public class HeapHistogramStatisticsExecutor {
             processHistogramEntries(heapHistogramEntries);
             LOGGER.info("Java Heap Histogram Statistics job completed in {}",
                     Duration.between(startTme, Instant.now()).toString());
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Error executing scheduled Heap Histogram job", e);
             throw e;
         }

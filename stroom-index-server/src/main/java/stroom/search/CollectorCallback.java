@@ -28,7 +28,7 @@ public interface CollectorCallback {
      *
      * @param e The exception that was thrown by the index.
      */
-    void onIndexException(final Exception e);
+    void onIndexException(final RuntimeException e);
 
     /**
      * Called when the parallel searcher finds a new hit.

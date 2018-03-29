@@ -67,8 +67,8 @@ public class BaseEntityDeProxyProcessor {
     public Object process(final Object source) {
         try {
             return doProcess(source);
-        } catch (final Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (final IntrospectionException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

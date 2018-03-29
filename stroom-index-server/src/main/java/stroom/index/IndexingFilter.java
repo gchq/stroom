@@ -211,7 +211,7 @@ class IndexingFilter extends AbstractXMLFilter {
                 try {
                     final long val = DateUtil.parseUnknownString(value);
                     field = FieldFactory.create(indexField, val);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             } else {
@@ -249,7 +249,7 @@ class IndexingFilter extends AbstractXMLFilter {
         this.indexRef = indexRef;
     }
 
-    private void log(final Severity severity, final String message, final Exception e) {
+    private void log(final Severity severity, final String message, final RuntimeException e) {
         errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
     }
 }

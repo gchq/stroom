@@ -61,7 +61,7 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
 
     @Override
     @Insecure
-    public BaseResultList<StreamType> find(final FindStreamTypeCriteria criteria) throws RuntimeException {
+    public BaseResultList<StreamType> find(final FindStreamTypeCriteria criteria) {
         return super.find(criteria);
     }
 

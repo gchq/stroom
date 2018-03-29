@@ -228,7 +228,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         }
 
         @Override
-        public Volume save(Volume entity) throws RuntimeException {
+        public Volume save(Volume entity) {
             super.save(entity);
             saveCalled = true;
             savedVolumes.add(entity);

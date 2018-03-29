@@ -27,6 +27,7 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
+import java.io.IOException;
 
 public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
     @Inject
@@ -35,7 +36,7 @@ public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
     private StreamStore streamStore;
 
     @Test
-    public void test() {
+    public void test() throws IOException {
         try {
             final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
 
@@ -47,12 +48,12 @@ public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
             streamGrepTool.setMatch("to match on");
             streamGrepTool.run();
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    private void addData(final Feed feed, final String data) throws Exception {
+    private void addData(final Feed feed, final String data) throws IOException {
         Stream stream = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, System.currentTimeMillis());
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         streamTarget.getOutputStream().write(data.getBytes(StreamUtil.DEFAULT_CHARSET));

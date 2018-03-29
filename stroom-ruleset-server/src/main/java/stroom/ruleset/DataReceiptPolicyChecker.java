@@ -170,7 +170,7 @@ class DataReceiptPolicyChecker {
                             attributeMap.put(fieldName, getSafeLong(string));
                             break;
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.debug(e.getMessage(), e);
                 }
             });
@@ -181,7 +181,7 @@ class DataReceiptPolicyChecker {
             if (string != null) {
                 try {
                     return Long.valueOf(string);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.debug(e.getMessage(), e);
                 }
             }
@@ -195,7 +195,7 @@ class DataReceiptPolicyChecker {
                     if (expressionMatcher.match(attributeMap, rule.getExpression())) {
                         return rule;
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error("Error in rule '" + rule.toString() + "' - " + e.getMessage(), e);
                 }
             }

@@ -252,8 +252,8 @@ public class MockStreamStore implements StreamStore, Clearable {
                     results.add(stream);
                 }
             }
-        } catch (final Exception ex) {
-            System.out.println(ex.getMessage());
+        } catch (final RuntimeException e) {
+            System.out.println(e.getMessage());
             // Ignore ... just a mock
         }
 
@@ -341,7 +341,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
+    public BaseResultList<Stream> find(final FindStreamCriteria criteria) {
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getExtendedFieldMap(), null);
         final List<Stream> list = new ArrayList<>();
         for (final Stream stream : fileData.keySet()) {
@@ -421,7 +421,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public Long findDelete(final FindStreamCriteria criteria) throws RuntimeException {
+    public Long findDelete(final FindStreamCriteria criteria) {
         return null;
     }
 

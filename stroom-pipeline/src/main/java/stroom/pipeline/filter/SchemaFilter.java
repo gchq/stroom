@@ -590,7 +590,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
                 for (final StoredError storedError : storedSchema.getErrorReceiver().getList()) {
                     errorReceiverProxy.log(storedError.getSeverity(), locationFactory.create(1, 1), getElementId(), storedError.toString(), null);
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 errorHandler.fatalError(new SAXParseException(e.getMessage(), null));
             }
 

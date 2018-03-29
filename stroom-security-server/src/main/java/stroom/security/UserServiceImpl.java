@@ -263,24 +263,24 @@ class UserServiceImpl implements UserService {
 
     // @Transactional
     @Override
-    public User load(final User entity) throws RuntimeException {
+    public User load(final User entity) {
         return entityServiceHelper.load(entity, Collections.emptySet(), queryAppender);
     }
 
     // @Transactional
     @Override
-    public User load(final User entity, final Set<String> fetchSet) throws RuntimeException {
+    public User load(final User entity, final Set<String> fetchSet) {
         return entityServiceHelper.load(entity, fetchSet, queryAppender);
     }
 
     @Override
-    public final User loadByUuid(final String uuid) throws RuntimeException {
+    public final User loadByUuid(final String uuid) {
         return entityServiceHelper.loadByUuid(uuid, Collections.emptySet(), queryAppender);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public final User loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
+    public final User loadByUuid(final String uuid, final Set<String> fetchSet) {
         return entityServiceHelper.loadByUuid(uuid, fetchSet, queryAppender);
     }
 
@@ -297,7 +297,7 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Boolean delete(final User entity) throws RuntimeException {
+    public Boolean delete(final User entity) {
         final Boolean success = entityServiceHelper.delete(entity);
 
         // Delete any document permissions associated with this user.
@@ -305,7 +305,7 @@ class UserServiceImpl implements UserService {
             if (documentPermissionService != null && Boolean.TRUE.equals(success)) {
                 documentPermissionService.clearUserPermissions(UserRefFactory.create(entity));
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -328,7 +328,7 @@ class UserServiceImpl implements UserService {
         if (entityType == null) {
             try {
                 entityType = getEntityClass().newInstance().getType();
-            } catch (final Exception e) {
+            } catch (final IllegalAccessException | InstantiationException e) {
                 throw new RuntimeException(e);
             }
         }

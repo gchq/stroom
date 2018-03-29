@@ -67,7 +67,7 @@ class StreamAttributeMapUtil {
                             attributeMap.put(field.getName(), Long.valueOf(value));
                             break;
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
             }

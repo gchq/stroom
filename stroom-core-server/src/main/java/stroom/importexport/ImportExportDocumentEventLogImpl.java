@@ -43,7 +43,7 @@ class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
     }
 
     @Override
-    public void importDocument(final String type, final String uuid, final String name, final Exception ex) {
+    public void importDocument(final String type, final String uuid, final String name, final Exception e) {
         try {
             final Event event = createAction("Import", "Importing", type, name);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -55,15 +55,15 @@ class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
             object.setName(name);
 
             objectOutcome.getObjects().add(object);
-            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
+            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(e));
             eventLoggingService.log(event);
-        } catch (final Exception e) {
-            LOGGER.error("Unable to create event!", e);
+        } catch (final RuntimeException ex) {
+            LOGGER.error("Unable to create event!", ex);
         }
     }
 
     @Override
-    public void exportDocument(final DocRef document, final Exception ex) {
+    public void exportDocument(final DocRef document, final Exception e) {
         try {
             final Event event = createAction("Export", "Exporting", document.getType(), document.getName());
 
@@ -77,13 +77,13 @@ class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
 
             final Export export = new Export();
             export.setSource(multiObject);
-            export.setOutcome(EventLoggingUtil.createOutcome(ex));
+            export.setOutcome(EventLoggingUtil.createOutcome(e));
 
             event.getEventDetail().setExport(export);
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
-            LOGGER.error("Unable to create event!", e);
+        } catch (final RuntimeException ex) {
+            LOGGER.error("Unable to create event!", ex);
         }
     }
 

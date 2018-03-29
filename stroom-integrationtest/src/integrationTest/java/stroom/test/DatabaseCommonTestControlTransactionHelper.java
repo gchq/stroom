@@ -89,7 +89,7 @@ public class DatabaseCommonTestControlTransactionHelper {
                 try {
                     entityManager.deleteEntity(baseEntity);
                     results.remove(i);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     foundError = true;
 
                     if (tryCount == maxTryCount) {

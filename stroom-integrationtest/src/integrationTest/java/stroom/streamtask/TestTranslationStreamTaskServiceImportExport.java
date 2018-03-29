@@ -51,7 +51,7 @@ public class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIn
     // items.
     // */
     // @Test
-    // public void testExportImport() throws Exception {
+    // public void testExportImport() {
     // EventFeed efd1 = commonTestScenarioCreator.createSimpleEventFeed();
     //
     // feedService.save(efd1);

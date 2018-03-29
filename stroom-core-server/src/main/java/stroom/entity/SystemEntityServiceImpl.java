@@ -17,7 +17,6 @@
 package stroom.entity;
 
 import event.logging.BaseAdvancedQueryItem;
-
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
@@ -51,64 +50,64 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
 
 //    @Secured(permission = DocumentPermissionNames.CREATE)
 //    @Override
-//    public E create(final E entity) throws RuntimeException {
+//    public E create(final E entity) {
 //        return entityServiceHelper.create(entity);
 //    }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
     // @Transactional
     @Override
-    public E load(final E entity) throws RuntimeException {
+    public E load(final E entity) {
         return entityServiceHelper.load(entity, Collections.emptySet(), queryAppender);
     }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
     // @Transactional
     @Override
-    public E load(final E entity, final Set<String> fetchSet) throws RuntimeException {
+    public E load(final E entity, final Set<String> fetchSet) {
         return entityServiceHelper.load(entity, fetchSet, queryAppender);
     }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
     // @Transactional
     @Override
-    public E loadById(final long id) throws RuntimeException {
+    public E loadById(final long id) {
         return entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender);
     }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
     // @Transactional
     @Override
-    public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
+    public E loadById(final long id, final Set<String> fetchSet) {
         return entityServiceHelper.loadById(id, fetchSet, queryAppender);
     }
 
 //    // @Transactional
 //    @Override
-//    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
+//    public E loadByIdInsecure(final long id, final Set<String> fetchSet) {
 //        return entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender);
 //    }
 
     //    @Secured(permission = DocumentPermissionNames.UPDATE)
     @Override
-    public E save(final E entity) throws RuntimeException {
+    public E save(final E entity) {
         return entityServiceHelper.save(entity, queryAppender);
     }
 
 //    @Secured(permission = DocumentPermissionNames.USE)
 //    @Override
-//    public BaseResultList<E> find(final C criteria) throws RuntimeException {
+//    public BaseResultList<E> find(final C criteria) {
 //        return super.find(criteria);
 //    }
 
     //    @Secured(permission = DocumentPermissionNames.DELETE)
     @Override
-    public Boolean delete(final E entity) throws RuntimeException {
+    public Boolean delete(final E entity) {
         return entityServiceHelper.delete(entity);
     }
 
     @Override
-    public BaseResultList<E> find(C criteria) throws RuntimeException {
+    public BaseResultList<E> find(C criteria) {
         return findServiceHelper.find(criteria, getSqlFieldMap());
     }
 
@@ -116,7 +115,7 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
         if (entityType == null) {
             try {
                 entityType = getEntityClass().newInstance().getType();
-            } catch (final Exception e) {
+            } catch (final InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }

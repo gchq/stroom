@@ -28,6 +28,7 @@ import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.zip.ZipUtil;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -45,7 +46,7 @@ public class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
     private FeedService feedService;
 
     @Test
-    public void testImportZip() throws Exception {
+    public void testImportZip() throws IOException {
         final Path rootTestDir = StroomCoreServerTestFileUtil.getTestResourcesDir();
         final Path importDir = rootTestDir.resolve("samples/config");
         final Path zipFile = getCurrentTestDir().resolve(UUID.randomUUID().toString() + ".zip");

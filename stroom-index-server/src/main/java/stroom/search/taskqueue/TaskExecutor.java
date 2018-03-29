@@ -178,7 +178,7 @@ public abstract class TaskExecutor {
                         producer = producers.first();
                     }
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 // Ignore.
             }
         } while (!lastProducer.compareAndSet(current, producer));

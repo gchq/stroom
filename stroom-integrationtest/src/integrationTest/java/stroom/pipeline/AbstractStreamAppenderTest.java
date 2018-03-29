@@ -27,6 +27,8 @@ import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -39,19 +41,23 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
               final String name,
               final String type,
               final String outputReference,
-              final String encoding) throws Exception {
+              final String encoding) {
         super.test(pipelineEntity, dir, name, type, outputReference, encoding);
 
         final List<Stream> streams = streamStore.find(new FindStreamCriteria());
         Assert.assertEquals(1, streams.size());
 
-        final long streamId = streams.get(0).getId();
-        checkOuterData(streamId, type.equalsIgnoreCase("text"));
-        checkInnerData(streamId, type.equalsIgnoreCase("text"));
-        checkFull(streamId, outputReference);
+        try {
+            final long streamId = streams.get(0).getId();
+            checkOuterData(streamId, type.equalsIgnoreCase("text"));
+            checkInnerData(streamId, type.equalsIgnoreCase("text"));
+            checkFull(streamId, outputReference);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
-    private void checkInnerData(final long streamId, final boolean text) throws Exception {
+    private void checkInnerData(final long streamId, final boolean text) throws IOException {
         if (text) {
             final String innerRef = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
                     "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123lastuser1234/goodGETHTTP/1.0someagent200\n";
@@ -137,7 +143,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
         }
     }
 
-    private void checkOuterData(final long streamId, final boolean text) throws Exception {
+    private void checkOuterData(final long streamId, final boolean text) throws IOException {
         if (text) {
             final String outerRef = "";
 
@@ -165,7 +171,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
         streamStore.closeStreamSource(streamSource);
     }
 
-    private void checkOuterData(final long streamId, final int count, final String ref) throws Exception {
+    private void checkOuterData(final long streamId, final int count, final String ref) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
         final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
 
@@ -181,7 +187,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
         streamStore.closeStreamSource(streamSource);
     }
 
-    private void checkInnerData(final long streamId, final int count, final String ref) throws Exception {
+    private void checkInnerData(final long streamId, final int count, final String ref) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
         final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
 

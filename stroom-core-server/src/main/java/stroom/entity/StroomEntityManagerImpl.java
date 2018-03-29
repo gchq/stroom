@@ -79,7 +79,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
             if (securityContext != null) {
                 return securityContext.getUserId();
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
         }
 

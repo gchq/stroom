@@ -73,7 +73,7 @@ public class Headless extends AbstractCommandLineTool {
     private Path configFile;
     private Path tmpDir;
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         new Headless().doMain(args);
     }
 
@@ -268,12 +268,12 @@ public class Headless extends AbstractCommandLineTool {
 
                         // Close the zip file.
                         stroomZipFile.close();
-                    } catch (final Exception e) {
+                    } catch (final IOException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                 });
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to process repository!", e);
         }
     }

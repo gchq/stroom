@@ -28,7 +28,7 @@ import stroom.util.shared.SharedList;
 import stroom.util.zip.ZipUtil;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -78,8 +78,8 @@ public class ImportExportServiceImpl implements ImportExportService {
             ZipUtil.unzip(zipFile, explodeDir);
 
             importExportSerializer.read(explodeDir, confirmList, importMode);
-        } catch (final Exception ex) {
-            throw EntityServiceExceptionUtil.create(ex);
+        } catch (final IOException | RuntimeException e) {
+            throw EntityServiceExceptionUtil.create(e);
         } finally {
             FileUtil.deleteDir(explodeDir);
         }
@@ -102,8 +102,8 @@ public class ImportExportServiceImpl implements ImportExportService {
             // Now zip the dir.
             ZipUtil.zip(zipFile, explodeDir);
 
-        } catch (final Exception ex) {
-            throw EntityServiceExceptionUtil.create(ex);
+        } catch (final IOException e) {
+            throw EntityServiceExceptionUtil.create(e);
         } finally {
             FileUtil.deleteDir(explodeDir);
         }

@@ -46,7 +46,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
     }
 
     @Override
-    public void create(final String type, final String uuid, final String name, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception ex) {
+    public void create(final String type, final String uuid, final String name, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception e) {
         try {
             final Event event = createAction("Create", "Creating", type, name, permissionInheritance);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -58,15 +58,15 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
             object.setName(name);
 
             objectOutcome.getObjects().add(object);
-            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
+            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(e));
             eventLoggingService.log(event);
-        } catch (final Exception e) {
-            LOGGER.error("Unable to create event!", e);
+        } catch (final RuntimeException e2) {
+            LOGGER.error("Unable to create event!", e2);
         }
     }
 
     @Override
-    public void copy(final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception ex) {
+    public void copy(final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception e) {
         try {
             final Event event = createAction("Copy", "Copying", document, permissionInheritance);
             final CopyMove copy = new CopyMove();
@@ -84,21 +84,21 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                 destination.getObjects().add(createBaseObject(folder));
             }
 
-            if (ex != null && ex.getMessage() != null) {
+            if (e != null && e.getMessage() != null) {
                 final CopyMoveOutcome outcome = new CopyMoveOutcome();
                 outcome.setSuccess(Boolean.FALSE);
-                outcome.setDescription(ex.getMessage());
+                outcome.setDescription(e.getMessage());
                 copy.setOutcome(outcome);
             }
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
-            LOGGER.error("Unable to copy event!", e);
+        } catch (final RuntimeException e2) {
+            LOGGER.error("Unable to copy event!", e2);
         }
     }
 
     @Override
-    public void move(final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception ex) {
+    public void move(final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception e) {
         try {
             final Event event = createAction("Move", "Moving", document, permissionInheritance);
             final CopyMove move = new CopyMove();
@@ -116,21 +116,21 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                 destination.getObjects().add(createBaseObject(folder));
             }
 
-            if (ex != null && ex.getMessage() != null) {
+            if (e != null && e.getMessage() != null) {
                 final CopyMoveOutcome outcome = new CopyMoveOutcome();
                 outcome.setSuccess(Boolean.FALSE);
-                outcome.setDescription(ex.getMessage());
+                outcome.setDescription(e.getMessage());
                 move.setOutcome(outcome);
             }
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
-            LOGGER.error("Unable to move event!", e);
+        } catch (final RuntimeException e2) {
+            LOGGER.error("Unable to move event!", e2);
         }
     }
 
     @Override
-    public void rename(final DocRef document, final String name, final Exception ex) {
+    public void rename(final DocRef document, final String name, final Exception e) {
         try {
             final Event event = createAction("Rename", "Renaming", document, null);
             final CopyMove move = new CopyMove();
@@ -149,30 +149,30 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                 destination.getObjects().add(createBaseObject(newDoc));
             }
 
-            if (ex != null && ex.getMessage() != null) {
+            if (e != null && e.getMessage() != null) {
                 final CopyMoveOutcome outcome = new CopyMoveOutcome();
                 outcome.setSuccess(Boolean.FALSE);
-                outcome.setDescription(ex.getMessage());
+                outcome.setDescription(e.getMessage());
                 move.setOutcome(outcome);
             }
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
-            LOGGER.error("Unable to move event!", e);
+        } catch (final RuntimeException e2) {
+            LOGGER.error("Unable to move event!", e2);
         }
     }
 
     @Override
-    public void delete(final DocRef document, final Exception ex) {
+    public void delete(final DocRef document, final Exception e) {
         try {
             final Event event = createAction("Delete", "Deleting", document, null);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             event.getEventDetail().setDelete(objectOutcome);
             objectOutcome.getObjects().add(createBaseObject(document));
-            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
+            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(e));
             eventLoggingService.log(event);
-        } catch (final Exception e) {
-            LOGGER.error("Unable to delete event!", e);
+        } catch (final RuntimeException e2) {
+            LOGGER.error("Unable to delete event!", e2);
         }
     }
 

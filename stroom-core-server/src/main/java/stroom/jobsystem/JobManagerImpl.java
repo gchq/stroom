@@ -166,7 +166,7 @@ public class JobManagerImpl implements JobManager {
     }
 
     @Override
-    public Boolean isClusterRunning() throws RuntimeException {
+    public Boolean isClusterRunning() {
         return lifecycleService.isRunning();
     }
 }

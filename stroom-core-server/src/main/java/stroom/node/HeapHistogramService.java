@@ -13,6 +13,7 @@ import stroom.properties.StroomPropertyService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
@@ -87,7 +88,7 @@ class HeapHistogramService {
                 logError(stdOut, stdErr, watchdog);
                 heapHistogramEntries = Collections.emptyList();
             }
-        } catch (Exception e) {
+        } catch (final IOException e) {
             logError(stdOut, stdErr, watchdog);
             throw new RuntimeException(String.format("Error executing command %s", command.toString()), e);
         }
@@ -113,12 +114,12 @@ class HeapHistogramService {
             String stdErrStr;
             try {
                 stdOutStr = getTruncatedStr(getStringOutput(stdOut));
-            } catch (Exception e) {
+            } catch (final RuntimeException e) {
                 stdOutStr = "Unable to get stdOut str due to error " + e.getMessage();
             }
             try {
                 stdErrStr = getTruncatedStr(getStringOutput(stdErr));
-            } catch (Exception e) {
+            } catch (final RuntimeException e) {
                 stdErrStr = "Unable to get stdErr str due to error " + e.getMessage();
             }
             LOGGER.error("The jmap call failed with stdout [%s] and stderr [%s]", stdOutStr, stdErrStr);
@@ -173,7 +174,7 @@ class HeapHistogramService {
         } else {
             try {
                 return Pattern.compile(classNameRegexStr).asPredicate();
-            } catch (Exception e) {
+            } catch (final RuntimeException e) {
                 throw new RuntimeException(String.format("Error compiling regex string [%s]", classNameRegexStr), e);
             }
         }
@@ -188,7 +189,7 @@ class HeapHistogramService {
             try {
                 final Pattern pattern = Pattern.compile(anonymousIdRegex);
                 return className -> pattern.matcher(className).replaceAll(ID_REPLACEMENT);
-            } catch (Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error("Value [{}] for property [{}] is not valid regex",
                         anonymousIdRegex, ANON_ID_REGEX_PROP_KEY, e);
                 return Function.identity();
@@ -241,7 +242,7 @@ class HeapHistogramService {
             }
             return histogramEntries;
 
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(String.format("Error processing stdOut string [%s]",
                     getTruncatedStr(stdOut)), e);
         }

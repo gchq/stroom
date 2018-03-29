@@ -47,7 +47,7 @@ public class TestHeapHistogramStatisticsExecutor {
             mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "jmap");
 
             executor = new HeapHistogramStatisticsExecutor(heapHistogramService, mockInternalStatisticsReceiver, nodeCache);
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException("Error during test setup", e);
         }
     }
@@ -133,7 +133,7 @@ public class TestHeapHistogramStatisticsExecutor {
         boolean thrownException = false;
         try {
             executor.exec();
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             thrownException = true;
         }
 

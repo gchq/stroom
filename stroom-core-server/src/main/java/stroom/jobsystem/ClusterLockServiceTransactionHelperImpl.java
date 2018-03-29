@@ -62,7 +62,7 @@ public class ClusterLockServiceTransactionHelperImpl implements ClusterLockServi
                 clusterLock.setName(name);
                 try {
                     save(clusterLock);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.warn("checkLockCreated() - {} {}", name, e.getMessage());
                 }
             }

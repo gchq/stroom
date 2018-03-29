@@ -113,7 +113,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             objectOutcome.getObjects().add(object);
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to create event!", e);
         }
     }
@@ -132,7 +132,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             objectOutcome.getObjects().add(createBaseObject(object));
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to create event!", e);
         }
     }
@@ -164,7 +164,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             update.setOutcome(EventLoggingUtil.createOutcome(ex));
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to update event!", e);
         }
     }
@@ -202,7 +202,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             }
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to copy event!", e);
         }
     }
@@ -234,7 +234,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             }
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to move event!", e);
         }
     }
@@ -266,7 +266,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             }
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to rename event!", e);
         }
     }
@@ -285,7 +285,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             objectOutcome.getObjects().add(createBaseObject(object));
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to delete event!", e);
         }
     }
@@ -299,7 +299,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             objectOutcome.getObjects().add(createBaseObject(object));
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to view event!", e);
         }
     }
@@ -332,7 +332,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             event.getEventDetail().setDelete(objectOutcome);
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to doDelete!", e);
         }
     }
@@ -352,7 +352,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             event.getEventDetail().setExport(exp);
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
@@ -387,7 +387,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
             search.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to doSearch!", e);
         }
     }
@@ -422,7 +422,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
             search.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to doSearchSummary", e);
         }
     }

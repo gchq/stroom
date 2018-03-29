@@ -128,8 +128,8 @@ public class StatusServlet extends HttpServlet {
             // This will query the database...
             nodeService.find(new FindNodeCriteria());
             writeInfoLine(pw, AREA_DB, MSG_OK);
-        } catch (final Exception ex) {
-            writeErrorLine(pw, AREA_DB, ex.getMessage());
+        } catch (final RuntimeException e) {
+            writeErrorLine(pw, AREA_DB, e.getMessage());
         }
     }
 
@@ -169,8 +169,8 @@ public class StatusServlet extends HttpServlet {
                 writeErrorLine(pw, AREA_VOLUME, "No OK public volumes listed");
             }
 
-        } catch (final Exception ex) {
-            writeErrorLine(pw, AREA_VOLUME, ex.getMessage());
+        } catch (final RuntimeException e) {
+            writeErrorLine(pw, AREA_VOLUME, e.getMessage());
         }
     }
 

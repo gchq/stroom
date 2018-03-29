@@ -19,6 +19,7 @@ package stroom.xml.event;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.query.QueryResult;
 import net.sf.saxon.s9api.Serializer.Property;
+import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.xpath.XPathEvaluator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,10 +30,12 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.CharBuffer;
 import stroom.xml.event.simple.StartElement;
 
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
@@ -87,7 +90,7 @@ public final class EventListUtils {
 
             return outputStream.toString();
 
-        } catch (final Exception e) {
+        } catch (final SAXException | TransformerConfigurationException | RuntimeException e) {
             throw new ProcessException(e.getMessage());
         }
     }
@@ -102,7 +105,7 @@ public final class EventListUtils {
             final StreamResult sr = new StreamResult(sw);
             QueryResult.serialize(nodeInfo, sr, getOutputProperties());
             return sw.toString();
-        } catch (final Exception e) {
+        } catch (final XPathException | RuntimeException e) {
             throw new ProcessException(e.getMessage());
         }
     }
@@ -117,10 +120,9 @@ public final class EventListUtils {
             final XPathEvaluator xPathEvaluator = new XPathEvaluator(nodeInfo.getConfiguration());
 
             final XPathExpression xPathExpression = xPathEvaluator.compile(path);
-            final String result = (String) xPathExpression.evaluate(nodeInfo, XPathConstants.STRING);
-            return result;
+            return (String) xPathExpression.evaluate(nodeInfo, XPathConstants.STRING);
 
-        } catch (final Exception e) {
+        } catch (final XPathExpressionException | RuntimeException e) {
             throw new ProcessException(e.getMessage());
         }
     }
@@ -159,7 +161,7 @@ public final class EventListUtils {
 
             return outputStream.toString();
 
-        } catch (final Exception e) {
+        } catch (final SAXException | TransformerConfigurationException | RuntimeException e) {
             throw new ProcessException(e.getMessage());
         }
     }
@@ -196,7 +198,7 @@ public final class EventListUtils {
         try {
             events.fire(new DefaultHandler() {
                 @Override
-                public void characters(final char[] ch, final int start, final int length) throws SAXException {
+                public void characters(final char[] ch, final int start, final int length) {
                     cb.append(ch, start, length);
                 }
             });
@@ -204,7 +206,6 @@ public final class EventListUtils {
             LOGGER.error(e.getMessage(), e);
         }
 
-        final String text = cb.toString();
-        return text;
+        return cb.toString();
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
 public class TestProxyHandlerFactory extends StroomUnitTest {
     @SuppressWarnings("unchecked")
     @Test
-    public void testStoreAndForward() throws Exception {
+    public void testStoreAndForward() {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(FileUtil.getCanonicalPath(getCurrentTestDir()),
                 "https://url1,https://url2");
         final List<StreamHandler> incomingHandlers = proxyHandlerFactory.addReceiveHandlers(new ArrayList<>());
@@ -31,7 +31,7 @@ public class TestProxyHandlerFactory extends StroomUnitTest {
     }
 
     @Test
-    public void testForward() throws Exception {
+    public void testForward() {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(null, "https://url1,https://url2");
 
         for (int i = 0; i < 2; i++) {
@@ -50,7 +50,7 @@ public class TestProxyHandlerFactory extends StroomUnitTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testStore() throws Exception {
+    public void testStore() {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(FileUtil.getCanonicalPath(getCurrentTestDir()), null);
 
         final List<StreamHandler> incomingHandlers = proxyHandlerFactory.addReceiveHandlers(new ArrayList<>());

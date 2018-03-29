@@ -128,7 +128,7 @@ public class StreamMapCreator {
                 final String value = storedData[index];
                 return Long.parseLong(value);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // Ignore
         }
 

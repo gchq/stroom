@@ -32,12 +32,12 @@ import stroom.feed.shared.Feed;
 import stroom.jobsystem.ClusterLockService;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
+import stroom.persist.EntityManagerSupport;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.persist.EntityManagerSupport;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -318,7 +318,7 @@ class StreamTaskCreatorTransactionHelper {
 
                                 multiInsertExecutor.execute(allArgs);
                             }
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             LOGGER.error(e.getMessage(), e);
                             throw new RuntimeException(e.getMessage(), e);
                         }
@@ -405,7 +405,7 @@ class StreamTaskCreatorTransactionHelper {
                 // Has this filter finished creating tasks for good, i.e. is there
                 // any possibility of getting more tasks in future?
                 if (tracker.getMaxStreamCreateMs() != null && tracker.getStreamCreateMs() != null
-                        && tracker.getStreamCreateMs().longValue() > tracker.getMaxStreamCreateMs()) {
+                        && tracker.getStreamCreateMs() > tracker.getMaxStreamCreateMs()) {
                     LOGGER.info("processStreamProcessorFilter() - Finished task creation for bounded filter {}", filter);
                     tracker.setStatus(StreamProcessorFilterTracker.COMPLETE);
                 }
@@ -413,8 +413,8 @@ class StreamTaskCreatorTransactionHelper {
                 // Save the tracker state.
                 saveTracker(tracker);
 
-            } catch (final Exception ex) {
-                LOGGER.error("createNewTasks", ex);
+            } catch (final RuntimeException e) {
+                LOGGER.error("createNewTasks", e);
             }
 
             return new CreatedTasks(availableTaskList, availableTasksCreated, totalTasksCreated, eventCount);

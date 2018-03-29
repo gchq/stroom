@@ -44,7 +44,7 @@ class StreamAttributeValueServiceImpl
     }
 
     @Override
-    public Long findDelete(final FindStreamAttributeValueCriteria criteria) throws RuntimeException {
+    public Long findDelete(final FindStreamAttributeValueCriteria criteria) {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("DELETE FROM ");
         sql.append(StreamAttributeValue.TABLE_NAME);
@@ -66,7 +66,7 @@ class StreamAttributeValueServiceImpl
 
 //    @Override
 //    public BaseResultList<StreamAttributeValue> find(final FindStreamAttributeValueCriteria criteria)
-//            throws RuntimeException {
+//            {
 //        return doBasicFind(criteria);
 //    }
 

@@ -150,8 +150,8 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                             submittedList));
                 }
             }
-        } catch (final Exception ex) {
-            info.add(new ReprocessDataInfo(Severity.ERROR, ex.getMessage(), null));
+        } catch (final RuntimeException e) {
+            info.add(new ReprocessDataInfo(Severity.ERROR, e.getMessage(), null));
         }
 
         return new SharedList<>(info);

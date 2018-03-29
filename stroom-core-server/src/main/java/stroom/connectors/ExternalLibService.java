@@ -82,7 +82,7 @@ public class ExternalLibService {
 
         } catch (final MalformedURLException e) {
             LOGGER.error("Could not load in an External Service JAR {}", path.toString(), e);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 

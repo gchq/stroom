@@ -42,7 +42,7 @@ public class StreamRange extends Range<Long> {
                 final long startDate = DateUtil.parseNormalDateTimeString(stroomTime);
                 final long endDate = startDate + DAY_MS;
                 createPeriod = new Period(startDate, endDate);
-            } catch (final Exception ex) {
+            } catch (final RuntimeException e) {
                 // Not a stream path
                 invalidPath = true;
             }
@@ -66,7 +66,7 @@ public class StreamRange extends Range<Long> {
                 final long fromId = dirNumber * 1000L;
                 init(fromId, fromId + 1000L);
 
-            } catch (final Exception ex) {
+            } catch (final RuntimeException e) {
                 // Not a stream path
                 invalidPath = true;
             }

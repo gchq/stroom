@@ -54,6 +54,7 @@ import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
@@ -163,7 +164,7 @@ public class ExtractionTaskHandler {
             // Process the stream segments.
             processData(task.getStreamId(), task.getEventIds(), pipelineEntity, pipeline);
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             error(e.getMessage(), e);
         }
     }
@@ -212,20 +213,20 @@ public class ExtractionTaskHandler {
                         // Now try and extract the data.
                         extract(pipelineEntity, pipeline, streamSource, segmentInputStream, count);
 
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         // Something went wrong extracting data from this
                         // stream.
                         error("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
                                 e);
                     }
-                } catch (final Exception e) {
+                } catch (final IOException | RuntimeException e) {
                     // Something went wrong extracting data from this stream.
                     error("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
                 } finally {
                     streamStore.closeStreamSource(streamSource);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // Something went wrong extracting data from this stream.
             error("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
         }
@@ -265,7 +266,7 @@ public class ExtractionTaskHandler {
             } catch (final TerminatedException e) {
                 // Ignore stopped pipeline exceptions as we are meant to get
                 // these when a task is asked to stop prematurely.
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 throw SearchException.wrap(e);
             }
         }

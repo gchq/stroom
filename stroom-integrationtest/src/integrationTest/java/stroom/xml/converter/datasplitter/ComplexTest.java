@@ -34,7 +34,7 @@ public class ComplexTest extends AbstractProcessIntegrationTest {
     private StroomBeanStore beanStore;
 
     @Test
-    public void test() throws Exception {
+    public void test() {
 //		final Path expectedFile = StroomProcessTestFileUtil.getTestResourcesFile(OUTPUT);
 //		final Path actualFile = getCurrentTestDir().resolve("ComplexTestOutput.xml");
 //

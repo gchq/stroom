@@ -236,7 +236,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                     updateClusterStateAsync(REQUERY_DELAY, true);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 

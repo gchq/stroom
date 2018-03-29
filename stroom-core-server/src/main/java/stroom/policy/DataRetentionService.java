@@ -26,6 +26,7 @@ import stroom.ruleset.shared.Policy;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,9 +67,9 @@ public class DataRetentionService {
             policy.setData(data);
             policy = policyService.save(policy);
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage());
+            throw e;
         }
 
         return read(policy);
@@ -84,9 +85,9 @@ public class DataRetentionService {
 
             dataRetentionPolicy.setVersion(policy.getVersion());
             return dataRetentionPolicy;
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage());
+            throw e;
         }
     }
 
@@ -99,7 +100,7 @@ public class DataRetentionService {
                 policy = new Policy();
                 policy.setName(POLICY_NAME);
                 policy = policyService.save(policy);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
                 // Try and fetch again.
                 policyList = policyService.find(new FindPolicyCriteria(POLICY_NAME));
@@ -114,13 +115,21 @@ public class DataRetentionService {
         return policy;
     }
 
-    private DataRetentionPolicy unmarshal(final String data) throws Exception {
-        final JAXBContext context = JAXBContext.newInstance(DataRetentionPolicy.class);
-        return XMLMarshallerUtil.unmarshal(context, DataRetentionPolicy.class, data);
+    private DataRetentionPolicy unmarshal(final String data) {
+        try {
+            final JAXBContext context = JAXBContext.newInstance(DataRetentionPolicy.class);
+            return XMLMarshallerUtil.unmarshal(context, DataRetentionPolicy.class, data);
+        } catch (final JAXBException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
-    private String marshal(final DataRetentionPolicy dataRetentionPolicy) throws Exception {
-        final JAXBContext context = JAXBContext.newInstance(DataRetentionPolicy.class);
-        return XMLMarshallerUtil.marshal(context, dataRetentionPolicy);
+    private String marshal(final DataRetentionPolicy dataRetentionPolicy) {
+        try {
+            final JAXBContext context = JAXBContext.newInstance(DataRetentionPolicy.class);
+            return XMLMarshallerUtil.marshal(context, dataRetentionPolicy);
+        } catch (final JAXBException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 }

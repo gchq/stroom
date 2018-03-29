@@ -30,5 +30,5 @@ interface ScheduleService {
      * @throws RuntimeException Could be thrown.
      */
     ScheduledTimes getScheduledTimes(final JobType jobType, final Long scheduleReferenceTime,
-                                     final Long lastExecutedTime, final String expression) throws RuntimeException;
+                                     final Long lastExecutedTime, final String expression);
 }

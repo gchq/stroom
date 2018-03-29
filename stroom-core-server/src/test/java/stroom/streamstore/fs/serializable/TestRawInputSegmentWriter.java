@@ -35,7 +35,7 @@ import java.io.InputStream;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestRawInputSegmentWriter extends StroomUnitTest {
     @Test
-    public void testSimpleWriteThenRead() throws Exception {
+    public void testSimpleWriteThenRead() {
         final String text = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><records><record>text1</record><record>text2</record><record>text3</record></records>";
         final InputStream bais = new ByteArrayInputStream(text.getBytes(StreamUtil.DEFAULT_CHARSET));
 

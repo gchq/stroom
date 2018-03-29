@@ -29,7 +29,7 @@ public abstract class AbstractFileAppenderTest extends AbstractAppenderTest {
               final String name,
               final String type,
               final String outputReference,
-              final String encoding) throws Exception {
+              final String encoding) {
         final Path tempDir = getCurrentTestDir();
 
         // Make sure the config dir is set.

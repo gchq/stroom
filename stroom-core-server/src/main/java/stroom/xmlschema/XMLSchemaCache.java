@@ -66,7 +66,7 @@ public class XMLSchemaCache implements EntityEvent.Handler {
         for (final ClearHandler clearHandler : clearHandlers) {
             try {
                 clearHandler.onClear();
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to clear cache!", e);
             }
         }
@@ -128,7 +128,7 @@ public class XMLSchemaCache implements EntityEvent.Handler {
                     }
                 }
 
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to get schema set!", e);
             }
         }

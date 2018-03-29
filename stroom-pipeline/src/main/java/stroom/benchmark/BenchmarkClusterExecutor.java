@@ -254,7 +254,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 //
                 LOGGER.info("Cluster benchmark complete");
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to create benchmark!", e);
         }
     }

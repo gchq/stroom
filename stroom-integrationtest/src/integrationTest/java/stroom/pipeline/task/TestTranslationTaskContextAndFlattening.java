@@ -49,11 +49,9 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
 
     /**
      * Tests Task with a valid resource and feed.
-     *
-     * @throws Exception Could be thrown.
      */
     @Test
-    public void test() throws Exception {
+    public void test() {
         // FIXME : Fix this.
 
         // setup();
@@ -97,7 +95,7 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
         // Assert.assertTrue(Files.isRegularFile(flatFile));
     }
 
-    // private List<TranslationTaskResult> doTest() throws Exception {
+    // private List<TranslationTaskResult> doTest() {
     // List<TranslationTaskResult> results = new
     // ArrayList<TranslationTaskResult>();
     // StreamProcessorTask task = null;

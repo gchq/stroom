@@ -19,7 +19,10 @@ package stroom.pipeline.xsltfunctions;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
 import stroom.util.shared.Severity;
+
+import java.io.IOException;
 
 class Log extends StroomExtensionFunctionCall {
     @Override
@@ -34,7 +37,7 @@ class Log extends StroomExtensionFunctionCall {
             } else {
                 log(context, sev, message, null);
             }
-        } catch (final Exception e) {
+        } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

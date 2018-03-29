@@ -24,8 +24,8 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.filter.RecordCountFilter;
-import stroom.pipeline.util.ProcessorUtil;
 import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.util.ProcessorUtil;
 import stroom.streamstore.fs.BlockGZIPInputFile;
 import stroom.streamstore.fs.BlockGZIPOutputFile;
 import stroom.streamstore.fs.UncompressedInputStream;
@@ -38,6 +38,7 @@ import stroom.util.test.StroomUnitTest;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -55,7 +56,7 @@ public class TestXMLSegmentWriter extends StroomUnitTest {
     private static final String RESOURCE = "TestXMLSegmentWriter/TestXMLSegmentWriter.out";
 
     @Test
-    public void testXMLSegmentWriter() throws Exception {
+    public void testXMLSegmentWriter() throws IOException {
         createOutput();
 
         // Test includes and excludes 100 times.
@@ -67,7 +68,7 @@ public class TestXMLSegmentWriter extends StroomUnitTest {
         }
     }
 
-    private void createOutput() throws Exception {
+    private void createOutput() throws IOException {
         final Path dir = getCurrentTestDir();
         final Path dataFile = dir.resolve("test.dat");
         final Path indexFile = dir.resolve("test.idx");
@@ -85,7 +86,7 @@ public class TestXMLSegmentWriter extends StroomUnitTest {
         ProcessorUtil.processXml(inputStream, errorReceiverProxy, segmentWriter, new LocationFactoryProxy());
     }
 
-    private void test(final boolean testInclude, final int bufferLength) throws Exception {
+    private void test(final boolean testInclude, final int bufferLength) throws IOException {
         final Path dir = getCurrentTestDir();
         final Path dataFile = dir.resolve("test.dat");
         final Path indexFile = dir.resolve("test.idx");

@@ -20,10 +20,12 @@ package stroom.util;
 import com.google.common.base.Strings;
 
 import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +39,7 @@ public abstract class AbstractCommandLineTool {
     private List<String> validArguments;
     private int maxPropLength = 0;
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         final Example example = new Example();
         example.doMain(args);
     }
@@ -51,25 +53,29 @@ public abstract class AbstractCommandLineTool {
         throw new RuntimeException(arg + " - " + msg);
     }
 
-    public void init(final String[] args) throws Exception {
-        map = ArgsUtil.parse(args);
-        validArguments = new ArrayList<>();
+    public void init(final String[] args) {
+        try {
+            map = ArgsUtil.parse(args);
+            validArguments = new ArrayList<>();
 
-        final BeanInfo beanInfo = Introspector.getBeanInfo(this.getClass());
+            final BeanInfo beanInfo = Introspector.getBeanInfo(this.getClass());
 
-        for (final PropertyDescriptor field : beanInfo.getPropertyDescriptors()) {
-            if (field.getWriteMethod() != null) {
-                if (field.getName().length() > maxPropLength) {
-                    maxPropLength = field.getName().length();
-                }
-                if (map.containsKey(field.getName())) {
-                    validArguments.add(field.getName());
-                    field.getWriteMethod().invoke(this, getAsType(field));
+            for (final PropertyDescriptor field : beanInfo.getPropertyDescriptors()) {
+                if (field.getWriteMethod() != null) {
+                    if (field.getName().length() > maxPropLength) {
+                        maxPropLength = field.getName().length();
+                    }
+                    if (map.containsKey(field.getName())) {
+                        validArguments.add(field.getName());
+                        field.getWriteMethod().invoke(this, getAsType(field));
+                    }
                 }
             }
-        }
 
-        checkArgs();
+            checkArgs();
+        } catch (final IntrospectionException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     private Object getAsType(final PropertyDescriptor descriptor) {
@@ -89,7 +95,7 @@ public abstract class AbstractCommandLineTool {
         throw new RuntimeException("AbstractCommandLineTool does not know about properties of type " + propertyClass);
     }
 
-    public void doMain(final String[] args) throws Exception {
+    public void doMain(final String[] args) {
         init(args);
         run();
     }
@@ -97,43 +103,47 @@ public abstract class AbstractCommandLineTool {
     public void traceArguments(final PrintStream printStream) {
         try {
             doTraceArguments(printStream);
-        } catch (final Exception ex) {
-            printStream.println(ex.getMessage());
+        } catch (final RuntimeException e) {
+            printStream.println(e.getMessage());
         }
     }
 
-    private void doTraceArguments(final PrintStream printStream) throws Exception {
-        final BeanInfo beanInfo = Introspector.getBeanInfo(this.getClass());
-        for (final PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
-            // Only do properties with getters
-            if (pd.getWriteMethod() != null) {
-                // Simple getter ?
-                String suffix = " (default)";
-                if (map.containsKey(pd.getName())) {
-                    suffix = " (arg)";
-                }
-                String value = "";
-
-                if (pd.getReadMethod() != null && pd.getReadMethod().getParameterTypes().length == 0) {
-                    value = String.valueOf(pd.getReadMethod().invoke(this));
-                } else {
-                    // No simple getter
-                    Field field = null;
-                    try {
-                        field = this.getClass().getDeclaredField(pd.getName());
-                    } catch (final NoSuchFieldException nsfex) {
-                        // Ignore
+    private void doTraceArguments(final PrintStream printStream) {
+        try {
+            final BeanInfo beanInfo = Introspector.getBeanInfo(this.getClass());
+            for (final PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+                // Only do properties with getters
+                if (pd.getWriteMethod() != null) {
+                    // Simple getter ?
+                    String suffix = " (default)";
+                    if (map.containsKey(pd.getName())) {
+                        suffix = " (arg)";
                     }
-                    if (field != null) {
-                        field.setAccessible(true);
-                        value = String.valueOf(field.get(this));
+                    String value = "";
+
+                    if (pd.getReadMethod() != null && pd.getReadMethod().getParameterTypes().length == 0) {
+                        value = String.valueOf(pd.getReadMethod().invoke(this));
                     } else {
-                        value = "?";
+                        // No simple getter
+                        Field field = null;
+                        try {
+                            field = this.getClass().getDeclaredField(pd.getName());
+                        } catch (final NoSuchFieldException nsfex) {
+                            // Ignore
+                        }
+                        if (field != null) {
+                            field.setAccessible(true);
+                            value = String.valueOf(field.get(this));
+                        } else {
+                            value = "?";
 
+                        }
                     }
+                    printStream.println(Strings.padEnd(pd.getName(), maxPropLength, ' ') + " = " + value + suffix);
                 }
-                printStream.println(Strings.padEnd(pd.getName(), maxPropLength, ' ') + " = " + value + suffix);
             }
+        } catch (final IntrospectionException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

@@ -26,12 +26,13 @@ import stroom.dashboard.vis.VisSettings;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class TestVisSettings {
     @Test
-    public void test() throws Exception {
+    public void test() throws IOException {
         final Path jsonFile = StroomPipelineTestFileUtil.getTestResourcesFile("TestVisSettings/settings.json");
         Assert.assertTrue(Files.isRegularFile(jsonFile));
         final String json = StreamUtil.fileToString(jsonFile);

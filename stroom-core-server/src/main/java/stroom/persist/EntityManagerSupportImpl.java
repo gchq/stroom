@@ -27,9 +27,6 @@ public class EntityManagerSupportImpl implements EntityManagerSupport {
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
             throw e;
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
         } finally {
             persistService.end();
         }
@@ -47,9 +44,6 @@ public class EntityManagerSupportImpl implements EntityManagerSupport {
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
             throw e;
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
         } finally {
             persistService.end();
         }
@@ -74,10 +68,6 @@ public class EntityManagerSupportImpl implements EntityManagerSupport {
             LOGGER.debug(e.getMessage(), e);
             entityManager.getTransaction().setRollbackOnly();
             throw e;
-        } catch (final Exception e) {
-            LOGGER.debug(e.getMessage(), e);
-            entityManager.getTransaction().setRollbackOnly();
-            throw new RuntimeException(e.getMessage(), e);
         } finally {
             try {
                 // Commit the current transaction if we are not nested.
@@ -113,10 +103,6 @@ public class EntityManagerSupportImpl implements EntityManagerSupport {
             LOGGER.debug(e.getMessage(), e);
             entityManager.getTransaction().setRollbackOnly();
             throw e;
-        } catch (final Exception e) {
-            LOGGER.debug(e.getMessage(), e);
-            entityManager.getTransaction().setRollbackOnly();
-            throw new RuntimeException(e.getMessage(), e);
         } finally {
             try {
                 // Commit the current transaction if we are not nested.

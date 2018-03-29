@@ -20,6 +20,7 @@ import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.FileUtil;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import java.io.BufferedReader;
@@ -53,7 +54,7 @@ public class Configure extends AbstractCommandLineTool {
                 "java stroom.util.config.Configure parameterFile=<parameter file> processFile=<comma delimited files to process>");
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         new Configure().doMain(args);
     }
 
@@ -79,8 +80,8 @@ public class Configure extends AbstractCommandLineTool {
             Marshaller marshaller = jaxbContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             marshaller.marshal(data, outputStream);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (final JAXBException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -99,8 +100,8 @@ public class Configure extends AbstractCommandLineTool {
             }
 
             return parameterFile;
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (final JAXBException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -151,10 +152,9 @@ public class Configure extends AbstractCommandLineTool {
             if (exitOnError) {
                 System.exit(1);
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (final IOException e) {
+            e.printStackTrace();
         }
-
     }
 
     public void writeParameter() throws IOException {

@@ -49,8 +49,8 @@ public class TestFileUtil extends StroomUnitTest {
                     final String dir = dirArray[count % dirArray.length];
                     System.out.println(dir);
                     FileUtil.mkdirs(Paths.get(dir));
-                } catch (final Exception ex) {
-                    ex.printStackTrace();
+                } catch (final RuntimeException e) {
+                    e.printStackTrace();
                     exception.set(true);
                 }
             });
@@ -79,7 +79,7 @@ public class TestFileUtil extends StroomUnitTest {
         try {
             FileUtil.mkdirs(Paths.get("/dev/null"));
             Assert.fail("Not expecting that this directory can be created");
-        } catch (final Exception ex) {
+        } catch (final RuntimeException e) {
         }
     }
 }

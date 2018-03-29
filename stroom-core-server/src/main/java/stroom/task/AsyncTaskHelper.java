@@ -111,7 +111,7 @@ public class AsyncTaskHelper<R> {
                                 if (callback != null) {
                                     callback.onSuccess(result);
                                 }
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 LOGGER.error("onSuccess() - Error calling callback", e);
                             } finally {
                                 // Remove the task from the task list.
@@ -130,7 +130,7 @@ public class AsyncTaskHelper<R> {
                                 } else {
                                     LOGGER.error("onFailure() - Unhandled Exception", t);
                                 }
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 LOGGER.error("onFailure() - Error calling callback", e);
                             } finally {
                                 // Remove the task from the task list.
@@ -142,7 +142,7 @@ public class AsyncTaskHelper<R> {
                         }
 
                     });
-                } catch (final Exception ex) {
+                } catch (final RuntimeException e) {
                     // Failed to even start
                     recordFinish(entry, task);
                 }

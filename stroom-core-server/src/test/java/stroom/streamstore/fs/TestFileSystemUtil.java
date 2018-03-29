@@ -187,7 +187,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
      * trying to create the same dir).
      */
     @Test
-    public void testParentMkdirs() throws Exception {
+    public void testParentMkdirs() throws InterruptedException {
         final HashSet<Path> fileSet = new HashSet<>();
 
         final String dir = FileSystemTestUtil.getUniqueTestString();

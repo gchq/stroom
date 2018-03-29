@@ -62,7 +62,7 @@ class DispatchEntityEventTaskHandler extends AbstractTaskHandler<DispatchEntityE
         } catch (final NullClusterStateException | NodeNotFoundException e) {
             LOGGER.warn(e.getMessage());
             LOGGER.debug(e.getMessage(), e);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
         return VoidResult.INSTANCE;

@@ -184,8 +184,8 @@ public class TestMySQLCharacterSets {
 
         try {
             Class.forName(driverClassname);
-        } catch (final Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
 
         return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);

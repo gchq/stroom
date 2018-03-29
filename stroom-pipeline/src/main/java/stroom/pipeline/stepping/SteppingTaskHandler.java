@@ -19,6 +19,7 @@ package stroom.pipeline.stepping;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
@@ -59,10 +60,10 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Highlight;
-import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -342,7 +343,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         if (streamSource != null) {
                             try {
                                 streamStore.closeStreamSource(streamSource);
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 error(e);
                             }
                         }
@@ -589,7 +590,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         // Do nothing as we will have recorded this error in the
                         // logging error receiver.
                         done = true;
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         error(e);
                         done = true;
                     }
@@ -613,10 +614,10 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         }
                     }
                 }
-            } catch (final Exception e) {
+            } catch (final SAXException | IOException | RuntimeException e) {
                 error(e);
             }
-        } catch (final Exception e) {
+        } catch (final IOException | RuntimeException e) {
             error(e);
         }
     }

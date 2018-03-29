@@ -115,7 +115,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_2");
                 checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_3");
                 checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_4");
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
         });
@@ -212,7 +212,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
                 Assert.assertEquals("user1", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
                         0, "CARD_NUMBER_TO_PF_NUMBER/NUMBER_TO_SID", "011111")));
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
         });

@@ -156,7 +156,7 @@ public class SearchResponseMapper {
 
                     store = getStore(null, map, types, valueCount, maxDepth, 0);
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 error = e.getMessage();
             }
         }

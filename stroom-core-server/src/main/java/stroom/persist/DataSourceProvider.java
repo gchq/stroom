@@ -111,7 +111,7 @@ public class DataSourceProvider implements Provider<DataSource> {
                             }
                         }
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.debug(e.getMessage());
                     // Ignore.
                 }
@@ -126,7 +126,7 @@ public class DataSourceProvider implements Provider<DataSource> {
                                 }
                             }
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                         // Ignore.
                     }
@@ -141,7 +141,7 @@ public class DataSourceProvider implements Provider<DataSource> {
                                 }
                             }
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                         // Ignore.
                     }
@@ -156,7 +156,7 @@ public class DataSourceProvider implements Provider<DataSource> {
                                 }
                             }
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                         // Ignore.
                     }

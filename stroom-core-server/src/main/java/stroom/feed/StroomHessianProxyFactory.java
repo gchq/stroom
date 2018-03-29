@@ -27,8 +27,7 @@ public class StroomHessianProxyFactory extends HessianProxyFactory {
     protected HessianConnectionFactory createHessianConnectionFactory() {
         final String className = System.getProperty(HessianConnectionFactory.class.getName());
 
-        HessianConnectionFactory factory = null;
-
+        HessianConnectionFactory factory;
         try {
             if (className != null) {
                 final ClassLoader loader = Thread.currentThread().getContextClassLoader();
@@ -39,7 +38,7 @@ public class StroomHessianProxyFactory extends HessianProxyFactory {
 
                 return factory;
             }
-        } catch (final Exception e) {
+        } catch (final ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
 

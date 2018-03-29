@@ -126,7 +126,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
             if (LOGGER.isDebugEnabled()) {
                 try {
                     LOGGER.debug(XMLUtil.prettyPrintXML(outputStream.toString()));
-                } catch (final Exception ex) {
+                } catch (final RuntimeException e) {
                     LOGGER.debug("Not XML");
                     LOGGER.debug(outputStream.toString());
                 }

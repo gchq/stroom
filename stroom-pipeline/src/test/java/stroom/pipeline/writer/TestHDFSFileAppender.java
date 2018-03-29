@@ -67,7 +67,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
                 if (hdfs.exists(rootPath)) {
                     hdfs.delete(rootPath, true);
                 }
-            } catch (final Exception e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -85,7 +85,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
         HDFSFileAppender.runOnHDFS(userGroupInformation, conf, hdfs -> {
             try {
                 hdfs.exists(path);
-            } catch (final Exception e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -96,7 +96,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
     }
 
     @Test
-    public void testCycleDirs() throws Exception {
+    public void testCycleDirs() throws IOException {
         final HDFSFileAppender provider = buildTestObject();
 
         boolean found1 = false;
@@ -123,7 +123,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
             HDFSFileAppender.runOnHDFS(userGroupInformation, conf, hdfs -> {
                 try {
                     Assert.assertTrue(hdfs.exists(file));
-                } catch (final Exception e) {
+                } catch (final IOException e) {
                     throw new RuntimeException(e);
                 }
             });

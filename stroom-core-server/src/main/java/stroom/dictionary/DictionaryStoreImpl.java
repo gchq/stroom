@@ -38,6 +38,7 @@ import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.HashSet;
@@ -168,7 +169,7 @@ class DictionaryStoreImpl implements DictionaryStore {
                     DictionaryDoc doc = null;
                     try {
                         doc = readDocument(d);
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                     }
                     return Optional.ofNullable(doc);
@@ -180,7 +181,7 @@ class DictionaryStoreImpl implements DictionaryStore {
                         if (doc.getImports() != null && doc.getImports() != null) {
                             return Collections.unmodifiableSet(new HashSet<>(doc.getImports()));
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                     }
 
@@ -240,7 +241,7 @@ class DictionaryStoreImpl implements DictionaryStore {
                     }
                 }
 
-            } catch (final Exception e) {
+            } catch (final RuntimeException | IOException e) {
                 importState.addMessage(Severity.ERROR, e.getMessage());
             }
 

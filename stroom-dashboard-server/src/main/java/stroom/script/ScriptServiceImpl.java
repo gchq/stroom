@@ -107,7 +107,7 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
         try {
             final Script script = loadByUuid(docRef.getUuid());
             return new HashSet<>(script.getDependencies().getDoc());
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 

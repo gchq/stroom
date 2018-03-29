@@ -20,5 +20,5 @@ package stroom.entity;
 import stroom.entity.shared.BaseCriteria;
 
 public interface FindFlushService<C extends BaseCriteria> {
-    Long findFlush(C criteria) throws RuntimeException;
+    Long findFlush(C criteria);
 }

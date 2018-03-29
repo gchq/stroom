@@ -78,7 +78,7 @@ public class GlobalProperties {
                     StroomProperties.setProperty(globalProperty.getName(), globalProperty.getValue(), StroomProperties.Source.GUICE);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             e.printStackTrace();
         }
     }
@@ -109,7 +109,7 @@ public class GlobalProperties {
                     throw e;
                 }
             }
-        } catch (final Exception e) {
+        } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }

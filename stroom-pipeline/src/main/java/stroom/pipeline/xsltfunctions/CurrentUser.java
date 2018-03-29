@@ -39,7 +39,7 @@ class CurrentUser extends StroomExtensionFunctionCall {
 
         try {
             result = currentUserHolder.getCurrentUser();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

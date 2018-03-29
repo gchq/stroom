@@ -157,7 +157,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
 //            indexShardManager.shutdown();
 
         Assert.assertEquals("Not expecting any errored threads", 0, failedThreads.get());
-//        } catch (final Exception e) {
+//        } catch (final RuntimeException e) {
 //            throw new RuntimeException(e.getMessage(), e);
 //        }
     }

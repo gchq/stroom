@@ -75,7 +75,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
     }
 
     @Override
-    public BaseResultList<SummaryDataRow> findSummary(final FindStreamTaskCriteria criteria) throws RuntimeException {
+    public BaseResultList<SummaryDataRow> findSummary(final FindStreamTaskCriteria criteria) {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT D.* FROM (");
         sql.append("SELECT P.");

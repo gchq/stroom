@@ -53,9 +53,8 @@ public final class SampleRepositoryCreator {
 //     * Main.
 //     *
 //     * @param args NA
-//     * @throws Exception NA
 //     */
-//    public static void main(final String[] args) throws Exception {
+//    public static void main(final String[] args) {
 //        final SampleRepositoryCreator setupSampleData = new SampleRepositoryCreator();
 //        setupSampleData.run(true);
 //    }

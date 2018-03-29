@@ -32,7 +32,7 @@ import java.util.List;
 
 public class TestSearchResponseMapper {
     @Test
-    public void testResponse() throws Exception {
+    public void testResponse() {
         final SearchResponseMapper mapper = new SearchResponseMapper();
         final stroom.dashboard.shared.SearchResponse result = mapper.mapResponse(getSearchResponse());
         System.out.println(result);

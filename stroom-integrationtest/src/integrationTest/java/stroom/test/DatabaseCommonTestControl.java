@@ -222,8 +222,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                 try {
                     streamAttributeKeyService.save(new StreamAttributeKey(name,
                             StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
-                } catch (final Exception ex) {
-                    ex.printStackTrace();
+                } catch (final RuntimeException e) {
+                    e.printStackTrace();
                 }
             }
         }

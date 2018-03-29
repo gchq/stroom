@@ -220,7 +220,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                     try {
                         final D doc = readDocument(d);
                         docRef = new DocRef(doc.getType(), doc.getUuid(), doc.getName());
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                     }
                     return Optional.ofNullable(docRef);
@@ -248,7 +248,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                 }
             }
 
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
@@ -287,7 +287,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                 data = new HashMap<>();
                 data.put(KEY, new String(byteArrayOutputStream.toByteArray(), CHARSET));
             }
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             messageList.add(new Message(Severity.ERROR, e.getMessage()));
         }
 
@@ -323,7 +323,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
 
         } catch (final RuntimeException e) {
             throw e;
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -387,7 +387,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
 
         } catch (final RuntimeException e) {
             throw e;
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }

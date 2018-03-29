@@ -52,7 +52,7 @@ public final class XMLMarshallerUtil {
 
                 try {
                     clone = clazz.newInstance();
-                } catch (final Exception e) {
+                } catch (final InstantiationException | IllegalAccessException e) {
                     return obj;
                 }
 
@@ -82,7 +82,7 @@ public final class XMLMarshallerUtil {
                                 if (o != null) {
                                     result = clone;
                                 }
-                            } catch (final Exception e) {
+                            } catch (final IllegalAccessException e) {
                                 throw new RuntimeException(e.getMessage(), e);
                             }
                         }
@@ -98,7 +98,7 @@ public final class XMLMarshallerUtil {
                     result = clone;
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
 

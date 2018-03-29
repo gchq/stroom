@@ -42,7 +42,7 @@ public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends Fi
 
     //    @Secured(permission = DocumentPermissionNames.CREATE)
     @Override
-    public E create(final String name) throws RuntimeException {
+    public E create(final String name) {
         // Create a new entity instance.
         E entity;
         try {

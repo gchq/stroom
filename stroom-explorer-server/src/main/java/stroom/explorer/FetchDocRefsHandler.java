@@ -57,7 +57,7 @@ public class FetchDocRefsHandler
                                 .map(SharedDocRef::create)
                                 .ifPresent(result::add);
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.debug(e.getMessage(), e);
                 }
             }

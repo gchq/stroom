@@ -176,8 +176,8 @@ public class JobNodeTrackerCache {
                                 }
                             }
                         }
-                    } catch (final Exception ex) {
-                        LOGGER.error("Problem updating schedule for '" + jobName + "' job : " + ex.getMessage(), ex);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error("Problem updating schedule for '" + jobName + "' job : " + e.getMessage(), e);
                     }
                 }
             } catch (final Throwable t) {

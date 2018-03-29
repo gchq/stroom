@@ -35,17 +35,17 @@ import java.nio.file.Path;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestBlockGZIPFiles extends StroomUnitTest {
     @Test
-    public void testSimpleSmallDataInBigBlock() throws Exception {
+    public void testSimpleSmallDataInBigBlock() throws IOException {
         testWriteAndRead(10000, 99);
     }
 
     @Test
-    public void testSimpleDataInLotsOfSmallBlocks() throws Exception {
+    public void testSimpleDataInLotsOfSmallBlocks() throws IOException {
         testWriteAndRead(100, 999);
     }
 
     @Test
-    public void testSimpleBounds() throws Exception {
+    public void testSimpleBounds() throws IOException {
         testWriteAndRead(10, 0);
         testWriteAndRead(10, 1);
         testWriteAndRead(10, 9);
@@ -57,7 +57,7 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
     }
 
     @Test
-    public void testBroken() throws Exception {
+    public void testBroken() throws IOException {
         for (int inBuf = 2; inBuf < 5; inBuf++) {
             for (int outBuf = 2; outBuf < 5; outBuf++) {
                 testWriteAndReadBuffered(9, 100, inBuf, outBuf);
@@ -69,14 +69,14 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
     }
 
     @Test
-    public void testBufferedSmall() throws Exception {
+    public void testBufferedSmall() throws IOException {
         testWriteAndReadBuffered(10, 30, 3, 3);
         testWriteAndReadBuffered(10, 29, 3, 3);
         testWriteAndReadBuffered(10, 31, 3, 3);
     }
 
     @Test
-    public void testBufferedBig() throws Exception {
+    public void testBufferedBig() throws IOException {
         testWriteAndReadBuffered(1000, 1000000, 100, 100);
     }
 
@@ -172,7 +172,7 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
     }
 
     @Test
-    public void testSeeking() throws Exception {
+    public void testSeeking() throws IOException {
         final Path file = getCurrentTestDir().resolve("test.bgz");
         FileUtil.deleteFile(file);
 

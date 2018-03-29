@@ -22,10 +22,12 @@ import org.junit.runner.RunWith;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
+import java.security.NoSuchAlgorithmException;
+
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestHash extends StroomUnitTest {
     @Test
-    public void testHashWithSalt() throws Exception {
+    public void testHashWithSalt() throws NoSuchAlgorithmException {
         final Hash hash = new Hash();
 
         String result = hash.hash("test", "SHA-512", "salt");
@@ -42,7 +44,7 @@ public class TestHash extends StroomUnitTest {
     }
 
     @Test
-    public void testHashNoSalt() throws Exception {
+    public void testHashNoSalt() throws NoSuchAlgorithmException {
         final Hash hash = new Hash();
 
         String result = hash.hash("test", "SHA-512", null);

@@ -214,8 +214,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 if (property != null) {
                     ramBufferSizeMB = Integer.parseInt(property);
                 }
-            } catch (final Exception ex) {
-                LOGGER.error(() -> "connectWrapper() - Integer.parseInt stroom.index.ramBufferSizeMB", ex);
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> "connectWrapper() - Integer.parseInt stroom.index.ramBufferSizeMB", e);
             }
         }
         return ramBufferSizeMB;
@@ -358,7 +358,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
                 // Flush the shard.
                 indexShardWriter.flush();
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
 
@@ -397,7 +397,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                             // Update the shard status.
                             indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
                     }
 
@@ -409,7 +409,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     closing.decrementAndGet();
                     return null;
                 });
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
 
@@ -442,7 +442,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
             indexShard.setStatus(IndexShardStatus.CLOSED);
             indexShardService.save(indexShard);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
 
@@ -450,7 +450,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             LOGGER.info(() -> "Clearing any lingering locks (" + indexShard + ")");
             final Path dir = IndexShardUtil.getIndexPath(indexShard);
             LockFactoryUtil.clean(dir);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
     }

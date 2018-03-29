@@ -141,8 +141,8 @@ public class StreamRetentionExecutor {
             } while (deleted >= DELETE_STREAM_BATCH_SIZE);
 
             LOGGER.info("processFeed() - {} Deleted {}", feed.getName(), total);
-        } catch (final Exception ex) {
-            LOGGER.error("processFeed() - {} Error", feed.getName(), ex);
+        } catch (final RuntimeException e) {
+            LOGGER.error("processFeed() - {} Error", feed.getName(), e);
         }
     }
 }

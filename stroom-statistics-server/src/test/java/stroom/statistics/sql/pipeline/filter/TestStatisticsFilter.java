@@ -86,7 +86,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     @Test
-    public void test2GoodCountStats() throws Exception {
+    public void test2GoodCountStats() {
         final String inputPath = INPUT_DIR + "input01_2goodCountEvents.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
@@ -160,7 +160,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     @Test
-    public void test2GoodValueStats() throws Exception {
+    public void test2GoodValueStats() {
         final String inputPath = INPUT_DIR + "input02_2goodValueEvents.xml";
         final long precision = 60 * 1000L;
 
@@ -212,7 +212,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testBadStatType() throws Exception {
+    public void testBadStatType() {
         final String inputPath = INPUT_DIR + "input03_badType.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
@@ -239,7 +239,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     @Test
-    public void testNoCountElement() throws Exception {
+    public void testNoCountElement() {
         final String inputPath = INPUT_DIR + "input05_noCountOrValue.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
@@ -270,7 +270,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     @Test(expected = ProcessException.class)
-    public void testNoValueElement() throws Exception {
+    public void testNoValueElement() {
         final String inputPath = INPUT_DIR + "input05_noCountOrValue.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
@@ -298,7 +298,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     @Test(expected = ProcessException.class)
-    public void testDisabledStatDataSource() throws Exception {
+    public void testDisabledStatDataSource() {
         final String inputPath = INPUT_DIR + "input01_2goodCountEvents.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
@@ -325,7 +325,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     @Test(expected = ProcessException.class)
-    public void testInvalidElement() throws Exception {
+    public void testInvalidElement() {
         final String inputPath = INPUT_DIR + "input06_invalidElement.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
@@ -352,7 +352,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     @Test
-    public void testEmptyCountElement() throws Exception {
+    public void testEmptyCountElement() {
         final String inputPath = INPUT_DIR + "input07_emptyCountElement.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());

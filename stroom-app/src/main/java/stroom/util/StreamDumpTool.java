@@ -55,7 +55,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
     private String createPeriodTo;
     private String outputDir;
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         new StreamDumpTool().doMain(args);
     }
 
@@ -172,14 +172,14 @@ public class StreamDumpTool extends AbstractCommandLineTool {
                     System.out.println(
                             "Dumping stream " + count + " of " + total + " to file '" + FileUtil.getCanonicalPath(outputFile) + "'");
                     StreamUtil.streamToFile(inputStream, outputFile);
-                } catch (final Exception ex) {
-                    ex.printStackTrace();
+                } catch (final RuntimeException e) {
+                    e.printStackTrace();
                 } finally {
                     inputStream.close();
                 }
             }
-        } catch (final Exception ex) {
-            ex.printStackTrace();
+        } catch (final IOException | RuntimeException e) {
+            e.printStackTrace();
         } finally {
             if (streamSource != null) {
                 streamStore.closeStreamSource(streamSource);

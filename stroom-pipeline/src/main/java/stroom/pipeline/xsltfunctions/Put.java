@@ -19,6 +19,7 @@ package stroom.pipeline.xsltfunctions;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -37,7 +38,7 @@ class Put extends StroomExtensionFunctionCall {
             final String key = getSafeString(functionName, context, arguments, 0);
             final String value = getSafeString(functionName, context, arguments, 1);
             map.put(key, value);
-        } catch (final Exception e) {
+        } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

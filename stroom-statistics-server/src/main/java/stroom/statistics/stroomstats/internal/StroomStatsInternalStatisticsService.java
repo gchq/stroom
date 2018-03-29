@@ -175,7 +175,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private <T> T getValueAsType(final InternalStatisticEvent.Type type, final Class<T> clazz, final Object value) {
         try {
             return clazz.cast(value);
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(String.format("Statistic of type %s has value of wrong type %s",
                     type, clazz.getCanonicalName()));
         }

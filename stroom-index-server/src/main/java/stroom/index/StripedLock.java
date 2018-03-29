@@ -64,7 +64,7 @@ public class StripedLock {
     /**
      * Selects a lock for a key. The same lock is always used for a given key.
      */
-    private int selectLock(final Object key, int numberOfLocks) throws RuntimeException {
+    private int selectLock(final Object key, int numberOfLocks) {
         int number = numberOfLocks & (numberOfLocks - 1);
         if (number != 0) {
             throw new RuntimeException("Lock number must be a power of two: " + numberOfLocks);

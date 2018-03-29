@@ -20,5 +20,5 @@ package stroom.entity;
 import stroom.entity.shared.BaseCriteria;
 
 public interface FindCloseService<C extends BaseCriteria> {
-    Long findClose(C criteria) throws RuntimeException;
+    Long findClose(C criteria);
 }

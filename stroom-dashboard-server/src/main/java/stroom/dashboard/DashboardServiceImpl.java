@@ -142,7 +142,7 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
                     }
                 });
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -174,7 +174,7 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
 //    }
 //
 //    @Override
-//    public Dashboard save(Dashboard entity) throws RuntimeException {
+//    public Dashboard save(Dashboard entity) {
 //        if (entity.getData() == null) {
 //            entity.setData(getTemplate());
 //        }
@@ -182,7 +182,7 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
 //    }
 
     @Override
-    public Boolean delete(final Dashboard entity) throws RuntimeException {
+    public Boolean delete(final Dashboard entity) {
         checkDeletePermission(DocRefUtil.create(entity));
 
         // Delete associated queries first.
@@ -203,7 +203,7 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
             try {
                 final InputStream inputStream = getClass().getResourceAsStream("/stroom/dashboard/DashboardTemplate.data.xml");
                 xmlTemplate = StreamUtil.streamToString(inputStream);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
 

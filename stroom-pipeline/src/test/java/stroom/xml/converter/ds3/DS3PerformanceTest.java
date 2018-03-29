@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.entity.util.XMLUtil;
 import stroom.pipeline.DefaultLocationFactory;
@@ -32,6 +33,7 @@ import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.xml.converter.SchemaFilterFactory;
 
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedInputStream;
@@ -55,15 +57,15 @@ public class DS3PerformanceTest {
     private final SchemaFilterFactory schemaFilterFactory = new SchemaFilterFactory();
     private DS3ParserFactory ds3ParserFactory;
 
-    public void testCSVWithHeading() throws Exception {
+    public void testCSVWithHeading() throws IOException, SAXException, TransformerConfigurationException {
         process("CSVWithHeading");
     }
 
-    public void testCSVWithHeadingSplit() throws Exception {
+    public void testCSVWithHeadingSplit() throws IOException, SAXException, TransformerConfigurationException {
         process("CSVWithHeadingSplit");
     }
 
-    private void process(final String stem) throws Exception {
+    private void process(final String stem) throws IOException, SAXException, TransformerConfigurationException {
         LOGGER.info("Testing: " + stem);
 
         final Path testDir = getDS3TestDir().resolve("tmp");
@@ -85,7 +87,7 @@ public class DS3PerformanceTest {
         System.out.println("DS3 Elapsed Time = " + ds3Elapsed);
     }
 
-    private long process(final Path input, final Path output, final XMLReader parser) throws Exception {
+    private long process(final Path input, final Path output, final XMLReader parser) throws IOException, SAXException, TransformerConfigurationException {
         final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         threadMXBean.setThreadContentionMonitoringEnabled(true);
         threadMXBean.setThreadCpuTimeEnabled(true);
@@ -117,7 +119,7 @@ public class DS3PerformanceTest {
         writer.close();
     }
 
-    private OutputStream createWriter(final XMLReader reader, final Path tmp) throws Exception {
+    private OutputStream createWriter(final XMLReader reader, final Path tmp) throws IOException, TransformerConfigurationException {
         // Create an output writer.
         final TransformerHandler th = XMLUtil.createTransformerHandler(true);
         final OutputStream os = new BufferedOutputStream(Files.newOutputStream(tmp));
@@ -135,7 +137,7 @@ public class DS3PerformanceTest {
         return testDir;
     }
 
-    private XMLReader createDS3Reader(final Path config) throws Exception {
+    private XMLReader createDS3Reader(final Path config) throws IOException {
         final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(errorReceiver);
 

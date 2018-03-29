@@ -26,6 +26,7 @@ import stroom.entity.util.EntityServiceExceptionUtil;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,7 +91,7 @@ public class EntityServiceBeanRegistry {
 
             retVal = method.invoke(entityService, args);
 
-        } catch (final Exception e) {
+        } catch (final InvocationTargetException | IllegalAccessException e) {
             throw EntityServiceExceptionUtil.create(e);
         }
 

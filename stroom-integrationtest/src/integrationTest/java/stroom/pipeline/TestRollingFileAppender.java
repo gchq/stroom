@@ -20,12 +20,12 @@ import org.junit.Test;
 
 public class TestRollingFileAppender extends AbstractFileAppenderTest {
     @Test
-    public void testXML() throws Exception {
+    public void testXML() {
         test("TestRollingFileAppender", "XML");
     }
 
     @Test
-    public void testText() throws Exception {
+    public void testText() {
         test("TestRollingFileAppender", "Text");
     }
 }

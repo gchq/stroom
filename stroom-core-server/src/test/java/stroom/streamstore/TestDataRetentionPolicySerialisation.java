@@ -27,13 +27,15 @@ import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.shared.TimeUnit;
 
+import javax.xml.bind.JAXB;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TestDataRetentionPolicySerialisation {
     @Test
-    public void test() throws Exception {
+    public void test() throws JAXBException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
         builder.addTerm("StreamType", Condition.EQUALS, "Raw Events");
         builder.addTerm("Feed", Condition.EQUALS, "TEST_FEED");

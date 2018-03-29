@@ -68,7 +68,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     public void startProcessing() {
         try {
             this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector().orElse(null);
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
             throw new LoggedException(msg);
@@ -184,7 +184,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
                 //keep hold of the future so we can wait for it at the end of processing
                 kafkaMetaFutures.add(future);
             }
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             error(e);
         }
     }

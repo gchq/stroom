@@ -23,6 +23,7 @@ import net.sf.saxon.event.ReceivingContentHandler;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -48,7 +49,7 @@ class JsonToXml extends StroomExtensionFunctionCall {
                     createWarning(context, t);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

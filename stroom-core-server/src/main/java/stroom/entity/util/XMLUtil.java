@@ -19,10 +19,12 @@ package stroom.entity.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.ErrorListener;
@@ -32,6 +34,7 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -113,7 +116,7 @@ public final class XMLUtil {
             xmlReader.setContentHandler(handler);
             xmlReader.parse(new InputSource(reader));
 
-        } catch (final Exception e) {
+        } catch (final ParserConfigurationException | TransformerConfigurationException | IOException | SAXException e) {
             throw new RuntimeException(e);
         }
     }

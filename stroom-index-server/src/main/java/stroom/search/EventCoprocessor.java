@@ -94,7 +94,7 @@ public class EventCoprocessor implements Coprocessor {
                 final String value = storedData[index];
                 return Long.parseLong(value);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // Ignore
         }
 

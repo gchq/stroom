@@ -137,7 +137,7 @@ public class TimeAgnosticStatisticEvent implements Serializable {
         }
         try {
             return tagList.get(tagPos).getValue();
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(String.format("Error extracting value for tag [%s] at position [%s]",
                     tagName, tagPos), e);
         }

@@ -19,13 +19,14 @@ package stroom.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityServiceException;
+import stroom.guice.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Insecure;
 import stroom.util.logging.LogExecutionTime;
-import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -46,8 +47,7 @@ class ClusterCallServiceLocal implements ClusterCallService {
 
     @Override
     @Insecure
-    public Object call(final Node sourceNode, final Node targetNode, final String beanName, final String methodName,
-                       final Class<?>[] parameterTypes, final Object[] args) throws Exception {
+    public Object call(final Node sourceNode, final Node targetNode, final String beanName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         final Node thisNode = nodeCache.getDefaultNode();
@@ -61,7 +61,8 @@ class ClusterCallServiceLocal implements ClusterCallService {
             final Method method = service.getClass().getMethod(methodName, parameterTypes);
 
             return method.invoke(service, args);
-
+        } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e.getMessage(), e);
         } finally {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(ClusterCallUtil.logString("call() - remoting ", sourceNode, targetNode, beanName,

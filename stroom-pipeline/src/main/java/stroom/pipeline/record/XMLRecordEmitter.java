@@ -93,7 +93,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
             if (encoding != null && !encoding.isEmpty()) {
                 try {
                     charset = Charset.forName(encoding);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     errorReceiver.log(Severity.ERROR, null, getElementId(),
                             "Unsupported encoding '" + encoding + "', defaulting to UTF-8", e);
                 }

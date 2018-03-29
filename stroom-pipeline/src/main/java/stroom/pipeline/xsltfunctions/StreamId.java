@@ -43,7 +43,7 @@ class StreamId extends StroomExtensionFunctionCall {
             if (stream != null) {
                 result = String.valueOf(streamHolder.getStream().getId());
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

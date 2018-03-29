@@ -30,7 +30,7 @@ class CurrentTime extends StroomExtensionFunctionCall {
 
         try {
             result = DateUtil.createNormalDateTimeString();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

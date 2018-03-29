@@ -608,7 +608,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     }
                 };
                 autoRefreshTimer.schedule(millis);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 // Ignore as we cannot display this error now.
             }
         }

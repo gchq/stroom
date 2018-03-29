@@ -178,7 +178,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
                 try {
                     stroomEntityManager.executeNativeUpdate(multiStmt);
                     qryCnt++;
-                } catch (Exception e) {
+                } catch (final RuntimeException e) {
                     dumpSqlBuilder(multiStmt);
                     throw e;
                 }
@@ -226,7 +226,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
                                 args);
 
                         qryCnt++;
-                    } catch (Exception e) {
+                    } catch (final RuntimeException e) {
                         dumpStringBuilder(stringBuilder, args);
                         throw e;
                     }

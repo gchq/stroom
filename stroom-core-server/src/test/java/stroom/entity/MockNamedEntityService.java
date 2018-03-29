@@ -32,18 +32,18 @@ public abstract class MockNamedEntityService<E extends NamedEntity, C extends Fi
     }
 
     @Override
-    public E create(final String name) throws RuntimeException {
+    public E create(final String name) {
         try {
             final E entity = getEntityClass().newInstance();
             entity.setName(name);
             return save(entity);
-        } catch (final Exception e) {
+        } catch (final InstantiationException | IllegalAccessException | RuntimeException e) {
             throw new EntityServiceException(e.getMessage());
         }
     }
 
     @Override
-    public E loadByName(final String name) throws RuntimeException {
+    public E loadByName(final String name) {
         final BaseResultList<E> results = find(null);
         if (results == null) {
             return null;
@@ -65,7 +65,7 @@ public abstract class MockNamedEntityService<E extends NamedEntity, C extends Fi
     }
 
     @Override
-    public E loadByName(final String name, final Set<String> fetchSet) throws RuntimeException {
+    public E loadByName(final String name, final Set<String> fetchSet) {
         return loadByName(name);
     }
 

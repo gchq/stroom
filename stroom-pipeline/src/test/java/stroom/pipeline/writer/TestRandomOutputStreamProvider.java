@@ -21,12 +21,13 @@ import org.junit.Test;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 
 public class TestRandomOutputStreamProvider extends StroomUnitTest {
     @Test
-    public void testCycleDirs() throws Exception {
+    public void testCycleDirs() throws IOException {
         final FileAppender provider = buildTestObject();
 
         boolean found1 = false;

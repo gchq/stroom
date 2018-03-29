@@ -26,7 +26,7 @@ public class TestInternalStatisticDocRefCache {
     private static final DocRef expectedDocRef2 = new DocRef(type2, uuid2, name2);
 
     @Test
-    public void getDocRefs_singleDocRef() throws Exception {
+    public void getDocRefs_singleDocRef() {
 
         MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
 
@@ -43,7 +43,7 @@ public class TestInternalStatisticDocRefCache {
     }
 
     @Test
-    public void getDocRefs_twoDocRefs() throws Exception {
+    public void getDocRefs_twoDocRefs() {
 
         MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
 
@@ -60,7 +60,7 @@ public class TestInternalStatisticDocRefCache {
     }
 
     @Test
-    public void getDocRefs_emptyProvVal() throws Exception {
+    public void getDocRefs_emptyProvVal() {
 
         MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
 
@@ -75,7 +75,7 @@ public class TestInternalStatisticDocRefCache {
     }
 
     @Test
-    public void getDocRefs_nullProvVal() throws Exception {
+    public void getDocRefs_nullProvVal() {
 
         MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
 
@@ -90,7 +90,7 @@ public class TestInternalStatisticDocRefCache {
     }
 
     @Test(expected = RuntimeException.class)
-    public void getDocRefs_invalidPropVal() throws Exception {
+    public void getDocRefs_invalidPropVal() {
 
         MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
 

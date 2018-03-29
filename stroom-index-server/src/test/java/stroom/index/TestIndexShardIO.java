@@ -191,7 +191,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 //                    }
 //                } catch (final AlreadyClosedException e) {
 //                    System.out.println(e.getMessage());
-//                } catch (final Exception e) {
+//                } catch (final RuntimeException e) {
 //                    System.err.println(e.getMessage());
 //                }
 //            }
@@ -209,7 +209,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 //                        return null;
 //                    });
 //                    ThreadUtil.sleep(100);
-//                } catch (final Exception e) {
+//                } catch (final RuntimeException e) {
 //                    System.err.println(e.getMessage());
 //                }
 //            }

@@ -30,7 +30,6 @@ import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Singleton;
 
 public class ClusterWorkerImpl implements ClusterWorker {
     public static final String BEAN_NAME = "clusterWorker";
@@ -144,10 +143,10 @@ public class ClusterWorkerImpl implements ClusterWorker {
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD_ARGS, new Object[]{task, targetNode,
                                     sourceTaskId, collectorId, result, t, Boolean.valueOf(success)});
                     done = true;
-                } catch (final Exception ex) {
-                    lastException = ex;
-                    LOGGER.warn(ex.getMessage());
-                    LOGGER.debug(ex.getMessage(), ex);
+                } catch (final RuntimeException e) {
+                    lastException = e;
+                    LOGGER.warn(e.getMessage());
+                    LOGGER.debug(e.getMessage(), e);
                     ThreadUtil.sleepUpTo(1000L * tryCount);
                     tryCount++;
                 }

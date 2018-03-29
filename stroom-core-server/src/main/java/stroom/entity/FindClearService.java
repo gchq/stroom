@@ -20,5 +20,5 @@ package stroom.entity;
 import stroom.entity.shared.BaseCriteria;
 
 public interface FindClearService<C extends BaseCriteria> {
-    Long findClear(C criteria) throws RuntimeException;
+    Long findClear(C criteria);
 }

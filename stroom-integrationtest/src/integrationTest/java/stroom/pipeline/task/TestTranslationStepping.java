@@ -44,25 +44,25 @@ public class TestTranslationStepping extends AbstractCoreIntegrationTest {
     private TaskManager taskManager;
 
     @Test
-    public void testDataSplitterTransformation() throws Exception {
+    public void testDataSplitterTransformation() {
         test(DATASPLITTER_FORMAT_DEFINITION, DATASPLITTER_XSLT, INPUT_DIR, ".csv", TextConverterType.DATA_SPLITTER,
                 "DataSplitter");
     }
 
     @Test
-    public void testXMLFragmentTransformation() throws Exception {
+    public void testXMLFragmentTransformation() {
         test(XMLFRAGMENT_FORMAT_DEFINITION, DATASPLITTER_XSLT, INPUT_DIR, ".nxml", TextConverterType.XML_FRAGMENT,
                 "XMLFragment");
     }
 
     @Test
-    public void testXMLTransformation() throws Exception {
+    public void testXMLTransformation() {
         test(null, DATASPLITTER_XSLT, INPUT_DIR, ".xml", TextConverterType.NONE, "XML");
     }
 
     private void test(final String converterDefinitionLocation, final String xsltLocation, final String inputDir,
                       final String extension, final TextConverterType textConverterType, final String outputName)
-            throws Exception {
+            {
         // FIXME : Fix this.
     }
 }

@@ -80,7 +80,7 @@ public class TestCache extends StroomUnitTest {
             System.out.println("Get time = " + (System.currentTimeMillis() - time));
 
             // // Set the reference data loader factory back.
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }

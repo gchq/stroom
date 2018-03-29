@@ -89,47 +89,47 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private PipelineScopeRunnable pipelineScopeRunnable;
 
     @Test
-    public void testDefault() throws Exception {
+    public void testDefault() {
         testXMLTransformer(INPUT_DEFAULT, null);
     }
 
     @Test
-    public void testUTF8() throws Exception {
+    public void testUTF8() {
         testXMLTransformer(INPUT_UTF_8, "UTF-8");
     }
 
     @Test
-    public void testUTF8BOM() throws Exception {
+    public void testUTF8BOM() {
         testXMLTransformer(INPUT_UTF_8_BOM, "UTF-8");
     }
 
     @Test
-    public void testUTF16LE() throws Exception {
+    public void testUTF16LE() {
         testXMLTransformer(INPUT_UTF_16_LE, "UTF-16LE");
     }
 
     @Test
-    public void testUTF16LEBOM() throws Exception {
+    public void testUTF16LEBOM() {
         testXMLTransformer(INPUT_UTF_16_LE_BOM, "UTF-16LE");
     }
 
     @Test
-    public void testUTF16BE() throws Exception {
+    public void testUTF16BE() {
         testXMLTransformer(INPUT_UTF_16_BE, "UTF-16BE");
     }
 
     @Test
-    public void testUTF16BEBOM() throws Exception {
+    public void testUTF16BEBOM() {
         testXMLTransformer(INPUT_UTF_16_BE_BOM, "UTF-16BE");
     }
 
     @Test
-    public void testFragment() throws Exception {
+    public void testFragment() {
         final PipelineEntity pipelineEntity = createFragmentPipeline();
         test(pipelineEntity, INPUT_FRAGMENT, null);
     }
 
-    private void testXMLTransformer(final String inputResource, final String encoding) throws Exception {
+    private void testXMLTransformer(final String inputResource, final String encoding) {
         final PipelineEntity pipelineEntity = createTransformerPipeline();
         test(pipelineEntity, inputResource, encoding);
     }

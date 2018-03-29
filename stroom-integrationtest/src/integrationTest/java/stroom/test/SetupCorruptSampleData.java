@@ -29,9 +29,8 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
      * Main.
      *
      * @param args NA
-     * @throws Exception NA
      */
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
 //        final SetupCorruptSampleData setupSampleData = new SetupCorruptSampleData();
 //        setupSampleData.doMain(args);
     }
@@ -60,7 +59,7 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
 //
 //        try {
 //            target.getOutputStream().write(" ".getBytes(StreamUtil.DEFAULT_CHARSET));
-//        } catch (final Exception ex) {
+//        } catch (final RuntimeException e) {
 //            throw new RuntimeException(ex);
 //        }
 //        streamStore.closeStreamTarget(target);

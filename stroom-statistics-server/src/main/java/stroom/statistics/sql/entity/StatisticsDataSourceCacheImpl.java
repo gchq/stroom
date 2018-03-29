@@ -161,13 +161,13 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                                     cacheByEngineName.invalidate(k);
                                 }
                             }
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             LOGGER.error(e.getMessage(), e);
                         }
                     });
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }

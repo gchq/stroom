@@ -74,7 +74,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
             //Even if kafka is down the producer will still create successfully. Any calls to send will however
             //block until it comes up or throw an exception on timeout
             this.producer = new KafkaProducer<>(props);
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(String.format("Error initialising kafka producer for %s, due to %s",
                     bootstrapServers, e.getMessage()), e);
         } finally {
@@ -178,7 +178,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
         try {
             LOGGER.info("Closing down Kafka Producer");
             producer.close();
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Error closing kafka producer", e);
         }
     }

@@ -29,7 +29,6 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.ResultHandler;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.task.AbstractTaskHandler;
@@ -39,13 +38,12 @@ import stroom.task.TaskHandlerBean;
 import stroom.task.TaskManager;
 import stroom.task.cluster.ClusterDispatchAsync;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.ClusterResultCollectorCache;
+import stroom.task.cluster.NodeNotFoundException;
+import stroom.task.cluster.NullClusterStateException;
 import stroom.task.cluster.TargetNodeSetFactory;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.cluster.TerminateTaskClusterTask;
 import stroom.task.shared.FindTaskCriteria;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -169,28 +167,26 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Await completion.
                     resultCollector.awaitCompletion();
 
-//                        // If the collector is no longer in the cache then terminate
-//                        // this search task.
-//                        if (clusterResultCollectorCache.get(resultCollector.getId()) == null) {
-//                            terminateTasks(task);
-//                        }
-
+                } catch (final NullClusterStateException | NodeNotFoundException | RuntimeException e) {
+                    resultCollector.getErrorSet(sourceNode).add(e.getMessage());
+                } catch (final InterruptedException e) {
+                    // Interrupt this thread again.
+                    Thread.currentThread().interrupt();
+                    resultCollector.getErrorSet(sourceNode).add(e.getMessage());
+                } finally {
                     taskContext.info(task.getSearchName() + " - complete");
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
                     terminateTasks(task);
 
-                } catch (final Exception e) {
-                    resultCollector.getErrorSet(sourceNode).add(e.getMessage());
+                    // Let the result handler know search has finished.
+                    resultCollector.complete();
+
+                    // We need to wait here for the client to keep getting results if
+                    // this is an interactive search.
+                    taskContext.info(task.getSearchName() + " - staying alive for UI requests");
                 }
-
-                // Let the result handler know search has finished.
-                resultCollector.complete();
-
-                // We need to wait here for the client to keep getting results if
-                // this is an interactive search.
-                taskContext.info(task.getSearchName() + " - staying alive for UI requests");
             }
 
             return VoidResult.INSTANCE;

@@ -69,7 +69,7 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                                     valid = false;
                                     try {
                                         valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
-                                    } catch (final Exception e) {
+                                    } catch (final RuntimeException e) {
                                         AlertEvent.fireErrorFromException(QueryInfoPresenter.this, e, null);
                                     }
                                 }

@@ -46,7 +46,7 @@ public class GenerateSampleStatisticsDataForBulk {
 
     private static final String[] users = new String[]{"user1", "user2", "user3", "user4", "user5",};
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) throws IOException {
         System.out.println("Writing value data...");
 
         try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsBulkTestData_Values.xml"))) {

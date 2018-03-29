@@ -7,6 +7,7 @@ import net.sf.saxon.event.ReceivingContentHandler;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ class ParseUri extends StroomExtensionFunctionCall {
 
                 return sequence;
             }
-        } catch (final Exception e) {
+        } catch (final XPathException | SAXException | RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             outputWarning(context, new StringBuilder("Problem parsing URI: " + e.getMessage()), e);
         }

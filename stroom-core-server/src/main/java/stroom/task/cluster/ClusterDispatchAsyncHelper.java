@@ -135,7 +135,7 @@ public class ClusterDispatchAsyncHelper {
             if (tmp != null) {
                 timeout = tmp;
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 

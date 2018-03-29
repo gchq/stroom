@@ -34,6 +34,7 @@ import stroom.util.test.FileSystemTestUtil;
 import stroom.util.zip.ZipUtil;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +54,7 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     private ExplorerService explorerService;
 
     @Test
-    public void testImportZip() throws Exception {
+    public void testImportZip() throws IOException {
         final int BATCH_SIZE = 200;
         for (int i = 0; i < BATCH_SIZE; i++) {
             explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);

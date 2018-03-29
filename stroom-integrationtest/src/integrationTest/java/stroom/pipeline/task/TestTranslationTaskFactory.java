@@ -44,6 +44,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -94,11 +95,9 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     /**
      * Tests that valid streams are all processed and put into the processed and
      * raw stores and that no streams end up in the error store.
-     *
-     * @throws Exception Could be thrown.
      */
     @Test
-    public void testTranslationTaskFactory() throws Exception {
+    public void testTranslationTaskFactory() {
         // Create a store.
         createStore(VALID_DATA, REFERENCE_DATA, SAMPLE_XSLT);
 
@@ -148,11 +147,10 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     // * Tests that the store remains clean if processing is started and stopped
     // * instantly.
     // *
-    // * @throws Exception
     // * Could be thrown.
     // */
     // @Test
-    // public void testNoTranslation() throws Exception {
+    // public void testNoTranslation() {
     // // Create a store.
     // createStore(VALID_DATA, REFERENCE_DATA, DTS_XSLT);
     //
@@ -184,11 +182,9 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     /**
      * Tests that invalid streams are processed but errors are recorded against
      * them.
-     *
-     * @throws Exception Could be thrown.
      */
     @Test
-    public void testInvalidData() throws Exception {
+    public void testInvalidData() {
         // Create a store.
         createStore(INVALID_DATA, REFERENCE_DATA, SAMPLE_XSLT);
 
@@ -218,11 +214,9 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     /**
      * Tests that invalid streams are processed but errors are recorded against
      * them.
-     *
-     * @throws Exception Could be thrown.
      */
     @Test
-    public void testEmptyData() throws Exception {
+    public void testEmptyData() {
         // Create a store.
         createStore(EMPTY_DATA, REFERENCE_DATA, SAMPLE_XSLT);
 
@@ -250,11 +244,9 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
 
     /**
      * Tests that invalid xslt causes all tasks to fail.
-     *
-     * @throws Exception Could be thrown.
      */
     @Test
-    public void testInvalidXSLT() throws Exception {
+    public void testInvalidXSLT() {
         // Check none passed.
         List<Stream> cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.RAW_EVENTS));
         Assert.assertEquals(0, cooked.size());
@@ -291,7 +283,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     // * Could be thrown.
     // */
     // @Test
-    // public void testInvalidNoTranslation() throws Exception {
+    // public void testInvalidNoTranslation() {
     // // Create a store.
     // createStore(INVALID_DATA, REFERENCE_DATA, DTS_XSLT);
     //
@@ -351,9 +343,9 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             // Force creation of stream tasks.
             streamTaskCreator.createTasks(new SimpleTaskContext());
 
-        } catch (final Exception ex) {
-            ex.printStackTrace();
-            throw ProcessException.wrap(ex);
+        } catch (final IOException e) {
+            e.printStackTrace();
+            throw ProcessException.wrap(e);
         }
     }
 }

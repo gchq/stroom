@@ -128,7 +128,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                                 } else {
                                     deleteFromDisk(shard);
                                 }
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                             }
                         }
@@ -146,7 +146,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     taskManager.execAsync(task);
                 }
 
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
                 deletingShards.set(false);
             }
@@ -236,7 +236,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                             indexShardWriterCache.delete(shard.getId());
                             break;
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                 }
 
@@ -319,7 +319,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                         indexShardService.save(indexShard);
                     }
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             } finally {
                 lock.unlock();

@@ -22,7 +22,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.util.shared.SharedObject;
 
 public interface FindService<E extends SharedObject, C extends BaseCriteria> {
-    BaseResultList<E> find(C criteria) throws RuntimeException;
+    BaseResultList<E> find(C criteria);
 
     C createCriteria();
 }

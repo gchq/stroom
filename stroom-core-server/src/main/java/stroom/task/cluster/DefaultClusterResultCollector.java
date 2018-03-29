@@ -152,24 +152,24 @@ public class DefaultClusterResultCollector<R extends SharedObject> implements Cl
         lock.lock();
         try {
             while (!terminated && !isComplete() && waitTimeRemainingNS > 0) {
-                try {
-                    waitTimeRemainingNS = condition.awaitNanos(waitTimeRemainingNS);
+                waitTimeRemainingNS = condition.awaitNanos(waitTimeRemainingNS);
 
-                    // Reset the wait time if we have received a result so that
-                    // we keep waiting until complete.
-                    if (receivedResult) {
-                        receivedResult = false;
-                        waitTimeRemainingNS = waitTimeNS;
-                    }
-                } catch (final Exception e) {
-                    waitTimeRemainingNS = 0;
-                    LOGGER.error(e.getMessage(), e);
+                // Reset the wait time if we have received a result so that
+                // we keep waiting until complete.
+                if (receivedResult) {
+                    receivedResult = false;
+                    waitTimeRemainingNS = waitTimeNS;
                 }
             }
 
             if (waitTimeRemainingNS <= 0) {
                 LOGGER.debug("waitToComplete() - Timeout");
             }
+        } catch (final InterruptedException e) {
+            waitTimeRemainingNS = 0;
+            LOGGER.error(e.getMessage(), e);
+
+            Thread.currentThread().interrupt();
         } finally {
             lock.unlock();
         }

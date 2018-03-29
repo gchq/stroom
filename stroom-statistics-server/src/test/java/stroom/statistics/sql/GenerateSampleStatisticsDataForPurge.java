@@ -19,6 +19,7 @@ package stroom.statistics.sql;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;
 
+import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -47,7 +48,7 @@ public class GenerateSampleStatisticsDataForPurge {
 
     private static final String[] users = new String[]{USER1, USER2};
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) throws IOException  {
         System.out.println("Writing value data...");
 
         try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsPurgeTestData_Values.xml"))) {
@@ -62,12 +63,12 @@ public class GenerateSampleStatisticsDataForPurge {
     }
 
     private static long generateStartTime() {
-        final int hourInMs = 1000 * 60 * 60;
+        final long hourInMs = 1000 * 60 * 60;
 
         long startTime = System.currentTimeMillis();
 
         // round the star time to the last whole hour
-        startTime = new Long(startTime / hourInMs) * hourInMs;
+        startTime = (startTime / hourInMs) * hourInMs;
 
         // now add 1min and 1s to help us see which store it is in
         startTime += 61_000;

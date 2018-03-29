@@ -19,5 +19,4 @@ public class GuiceJUnit4Runner extends BlockJUnit4ClassRunner {
         Guice.createInjector(module).injectMembers(object);
         return object;
     }
-
 }

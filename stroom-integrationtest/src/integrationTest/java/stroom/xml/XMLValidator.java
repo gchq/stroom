@@ -31,6 +31,7 @@ import stroom.guice.PipelineScopeRunnable;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -99,8 +100,8 @@ public class XMLValidator {
 
                     return errorReceiverProvider.get().toString();
 
-                } catch (final Exception ex) {
-                    return ex.getMessage();
+                } catch (final RuntimeException e) {
+                    return e.getMessage();
                 }
             }
 

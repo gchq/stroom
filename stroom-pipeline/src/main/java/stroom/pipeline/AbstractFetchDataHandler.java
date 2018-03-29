@@ -202,7 +202,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
                 return createDataResult(feed, streamType, segmentInputStream, pageRange, availableChildStreamTypes, pipeline, showAsHtml, streamSource);
 
-            } catch (final Exception e) {
+            } catch (final IOException | RuntimeException e) {
                 writeEventLog(streamSource.getStream(), feed, streamType, e);
 
                 if (StreamStatus.LOCKED.equals(streamSource.getStream().getStatus())) {
@@ -218,7 +218,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 // Close all open streams.
                 try {
                     streamCloser.close();
-                } catch (final Exception e) {
+                } catch (final IOException e) {
                     if (exception != null) {
                         exception.addSuppressed(e);
                     } else {
@@ -290,7 +290,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
             try {
                 // If we have a pipeline then use it.
                 output = usePipeline(streamSource, rawData, feed, pipeline);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 output = e.getMessage();
                 if (output == null || output.length() == 0) {
                     output = e.toString();
@@ -301,7 +301,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 //                    // Try and pretty print XML.
 //                    try {
 //                        output = XMLUtil.prettyPrintXML(rawData);
-//                    } catch (final Exception ex) {
+//                    } catch (final RuntimeException e) {
 //                        // Ignore.
 //                    }
 //
@@ -334,8 +334,8 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                                final Exception e) {
         try {
             streamEventLog.viewStream(stream, feed, streamType, e);
-        } catch (final Exception ex) {
-            LOGGER.debug(ex.getMessage(), ex);
+        } catch (final Exception e2) {
+            LOGGER.debug(e.getMessage(), e2);
         }
     }
 
@@ -486,13 +486,13 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 ProcessException processException = null;
                 try {
                     pipeline.startProcessing();
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     processException = new ProcessException(e.getMessage());
                     throw processException;
                 } finally {
                     try {
                         pipeline.process(inputStream, StreamUtil.DEFAULT_CHARSET_NAME);
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         if (processException != null) {
                             processException.addSuppressed(e);
                         } else {
@@ -502,7 +502,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                     } finally {
                         try {
                             pipeline.endProcessing();
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             if (processException != null) {
                                 processException.addSuppressed(e);
                             } else {

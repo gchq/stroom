@@ -39,8 +39,6 @@ public class TestDataSplitter2 extends AbstractProcessIntegrationTest {
 
     /**
      * Tests a multi line regex file.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
     public void testMultiLineRegex() {

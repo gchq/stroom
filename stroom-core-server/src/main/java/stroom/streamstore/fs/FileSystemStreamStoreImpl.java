@@ -43,13 +43,13 @@ import stroom.feed.shared.FindFeedCriteria;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Volume;
+import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.persist.EntityManagerSupport;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.ExpressionToFindCriteria.Context;
@@ -274,7 +274,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     // @Override
     @SuppressWarnings("unchecked")
     private Stream loadStreamById(final long id, final Set<String> fetchSet, final boolean anyStatus)
-            throws RuntimeException {
+            {
         Stream entity = null;
 
         final HqlBuilder sql = new HqlBuilder();
@@ -431,18 +431,19 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             entityManager.flush();
             LOGGER.debug("obtainLock() Exit " + lock);
             return lock;
-        } catch (final Exception ex) {
-            LOGGER.warn("Failed to get lock on " + stream, ex);
-            resolveException(ex);
+        } catch (final RuntimeException e) {
+            LOGGER.warn("Failed to get lock on " + stream, e);
+            resolveException(e);
             return null;
         }
     }
 
-    private void resolveException(final Exception ex) {
-        if (ex instanceof RuntimeException) {
-            throw (RuntimeException) ex;
-        }
-        throw new StreamException(ex);
+    private void resolveException(final RuntimeException e) {
+        throw e;
+//        if (e instanceof RuntimeException) {
+//            throw (RuntimeException) ex;
+//        }
+//        throw new StreamException(ex);
     }
 
     private Stream unLock(final Stream stream, final MetaMap metaMap, final boolean append) {
@@ -454,7 +455,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         if (!metaMap.isEmpty()) {
             try {
                 streamAttributeValueFlush.persitAttributes(stream, append, metaMap);
-            } catch (final Exception ex) {
+            } catch (final RuntimeException e) {
                 LOGGER.error("unLock() - Failed to persist attributes in new transaction... will ignore");
             }
         }
@@ -617,7 +618,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         try {
             // Close the stream source.
             streamSource.close();
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             LOGGER.error("Unable to close stream source!", e.getMessage(), e);
         }
     }
@@ -626,12 +627,12 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     public void closeStreamTarget(final StreamTarget streamTarget) {
         entityManagerSupport.transaction(em -> {
             // If we get error on closing the stream we must return it to the caller
-            Exception streamCloseException = null;
+            IOException streamCloseException = null;
 
             try {
                 // Close the stream target.
                 streamTarget.close();
-            } catch (final Exception e) {
+            } catch (final IOException e) {
                 LOGGER.error("closeStreamTarget() - Error on closing stream {}", streamTarget, e);
                 streamCloseException = e;
             }
@@ -668,7 +669,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                     }
 
                 }
-            } catch (final Exception e) {
+            } catch (final IOException e) {
                 LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", streamTarget, e);
             }
 
@@ -678,11 +679,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 ((FileSystemStreamTarget) streamTarget).setMetaData(
                         unLock(streamTarget.getStream(), streamTarget.getAttributeMap(), streamTarget.isAppend()));
             } else {
-                if (streamCloseException instanceof RuntimeException) {
-                    throw (RuntimeException) streamCloseException;
-                } else {
-                    throw new RuntimeException(streamCloseException);
-                }
+                throw new RuntimeException(streamCloseException);
             }
         });
     }
@@ -715,7 +712,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-    public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
+    public BaseResultList<Stream> find(final FindStreamCriteria criteria) {
         final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
         return find(oldFindStreamCriteria);
     }
@@ -1333,7 +1330,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Override
     @Secured(Stream.DELETE_DATA_PERMISSION)
     // @Transactional
-    public Long findDelete(final FindStreamCriteria criteria) throws RuntimeException {
+    public Long findDelete(final FindStreamCriteria criteria) {
         final Context context = new Context(null, System.currentTimeMillis());
         final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
         return findDelete(oldFindStreamCriteria);

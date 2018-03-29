@@ -330,7 +330,7 @@ public class ExpressionMatcher {
             return DateUtil.parseNormalDateTimeString(value.toString());
 
 //            return new DateExpressionParser().parse(value, timeZoneId, nowEpochMilli).toInstant().toEpochMilli();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new MatchException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");
         }

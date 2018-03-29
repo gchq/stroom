@@ -49,7 +49,7 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
     }
 
     @Override
-    public BaseResultList<E> find(final C criteria) throws RuntimeException {
+    public BaseResultList<E> find(final C criteria) {
         final List<E> list = new ArrayList<>();
         for (final E entity : map.values()) {
             if (criteria == null || isMatch(criteria, entity)) {
@@ -60,13 +60,13 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
     }
 
     @Override
-    public E load(final E entity) throws RuntimeException {
+    public E load(final E entity) {
         return load(entity, BLANK_SET);
     }
 
 
     @Override
-    public E load(final E entity, final Set<String> fetchSet) throws RuntimeException {
+    public E load(final E entity, final Set<String> fetchSet) {
         if (entity == null) {
             return null;
         }
@@ -74,12 +74,12 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
     }
 
     @Override
-    public E loadById(final long id) throws RuntimeException {
+    public E loadById(final long id) {
         return loadById(id, BLANK_SET);
     }
 
     @Override
-    public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
+    public E loadById(final long id, final Set<String> fetchSet) {
         return map.get(id);
     }
 
@@ -114,7 +114,7 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
         if (entityType == null) {
             try {
                 entityType = getEntityClass().newInstance().getType();
-            } catch (final Exception e) {
+            } catch (final InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }

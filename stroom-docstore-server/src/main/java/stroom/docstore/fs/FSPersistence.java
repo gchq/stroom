@@ -84,7 +84,7 @@ public class FSPersistence implements Persistence {
             Files.delete(path);
         } catch (final RuntimeException e) {
             throw e;
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -99,7 +99,7 @@ public class FSPersistence implements Persistence {
                     final int index = fileName.indexOf(".");
                     final String uuid = fileName.substring(0, index);
                     list.add(new DocRef(type, uuid));
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
             });

@@ -23,12 +23,14 @@ import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
+import java.io.IOException;
+
 public class TestStandardAnalyser {
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) throws IOException {
         new TestStandardAnalyser().test();
     }
 
-    public void test() throws Exception {
+    public void test() throws IOException {
         String in = "SOME-HYPHENATED-STRING";
 
         testAnalyser(in, new StandardAnalyzer());
@@ -42,7 +44,7 @@ public class TestStandardAnalyser {
         testAnalyser(in, new StopAnalyzer());
     }
 
-    private void testAnalyser(final String input, final Analyzer analyzer) throws Exception {
+    private void testAnalyser(final String input, final Analyzer analyzer) throws IOException {
         System.out.println("Testing analyser: " + analyzer.getClass().getName());
 
         final ReusableStringReader reader = new ReusableStringReader();

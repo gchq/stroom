@@ -20,5 +20,5 @@ package stroom.entity;
 import stroom.entity.shared.BaseCriteria;
 
 public interface FindDeleteService<C extends BaseCriteria> {
-    Long findDelete(C criteria) throws RuntimeException;
+    Long findDelete(C criteria);
 }

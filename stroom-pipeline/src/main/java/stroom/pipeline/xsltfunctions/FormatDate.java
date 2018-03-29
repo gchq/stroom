@@ -64,7 +64,7 @@ class FormatDate extends StroomExtensionFunctionCall {
             } else if (arguments.length >= 4 && arguments.length <= 5) {
                 result = convertToSpecifiedDateFormat(functionName, context, arguments);
             }
-        } catch (final Exception e) {
+        } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

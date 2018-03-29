@@ -3,6 +3,7 @@ package stroom.proxy.repo;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,7 +13,7 @@ public class TestStroomZipOutputStream {
     private final static int TEST_SIZE = 100;
 
     @Test
-    public void testBigFile() throws Exception {
+    public void testBigFile() throws IOException {
         final Path testFile = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(testFile);
         try {
@@ -45,7 +46,7 @@ public class TestStroomZipOutputStream {
     }
 
     @Test
-    public void testBlankProducesNothing() throws Exception {
+    public void testBlankProducesNothing() throws IOException {
         final Path testFile = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(testFile);
         stroomZipOutputStream.close();

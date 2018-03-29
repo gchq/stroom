@@ -39,6 +39,7 @@ import stroom.util.shared.VoidResult;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -145,8 +146,8 @@ public class FileSystemCleanExecutor {
                                 printWriterMap
                                         .put(volume,
                                                 new PrintWriter(Files.newBufferedWriter(dir.resolve(DELETE_OUT), StreamUtil.DEFAULT_CHARSET)));
-                            } catch (final Exception ex) {
-                                LOGGER.error("exec() - Error opening file", ex);
+                            } catch (final IOException e) {
+                                LOGGER.error("exec() - Error opening file", e);
                             }
                         }
                     }
@@ -198,8 +199,8 @@ public class FileSystemCleanExecutor {
                                     deletePrintWriter.println(line);
                                 }
                             }
-                        } catch (final Exception ex) {
-                            LOGGER.error("exec() - Error writing " + DELETE_OUT, ex);
+                        } catch (final RuntimeException e) {
+                            LOGGER.error("exec() - Error writing " + DELETE_OUT, e);
                             taskContext.terminate();
                         }
                     }

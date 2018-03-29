@@ -64,7 +64,7 @@ class StreamAttributeKeyServiceImpl
     }
 
     @Override
-    public BaseResultList<StreamAttributeKey> findAll() throws RuntimeException {
+    public BaseResultList<StreamAttributeKey> findAll() {
         return cache.getUnchecked("findAll");
     }
 

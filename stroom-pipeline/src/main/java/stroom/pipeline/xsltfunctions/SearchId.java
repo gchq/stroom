@@ -39,7 +39,7 @@ class SearchId extends StroomExtensionFunctionCall {
 
         try {
             result = searchIdHolder.getSearchId();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

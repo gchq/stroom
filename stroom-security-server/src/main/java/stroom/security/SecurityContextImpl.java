@@ -326,7 +326,7 @@ class SecurityContextImpl implements SecurityContext {
                         documentPermissionService.addPermission(userRef, docRef, DocumentPermissionNames.OWNER);
                     } catch (final RollbackException e) {
                         LOGGER.debug(e.getMessage(), e);
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                 }
@@ -362,7 +362,7 @@ class SecurityContextImpl implements SecurityContext {
                                     documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
                                 } catch (final RollbackException e) {
                                     LOGGER.debug(e.getMessage(), e);
-                                } catch (final Exception e) {
+                                } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
                                 }
                             }

@@ -60,7 +60,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E create(final String name) throws RuntimeException {
+    public E create(final String name) {
         // Create a new entity instance.
         E entity;
         try {
@@ -137,7 +137,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //        return create(folder, name, PermissionInheritance.NONE);
 //    }
 //
-//    private E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
+//    private E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
 //        // Create a new entity instance.
 //        E entity;
 //        try {
@@ -158,7 +158,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //    }
 //
 //    @Override
-//    public E saveAs(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
+//    public E saveAs(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
 //        entity.clearPersistence();
 //        entity.setName(name);
 //        setFolder(entity, folder);
@@ -166,7 +166,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //        return result;
 //    }
 //
-//    private void setFolder(final E entity, final String folderUUID) throws RuntimeException {
+//    private void setFolder(final E entity, final String folderUUID) {
 //        DocRef folderRef = null;
 //        if (folderUUID != null) {
 //            folderRef = new DocRef(Folder.ENTITY_TYPE, folderUUID);
@@ -175,7 +175,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //        setFolder(entity, folderRef);
 //    }
 //
-//    private void setFolder(final E entity, final DocRef folderRef) throws RuntimeException {
+//    private void setFolder(final E entity, final DocRef folderRef) {
 //        // TODO : Remove this when document entities no longer reference a folder.
 //        Folder folder = null;
 //        if (folderRef != null && folderRef.getId() != null) {
@@ -190,12 +190,12 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //    }
 
     @Override
-    public E loadByUuid(final String uuid) throws RuntimeException {
+    public E loadByUuid(final String uuid) {
         return loadByUuid(uuid, null);
     }
 
     @Override
-    public E loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
+    public E loadByUuid(final String uuid, final Set<String> fetchSet) {
         final List<E> list = find(null);
         for (final E e : list) {
             if (e.getUuid() != null && e.getUuid().equals(uuid)) {
@@ -207,12 +207,12 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
 //    @Override
-//    public E loadByName(final DocRef folder, final String name) throws RuntimeException {
+//    public E loadByName(final DocRef folder, final String name) {
 //        return loadByName(folder, name, null);
 //    }
 //
 //    @Override
-//    public E loadByName(final DocRef folder, final String name, final Set<String> fetchSet) throws RuntimeException {
+//    public E loadByName(final DocRef folder, final String name, final Set<String> fetchSet) {
 //        final BaseResultList<E> results = find(null);
 //        if (results == null) {
 //            return null;
@@ -237,12 +237,12 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //    }
 
     @Override
-    public E load(final E entity) throws RuntimeException {
+    public E load(final E entity) {
         return load(entity, BLANK_SET);
     }
 
     @Override
-    public E load(final E entity, final Set<String> fetchSet) throws RuntimeException {
+    public E load(final E entity, final Set<String> fetchSet) {
         if (entity == null) {
             return null;
         }
@@ -250,22 +250,22 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E loadById(final long id) throws RuntimeException {
+    public E loadById(final long id) {
         return loadById(id, BLANK_SET);
     }
 
     @Override
-    public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
+    public E loadById(final long id, final Set<String> fetchSet) {
         return map.get(id);
     }
 
 //    @Override
-//    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
+//    public E loadByIdInsecure(final long id, final Set<String> fetchSet) {
 //        return map.get(id);
 //    }
 
     @Override
-    public E save(final E entity) throws RuntimeException {
+    public E save(final E entity) {
         if (!entity.isPersistent()) {
             throw new EntityServiceException("You cannot update an entity that has not been created");
         }
@@ -307,7 +307,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //    }
 
     @Override
-    public Boolean delete(E entity) throws RuntimeException {
+    public Boolean delete(E entity) {
         if (map.remove(entity.getId()) != null) {
             return Boolean.TRUE;
         } else {
@@ -316,7 +316,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
 //    @Override
-//    public List<E> findByFolder(final DocRef folder, final Set<String> fetchSet) throws RuntimeException {
+//    public List<E> findByFolder(final DocRef folder, final Set<String> fetchSet) {
 //        final BaseResultList<E> results = find(null);
 //        if (results == null) {
 //            return null;
@@ -337,7 +337,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
-    public BaseResultList<E> find(final C criteria) throws RuntimeException {
+    public BaseResultList<E> find(final C criteria) {
         final List<E> list = new ArrayList<>();
         for (final E entity : map.values()) {
             if (criteria == null || isMatch(criteria, entity)) {
@@ -393,7 +393,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
                 entity = doSave(entity);
             }
 
-        } catch (final Exception e) {
+        } catch (final InstantiationException | IllegalAccessException | RuntimeException e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
@@ -545,7 +545,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         if (entityType == null) {
             try {
                 entityType = getEntityClass().newInstance().getType();
-            } catch (final Exception e) {
+            } catch (final InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }

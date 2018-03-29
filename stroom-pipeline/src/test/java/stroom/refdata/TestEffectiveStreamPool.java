@@ -103,7 +103,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             effectiveStreamPool
                     .get(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
             Assert.assertEquals("Database call", 3, findEffectiveStreamSourceCount);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }

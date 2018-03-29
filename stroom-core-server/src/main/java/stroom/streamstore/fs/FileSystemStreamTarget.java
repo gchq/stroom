@@ -256,8 +256,8 @@ public final class FileSystemStreamTarget implements StreamTarget {
                 if (Files.isRegularFile(manifestFile)) {
                     try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
                         attributeMap.read(inputStream, true);
-                    } catch (final Exception ex) {
-                        LOGGER.error("getAttributeMap()", ex);
+                    } catch (final IOException e) {
+                        LOGGER.error("getAttributeMap()", e);
                     }
                 }
             }

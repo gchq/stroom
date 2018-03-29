@@ -25,6 +25,7 @@ import stroom.util.ZipResource;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
@@ -40,20 +41,20 @@ public class TestBOMRemovalInputStream extends StroomUnitTest {
     public static ZipResource bomContent = new ZipResource("stroom/resource/server/BOM_CONTENT");
 
     @Test
-    public void testBlank() throws Exception {
+    public void testBlank() throws IOException {
         final LineNumberReader lineNumberReader = getLineNumberReader(bomBlank);
         Assert.assertNull(lineNumberReader.readLine());
         lineNumberReader.close();
     }
 
     @Test
-    public void testContent() throws Exception {
+    public void testContent() throws IOException {
         final LineNumberReader lineNumberReader = getLineNumberReader(bomContent);
         Assert.assertNotNull(lineNumberReader.readLine());
         lineNumberReader.close();
     }
 
-    private LineNumberReader getLineNumberReader(final ZipResource zipResource) throws Exception {
+    private LineNumberReader getLineNumberReader(final ZipResource zipResource) throws IOException {
         final ZipInputStream zipInputStream = zipResource.getZipInputStream();
         zipInputStream.getNextEntry();
 

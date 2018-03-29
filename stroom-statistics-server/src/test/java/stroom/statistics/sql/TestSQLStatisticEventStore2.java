@@ -256,7 +256,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testBuildCriteria_noDate() throws Exception {
+    public void testBuildCriteria_noDate() {
         final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final Query query = new Query(null, rootOperator.build());
@@ -270,7 +270,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testBuildCriteria_invalidDateCondition() throws Exception {
+    public void testBuildCriteria_invalidDateCondition() {
         final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String dateTerm = "2000-01-01T00:00:00.000Z,2010-01-01T00:00:00.000Z";
@@ -289,7 +289,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     @Test
-    public void testBuildCriteria_validDateTerm() throws Exception {
+    public void testBuildCriteria_validDateTerm() {
         final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
@@ -319,7 +319,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testBuildCriteria_invalidDateTermOnlyOneDate() throws Exception {
+    public void testBuildCriteria_invalidDateTermOnlyOneDate() {
         final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
@@ -339,7 +339,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testBuildCriteria_validDateTermOtherTermMissingFieldName() throws Exception {
+    public void testBuildCriteria_validDateTermOtherTermMissingFieldName() {
         final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
@@ -362,7 +362,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     @Test
-    public void testBuildCriteria_validDateTermOtherTermMissingFieldValue() throws Exception {
+    public void testBuildCriteria_validDateTermOtherTermMissingFieldValue() {
         final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
@@ -388,7 +388,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     @Test
-    public void testBuildCriteria_validDateTermAndOtherTerm() throws Exception {
+    public void testBuildCriteria_validDateTermAndOtherTerm() {
         final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";

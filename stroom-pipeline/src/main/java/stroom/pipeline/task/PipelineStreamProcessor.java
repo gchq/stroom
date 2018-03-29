@@ -21,19 +21,19 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.feed.MetaMap;
 import stroom.feed.FeedService;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.node.NodeCache;
-import stroom.pipeline.destination.Destination;
-import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.DefaultErrorWriter;
 import stroom.pipeline.EncodingSelection;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.StreamLocationFactory;
+import stroom.pipeline.destination.Destination;
+import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -71,12 +71,12 @@ import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
+import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
-import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -187,7 +187,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
             process();
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             outputError(e);
         }
     }
@@ -261,7 +261,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             taskContext.info(finishedInfo);
             LOGGER.info(finishedInfo);
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             outputError(e);
 
         } finally {
@@ -351,8 +351,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
             internalStatisticsReceiver.putEvent(event);
 
-        } catch (final Exception ex) {
-            LOGGER.error("recordStats", ex);
+        } catch (final RuntimeException e) {
+            LOGGER.error("recordStats", e);
         }
     }
 
@@ -462,7 +462,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                                 if (LOGGER.isTraceEnabled() && stream != null) {
                                     LOGGER.trace("Error while processing stream task: id = " + stream.getId(), e);
                                 }
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 outputError(e);
                             }
 
@@ -478,7 +478,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 if (LOGGER.isTraceEnabled() && stream != null) {
                     LOGGER.trace("Error while processing stream task: id = " + stream.getId(), e);
                 }
-            } catch (final Exception e) {
+            } catch (final IOException | RuntimeException e) {
                 // An exception that's gets here is definitely a failure.
                 outputError(e);
 
@@ -495,11 +495,11 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     if (LOGGER.isTraceEnabled() && stream != null) {
                         LOGGER.trace("Error while processing stream task: id = " + stream.getId(), e);
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     outputError(e);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final IOException | RuntimeException e) {
             outputError(e);
         }
     }
@@ -517,27 +517,27 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             metaData.put(StreamAttributeConstants.REC_FATAL, String.valueOf(getMarkerCount(Severity.FATAL_ERROR)));
             metaData.put(StreamAttributeConstants.DURATION, String.valueOf(recordCount.getDuration()));
             metaData.put(StreamAttributeConstants.NODE, nodeCache.getDefaultNode().getName());
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             outputError(e);
         }
     }
 
-    private void outputError(final Exception ex) {
-        outputError(ex, Severity.FATAL_ERROR);
+    private void outputError(final Exception e) {
+        outputError(e, Severity.FATAL_ERROR);
     }
 
     /**
      * Used to handle any errors that may occur during translation.
      */
-    private void outputError(final Exception ex, final Severity severity) {
-        if (errorReceiverProxy != null && !(ex instanceof LoggedException)) {
+    private void outputError(final Exception e, final Severity severity) {
+        if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
             try {
-                if (ex.getMessage() != null) {
-                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", ex.getMessage(), ex);
+                if (e.getMessage() != null) {
+                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", e.getMessage(), e);
                 } else {
-                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", ex.toString(), ex);
+                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", e.toString(), e);
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e2) {
                 // Ignore exception as we generated it.
             }
 
@@ -546,10 +546,10 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             }
 
             if (LOGGER.isTraceEnabled() && streamSource.getStream() != null) {
-                LOGGER.trace("Error while processing stream task: id = " + streamSource.getStream().getId(), ex);
+                LOGGER.trace("Error while processing stream task: id = " + streamSource.getStream().getId(), e);
             }
         } else {
-            LOGGER.error(MarkerFactory.getMarker("FATAL"), ex.getMessage(), ex);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
         }
     }
 

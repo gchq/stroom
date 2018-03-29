@@ -19,6 +19,7 @@ package stroom.pipeline.xsltfunctions;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 
 class HexToDec extends StroomExtensionFunctionCall {
@@ -30,7 +31,7 @@ class HexToDec extends StroomExtensionFunctionCall {
             final String hex = getSafeString(functionName, context, arguments, 0);
             final Long l = Long.parseLong(hex, 16);
             result = Long.toString(l);
-        } catch (final Exception e) {
+        } catch (final XPathException | RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append(e.getMessage());
             outputWarning(context, sb, e);

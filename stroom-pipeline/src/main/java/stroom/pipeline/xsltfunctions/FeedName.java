@@ -43,7 +43,7 @@ class FeedName extends StroomExtensionFunctionCall {
             if (feed != null) {
                 result = feed.getName();
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

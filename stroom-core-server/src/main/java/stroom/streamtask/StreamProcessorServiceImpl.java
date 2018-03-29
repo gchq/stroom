@@ -47,7 +47,7 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
 
     @Insecure
     @Override
-    public StreamProcessor loadByIdInsecure(final long id) throws RuntimeException {
+    public StreamProcessor loadByIdInsecure(final long id) {
         return loadById(id);
     }
 

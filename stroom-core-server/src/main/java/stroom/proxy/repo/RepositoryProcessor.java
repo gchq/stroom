@@ -124,7 +124,7 @@ public final class RepositoryProcessor {
             processFeeds(stroomZipRepository, feedPathMap);
 
             LOGGER.debug("Completed");
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -241,7 +241,7 @@ public final class RepositoryProcessor {
                                 if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
                                     zipFiles.add(file);
                                 }
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 LOGGER.error(e.getMessage(), e);
                             }
 
@@ -256,7 +256,7 @@ public final class RepositoryProcessor {
                     LOGGER.error(e.getMessage(), e);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 

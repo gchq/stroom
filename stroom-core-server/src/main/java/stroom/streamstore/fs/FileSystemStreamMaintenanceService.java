@@ -20,7 +20,6 @@ package stroom.streamstore.fs;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SupportsCriteriaLogging;
@@ -41,7 +40,6 @@ import stroom.util.io.FileUtil;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -334,8 +332,8 @@ public class FileSystemStreamMaintenanceService
                 LOGGER.debug("tryDelete() - File too new to delete {}", FileUtil.getCanonicalPath(deleteFile));
                 result.incrementTooNewToDeleteCount();
             }
-        } catch (final Exception ex) {
-            LOGGER.error("tryDelete() - Failed to delete file {}", FileUtil.getCanonicalPath(deleteFile), ex);
+        } catch (final IOException e) {
+            LOGGER.error("tryDelete() - Failed to delete file {}", FileUtil.getCanonicalPath(deleteFile), e);
         }
     }
 

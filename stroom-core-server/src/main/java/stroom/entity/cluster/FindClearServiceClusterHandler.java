@@ -57,7 +57,7 @@ class FindClearServiceClusterHandler extends AbstractTaskHandler<FindClearServic
 
             ((FindClearService) obj).findClear(task.getCriteria());
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 

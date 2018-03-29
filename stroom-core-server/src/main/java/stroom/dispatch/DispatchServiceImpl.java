@@ -83,7 +83,7 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
     }
 
     @Override
-    public <R extends SharedObject> R exec(final Action<R> action) throws RuntimeException {
+    public <R extends SharedObject> R exec(final Action<R> action) {
         final long startTime = System.currentTimeMillis();
 
         LOGGER.debug("exec() - >> {} {}", action.getClass().getName(), httpServletRequestHolder);
@@ -143,9 +143,9 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
 
             super.service(req, resp);
 
-        } catch (final Exception ex) {
-            LOGGER.error("handle() - {}", req.getRequestURI(), ex);
-            throw ex;
+        } catch (final RuntimeException e) {
+            LOGGER.error("handle() - {}", req.getRequestURI(), e);
+            throw e;
         }
     }
 

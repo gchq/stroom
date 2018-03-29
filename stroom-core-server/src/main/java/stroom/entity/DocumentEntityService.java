@@ -23,5 +23,5 @@ import stroom.entity.shared.HasLoadByUuid;
 import stroom.entity.shared.ProvidesNamePattern;
 
 public interface DocumentEntityService<E extends DocumentEntity> extends BaseEntityService<E>, HasLoadByUuid<E>, ProvidesNamePattern, DocumentActionHandler<E> {
-    E create(String name) throws RuntimeException;
+    E create(String name);
 }

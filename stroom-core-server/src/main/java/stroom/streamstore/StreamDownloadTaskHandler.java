@@ -68,7 +68,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
     }
 
     private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria findStreamCriteria,
-                                              Path data, final StreamDownloadSettings settings) throws RuntimeException {
+                                              Path data, final StreamDownloadSettings settings) {
         final BaseResultList<Stream> list = streamStore.find(findStreamCriteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();

@@ -205,7 +205,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(resourceName);
             try {
                 pipeline.process(input);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 // Ignore as some tests expect errors. These tests will get see that
                 // nothing was written.
             }

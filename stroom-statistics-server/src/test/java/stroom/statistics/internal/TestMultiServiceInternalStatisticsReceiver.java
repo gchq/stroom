@@ -59,7 +59,7 @@ public class TestMultiServiceInternalStatisticsReceiver {
     }
 
     @Test
-    public void putEvents() throws Exception {
+    public void putEvents() {
 
         //keyA has a docRef for both services
         Mockito.when(internalStatisticDocRefCache.getDocRefs(Mockito.eq(STAT_KEY_A)))

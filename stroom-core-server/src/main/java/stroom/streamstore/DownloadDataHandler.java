@@ -61,9 +61,9 @@ class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, Resour
 
             streamEventLog.exportStream(action.getCriteria(), null);
 
-        } catch (final Exception ex) {
-            streamEventLog.exportStream(action.getCriteria(), ex);
-            throw EntityServiceExceptionUtil.create(ex);
+        } catch (final RuntimeException e) {
+            streamEventLog.exportStream(action.getCriteria(), e);
+            throw EntityServiceExceptionUtil.create(e);
         }
         return new ResourceGeneration(resourceKey, new ArrayList<>());
     }

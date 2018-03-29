@@ -66,7 +66,7 @@ public class TestXMLWriter extends StroomUnitTest {
         boolean error = false;
         try {
             XMLUtil.prettyPrintXML(new ByteArrayInputStream("Test".getBytes()), new ByteArrayOutputStream());
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             error = true;
         }
         Assert.assertTrue(error);

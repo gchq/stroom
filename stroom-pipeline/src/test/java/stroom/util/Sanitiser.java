@@ -17,6 +17,7 @@
 package stroom.util;
 
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.entity.util.XMLUtil;
 import stroom.pipeline.DefaultLocationFactory;
@@ -33,8 +34,10 @@ import stroom.util.xml.SAXParserFactoryFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -49,11 +52,11 @@ public class Sanitiser {
         PARSER_FACTORY.setNamespaceAware(true);
     }
 
-    public Sanitiser(final Path in, final Path out) {
+    public Sanitiser(final Path in, final Path out) throws IOException, TransformerConfigurationException, SAXException {
         process(in, out);
     }
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) throws IOException, TransformerConfigurationException, SAXException {
         if (args.length != 2) {
             System.out.println("Bad arguments - provide input and output files.");
         }
@@ -61,7 +64,7 @@ public class Sanitiser {
         new Sanitiser(Paths.get(args[0]), Paths.get(args[1]));
     }
 
-    private void process(final Path in, final Path out) {
+    private void process(final Path in, final Path out) throws IOException, TransformerConfigurationException, SAXException {
         try (final Reader reader = Files.newBufferedReader(in, StreamUtil.DEFAULT_CHARSET);
              final Writer writer = Files.newBufferedWriter(out, StreamUtil.DEFAULT_CHARSET)) {
             final TransformerHandler th = XMLUtil.createTransformerHandler(true);
@@ -84,7 +87,7 @@ public class Sanitiser {
             xmlReader.setErrorHandler(new ErrorHandlerAdaptor("XMLReader", locationFactory, new FatalErrorReceiver()));
             xmlReader.parse(new InputSource(reader));
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             System.out.println("Error processing file: " + FileUtil.getCanonicalPath(in));
             e.printStackTrace();
         }

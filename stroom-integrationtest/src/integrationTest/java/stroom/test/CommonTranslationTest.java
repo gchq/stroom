@@ -90,7 +90,7 @@ public class CommonTranslationTest {
         this.streamStore = streamStore;
     }
 
-    public List<StreamProcessorTaskExecutor> processAll() throws Exception {
+    public List<StreamProcessorTaskExecutor> processAll() {
         // Force creation of stream tasks.
         if (streamTaskCreator instanceof StreamTaskCreator) {
             streamTaskCreator.createTasks(new SimpleTaskContext());

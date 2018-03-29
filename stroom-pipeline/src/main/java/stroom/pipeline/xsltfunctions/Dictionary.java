@@ -20,6 +20,7 @@ package stroom.pipeline.xsltfunctions;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 import stroom.dictionary.DictionaryStore;
 import stroom.query.api.v2.DocRef;
@@ -75,7 +76,7 @@ class Dictionary extends StroomExtensionFunctionCall {
                                 log(context, Severity.INFO, "Unable to find dictionary " + docRef, null);
                             }
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         log(context, Severity.ERROR, e.getMessage(), e);
                     }
 
@@ -83,7 +84,7 @@ class Dictionary extends StroomExtensionFunctionCall {
                     cachedData.put(name, result);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

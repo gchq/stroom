@@ -105,7 +105,7 @@ public class FileAppender extends AbstractAppender {
 
         } catch (final IOException e) {
             throw e;
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
         }
     }

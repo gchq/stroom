@@ -36,16 +36,16 @@ public class FindServiceHelper<E extends Entity, C extends BaseCriteria> {
     }
 
     // @Transactional
-    public BaseResultList<E> find(final C criteria, final FieldMap sqlFieldMap) throws RuntimeException {
+    public BaseResultList<E> find(final C criteria, final FieldMap sqlFieldMap) {
         return doBasicFind(criteria, sqlFieldMap);
     }
 
-    private BaseResultList<E> doBasicFind(final C criteria, final FieldMap sqlFieldMap) throws RuntimeException {
+    private BaseResultList<E> doBasicFind(final C criteria, final FieldMap sqlFieldMap) {
         return doBasicFind(criteria, sqlFieldMap, "e");
     }
 
     @SuppressWarnings("unchecked")
-    private BaseResultList<E> doBasicFind(final C criteria, final FieldMap sqlFieldMap, final String alias) throws RuntimeException {
+    private BaseResultList<E> doBasicFind(final C criteria, final FieldMap sqlFieldMap, final String alias) {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT ");
         sql.append(alias);

@@ -142,8 +142,8 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                         if (!taskContext.isTerminated()) {
                             complete = true;
                         }
-                    } catch (final Exception ex) {
-                        LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, stream}, ex);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, stream}, e);
                     }
                 }
             }
@@ -154,7 +154,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
             if (streamSource != null) {
                 try {
                     streamStore.closeStreamSource(streamSource);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
                 streamSource = null;

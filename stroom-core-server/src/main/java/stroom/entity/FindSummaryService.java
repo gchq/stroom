@@ -22,5 +22,5 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.SummaryDataRow;
 
 public interface FindSummaryService<C extends BaseCriteria> {
-    BaseResultList<SummaryDataRow> findSummary(C criteria) throws RuntimeException;
+    BaseResultList<SummaryDataRow> findSummary(C criteria);
 }

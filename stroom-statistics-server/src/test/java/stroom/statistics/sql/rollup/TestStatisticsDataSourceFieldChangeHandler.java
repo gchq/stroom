@@ -35,7 +35,7 @@ public class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
      * Go from B, C, D to A,B,D
      */
     @Test
-    public void testExec() throws Exception {
+    public void testExec() {
         final StatisticField fieldA = new StatisticField("A");
         final StatisticField fieldB = new StatisticField("B");
         final StatisticField fieldC = new StatisticField("C");

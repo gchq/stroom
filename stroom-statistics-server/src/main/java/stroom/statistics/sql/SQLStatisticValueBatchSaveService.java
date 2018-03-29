@@ -153,7 +153,7 @@ public class SQLStatisticValueBatchSaveService {
                     try {
                         preparedStatement.execute();
                         savedCount++;
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         // log the error and carry on with the rest
                         LOGGER.error(
                                 "Error while tyring to insert a SQL statistic record.  SQL: [{}], createMs: [{}], name: [{}], "

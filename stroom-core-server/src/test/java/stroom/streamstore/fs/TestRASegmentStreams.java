@@ -69,7 +69,7 @@ public class TestRASegmentStreams extends StroomUnitTest {
     }
 
     @Test
-    public void testBrokenBuffers() throws Exception {
+    public void testBrokenBuffers() throws IOException {
         final RASegmentOutputStream outputStream = new RASegmentOutputStream(
                 Files.newOutputStream(dir.resolve("main.dat")), Files.newOutputStream(dir.resolve("main.idx")));
 
@@ -98,7 +98,7 @@ public class TestRASegmentStreams extends StroomUnitTest {
     }
 
     @Test
-    public void testBrokenBuffers1() throws Exception {
+    public void testBrokenBuffers1() throws IOException {
         final RASegmentOutputStream outputStream = new RASegmentOutputStream(
                 Files.newOutputStream(dir.resolve("main.dat")), Files.newOutputStream(dir.resolve("main.idx")));
 

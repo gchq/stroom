@@ -85,7 +85,7 @@ public abstract class AbstractPoolCache<K, V> implements Clearable {
             // Get an item from the cache using the pool key.
             return cache.getUnchecked(poolKey);
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -113,7 +113,7 @@ public abstract class AbstractPoolCache<K, V> implements Clearable {
                     return deque;
                 });
 
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
                 throw new RuntimeException(e.getMessage(), e);
             }

@@ -38,7 +38,7 @@ public class LoggingModule extends AbstractModule {
 //        HttpServletRequestHolder httpServletRequestHolder = null;
 //        try {
 //            httpServletRequestHolder = httpServletRequestHolderProvider.get();
-//        } catch (final Exception e) {
+//        } catch (final RuntimeException e) {
 //            // Ignore
 //        }
 //

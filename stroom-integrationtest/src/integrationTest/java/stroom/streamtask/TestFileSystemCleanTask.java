@@ -41,6 +41,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
@@ -68,7 +69,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     private NodeService nodeService;
 
     @Test
-    public void testCheckCleaning() throws Exception {
+    public void testCheckCleaning() throws IOException {
         final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
         for (final Node node : nodeList) {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
@@ -188,7 +189,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testCheckCleaningLotsOfFiles() throws Exception {
+    public void testCheckCleaningLotsOfFiles() throws IOException {
         final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
         for (final Node node : nodeList) {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());

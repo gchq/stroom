@@ -43,7 +43,7 @@ class PipelineName extends StroomExtensionFunctionCall {
             if (pipelineEntity != null) {
                 result = pipelineEntity.getName();
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

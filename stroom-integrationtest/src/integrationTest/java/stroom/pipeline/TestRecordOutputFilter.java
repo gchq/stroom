@@ -79,7 +79,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     private PipelineScopeRunnable pipelineScopeRunnable;
 
     @Test
-    public void testAll() throws Exception {
+    public void testAll() {
         final String dir = "TestRecordOutputFilter/";
         final TextConverter textConverter = createTextConverter(dir + "TestRecordOutputFilter.ds3.xml",
                 "TestRecordOutputFilter", TextConverterType.DATA_SPLITTER);
@@ -91,7 +91,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     @Test
-    public void testMultiPart() throws Exception {
+    public void testMultiPart() {
         final String dir = "TestRecordOutputFilter/";
         final TextConverter textConverter = createTextConverter(dir + "TestRecordOutputFilter.ds3.xml",
                 "TestRecordOutputFilter", TextConverterType.DATA_SPLITTER);
@@ -141,7 +141,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     private void test(final PipelineEntity pipelineEntity, final String dir, final String inputStem,
-                      final String outputXMLStem, final String outputSAXStem, final String encoding) throws Exception {
+                      final String outputXMLStem, final String outputSAXStem, final String encoding) {
         pipelineScopeRunnable.scopeRunnable(() -> {
             try {
                 final Path tempDir = getCurrentTestDir();

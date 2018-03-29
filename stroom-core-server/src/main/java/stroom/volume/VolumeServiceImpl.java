@@ -438,7 +438,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
      * On creating a new volume create the directory Never create afterwards
      */
     @Override
-    public Volume save(final Volume entity) throws RuntimeException {
+    public Volume save(final Volume entity) {
         return entityManagerSupport.transactionResult(em -> {
             if (!entity.isPersistent()) {
                 VolumeState volumeState = entity.getVolumeState();
@@ -456,7 +456,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     @Override
-    public Boolean delete(final Volume entity) throws RuntimeException {
+    public Boolean delete(final Volume entity) {
         if (Boolean.TRUE.equals(super.delete(entity))) {
             return stroomEntityManager.deleteEntity(entity.getVolumeState());
         }
@@ -506,7 +506,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             if (value != null) {
                 volumeSelector = volumeSelectorMap.get(value);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage());
         }
 
@@ -625,7 +625,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             } else {
                 return Optional.empty();
             }
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
             return Optional.empty();
         }

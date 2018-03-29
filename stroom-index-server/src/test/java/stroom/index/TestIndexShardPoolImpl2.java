@@ -108,7 +108,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
             }
 
             simpleExecutor.stop(false);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }

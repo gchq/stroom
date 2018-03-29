@@ -47,7 +47,7 @@ public class TestInvalidXMLCharFilterReader {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         m_bmp_rep_twice = new char[0x20000];
         for (int i = 0; i != m_bmp_rep_twice.length; ++i)
             m_bmp_rep_twice[i] = (char) i;

@@ -303,7 +303,7 @@ public class ExpressionToFindCriteria {
             if (feed != null) {
                 return Collections.singleton(feed);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // Ignore.
         }
 
@@ -313,7 +313,7 @@ public class ExpressionToFindCriteria {
             if (feed != null) {
                 return Collections.singleton(feed);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // Ignore.
         }
 
@@ -328,7 +328,7 @@ public class ExpressionToFindCriteria {
             if (pipeline != null) {
                 return Collections.singleton(pipeline);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // Ignore.
         }
 
@@ -340,7 +340,7 @@ public class ExpressionToFindCriteria {
             if (list != null) {
                 return new HashSet<>(list);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // Ignore.
         }
 
@@ -418,7 +418,7 @@ public class ExpressionToFindCriteria {
         try {
             //empty optional will be caught below
             return DateExpressionParser.parse(value, context.timeZoneId, context.nowEpochMilli).get().toInstant().toEpochMilli();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new EntityServiceException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");
         }
@@ -483,7 +483,7 @@ public class ExpressionToFindCriteria {
                     throw new EntityServiceException(errorMsg);
                 }
                 set.add(val);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 final String errorMsg = "Unexpected value '" + value + "' used for " + field;
                 throw new EntityServiceException(errorMsg);
             }
@@ -516,7 +516,7 @@ public class ExpressionToFindCriteria {
                     throw new EntityServiceException(errorMsg);
                 }
                 entityIdSet.addAllEntities(val);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 final String errorMsg = "Unexpected value '" + value + "' used for " + field;
                 throw new EntityServiceException(errorMsg);
             }
@@ -549,7 +549,7 @@ public class ExpressionToFindCriteria {
                     throw new EntityServiceException(errorMsg);
                 }
                 entityIdSet.add(val);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 final String errorMsg = "Unexpected value '" + value + "' used for " + field;
                 throw new EntityServiceException(errorMsg);
             }

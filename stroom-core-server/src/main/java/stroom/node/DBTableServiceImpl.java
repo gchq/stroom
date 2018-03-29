@@ -21,12 +21,12 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
+import stroom.guice.StroomBeanStore;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.Secured;
 import stroom.util.shared.CompareUtil;
-import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -34,6 +34,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -142,8 +143,8 @@ public class DBTableServiceImpl implements DBTableService {
                 }
             }
 
-        } catch (final Exception ex) {
-            LOGGER.error("findSystemTableStatus()", ex);
+        } catch (final SQLException e) {
+            LOGGER.error("findSystemTableStatus()", e);
         }
     }
 }

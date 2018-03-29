@@ -95,7 +95,7 @@ class JWTService {
                 return jwtClaimsOptional.isPresent();
             }
 
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to verify token:", e.getMessage(), e);
             // If we get an exception verifying the token then we need to log the message
             // and continue as if the token wasn't provided.

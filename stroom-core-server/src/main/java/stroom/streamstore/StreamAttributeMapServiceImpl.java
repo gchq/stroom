@@ -108,7 +108,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
 
     @Override
     public BaseResultList<StreamAttributeMap> find(final FindStreamAttributeMapCriteria criteria)
-            throws RuntimeException {
+            {
         BaseResultList<StreamAttributeMap> result;
 
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
@@ -283,7 +283,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         Optional<T> optional = Optional.empty();
         try {
             optional = Optional.ofNullable(supplier.get());
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage());
         }
         return optional;
@@ -357,7 +357,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                         for (final Path file : allFiles) {
                             streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(file));
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error("loadAttributeMapFromFileSystem() ", e);
                     }
                 }

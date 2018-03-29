@@ -23,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
@@ -69,33 +70,33 @@ public class TestJSONParser extends StroomUnitTest {
     private final XMLSchemaService xmlSchemaService = new MockXMLSchemaService();
 
     @Test
-    public void testKV() throws Exception {
+    public void testKV() throws IOException {
         positiveTest("KV");
     }
 
     @Test
-    public void testSimple() throws Exception {
+    public void testSimple() throws IOException {
         positiveTest("Simple");
     }
 
     @Test
-    public void testMulti() throws Exception {
+    public void testMulti() throws IOException {
         positiveTest("Multi");
     }
 
-    private void negativeTest(final String stem, final String type) throws Exception {
+    private void negativeTest(final String stem, final String type) throws IOException {
         test(stem, "~" + type, true);
     }
 
-    private void positiveTest(final String stem) throws Exception {
+    private void positiveTest(final String stem) throws IOException {
         test(stem, "", false);
     }
 
-    private void positiveTest(final String stem, final String type) throws Exception {
+    private void positiveTest(final String stem, final String type) throws IOException {
         test(stem, "~" + type, false);
     }
 
-    private void test(final String stem, final String testType, final boolean expectedErrors) throws Exception {
+    private void test(final String stem, final String testType, final boolean expectedErrors) throws IOException {
         // Get the testing directory.
         final Path testDir = getTestDir();
 
@@ -186,7 +187,7 @@ public class TestJSONParser extends StroomUnitTest {
 
                 reader.parse(new InputSource(Files.newBufferedReader(input)));
             }
-        } catch (final Exception e) {
+        } catch (final SAXException | RuntimeException e) {
             e.printStackTrace();
 
         } finally {
@@ -232,7 +233,7 @@ public class TestJSONParser extends StroomUnitTest {
         return testDir;
     }
 
-    private XMLReader createReader() throws Exception {
+    private XMLReader createReader() {
         final JSONParserFactory factory = new JSONParserFactory();
         factory.setAddRootObject(false);
 

@@ -94,7 +94,7 @@ public class ContentPackImport {
                             } else {
                                 failedCounter.incrementAndGet();
                             }
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             LOGGER.error(e.getMessage(), e);
                         }
                     });
@@ -122,7 +122,7 @@ public class ContentPackImport {
 
             LOGGER.info("Completed import of content pack {}", FileUtil.getCanonicalPath(contentPack));
 
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Error importing content pack {}", FileUtil.getCanonicalPath(contentPack), e);
             moveFile(contentPack, contentPack.getParent().resolve(FAILED_DIR));
             return false;
@@ -162,7 +162,7 @@ public class ContentPackImport {
             //however it won't find any zips in here so will carry on regardless
             String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
             return Optional.of(Paths.get(codeSourceLocation).getParent());
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
             return Optional.empty();
         }

@@ -105,8 +105,8 @@ public class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTe
     // setOk(true);
     // }
     //
-    // } catch (Exception exception) {
-    // exception.printStackTrace();
+    // } catch (final RuntimeException e) {
+    // e.printStackTrace();
     // setOk(false);
     // }
     // }

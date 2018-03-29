@@ -7,11 +7,13 @@ import net.sf.saxon.trans.XPathException;
 import org.mortbay.jetty.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 
 import javax.inject.Inject;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -63,7 +65,7 @@ class FetchJson extends StroomExtensionFunctionCall {
                         break;
                 }
             }
-        } catch (Exception e) {
+        } catch (final SAXException | IOException | RuntimeException e) {
             LOGGER.warn("Could not make request to Annotations Service: " + e.getLocalizedMessage());
         }
 

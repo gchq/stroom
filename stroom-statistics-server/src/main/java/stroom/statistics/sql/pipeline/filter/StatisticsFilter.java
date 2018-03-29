@@ -213,14 +213,14 @@ public class StatisticsFilter extends AbstractXMLFilter {
                     }
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             error(e);
         }
 
         super.startElement(uri, localName, qName, atts);
     }
 
-    private void error(final Exception e) {
+    private void error(final RuntimeException e) {
         if (locator != null) {
             errorReceiverProxy.log(Severity.ERROR,
                     locationFactory.create(locator.getLineNumber(), locator.getColumnNumber()), getElementId(),
@@ -273,7 +273,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
                 }
                 try {
                     currentStatisticValue = Double.valueOf(textBuffer.toString());
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     throw new RuntimeException(String.format("Statistic vlaue [%s] cannot be converted to a double",
                             textBuffer.toString()), e);
                 }
@@ -288,7 +288,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
                 } else {
                     try {
                         currentStatisticCount = Long.valueOf(textBuffer.toString());
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         throw new RuntimeException(String.format("Statistic count [%s] cannot be converted to a long",
                                 textBuffer.toString()), e);
                     }
@@ -336,7 +336,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
             } else {
                 throw new RuntimeException(String.format("Encountered unexpected element with name [%s]", localName));
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             error(e);
         }
 
@@ -356,7 +356,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
         this.statisticStoreRef = statisticStoreRef;
     }
 
-    private void log(final Severity severity, final String message, final Exception e) {
+    private void log(final Severity severity, final String message, final RuntimeException e) {
         errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
     }
 }

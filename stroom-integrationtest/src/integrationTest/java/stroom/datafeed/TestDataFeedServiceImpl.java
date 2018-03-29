@@ -29,9 +29,11 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -66,7 +68,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testErrorNoParameters() throws Exception {
+    public void testErrorNoParameters() throws IOException, ServletException {
         dataFeedService.doPost(request, response);
         checkError(HttpServletResponse.SC_NOT_ACCEPTABLE, "Feed must be specified");
     }
@@ -82,7 +84,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testErrorCompressionInvalid() throws Exception {
+    public void testErrorCompressionInvalid() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("effectiveTime", DateUtil.createNormalDateTimeString());
         request.addHeader("compression", "UNKNOWN");
@@ -95,7 +97,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testOkCompressionNone() throws Exception {
+    public void testOkCompressionNone() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("effectiveTime", DateUtil.createNormalDateTimeString());
         request.addHeader("compression", "NONE");
@@ -111,7 +113,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testOkWithQueryString() throws Exception {
+    public void testOkWithQueryString() throws IOException, ServletException {
         request.setQueryString("feed=TEST-FEED" + "&periodStartTime=" + DateUtil.createNormalDateTimeString()
                 + "&periodEndTime=" + DateUtil.createNormalDateTimeString());
         request.setInputStream("SOME TEST DATA".getBytes());
@@ -126,7 +128,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testOkCompressionBlank() throws Exception {
+    public void testOkCompressionBlank() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -143,7 +145,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testOkCompressionNotStated() throws Exception {
+    public void testOkCompressionNotStated() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -159,7 +161,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testErrorCompressionGZIP() throws Exception {
+    public void testErrorCompressionGZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -174,7 +176,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testErrorCompressionZIP() throws Exception {
+    public void testErrorCompressionZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -189,7 +191,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testEmptyCompressionZIP() throws Exception {
+    public void testEmptyCompressionZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -203,7 +205,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testOKCompressionGZIP() throws Exception {
+    public void testOKCompressionGZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -222,7 +224,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testOKCompressionGZIP2() throws Exception {
+    public void testOKCompressionGZIP2() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -241,7 +243,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testOKCompressionZeroContent() throws Exception {
+    public void testOKCompressionZeroContent() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -255,7 +257,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testOKCompressionZIP() throws Exception {
+    public void testOKCompressionZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -272,7 +274,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testIOErrorWhileWriteUncompressesd() throws Exception {
+    public void testIOErrorWhileWriteUncompressesd() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -287,7 +289,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testIOErrorWhileWriteGZIP() throws Exception {
+    public void testIOErrorWhileWriteGZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -307,7 +309,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testIOErrorWhileWriteZIP() throws Exception {
+    public void testIOErrorWhileWriteZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());

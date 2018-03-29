@@ -32,7 +32,7 @@ public class DatabaseTool extends AbstractCommandLineTool {
     private String jdbcDriverUsername;
     private String jdbcDriverPassword;
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         new DatabaseTool().doMain(args);
     }
 
@@ -46,8 +46,8 @@ public class DatabaseTool extends AbstractCommandLineTool {
             }
             System.out.println("Connected!!");
 
-        } catch (final Exception ex) {
-            ex.printStackTrace();
+        } catch (final SQLException e) {
+            e.printStackTrace();
         }
     }
 

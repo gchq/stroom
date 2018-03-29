@@ -21,25 +21,25 @@ import org.junit.Test;
 
 public class TestSQLSafe {
     @Test
-    public void testEscapeChars_backslash() throws Exception {
+    public void testEscapeChars_backslash() {
         final String dirtyString = "ab\\c";
         doEscapeCharsTest(dirtyString, "ab\\\\c");
     }
 
     @Test
-    public void testEscapeChars_doubelQuote() throws Exception {
+    public void testEscapeChars_doubelQuote() {
         final String dirtyString = "a\"bc";
         doEscapeCharsTest(dirtyString, "a\\\"bc");
     }
 
     @Test
-    public void testEscapeChars_singleQuote() throws Exception {
+    public void testEscapeChars_singleQuote() {
         final String dirtyString = "abc'";
         doEscapeCharsTest(dirtyString, "abc\\'");
     }
 
     @Test
-    public void testEscapeChars_lotsOfChars() throws Exception {
+    public void testEscapeChars_lotsOfChars() {
         final String dirtyString = "a\"b\\c'";
         doEscapeCharsTest(dirtyString, "a\\\"b\\\\c\\'");
     }
@@ -52,14 +52,14 @@ public class TestSQLSafe {
     }
 
     @Test
-    public void testCleanWhiteSpace() throws Exception {
+    public void testCleanWhiteSpace() {
         final String dirty = "a\tb c\nd\fe";
         final String cleanString = SQLSafe.cleanWhiteSpace(dirty);
         Assert.assertEquals("a b c d e", cleanString);
     }
 
     @Test
-    public void testRegexTerm() throws Exception {
+    public void testRegexTerm() {
         final String dirty = "abc\\^$.|?*+()[{def";
         final String expected = "abc\\\\\\^\\$\\.\\|\\?\\*\\+\\(\\)\\[\\{def";
         final String cleaned = SQLSafe.cleanRegexpTerm(dirty);

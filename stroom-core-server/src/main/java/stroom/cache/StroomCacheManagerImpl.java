@@ -49,7 +49,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     }
 
     @Override
-    public BaseResultList<CacheInfo> find(final FindCacheInfoCriteria criteria) throws RuntimeException {
+    public BaseResultList<CacheInfo> find(final FindCacheInfoCriteria criteria) {
         final PageRequest pageRequest = criteria.obtainPageRequest();
 
         List<CacheInfo> list = findCaches(criteria);
@@ -106,7 +106,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
                                 final long nanos = Long.valueOf(v);
                                 map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000, true));
 
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 // Ignore.
                             }
                         }
@@ -150,7 +150,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             LOGGER.debug("Evicting cache entries for " + k);
             try {
                 v.getCache().cleanUp();
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         });
@@ -165,7 +165,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             LOGGER.debug("Clearing cache entries for " + k);
             try {
                 CacheUtil.clear(v.getCache());
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         });

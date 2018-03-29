@@ -39,6 +39,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +69,7 @@ public class StroomStreamProcessor {
         if (hostName == null) {
             try {
                 setHostName(InetAddress.getLocalHost().getHostName());
-            } catch (final Exception ex) {
+            } catch (final UnknownHostException e) {
                 setHostName("Unknown");
             }
         }

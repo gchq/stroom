@@ -164,7 +164,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      */
     Long deleteStream(Stream stream);
 
-    BaseResultList<Stream> find(OldFindStreamCriteria findStreamCriteria) throws RuntimeException;
+    BaseResultList<Stream> find(OldFindStreamCriteria findStreamCriteria);
 
     /**
      * <p>

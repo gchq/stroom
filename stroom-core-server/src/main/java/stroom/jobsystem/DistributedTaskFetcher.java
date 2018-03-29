@@ -231,7 +231,7 @@ public class DistributedTaskFetcher {
                     waitingToFetchTasks.set(true);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to fetch task!", e);
         }
     }

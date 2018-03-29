@@ -50,6 +50,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -323,7 +324,7 @@ public class DataRetentionExecutor {
                     final String data = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
                     return XMLMarshallerUtil.unmarshal(getContext(), Tracker.class, data);
                 }
-            } catch (final Exception e) {
+            } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
             return null;
@@ -334,7 +335,7 @@ public class DataRetentionExecutor {
                 final String data = XMLMarshallerUtil.marshal(getContext(), this);
                 final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
                 Files.write(path, data.getBytes(StreamUtil.DEFAULT_CHARSET));
-            } catch (final Exception e) {
+            } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         }

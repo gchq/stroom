@@ -181,9 +181,9 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
             Assert.assertNotNull(dbFd);
             // Assert.assertNotNull(dbFd.getFeed());
             // Assert.assertNotNull(dbFd.getReferenceFeed().iterator().next());
-        } catch (final Exception ex) {
-            ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+        } catch (final RuntimeException e) {
+            e.printStackTrace();
+            Assert.fail(e.getMessage());
         }
     }
 }

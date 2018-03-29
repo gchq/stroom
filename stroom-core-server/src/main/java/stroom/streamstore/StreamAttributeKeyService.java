@@ -24,5 +24,5 @@ import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeKey;
 
 public interface StreamAttributeKeyService extends BaseEntityService<StreamAttributeKey>, FindService<StreamAttributeKey, FindStreamAttributeKeyCriteria> {
-    BaseResultList<StreamAttributeKey> findAll() throws RuntimeException;
+    BaseResultList<StreamAttributeKey> findAll();
 }

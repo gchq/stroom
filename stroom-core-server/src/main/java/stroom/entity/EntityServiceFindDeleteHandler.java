@@ -62,7 +62,7 @@ class EntityServiceFindDeleteHandler
                     final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
                     logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 // Ignore.
             }
 

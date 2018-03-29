@@ -105,7 +105,7 @@ public class RefParser {
                     final String num = string.substring(pos, i);
                     try {
                         refGroup = Integer.parseInt(num);
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         throw new RuntimeException("Malformed lookup group '" + num + "' specified at position " + pos
                                 + " in reference '" + reference + "'");
                     }
@@ -133,7 +133,7 @@ public class RefParser {
                 final String num = string.substring(pos, chars.length);
                 try {
                     refGroup = Integer.parseInt(num);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     throw new RuntimeException("Malformed lookup group '" + num + "' specified at position " + pos
                             + " in reference '" + reference + "'");
                 }
@@ -164,7 +164,7 @@ public class RefParser {
             final int index = Integer.parseInt(num);
 
             return new MatchIndex(index, negative || positive);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(
                     "Malformed lookup index '" + num + "' specified in reference '" + reference + "'");
         }

@@ -33,6 +33,11 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.statistics.shared.StatisticStore;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticType;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.statistics.sql.entity.StatisticStoreValidator;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
@@ -45,13 +50,8 @@ import stroom.statistics.sql.search.FindEventCriteria;
 import stroom.statistics.sql.search.StatisticDataPoint;
 import stroom.statistics.sql.search.StatisticDataSet;
 import stroom.statistics.sql.search.ValueStatisticDataPoint;
-import stroom.statistics.shared.StatisticStore;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.StatisticType;
-import stroom.statistics.shared.common.CustomRollUpMask;
-import stroom.statistics.shared.common.StatisticRollUpType;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -386,7 +386,7 @@ public class SQLStatisticEventStore implements Statistics {
         final ZonedDateTime dateTime;
         try {
             dateTime = DateExpressionParser.parse(value, timeZoneId, nowEpochMilli).get();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
         }
 
@@ -501,8 +501,8 @@ public class SQLStatisticEventStore implements Statistics {
         LOGGER.debug("evict");
         try {
             objectPool.evict();
-        } catch (final Exception ex) {
-            LOGGER.error("evict", ex);
+        } catch (final Exception e) {
+            LOGGER.error("evict", e);
         }
     }
 
@@ -578,8 +578,11 @@ public class SQLStatisticEventStore implements Statistics {
             }
         } catch (final StatisticsEventValidationException seve) {
             throw new RuntimeException(seve.getMessage(), seve);
-        } catch (final Exception ex) {
-            LOGGER.error("putEvent()", ex);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("putEvent()", e);
+        } catch (final Exception e) {
+            LOGGER.error("putEvent()", e);
         }
     }
 
@@ -611,9 +614,9 @@ public class SQLStatisticEventStore implements Statistics {
                 }
             } catch (final StatisticsEventValidationException seve) {
                 throw new RuntimeException(seve.getMessage(), seve);
-            } catch (final Exception ex) {
-                LOGGER.error("putEvent()", ex);
-                throw new RuntimeException(String.format("Exception adding statistics to the aggregateMap"), ex);
+            } catch (final Exception e) {
+                LOGGER.error("putEvent()", e);
+                throw new RuntimeException(String.format("Exception adding statistics to the aggregateMap"), e);
             }
         }
     }
@@ -866,7 +869,7 @@ public class SQLStatisticEventStore implements Statistics {
 
     private class ObjectFactory extends BasePooledObjectFactory<SQLStatisticAggregateMap> {
         @Override
-        public SQLStatisticAggregateMap create() throws Exception {
+        public SQLStatisticAggregateMap create() {
             return createAggregateMap();
         }
 

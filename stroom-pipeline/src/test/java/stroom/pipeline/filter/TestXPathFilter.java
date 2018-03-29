@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
@@ -31,9 +32,12 @@ import stroom.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
 
 import javax.xml.namespace.NamespaceContext;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -49,7 +53,7 @@ public class TestXPathFilter extends StroomUnitTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
         final Path input = StroomPipelineTestFileUtil.getTestResourcesFile(INPUT);
         final SAXParser parser = PARSER_FACTORY.newSAXParser();
         final XMLReader xmlReader = parser.getXMLReader();
@@ -74,15 +78,14 @@ public class TestXPathFilter extends StroomUnitTest {
         testPathEquals("records/record/data[@name = 'FileNo']/@value", "1", steppingFilter);
     }
 
-    private void testPathExists(final String xPath, final SAXEventRecorder steppingFilter) throws Exception {
+    private void testPathExists(final String xPath, final SAXEventRecorder steppingFilter) throws XPathExpressionException {
         final XPathFilter xPathFilter = new XPathFilter();
         xPathFilter.setXPath(xPath);
         xPathFilter.setMatchType(MatchType.EXISTS);
         Assert.assertTrue(match(xPathFilter, steppingFilter));
     }
 
-    private void testPathEquals(final String xPath, final String value, final SAXEventRecorder steppingFilter)
-            throws Exception {
+    private void testPathEquals(final String xPath, final String value, final SAXEventRecorder steppingFilter) throws XPathExpressionException {
         final XPathFilter xPathFilter = new XPathFilter();
         xPathFilter.setXPath(xPath);
         xPathFilter.setMatchType(MatchType.EQUALS);
@@ -91,7 +94,7 @@ public class TestXPathFilter extends StroomUnitTest {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean match(final XPathFilter xPathFilter, final SAXEventRecorder steppingFilter) throws Exception {
+    private boolean match(final XPathFilter xPathFilter, final SAXEventRecorder steppingFilter) throws XPathExpressionException {
         final Configuration configuration = steppingFilter.getConfiguration();
         final NodeInfo nodeInfo = steppingFilter.getEvents();
         final NamespaceContext namespaceContext = steppingFilter.getNamespaceContext();

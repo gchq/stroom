@@ -141,7 +141,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
             if (lockFile != null) {
                 try {
                     Files.move(lockFile, file);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     throw new IOException("Failed to rename file " + lockFile + " to " + file);
                 }
             }
@@ -161,7 +161,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         if (lockFile != null) {
             try {
                 Files.delete(lockFile);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 throw new IOException("Failed to delete file " + lockFile);
             }
         }

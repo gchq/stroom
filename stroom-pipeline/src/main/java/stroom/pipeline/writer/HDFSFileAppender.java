@@ -120,7 +120,7 @@ public class HDFSFileAppender extends AbstractAppender {
         try {
             userGroupInformation.doAs(new PrivilegedExceptionAction<Void>() {
                 @Override
-                public Void run() throws Exception {
+                public Void run() {
                     final FileSystem hdfs = getHDFS(conf);
 
                     // run the passed lambda
@@ -172,7 +172,7 @@ public class HDFSFileAppender extends AbstractAppender {
 
         } catch (final IOException e) {
             throw e;
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
         }
     }
@@ -215,34 +215,38 @@ public class HDFSFileAppender extends AbstractAppender {
         try {
             hdfsLockedOutputStream = ugi.doAs(new PrivilegedExceptionAction<HDFSLockedOutputStream>() {
                 @Override
-                public HDFSLockedOutputStream run() throws Exception {
-                    final FileSystem hdfs = getHDFS();
-                    final Path dir = filePath.getParent();
+                public HDFSLockedOutputStream run() {
+                    try {
+                        final FileSystem hdfs = getHDFS();
+                        final Path dir = filePath.getParent();
 
-                    // Create the directory if it doesn't exist
-                    if (!hdfs.exists(dir)) {
-                        hdfs.mkdirs(dir);
+                        // Create the directory if it doesn't exist
+                        if (!hdfs.exists(dir)) {
+                            hdfs.mkdirs(dir);
+                        }
+
+                        final Path lockFile = createCleanPath(filePath + LOCK_EXTENSION);
+                        final Path outFile = filePath;
+
+                        // Make sure we can create both output files without
+                        // overwriting
+                        // another
+                        // file.
+                        if (hdfs.exists(lockFile)) {
+                            throw new ProcessException("Output file \"" + lockFile.toString() + "\" already exists");
+                        }
+
+                        if (hdfs.exists(outFile)) {
+                            throw new ProcessException("Output file \"" + outFile.toString() + "\" already exists");
+                        }
+
+                        // Get a writer for the new lock file.
+                        final OutputStream outputStream = new BufferedOutputStream(hdfs.create(lockFile));
+
+                        return new HDFSLockedOutputStream(outputStream, lockFile, outFile, hdfs);
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
                     }
-
-                    final Path lockFile = createCleanPath(filePath + LOCK_EXTENSION);
-                    final Path outFile = filePath;
-
-                    // Make sure we can create both output files without
-                    // overwriting
-                    // another
-                    // file.
-                    if (hdfs.exists(lockFile)) {
-                        throw new ProcessException("Output file \"" + lockFile.toString() + "\" already exists");
-                    }
-
-                    if (hdfs.exists(outFile)) {
-                        throw new ProcessException("Output file \"" + outFile.toString() + "\" already exists");
-                    }
-
-                    // Get a writer for the new lock file.
-                    final OutputStream outputStream = new BufferedOutputStream(hdfs.create(lockFile));
-
-                    return new HDFSLockedOutputStream(outputStream, lockFile, outFile, hdfs);
                 }
             });
         } catch (final InterruptedException e) {

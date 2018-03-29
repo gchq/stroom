@@ -65,7 +65,7 @@ public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicy
     }
 
     @Override
-    public BaseResultList<Policy> find(final FindPolicyCriteria criteria) throws RuntimeException {
+    public BaseResultList<Policy> find(final FindPolicyCriteria criteria) {
         return super.find(criteria);
     }
 

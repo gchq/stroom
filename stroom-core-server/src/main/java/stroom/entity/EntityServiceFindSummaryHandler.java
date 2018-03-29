@@ -62,7 +62,7 @@ class EntityServiceFindSummaryHandler
                     final SupportsCriteriaLogging<BaseCriteria> usesCriteria = (SupportsCriteriaLogging<BaseCriteria>) entityService;
                     usesCriteria.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 // Ignore.
             }
 

@@ -145,9 +145,12 @@ public final class FileSystemStreamSource implements StreamSource {
         if (attributeMap == null) {
             attributeMap = new MetaMap();
             try {
-                attributeMap.read(getChildStream(StreamType.MANIFEST).getInputStream(), true);
-            } catch (Exception ex) {
-                LOGGER.error("getAttributeMap()", ex);
+                final StreamSource streamSource = getChildStream(StreamType.MANIFEST);
+                if (streamSource != null) {
+                    attributeMap.read(streamSource.getInputStream(), true);
+                }
+            } catch (final RuntimeException | IOException e) {
+                LOGGER.error("getAttributeMap()", e);
             }
         }
         return attributeMap;

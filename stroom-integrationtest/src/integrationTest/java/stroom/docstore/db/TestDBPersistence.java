@@ -8,6 +8,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -20,7 +21,7 @@ public class TestDBPersistence extends AbstractCoreIntegrationTest {
     private Persistence persistence;
 
     @Test
-    public void test() throws Exception {
+    public void test() throws IOException {
         final String data = UUID.randomUUID().toString();
         final String data2 = UUID.randomUUID().toString();
         final DocRef docRef = new DocRef("test-type", "test-uuid", "test-name");

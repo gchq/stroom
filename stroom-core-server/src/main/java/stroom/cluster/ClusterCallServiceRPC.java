@@ -31,7 +31,7 @@ public class ClusterCallServiceRPC extends HessianServlet implements ClusterCall
     }
 
     @Override
-    public Object call(final Node sourceNode, final Node targetNode, final String beanName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) throws Exception {
+    public Object call(final Node sourceNode, final Node targetNode, final String beanName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
         return clusterCallService.call(sourceNode, targetNode, beanName, methodName, parameterTypes, args);
     }
 }

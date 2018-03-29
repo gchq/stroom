@@ -1,5 +1,6 @@
 package stroom.explorer;
 
+import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.PermissionInheritance;
@@ -65,7 +66,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                     LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for create operation");
                     break;
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -105,7 +106,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                     LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for copy operation");
                     break;
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -145,7 +146,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                     LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for move operation");
                     break;
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -162,7 +163,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         try {
             getNodeForDocRef(docRef).ifPresent(explorerTreeDao::remove);
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -283,7 +284,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             setTags(docNode);
             explorerTreeDao.addChild(folderNode, docNode);
 
-        } catch (final Exception e) {
+        } catch (final UniqueConstraintViolationException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -294,7 +295,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
             explorerTreeDao.move(docNode, folderNode);
 
-        } catch (final Exception e) {
+        } catch (final UniqueConstraintViolationException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -308,7 +309,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 docNode.setName(docRef.getName());
                 explorerTreeDao.update(docNode);
             }
-        } catch (final Exception e) {
+        } catch (final UniqueConstraintViolationException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }

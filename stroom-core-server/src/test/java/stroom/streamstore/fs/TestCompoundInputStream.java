@@ -241,7 +241,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
         try {
             compoundInputStream.getNextInputStream(2);
             Assert.fail("Expecting IO Error");
-        } catch (final Exception ex) {
+        } catch (final RuntimeException e) {
         }
         compoundInputStream.close();
     }
@@ -259,7 +259,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
             seg = compoundInputStream.getNextInputStream(1);
             seg.include(2);
             Assert.fail("Expecting IO Error");
-        } catch (final Exception ex) {
+        } catch (final RuntimeException e) {
         }
         StreamUtil.close(seg);
         compoundInputStream.close();
@@ -442,7 +442,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
                     }
                     seg.close();
                     compoundInputStream.close();
-                } catch (final Exception ex) {
+                } catch (final RuntimeException e) {
                     failed.append("Exception :" + check);
 
                 }

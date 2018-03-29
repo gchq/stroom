@@ -38,11 +38,9 @@ public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
 
     /**
      * Tests a basic XML fragment.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testBasicFragment() throws Exception {
+    public void testBasicFragment() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final TextConverterType textConverterType = TextConverterType.XML_FRAGMENT;
             final String textConverterLocation = "TestXMLFragmentWrapper/XMLFragmentWrapper.xml";

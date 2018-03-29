@@ -34,8 +34,6 @@ public class CacheManager implements AutoCloseable {
             close();
         } catch (final RuntimeException e) {
             throw e;
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

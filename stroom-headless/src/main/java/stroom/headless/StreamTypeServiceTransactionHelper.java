@@ -90,8 +90,8 @@ class StreamTypeServiceTransactionHelper {
                     sql.arg(streamType.getPpurpose());
                     sql.append(")");
                     stroomEntityManager.executeNativeUpdate(sql);
-                } catch (final Exception ex) {
-                    LOGGER.error("init() - Added initial stream type {}", streamType, ex);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("init() - Added initial stream type {}", streamType, e);
                 }
             }
         }

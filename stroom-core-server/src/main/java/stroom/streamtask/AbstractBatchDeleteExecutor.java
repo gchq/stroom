@@ -182,7 +182,7 @@ public abstract class AbstractBatchDeleteExecutor {
             try {
                 final long duration = ModelStringUtil.parseDurationString(durationString);
                 age = System.currentTimeMillis() - duration;
-            } catch (final Exception ex) {
+            } catch (final RuntimeException e) {
                 LOGGER.error("Error reading {}", property);
             }
         }

@@ -56,7 +56,7 @@ public class PostMessage {
                     frameListener.receiveMessage(event, message);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             Window.alert("PostMessage - receiveMessage() - " + e.getMessage());
         }
     }

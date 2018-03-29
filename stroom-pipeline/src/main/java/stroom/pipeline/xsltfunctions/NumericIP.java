@@ -19,6 +19,7 @@ package stroom.pipeline.xsltfunctions;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 import stroom.util.shared.Severity;
 
@@ -31,12 +32,12 @@ class NumericIP extends StroomExtensionFunctionCall {
             final String ipAddress = getSafeString(functionName, context, arguments, 0);
             try {
                 result = convert(ipAddress);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append(e.getMessage());
                 outputWarning(context, sb, e);
             }
-        } catch (final Exception e) {
+        } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

@@ -116,8 +116,8 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
             if (taskManager != null) {
                 taskManager.exec(action);
             }
-        } catch (final Exception ex) {
-            getLogger().error("sessionDestroyed()", ex);
+        } catch (final RuntimeException e) {
+            getLogger().error("sessionDestroyed()", e);
         }
     }
 

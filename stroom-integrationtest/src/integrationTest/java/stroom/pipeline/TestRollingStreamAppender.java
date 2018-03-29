@@ -20,12 +20,12 @@ import org.junit.Test;
 
 public class TestRollingStreamAppender extends AbstractStreamAppenderTest {
     @Test
-    public void testXML() throws Exception {
+    public void testXML() {
         test("TestRollingStreamAppender", "XML");
     }
 
     @Test
-    public void testText() throws Exception {
+    public void testText() {
         test("TestRollingStreamAppender", "Text");
     }
 }

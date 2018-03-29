@@ -38,11 +38,11 @@ public class EntityServiceHelper<E extends Entity> {
 //        this.queryAppender = queryAppender;
     }
 
-//    public E create(E entity) throws RuntimeException {
+//    public E create(E entity) {
 //        return create(entity, queryAppender);
 //    }
 
-    public E create(E entity, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
+    public E create(E entity, final QueryAppender<E, ?> queryAppender) {
         if (entity == null) {
             throw new EntityServiceException("Entity is null");
         }
@@ -64,11 +64,11 @@ public class EntityServiceHelper<E extends Entity> {
         return entity;
     }
 
-//    public E load(final E entity) throws RuntimeException {
+//    public E load(final E entity) {
 //        return load(entity, Collections.emptySet());
 //    }
 
-    public E load(final E entity, final Set<String> fetchSet, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
+    public E load(final E entity, final Set<String> fetchSet, final QueryAppender<E, ?> queryAppender) {
         if (entity == null) {
             return null;
         }
@@ -83,16 +83,16 @@ public class EntityServiceHelper<E extends Entity> {
         throw new RuntimeException("Entity does not have an id or uuid");
     }
 
-//    public E loadById(final long id) throws RuntimeException {
+//    public E loadById(final long id) {
 //        return loadById(id, Collections.emptySet());
 //    }
 //
-//    public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
+//    public E loadById(final long id, final Set<String> fetchSet) {
 //        return loadById(id, fetchSet, queryAppender);
 //    }
 
     @SuppressWarnings("unchecked")
-    public E loadById(final long id, final Set<String> fetchSet, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
+    public E loadById(final long id, final Set<String> fetchSet, final QueryAppender<E, ?> queryAppender) {
         E entity = null;
 
         final HqlBuilder sql = new HqlBuilder();
@@ -120,16 +120,16 @@ public class EntityServiceHelper<E extends Entity> {
         return entity;
     }
 
-//    public E loadByUuid(final String uuid) throws RuntimeException {
+//    public E loadByUuid(final String uuid) {
 //        return loadByUuid(uuid, Collections.emptySet());
 //    }
 //
-//    public E loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
+//    public E loadByUuid(final String uuid, final Set<String> fetchSet) {
 //        return loadByUuid(uuid, fetchSet, queryAppender);
 //    }
 
     @SuppressWarnings("unchecked")
-    public E loadByUuid(final String uuid, final Set<String> fetchSet, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
+    public E loadByUuid(final String uuid, final Set<String> fetchSet, final QueryAppender<E, ?> queryAppender) {
         E entity = null;
 
         final HqlBuilder sql = new HqlBuilder();
@@ -152,11 +152,11 @@ public class EntityServiceHelper<E extends Entity> {
         return entity;
     }
 
-//    public E save(E entity) throws RuntimeException {
+//    public E save(E entity) {
 //        return save(entity, queryAppender);
 //    }
 
-    public E save(E entity, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
+    public E save(E entity, final QueryAppender<E, ?> queryAppender) {
         if (entity != null && queryAppender != null) {
             queryAppender.preSave(entity);
         }
@@ -170,7 +170,7 @@ public class EntityServiceHelper<E extends Entity> {
         return entity;
     }
 
-    public Boolean delete(final E entity) throws RuntimeException {
+    public Boolean delete(final E entity) {
         return entityManager.deleteEntity(entity);
     }
 
@@ -182,7 +182,7 @@ public class EntityServiceHelper<E extends Entity> {
         if (entityType == null) {
             try {
                 entityType = entityClass.newInstance().getType();
-            } catch (final Exception e) {
+            } catch (final InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }

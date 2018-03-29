@@ -92,7 +92,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         loadEntityRef(future);
                         loading = true;
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     AlertEvent.fireErrorFromException(this, e, null);
                 }
             }

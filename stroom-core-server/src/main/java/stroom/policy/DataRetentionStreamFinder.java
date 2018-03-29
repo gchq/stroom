@@ -129,7 +129,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
                             }
                         });
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error("An error occurred processing stream " + streamId, e);
                 }
             }

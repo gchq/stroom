@@ -17,15 +17,21 @@
 package stroom.util.cert;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Collection;
 import java.util.HashMap;
@@ -124,9 +130,8 @@ public final class ImportKey {
             try (final OutputStream outputStream = Files.newOutputStream(Paths.get(keystore))) {
                 ks.store(outputStream, keyPass.toCharArray());
             }
-
-        } catch (final Exception ex) {
-            ex.printStackTrace();
+        } catch (final IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException | NoSuchProviderException | InvalidKeySpecException e) {
+            e.printStackTrace();
         }
     }
 }

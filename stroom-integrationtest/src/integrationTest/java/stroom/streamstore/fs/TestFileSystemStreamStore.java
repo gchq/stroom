@@ -124,7 +124,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testBasic() throws Exception {
+    public void testBasic() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createYearPeriod(2014))
                 .addTerm(StreamDataSource.EFFECTIVE_TIME, Condition.BETWEEN, createYearPeriod(2014))
@@ -150,7 +150,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testFeedFindAll() throws Exception {
+    public void testFeedFindAll() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
                         .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
@@ -162,7 +162,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testFeedFindSome() throws Exception {
+    public void testFeedFindSome() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
                         .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
@@ -176,7 +176,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testFeedFindNone() throws Exception {
+    public void testFeedFindNone() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
                 .addOperator(new ExpressionOperator.Builder(Op.NOT)
@@ -188,7 +188,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testFeedFindOne() throws Exception {
+    public void testFeedFindOne() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed2.getName())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
@@ -196,7 +196,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         testCriteria(new FindStreamCriteria(expression), 1);
     }
 
-    private void testCriteria(final FindStreamCriteria criteria, final int expectedStreams) throws Exception {
+    private void testCriteria(final FindStreamCriteria criteria, final int expectedStreams) throws IOException {
         streamStore.findDelete(new FindStreamCriteria());
 
         createStream(feed1, 1L, null);
@@ -209,7 +209,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testParentChild() throws Exception {
+    public void testParentChild() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
@@ -248,7 +248,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testFindDeleteAndUndelete() throws Exception {
+    public void testFindDeleteAndUndelete() throws IOException {
         final Stream stream = createStream(feed1, 1L, null);
 
         FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
@@ -294,7 +294,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testFindWithAllCriteria() throws Exception {
+    public void testFindWithAllCriteria() {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
                 .addTerm(StreamDataSource.EFFECTIVE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
@@ -317,7 +317,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     @StroomExpectedException(exception = LazyInitializationException.class)
-    public void testBasicImportExportList() throws Exception {
+    public void testBasicImportExportList() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
@@ -623,19 +623,19 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testDeleteStreamTarget() throws Exception {
+    public void testDeleteStreamTarget() throws IOException {
         final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
         doDeleteStreamTarget(stream);
 
         try {
             doDeleteStreamTarget(stream);
             Assert.fail();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
         }
     }
 
     @Test
-    public void testAppendStream() throws Exception {
+    public void testAppendStream() throws IOException {
         final String testString1 = FileSystemTestUtil.getUniqueTestString();
         final String testString2 = FileSystemTestUtil.getUniqueTestString();
         final String testString3 = FileSystemTestUtil.getUniqueTestString();
@@ -702,7 +702,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         streamStore.closeStreamSource(streamSource);
     }
 
-    private void doDeleteStreamTarget(final Stream stream) throws Exception {
+    private void doDeleteStreamTarget(final Stream stream) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
@@ -719,7 +719,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             // We shouldn't be able to close a stream target again.
             streamStore.closeStreamTarget(streamTarget);
             Assert.fail();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
         }
 
         streamStore.deleteStreamTarget(streamTarget);
@@ -730,7 +730,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             // We shouldn't be able to delete a stream target again.
             streamStore.deleteStreamTarget(streamTarget);
             Assert.fail();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
         }
 
         reloadedStream = streamStore.find(FindStreamCriteria.createWithStream(streamTarget.getStream())).getFirst();
@@ -743,7 +743,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     @StroomExpectedException(exception = {StreamException.class, IOException.class,
             RuntimeException.class})
-    public void testIOErrors() throws Exception {
+    public void testIOErrors() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);

@@ -63,7 +63,7 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
 
     @Override
 //    @Secured(permission = DocumentPermissionNames.UPDATE)
-    public Job save(final Job entity) throws RuntimeException {
+    public Job save(final Job entity) {
         // We always want to update a job even if we have a stale version.
         if (entity.isPersistent()) {
             final Job tmp = load(entity);

@@ -45,6 +45,7 @@ import stroom.util.config.StroomProperties;
 import stroom.volume.VolumeServiceImpl;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -101,7 +102,7 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testCheckArchive() throws Exception {
+    public void testCheckArchive() throws IOException {
         nodeCache.getDefaultNode();
         final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
         for (final Node node : nodeList) {

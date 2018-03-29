@@ -19,11 +19,13 @@ package stroom.pipeline.xsltfunctions;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import java.io.IOException;
 
 class Meta extends StroomExtensionFunctionCall {
     private final MetaDataHolder metaDataHolder;
@@ -42,10 +44,10 @@ class Meta extends StroomExtensionFunctionCall {
             try {
                 key = getSafeString(functionName, context, arguments, 0);
                 result = metaDataHolder.get(key);
-            } catch (final Exception e) {
+            } catch (final IOException | XPathException | RuntimeException e) {
                 outputWarning(context, new StringBuilder("Error fetching meta value for key '" + key + "'"), e);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

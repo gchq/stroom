@@ -29,7 +29,6 @@ import org.xml.sax.SAXException;
 import stroom.cache.StoredXsltExecutable;
 import stroom.cache.XSLTPool;
 import stroom.entity.shared.StringCriteria;
-import stroom.properties.StroomPropertyService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.XSLTService;
@@ -43,7 +42,6 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
@@ -51,7 +49,9 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.PipelineContext;
+import stroom.pipeline.writer.PathCreator;
 import stroom.pool.PoolItem;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Location;
@@ -253,7 +253,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 final String msg = "XSLT is required but either no XSLT was found or there is an error in the XSLT";
                 throw new ProcessException(msg);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), e.getMessage(), e);
             // If we aren't stepping then throw an exception to terminate early.
             if (!pipelineContext.isStepping()) {
@@ -590,8 +590,8 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 if (property != null) {
                     maxElements = Integer.parseInt(property);
                 }
-            } catch (final Exception ex) {
-                LOGGER.error("getMaxElements() - Integer.parseInt stroom.pipeline.xslt.maxElements", ex);
+            } catch (final RuntimeException e) {
+                LOGGER.error("getMaxElements() - Integer.parseInt stroom.pipeline.xslt.maxElements", e);
             }
         }
         return maxElements;

@@ -31,7 +31,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
         this.searchValue = searchValue;
     }
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         new IndexShardSearcherSimpleClient().doMain(args);
     }
 
@@ -84,7 +84,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
 //                    searcherManager.release(searcher);
 //                }
 //                indexShardSearcher.destroy();
-//            } catch (final Exception ex) {
+//            } catch (final RuntimeException e) {
 //                ex.printStackTrace();
 //            }
 //        }

@@ -22,11 +22,12 @@ import org.junit.runner.RunWith;
 import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestLineReader {
     @Test
-    public void test() throws Exception {
+    public void test() throws IOException {
         final StringBuilder in = new StringBuilder();
         for (int i = 0; i < 1000; i++) {
             in.append(i);

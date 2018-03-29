@@ -40,12 +40,12 @@ import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -170,12 +170,12 @@ public class ImportExportHelper {
                         Long newTime = null;
                         try {
                             newTime = DateUtil.parseNormalDateTimeString(newDateString);
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             // Ignore.
                         }
                         try {
                             newTime = Long.valueOf(newDateString);
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             // Ignore.
                         }
 
@@ -191,7 +191,7 @@ public class ImportExportHelper {
                 }
             }
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException | IOException e) {
             LOGGER.error(e.getMessage(), e);
             importState.addMessage(Severity.ERROR, e.getMessage());
         }
@@ -302,7 +302,7 @@ public class ImportExportHelper {
                     } else if (Boolean.class.equals(property.getType())) {
                         property.set(object, Boolean.valueOf(value));
                     } else if (property.getType().isEnum()) {
-                        property.set(object, Enum.valueOf((Class<Enum>)property.getType(), value));
+                        property.set(object, Enum.valueOf((Class<Enum>) property.getType(), value));
                     } else if (property.getType().isPrimitive()) {
                         if (property.getType().getName().equals("boolean")) {
                             property.set(object, Boolean.valueOf(value));
@@ -318,8 +318,8 @@ public class ImportExportHelper {
                     }
                 }
             }
-        } catch (final Exception ex) {
-            throw EntityServiceExceptionUtil.create(ex);
+        } catch (final RuntimeException | IllegalAccessException | InvocationTargetException e) {
+            throw EntityServiceExceptionUtil.create(e);
         }
     }
 
@@ -500,7 +500,7 @@ public class ImportExportHelper {
                                 if (docRef != null) {
                                     config.add(propertyName, docRef);
                                 }
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 LOGGER.debug(e.getMessage(), e);
                             }
                         } else if (value instanceof NamedEntity) {
@@ -510,7 +510,7 @@ public class ImportExportHelper {
                                 if (namedEntity != null) {
                                     config.add(propertyName, namedEntity.getName());
                                 }
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 LOGGER.debug(e.getMessage(), e);
                             }
                         } else if (value instanceof Date) {
@@ -527,17 +527,10 @@ public class ImportExportHelper {
             config.write(writer, entity.getType());
             dataMap.put("xml", writer.toString());
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException | IllegalAccessException | InvocationTargetException | IOException e) {
             messageList.add(new Message(Severity.ERROR, EntityServiceExceptionUtil.getDefaultMessage(e, e)));
         }
 
         return dataMap;
-    }
-
-    private static class EntityClassComparator implements Comparator<Class<? extends DocumentEntity>> {
-        @Override
-        public int compare(final Class<? extends DocumentEntity> o1, final Class<? extends DocumentEntity> o2) {
-            return o1.getSimpleName().compareTo(o2.getSimpleName());
-        }
     }
 }

@@ -94,7 +94,7 @@ public final class BeanPropertyUtil {
                                 ExtensionProvider instance;
                                 try {
                                     instance = (ExtensionProvider) extensionProvider.newInstance();
-                                } catch (final Exception e) {
+                                } catch (final InstantiationException | IllegalAccessException e) {
                                     throw new RuntimeException(e.getMessage(), e);
                                 }
                                 exportProperty = new Property(propertyName, true, instance, getMethod, setMethod);

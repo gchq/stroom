@@ -80,7 +80,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
             if (encoding != null && !encoding.isEmpty()) {
                 try {
                     charset = Charset.forName(encoding);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     error("Unsupported encoding '" + encoding + "', defaulting to UTF-8", e);
                 }
             }
@@ -96,7 +96,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
         if (encoding != null && !encoding.isEmpty()) {
             try {
                 charset = Charset.forName(encoding);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 error(e.getMessage(), e);
             }
         }
@@ -195,7 +195,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
         for (final DestinationProvider destinationProvider : destinationProviders) {
             try {
                 destinationProvider.endProcessing();
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 fatal(e);
             }
         }

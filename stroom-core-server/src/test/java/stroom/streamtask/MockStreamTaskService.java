@@ -34,7 +34,7 @@ import javax.inject.Singleton;
 public class MockStreamTaskService extends MockEntityService<StreamTask, FindStreamTaskCriteria>
         implements StreamTaskService {
     @Override
-    public BaseResultList<SummaryDataRow> findSummary(final FindStreamTaskCriteria criteria) throws RuntimeException {
+    public BaseResultList<SummaryDataRow> findSummary(final FindStreamTaskCriteria criteria) {
         return null;
     }
 

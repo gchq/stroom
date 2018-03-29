@@ -32,6 +32,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -53,11 +54,11 @@ public class BenchmarkIO {
         }
     }
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) throws IOException {
         new BenchmarkIO().run(args);
     }
 
-    private void run(final String[] args) throws Exception {
+    private void run(final String[] args) throws IOException {
         if (args.length == 0) {
             System.out.println("You must specify the file path where the test should be performed");
             System.out.println("Usage = <PATH> <RECORDS> <RUNS>");
@@ -92,7 +93,7 @@ public class BenchmarkIO {
         }
     }
 
-    private void test(final Path dir, final int recordCount) throws Exception {
+    private void test(final Path dir, final int recordCount) throws IOException {
         final byte[] data = createData(recordCount);
 
         final Path rawFile = dir.resolve("test.dat");
@@ -130,8 +131,7 @@ public class BenchmarkIO {
         Files.delete(bgzipIdxFile3);
     }
 
-    public void doTest(final Path file1, final Path file2, final byte[] data, final StreamType streamType)
-            throws Exception {
+    public void doTest(final Path file1, final Path file2, final byte[] data, final StreamType streamType) throws IOException {
         // Write the data.
         OutputStream os = null;
         switch (streamType) {

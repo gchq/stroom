@@ -78,7 +78,7 @@ public class StreamEventLog {
             event.getEventDetail().setImport(imp);
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to import stream!", e);
         }
     }
@@ -93,7 +93,7 @@ public class StreamEventLog {
                 objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
                 eventLoggingService.log(event);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to view stream!", e);
         }
     }
@@ -118,7 +118,7 @@ public class StreamEventLog {
 
                 eventLoggingService.log(event);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to export stream!", e);
         }
     }

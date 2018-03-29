@@ -22,9 +22,9 @@ import stroom.entity.shared.Entity;
 import java.util.Set;
 
 public interface EntityService<E extends Entity> {
-    E load(E entity) throws RuntimeException;
+    E load(E entity);
 
-    E load(E entity, Set<String> fetchSet) throws RuntimeException;
+    E load(E entity, Set<String> fetchSet);
 
     /**
      * Save the entity.
@@ -33,7 +33,7 @@ public interface EntityService<E extends Entity> {
      * @throws RuntimeException If a DB error occurred during deletion such as an optimistic
      *                          lock exception or entity constraint.
      */
-    E save(E entity) throws RuntimeException;
+    E save(E entity);
 
     /**
      * Delete an entity.
@@ -42,7 +42,7 @@ public interface EntityService<E extends Entity> {
      * @throws RuntimeException If a DB error occurred during deletion such as an optimistic
      *                          lock exception or entity constraint.
      */
-    Boolean delete(E entity) throws RuntimeException;
+    Boolean delete(E entity);
 
     /**
      * Get the type of entity class associated with this service.

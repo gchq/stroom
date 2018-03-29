@@ -53,7 +53,7 @@ class Classification extends StroomExtensionFunctionCall {
             }
 
             result = classification;
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

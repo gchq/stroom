@@ -367,8 +367,12 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     extractionTaskProducer.awaitCompletion();
                 }
             }
-        } catch (final Exception pEx) {
-            throw SearchException.wrap(pEx);
+        } catch (final InterruptedException e) {
+            // Interrupt the current thread again.
+            Thread.currentThread().interrupt();
+            throw SearchException.wrap(e);
+        } catch (final RuntimeException e) {
+            throw SearchException.wrap(e);
         }
     }
 
@@ -405,7 +409,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     } else if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Lucene Query is " + query1.toString());
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     error(e.getMessage(), e);
                 }
 
@@ -418,7 +422,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         };
     }
 
-    private void transfer(final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {
+    private void transfer(final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) throws InterruptedException {
         try {
             // If we aren't required to filter streams and aren't using pipelines to feed data to coprocessors then just do a simple data transfer to the coprocessors.
             final Set<Coprocessor> coprocessors = extractionCoprocessorsMap.get(null);
@@ -435,7 +439,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     complete = true;
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             error(e.getMessage(), e);
         }
     }
@@ -557,7 +561,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             sendData();
                         }
 
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         complete();
 
                         // If we failed to send the result or the source node rejected the result because the source

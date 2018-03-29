@@ -108,7 +108,7 @@ public class TextWriter extends AbstractWriter {
             } else {
                 this.header = StringEscapeUtils.unescapeJava(header).getBytes();
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw ProcessException.wrap(e.getMessage(), e);
         }
     }
@@ -121,7 +121,7 @@ public class TextWriter extends AbstractWriter {
             } else {
                 this.footer = StringEscapeUtils.unescapeJava(footer).getBytes();
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw ProcessException.wrap(e.getMessage(), e);
         }
     }

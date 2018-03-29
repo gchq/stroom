@@ -119,7 +119,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
                     } catch (final InterruptedException e) {
                         LOGGER.debug(e.getMessage(), e);
                         completedEventMapping.set(true);
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                         completedEventMapping.set(true);
                     }
@@ -273,7 +273,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
                     for (final Coprocessor coprocessor : coprocessors) {
                         try {
                             coprocessor.receive(values);
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             error(e.getMessage(), e);
                         }
                     }

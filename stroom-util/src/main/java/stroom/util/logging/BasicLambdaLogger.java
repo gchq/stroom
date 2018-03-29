@@ -20,7 +20,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             if (logger.isTraceEnabled()) {
                 logger.trace(message.get());
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -31,7 +31,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             if (logger.isTraceEnabled()) {
                 logger.trace(message.get(), t);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -45,7 +45,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                     logger.debug(msg);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -56,7 +56,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             if (logger.isDebugEnabled()) {
                 logger.debug(message.get(), t);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -67,7 +67,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             if (logger.isInfoEnabled()) {
                 logger.info(message.get());
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -78,7 +78,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             if (logger.isInfoEnabled()) {
                 logger.info(message.get(), t);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -89,7 +89,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             if (logger.isWarnEnabled()) {
                 logger.warn(message.get());
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -100,7 +100,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             if (logger.isWarnEnabled()) {
                 logger.warn(message.get(), t);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -111,7 +111,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             if (logger.isErrorEnabled()) {
                 logger.error(message.get());
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -122,7 +122,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             if (logger.isErrorEnabled()) {
                 logger.error(message.get(), t);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -134,7 +134,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             T result = timedWork.get();
             try {
                 logger.trace("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
             return result;
@@ -150,7 +150,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             T result = timedWork.get();
             try {
                 logger.debug("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
             return result;
@@ -166,7 +166,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             T result = timedWork.get();
             try {
                 logger.info("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
             return result;
@@ -182,7 +182,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             timedWork.run();
             try {
                 logger.trace("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
         } else {
@@ -197,7 +197,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             timedWork.run();
             try {
                 logger.debug("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
         } else {
@@ -212,7 +212,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             timedWork.run();
             try {
                 logger.info("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
         } else {

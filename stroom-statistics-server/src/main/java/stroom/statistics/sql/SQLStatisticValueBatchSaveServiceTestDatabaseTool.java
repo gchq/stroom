@@ -33,7 +33,7 @@ import java.util.List;
 public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseTool {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveServiceTestDatabaseTool.class);
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         new SQLStatisticValueBatchSaveServiceTestDatabaseTool().doMain(args);
     }
 

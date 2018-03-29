@@ -72,7 +72,7 @@ public class HttpPostFilter extends AbstractSamplingFilter {
             } else {
                 LOGGER.info("POSTed document to API.");
             }
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             String errorMessage = String.format("Unable to POST document to API: %s", e);
             errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, e);
             LOGGER.error(errorMessage);

@@ -65,7 +65,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
             if (indexWriter != null) {
                 try {
                     searcherManager = openWithWriter(indexWriter);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage());
                 }
             }

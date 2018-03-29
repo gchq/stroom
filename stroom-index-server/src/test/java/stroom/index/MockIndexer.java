@@ -20,6 +20,7 @@ import org.apache.lucene.document.Document;
 import stroom.index.shared.IndexShardKey;
 
 import javax.inject.Inject;
+import java.io.IOException;
 
 public class MockIndexer implements Indexer {
     private final IndexShardWriterCache indexShardWriterCache;
@@ -38,7 +39,7 @@ public class MockIndexer implements Indexer {
         try {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(key);
             indexShardWriter.addDocument(document);
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }

@@ -21,15 +21,16 @@ import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.StroomHessianProxyFactory;
+import stroom.guice.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.properties.StroomPropertyService;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
@@ -101,7 +102,7 @@ class ClusterCallServiceRemote implements ClusterCallService {
 
     @Override
     public Object call(final Node sourceNode, final Node targetNode, final String beanName, final String methodName,
-                       final java.lang.Class<?>[] parameterTypes, final Object[] args) throws Exception {
+                       final java.lang.Class<?>[] parameterTypes, final Object[] args) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Object result;
 
@@ -119,15 +120,22 @@ class ClusterCallServiceRemote implements ClusterCallService {
         }
 
         if (local) {
-            final Object service = beanStore.getInstance(beanName);
-            final Method method = service.getClass().getMethod(methodName, parameterTypes);
-            result = method.invoke(service, args);
-
+            try {
+                final Object service = beanStore.getInstance(beanName);
+                final Method method = service.getClass().getMethod(methodName, parameterTypes);
+                result = method.invoke(service, args);
+            } catch (final IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
         } else {
             ClusterCallService api = proxyMap.get(targetNode);
 
             if (api == null) {
-                api = createHessianProxy(targetNode);
+                try {
+                    api = createHessianProxy(targetNode);
+                } catch (final MalformedURLException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
                 proxyMap.put(targetNode, api);
             }
 
@@ -159,5 +167,6 @@ class ClusterCallServiceRemote implements ClusterCallService {
         }
 
         return result;
+
     }
 }

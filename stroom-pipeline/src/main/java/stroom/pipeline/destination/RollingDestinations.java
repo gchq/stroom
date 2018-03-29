@@ -19,12 +19,12 @@ package stroom.pipeline.destination;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.jobsystem.JobTrackedSchedule;
-import stroom.properties.StroomPropertyService;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
+import stroom.properties.StroomPropertyService;
+import stroom.task.TaskContext;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
-import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -166,7 +166,7 @@ public class RollingDestinations {
                 try {
                     try {
                         rolled = destination.tryFlushAndRoll(force, currentTime);
-                    } catch (final Exception e) {
+                    } catch (final IOException | RuntimeException e) {
                         rolled = true;
                         LOGGER.error(e.getMessage(), e);
                     }
@@ -185,7 +185,7 @@ public class RollingDestinations {
                 try {
                     try {
                         rolled = destination.tryFlushAndRoll(force, currentTime);
-                    } catch (final Exception e) {
+                    } catch (final IOException | RuntimeException e) {
                         rolled = true;
                         LOGGER.error(e.getMessage(), e);
                     }
@@ -209,10 +209,8 @@ public class RollingDestinations {
                 if (property != null) {
                     maxActiveDestinations = Integer.parseInt(property);
                 }
-            } catch (final Exception ex) {
-                LOGGER.error(
-                        "getMaxActiveDestinations() - Integer.parseInt stroom.pipeline.appender.maxActiveDestinations",
-                        ex);
+            } catch (final RuntimeException e) {
+                LOGGER.error("getMaxActiveDestinations() - Integer.parseInt stroom.pipeline.appender.maxActiveDestinations", e);
             }
         }
         return maxActiveDestinations;

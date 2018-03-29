@@ -208,7 +208,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testAsShort() throws Exception {
+    public void testAsShort() {
         final short mask = 2;
 
         final RollUpBitMask rollUpBitMask = RollUpBitMask.fromShort(mask);
@@ -218,14 +218,14 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testFromShort() throws Exception {
+    public void testFromShort() {
         final RollUpBitMask rollUpBitMask = RollUpBitMask.fromShort((short) 2);
 
         Assert.assertEquals("0002", rollUpBitMask.asHexString());
     }
 
     @Test(expected = RuntimeException.class)
-    public void testFromShortTooSmall() throws Exception {
+    public void testFromShortTooSmall() {
         final short tooSmall = -1;
 
         RollUpBitMask.fromShort(tooSmall);
@@ -250,7 +250,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testGetTagPositions() throws Exception {
+    public void testGetTagPositions() {
         // for each possible short value construct a RollUpBitMask object then
         // convert it to a list of tag positions and
         // back, asserting the two objects are equal
@@ -290,13 +290,13 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testIsTagPositionRolledUp_Exception() throws Exception {
+    public void testIsTagPositionRolledUp_Exception() {
         final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(Arrays.asList(0, 2, 3));
         rollUpBitMask.isTagPositionRolledUp(-1);
     }
 
     @Test
-    public void testConvert_AddedTags() throws Exception {
+    public void testConvert_AddedTags() {
         final Map<Integer, Integer> newToOldPosMap = new HashMap<>();
 
         // [a,c] => [a,b,c,d] (added pos 1 and 3)
@@ -323,7 +323,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testConvert_RemovedTags() throws Exception {
+    public void testConvert_RemovedTags() {
         final Map<Integer, Integer> newToOldPosMap = new HashMap<>();
 
         // [a,b,c,d] => [b,d] (removed pos 1 and 3)
@@ -355,7 +355,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testConvert_ReOrdered() throws Exception {
+    public void testConvert_ReOrdered() {
         final Map<Integer, Integer> newToOldPosMap = new HashMap<>();
 
         // [a,b,c] => [b,c,a]
@@ -387,7 +387,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testGetBooleanMask() throws Exception {
+    public void testGetBooleanMask() {
         RollUpBitMask mask;
         List<Integer> posList;
 
@@ -405,7 +405,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testGetTagPositionsAsList() throws Exception {
+    public void testGetTagPositionsAsList() {
         final List<Integer> tagPositionsInput = Arrays.asList(0, 2, 4);
 
         final RollUpBitMask mask = RollUpBitMask.fromTagPositions(tagPositionsInput);
@@ -414,7 +414,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testByteValueFromTagList() throws Exception {
+    public void testByteValueFromTagList() {
         final String allTags = "tag2,tag4,tag1,tag3";
         final String rolledUpTags = "tag3,tag1";
 
@@ -426,7 +426,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testByteValueFromTagList_noRollups() throws Exception {
+    public void testByteValueFromTagList_noRollups() {
         final String allTags = "tag2,tag4,tag1,tag3";
         final String rolledUpTags = "";
 
@@ -438,7 +438,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testByteValueFromTagList_missingTag() throws Exception {
+    public void testByteValueFromTagList_missingTag() {
         final String allTags = "tag2,tag4,tag1,tag3";
         final String rolledUpTags = "tag3,tagBad";
 
@@ -446,7 +446,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testIntValueFromTagList() throws Exception {
+    public void testIntValueFromTagList() {
         final String allTags = "tag2,tag4,tag1,tag3";
         final String rolledUpTags = "tag3,tag1";
 
@@ -458,7 +458,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testIntValueFromTagList_missingTag() throws Exception {
+    public void testIntValueFromTagList_missingTag() {
         final String allTags = "tag2,tag4,tag1,tag3";
         final String rolledUpTags = "tag3,tagBad";
 

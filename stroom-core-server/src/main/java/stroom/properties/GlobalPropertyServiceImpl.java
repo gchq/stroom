@@ -51,7 +51,7 @@ public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProp
     }
 
     @Override
-    public GlobalProperty save(final GlobalProperty entity) throws RuntimeException {
+    public GlobalProperty save(final GlobalProperty entity) {
         final GlobalProperty prop = super.save(entity);
 
         // Update the local property so that this node at least sees the latest value.
@@ -63,7 +63,7 @@ public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProp
     }
 
     @Override
-    public BaseResultList<GlobalProperty> find(final FindGlobalPropertyCriteria criteria) throws RuntimeException {
+    public BaseResultList<GlobalProperty> find(final FindGlobalPropertyCriteria criteria) {
         final BaseResultList<GlobalProperty> allProperties = super.find(new FindGlobalPropertyCriteria());
         final Map<String, GlobalProperty> allDatabase = allProperties
                 .stream()

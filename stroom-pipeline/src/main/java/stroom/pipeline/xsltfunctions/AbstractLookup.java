@@ -116,7 +116,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                     createLookupFailWarning(context, map, key, ms, t);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

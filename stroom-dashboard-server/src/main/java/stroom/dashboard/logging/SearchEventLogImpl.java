@@ -28,7 +28,6 @@ import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.datasource.DataSourceProviderRegistry;
 import stroom.dictionary.DictionaryStore;
 import stroom.entity.QueryDataLogUtil;
 import stroom.logging.StroomEventLoggingService;
@@ -63,8 +62,8 @@ public class SearchEventLogImpl implements SearchEventLog {
     public void search(final DocRef dataSourceRef,
                        final ExpressionOperator expression,
                        final String queryInfo,
-                       final Exception ex) {
-        search("Search", dataSourceRef, expression, queryInfo, ex);
+                       final Exception e) {
+        search("Search", dataSourceRef, expression, queryInfo, e);
     }
 
     @Override
@@ -78,8 +77,8 @@ public class SearchEventLogImpl implements SearchEventLog {
     public void batchSearch(final DocRef dataSourceRef,
                             final ExpressionOperator expression,
                             final String queryInfo,
-                            final Exception ex) {
-        search("Batch search", dataSourceRef, expression, queryInfo, ex);
+                            final Exception e) {
+        search("Batch search", dataSourceRef, expression, queryInfo, e);
     }
 
     @Override
@@ -93,8 +92,8 @@ public class SearchEventLogImpl implements SearchEventLog {
     public void downloadResults(final DocRef dataSourceRef,
                                 final ExpressionOperator expression,
                                 final String queryInfo,
-                                final Exception ex) {
-        downloadResults("Download search results", dataSourceRef, expression, queryInfo, ex);
+                                final Exception e) {
+        downloadResults("Download search results", dataSourceRef, expression, queryInfo, e);
     }
 
     @Override
@@ -102,7 +101,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                                 final DocRef dataSourceRef,
                                 final ExpressionOperator expression,
                                 final String queryInfo,
-                                final Exception ex) {
+                                final Exception e) {
         try {
             final String dataSourceName = getDataSourceName(dataSourceRef);
 
@@ -118,7 +117,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
             final Export exp = new Export();
             exp.setSource(multiObject);
-            exp.setOutcome(EventLoggingUtil.createOutcome(ex));
+            exp.setOutcome(EventLoggingUtil.createOutcome(e));
 
             final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
 
@@ -126,8 +125,8 @@ public class SearchEventLogImpl implements SearchEventLog {
             event.getEventDetail().setPurpose(getPurpose(queryInfo));
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+        } catch (final RuntimeException e2) {
+            LOGGER.error(e.getMessage(), e2);
         }
     }
 
@@ -136,7 +135,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                        final DocRef dataSourceRef,
                        final ExpressionOperator expression,
                        final String queryInfo,
-                       final Exception ex) {
+                       final Exception e) {
         try {
             String dataSourceName = getDataSourceName(dataSourceRef);
             if (dataSourceName == null || dataSourceName.isEmpty()) {
@@ -149,19 +148,19 @@ public class SearchEventLogImpl implements SearchEventLog {
             final Search search = new Search();
             search.setDataSources(dataSources);
             search.setQuery(getQuery(expression));
-            search.setOutcome(EventLoggingUtil.createOutcome(ex));
+            search.setOutcome(EventLoggingUtil.createOutcome(e));
 
             final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
             event.getEventDetail().setSearch(search);
             event.getEventDetail().setPurpose(getPurpose(queryInfo));
 
             eventLoggingService.log(event);
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+        } catch (final RuntimeException e2) {
+            LOGGER.error(e.getMessage(), e2);
         }
     }
 
-    public String getDataSourceName(final DocRef docRef) {
+    private String getDataSourceName(final DocRef docRef) {
         if (docRef == null) {
             return null;
         }

@@ -32,7 +32,7 @@ import javax.inject.Singleton;
 public class MockStreamProcessorService extends MockEntityService<StreamProcessor, FindStreamProcessorCriteria>
         implements StreamProcessorService {
     @Override
-    public StreamProcessor loadByIdInsecure(final long id) throws RuntimeException {
+    public StreamProcessor loadByIdInsecure(final long id) {
         return loadById(id);
     }
 

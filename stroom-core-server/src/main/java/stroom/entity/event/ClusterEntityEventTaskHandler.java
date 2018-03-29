@@ -40,7 +40,7 @@ class ClusterEntityEventTaskHandler implements TaskHandler<ClusterEntityEventTas
     public void exec(final ClusterEntityEventTask task, final TaskCallback<VoidResult> callback) {
         try {
             entityEventBusImpl.fireLocally(task.getEntityEvent());
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 

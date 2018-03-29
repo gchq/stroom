@@ -16,6 +16,7 @@
 
 package stroom.explorer;
 
+import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationException;
 import org.junit.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 
@@ -27,7 +28,7 @@ public class TestExplorerTree extends AbstractCoreIntegrationTest {
     private ExplorerTreeDao explorerTreeDao;
 
     @Test
-    public void testCreateTree() throws Exception {
+    public void testCreateTree() throws UniqueConstraintViolationException {
         ExplorerTreeNode root = explorerTreeDao.createRoot(newTreePojo("System"));
         ExplorerTreeNode a = explorerTreeDao.addChild(root, newTreePojo("A"));
         ExplorerTreeNode b = explorerTreeDao.addChild(root, newTreePojo("B"));

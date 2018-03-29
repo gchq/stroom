@@ -158,7 +158,7 @@ public abstract class StroomAbstractConnectorFactoryService<
                                     connectorVersion,
                                     factoryClass.getName()));
                 }
-            } catch (Exception e) {
+            } catch (final RuntimeException e) {
                 String factoryClassName = factoryClass.getName();
                 LAMBDA_LOGGER.error(() ->
                         LambdaLogger.buildMessage("Unable to initialise connector [{}] [{}] due to [{}], (enable DEBUG for full stack)",

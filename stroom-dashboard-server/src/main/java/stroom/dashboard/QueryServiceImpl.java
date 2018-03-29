@@ -63,7 +63,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
     }
 
     @Override
-    public QueryEntity create(final String name) throws RuntimeException {
+    public QueryEntity create(final String name) {
         final QueryEntity entity = super.create(name);
 
         // Create the initial user permissions for this new document.
@@ -110,7 +110,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
             final long rows = entityManager.executeNativeUpdate(sql);
             LOGGER.debug("Deleted " + rows + " rows");
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
