@@ -85,6 +85,9 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
                 storedData.put(Optional.of(values));
             } catch (final InterruptedException e) {
                 error(e.getMessage(), e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
         };
 
@@ -191,6 +194,9 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
             storedData.put(Optional.empty());
         } catch (final InterruptedException e) {
             LAMBDA_LOGGER.debug(e::getMessage, e);
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
         }
 
         try {

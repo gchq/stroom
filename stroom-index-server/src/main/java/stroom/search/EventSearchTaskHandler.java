@@ -110,6 +110,9 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
                 eventRefs.trim();
             }
         } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
+
             //Don't want to reset interrupt status as this thread will go back into
             //the executor's pool. Throwing an exception will terminate the task
             throw new RuntimeException(

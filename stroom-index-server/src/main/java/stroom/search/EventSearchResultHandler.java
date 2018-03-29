@@ -49,6 +49,9 @@ public class EventSearchResultHandler implements ResultHandler {
                 }
             }
         } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
+
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -65,6 +68,10 @@ public class EventSearchResultHandler implements ResultHandler {
                     pendingMerges.put(eventRefs);
                 } catch (final InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+
                     throw new RuntimeException(e.getMessage(), e);
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);

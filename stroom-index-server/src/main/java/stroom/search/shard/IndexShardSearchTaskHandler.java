@@ -121,6 +121,9 @@ public class IndexShardSearchTaskHandler {
                                         docIdStore.put(OptionalInt.empty());
                                     } catch (final InterruptedException e) {
                                         error(task, e.getMessage(), e);
+
+                                        // Continue to interrupt this thread.
+                                        Thread.currentThread().interrupt();
                                     }
                                 },
                                 () -> "searcher.search()");
@@ -144,10 +147,10 @@ public class IndexShardSearchTaskHandler {
                     searcherManager.release(searcher);
                 }
             } catch (final InterruptedException e) {
-                // Interrupt the thread again.
-                Thread.currentThread().interrupt();
-
                 error(task, e.getMessage(), e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             } catch (final IOException | RuntimeException e) {
                 error(task, e.getMessage(), e);
             }

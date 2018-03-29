@@ -102,9 +102,10 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
         futures.forEach(future -> {
             try {
                 metaDataList.add(future.get());
-            } catch (InterruptedException e) {
-                LOGGER.warn("Thread {} interrupted", Thread.currentThread().getName());
+            } catch (final InterruptedException e) {
+                // Continue to interrupt this thread.
                 Thread.currentThread().interrupt();
+                LOGGER.warn("Thread {} interrupted", Thread.currentThread().getName());
             } catch (ExecutionException e) {
                 //this is sync so throw rather than using the callback
                 throw new RuntimeException(

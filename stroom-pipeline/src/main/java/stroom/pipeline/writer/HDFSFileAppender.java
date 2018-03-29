@@ -130,6 +130,7 @@ public class HDFSFileAppender extends AbstractAppender {
                 }
             });
         } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -250,6 +251,7 @@ public class HDFSFileAppender extends AbstractAppender {
                 }
             });
         } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
         }
 

@@ -182,6 +182,9 @@ public class AsyncTaskHelper<R> {
             }
         } catch (final InterruptedException e) {
             LOGGER.error("Thread interrupted!", e);
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
         }
     }
 

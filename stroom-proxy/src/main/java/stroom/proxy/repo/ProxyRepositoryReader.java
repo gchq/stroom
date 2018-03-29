@@ -106,9 +106,11 @@ public final class ProxyRepositoryReader {
                 } catch (final TimeoutException e) {
                     // Ignore.
                 } catch (final InterruptedException e) {
-                    Thread.currentThread().interrupt();
                     LOGGER.error(e.getMessage(), e);
                     waiting = false;
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
                 } catch (final ExecutionException | RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                     waiting = false;
@@ -128,6 +130,9 @@ public final class ProxyRepositoryReader {
                     condition.await(1, TimeUnit.SECONDS);
                 } catch (final InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
                 }
 
                 if (!finish.get()) {

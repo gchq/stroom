@@ -92,9 +92,10 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         while ((future = kafkaMetaFutures.poll()) != null) {
             try {
                 future.get();
-            } catch (InterruptedException e) {
-                //reset interrupt status
+            } catch (final InterruptedException e) {
+                // Continue to interrupt this thread.
                 Thread.currentThread().interrupt();
+
                 throw new ProcessException("Thread interrupted");
             } catch (ExecutionException e) {
                 error(e);

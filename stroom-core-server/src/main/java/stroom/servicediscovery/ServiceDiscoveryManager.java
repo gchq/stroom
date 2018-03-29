@@ -91,7 +91,8 @@ public class ServiceDiscoveryManager {
         curatorFramework.start();
         try {
             curatorFramework.blockUntilConnected();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
             throw new RuntimeException("Thread interrupted waiting for connection to zookeeper");
         }

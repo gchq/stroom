@@ -170,9 +170,10 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                 } catch (final NullClusterStateException | NodeNotFoundException | RuntimeException e) {
                     resultCollector.getErrorSet(sourceNode).add(e.getMessage());
                 } catch (final InterruptedException e) {
-                    // Interrupt this thread again.
-                    Thread.currentThread().interrupt();
                     resultCollector.getErrorSet(sourceNode).add(e.getMessage());
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
                 } finally {
                     taskContext.info(task.getSearchName() + " - complete");
 

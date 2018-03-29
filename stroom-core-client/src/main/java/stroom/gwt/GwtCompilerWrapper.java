@@ -65,8 +65,10 @@ public class GwtCompilerWrapper {
     private static void doSleep(final long timeMs) {
         try {
             Thread.sleep(timeMs);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             System.out.println("Thread interrupted");
+
+            // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
         }
     }

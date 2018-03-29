@@ -53,6 +53,9 @@ class IndexShardHitCollector extends SimpleCollector {
             // Add to the hit count.
             hitCount.incrementAndGet();
         } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
+
             throw new RuntimeException(e.getMessage(), e);
         }
     }

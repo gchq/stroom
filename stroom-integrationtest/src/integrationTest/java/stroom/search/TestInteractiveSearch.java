@@ -458,6 +458,8 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         try {
             complete.await();
         } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e.getMessage(), e);
         }
 

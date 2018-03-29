@@ -202,6 +202,9 @@ public class LifecycleServiceImpl implements LifecycleService {
                     scheduledExecutorService.awaitTermination(1, TimeUnit.MINUTES);
                 } catch (final InterruptedException e) {
                     LOGGER.error("Waiting termination interrupted!", e);
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
                 }
             }
 

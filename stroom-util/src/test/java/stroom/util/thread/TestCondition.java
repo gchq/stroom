@@ -60,6 +60,8 @@ public class TestCondition {
             System.out.println("awake");
             sleepTime.set(System.currentTimeMillis() - time);
         } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
         }
 
         Assert.assertTrue(sleepTime.get() < 2000);

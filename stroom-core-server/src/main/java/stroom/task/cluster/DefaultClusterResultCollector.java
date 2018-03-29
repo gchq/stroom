@@ -169,6 +169,7 @@ public class DefaultClusterResultCollector<R extends SharedObject> implements Cl
             waitTimeRemainingNS = 0;
             LOGGER.error(e.getMessage(), e);
 
+            // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
         } finally {
             lock.unlock();

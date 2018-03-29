@@ -126,6 +126,9 @@ public class SimpleProcessorFactory implements ProcessorFactory {
                 }
             } catch (final InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
         }
 

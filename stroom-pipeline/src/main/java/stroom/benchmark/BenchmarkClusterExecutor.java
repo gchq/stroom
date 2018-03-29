@@ -183,9 +183,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
         // Create the benchmark.
         createBenchmark();
-        // } catch (final InterruptedException e) {
-        // LOGGER.error(e, e);
-        // }
 
         // // Don't delete data if we were asked to stop.
         // if (!isStopping()) {

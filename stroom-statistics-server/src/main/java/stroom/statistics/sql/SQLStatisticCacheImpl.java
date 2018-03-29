@@ -141,6 +141,9 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
 
         } catch (final InterruptedException e) {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), "doFlush() - Not expecting InterruptedException", e);
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
         }
     }
 

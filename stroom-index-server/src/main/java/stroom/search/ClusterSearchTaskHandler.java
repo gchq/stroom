@@ -268,9 +268,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             resultSender.awaitCompletion();
                         }
                     } catch (final InterruptedException e) {
-                        // Interrupt the thread again.
-                        Thread.currentThread().interrupt();
-
                         try {
                             callback.onFailure(e);
                         } catch (final RuntimeException e2) {
@@ -278,6 +275,9 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             LOGGER.info("Terminating search because we have been interrupted");
                             taskContext.terminate();
                         }
+
+                        // Continue to interrupt this thread.
+                        Thread.currentThread().interrupt();
 
                     } catch (final RuntimeException e) {
                         try {
@@ -380,8 +380,9 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 }
             }
         } catch (final InterruptedException e) {
-            // Interrupt the current thread again.
+            // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
+
             throw SearchException.wrap(e);
         } catch (final RuntimeException e) {
             throw SearchException.wrap(e);
@@ -472,6 +473,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             try {
                 errors.put(msg);
             } catch (final InterruptedException ie) {
+                // Continue to interrupt this thread.
                 Thread.currentThread().interrupt();
             }
         }

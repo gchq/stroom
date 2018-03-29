@@ -108,6 +108,9 @@ public class DistributedTaskFetcher {
             }
         } catch (final InterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
         }
     }
 
