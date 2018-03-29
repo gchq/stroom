@@ -118,13 +118,13 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
         commonTestScenarioCreator.createStreamProcessor(findStreamQueryData);
 
-        for (int i = 0; i < 3000; i++) {
+        for (int i = 0; i < 1000; i++) {
             commonTestScenarioCreator.createSample2LineRawFile(feed1, StreamType.RAW_EVENTS);
             commonTestScenarioCreator.createSample2LineRawFile(feed2, StreamType.RAW_EVENTS);
         }
 
         final int initialQueueSize = StroomProperties.getIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, 1000);
-        StroomProperties.setIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, 5000, StroomProperties.Source.TEST);
+        StroomProperties.setIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, 1000, StroomProperties.Source.TEST);
         StroomProperties.setBooleanProperty(StreamTaskCreatorImpl.STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY, false, StroomProperties.Source.TEST);
 
         streamTaskCreator.createTasks(new SimpleTaskContext());
@@ -134,14 +134,14 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         // recent stream info. This isn't a problem but this can't be checked in this test with MySql.
         // Assert.assertTrue(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail());
 
-        Assert.assertEquals(5000, commonTestControl.countEntity(StreamTask.class));
-        List<StreamTask> tasks = streamTaskCreator.assignStreamTasks(node, 5000);
-        Assert.assertEquals(5000, tasks.size());
+        Assert.assertEquals(1000, commonTestControl.countEntity(StreamTask.class));
+        List<StreamTask> tasks = streamTaskCreator.assignStreamTasks(node, 1000);
+        Assert.assertEquals(1000, tasks.size());
 
         streamTaskCreator.createTasks(new SimpleTaskContext());
         Assert.assertTrue(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail());
-        Assert.assertEquals(6000, commonTestControl.countEntity(StreamTask.class));
-        tasks = streamTaskCreator.assignStreamTasks(node, 5000);
+        Assert.assertEquals(2000, commonTestControl.countEntity(StreamTask.class));
+        tasks = streamTaskCreator.assignStreamTasks(node, 1000);
         Assert.assertEquals(1000, tasks.size());
 
         StroomProperties.setBooleanProperty(StreamTaskCreatorImpl.STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY, true, StroomProperties.Source.TEST);
