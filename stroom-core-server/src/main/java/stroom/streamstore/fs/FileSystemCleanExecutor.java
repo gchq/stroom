@@ -36,7 +36,6 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -169,8 +168,15 @@ public class FileSystemCleanExecutor {
                 }
 
                 while (asyncTaskHelper.busy()) {
-                    // Wait for all task steps to complete.
-                    ThreadUtil.sleep(500);
+                    try {
+                        // Wait for all task steps to complete.
+                        Thread.sleep(500);
+                    } catch (final InterruptedException e) {
+                        LOGGER.error(e.getMessage(), e);
+
+                        // Continue to interrupt this thread.
+                        Thread.currentThread().interrupt();
+                    }
 
                     if (taskContext.isTerminated()) {
                         logInfo("Stopping file system clean task.");

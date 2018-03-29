@@ -2,7 +2,6 @@ package stroom.streamtask;
 
 import stroom.proxy.repo.StroomZipFile;
 import stroom.util.io.FileUtil;
-import stroom.util.thread.ThreadUtil;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -38,7 +37,7 @@ public class ProxyAggregationLoader {
     }
 
     //main method for manually testing proxy aggregation with a running stroom instance
-    public static void main(final String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException, InterruptedException {
 
         final Path proxyDir = Paths.get("/home/dev/tmp/dev/proxy");
 //        final File proxyDir = new File("/tmp/stroom/dev/proxy");
@@ -49,7 +48,7 @@ public class ProxyAggregationLoader {
             final Path testFile1 = proxyDir.resolve(String.format("%08d", i) + ".zip");
             int feedNo = (i % 4) + 1;
             writeTestFile(testFile1, "TEST_FEED_" + feedNo, i + "-data1\n" + i + "-data1\n");
-            ThreadUtil.sleep(200);
+            Thread.sleep(200);
         }
     }
 }

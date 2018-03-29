@@ -20,11 +20,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class TestClusterLockService extends AbstractCoreIntegrationTest {
     @Inject
@@ -33,31 +33,28 @@ public class TestClusterLockService extends AbstractCoreIntegrationTest {
     private StroomDatabaseInfo stroomDatabaseInfo;
 
     @Test
-    public void test() {
+    public void test() throws InterruptedException {
+        final CountDownLatch countDownLatch = new CountDownLatch(2);
         final List<Integer> sequence = new ArrayList<>(3);
 
         // This thread should acquire the lock first stopping the second thread
         // from adding to the sequence until after this thread completes.
-        final Thread thread1 = new Thread() {
-            @Override
-            public void run() {
-                testClusterLockServiceTransaction.thread1("TEST", sequence);
-            }
-        };
+        final Thread thread1 = new Thread(() -> {
+            testClusterLockServiceTransaction.thread1("TEST", sequence);
+            countDownLatch.countDown();
+        });
 
-        final Thread thread2 = new Thread() {
-            @Override
-            public void run() {
-                testClusterLockServiceTransaction.thread2("TEST", sequence);
-            }
-        };
+        final Thread thread2 = new Thread(() -> {
+            testClusterLockServiceTransaction.thread2("TEST", sequence);
+            countDownLatch.countDown();
+        });
 
         // Start the threads.
         thread1.start();
         thread2.start();
 
         // Now make sure the sequence is as expected.
-        Assert.assertTrue(ThreadUtil.sleep(3000));
+        countDownLatch.await();
         Assert.assertEquals(3, sequence.size());
         Assert.assertEquals(1, sequence.get(0).intValue());
 

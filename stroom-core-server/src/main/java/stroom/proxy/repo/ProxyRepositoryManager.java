@@ -7,7 +7,6 @@ import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -99,18 +98,24 @@ public class ProxyRepositoryManager {
         // Rolling?
         if (scheduler != null) {
             CompletableFuture.runAsync(() -> {
-                        while (!finish) {
-                            // Sleep for a second
-                            ThreadUtil.sleep(1000);
+                try {
+                    while (!finish) {
+                        // Sleep for a second
+                        Thread.sleep(1000);
 
-                            try {
-                                doRunWork();
-                            } catch (final RuntimeException e) {
-                                LOGGER.error("run() Exception", e);
-                            }
+                        try {
+                            doRunWork();
+                        } catch (final RuntimeException e) {
+                            LOGGER.error("run() Exception", e);
                         }
                     }
-            );
+                } catch (final InterruptedException e) {
+                    LOGGER.error(e.getMessage(), e);
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+                }
+            });
         }
     }
 
@@ -172,7 +177,7 @@ public class ProxyRepositoryManager {
         }
     }
 
-    public StroomZipRepository getActiveRepository() {
+    StroomZipRepository getActiveRepository() {
         if (activeRepository.get() == null) {
             synchronized (ProxyRepositoryManager.class) {
                 if (activeRepository.get() == null) {

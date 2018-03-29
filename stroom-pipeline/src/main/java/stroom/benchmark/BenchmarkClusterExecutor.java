@@ -58,16 +58,15 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.GenericServerTask;
+import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.date.DateUtil;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
-import stroom.task.TaskContext;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -320,73 +319,80 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final StreamType processedStreamType,
                              final StreamProcessor streamProcessor,
                              final Period createPeriod) {
-        if (!isTerminated()) {
-            final long startTime = System.currentTimeMillis();
-
-            // Translate the data across the cluster.
-            LOGGER.info("Processing data {}", feed.getName());
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-
-            final ExpressionOperator rawExpression = new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
-                    .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
-                    .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, rawStreamType.getDisplayValue())
-                    .build();
-            final QueryData rawCriteria = new QueryData();
-            rawCriteria.setExpression(rawExpression);
-
-            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, rawCriteria);
-
-            jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, true);
-
-            // Wait for the cluster to stop processing.
-            final ExpressionOperator processedExpression = new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
-                    .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
-                    .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, processedStreamType.getDisplayValue())
-                    .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
-                    .build();
-            final FindStreamCriteria processedCriteria = new FindStreamCriteria();
-            processedCriteria.setExpression(processedExpression);
-
-            boolean complete = false;
-
-            long timeoutTime = getTimeoutTimeMs();
-
-            // Monitor translations and wait for all processing to complete.
-            int completedTaskCount = 0;
-            while (!complete && !isTerminated()) {
-                ThreadUtil.sleepTenSeconds();
-
-                // Find out how many tasks are complete.
-                final List<Stream> streams = streamStore.find(processedCriteria);
-
-                // Things moved on ?
-                if (streams.size() > completedTaskCount) {
-                    // Move on the time out
-                    timeoutTime = getTimeoutTimeMs();
-                    completedTaskCount = streams.size();
-                }
-
-                info("Completed {}/{} translation tasks", completedTaskCount, benchmarkClusterConfig.getStreamCount());
-
-                if (completedTaskCount >= benchmarkClusterConfig.getStreamCount()) {
-                    complete = true;
-                }
-                if (System.currentTimeMillis() > timeoutTime) {
-                    LOGGER.info("Timeout !! Abort !!");
-                    abortDueToTimeout();
-                }
-            }
-
-            // Record benchmark statistics if we weren't asked to stop.
+        try {
             if (!isTerminated()) {
-                final Period processPeriod = new Period(startTime, System.currentTimeMillis());
-                LOGGER.info("Translated {} data in {}", feed.getName(), logExecutionTime);
-                recordTranslationStats(feed, processPeriod);
-            }
+                final long startTime = System.currentTimeMillis();
 
-            jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, false);
+                // Translate the data across the cluster.
+                LOGGER.info("Processing data {}", feed.getName());
+                final LogExecutionTime logExecutionTime = new LogExecutionTime();
+
+                final ExpressionOperator rawExpression = new ExpressionOperator.Builder(Op.AND)
+                        .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, rawStreamType.getDisplayValue())
+                        .build();
+                final QueryData rawCriteria = new QueryData();
+                rawCriteria.setExpression(rawExpression);
+
+                streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, rawCriteria);
+
+                jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, true);
+
+                // Wait for the cluster to stop processing.
+                final ExpressionOperator processedExpression = new ExpressionOperator.Builder(Op.AND)
+                        .addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, processedStreamType.getDisplayValue())
+                        .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                        .build();
+                final FindStreamCriteria processedCriteria = new FindStreamCriteria();
+                processedCriteria.setExpression(processedExpression);
+
+                boolean complete = false;
+
+                long timeoutTime = getTimeoutTimeMs();
+
+                // Monitor translations and wait for all processing to complete.
+                int completedTaskCount = 0;
+                while (!complete && !isTerminated()) {
+                    Thread.sleep(10000);
+
+                    // Find out how many tasks are complete.
+                    final List<Stream> streams = streamStore.find(processedCriteria);
+
+                    // Things moved on ?
+                    if (streams.size() > completedTaskCount) {
+                        // Move on the time out
+                        timeoutTime = getTimeoutTimeMs();
+                        completedTaskCount = streams.size();
+                    }
+
+                    info("Completed {}/{} translation tasks", completedTaskCount, benchmarkClusterConfig.getStreamCount());
+
+                    if (completedTaskCount >= benchmarkClusterConfig.getStreamCount()) {
+                        complete = true;
+                    }
+                    if (System.currentTimeMillis() > timeoutTime) {
+                        LOGGER.info("Timeout !! Abort !!");
+                        abortDueToTimeout();
+                    }
+                }
+
+                // Record benchmark statistics if we weren't asked to stop.
+                if (!isTerminated()) {
+                    final Period processPeriod = new Period(startTime, System.currentTimeMillis());
+                    LOGGER.info("Translated {} data in {}", feed.getName(), logExecutionTime);
+                    recordTranslationStats(feed, processPeriod);
+                }
+
+                jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, false);
+            }
+        } catch (final InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
         }
     }
 

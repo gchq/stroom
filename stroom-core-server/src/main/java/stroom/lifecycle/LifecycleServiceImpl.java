@@ -30,7 +30,6 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.thread.CustomThreadFactory;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -129,7 +128,7 @@ public class LifecycleServiceImpl implements LifecycleService {
             startNext();
             // Wait for startup to complete.
             while (startingBeanCount.get() > 0) {
-                ThreadUtil.sleep(500);
+                Thread.sleep(500);
             }
 
             // Create the runnable object that will perform execution on all
@@ -166,6 +165,9 @@ public class LifecycleServiceImpl implements LifecycleService {
 
             LOGGER.info("Started Stroom Lifecycle service");
             running.set(true);
+        } catch (final InterruptedException e) {
+            LOGGER.info("Interrupted");
+            stop();
         } finally {
             startingUp.set(false);
         }
@@ -190,7 +192,7 @@ public class LifecycleServiceImpl implements LifecycleService {
             // Wait for startup to finish.
             while (startingUp.get()) {
                 LOGGER.info("Waiting for startup to finish before shutting down");
-                ThreadUtil.sleep(ONE_SECOND);
+                Thread.sleep(ONE_SECOND);
             }
 
             LOGGER.info("Stopping Stroom Lifecycle service");
@@ -209,9 +211,17 @@ public class LifecycleServiceImpl implements LifecycleService {
             }
 
             stopNext();
-            // Wait for stop to complete.
-            while (stoppingBeanCount.get() > 0) {
-                ThreadUtil.sleep(500);
+
+            try {
+                // Wait for stop to complete.
+                while (stoppingBeanCount.get() > 0) {
+                    Thread.sleep(500);
+                }
+            } catch (final InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
 
             taskManager.shutdown();
@@ -222,6 +232,8 @@ public class LifecycleServiceImpl implements LifecycleService {
             }
 
             LOGGER.info("Stopped Stroom Lifecycle service");
+        } catch (final InterruptedException e) {
+            LOGGER.info("Interrupted");
         } finally {
             running.set(false);
         }

@@ -37,7 +37,6 @@ import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -98,13 +97,11 @@ public class DistributedTaskFetcher {
 
             // Wait until we have stopped.
             while (runningTasks.size() > 0) {
-//            for (final Task<?> task : runningTasks) {
-//                task.terminate();
-//            }
+                for (final Task<?> task : runningTasks) {
+                    taskManager.terminate(task.getId());
+                }
 
                 Thread.sleep(1000);
-
-                ThreadUtil.sleep(1000);
             }
         } catch (final InterruptedException e) {
             LOGGER.debug(e.getMessage(), e);

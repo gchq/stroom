@@ -20,7 +20,6 @@ import com.google.common.base.Strings;
 import stroom.util.ArgsUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.thread.ThreadUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -46,7 +45,7 @@ public abstract class ManualCheckStreamPerformance {
         return tempFile;
     }
 
-    public static void averageTimeCheck(final String msg, final TimedAction provider) throws IOException {
+    public static void averageTimeCheck(final String msg, final TimedAction provider) throws InterruptedException {
         final HashMap<Thread, Long> threadTimes = new HashMap<>();
         for (int i = 0; i < testThreadCount; i++) {
             final Thread t = new Thread((() -> {
@@ -62,7 +61,7 @@ public abstract class ManualCheckStreamPerformance {
         }
         boolean running = false;
         do {
-            ThreadUtil.sleep(1000);
+            Thread.sleep(1000);
 
             running = false;
             for (final Thread thread : threadTimes.keySet()) {
@@ -83,7 +82,7 @@ public abstract class ManualCheckStreamPerformance {
                 "Average for " + Strings.padStart(msg, 20, ' ') + " is " + Strings.padStart("" + average, 10, ' '));
     }
 
-    public static void main(final String[] args) throws IOException {
+    public static void main(final String[] args) throws InterruptedException {
         final Map<String, String> map = ArgsUtil.parse(args);
 
         if (map.containsKey("testThreadCount")) {

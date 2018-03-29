@@ -34,7 +34,12 @@ public class TestCondition {
         final Thread waker = new Thread() {
             @Override
             public void run() {
-                ThreadUtil.sleep(500);
+                try {
+                    Thread.sleep(500);
+                } catch (final InterruptedException e) {
+                    System.out.println("interrupted thread");
+                }
+
                 System.out.println("wake");
                 lock.lock();
                 try {

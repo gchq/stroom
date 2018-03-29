@@ -38,7 +38,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ThreadPool;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -475,10 +474,14 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + closing.get() + " index shards to close"), 10, 10, TimeUnit.SECONDS);
 
                 while (closing.get() > 0) {
-                    ThreadUtil.sleep(500);
+                    Thread.sleep(500);
                 }
             }
+        } catch (final InterruptedException e) {
+            LOGGER.error(e::getMessage, e);
 
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
         } finally {
             if (executor != null) {
                 // Shut down the progress logging executor.

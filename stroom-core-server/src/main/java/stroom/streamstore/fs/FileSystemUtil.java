@@ -23,7 +23,6 @@ import stroom.node.shared.Volume;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.FileUtil;
 import stroom.util.io.FileUtilException;
-import stroom.util.thread.ThreadUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -271,16 +270,23 @@ public final class FileSystemUtil {
                 LOGGER.debug("Failed to make dir " + e.getMessage());
             }
 
-            // Someone could have made it in the * CONCURRENT PROBLEM AREA *
-            if (!Files.isDirectory(dir)) {
-                if (retry > 0) {
-                    retry = retry - 1;
-                    LOGGER.warn("doMkdirs() - Sleep and Retry due to unable to create " + FileUtil.getCanonicalPath(dir));
-                    ThreadUtil.sleep(MKDIR_RETRY_SLEEP_MS);
-                    return doMkdirs(superDir, dir, retry);
-                } else {
-                    return false;
+            try {
+                // Someone could have made it in the * CONCURRENT PROBLEM AREA *
+                if (!Files.isDirectory(dir)) {
+                    if (retry > 0) {
+                        retry = retry - 1;
+                        LOGGER.warn("doMkdirs() - Sleep and Retry due to unable to create " + FileUtil.getCanonicalPath(dir));
+                        Thread.sleep(MKDIR_RETRY_SLEEP_MS);
+                        return doMkdirs(superDir, dir, retry);
+                    } else {
+                        return false;
+                    }
                 }
+            } catch (final InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
         }
         return true;

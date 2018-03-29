@@ -17,7 +17,6 @@
 package stroom.test;
 
 import stroom.util.io.StreamUtil;
-import stroom.util.thread.ThreadUtil;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
@@ -67,9 +66,11 @@ public class SendExtraSampleData {
                     System.out.println(msg);
                 }
 
-                ThreadUtil.sleep(100);
+                Thread.sleep(100);
             }
-
+        } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
         } catch (IOException ex) {
             ex.printStackTrace();
         }

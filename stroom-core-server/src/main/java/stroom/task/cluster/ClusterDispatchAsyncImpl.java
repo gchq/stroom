@@ -23,7 +23,6 @@ import stroom.cluster.ClusterCallService;
 import stroom.node.shared.Node;
 import stroom.task.CurrentTaskState;
 import stroom.task.GenericServerTask;
-import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
@@ -32,7 +31,6 @@ import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -50,20 +48,16 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
             CollectorId.class, SharedObject.class, Throwable.class, Boolean.class};
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncImpl.class);
     private static final String RECEIVE_RESULT = "receiveResult";
-    private static final Long DEBUG_REQUEST_DELAY = null;
 
     private final TaskManager taskManager;
-    private final TaskContext taskContext;
     private final ClusterResultCollectorCache collectorCache;
     private final ClusterCallService clusterCallService;
 
     @Inject
     ClusterDispatchAsyncImpl(final TaskManager taskManager,
-                             final TaskContext taskContext,
                              final ClusterResultCollectorCache collectorCache,
                              @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
         this.taskManager = taskManager;
-        this.taskContext = taskContext;
         this.collectorCache = collectorCache;
         this.clusterCallService = clusterCallService;
     }
@@ -144,7 +138,6 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
             // Execute the cluster call asynchronously so we don't block calls
             // to other nodes.
             LOGGER.trace(message);
-            ThreadUtil.sleep(DEBUG_REQUEST_DELAY);
             taskManager.execAsync(clusterCallTask, THREAD_POOL);
         }
     }

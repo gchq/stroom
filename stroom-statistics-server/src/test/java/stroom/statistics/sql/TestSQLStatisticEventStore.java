@@ -27,13 +27,12 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.properties.MockStroomPropertyService;
 import stroom.query.api.v2.DocRef;
-import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
-import stroom.util.thread.ThreadUtil;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +84,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     }
 
     @Test
-    public void test() {
+    public void test() throws InterruptedException {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
         final SQLStatisticEventStore store = new SQLStatisticEventStore(5, 10, 10000, null,
@@ -122,7 +121,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     }
 
     @Test
-    public void testIdle() {
+    public void testIdle() throws InterruptedException {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
         final SQLStatisticEventStore store = new SQLStatisticEventStore(10, 10, 100, null,
@@ -147,7 +146,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         Assert.assertEquals(1, store.getNumIdle());
         Assert.assertEquals(0, store.getNumActive());
 
-        ThreadUtil.sleep(200);
+        Thread.sleep(200);
 
         // store required manually evicting
         store.evict();

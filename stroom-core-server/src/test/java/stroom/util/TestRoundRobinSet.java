@@ -23,7 +23,6 @@ import org.junit.runner.RunWith;
 import stroom.util.shared.SharedObject;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
-import stroom.util.thread.ThreadUtil;
 
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
@@ -69,15 +68,20 @@ public class TestRoundRobinSet extends StroomUnitTest {
         final ExecutorService executorService = Executors.newCachedThreadPool();
         for (int i = 0; i < 10; i++) {
             executorService.execute(() -> {
-                for (int j = 0; j < 100; j++) {
-                    ThreadUtil.sleepUpTo(10);
+                try {
+                    for (int j = 0; j < 100; j++) {
+                        Thread.sleep(10);
 
-                    try {
-                        getString(rrList);
-                    } catch (final RuntimeException e) {
-                        System.err.println(e.getMessage());
-                        failureCount.increment();
+                        try {
+                            getString(rrList);
+                        } catch (final RuntimeException e) {
+                            System.err.println(e.getMessage());
+                            failureCount.increment();
+                        }
                     }
+                } catch (final InterruptedException e) {
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
                 }
             });
         }

@@ -16,17 +16,16 @@
 
 package stroom.jobsystem;
 
-import org.junit.Assert;
-
 import stroom.persist.EntityManagerSupport;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class ClusterLockServiceInnerTransactions {
     private final ClusterLockService clusterLockService;
     private final EntityManagerSupport entityManagerSupport;
+    private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
     @Inject
     ClusterLockServiceInnerTransactions(final ClusterLockService clusterLockService,
@@ -42,14 +41,30 @@ public class ClusterLockServiceInnerTransactions {
             // completes.
             sequence.add(1);
             clusterLockService.lock(lock);
-            Assert.assertTrue(ThreadUtil.sleep(2000));
+            try {
+                countDownLatch.countDown();
+                Thread.sleep(100);
+            } catch (final InterruptedException e) {
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
+
+                throw new RuntimeException(e.getMessage(), e);
+            }
             sequence.add(2);
         });
     }
 
     public void thread2(final String lock, final List<Integer> sequence) {
         entityManagerSupport.transaction(entityManager -> {
-            Assert.assertTrue(ThreadUtil.sleep(500));
+            try {
+                countDownLatch.await();
+            } catch (final InterruptedException e) {
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
+
+                throw new RuntimeException(e.getMessage(), e);
+            }
+
             clusterLockService.lock(lock);
             sequence.add(3);
         });

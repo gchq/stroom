@@ -24,7 +24,6 @@ import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.persistence.EntityNotFoundException;
@@ -52,49 +51,56 @@ class StreamTaskHelper {
             StreamTask result = null;
 
             try {
-                modify(streamTask, node, status, now, startTime, endTime);
-                result = streamTaskService.save(streamTask);
-            } catch (final EntityNotFoundException e) {
-                LOGGER.warn("changeTaskStatus() - Task cannot be found {}", streamTask);
-            } catch (final RuntimeException e) {
-                // Try this operation a few times.
-                boolean success = false;
-                RuntimeException lastError = null;
+                try {
+                    modify(streamTask, node, status, now, startTime, endTime);
+                    result = streamTaskService.save(streamTask);
+                } catch (final EntityNotFoundException e) {
+                    LOGGER.warn("changeTaskStatus() - Task cannot be found {}", streamTask);
+                } catch (final RuntimeException e) {
+                    // Try this operation a few times.
+                    boolean success = false;
+                    RuntimeException lastError = null;
 
-                // Try and do this up to 100 times.
-                for (int tries = 0; tries < 100 && !success; tries++) {
-                    success = true;
+                    // Try and do this up to 100 times.
+                    for (int tries = 0; tries < 100 && !success; tries++) {
+                        success = true;
 
-                    try {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.warn("changeTaskStatus() - {} - Task has changed, attempting reload {}", e.getMessage(), streamTask, e);
-                        } else {
-                            LOGGER.warn("changeTaskStatus() - Task has changed, attempting reload {}", streamTask);
+                        try {
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.warn("changeTaskStatus() - {} - Task has changed, attempting reload {}", e.getMessage(), streamTask, e);
+                            } else {
+                                LOGGER.warn("changeTaskStatus() - Task has changed, attempting reload {}", streamTask);
+                            }
+
+                            final StreamTask loaded = streamTaskService.load(streamTask);
+                            if (loaded == null) {
+                                LOGGER.warn("changeTaskStatus() - Failed to reload task {}", streamTask);
+                            } else if (TaskStatus.DELETED.equals(loaded.getStatus())) {
+                                LOGGER.warn("changeTaskStatus() - Task has been deleted {}", streamTask);
+                            } else {
+                                LOGGER.warn("changeTaskStatus() - Loaded stream task {}", loaded);
+                                modify(loaded, node, status, now, startTime, endTime);
+                                result = streamTaskService.save(loaded);
+                            }
+                        } catch (final EntityNotFoundException e2) {
+                            LOGGER.warn("changeTaskStatus() - Failed to reload task as it cannot be found {}", streamTask);
+                        } catch (final RuntimeException e2) {
+                            success = false;
+                            lastError = e2;
+                            // Wait before trying this operation again.
+                            Thread.sleep(1000);
                         }
+                    }
 
-                        final StreamTask loaded = streamTaskService.load(streamTask);
-                        if (loaded == null) {
-                            LOGGER.warn("changeTaskStatus() - Failed to reload task {}", streamTask);
-                        } else if (TaskStatus.DELETED.equals(loaded.getStatus())) {
-                            LOGGER.warn("changeTaskStatus() - Task has been deleted {}", streamTask);
-                        } else {
-                            LOGGER.warn("changeTaskStatus() - Loaded stream task {}", loaded);
-                            modify(loaded, node, status, now, startTime, endTime);
-                            result = streamTaskService.save(loaded);
-                        }
-                    } catch (final EntityNotFoundException e2) {
-                        LOGGER.warn("changeTaskStatus() - Failed to reload task as it cannot be found {}", streamTask);
-                    } catch (final RuntimeException e2) {
-                        success = false;
-                        lastError = e2;
-                        // Wait before trying this operation again.
-                        ThreadUtil.sleep(1000);
+                    if (!success) {
+                        LOGGER.error("Error changing task status for task '{}': {}", streamTask, lastError.getMessage(), lastError);
                     }
                 }
+            } catch (final InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
 
-                if (!success) {
-                    LOGGER.error("Error changing task status for task '{}': {}", streamTask, lastError.getMessage(), lastError);
-                }
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
 
             return result;

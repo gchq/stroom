@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.shared.ThreadPool;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.util.Queue;
@@ -47,10 +46,17 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         CompletableFuture[] futures = IntStream.rangeClosed(1, taskCount)
                 .mapToObj(i ->
                         CompletableFuture.runAsync(() -> {
-                                    ThreadUtil.sleep(50);
-                                    LOGGER.info("Running task %s", i);
-                                    counter.incrementAndGet();
-                                    threadsUsed.add(Thread.currentThread());
+                                    try {
+                                        Thread.sleep(50);
+                                        LOGGER.info("Running task %s", i);
+                                        counter.incrementAndGet();
+                                        threadsUsed.add(Thread.currentThread());
+                                    } catch (final InterruptedException e) {
+                                        LOGGER.error(e.getMessage(), e);
+
+                                        // Continue to interrupt this thread.
+                                        Thread.currentThread().interrupt();
+                                    }
                                 },
                                 executor))
                 .toArray(CompletableFuture[]::new);
@@ -89,10 +95,17 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         CompletableFuture[] futures = IntStream.rangeClosed(1, taskCount)
                 .mapToObj(i ->
                         CompletableFuture.runAsync(() -> {
-                                    ThreadUtil.sleep(50);
-                                    LOGGER.info("Running task %s", i);
-                                    counter.incrementAndGet();
-                                    threadsUsed.add(Thread.currentThread());
+                                    try {
+                                        Thread.sleep(50);
+                                        LOGGER.info("Running task %s", i);
+                                        counter.incrementAndGet();
+                                        threadsUsed.add(Thread.currentThread());
+                                    } catch (final InterruptedException e) {
+                                        LOGGER.error(e.getMessage(), e);
+
+                                        // Continue to interrupt this thread.
+                                        Thread.currentThread().interrupt();
+                                    }
                                 },
                                 executor))
                 .toArray(CompletableFuture[]::new);

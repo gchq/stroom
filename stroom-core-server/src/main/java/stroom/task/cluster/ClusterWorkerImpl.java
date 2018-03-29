@@ -26,7 +26,6 @@ import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.TaskId;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -131,7 +130,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
         DebugTrace.debugTraceIn(task, SEND_RESULT, true);
         try {
             LOGGER.debug("{}() - {}", SEND_RESULT, task);
-            ThreadUtil.sleep(DEBUG_RESPONSE_DELAY);
+            Thread.sleep(DEBUG_RESPONSE_DELAY);
 
             while (!done && tryCount <= 10) {
                 try {
@@ -147,10 +146,16 @@ public class ClusterWorkerImpl implements ClusterWorker {
                     lastException = e;
                     LOGGER.warn(e.getMessage());
                     LOGGER.debug(e.getMessage(), e);
-                    ThreadUtil.sleepUpTo(1000L * tryCount);
+                    sleepUpTo(1000L * tryCount);
                     tryCount++;
                 }
             }
+        } catch (final InterruptedException e) {
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
+
         } catch (final RuntimeException e) {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
@@ -190,6 +195,15 @@ public class ClusterWorkerImpl implements ClusterWorker {
             // to return a result knows that the result did not make it to the
             // requesting node.
             throw new RuntimeException("Unable to return result to requesting node or requesting node rejected result");
+        }
+    }
+
+    private void sleepUpTo(final long millis) throws InterruptedException {
+        if (millis > 0) {
+            int realSleep = (int) Math.floor(Math.random() * (millis + 1));
+            if (realSleep > 0) {
+                Thread.sleep(realSleep);
+            }
         }
     }
 }

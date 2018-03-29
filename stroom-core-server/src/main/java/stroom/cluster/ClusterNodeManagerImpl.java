@@ -31,7 +31,6 @@ import stroom.task.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.lifecycle.StroomStartup;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -125,10 +124,15 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                     // Re-query cluster state if we are pending an update.
                     if (pendingUpdate.get()) {
                         // Wait a few seconds before we query again.
-                        ThreadUtil.sleep(REQUERY_DELAY);
+                        Thread.sleep(REQUERY_DELAY);
                         // Query again.
                         doUpdate(0);
                     }
+                } catch (final InterruptedException e) {
+                    LOGGER.error(e.getMessage(), e);
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 } finally {

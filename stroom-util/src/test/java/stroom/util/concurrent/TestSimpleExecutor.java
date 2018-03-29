@@ -20,12 +20,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.thread.ThreadUtil;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestSimpleExecutor {
     @Test
-    public void testSimpleShutDownNow() {
+    public void testSimpleShutDownNow() throws InterruptedException {
         SimpleExecutor simpleExecutor = new SimpleExecutor(5);
         for (int i = 0; i < 100; i++) {
             // 10 sec task
@@ -40,7 +39,7 @@ public class TestSimpleExecutor {
     }
 
     @Test
-    public void testSimpleShutDown() {
+    public void testSimpleShutDown() throws InterruptedException {
         SimpleExecutor simpleExecutor = new SimpleExecutor(5);
         for (int i = 0; i < 10; i++) {
             // Submit 10 very quick tasks
@@ -54,7 +53,7 @@ public class TestSimpleExecutor {
     }
 
     @Test
-    public void testSimpleShutDownNowAndMoreTasksAdded() {
+    public void testSimpleShutDownNowAndMoreTasksAdded() throws InterruptedException {
         final SimpleExecutor simpleExecutor = new SimpleExecutor(5);
         for (int i = 0; i < 10; i++) {
             // Submit 10 slow tasks
@@ -75,7 +74,7 @@ public class TestSimpleExecutor {
     }
 
     @Test
-    public void testWaitForCompleteAndAddMore() {
+    public void testWaitForCompleteAndAddMore() throws InterruptedException {
         final SimpleExecutor simpleExecutor = new SimpleExecutor(5);
         for (int i = 0; i < 10; i++) {
             // Submit 10 quick tasks
@@ -109,20 +108,19 @@ public class TestSimpleExecutor {
 
     static class TestRunnable implements Runnable {
         int time;
-        boolean complete = false;
 
-        public TestRunnable(int time) {
+        TestRunnable(int time) {
             this.time = time;
         }
 
         @Override
         public void run() {
-            ThreadUtil.sleep(time);
-            complete = true;
-        }
-
-        public boolean isComplete() {
-            return complete;
+            try {
+                Thread.sleep(time);
+            } catch (final InterruptedException e) {
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

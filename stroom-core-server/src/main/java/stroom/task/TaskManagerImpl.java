@@ -37,7 +37,6 @@ import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
 import stroom.util.thread.CustomThreadFactory;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -158,32 +157,39 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
         LOGGER.info("shutdown()");
         stop.set(true);
 
-        // Wait for all tasks to stop executing.
-        boolean waiting = true;
-        while (waiting) {
-            // Stop all of the current tasks.
-            currentTasks.values().forEach(TaskThread::terminate);
+        try {
+            // Wait for all tasks to stop executing.
+            boolean waiting = true;
+            while (waiting) {
+                // Stop all of the current tasks.
+                currentTasks.values().forEach(TaskThread::terminate);
 
-            final int currentCount = currentAsyncTaskCount.get();
-            waiting = currentCount > 0;
-            if (waiting) {
-                final StringBuilder builder = new StringBuilder();
-                for (final TaskThread<?> taskThread : currentTasks.values()) {
-                    builder.append(taskThread.getTask().getTaskName());
-                    builder.append(" ");
+                final int currentCount = currentAsyncTaskCount.get();
+                waiting = currentCount > 0;
+                if (waiting) {
+                    final StringBuilder builder = new StringBuilder();
+                    for (final TaskThread<?> taskThread : currentTasks.values()) {
+                        builder.append(taskThread.getTask().getTaskName());
+                        builder.append(" ");
+                    }
+
+                    // Output some debug to list the tasks that are executing
+                    // and queued.
+                    LOGGER.info("shutdown() - Waiting for {} tasks to complete. {}", currentCount, builder);
+
+                    // Wait 1 second.
+                    Thread.sleep(1000);
                 }
-
-                // Output some debug to list the tasks that are executing
-                // and queued.
-                LOGGER.info("shutdown() - Waiting for {} tasks to complete. {}", currentCount, builder);
-
-                // Wait 1 second.
-                ThreadUtil.sleep(1000);
             }
-        }
 
-        // Shut down all executors.
-        shutdownExecutors();
+            // Shut down all executors.
+            shutdownExecutors();
+        } catch (final InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
+        }
 
         stop.set(false);
         LOGGER.info("shutdown() - Complete");
