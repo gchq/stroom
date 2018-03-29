@@ -354,6 +354,11 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 }
             }
 
+            // Make sure this thread is not interrupted.
+            if (Thread.interrupted()) {
+                LOGGER.warn("This thread was previously interrupted");
+            }
+
             currentTasks.put(task.getId(), taskThread);
             taskThread.setThread(Thread.currentThread());
 
