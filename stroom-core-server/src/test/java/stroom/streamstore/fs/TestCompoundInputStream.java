@@ -241,7 +241,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
         try {
             compoundInputStream.getNextInputStream(2);
             Assert.fail("Expecting IO Error");
-        } catch (final RuntimeException e) {
+        } catch (final IOException e) {
         }
         compoundInputStream.close();
     }
