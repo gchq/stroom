@@ -27,44 +27,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.entity.shared.Period;
-import stroom.entity.shared.Range;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.DateExpressionParser;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
 import stroom.statistics.server.sql.datasource.StatisticStoreValidator;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
 import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
-import stroom.statistics.server.sql.search.CountStatisticDataPoint;
-import stroom.statistics.server.sql.search.FilterTermsTree;
-import stroom.statistics.server.sql.search.FilterTermsTreeBuilder;
-import stroom.statistics.server.sql.search.FindEventCriteria;
-import stroom.statistics.server.sql.search.StatisticDataPoint;
-import stroom.statistics.server.sql.search.StatisticDataSet;
-import stroom.statistics.server.sql.search.ValueStatisticDataPoint;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -76,11 +53,6 @@ import java.util.stream.Collectors;
 public class SQLStatisticEventStore implements Statistics {
     public static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
 
-    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
-
-    private static final List<ExpressionTerm.Condition> SUPPORTED_DATE_CONDITIONS = Arrays.asList(ExpressionTerm.Condition.BETWEEN);
-
-
     private static final int DEFAULT_POOL_SIZE = 10;
     private static final long DEFAULT_SIZE_THRESHOLD = 1000000L;
     private static final Set<String> BLACK_LISTED_INDEX_FIELDS = Collections.emptySet();
@@ -88,21 +60,9 @@ public class SQLStatisticEventStore implements Statistics {
      * Keep half the time out our SQL insert threshold
      */
     private static final long DEFAULT_AGE_MS_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
-    // @formatter:off
-    private static final String STAT_QUERY_SKELETON = "" + "select " + "K." + SQLStatisticNames.NAME + ", " + "V."
-            + SQLStatisticNames.PRECISION + ", " + "V." + SQLStatisticNames.TIME_MS + ", " + "V."
-            + SQLStatisticNames.VALUE_TYPE + ", " + "V." + SQLStatisticNames.VALUE + ", " + "V."
-            + SQLStatisticNames.COUNT + " " + "FROM " + SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME + " K " + "JOIN "
-            + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME + " V ON (K." + SQLStatisticNames.ID + " = V."
-            + SQLStatisticNames.SQL_STATISTIC_KEY_FOREIGN_KEY + ") " + "WHERE K." + SQLStatisticNames.NAME + " LIKE ? "
-            + "AND K." + SQLStatisticNames.NAME + " REGEXP ? " + "AND V." + SQLStatisticNames.TIME_MS + " >= ? "
-            + "AND V." + SQLStatisticNames.TIME_MS + " < ?";
-
-    // @formatter:on
     private final StatisticStoreValidator statisticsDataSourceValidator;
     private final StatisticStoreCache statisticsDataSourceCache;
     private final SQLStatisticCache statisticCache;
-    private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
     /**
      * SQL for testing querying the stat/tag names
@@ -130,14 +90,12 @@ public class SQLStatisticEventStore implements Statistics {
     SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
                            final StatisticStoreCache statisticsDataSourceCache,
                            final SQLStatisticCache statisticCache,
-                           @Named("statisticsDataSource") final DataSource statisticsDataSource,
                            final StroomPropertyService propertyService) {
 
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.propertyService = propertyService;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
-        this.statisticsDataSource = statisticsDataSource;
 
         initPool(getObjectPoolConfig());
     }
@@ -148,13 +106,10 @@ public class SQLStatisticEventStore implements Statistics {
                                   final StatisticStoreValidator statisticsDataSourceValidator,
                                   final StatisticStoreCache statisticsDataSourceCache,
                                   final SQLStatisticCache statisticCache,
-                                  final DataSource statisticsDataSource,
                                   final StroomPropertyService propertyService) {
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
-        this.statisticsDataSource = statisticsDataSource;
-
         this.aggregatorSizeThreshold = aggregatorSizeThreshold;
         this.poolAgeMsThreshold = poolAgeMsThreshold;
         this.poolSize = poolSize;
@@ -163,171 +118,6 @@ public class SQLStatisticEventStore implements Statistics {
         initPool(getObjectPoolConfig());
     }
 
-    protected static FindEventCriteria buildCriteria(final SearchRequest searchRequest,
-                                                     final StatisticStoreEntity dataSource) {
-        LOGGER.trace("buildCriteria called for statistic {}", dataSource.getName());
-
-        // Get the current time in millis since epoch.
-        final long nowEpochMilli = System.currentTimeMillis();
-
-        // object looks a bit like this
-        // AND
-        // Date Time between 2014-10-22T23:00:00.000Z,2014-10-23T23:00:00.000Z
-
-        final ExpressionOperator topLevelExpressionOperator = searchRequest.getQuery().getExpression();
-
-        if (topLevelExpressionOperator == null || topLevelExpressionOperator.getOp() == null) {
-            throw new IllegalArgumentException(
-                    "The top level operator for the query must be one of [" + ExpressionOperator.Op.values() + "]");
-        }
-
-        final List<ExpressionItem> childExpressions = topLevelExpressionOperator.getChildren();
-        int validDateTermsFound = 0;
-        int dateTermsFound = 0;
-
-        // Identify the date term in the search criteria. Currently we must have
-        // a exactly one BETWEEN operator on the
-        // datetime
-        // field to be able to search. This is because of the way the search in
-        // hbase is done, ie. by start/stop row
-        // key.
-        // It may be possible to expand the capability to make multiple searches
-        // but that is currently not in place
-        ExpressionTerm dateTerm = null;
-        if (childExpressions != null) {
-            for (final ExpressionItem expressionItem : childExpressions) {
-                if (expressionItem instanceof ExpressionTerm) {
-                    final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
-
-                    if (expressionTerm.getField() == null) {
-                        throw new IllegalArgumentException("Expression term does not have a field specified");
-                    }
-
-                    if (expressionTerm.getField().equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
-                        dateTermsFound++;
-
-                        if (SUPPORTED_DATE_CONDITIONS.contains(expressionTerm.getCondition())) {
-                            dateTerm = expressionTerm;
-                            validDateTermsFound++;
-                        }
-                    }
-                } else if (expressionItem instanceof ExpressionOperator) {
-                    if (((ExpressionOperator) expressionItem).getOp() == null) {
-                        throw new IllegalArgumentException(
-                                "An operator in the query is missing a type, it should be one of " + ExpressionOperator.Op.values());
-                    }
-                }
-            }
-        }
-
-        // ensure we have a date term
-        if (dateTermsFound != 1 || validDateTermsFound != 1) {
-            throw new UnsupportedOperationException(
-                    "Search queries on the statistic store must contain one term using the '"
-                            + StatisticStoreEntity.FIELD_NAME_DATE_TIME
-                            + "' field with one of the following condtitions [" + SUPPORTED_DATE_CONDITIONS.toString()
-                            + "].  Please amend the query");
-        }
-
-        // ensure the value field is not used in the query terms
-        if (contains(searchRequest.getQuery().getExpression(), StatisticStoreEntity.FIELD_NAME_VALUE)) {
-            throw new UnsupportedOperationException("Search queries containing the field '"
-                    + StatisticStoreEntity.FIELD_NAME_VALUE + "' are not supported.  Please remove it from the query");
-        }
-
-        // if we have got here then we have a single BETWEEN date term, so parse
-        // it.
-        final Range<Long> range = extractRange(dateTerm, searchRequest.getDateTimeLocale(), nowEpochMilli);
-
-        final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
-        findAllTermNodes(topLevelExpressionOperator, termNodesInFilter);
-
-        final Set<String> rolledUpFieldNames = new HashSet<>();
-
-        for (final ExpressionTerm term : termNodesInFilter) {
-            // add any fields that use the roll up marker to the black list. If
-            // somebody has said user=* then we do not
-            // want that in the filter as it will slow it down. The fact that
-            // they have said user=* means it will use
-            // the statistic name appropriate for that rollup, meaning the
-            // filtering is built into the stat name.
-            if (term.getValue().equals(RollUpBitMask.ROLL_UP_TAG_VALUE)) {
-                rolledUpFieldNames.add(term.getField());
-            }
-        }
-
-        if (!rolledUpFieldNames.isEmpty()) {
-            if (dataSource.getRollUpType().equals(StatisticRollUpType.NONE)) {
-                throw new UnsupportedOperationException(
-                        "Query contains rolled up terms but the Statistic Data Source does not support any roll-ups");
-            } else if (dataSource.getRollUpType().equals(StatisticRollUpType.CUSTOM)) {
-                if (!dataSource.isRollUpCombinationSupported(rolledUpFieldNames)) {
-                    throw new UnsupportedOperationException(String.format(
-                            "The query contains a combination of rolled up fields %s that is not in the list of custom roll-ups for the statistic data source",
-                            rolledUpFieldNames));
-                }
-            }
-        }
-
-        // Date Time is handled spearately to the the filter tree so ignore it
-        // in the conversion
-        final Set<String> blackListedFieldNames = new HashSet<>();
-        blackListedFieldNames.addAll(rolledUpFieldNames);
-        blackListedFieldNames.add(StatisticStoreEntity.FIELD_NAME_DATE_TIME);
-
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder
-                .convertExpresionItemsTree(topLevelExpressionOperator, blackListedFieldNames);
-
-        final FindEventCriteria criteria = FindEventCriteria.instance(new Period(range.getFrom(), range.getTo()),
-                dataSource.getName(), filterTermsTree, rolledUpFieldNames);
-
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("Searching statistics store with criteria: {}", criteria.toString());
-        }
-
-        return criteria;
-    }
-
-    /**
-     * Recursive method to populates the passed list with all enabled
-     * {@link ExpressionTerm} nodes found in the tree.
-     */
-    public static void findAllTermNodes(final ExpressionItem node, final List<ExpressionTerm> termsFound) {
-        // Don't go any further down this branch if this node is disabled.
-        if (node.enabled()) {
-            if (node instanceof ExpressionTerm) {
-                final ExpressionTerm termNode = (ExpressionTerm) node;
-
-                termsFound.add(termNode);
-
-            } else if (node instanceof ExpressionOperator) {
-                for (final ExpressionItem childNode : ((ExpressionOperator) node).getChildren()) {
-                    findAllTermNodes(childNode, termsFound);
-                }
-            }
-        }
-    }
-
-    public static boolean contains(final ExpressionItem expressionItem, final String fieldToFind) {
-        boolean hasBeenFound = false;
-
-        if (expressionItem instanceof ExpressionOperator) {
-            if (((ExpressionOperator) expressionItem).getChildren() != null) {
-                for (final ExpressionItem item : ((ExpressionOperator) expressionItem).getChildren()) {
-                    hasBeenFound = contains(item, fieldToFind);
-                    if (hasBeenFound) {
-                        break;
-                    }
-                }
-            }
-        } else {
-            if (((ExpressionTerm) expressionItem).getField() != null) {
-                hasBeenFound = ((ExpressionTerm) expressionItem).getField().equals(fieldToFind);
-            }
-        }
-
-        return hasBeenFound;
-    }
 
     // TODO could go futher up the chain so is store agnostic
     public static RolledUpStatisticEvent generateTagRollUps(final StatisticEvent event,
@@ -363,40 +153,6 @@ public class SQLStatisticEventStore implements Statistics {
         return rolledUpStatisticEvent;
     }
 
-    private static Range<Long> extractRange(final ExpressionTerm dateTerm, final String timeZoneId, final long nowEpochMilli) {
-        final String[] dateArr = dateTerm.getValue().split(",");
-
-        if (dateArr.length != 2) {
-            throw new RuntimeException("DateTime term is not a valid format, term: " + dateTerm.toString());
-        }
-
-        long rangeFrom = DateExpressionParser.parse(dateArr[0], timeZoneId, nowEpochMilli)
-                .map(time -> time.toInstant().toEpochMilli())
-                .orElse(0L);
-        // add one to make it exclusive
-        long rangeTo = DateExpressionParser.parse(dateArr[1], timeZoneId, nowEpochMilli)
-                .map(time -> time.toInstant().toEpochMilli() + 1)
-                .orElse(Long.MAX_VALUE);
-
-        final Range<Long> range = new Range<>(rangeFrom, rangeTo);
-
-        return range;
-    }
-
-    private static long parseDateTime(final String type, final String value, final String timeZoneId, final long nowEpochMilli) {
-        final ZonedDateTime dateTime;
-        try {
-            dateTime = DateExpressionParser.parse(value, timeZoneId, nowEpochMilli).get();
-        } catch (final Exception e) {
-            throw new RuntimeException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
-        }
-
-        if (dateTime == null) {
-            throw new RuntimeException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
-        }
-
-        return dateTime.toInstant().toEpochMilli();
-    }
 
     private static List<List<StatisticTag>> generateStatisticTagPerms(final List<StatisticTag> eventTags,
                                                                       final Set<List<Boolean>> perms) {
@@ -419,57 +175,6 @@ public class SQLStatisticEventStore implements Statistics {
         }
         return tagListPerms;
     }
-
-    /**
-     * TODO: This is a bit simplistic as a user could create a filter that said
-     * user=user1 AND user='*' which makes no sense. At the moment we would
-     * assume that the user tag is being rolled up so user=user1 would never be
-     * found in the data and thus would return no data.
-     */
-    public static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
-                                                               final StatisticStoreEntity statisticsDataSource) {
-        final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
-
-        final RollUpBitMask result;
-
-        if (rolledUpTagsFound.size() > 0) {
-            final List<Integer> rollUpTagPositionList = new ArrayList<>();
-
-            for (final String tag : rolledUpTagsFound) {
-                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
-                if (position == null) {
-                    throw new RuntimeException(String.format("No field position found for tag %s", tag));
-                }
-                rollUpTagPositionList.add(position);
-            }
-            result = RollUpBitMask.fromTagPositions(rollUpTagPositionList);
-
-        } else {
-            result = RollUpBitMask.ZERO_MASK;
-        }
-        return result;
-    }
-
-//    public static boolean isDataStoreEnabled(final String engineName, final StroomPropertyService propertyService) {
-//        final String enabledEngines = propertyService
-//                .getProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME);
-//
-//        if (LOGGER.isDebugEnabled()) {
-//            LOGGER.debug("{} property value: {}", CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME,
-//                    enabledEngines);
-//        }
-//
-//        boolean result = false;
-//
-//        if (enabledEngines != null) {
-//            for (final String engine : enabledEngines.split(",")) {
-//                if (engine.equals(engineName)) {
-//                    result = true;
-//                }
-//            }
-//        }
-//        return result;
-//    }
 
     protected Set<String> getIndexFieldBlackList() {
         return BLACK_LISTED_INDEX_FIELDS;
@@ -619,11 +324,6 @@ public class SQLStatisticEventStore implements Statistics {
         }
     }
 
-    public StatisticDataSet searchStatisticsData(final SearchRequest searchRequest, final StatisticStoreEntity dataSource) {
-        final FindEventCriteria criteria = buildCriteria(searchRequest, dataSource);
-        return performStatisticQuery(dataSource, criteria);
-    }
-
     @Override
     public List<String> getValuesByTag(final String tagName) {
         throw new UnsupportedOperationException("Code waiting to be written");
@@ -652,133 +352,6 @@ public class SQLStatisticEventStore implements Statistics {
         return objectPool.getNumIdle();
     }
 
-    private StatisticDataSet performStatisticQuery(final StatisticStoreEntity dataSource,
-                                                   final FindEventCriteria criteria) {
-        final Set<StatisticDataPoint> dataPoints = new HashSet<>();
-
-        // TODO need to fingure out how we get the precision
-        final StatisticDataSet statisticDataSet = new StatisticDataSet(dataSource.getName(),
-                dataSource.getStatisticType(), 1000L, dataPoints);
-
-        try (final Connection connection = statisticsDataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = buildSearchPreparedStatement(dataSource, criteria, connection)) {
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        final StatisticType statisticType = StatisticType.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(resultSet.getByte(SQLStatisticNames.VALUE_TYPE));
-
-                        final List<StatisticTag> statisticTags = extractStatisticTagsFromColumn(
-                                resultSet.getString(SQLStatisticNames.NAME));
-                        final long timeMs = resultSet.getLong(SQLStatisticNames.TIME_MS);
-
-                        // the precision in the table represents the number of zeros
-                        // of millisecond precision, e.g.
-                        // 6=1,000,000ms
-                        final long precisionMs = (long) Math.pow(10, resultSet.getInt(SQLStatisticNames.PRECISION));
-
-                        StatisticDataPoint statisticDataPoint;
-
-                        if (StatisticType.COUNT.equals(statisticType)) {
-                            statisticDataPoint = new CountStatisticDataPoint(timeMs, precisionMs, statisticTags,
-                                    resultSet.getLong(SQLStatisticNames.COUNT));
-                        } else {
-                            final double aggregatedValue = resultSet.getDouble(SQLStatisticNames.VALUE);
-                            final long count = resultSet.getLong(SQLStatisticNames.COUNT);
-
-                            // the aggregateValue is sum of all values against that
-                            // key/time. We therefore need to get the
-                            // average using the count column
-                            final double averagedValue = count != 0 ? (aggregatedValue / count) : 0;
-
-                            // min/max are not supported by SQL stats so use -1
-                            statisticDataPoint = new ValueStatisticDataPoint(timeMs, precisionMs, statisticTags,
-                                    count, averagedValue);
-                        }
-
-                        statisticDataSet.addDataPoint(statisticDataPoint);
-                    }
-                }
-            }
-        } catch (final SQLException sqlEx) {
-            LOGGER.error("performStatisticQuery failed", sqlEx);
-            throw new RuntimeException("performStatisticQuery failed", sqlEx);
-        }
-        return statisticDataSet;
-    }
-
-    /**
-     * @param columnValue The value from the STAT_KEY.NAME column which could be of the
-     *                    form 'StatName' or 'StatName¬Tag1¬Tag1Val1¬Tag2¬Tag2Val1'
-     * @return A list of {@link StatisticTag} objects built from the tag/value
-     * token pairs in the string or an empty list if there are none.
-     */
-    private List<StatisticTag> extractStatisticTagsFromColumn(final String columnValue) {
-        final String[] tokens = columnValue.split(SQLStatisticConstants.NAME_SEPARATOR);
-        final List<StatisticTag> statisticTags = new ArrayList<>();
-
-        if (tokens.length == 1) {
-            // no separators so there are no tags
-        } else if (tokens.length % 2 == 0) {
-            throw new RuntimeException(
-                    String.format("Expecting an odd number of tokens, columnValue: %s", columnValue));
-        } else {
-            // stat name will be at pos 0 so start at 1
-            for (int i = 1; i < tokens.length; i++) {
-                final String tag = tokens[i++];
-                String value = tokens[i];
-                if (value.equals(SQLStatisticConstants.NULL_VALUE_STRING)) {
-                    value = null;
-                }
-                final StatisticTag statisticTag = new StatisticTag(tag, value);
-                statisticTags.add(statisticTag);
-            }
-        }
-
-        return statisticTags;
-    }
-
-    private PreparedStatement buildSearchPreparedStatement(final StatisticStoreEntity dataSource,
-                                                           final FindEventCriteria criteria, final Connection connection) throws SQLException {
-        final RollUpBitMask rollUpBitMask = SQLStatisticEventStore.buildRollUpBitMaskFromCriteria(criteria, dataSource);
-
-        final String statNameWithMask = dataSource.getName() + rollUpBitMask.asHexString();
-
-        final List<String> bindVariables = new ArrayList<>();
-
-        String sqlQuery = STAT_QUERY_SKELETON + " ";
-
-        final String whereClause = SQLTagValueWhereClauseConverter
-                .buildTagValueWhereClause(criteria.getFilterTermsTree(), bindVariables);
-
-        if (whereClause != null && whereClause.length() != 0) {
-            sqlQuery += " AND " + whereClause;
-        }
-
-        final int maxResults = propertyService.getIntProperty(PROP_KEY_SQL_SEARCH_MAX_RESULTS, 100000);
-        sqlQuery += " LIMIT " + maxResults;
-
-        LOGGER.debug("Search query: {}", sqlQuery);
-
-        final PreparedStatement ps = connection.prepareStatement(sqlQuery);
-        int position = 1;
-
-        // do a like on the name first so we can hit the index before doing the
-        // slow regex matches
-        ps.setString(position++, statNameWithMask + "%");
-        // regex to match on the stat name which is always at the start of the
-        // string and either has a
-        ps.setString(position++, "^" + statNameWithMask + "(" + SQLStatisticConstants.NAME_SEPARATOR + "|$)");
-
-        // set the start/end dates
-        ps.setLong(position++, criteria.getPeriod().getFromMs());
-        ps.setLong(position++, criteria.getPeriod().getToMs());
-
-        for (final String bindVariable : bindVariables) {
-            ps.setString(position++, bindVariable);
-        }
-
-        return ps;
-    }
 
     @Override
     public void putEvent(final StatisticEvent statisticEvent) {
@@ -846,10 +419,6 @@ public class SQLStatisticEventStore implements Statistics {
             return supportedIndexFields;
         }
     }
-
-//    public boolean isDataStoreEnabled() {
-//        return SQLStatisticEventStore.isDataStoreEnabled(getEngineName(), propertyService);
-//    }
 
     public List<Set<Integer>> getFieldPositionsForBitMasks(final List<Short> maskValues) {
         if (maskValues != null) {

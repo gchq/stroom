@@ -89,7 +89,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
         final SQLStatisticEventStore store = new SQLStatisticEventStore(5, 10, 10000, null,
-                mockStatisticsDataSourceCache, null, null, propertyService) {
+                mockStatisticsDataSourceCache, null, propertyService) {
             @Override
             public SQLStatisticAggregateMap createAggregateMap() {
                 createCount.incrementAndGet();
@@ -126,7 +126,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
         final SQLStatisticEventStore store = new SQLStatisticEventStore(10, 10, 100, null,
-                mockStatisticsDataSourceCache, null, null, propertyService) {
+                mockStatisticsDataSourceCache, null, propertyService) {
             @Override
             public SQLStatisticAggregateMap createAggregateMap() {
                 createCount.incrementAndGet();
@@ -202,7 +202,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     private void processEvents(final int eventCount, final int expectedProcessedCount, final long firstEventTimeMs,
                                final long eventTimeDeltaMs) {
         final SQLStatisticEventStore store = new SQLStatisticEventStore(1, 1, 10000, null,
-                mockStatisticsDataSourceCache, mockSqlStatisticCache, null, propertyService);
+                mockStatisticsDataSourceCache, mockSqlStatisticCache, propertyService);
 
         for (int i = 0; i < eventCount; i++) {
             store.putEvent(createEvent(firstEventTimeMs + (i * eventTimeDeltaMs)));

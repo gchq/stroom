@@ -16,6 +16,8 @@
 
 package stroom.test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 
 import java.nio.file.Files;
@@ -23,6 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 final class ProjectPathUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProjectPathUtil.class);
+    
     static Path resolveDir(final String projectDir) {
         Path root = Paths.get(".").toAbsolutePath().normalize();
         Path dir = root.resolve(projectDir);

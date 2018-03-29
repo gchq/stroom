@@ -29,6 +29,7 @@ import stroom.statistics.server.sql.rollup.RollUpBitMask;
 import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.server.sql.search.FilterTermsTree;
 import stroom.statistics.server.sql.search.FindEventCriteria;
+import stroom.statistics.server.sql.search.StatStoreCriteriaBuilder;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.CustomRollUpMask;
@@ -265,7 +266,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
+        StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
 
     }
 
@@ -284,7 +285,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
+        StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
 
     }
 
@@ -307,7 +308,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());
@@ -335,7 +336,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
+        StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -358,7 +359,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
+        StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
     }
 
     @Test
@@ -381,7 +382,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals("[]", criteria.getFilterTermsTree().toString());
@@ -408,7 +409,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());

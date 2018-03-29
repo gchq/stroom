@@ -19,9 +19,6 @@ package stroom.refdata;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
@@ -31,18 +28,13 @@ import stroom.util.test.StroomUnitTest;
 import stroom.xml.event.EventList;
 
 @RunWith(StroomJUnit4ClassRunner.class)
-public class TestCache extends StroomUnitTest {
+public class TestMapStoreCache extends StroomUnitTest {
     private static final int MAX_CACHE_ITEMS = 200;
 
     @Test
     public void testReferenceDataCache() {
         try (CacheManager cacheManager = new CacheManager()) {
-            final ReferenceDataLoader referenceDataLoader = new ReferenceDataLoader() {
-                @Override
-                public MapStore load(final MapStoreCacheKey effectiveFeed) {
-                    return MapStoreTestUtil.createMapStore();
-                }
-            };
+            final ReferenceDataLoader referenceDataLoader = effectiveFeed -> MapStoreTestUtil.createMapStore();
             final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
 
             String eventString = null;

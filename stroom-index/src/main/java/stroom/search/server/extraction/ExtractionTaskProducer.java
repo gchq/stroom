@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package stroom.search.server.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.FieldIndexMap;
+import stroom.entity.shared.DocRef;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.query.api.v2.DocRef;
-import stroom.query.common.v2.Coprocessor;
 import stroom.search.server.ClusterSearchTask;
+import stroom.search.server.Coprocessor;
 import stroom.search.server.Event;
 import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
 import stroom.search.server.taskqueue.TaskExecutor;
@@ -49,15 +49,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ExtractionTaskProducer extends TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-            "Extraction",
-            5,
-            0,
-            Integer.MAX_VALUE);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Extraction", 5, 0, Integer.MAX_VALUE);
 
     private final ClusterSearchTask clusterSearchTask;
     private final FieldIndexMap extractionFieldIndexMap;
-    private final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap;
+    private final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap;
     private final ErrorReceiver errorReceiver;
     private final Provider<ExtractionTaskHandler> handlerProvider;
     private final Queue<ExtractionRunnable> taskQueue = new ConcurrentLinkedQueue<>();
@@ -72,7 +68,7 @@ public class ExtractionTaskProducer extends TaskProducer {
                                   final StreamMapCreator streamMapCreator,
                                   final LinkedBlockingQueue<String[]> storedData,
                                   final FieldIndexMap extractionFieldIndexMap,
-                                  final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,
+                                  final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap,
                                   final ErrorReceiver errorReceiver,
                                   final int maxThreadsPerTask,
                                   final ExecutorProvider executorProvider,
@@ -185,14 +181,14 @@ public class ExtractionTaskProducer extends TaskProducer {
 
         long[] eventIds = null;
 
-        for (final Entry<DocRef, Set<Coprocessor>> entry : extractionCoprocessorsMap.entrySet()) {
+        for (final Entry<DocRef, Set<Coprocessor<?>>> entry : extractionCoprocessorsMap.entrySet()) {
             final DocRef pipelineRef = entry.getKey();
-            final Set<Coprocessor> coprocessors = entry.getValue();
+            final Set<Coprocessor<?>> coprocessors = entry.getValue();
 
             if (pipelineRef != null) {
                 // This set of coprocessors require result extraction so invoke the extraction service.
                 final ResultReceiver resultReceiver = values -> {
-                    for (final Coprocessor coprocessor : coprocessors) {
+                    for (final Coprocessor<?> coprocessor : coprocessors) {
                         try {
                             coprocessor.receive(values);
                         } catch (final Exception e) {
@@ -218,7 +214,7 @@ public class ExtractionTaskProducer extends TaskProducer {
 
             } else {
                 // Pass raw values to coprocessors that are not requesting values to be extracted.
-                for (final Coprocessor coprocessor : coprocessors) {
+                for (final Coprocessor<?> coprocessor : coprocessors) {
                     for (final Event event : events) {
                         coprocessor.receive(event.getValues());
                     }

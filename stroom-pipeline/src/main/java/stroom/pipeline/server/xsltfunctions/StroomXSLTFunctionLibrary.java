@@ -35,11 +35,12 @@ public class StroomXSLTFunctionLibrary {
                 .library(this)
                 .delegateClass(BitmapLookup.class)
                 .minArgs(2)
-                .maxArgs(4)
+                .maxArgs(5)
                 .argTypes(new SequenceType[]{
                         SequenceType.SINGLE_STRING,
                         SequenceType.SINGLE_STRING,
                         SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_BOOLEAN,
                         SequenceType.OPTIONAL_BOOLEAN
                 })
                 .resultType(SequenceType.NODE_SEQUENCE)
@@ -198,11 +199,12 @@ public class StroomXSLTFunctionLibrary {
                 .library(this)
                 .delegateClass(Lookup.class)
                 .minArgs(2)
-                .maxArgs(4)
+                .maxArgs(5)
                 .argTypes(new SequenceType[]{
                         SequenceType.SINGLE_STRING,
                         SequenceType.SINGLE_STRING,
                         SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_BOOLEAN,
                         SequenceType.OPTIONAL_BOOLEAN
                 })
                 .resultType(SequenceType.NODE_SEQUENCE)
@@ -287,26 +289,6 @@ public class StroomXSLTFunctionLibrary {
                         SequenceType.SINGLE_STRING
                 })
                 .resultType(SequenceType.OPTIONAL_STRING)
-                .build());
-
-        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("pipeline-name")
-                .library(this)
-                .delegateClass(PipelineName.class)
-                .resultType(SequenceType.OPTIONAL_STRING)
-                .build());
-
-        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("put")
-                .library(this)
-                .delegateClass(Put.class)
-                .minArgs(2)
-                .maxArgs(2)
-                .argTypes(new SequenceType[]{
-                        SequenceType.SINGLE_STRING,
-                        SequenceType.SINGLE_STRING
-                })
-                .resultType(SequenceType.EMPTY_SEQUENCE)
                 .build());
     }
 

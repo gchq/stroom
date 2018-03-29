@@ -102,7 +102,7 @@ abstract class StroomExtensionFunctionCall {
         errorReceiver.log(severity, location, getClass().getSimpleName(), message, e);
     }
 
-    private Location getLocation(final XPathContext context) {
+    Location getLocation(final XPathContext context) {
         final Item item = context.getContextItem();
         if (item instanceof NodeInfo) {
             final NodeInfo nodeInfo = (NodeInfo) item;
@@ -112,7 +112,9 @@ abstract class StroomExtensionFunctionCall {
         return locationFactory.create();
     }
 
-    void configure(final ErrorReceiver errorReceiver, final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences) {
+    void configure(final ErrorReceiver errorReceiver,
+                   final LocationFactory locationFactory,
+                   final List<PipelineReference> pipelineReferences) {
         this.errorReceiver = errorReceiver;
         this.locationFactory = locationFactory;
         this.pipelineReferences = pipelineReferences;

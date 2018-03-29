@@ -107,10 +107,10 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             // works.
             addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
             addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
-            checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_1");
-            checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_2");
-            checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_3");
-            checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_4");
+            checkData(referenceData, pipelineReferences, "SID_TO_PF_1");
+            checkData(referenceData, pipelineReferences, "SID_TO_PF_2");
+            checkData(referenceData, pipelineReferences, "SID_TO_PF_3");
+            checkData(referenceData, pipelineReferences, "SID_TO_PF_4");
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -139,25 +139,16 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 3), mapStoreBuilder.getMapStore());
     }
 
-    private void checkData(final ReferenceData data, final List<PipelineReference> referenceFeedSet,
-                           final ErrorReceiver errorReceiver, final String mapName) {
-        Assert.assertEquals("B1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.111Z"), mapName, "user1")));
-        Assert.assertEquals("B1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2015-01-01T09:47:00.000Z"), mapName, "user1")));
-        Assert.assertEquals("A1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2009-10-01T09:47:00.000Z"), mapName, "user1")));
-        Assert.assertEquals("A1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"), mapName, "user1")));
-        Assert.assertEquals("1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z"), mapName, "user1")));
+    private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences, final String mapName) {
+        Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1"));
+        Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1"));
+        Assert.assertEquals("A1111", lookup(data, pipelineReferences, "2009-10-01T09:47:00.000Z", mapName, "user1"));
+        Assert.assertEquals("A1111", lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1"));
+        Assert.assertEquals("1111", lookup(data, pipelineReferences, "2008-01-01T09:47:00.000Z", mapName, "user1"));
 
-        Assert.assertNull(getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2006-01-01T09:47:00.000Z"), mapName, "user1")));
-        Assert.assertNull(getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"), mapName, "user1_X")));
-        Assert.assertNull(getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"), "SID_TO_PF_X", "user1")));
+        Assert.assertNull(lookup(data, pipelineReferences, "2006-01-01T09:47:00.000Z", mapName, "user1"));
+        Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1_X"));
+        Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", "SID_TO_PF_X", "user1"));
     }
 
     /**
@@ -175,7 +166,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
         pipelineReferences.add(pipelineReference);
 
-        final ReferenceData referenceData = createReferenceData();
+        final ReferenceData data = createReferenceData();
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
@@ -189,23 +180,17 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             };
             final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
             final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
-            referenceData.setEffectiveStreamCache(effectiveStreamCache);
-            referenceData.setMapStorePool(mapStoreCache);
-
-            final ErrorReceiver errorReceiver = new FatalErrorReceiver();
+            data.setEffectiveStreamCache(effectiveStreamCache);
+            data.setMapStorePool(mapStoreCache);
 
             final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
             mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
             mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
-            referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
+            data.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
 
-            Assert.assertEquals("091111", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
-                    0, "CARD_NUMBER_TO_PF_NUMBER", "011111")));
-            Assert.assertEquals("user1", getStringFromEvents(
-                    referenceData.getValue(pipelineReferences, errorReceiver, 0, "NUMBER_TO_SID", "091111")));
-
-            Assert.assertEquals("user1", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
-                    0, "CARD_NUMBER_TO_PF_NUMBER/NUMBER_TO_SID", "011111")));
+            Assert.assertEquals("091111", lookup(data, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER", "011111"));
+            Assert.assertEquals("user1", lookup(data, pipelineReferences, 0, "NUMBER_TO_SID", "091111"));
+            Assert.assertEquals("user1", lookup(data, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER/NUMBER_TO_SID", "011111"));
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -224,16 +209,23 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         return eventList;
     }
 
-    private String getStringFromEvents(final EventList eventList) {
-        // if (events == null || events.length == 0) {
-        // return null;
-        // }
-        //
-        // final Characters chars = (Characters) events[0];
-        // return chars.toString();
+    private String lookup(final ReferenceData data,
+                          final List<PipelineReference> pipelineReferences,
+                          final String time,
+                          final String mapName,
+                          final String key) {
+        return lookup(data, pipelineReferences, DateUtil.parseNormalDateTimeString(time), mapName, key);
+    }
 
-        if (eventList != null) {
-            return eventList.toString();
+    private String lookup(final ReferenceData data,
+                          final List<PipelineReference> pipelineReferences,
+                          final long time,
+                          final String mapName,
+                          final String key) {
+        final ReferenceDataResult result = new ReferenceDataResult();
+        data.getValue(pipelineReferences, time, mapName, key, result);
+        if (result.getEventList() != null) {
+            return result.getEventList().toString();
         }
 
         return null;

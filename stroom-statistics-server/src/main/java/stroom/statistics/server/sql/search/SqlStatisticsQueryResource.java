@@ -88,6 +88,8 @@ public class SqlStatisticsQueryResource implements HasHealthCheck {
             LOGGER.debug("/search called with searchRequest:\n{}", json);
         }
 
+        //TODO this call is currently blocking, it needs to be changed to make the underlying search asynch
+        //so that this can respect incremental queries
         return statisticsQueryService.search(request);
     }
 

@@ -113,12 +113,7 @@ class FormatDate extends StroomExtensionFunctionCall {
         long ms = -1;
         try {
             // If the incoming pattern doesn't contain year then we might need to figure the year out for ourselves.
-            if (!pattern.contains("yy")) {
-                ms = parseDateWithoutYear(context, timeZone, pattern, date);
-
-            } else {
-                ms = DateUtil.parseDate(pattern, timeZone, date);
-            }
+            ms = parseDate(context, timeZone, pattern, date);
         } catch (final Throwable e) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Failed to parse date: \"");
@@ -154,12 +149,7 @@ class FormatDate extends StroomExtensionFunctionCall {
         long ms = -1;
         try {
             // If the incoming pattern doesn't contain year then we might need to figure the year out for ourselves.
-            if (!patternIn.contains("yy")) {
-                ms = parseDateWithoutYear(context, timeZoneIn, patternIn, date);
-
-            } else {
-                ms = DateUtil.parseDate(patternIn, timeZoneIn, date);
-            }
+            ms = parseDate(context, timeZoneIn, patternIn, date);
         } catch (final Throwable e) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Failed to parse date: \"");
@@ -199,6 +189,40 @@ class FormatDate extends StroomExtensionFunctionCall {
         return result;
     }
 
+    long parseDate(final XPathContext context, final String timeZone, final String pattern, final String date) {
+        final ZoneId zoneId = getTimeZone(context, timeZone);
+        final ZonedDateTime referenceDateTime = getBaseTime().atZone(zoneId);
+        final DateTimeFormatter parseFormatter = new DateTimeFormatterBuilder()
+                .appendPattern(pattern)
+                .parseDefaulting(ChronoField.YEAR_OF_ERA, referenceDateTime.get(ChronoField.YEAR_OF_ERA))
+                .parseDefaulting(ChronoField.MONTH_OF_YEAR, referenceDateTime.get(ChronoField.MONTH_OF_YEAR))
+                .parseDefaulting(ChronoField.DAY_OF_MONTH, referenceDateTime.get(ChronoField.DAY_OF_MONTH))
+                .toFormatter(Locale.ENGLISH);
+
+        // Parse the date as best we can.
+        ZonedDateTime dateTime;
+        final TemporalAccessor temporalAccessor = parseFormatter.parseBest(date, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
+        if (temporalAccessor instanceof ZonedDateTime) {
+            dateTime = ((ZonedDateTime) temporalAccessor).withZoneSameInstant(zoneId);
+        } else if (temporalAccessor instanceof LocalDateTime) {
+            dateTime = ((LocalDateTime) temporalAccessor).atZone(zoneId);
+        } else {
+            dateTime = ((LocalDate) temporalAccessor).atStartOfDay(zoneId);
+        }
+
+        // Subtract a year if the date appears to be after our reference time.
+        if (dateTime.isAfter(referenceDateTime)) {
+            if (!pattern.contains("y")) {
+                if (!pattern.contains("M")) {
+                    dateTime = dateTime.minusMonths(1);
+                } else {
+                    dateTime = dateTime.minusYears(1);
+                }
+            }
+        }
+        return dateTime.toInstant().toEpochMilli();
+    }
+
     private ZoneId getTimeZone(final XPathContext context, final String timeZone) {
         ZoneId dateTimeZone = null;
         try {
@@ -222,47 +246,19 @@ class FormatDate extends StroomExtensionFunctionCall {
         return dateTimeZone;
     }
 
-    long parseDateWithoutYear(final XPathContext context, final String timeZone, final String pattern, final String date) {
-        final ZoneId zoneId = getTimeZone(context, timeZone);
-        final ZonedDateTime referenceDateTime = getBaseTime().atZone(zoneId);
-        final DateTimeFormatter parseFormatter = new DateTimeFormatterBuilder()
-                .appendPattern(pattern)
-                .parseDefaulting(ChronoField.YEAR, referenceDateTime.get(ChronoField.YEAR))
-                .parseDefaulting(ChronoField.MONTH_OF_YEAR, referenceDateTime.get(ChronoField.MONTH_OF_YEAR))
-                .parseDefaulting(ChronoField.DAY_OF_MONTH, referenceDateTime.get(ChronoField.DAY_OF_MONTH))
-                .toFormatter(Locale.ENGLISH);
-
-        // Parse the date as best we can.
-        ZonedDateTime dateTime;
-        final TemporalAccessor temporalAccessor = parseFormatter.parseBest(date, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
-        if (temporalAccessor instanceof ZonedDateTime) {
-            dateTime = ((ZonedDateTime) temporalAccessor).withZoneSameInstant(zoneId);
-        } else if (temporalAccessor instanceof LocalDateTime) {
-            dateTime = ((LocalDateTime) temporalAccessor).atZone(zoneId);
-        } else {
-            dateTime = ((LocalDate) temporalAccessor).atStartOfDay(zoneId);
-        }
-
-        // Subtract a year if the date appears to be after our reference time.
-        if (dateTime.isAfter(referenceDateTime)) {
-            if (!pattern.contains("M")) {
-                dateTime = dateTime.minusMonths(1);
-            } else {
-                dateTime = dateTime.minusYears(1);
-            }
-        }
-        return dateTime.toInstant().toEpochMilli();
-    }
-
     private Instant getBaseTime() {
         if (baseTime == null) {
-            long createMs = System.currentTimeMillis();
+            Long createMs = null;
             if (streamHolder != null) {
                 if (streamHolder.getStream() != null) {
                     createMs = streamHolder.getStream().getCreateMs();
                 }
             }
-            baseTime = Instant.ofEpochMilli(createMs);
+            if (createMs != null) {
+                baseTime = Instant.ofEpochMilli(createMs);
+            } else {
+                baseTime = Instant.now();
+            }
         }
         return baseTime;
     }
