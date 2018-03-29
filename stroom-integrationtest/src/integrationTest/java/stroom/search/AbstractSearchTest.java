@@ -36,7 +36,6 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.time.ZoneOffset;

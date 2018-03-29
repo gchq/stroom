@@ -40,7 +40,6 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.UserService;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.util.Collections;
