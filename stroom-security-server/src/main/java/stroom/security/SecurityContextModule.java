@@ -17,10 +17,16 @@
 package stroom.security;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 
 public class SecurityContextModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(SecurityContext.class).to(SecurityContextImpl.class);
+    }
+
+    @Provides
+    public Security security(final SecurityContext securityContext) {
+        return new Security(securityContext);
     }
 }
