@@ -19,12 +19,11 @@ package stroom.refdata;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.security.MockSecurityContext;
+import stroom.security.Security;
 import stroom.util.cache.CacheManager;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -38,7 +37,10 @@ public class TestCache extends StroomUnitTest {
     public void testReferenceDataCache() {
         try (CacheManager cacheManager = new CacheManager()) {
             final ReferenceDataLoader referenceDataLoader = effectiveFeed -> MapStoreTestUtil.createMapStore();
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
+            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager,
+                    referenceDataLoader,
+                    new MapStoreInternPool(),
+                    new Security(new MockSecurityContext()));
 
             String eventString = null;
 

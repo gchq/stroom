@@ -22,5 +22,5 @@ import javax.inject.Singleton;
 import java.util.NavigableSet;
 
 @Singleton
-public class EffectiveStreamInternPool extends InternPool<NavigableSet<EffectiveStream>> {
+class EffectiveStreamInternPool extends InternPool<NavigableSet<EffectiveStream>> {
 }

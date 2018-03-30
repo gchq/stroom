@@ -19,13 +19,11 @@ package stroom.refdata;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.joda.time.DateTime;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.DocRef;
+import stroom.security.MockSecurityContext;
+import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.MockStreamStore;
 import stroom.streamstore.shared.Stream;
@@ -71,8 +69,10 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
         DocRef feedRef = DocRefUtil.create(referenceFeed);
 
         try (CacheManager cacheManager = new CacheManager()) {
-            final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager, mockStreamStore,
-                    null, null);
+            final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager,
+                    mockStreamStore,
+                    new EffectiveStreamInternPool(),
+                    new Security(new MockSecurityContext()));
 
             Assert.assertEquals("No pooled times yet", 0, effectiveStreamPool.size());
             Assert.assertEquals("No calls to the database yet", 0, findEffectiveStreamSourceCount);
