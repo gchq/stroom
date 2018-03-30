@@ -28,8 +28,7 @@ import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
 import stroom.security.Insecure;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -40,6 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.util.List;
 
 /**
@@ -60,20 +60,21 @@ public class StatusServlet extends HttpServlet {
     private static final String AREA_DB = "DB";
     private static final String AREA_VOLUME = "VOLUME";
     private static final String MSG_OK = "OK";
-    private transient NodeService nodeService;
-    private transient ClientPropertiesService clientPropertiesService;
-    private transient VolumeService volumeService;
-    private transient SecurityContext securityContext;
+
+    private final NodeService nodeService;
+    private final ClientPropertiesService clientPropertiesService;
+    private final VolumeService volumeService;
+    private final Security security;
 
     @Inject
     StatusServlet(final NodeService nodeService,
                   final ClientPropertiesService clientPropertiesService,
                   final VolumeService volumeService,
-                  final SecurityContext securityContext) {
+                  final Security security) {
         this.nodeService = nodeService;
         this.clientPropertiesService = clientPropertiesService;
         this.volumeService = volumeService;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     /**
@@ -89,19 +90,22 @@ public class StatusServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
-            throws ServletException, IOException {
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
-            response.setContentType("text/plain");
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) {
+        security.asProcessingUser(() -> {
+            try {
+                response.setContentType("text/plain");
 
-            final PrintWriter pw = response.getWriter();
+                final PrintWriter pw = response.getWriter();
 
-            reportHTTP(pw);
-            reportNodeStatus(pw);
-            reportVolumeStatus(pw);
+                reportHTTP(pw);
+                reportNodeStatus(pw);
+                reportVolumeStatus(pw);
 
-            pw.close();
-        }
+                pw.close();
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     /**
@@ -109,7 +113,7 @@ public class StatusServlet extends HttpServlet {
      *
      * @param pw
      */
-    public void reportHTTP(final PrintWriter pw) {
+    private void reportHTTP(final PrintWriter pw) {
         writeInfoLine(pw, AREA_HTTP, MSG_OK);
     }
 
@@ -118,7 +122,7 @@ public class StatusServlet extends HttpServlet {
      *
      * @param pw
      */
-    public void reportNodeStatus(final PrintWriter pw) {
+    private void reportNodeStatus(final PrintWriter pw) {
         try {
             final ClientProperties clientProperties = clientPropertiesService.getProperties();
             writeInfoLine(pw, AREA_BUILD, "Build version " + clientProperties.get(ClientProperties.BUILD_VERSION));
@@ -138,7 +142,7 @@ public class StatusServlet extends HttpServlet {
      *
      * @param pw
      */
-    public void reportVolumeStatus(final PrintWriter pw) {
+    private void reportVolumeStatus(final PrintWriter pw) {
         try {
             final FindVolumeCriteria criteria = new FindVolumeCriteria();
             boolean oneOKVolume = false;

@@ -19,8 +19,7 @@ package stroom.dashboard;
 import stroom.dashboard.shared.FetchDataSourceFieldsAction;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.entity.shared.DataSourceFields;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -29,23 +28,21 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = FetchDataSourceFieldsAction.class)
 class FetchExpressionFieldsHandler extends AbstractTaskHandler<FetchDataSourceFieldsAction, DataSourceFields> {
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     FetchExpressionFieldsHandler(final DataSourceProviderRegistry dataSourceProviderRegistry,
-                                 final SecurityContext securityContext) {
+                                 final Security security) {
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
     public DataSourceFields exec(final FetchDataSourceFieldsAction action) {
         // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            return dataSourceProviderRegistry.getDataSourceProvider(action.getDataSourceRef())
-                    .map(provider ->
-                            new DataSourceFields(provider.getDataSource(action.getDataSourceRef()).getFields()))
-                    .orElse(null);
-        }
+        return security.useAsReadResult(() -> dataSourceProviderRegistry.getDataSourceProvider(action.getDataSourceRef())
+                .map(provider ->
+                        new DataSourceFields(provider.getDataSource(action.getDataSourceRef()).getFields()))
+                .orElse(null));
     }
 }

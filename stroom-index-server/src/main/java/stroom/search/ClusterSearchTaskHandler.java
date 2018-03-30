@@ -49,8 +49,7 @@ import stroom.search.shard.IndexShardSearchTaskHandler;
 import stroom.search.shard.IndexShardSearchTaskProducer;
 import stroom.search.shard.IndexShardSearchTaskProperties;
 import stroom.search.shard.IndexShardSearcherCache;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskCallback;
@@ -104,7 +103,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final ExtractionTaskExecutor extractionTaskExecutor;
     private final ExtractionTaskProperties extractionTaskProperties;
     private final StreamStore streamStore;
-    private final SecurityContext securityContext;
+    private final Security security;
     private final int maxBooleanClauseCount;
     private final int maxStoredDataQueueSize;
     private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
@@ -128,7 +127,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final ExtractionTaskExecutor extractionTaskExecutor,
                              final ExtractionTaskProperties extractionTaskProperties,
                              final StreamStore streamStore,
-                             final SecurityContext securityContext,
+                             final Security security,
                              final StroomPropertyService propertyService,
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                              final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
@@ -143,7 +142,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         this.extractionTaskExecutor = extractionTaskExecutor;
         this.extractionTaskProperties = extractionTaskProperties;
         this.streamStore = streamStore;
-        this.securityContext = securityContext;
+        this.security = security;
         this.maxBooleanClauseCount = propertyService.getIntProperty("stroom.search.maxBooleanClauseCount", DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
         this.maxStoredDataQueueSize = propertyService.getIntProperty("stroom.search.maxStoredDataQueueSize", DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
         this.indexShardSearchTaskHandlerProvider = indexShardSearchTaskHandlerProvider;
@@ -153,7 +152,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     @Override
     public void exec(final ClusterSearchTask task, final TaskCallback<NodeResult> callback) {
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        security.useAsRead(() -> {
             if (!taskContext.isTerminated()) {
                 taskContext.info("Initialising...");
 
@@ -290,7 +289,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     }
                 }
             }
-        }
+        });
     }
 
     private void search(final ClusterSearchTask task,
@@ -358,7 +357,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                     // Create an object to make event lists from raw index data.
                     final StreamMapCreator streamMapCreator = new StreamMapCreator(task.getStoredFields(), this,
-                            streamStore, securityContext);
+                            streamStore, security);
 
                     // Make a task producer that will create event data extraction tasks when requested by the executor.
                     final Executor extractionExecutor = executorProvider.getExecutor(ExtractionTaskProducer.THREAD_POOL);

@@ -24,8 +24,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.Stream;
@@ -56,17 +55,17 @@ public class EffectiveStreamCache implements Clearable {
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
     private final StreamStore streamStore;
     private final EffectiveStreamInternPool internPool;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
                          final StreamStore streamStore,
                          final EffectiveStreamInternPool internPool,
-                         final SecurityContext securityContext) {
+                         final Security security) {
         this.streamStore = streamStore;
         this.internPool = internPool;
-        this.securityContext = securityContext;
+        this.security = security;
 
         final CacheLoader<EffectiveStreamKey, NavigableSet> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
@@ -89,7 +88,7 @@ public class EffectiveStreamCache implements Clearable {
     }
 
     protected NavigableSet<EffectiveStream> create(final EffectiveStreamKey key) {
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        return security.asProcessingUserResult(() -> {
             NavigableSet<EffectiveStream> effectiveStreamSet = Collections.emptyNavigableSet();
 
             try {
@@ -150,7 +149,7 @@ public class EffectiveStreamCache implements Clearable {
             }
 
             return effectiveStreamSet;
-        }
+        });
     }
 
     /**

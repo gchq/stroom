@@ -28,8 +28,7 @@ import stroom.query.api.v2.Query;
 import stroom.search.EventRef;
 import stroom.search.EventRefs;
 import stroom.search.EventSearchTask;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.security.UserTokenUtil;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
@@ -51,15 +50,15 @@ import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.TaskCallbackAdaptor;
+import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.VoidResult;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.lifecycle.StroomStartup;
-import stroom.task.TaskContext;
+import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -107,7 +106,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StroomPropertyService propertyService;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final StreamStore streamStore;
-    private final SecurityContext securityContext;
+    private final Security security;
     private final ExpressionToFindCriteria expressionToFindCriteria;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
@@ -159,7 +158,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final StroomPropertyService propertyService,
                           final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
                           final StreamStore streamStore,
-                          final SecurityContext securityContext,
+                          final Security security,
                           final ExpressionToFindCriteria expressionToFindCriteria) {
 
         this.streamProcessorFilterService = streamProcessorFilterService;
@@ -171,7 +170,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.propertyService = propertyService;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
         this.streamStore = streamStore;
-        this.securityContext = securityContext;
+        this.security = security;
         this.expressionToFindCriteria = expressionToFindCriteria;
     }
 
@@ -503,7 +502,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private void createTasksForFilter(final TaskContext taskContext, final Node node,
                                       final StreamProcessorFilter filter, final StreamTaskQueue queue, final int maxQueueSize,
                                       final StreamTaskCreatorRecentStreamDetails recentStreamInfo) {
-        boolean searching = false;
+        final AtomicBoolean searching = new AtomicBoolean();
         try {
             // Reload as it could have changed
             final StreamProcessorFilter loadedFilter = streamProcessorFilterService.load(filter,
@@ -513,7 +512,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             if (loadedFilter != null) {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, UserTokenUtil.create(loadedFilter.getCreateUser(), null))) {
+                security.asUser(UserTokenUtil.create(loadedFilter.getCreateUser(), null), () -> {
                     LOGGER.debug("createTasksForFilter() - streamProcessorFilter {}", loadedFilter.toString());
 
                     // Only try and create tasks if the processor is enabled.
@@ -623,7 +622,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                     } else if (!isStreamStoreSearch) {
                                         // Create stream tasks by executing a
                                         // search.
-                                        searching = true;
+                                        searching.set(true);
                                         createTasksFromSearchQuery(loadedFilter,
                                                 queryData,
                                                 streamQueryTime,
@@ -649,13 +648,13 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                             exhaustedFilterMap.put(loadedFilter.getId(), Boolean.FALSE);
                         }
                     }
-                }
+                });
             }
         } catch (final RuntimeException e) {
             LOGGER.error("Error processing filter with id = " + filter.getId());
             LOGGER.error(e.getMessage(), e);
         } finally {
-            if (!searching) {
+            if (!searching.get()) {
                 queue.setFilling(false);
             }
         }

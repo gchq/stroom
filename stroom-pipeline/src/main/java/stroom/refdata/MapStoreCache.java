@@ -22,8 +22,7 @@ import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
@@ -45,17 +44,17 @@ public final class MapStoreCache implements Clearable {
     private final LoadingCache<MapStoreCacheKey, MapStore> cache;
     private final ReferenceDataLoader referenceDataLoader;
     private final MapStoreInternPool internPool;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     @SuppressWarnings("unchecked")
     MapStoreCache(final CacheManager cacheManager,
                   final ReferenceDataLoader referenceDataLoader,
                   final MapStoreInternPool internPool,
-                  final SecurityContext securityContext) {
+                  final Security security) {
         this.referenceDataLoader = referenceDataLoader;
         this.internPool = internPool;
-        this.securityContext = securityContext;
+        this.security = security;
 
         final CacheLoader<MapStoreCacheKey, MapStore> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
@@ -70,7 +69,7 @@ public final class MapStoreCache implements Clearable {
     }
 
     private MapStore create(final MapStoreCacheKey mapStoreCacheKey) {
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        return security.asProcessingUserResult(() -> {
             MapStore mapStore = null;
 
             try {
@@ -100,7 +99,7 @@ public final class MapStoreCache implements Clearable {
             }
 
             return mapStore;
-        }
+        });
     }
 
     @Override

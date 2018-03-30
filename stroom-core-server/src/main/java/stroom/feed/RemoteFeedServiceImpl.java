@@ -20,26 +20,25 @@ package stroom.feed;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.security.Insecure;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 class RemoteFeedServiceImpl implements RemoteFeedService {
-    private final SecurityContext securityContext;
+    private final Security security;
     private final FeedService feedService;
 
     @Inject
-    RemoteFeedServiceImpl(final SecurityContext securityContext, @Named("cachedFeedService") final FeedService feedService) {
-        this.securityContext = securityContext;
+    RemoteFeedServiceImpl(final Security security, @Named("cachedFeedService") final FeedService feedService) {
+        this.security = security;
         this.feedService = feedService;
     }
 
     @Override
     @Insecure
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        return security.asProcessingUserResult(() -> {
             final Feed feed = feedService.loadByName(request.getFeedName());
 
             if (feed == null) {
@@ -88,6 +87,6 @@ class RemoteFeedServiceImpl implements RemoteFeedService {
 //
             return GetFeedStatusResponse.createOKRecieveResponse();
 
-        }
+        });
     }
 }

@@ -29,8 +29,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskContext;
@@ -68,7 +67,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
     private final IndexService indexService;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     AsyncSearchTaskHandler(final TaskContext taskContext,
@@ -78,7 +77,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                            final IndexService indexService,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
-                           final SecurityContext securityContext) {
+                           final Security security) {
         this.taskContext = taskContext;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.dispatchAsyncProvider = dispatchAsyncProvider;
@@ -86,12 +85,12 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         this.indexService = indexService;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final AsyncSearchTask task) {
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        return security.useAsReadResult(() -> {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
             if (!taskContext.isTerminated()) {
@@ -191,7 +190,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
             }
 
             return VoidResult.INSTANCE;
-        }
+        });
     }
 
     private void terminateTasks(final AsyncSearchTask task) {

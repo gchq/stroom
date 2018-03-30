@@ -18,8 +18,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.query.api.v2.DocRef;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.security.UserService;
 import stroom.security.UserTokenUtil;
 import stroom.util.shared.Severity;
@@ -57,7 +56,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     private final ElasticIndexCache elasticIndexCache;
 
     private final StroomElasticProducerFactoryService elasticProducerFactoryService;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     private StroomElasticProducer elasticProducer = null;
     private ElasticIndexDocRefEntity indexConfig = null;
@@ -67,14 +66,14 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     @Inject
     public ElasticIndexingFilter(final LocationFactoryProxy locationFactory,
                                  final ElasticIndexCache elasticIndexCache,
-                                 final SecurityContext securityContext,
+                                 final Security security,
                                  final ErrorReceiverProxy errorReceiverProxy,
                                  final StroomElasticProducerFactoryService elasticProducerFactoryService) {
         this.locationFactory = locationFactory;
         this.elasticIndexCache = elasticIndexCache;
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticProducerFactoryService = elasticProducerFactoryService;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @PipelineProperty(description = "The field name to use as the unique ID for records.")
@@ -110,16 +109,14 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
                 throw new LoggedException("Index has not been set");
             }
 
-            try (final SecurityHelper sh = SecurityHelper.asUser(
-                    securityContext,
-                    UserTokenUtil.create(UserService.STROOM_SERVICE_USER_NAME, null))) {
+            security.asUser(UserTokenUtil.create(UserService.STROOM_SERVICE_USER_NAME, null), () -> {
                 // Get the index and index fields from the cache.
                 indexConfig = elasticIndexCache.get(indexRef);
                 if (indexConfig == null) {
                     log(Severity.FATAL_ERROR, "Unable to load index", null);
                     throw new LoggedException("Unable to load index");
                 }
-            }
+            });
 
             elasticProducer = elasticProducerFactoryService.getConnector().orElseThrow(() -> {
                 String msg = "No Elastic Search connector is available to use";

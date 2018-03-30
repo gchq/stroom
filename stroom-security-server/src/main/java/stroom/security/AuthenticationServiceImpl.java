@@ -33,16 +33,16 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     AuthenticationServiceImpl(
             final UserService userService,
             final UserAppPermissionService userAppPermissionService,
-            final SecurityContext securityContext) {
+            final Security security) {
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
@@ -59,9 +59,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
             // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
             // some way of sensibly referencing the user and something to attach permissions to.
             // We need to elevate the user because no one is currently logged in.
-            try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
-                userRef = userService.createUser(token.getUserId());
-            }
+            userRef = security.asProcessingUserResult(() -> userService.createUser(token.getUserId()));
         }
 
         return userRef;
@@ -90,13 +88,11 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private UserRef createOrRefreshUser(String name) {
-        UserRef userRef;
-
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        return security.asProcessingUserResult(() -> {
             // Ensure all perms have been created
             userAppPermissionService.init();
 
-            userRef = userService.getUserByName(name);
+            UserRef userRef = userService.getUserByName(name);
             if (userRef == null) {
                 User user = new User();
                 user.setName(name);
@@ -112,8 +108,9 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
                 userRef = UserRefFactory.create(user);
             }
-        }
-        return userRef;
+
+            return userRef;
+        });
     }
 
     /**
@@ -126,8 +123,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private UserRef createOrRefreshAdminUserGroup(final String userGroupName) {
-        UserRef newUserGroup;
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        return security.asProcessingUserResult(() -> {
             final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
             findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
 
@@ -136,14 +132,15 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 return UserRefFactory.create(userGroup);
             }
 
-            newUserGroup = userService.createUserGroup(userGroupName);
+            UserRef newUserGroup = userService.createUserGroup(userGroupName);
             try {
                 userAppPermissionService.addPermission(newUserGroup, PermissionNames.ADMINISTRATOR);
             } catch (final RuntimeException e) {
                 // Expected.
                 LOGGER.debug(e.getMessage());
             }
-        }
-        return newUserGroup;
+
+            return newUserGroup;
+        });
     }
 }

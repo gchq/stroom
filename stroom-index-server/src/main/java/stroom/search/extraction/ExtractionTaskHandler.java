@@ -39,8 +39,8 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.query.api.v2.DocRef;
 import stroom.search.SearchException;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
@@ -73,6 +73,7 @@ public class ExtractionTaskHandler {
     private final PipelineService pipelineService;
     private final PipelineDataCache pipelineDataCache;
     private final TaskContext taskContext;
+    private final Security security;
     private final SecurityContext securityContext;
 
     private ExtractionTask task;
@@ -89,6 +90,7 @@ public class ExtractionTaskHandler {
                           @Named("cachedPipelineService") final PipelineService pipelineService,
                           final PipelineDataCache pipelineDataCache,
                           final TaskContext taskContext,
+                          final Security security,
                           final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedService = feedService;
@@ -101,11 +103,12 @@ public class ExtractionTaskHandler {
         this.pipelineService = pipelineService;
         this.pipelineDataCache = pipelineDataCache;
         this.taskContext = taskContext;
+        this.security = security;
         this.securityContext = securityContext;
     }
 
     public VoidResult exec(final ExtractionTask task) {
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        return security.useAsReadResult(() -> {
             LAMBDA_LOGGER.logDurationIfDebugEnabled(
                     () -> {
                         taskContext.setName("Extraction");
@@ -117,9 +120,9 @@ public class ExtractionTaskHandler {
                         }
                     },
                     () -> "ExtractionTaskHandler.exec()");
-        }
 
-        return VoidResult.INSTANCE;
+            return VoidResult.INSTANCE;
+        });
     }
 
     private void extract(final ExtractionTask task) {

@@ -34,8 +34,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.policy.DataRetentionService;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -79,7 +78,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     private final StroomEntityManager entityManager;
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final StreamMaintenanceService streamMaintenanceService;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     StreamAttributeMapServiceImpl(@Named("cachedFeedService") final FeedService feedService,
@@ -92,7 +91,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                                   final StroomEntityManager entityManager,
                                   final StreamAttributeKeyService streamAttributeKeyService,
                                   final StreamMaintenanceService streamMaintenanceService,
-                                  final SecurityContext securityContext) {
+                                  final Security security) {
         this.feedService = feedService;
         this.pipelineService = pipelineService;
         this.streamTypeService = streamTypeService;
@@ -103,15 +102,12 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         this.entityManager = entityManager;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.streamMaintenanceService = streamMaintenanceService;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
-    public BaseResultList<StreamAttributeMap> find(final FindStreamAttributeMapCriteria criteria)
-            {
-        BaseResultList<StreamAttributeMap> result;
-
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+    public BaseResultList<StreamAttributeMap> find(final FindStreamAttributeMapCriteria criteria) {
+        return security.useAsReadResult(() -> {
             // Cache Call
             final List<StreamAttributeMap> streamMDList = new ArrayList<>();
 
@@ -130,7 +126,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
 
             if (streamList.size() > 0) {
                 // We need to decorate streams with retention rules as a processing user.
-                try (final SecurityHelper sh = SecurityHelper.processingUser(securityContext)) {
+                security.asProcessingUser(() -> {
                     // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
                     List<DataRetentionRule> rules = Collections.emptyList();
 
@@ -151,14 +147,12 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                             loadAttributeMapFromFileSystem(criteria, streamMDList, streamList, ruleDecorator);
                         }
                     }
-                }
+                });
             }
 
-            result = new BaseResultList<>(streamMDList, streamList.getPageResponse().getOffset(),
+            return new BaseResultList<>(streamMDList, streamList.getPageResponse().getOffset(),
                     streamList.getPageResponse().getTotal(), streamList.getPageResponse().isExact());
-        }
-
-        return result;
+        });
     }
 
     /**

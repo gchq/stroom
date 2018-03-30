@@ -31,8 +31,7 @@ import stroom.datasource.DataSourceProviderRegistry;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -52,7 +51,7 @@ public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPol
     private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final ActiveQueriesManager activeQueriesManager;
     private final SearchRequestMapper searchRequestMapper;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     SearchBusPollActionHandler(final QueryService queryService,
@@ -60,19 +59,19 @@ public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPol
                                final DataSourceProviderRegistry searchDataSourceProviderRegistry,
                                final ActiveQueriesManager activeQueriesManager,
                                final SearchRequestMapper searchRequestMapper,
-                               final SecurityContext securityContext) {
+                               final Security security) {
         this.queryService = queryService;
         this.searchEventLog = searchEventLog;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.activeQueriesManager = activeQueriesManager;
         this.searchRequestMapper = searchRequestMapper;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
     public SearchBusPollResult exec(final SearchBusPollAction action) {
         // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        return security.useAsReadResult(() -> {
             if (LOGGER.isDebugEnabled()) {
                 final StringBuilder sb = new StringBuilder(
                         "Only the following search queries should be active for session '");
@@ -114,7 +113,7 @@ public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPol
             }
 
             return new SearchBusPollResult(searchResultMap);
-        }
+        });
     }
 
     private SearchResponse processRequest(final ActiveQueries activeQueries, final DashboardQueryKey queryKey, final SearchRequest searchRequest) {

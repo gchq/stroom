@@ -18,8 +18,7 @@
 package stroom.dashboard;
 
 import stroom.dashboard.shared.FetchVisualisationAction;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.visualisation.VisualisationService;
@@ -30,20 +29,18 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = FetchVisualisationAction.class)
 class FetchVisualisationHandler extends AbstractTaskHandler<FetchVisualisationAction, Visualisation> {
     private final VisualisationService visualisationService;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     FetchVisualisationHandler(final VisualisationService visualisationService,
-                              final SecurityContext securityContext) {
+                              final Security security) {
         this.visualisationService = visualisationService;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
     public Visualisation exec(final FetchVisualisationAction action) {
         // Elevate the users permissions for the duration of this task so they can read the visualisation if they have 'use' permission.
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            return visualisationService.loadByUuid(action.getVisualisation().getUuid());
-        }
+        return security.useAsReadResult(() -> visualisationService.loadByUuid(action.getVisualisation().getUuid()));
     }
 }

@@ -19,8 +19,7 @@ package stroom.script;
 
 import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;
@@ -28,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,45 +39,47 @@ import java.util.Set;
  * </p>
  */
 public class ScriptServlet extends HttpServlet {
-    public static final String BEAN_NAME = "scriptServlet";
-
     private static final long serialVersionUID = 2912973031600581055L;
 
     private static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
 
     private final ScriptService scriptService;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     ScriptServlet(final ScriptService scriptService,
-                  final SecurityContext securityContext) {
+                  final Security security) {
         this.scriptService = scriptService;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
-    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) {
         // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            response.setContentType("text/javascript");
-            response.setCharacterEncoding("UTF-8");
+        security.useAsRead(() -> {
+            try {
+                response.setContentType("text/javascript");
+                response.setCharacterEncoding("UTF-8");
 
-            final String query = request.getQueryString();
-            if (query != null) {
-                final Map<String, String> queryParamMap = createQueryParamMap(query);
+                final String query = request.getQueryString();
+                if (query != null) {
+                    final Map<String, String> queryParamMap = createQueryParamMap(query);
 
-                final String uuid = queryParamMap.get("uuid");
-                if (uuid != null && !uuid.isEmpty()) {
-                    final Script script = getScript(uuid);
-                    final Res res = script.getResource();
-                    if (res != null && res.getData() != null) {
-                        final PrintWriter pw = response.getWriter();
-                        pw.write(res.getData());
-                        pw.close();
+                    final String uuid = queryParamMap.get("uuid");
+                    if (uuid != null && !uuid.isEmpty()) {
+                        final Script script = getScript(uuid);
+                        final Res res = script.getResource();
+                        if (res != null && res.getData() != null) {
+                            final PrintWriter pw = response.getWriter();
+                            pw.write(res.getData());
+                            pw.close();
+                        }
                     }
                 }
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
             }
-        }
+        });
     }
 
     private Script getScript(final String uuid) {

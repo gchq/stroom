@@ -25,8 +25,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -40,17 +39,17 @@ class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataActi
     private final PipelineService pipelineService;
     private final PipelineStackLoader pipelineStackLoader;
     private final PipelineDataValidator pipelineDataValidator;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     FetchPipelineDataHandler(final PipelineService pipelineService,
                              final PipelineStackLoader pipelineStackLoader,
                              final PipelineDataValidator pipelineDataValidator,
-                             final SecurityContext securityContext) {
+                             final Security security) {
         this.pipelineService = pipelineService;
         this.pipelineStackLoader = pipelineStackLoader;
         this.pipelineDataValidator = pipelineDataValidator;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
@@ -58,7 +57,7 @@ class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataActi
         final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
 
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        return security.useAsReadResult(() -> {
             final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
             final SharedList<PipelineData> result = new SharedList<>(pipelines.size());
 
@@ -74,6 +73,6 @@ class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataActi
             }
 
             return result;
-        }
+        });
     }
 }

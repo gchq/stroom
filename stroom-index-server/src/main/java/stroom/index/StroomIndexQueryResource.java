@@ -32,8 +32,7 @@ import stroom.query.common.v2.SearchResponseCreator;
 import stroom.search.IndexDataSourceFieldUtil;
 import stroom.search.SearchResultCreatorManager;
 import stroom.search.SearchResultCreatorManager.Key;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
@@ -51,15 +50,15 @@ import javax.ws.rs.core.MediaType;
 public class StroomIndexQueryResource implements HasHealthCheck {
     private final SearchResultCreatorManager searchResultCreatorManager;
     private final IndexService indexService;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     public StroomIndexQueryResource(final SearchResultCreatorManager searchResultCreatorManager,
                                     final IndexService indexService,
-                                    final SecurityContext securityContext) {
+                                    final Security security) {
         this.searchResultCreatorManager = searchResultCreatorManager;
         this.indexService = indexService;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @POST
@@ -71,10 +70,10 @@ public class StroomIndexQueryResource implements HasHealthCheck {
             value = "Submit a request for a data source definition, supplying the DocRef for the data source",
             response = DataSource.class)
     public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        return security.useAsReadResult(() -> {
             final Index index = indexService.loadByUuid(docRef.getUuid());
             return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index));
-        }
+        });
     }
 
     @POST

@@ -25,8 +25,7 @@ import stroom.entity.SupportsCriteriaLogging;
 import stroom.entity.shared.BaseResultList;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.node.NodeCache;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.security.UserTokenUtil;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -62,7 +61,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
 
     private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
     private final NodeCache nodeCache;
-    private final SecurityContext securityContext;
+    private final Security security;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
     private final Map<TaskId, TaskThread> currentTasks = new ConcurrentHashMap<>(1024, 0.75F, 1024);
@@ -74,11 +73,11 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
     @Inject
     TaskManagerImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
                     final NodeCache nodeCache,
-                    final SecurityContext securityContext,
+                    final Security security,
                     final PipelineScopeRunnable pipelineScopeRunnable) {
         this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
         this.nodeCache = nodeCache;
-        this.securityContext = securityContext;
+        this.security = security;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
 
         // When we are running unit tests we need to make sure that all Stroom
@@ -366,7 +365,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 throw new TaskTerminatedException(stop.get());
             }
 
-            try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, userToken)) {
+            security.asUser(userToken, () -> {
                 CurrentTaskState.pushState(taskThread);
                 try {
                     // Get the task handler that will deal with this task.
@@ -379,8 +378,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 } finally {
                     CurrentTaskState.popState();
                 }
-            }
-
+            });
         } finally {
             currentThread.setName(oldThreadName);
 

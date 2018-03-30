@@ -45,8 +45,7 @@ import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.query.api.v2.DocRef;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.FileSystemUtil;
@@ -93,7 +92,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final PipelineDataCache pipelineDataCache;
     private final StreamEventLog streamEventLog;
-    private final SecurityContext securityContext;
+    private final Security security;
     private final PipelineScopeRunnable pipelineScopeRunnable;
 
     private Long streamsOffset = 0L;
@@ -113,7 +112,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                              final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                              final PipelineDataCache pipelineDataCache,
                              final StreamEventLog streamEventLog,
-                             final SecurityContext securityContext,
+                             final Security security,
                              final PipelineScopeRunnable pipelineScopeRunnable) {
         this.streamStore = streamStore;
         this.feedService = feedService;
@@ -125,7 +124,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.pipelineDataCache = pipelineDataCache;
         this.streamEventLog = streamEventLog;
-        this.securityContext = securityContext;
+        this.security = security;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
@@ -133,7 +132,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                                               final OffsetRange<Long> streamsRange, final OffsetRange<Long> pageRange, final boolean markerMode,
                                               final DocRef pipeline, final boolean showAsHtml, final Severity... expandedSeverities) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        return security.useAsReadResult(() -> {
             final StreamCloser streamCloser = new StreamCloser();
             List<StreamType> availableChildStreamTypes;
             Feed feed = null;
@@ -231,7 +230,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                     }
                 }
             }
-        }
+        });
     }
 
     private FetchMarkerResult createMarkerResult(final Feed feed, final StreamType streamType, final RASegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<StreamType> availableChildStreamTypes, final Severity... expandedSeverities) throws IOException {

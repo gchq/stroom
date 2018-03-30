@@ -30,7 +30,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Secured;
-import stroom.security.SecurityContext;
+import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.task.TaskHandlerBean;
@@ -52,7 +52,7 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
                                  final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                                  final PipelineDataCache pipelineDataCache,
                                  final StreamEventLog streamEventLog,
-                                 final SecurityContext securityContext,
+                                 final Security security,
                                  final PipelineScopeRunnable pipelineScopeRunnable) {
         super(streamStore,
                 feedService,
@@ -64,7 +64,7 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
                 errorReceiverProxyProvider,
                 pipelineDataCache,
                 streamEventLog,
-                securityContext,
+                security,
                 pipelineScopeRunnable);
     }
 

@@ -16,10 +16,6 @@
 
 package stroom.security;
 
-import stroom.security.Insecure;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
-import stroom.security.UserTokenUtil;
 import stroom.security.exception.AuthenticationException;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.UserAndPermissions;
@@ -35,12 +31,15 @@ import javax.inject.Inject;
 class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPermissionsAction, UserAndPermissions> {
     private static final String PREVENT_LOGIN_PROPERTY = "stroom.maintenance.preventLogin";
 
+    private final Security security;
     private final SecurityContext securityContext;
     private final UserAndPermissionsHelper userAndPermissionsHelper;
 
     @Inject
-    FetchUserAndPermissionsHandler(final SecurityContext securityContext,
+    FetchUserAndPermissionsHandler(final Security security,
+                                   final SecurityContext securityContext,
                                    final UserAndPermissionsHelper userAndPermissionsHelper) {
+        this.security = security;
         this.securityContext = securityContext;
         this.userAndPermissionsHelper = userAndPermissionsHelper;
     }
@@ -54,11 +53,11 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
 
         final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
         if (preventLogin) {
-            try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, UserTokenUtil.create(userRef.getName(), null))) {
+            security.asUser(UserTokenUtil.create(userRef.getName(), null), () -> {
                 if (!securityContext.isAdmin()) {
                     throw new AuthenticationException("You are not allowed access at this time");
                 }
-            }
+            });
         }
 
         return new UserAndPermissions(userRef, userAndPermissionsHelper.get(userRef));

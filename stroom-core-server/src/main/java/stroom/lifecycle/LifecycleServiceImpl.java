@@ -21,8 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.ScheduledTaskExecutor;
 import stroom.properties.StroomPropertyService;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.task.StroomThreadGroup;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
@@ -53,7 +52,7 @@ public class LifecycleServiceImpl implements LifecycleService {
     private final StroomBeanLifeCycle stroomBeanLifeCycle;
     private final StroomEntityManager entityManager;
     private final ScheduledTaskExecutor scheduledTaskExecutor;
-    private final SecurityContext securityContext;
+    private final Security security;
     private final AtomicInteger startingBeanCount = new AtomicInteger();
     private final AtomicInteger stoppingBeanCount = new AtomicInteger();
     // The scheduled executor that executes executable beans.
@@ -68,13 +67,13 @@ public class LifecycleServiceImpl implements LifecycleService {
                                 final StroomBeanLifeCycle stroomBeanLifeCycle,
                                 final StroomEntityManager entityManager,
                                 final ScheduledTaskExecutor scheduledTaskExecutor,
-                                final SecurityContext securityContext,
+                                final Security security,
                                 final StroomPropertyService propertyService) {
         this.taskManager = taskManager;
         this.stroomBeanLifeCycle = stroomBeanLifeCycle;
         this.entityManager = entityManager;
         this.scheduledTaskExecutor = scheduledTaskExecutor;
-        this.securityContext = securityContext;
+        this.security = security;
         this.enabled.set(propertyService.getBooleanProperty("stroom.lifecycle.enabled", false));
 
         Long executionInterval;
@@ -137,14 +136,14 @@ public class LifecycleServiceImpl implements LifecycleService {
 
             final Runnable runnable = () -> {
                 if (lock.tryLock()) {
-
-                    try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
-                        Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
-                        scheduledTaskExecutor.execute();
+                    try {
+                        security.asProcessingUser(() -> {
+                            Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
+                            scheduledTaskExecutor.execute();
+                        });
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     } finally {
-
                         lock.unlock();
                     }
                 } else {

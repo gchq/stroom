@@ -46,8 +46,7 @@ import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Secured;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.security.UserTokenUtil;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
@@ -106,7 +105,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private final SteppingResponseCache steppingResponseCache;
     private final PipelineDataCache pipelineDataCache;
     private final PipelineContext pipelineContext;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     private List<Long> allStreamIdList;
     private List<Long> filteredStreamIdList;
@@ -137,7 +136,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         final SteppingResponseCache steppingResponseCache,
                         final PipelineDataCache pipelineDataCache,
                         final PipelineContext pipelineContext,
-                        final SecurityContext securityContext) {
+                        final Security security) {
         this.streamStore = streamStore;
         this.streamCloser = streamCloser;
         this.feedService = feedService;
@@ -155,13 +154,13 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         this.steppingResponseCache = steppingResponseCache;
         this.pipelineDataCache = pipelineDataCache;
         this.pipelineContext = pipelineContext;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
     public SteppingResult exec(final SteppingTask request) {
         // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        return security.useAsReadResult(() -> {
             // Set the current user so they are visible during translation.
             currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(request.getUserToken()));
 
@@ -222,7 +221,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
             return new SteppingResult(request.getStepFilterMap(), currentLocation, stepData.convertToShared(),
                     curentStreamOffset, controller.isFound(), generalErrors);
-        }
+        });
     }
 
     private void initialise(final SteppingTask request) {

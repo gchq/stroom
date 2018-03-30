@@ -29,8 +29,8 @@ import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pool.VersionedEntityDecorator;
 import stroom.security.Insecure;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
@@ -48,6 +48,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
 
     private final PipelineStackLoader pipelineStackLoader;
     private final LoadingCache<VersionedEntityDecorator<PipelineEntity>, PipelineData> cache;
+    private final Security security;
     private final SecurityContext securityContext;
     private final DocumentPermissionCache documentPermissionCache;
 
@@ -55,9 +56,11 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
     @SuppressWarnings("unchecked")
     public PipelineDataCacheImpl(final CacheManager cacheManager,
                                  final PipelineStackLoader pipelineStackLoader,
+                                 final Security security,
                                  final SecurityContext securityContext,
                                  final DocumentPermissionCache documentPermissionCache) {
         this.pipelineStackLoader = pipelineStackLoader;
+        this.security = security;
         this.securityContext = securityContext;
         this.documentPermissionCache = documentPermissionCache;
 
@@ -79,7 +82,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
     }
 
     private PipelineData create(final VersionedEntityDecorator key) {
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        return security.asProcessingUserResult(() -> {
             final PipelineEntity pipelineEntity = (PipelineEntity) key.getEntity();
             final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
             // Iterate over the pipeline list reading the deepest ancestor first.
@@ -100,7 +103,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
             }
 
             return pipelineDataMerger.createMergedData();
-        }
+        });
     }
 
     @Override

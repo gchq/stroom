@@ -34,6 +34,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pool.AbstractEntityPool;
 import stroom.pool.PoolItem;
 import stroom.security.Insecure;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
 import stroom.util.io.StreamUtil;
@@ -58,10 +59,11 @@ class XSLTPoolImpl extends AbstractEntityPool<XSLT, StoredXsltExecutable> implem
     @Inject
     XSLTPoolImpl(final CacheManager cacheManager,
                  final DocumentPermissionCache documentPermissionCache,
+                 final Security security,
                  final SecurityContext securityContext,
                  final URIResolver uriResolver,
                  final StroomBeanStore beanStore) {
-        super(cacheManager, "XSLT Pool", documentPermissionCache, securityContext);
+        super(cacheManager, "XSLT Pool", documentPermissionCache, security, securityContext);
         this.uriResolver = uriResolver;
         this.beanStore = beanStore;
     }

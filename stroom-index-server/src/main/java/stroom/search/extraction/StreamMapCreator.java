@@ -22,8 +22,7 @@ import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexField;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.search.Event;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamPermissionException;
@@ -44,16 +43,16 @@ public class StreamMapCreator {
     private final int streamIdIndex;
     private final int eventIdIndex;
 
-    private final SecurityContext securityContext;
+    private final Security security;
     private Map<Long, Optional<Stream>> fiteredStreamCache;
 
     public StreamMapCreator(final IndexField[] storedFields,
                             final ErrorReceiver errorReceiver,
                             final StreamStore streamStore,
-                            final SecurityContext securityContext) {
+                            final Security security) {
         this.errorReceiver = errorReceiver;
         this.streamStore = streamStore;
-        this.securityContext = securityContext;
+        this.security = security;
 
         // First get the index in the stored data of the stream and event id fields.
         streamIdIndex = getFieldIndex(storedFields, IndexConstants.STREAM_ID, true);
@@ -78,7 +77,7 @@ public class StreamMapCreator {
     }
 
     void addEvent(final Map<Long, List<Event>> storedDataMap, final String[] storedData) {
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        security.useAsRead(() -> {
             final Long longStreamId = getLong(storedData, streamIdIndex);
             final Long longEventId = getLong(storedData, eventIdIndex);
 
@@ -95,7 +94,7 @@ public class StreamMapCreator {
                     });
                 }
             }
-        }
+        });
     }
 
     private Optional<Stream> getStreamById(final long streamId) {

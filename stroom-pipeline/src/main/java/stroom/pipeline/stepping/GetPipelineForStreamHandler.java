@@ -19,14 +19,12 @@ package stroom.pipeline.stepping;
 
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.SharedDocRef;
-import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.query.api.v2.DocRef;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -42,18 +40,15 @@ import java.util.List;
 class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
     private final StreamStore streamStore;
     private final PipelineService pipelineService;
-    private final FeedService feedService;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     GetPipelineForStreamHandler(final StreamStore streamStore,
                                 final PipelineService pipelineService,
-                                final FeedService feedService,
-                                final SecurityContext securityContext) {
+                                final Security security) {
         this.streamStore = streamStore;
         this.pipelineService = pipelineService;
-        this.feedService = feedService;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
@@ -103,38 +98,39 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
     }
 
     private Stream getStream(final Long id) {
-        Stream stream = null;
-        if (id != null) {
-            try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
-                final FindStreamCriteria criteria = new FindStreamCriteria();
-                criteria.setExpression(ExpressionUtil.createStreamExpression(id));
-                criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-                criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
-                criteria.getFetchSet().add(Feed.ENTITY_TYPE);
-
-                final List<Stream> streamList = streamStore.find(criteria);
-                if (streamList != null && streamList.size() > 0) {
-                    stream = streamList.get(0);
-                }
-            }
+        if (id == null) {
+            return null;
         }
 
-        return stream;
+        return security.asProcessingUserResult(() -> {
+            final FindStreamCriteria criteria = new FindStreamCriteria();
+            criteria.setExpression(ExpressionUtil.createStreamExpression(id));
+            criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+            criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+            criteria.getFetchSet().add(Feed.ENTITY_TYPE);
+
+            final List<Stream> streamList = streamStore.find(criteria);
+            if (streamList != null && streamList.size() > 0) {
+                return streamList.get(0);
+            }
+
+            return null;
+        });
     }
 
     private Stream getFirstChildStream(final Long id) {
-        if (id != null) {
-            try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
-                final FindStreamCriteria criteria = new FindStreamCriteria();
-                criteria.setExpression(ExpressionUtil.createParentStreamExpression(id));
-                criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-                criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
-
-                return streamStore.find(criteria).getFirst();
-            }
+        if (id == null) {
+            return null;
         }
 
-        return null;
+        return security.asProcessingUserResult(() -> {
+            final FindStreamCriteria criteria = new FindStreamCriteria();
+            criteria.setExpression(ExpressionUtil.createParentStreamExpression(id));
+            criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+            criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+
+            return streamStore.find(criteria).getFirst();
+        });
     }
 
     private DocRef getPipeline(final Stream stream) {

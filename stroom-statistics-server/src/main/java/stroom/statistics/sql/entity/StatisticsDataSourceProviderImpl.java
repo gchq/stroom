@@ -22,12 +22,11 @@ import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
-import stroom.statistics.sql.Statistics;
+import stroom.security.Security;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.sql.Statistics;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -37,20 +36,20 @@ import java.util.List;
 class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
     private final StatisticStoreCache statisticStoreCache;
     private final Statistics statistics;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     StatisticsDataSourceProviderImpl(final StatisticStoreCache statisticStoreCache,
                                      final Statistics statistics,
-                                     final SecurityContext securityContext) {
+                                     final Security security) {
         this.statisticStoreCache = statisticStoreCache;
         this.statistics = statistics;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
     public DataSource getDataSource(final DocRef docRef) {
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        return security.useAsReadResult(() -> {
             final StatisticStoreEntity entity = statisticStoreCache.getStatisticsDataSource(docRef);
             if (entity == null) {
                 return null;
@@ -59,7 +58,7 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
             final List<DataSourceField> fields = buildFields(entity);
 
             return new DataSource(fields);
-        }
+        });
     }
 
     /**

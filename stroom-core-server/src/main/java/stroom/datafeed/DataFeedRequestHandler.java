@@ -26,14 +26,13 @@ import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
 import stroom.feed.shared.Feed;
-import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Insecure;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
+import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
+import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
@@ -53,7 +52,7 @@ import java.util.stream.Collectors;
 public class DataFeedRequestHandler implements RequestHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedRequestHandler.class);
 
-    private final SecurityContext securityContext;
+    private final Security security;
     private final StreamStore streamStore;
     private final FeedService feedService;
     private final MetaDataStatistic metaDataStatistics;
@@ -63,13 +62,13 @@ public class DataFeedRequestHandler implements RequestHandler {
     private volatile MetaMapFilter metaMapFilter;
 
     @Inject
-    public DataFeedRequestHandler(final SecurityContext securityContext,
+    public DataFeedRequestHandler(final Security security,
                                   final StreamStore streamStore,
                                   @Named("cachedFeedService") final FeedService feedService,
                                   final MetaDataStatistic metaDataStatistics,
                                   final MetaMapFilterFactory metaMapFilterFactory,
                                   final StroomPropertyService stroomPropertyService) {
-        this.securityContext = securityContext;
+        this.security = security;
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.metaDataStatistics = metaDataStatistics;
@@ -87,7 +86,7 @@ public class DataFeedRequestHandler implements RequestHandler {
             }
         }
 
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        security.asProcessingUser(() -> {
             final MetaMap metaMap = MetaMapFactory.create(request);
             if (metaMapFilter == null || metaMapFilter.filter(metaMap)) {
                 debug("Receiving data", metaMap);
@@ -132,7 +131,7 @@ public class DataFeedRequestHandler implements RequestHandler {
             // Set the response status.
             response.setStatus(StroomStatusCode.OK.getHttpCode());
             LOGGER.info("handleRequest response " + StroomStatusCode.OK);
-        }
+        });
     }
 
     private void debug(final String message, final MetaMap metaMap) {
