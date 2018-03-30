@@ -9,7 +9,7 @@ public class Security {
 
     private final SecurityContext securityContext;
 
-    Security(final SecurityContext securityContext) {
+    public Security(final SecurityContext securityContext) {
         this.securityContext = securityContext;
     }
 
