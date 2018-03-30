@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.StreamProcessorFilter;
@@ -45,7 +45,7 @@ class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorAction, 
 
     @Override
     public StreamProcessorFilter exec(final CreateProcessorAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
             final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
             return streamProcessorFilterService.createNewFilter(pipelineEntity, action.getQueryData(),
                     action.isEnabled(), action.getPriority());

@@ -24,7 +24,7 @@ import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.StreamAttributeValue;
 
 import javax.inject.Inject;
@@ -48,7 +48,7 @@ class StreamAttributeValueServiceImpl
 
     @Override
     public Long findDelete(final FindStreamAttributeValueCriteria criteria) {
-        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             final SqlBuilder sql = new SqlBuilder();
             sql.append("DELETE FROM ");
             sql.append(StreamAttributeValue.TABLE_NAME);

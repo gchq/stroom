@@ -33,7 +33,7 @@ import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -180,7 +180,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
 
     @Override
     protected String permission() {
-        return ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION;
+        return PermissionNames.MANAGE_PROCESSORS_PERMISSION;
     }
 
     private static class StreamTaskQueryAppender extends QueryAppender<StreamTask, FindStreamTaskCriteria> {

@@ -24,7 +24,7 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskContext;
 import stroom.task.TaskManager;
@@ -105,7 +105,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
     @JobTrackedSchedule(jobName = "Index Shard Delete", description = "Job to delete index shards from disk that have been marked as deleted")
     @Override
     public void deleteFromDisk() {
-        security.secure(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             if (deletingShards.compareAndSet(false, true)) {
                 try {
                     final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
@@ -183,7 +183,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
      */
     @Override
     public Long findFlush(final FindIndexShardCriteria criteria) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> performAction(criteria, IndexShardAction.FLUSH));
+        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> performAction(criteria, IndexShardAction.FLUSH));
     }
 
 //    /**
@@ -202,7 +202,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
      */
     @Override
     public Long findDelete(final FindIndexShardCriteria criteria) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> performAction(criteria, IndexShardAction.DELETE));
+        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> performAction(criteria, IndexShardAction.DELETE));
     }
 
     private Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
@@ -260,7 +260,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
     @JobTrackedSchedule(jobName = "Index Shard Retention", description = "Job to set index shards to have a status of deleted that have past their retention period")
     @Override
     public void checkRetention() {
-        security.secure(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
             criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
             criteria.getFetchSet().add(Index.ENTITY_TYPE);
@@ -294,7 +294,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
 
     @Override
     public IndexShard load(final long indexShardId) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             // Allow the thing to run without a service (e.g. benchmark mode)
             if (indexShardService != null) {
                 final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);

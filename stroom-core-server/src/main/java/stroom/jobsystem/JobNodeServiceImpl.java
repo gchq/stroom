@@ -39,7 +39,7 @@ import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
@@ -311,7 +311,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
     @Override
     protected String permission() {
-        return ApplicationPermissionNames.MANAGE_JOBS_PERMISSION;
+        return PermissionNames.MANAGE_JOBS_PERMISSION;
     }
 
     private static class JobNodeQueryAppender extends QueryAppender<JobNode, FindJobNodeCriteria> {

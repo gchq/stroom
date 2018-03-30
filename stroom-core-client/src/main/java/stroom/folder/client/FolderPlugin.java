@@ -28,7 +28,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.v2.DocRef;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.client.ClientSecurityContext;
 
 public class FolderPlugin extends DocumentPlugin<SharedDocRef> {
@@ -49,8 +49,8 @@ public class FolderPlugin extends DocumentPlugin<SharedDocRef> {
 
     @Override
     protected DocumentEditPresenter<?, ?> createEditor() {
-        if (securityContext.hasAppPermission(ApplicationPermissionNames.VIEW_DATA_PERMISSION) ||
-                securityContext.hasAppPermission(ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION) ||
+                securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             return editorProvider.get();
         }
 

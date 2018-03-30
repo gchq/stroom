@@ -24,7 +24,7 @@ import stroom.entity.util.HqlBuilder;
 import stroom.ruleset.shared.FindPolicyCriteria;
 import stroom.ruleset.shared.Policy;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -82,7 +82,7 @@ public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicy
 
     @Override
     protected String permission() {
-        return ApplicationPermissionNames.MANAGE_POLICIES_PERMISSION;
+        return PermissionNames.MANAGE_POLICIES_PERMISSION;
     }
 
     private static class PolicyQueryAppender extends QueryAppender<Policy, FindPolicyCriteria> {

@@ -22,7 +22,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
@@ -129,9 +129,6 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
             // Get a set of permissions that Stroom requires according to code
             // annotations present in the current version.
             final Set<String> requiredPermissionSet = getRequiredPermissionSet();
-
-            // Add a special permission for administrators.
-            requiredPermissionSet.add(PermissionNames.ADMINISTRATOR);
 
             // Add missing permissions to the DB and remove existing permissions
             // that are no longer required.
@@ -261,6 +258,6 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
     }
 
     Set<String> getRequiredPermissionSet() {
-        return new HashSet<>(Arrays.asList(ApplicationPermissionNames.PERMISSIONS));
+        return new HashSet<>(Arrays.asList(PermissionNames.PERMISSIONS));
     }
 }

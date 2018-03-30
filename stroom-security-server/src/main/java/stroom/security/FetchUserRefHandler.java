@@ -18,7 +18,7 @@ package stroom.security;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
@@ -45,7 +45,7 @@ class FetchUserRefHandler
 
     @Override
     public ResultList<UserRef> exec(final FetchUserRefAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final FindUserCriteria findUserCriteria = action.getCriteria();
             findUserCriteria.setSort(FindUserCriteria.FIELD_NAME);
             if (findUserCriteria.getRelatedUser() != null) {

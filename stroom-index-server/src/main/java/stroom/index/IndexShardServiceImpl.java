@@ -36,7 +36,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
 
 import javax.inject.Inject;
@@ -124,7 +124,7 @@ public class IndexShardServiceImpl
 
     @Override
     public Boolean delete(final IndexShard entity) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final Index index = entity.getIndex();
             if (!securityContext.hasDocumentPermission(index.getType(), index.getUuid(), DocumentPermissionNames.DELETE)) {
                 throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");

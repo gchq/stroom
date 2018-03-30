@@ -26,7 +26,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.FetchUserAppPermissionsAction;
 import stroom.security.shared.UserAppPermissions;
@@ -124,6 +124,6 @@ public class AppPermissionsPresenter extends
     }
 
     private boolean isCurrentUserUpdate() {
-        return securityContext.hasAppPermission(ApplicationPermissionNames.MANAGE_USERS_PERMISSION);
+        return securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
     }
 }

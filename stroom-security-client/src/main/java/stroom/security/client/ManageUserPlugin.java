@@ -27,7 +27,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.client.presenter.UsersAndGroupsPresenter;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -59,7 +59,7 @@ public class ManageUserPlugin extends NodeToolsPlugin {
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(ApplicationPermissionNames.MANAGE_USERS_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem(1, SvgPresets.USER, SvgPresets.USER, "User Permissions", null, true,
                             () -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {

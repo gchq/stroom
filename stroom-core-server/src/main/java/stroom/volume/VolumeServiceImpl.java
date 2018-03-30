@@ -43,7 +43,7 @@ import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
 import stroom.properties.StroomPropertyService;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
@@ -631,7 +631,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
 
     @Override
     protected String permission() {
-        return ApplicationPermissionNames.MANAGE_VOLUMES_PERMISSION;
+        return PermissionNames.MANAGE_VOLUMES_PERMISSION;
     }
 
     private static class VolumeQueryAppender extends QueryAppender<Volume, FindVolumeCriteria> {

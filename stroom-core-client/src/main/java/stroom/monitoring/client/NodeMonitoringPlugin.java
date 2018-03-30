@@ -24,7 +24,7 @@ import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.presenter.NodeMonitoringPresenter;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -37,7 +37,7 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodeMonitoringPresent
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(ApplicationPermissionNames.MANAGE_NODES_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem(10, SvgPresets.NODES, SvgPresets.NODES, "Nodes", null, true, () -> open()));
         }

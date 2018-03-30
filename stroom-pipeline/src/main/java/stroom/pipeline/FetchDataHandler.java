@@ -29,7 +29,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.StreamStore;
 import stroom.task.TaskHandlerBean;
 
@@ -70,7 +70,7 @@ class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
 
     @Override
     public AbstractFetchDataResult exec(final FetchDataAction action) {
-        return security.secureResult(ApplicationPermissionNames.VIEW_DATA_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
             final Long streamId = action.getStreamId();
 
             if (streamId != null) {

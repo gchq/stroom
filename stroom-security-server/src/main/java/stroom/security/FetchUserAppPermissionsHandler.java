@@ -16,7 +16,7 @@
 
 package stroom.security;
 
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.FetchUserAppPermissionsAction;
 import stroom.security.shared.UserAppPermissions;
 import stroom.task.AbstractTaskHandler;
@@ -39,6 +39,6 @@ class FetchUserAppPermissionsHandler
 
     @Override
     public UserAppPermissions exec(final FetchUserAppPermissionsAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> userAppPermissionsCache.get(action.getUserRef()));
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> userAppPermissionsCache.get(action.getUserRef()));
     }
 }

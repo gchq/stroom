@@ -26,7 +26,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.MonitoringPlugin;
 import stroom.ruleset.client.presenter.DataRetentionPolicyPresenter;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -40,7 +40,7 @@ public class DataRetentionPolicyPlugin extends MonitoringPlugin<DataRetentionPol
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(ApplicationPermissionNames.MANAGE_POLICIES_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_POLICIES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, createDataRetentionMenuItem());
         }
     }

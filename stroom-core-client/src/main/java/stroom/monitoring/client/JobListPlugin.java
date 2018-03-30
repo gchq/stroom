@@ -24,7 +24,7 @@ import stroom.core.client.MenuKeys;
 import stroom.jobsystem.client.presenter.JobPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -37,7 +37,7 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(ApplicationPermissionNames.MANAGE_JOBS_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_JOBS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem(9, SvgPresets.JOBS, SvgPresets.JOBS, "Jobs", null, true, () -> open()));
         }

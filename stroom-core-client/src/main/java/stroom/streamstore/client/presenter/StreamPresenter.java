@@ -52,7 +52,7 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
@@ -129,13 +129,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         dataPresenter.setBeginSteppingHandler(this);
 
         // Process
-        if (securityContext.hasAppPermission(ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             streamListProcess = streamListPresenter.add(SvgPresets.PROCESS);
             streamRelationListProcess = streamRelationListPresenter.add(SvgPresets.PROCESS);
         }
 
         // Delete, Undelete, DE-duplicate
-        if (securityContext.hasAppPermission(ApplicationPermissionNames.DELETE_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.DELETE_DATA_PERMISSION)) {
             streamListDelete = streamListPresenter.add(SvgPresets.DELETE);
             streamListDelete.setEnabled(false);
             streamRelationListDelete = streamRelationListPresenter.add(SvgPresets.DELETE);
@@ -147,13 +147,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         // Download
-        if (securityContext.hasAppPermission(ApplicationPermissionNames.EXPORT_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.EXPORT_DATA_PERMISSION)) {
             streamListDownload = streamListPresenter.add(SvgPresets.DOWNLOAD);
             streamRelationListDownload = streamRelationListPresenter.add(SvgPresets.DOWNLOAD);
         }
 
         // Upload
-        if (securityContext.hasAppPermission(ApplicationPermissionNames.IMPORT_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.IMPORT_DATA_PERMISSION)) {
             streamListUpload = streamListPresenter.add(SvgPresets.UPLOAD);
         }
 

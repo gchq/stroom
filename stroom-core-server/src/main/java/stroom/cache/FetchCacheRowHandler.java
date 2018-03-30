@@ -20,7 +20,7 @@ import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FetchCacheRowAction;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -45,7 +45,7 @@ class FetchCacheRowHandler extends AbstractTaskHandler<FetchCacheRowAction, Resu
 
     @Override
     public ResultList<CacheRow> exec(final FetchCacheRowAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
             final List<CacheRow> values = cacheManager.getCaches()
                     .keySet()
                     .stream()

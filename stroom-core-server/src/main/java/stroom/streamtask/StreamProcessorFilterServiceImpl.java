@@ -26,7 +26,7 @@ import stroom.entity.util.HqlBuilder;
 import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
@@ -170,7 +170,7 @@ class StreamProcessorFilterServiceImpl
 
     @Override
     protected String permission() {
-        return ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION;
+        return PermissionNames.MANAGE_PROCESSORS_PERMISSION;
     }
 
     private static class StreamProcessorFilterQueryAppender extends QueryAppender<StreamProcessorFilter, FindStreamProcessorFilterCriteria> {

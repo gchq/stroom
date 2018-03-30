@@ -24,7 +24,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.presenter.ManageGlobalPropertyPresenter;
 import stroom.node.client.presenter.ManageVolumesPresenter;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -45,7 +45,7 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(ApplicationPermissionNames.MANAGE_VOLUMES_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_VOLUMES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem(4, SvgPresets.VOLUMES, SvgPresets.VOLUMES, "Volumes", null, true, () -> {
                         final PopupSize popupSize = new PopupSize(1000, 600, true);
@@ -53,7 +53,7 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
                                 PopupType.CLOSE_DIALOG, null, popupSize, "Volumes", null, null);
                     }));
         }
-        if (getSecurityContext().hasAppPermission(ApplicationPermissionNames.MANAGE_PROPERTIES_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem(90, SvgPresets.PROPERTIES, SvgPresets.PROPERTIES, "Properties", null, true, () -> {
                         final PopupSize popupSize = new PopupSize(1000, 600, true);

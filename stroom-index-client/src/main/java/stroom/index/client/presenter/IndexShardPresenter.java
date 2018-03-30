@@ -47,7 +47,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
@@ -112,7 +112,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void enableButtons() {
-        final boolean enabled = !readOnly && (selectionCriteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll())) && securityContext.hasAppPermission(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION);
+        final boolean enabled = !readOnly && (selectionCriteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll())) && securityContext.hasAppPermission(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION);
         buttonFlush.setEnabled(enabled);
         buttonDelete.setEnabled(allowDelete && enabled);
     }

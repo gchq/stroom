@@ -13,7 +13,7 @@ import stroom.node.client.ClientPropertyCache;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.node.shared.ClientProperties;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
@@ -38,7 +38,7 @@ public class UsersPlugin extends NodeToolsPlugin {
 
     @Override
     protected void addChildItems(BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(ApplicationPermissionNames.MANAGE_USERS_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             clientPropertyCache.get()
                     .onSuccess(result -> {
                         final IconMenuItem usersMenuItem;

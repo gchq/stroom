@@ -25,7 +25,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.properties.StroomPropertyService;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -95,6 +95,6 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
 
     @Override
     protected String permission() {
-        return ApplicationPermissionNames.MANAGE_NODES_PERMISSION;
+        return PermissionNames.MANAGE_NODES_PERMISSION;
     }
 }

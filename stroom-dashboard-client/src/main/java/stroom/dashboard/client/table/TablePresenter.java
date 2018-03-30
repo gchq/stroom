@@ -73,7 +73,7 @@ import stroom.node.shared.ClientProperties;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.widget.button.client.ButtonView;
@@ -172,7 +172,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Download
         downloadButton = dataGrid.addButton(SvgPresets.DOWNLOAD);
-        downloadButton.setVisible(securityContext.hasAppPermission(ApplicationPermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+        downloadButton.setVisible(securityContext.hasAppPermission(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenter, formatPresenter,
                 filterPresenter);

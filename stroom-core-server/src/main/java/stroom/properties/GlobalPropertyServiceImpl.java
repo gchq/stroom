@@ -25,7 +25,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.node.shared.FindGlobalPropertyCriteria;
 import stroom.node.shared.GlobalProperty;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
@@ -140,7 +140,7 @@ public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProp
 
     @Override
     protected String permission() {
-        return ApplicationPermissionNames.MANAGE_PROPERTIES_PERMISSION;
+        return PermissionNames.MANAGE_PROPERTIES_PERMISSION;
     }
 
     private static class GlobalPropertyQueryAppender extends QueryAppender<GlobalProperty, FindGlobalPropertyCriteria> {

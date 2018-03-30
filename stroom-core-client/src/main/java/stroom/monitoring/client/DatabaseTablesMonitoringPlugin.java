@@ -24,7 +24,7 @@ import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -38,7 +38,7 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(ApplicationPermissionNames.MANAGE_DB_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_DB_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem(7, SvgPresets.DATABASE, SvgPresets.DATABASE, "Database Tables", null, true, () -> open()));
         }

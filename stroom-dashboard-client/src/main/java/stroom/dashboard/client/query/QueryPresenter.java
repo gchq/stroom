@@ -60,7 +60,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
@@ -177,7 +177,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
         downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD);
 
-        if (securityContext.hasAppPermission(ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
         }
 

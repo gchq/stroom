@@ -16,7 +16,7 @@
 
 package stroom.security;
 
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.CreateUserAction;
 import stroom.security.shared.UserRef;
 import stroom.task.AbstractTaskHandler;
@@ -38,7 +38,7 @@ class CreateUserHandler extends AbstractTaskHandler<CreateUserAction, UserRef> {
 
     @Override
     public UserRef exec(final CreateUserAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             if (action.isGroup()) {
                 return userService.createUserGroup(action.getName());
             } else {

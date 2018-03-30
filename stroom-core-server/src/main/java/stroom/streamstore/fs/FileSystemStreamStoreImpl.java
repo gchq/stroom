@@ -49,7 +49,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.ExpressionToFindCriteria;
@@ -555,7 +555,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     public Long deleteStream(final Stream stream) {
-        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDeleteStream(stream, true));
+        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDeleteStream(stream, true));
     }
 
     private Long doLogicalDeleteStream(final Stream stream, final boolean lockCheck) {
@@ -1333,7 +1333,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Override
     // @Transactional
     public Long findDelete(final FindStreamCriteria criteria) {
-        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             final Context context = new Context(null, System.currentTimeMillis());
             final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
             return findDelete(oldFindStreamCriteria);

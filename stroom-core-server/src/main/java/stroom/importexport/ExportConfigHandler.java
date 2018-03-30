@@ -20,7 +20,7 @@ import stroom.importexport.shared.ExportConfigAction;
 import stroom.logging.ImportExportEventLog;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Message;
@@ -52,7 +52,7 @@ class ExportConfigHandler extends AbstractTaskHandler<ExportConfigAction, Resour
 
     @Override
     public ResourceGeneration exec(final ExportConfigAction action) {
-        return security.secureResult(ApplicationPermissionNames.EXPORT_CONFIGURATION, () -> {
+        return security.secureResult(PermissionNames.EXPORT_CONFIGURATION, () -> {
             // Log the export.
             eventLog.export(action);
             final List<Message> messageList = new ArrayList<>();

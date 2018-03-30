@@ -18,7 +18,7 @@ package stroom.streamstore;
 
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.resource.ResourceStore;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.streamstore.shared.UploadDataAction;
 import stroom.task.AbstractTaskHandler;
@@ -46,7 +46,7 @@ class UploadDataHandler extends AbstractTaskHandler<UploadDataAction, ResourceKe
 
     @Override
     public ResourceKey exec(final UploadDataAction action) {
-        return security.secureResult(ApplicationPermissionNames.IMPORT_DATA_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.IMPORT_DATA_PERMISSION, () -> {
             try {
                 // Import file.
                 final Path file = resourceStore.getTempFile(action.getKey());

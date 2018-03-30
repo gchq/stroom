@@ -30,7 +30,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.StreamStore;
 import stroom.task.TaskHandlerBean;
 
@@ -71,7 +71,7 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
 
     @Override
     public AbstractFetchDataResult exec(final FetchDataWithPipelineAction action) {
-        return security.secureResult(ApplicationPermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION, () -> {
             // Because we are securing this to require XSLT then we must check that
             // some has been provided
             if (action.getPipeline() == null) {

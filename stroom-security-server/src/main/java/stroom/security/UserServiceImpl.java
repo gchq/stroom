@@ -30,7 +30,7 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.util.config.StroomProperties;
@@ -114,7 +114,7 @@ class UserServiceImpl implements UserService {
     @SuppressWarnings("unchecked")
     @Override
     public BaseResultList<User> find(final FindUserCriteria criteria) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             // Build up the HQL
             final HqlBuilder sql = new HqlBuilder();
             sql.append("SELECT user FROM ");
@@ -220,7 +220,7 @@ class UserServiceImpl implements UserService {
 
     @Override
     public UserRef createUser(final String name) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final User user = new User();
             user.setName(name);
             user.setGroup(false);
@@ -230,7 +230,7 @@ class UserServiceImpl implements UserService {
 
     @Override
     public UserRef createUserGroup(final String name) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final User user = new User();
             user.setName(name);
             user.setGroup(true);
@@ -240,7 +240,7 @@ class UserServiceImpl implements UserService {
 
     @Override
     public void addUserToGroup(final UserRef user, final UserRef userGroup) {
-        security.secure(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        security.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             try {
                 final SqlBuilder sqlBuilder = new SqlBuilder(SQL_ADD_USER_TO_GROUP, 1, user.getUuid(), userGroup.getUuid());
                 entityManager.executeNativeUpdate(sqlBuilder);
@@ -257,7 +257,7 @@ class UserServiceImpl implements UserService {
 
     @Override
     public void removeUserFromGroup(final UserRef user, final UserRef userGroup) {
-        security.secure(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        security.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             try {
                 final SqlBuilder sqlBuilder = new SqlBuilder(SQL_REMOVE_USER_FROM_GROUP, user.getUuid(), userGroup.getUuid());
                 entityManager.executeNativeUpdate(sqlBuilder);
@@ -270,17 +270,17 @@ class UserServiceImpl implements UserService {
 
     @Override
     public User load(final User entity) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> entityServiceHelper.load(entity, Collections.emptySet(), queryAppender));
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> entityServiceHelper.load(entity, Collections.emptySet(), queryAppender));
     }
 
     @Override
     public User load(final User entity, final Set<String> fetchSet) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> entityServiceHelper.load(entity, fetchSet, queryAppender));
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> entityServiceHelper.load(entity, fetchSet, queryAppender));
     }
 
     @Override
     public final User loadByUuid(final String uuid) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> entityServiceHelper.loadByUuid(uuid, Collections.emptySet(), queryAppender));
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> entityServiceHelper.loadByUuid(uuid, Collections.emptySet(), queryAppender));
     }
 
     @SuppressWarnings("unchecked")
@@ -291,7 +291,7 @@ class UserServiceImpl implements UserService {
 
     @Override
     public User save(final User user) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             // If this is a new system user then create an initial password.
             if (!user.isPersistent()) {
                 user.setUuid(UUID.randomUUID().toString());
@@ -305,7 +305,7 @@ class UserServiceImpl implements UserService {
 
     @Override
     public Boolean delete(final User entity) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final Boolean success = entityServiceHelper.delete(entity);
 
             // Delete any document permissions associated with this user.

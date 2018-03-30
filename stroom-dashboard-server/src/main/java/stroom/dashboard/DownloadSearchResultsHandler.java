@@ -36,7 +36,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.resource.ResourceStore;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -81,7 +81,7 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
 
     @Override
     public ResourceGeneration exec(final DownloadSearchResultsAction action) {
-        return security.secureResult(ApplicationPermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             ResourceKey resourceKey;
 
             final DashboardQueryKey queryKey = action.getQueryKey();

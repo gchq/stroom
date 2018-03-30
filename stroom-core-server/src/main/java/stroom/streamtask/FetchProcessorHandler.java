@@ -20,7 +20,7 @@ package stroom.streamtask;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.streamtask.shared.FetchProcessorAction;
@@ -61,7 +61,7 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
 
     @Override
     public ResultList<SharedObject> exec(final FetchProcessorAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
             final List<SharedObject> values = new ArrayList<>();
 
             final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();

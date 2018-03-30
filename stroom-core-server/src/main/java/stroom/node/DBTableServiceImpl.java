@@ -26,7 +26,7 @@ import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
@@ -57,7 +57,7 @@ public class DBTableServiceImpl implements DBTableService {
 
     @Override
     public List<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_DB_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_DB_PERMISSION, () -> {
             final List<DBTableStatus> rtnList = new ArrayList<>();
 
             if (beanStore != null) {

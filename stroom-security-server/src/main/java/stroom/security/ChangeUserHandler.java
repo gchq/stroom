@@ -17,7 +17,7 @@
 package stroom.security;
 
 import stroom.logging.AuthorisationEventLog;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.UserRef;
@@ -53,7 +53,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
 
     @Override
     public VoidResult exec(final ChangeUserAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final UserRef userRef = action.getUserRef();
             if (userRef != null) {
 

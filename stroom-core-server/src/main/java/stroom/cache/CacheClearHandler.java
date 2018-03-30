@@ -19,7 +19,7 @@ package stroom.cache;
 import stroom.cache.shared.CacheClearAction;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.cluster.FindClearServiceClusterTask;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -43,7 +43,7 @@ class CacheClearHandler extends AbstractTaskHandler<CacheClearAction, VoidResult
 
     @Override
     public VoidResult exec(final CacheClearAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.getName().setString(action.getCacheName());
 

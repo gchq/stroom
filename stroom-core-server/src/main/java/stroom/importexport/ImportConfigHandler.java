@@ -21,7 +21,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.logging.ImportExportEventLog;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.ResourceKey;
@@ -49,7 +49,7 @@ class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, Resour
 
     @Override
     public ResourceKey exec(final ImportConfigAction action) {
-        return security.secureResult(ApplicationPermissionNames.IMPORT_CONFIGURATION, () -> {
+        return security.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             // Import file.
             final Path file = resourceStore.getTempFile(action.getKey());
 

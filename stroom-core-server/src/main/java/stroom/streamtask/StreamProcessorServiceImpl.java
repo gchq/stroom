@@ -25,7 +25,7 @@ import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.HqlBuilder;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 
@@ -74,7 +74,7 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
 
     @Override
     protected String permission() {
-        return ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION;
+        return PermissionNames.MANAGE_PROCESSORS_PERMISSION;
     }
 
     private static class StreamProcessorQueryAppender extends QueryAppender<StreamProcessor, FindStreamProcessorCriteria> {

@@ -30,7 +30,7 @@ import stroom.guice.StroomBeanStore;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomStartup;
 import stroom.util.shared.CompareUtil;
@@ -115,7 +115,7 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
 
     @Override
     protected String permission() {
-        return ApplicationPermissionNames.MANAGE_JOBS_PERMISSION;
+        return PermissionNames.MANAGE_JOBS_PERMISSION;
     }
 
     private static class JobQueryAppender extends QueryAppender<Job, FindJobCriteria> {

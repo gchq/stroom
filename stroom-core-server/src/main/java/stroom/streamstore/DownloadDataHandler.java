@@ -19,7 +19,7 @@ package stroom.streamstore;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.logging.StreamEventLog;
 import stroom.resource.ResourceStore;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.task.AbstractTaskHandler;
@@ -52,7 +52,7 @@ class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, Resour
 
     @Override
     public ResourceGeneration exec(final DownloadDataAction action) {
-        return security.secureResult(ApplicationPermissionNames.EXPORT_DATA_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.EXPORT_DATA_PERMISSION, () -> {
             ResourceKey resourceKey;
             try {
                 // Import file.

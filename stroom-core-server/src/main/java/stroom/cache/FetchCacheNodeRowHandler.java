@@ -27,7 +27,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.StringCriteria;
 import stroom.node.shared.Node;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -56,7 +56,7 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
 
     @Override
     public ResultList<CacheNodeRow> exec(final FetchCacheNodeRowAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
             final List<CacheNodeRow> values = new ArrayList<>();
 
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();

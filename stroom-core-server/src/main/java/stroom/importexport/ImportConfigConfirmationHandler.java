@@ -20,7 +20,7 @@ import stroom.importexport.shared.ImportConfigConfirmationAction;
 import stroom.importexport.shared.ImportState;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -45,7 +45,7 @@ class ImportConfigConfirmationHandler
 
     @Override
     public SharedList<ImportState> exec(final ImportConfigConfirmationAction task) {
-        return security.secureResult(ApplicationPermissionNames.IMPORT_CONFIGURATION, () -> {
+        return security.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             try {
                 return importExportService.createImportConfirmationList(resourceStore.getTempFile(task.getKey()));
             } catch (final RuntimeException rex) {

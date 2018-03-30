@@ -23,7 +23,7 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -64,7 +64,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
 
     @Override
     public SharedList<ReprocessDataInfo> exec(final ReprocessDataAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
             final List<ReprocessDataInfo> info = new ArrayList<>();
 
             try {

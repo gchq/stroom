@@ -27,7 +27,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
 import stroom.node.shared.Volume;
 import stroom.security.Security;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.FileArrayList;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.ScanVolumePathResult;
@@ -86,7 +86,7 @@ public class FileSystemStreamMaintenanceService
 
 //    @Override
 //    public Long deleteStreamVolume(final StreamVolume streamVolume) {
-//        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> {
+//        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
 //            deleteStreamVolume(Arrays.asList(streamVolume));
 //            return 1L;
 //        });
@@ -96,7 +96,7 @@ public class FileSystemStreamMaintenanceService
     @Override
     // @Transactional
     public BaseResultList<StreamVolume> find(final FindStreamVolumeCriteria criteria) {
-        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             if (!criteria.isValidCriteria()) {
                 throw new IllegalArgumentException("Not enough criteria to run");
             }
@@ -210,7 +210,7 @@ public class FileSystemStreamMaintenanceService
     // @Transactional
     public ScanVolumePathResult scanVolumePath(final Volume volume, final boolean doDelete, final String repoPath,
                                                final long oldFileAge) {
-        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> {
+        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             final ScanVolumePathResult result = new ScanVolumePathResult();
 
             final long oldFileTime = System.currentTimeMillis() - oldFileAge;

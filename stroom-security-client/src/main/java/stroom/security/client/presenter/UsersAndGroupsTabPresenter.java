@@ -25,7 +25,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.ManageNewEntityPresenter;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.CreateUserAction;
 import stroom.security.shared.DeleteUserAction;
 import stroom.security.shared.FindUserCriteria;
@@ -68,7 +68,7 @@ public class UsersAndGroupsTabPresenter extends
         openButton = listPresenter.addButton(SvgPresets.OPEN);
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
-        final boolean updatePerm = securityContext.hasAppPermission(ApplicationPermissionNames.MANAGE_USERS_PERMISSION);
+        final boolean updatePerm = securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
 
         if (!updatePerm) {
             deleteButton.setVisible(false);

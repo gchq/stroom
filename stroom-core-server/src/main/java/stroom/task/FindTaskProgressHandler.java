@@ -17,7 +17,7 @@
 package stroom.task;
 
 import stroom.entity.shared.ResultList;
-import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressAction;
@@ -39,6 +39,6 @@ class FindTaskProgressHandler
 
     @Override
     public ResultList<TaskProgress> exec(final FindTaskProgressAction action) {
-        return security.secureResult(ApplicationPermissionNames.MANAGE_TASKS_PERMISSION, () -> doExec(action, action.getCriteria()));
+        return security.secureResult(PermissionNames.MANAGE_TASKS_PERMISSION, () -> doExec(action, action.getCriteria()));
     }
 }
