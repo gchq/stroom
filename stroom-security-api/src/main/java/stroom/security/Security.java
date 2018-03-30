@@ -68,9 +68,4 @@ public class Security {
             securityContext.restorePermissions();
         }
     }
-
-
-//    public static SecurityHelper elevate(SecurityContext securityContext) {
-//        return new SecurityHelper(securityContext, Action.ELEVATE, null);
-//    }
 }
