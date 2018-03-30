@@ -24,7 +24,7 @@ import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 @RunWith(StroomJUnit4ClassRunner.class)
-class TestBenchmarkClusterTaskHandler extends StroomUnitTest {
+public class TestBenchmarkClusterTaskHandler extends StroomUnitTest {
     @Test
     public void testSimple() {
         final BenchmarkClusterExecutor benchmarkClusterTaskHandler = new BenchmarkClusterExecutor(null, null, null, null, null, null, null, null, null, null, null, null, new BenchmarkClusterConfig());
