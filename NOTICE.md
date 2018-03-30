@@ -181,8 +181,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.jamon                                 | jamon-runtime                                | 2.4.1            | Custom BSD    |         |               |
 | com.jcraft                                | jsch                                         | 0.1.42           | Custom BSD    |         |               |
 | com.google.protobuf                       | protobuf-java                                | 2.5.0            | Custom BSD    |         |               |
-| org.aspectj                               | aspectjrt                                    | 1.8.9            | EPL 1.0       |         |               |
-| org.aspectj                               | aspectjweaver                                | 1.8.9            | EPL 1.0       |         |               |
 | com.mchange                               | c3p0                                         | 0.9.5.2          | EPL 1.0       |         |               |
 | junit                                     | junit                                        | 4.12             | EPL 1.0       |         |               |
 | com.mchange                               | mchange-commons-java                         | 0.2.9            | EPL 1.0       |         |               |

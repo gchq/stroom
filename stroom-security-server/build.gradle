@@ -27,7 +27,6 @@ dependencies {
     compile libs.stroomAuthApi
     compile libs.stroomQueryApi
     compile libs.eventLogging
-    compile libs.aspectjrt
     compile libs.commons_lang
     compile libs.guava
     compile libs.hibernate_jpa_api

@@ -106,8 +106,6 @@ ext.libs = [
 
     //------3rd Party-libs---------------
     aopalliance: "aopalliance:aopalliance:1.0",
-    aspectjrt: "org.aspectj:aspectjrt:1.8.10",
-    aspectjweaver: "org.aspectj:aspectjweaver:1.8.10",
     assertj_core: "org.assertj:assertj-core:3.8.0",
     c3p0: "com.mchange:c3p0:0.9.5.2",
     commons_codec: "commons-codec:commons-codec:1.11",

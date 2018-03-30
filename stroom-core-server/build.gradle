@@ -59,7 +59,6 @@ dependencies {
     runtime libs.jackson_core
     runtime libs.hibernate_entitymanager
     runtime libs.aopalliance
-    runtime libs.aspectjrt
     // dropwizard 1.0.6 uses hibernate-validator 5.2.4.Final
     // dropwizard 1.1.0 uses hibernate-validator 5.3.4.Final
     // so be consistent with dropwizard to avoid problems with different versions of javax.el

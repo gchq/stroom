@@ -4,6 +4,7 @@ dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
+    compile project(':stroom-security-api')
     compile project(':stroom-explorer-api')
     compile project(':stroom-explorer-server')
     compile project(':stroom-pipeline')
