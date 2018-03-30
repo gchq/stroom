@@ -28,6 +28,7 @@ import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeInfo;
 import stroom.jobsystem.shared.JobNodeRow;
 import stroom.node.shared.Node;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
@@ -38,8 +39,6 @@ import stroom.util.shared.SharedMap;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -47,68 +46,67 @@ import java.util.Map;
 class FetchJobDataHandler extends AbstractTaskHandler<FetchJobDataAction, ResultList<JobNodeRow>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchJobDataHandler.class);
 
-    private final JobService jobService;
     private final JobNodeService jobNodeService;
     private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final Security security;
 
     @Inject
-    FetchJobDataHandler(final JobService jobService,
-                        final JobNodeService jobNodeService,
-                        final ClusterDispatchAsyncHelper dispatchHelper) {
-        this.jobService = jobService;
+    FetchJobDataHandler(final JobNodeService jobNodeService,
+                        final ClusterDispatchAsyncHelper dispatchHelper,
+                        final Security security) {
         this.jobNodeService = jobNodeService;
         this.dispatchHelper = dispatchHelper;
+        this.security = security;
     }
 
     @Override
     public BaseResultList<JobNodeRow> exec(final FetchJobDataAction action) {
-        // Add the root node.
-        final List<JobNodeRow> values = new ArrayList<>();
+        return security.secureResult(() -> {
+            // Add the root node.
+            final List<JobNodeRow> values = new ArrayList<>();
 
-        if (action.getJob() == null) {
-            return BaseResultList.createUnboundedList(values);
-        }
-
-        DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
-        collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(action.getUserToken()), TargetType.ACTIVE);
-
-        final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
-        criteria.getJobIdSet().add(action.getJob());
-        criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getFetchSet().add(Job.ENTITY_TYPE);
-
-        final List<JobNode> jobNodes = jobNodeService.find(criteria);
-
-        // Sort job nodes by node name.
-        Collections.sort(jobNodes, (JobNode o1, JobNode o2) -> o1.getNode().getName().compareToIgnoreCase(o2.getNode().getName()));
-
-        final HashSet<Node> nodesToDo = new HashSet<>(collector.getTargetNodes());
-
-        // Create the JobNodeRow value
-        for (final JobNode jobNode : jobNodes) {
-            JobNodeInfo jobNodeInfo = null;
-
-            final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNode());
-
-            if (response == null) {
-                LOGGER.debug("No response for: {}", jobNode);
-            } else if (response.getError() != null) {
-                LOGGER.debug("Error response for: {} - {}", jobNode, response.getError().getMessage());
-                LOGGER.debug(response.getError().getMessage(), response.getError());
-            } else {
-                final Map<JobNode, JobNodeInfo> map = response.getResult();
-                if (map == null) {
-                    LOGGER.warn("No data for: {}", jobNode);
-                } else {
-                    jobNodeInfo = map.get(jobNode);
-                }
+            if (action.getJob() == null) {
+                return BaseResultList.createUnboundedList(values);
             }
 
-            final JobNodeRow jobNodeRow = new JobNodeRow(jobNode, jobNodeInfo);
-            values.add(jobNodeRow);
-            nodesToDo.remove(jobNode.getNode());
-        }
+            DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
+            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(action.getUserToken()), TargetType.ACTIVE);
 
-        return BaseResultList.createUnboundedList(values);
+            final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
+            criteria.getJobIdSet().add(action.getJob());
+            criteria.getFetchSet().add(Node.ENTITY_TYPE);
+            criteria.getFetchSet().add(Job.ENTITY_TYPE);
+
+            final List<JobNode> jobNodes = jobNodeService.find(criteria);
+
+            // Sort job nodes by node name.
+            jobNodes.sort((JobNode o1, JobNode o2) -> o1.getNode().getName().compareToIgnoreCase(o2.getNode().getName()));
+
+            // Create the JobNodeRow value
+            for (final JobNode jobNode : jobNodes) {
+                JobNodeInfo jobNodeInfo = null;
+
+                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNode());
+
+                if (response == null) {
+                    LOGGER.debug("No response for: {}", jobNode);
+                } else if (response.getError() != null) {
+                    LOGGER.debug("Error response for: {} - {}", jobNode, response.getError().getMessage());
+                    LOGGER.debug(response.getError().getMessage(), response.getError());
+                } else {
+                    final Map<JobNode, JobNodeInfo> map = response.getResult();
+                    if (map == null) {
+                        LOGGER.warn("No data for: {}", jobNode);
+                    } else {
+                        jobNodeInfo = map.get(jobNode);
+                    }
+                }
+
+                final JobNodeRow jobNodeRow = new JobNodeRow(jobNode, jobNodeInfo);
+                values.add(jobNodeRow);
+            }
+
+            return BaseResultList.createUnboundedList(values);
+        });
     }
 }

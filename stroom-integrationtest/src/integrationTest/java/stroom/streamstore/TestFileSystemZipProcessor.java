@@ -24,6 +24,7 @@ import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
@@ -51,7 +52,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private FeedService feedService;
     @Inject
-    private StreamMaintenanceService streamMaintenanceService;
+    private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 

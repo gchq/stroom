@@ -54,17 +54,17 @@ import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.EqualsBuilder;
@@ -177,7 +177,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
         downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD);
 
-        if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
         }
 

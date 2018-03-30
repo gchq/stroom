@@ -38,9 +38,9 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageResponse;
-import stroom.security.Insecure;
-import stroom.util.shared.HasId;
 import stroom.guice.StroomBeanStore;
+import stroom.security.Security;
+import stroom.util.shared.HasId;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -51,19 +51,22 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-@Insecure
 public class DocumentEventLogImpl implements DocumentEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
     private final Provider<StroomBeanStore> stroomBeanStoreProvider;
+    private final Security security;
 
     private volatile Map<Class<?>, EventInfoProvider> objectInfoAppenders;
 
     @Inject
-    public DocumentEventLogImpl(final StroomEventLoggingService eventLoggingService, final Provider<StroomBeanStore> stroomBeanStoreProvider) {
+    public DocumentEventLogImpl(final StroomEventLoggingService eventLoggingService,
+                                final Provider<StroomBeanStore> stroomBeanStoreProvider,
+                                final Security security) {
         this.eventLoggingService = eventLoggingService;
         this.stroomBeanStoreProvider = stroomBeanStoreProvider;
+        this.security = security;
     }
 
     private EventInfoProvider getInfoAppender(final Class<?> type) {
@@ -73,9 +76,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                     final StroomBeanStore stroomBeanStore = stroomBeanStoreProvider.get();
                     final Map<Class<?>, EventInfoProvider> appenders = new HashMap<>();
                     final Set<EventInfoProvider> eventInfoProviders = stroomBeanStore.getInstancesOfType(EventInfoProvider.class);
-                    eventInfoProviders.forEach(eventInfoProvider -> {
-                        appenders.put(eventInfoProvider.getType(), eventInfoProvider);
-                    });
+                    eventInfoProviders.forEach(eventInfoProvider -> appenders.put(eventInfoProvider.getType(), eventInfoProvider));
                     objectInfoAppenders = appenders;
                 }
             }
@@ -101,21 +102,23 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void create(final String objectType, final String objectName, final Throwable ex) {
-        try {
-            final Event event = createAction("Create", "Creating", objectType, objectName);
-            final ObjectOutcome objectOutcome = new ObjectOutcome();
-            event.getEventDetail().setCreate(objectOutcome);
+        security.insecure(() -> {
+            try {
+                final Event event = createAction("Create", "Creating", objectType, objectName);
+                final ObjectOutcome objectOutcome = new ObjectOutcome();
+                event.getEventDetail().setCreate(objectOutcome);
 
-            final Object object = new Object();
-            object.setType(objectType);
-            object.setName(objectName);
+                final Object object = new Object();
+                object.setType(objectType);
+                object.setName(objectName);
 
-            objectOutcome.getObjects().add(object);
-            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to create event!", e);
-        }
+                objectOutcome.getObjects().add(object);
+                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to create event!", e);
+            }
+        });
     }
 
 //    @Override
@@ -125,16 +128,18 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void create(final java.lang.Object object, final Throwable ex) {
-        try {
-            final Event event = createAction("Create", "Creating", object);
-            final ObjectOutcome objectOutcome = new ObjectOutcome();
-            event.getEventDetail().setCreate(objectOutcome);
-            objectOutcome.getObjects().add(createBaseObject(object));
-            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to create event!", e);
-        }
+        security.insecure(() -> {
+            try {
+                final Event event = createAction("Create", "Creating", object);
+                final ObjectOutcome objectOutcome = new ObjectOutcome();
+                event.getEventDetail().setCreate(objectOutcome);
+                objectOutcome.getObjects().add(createBaseObject(object));
+                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to create event!", e);
+            }
+        });
     }
 
 //    @Override
@@ -144,29 +149,31 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void update(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        try {
-            final Event event = createAction("Update", "Updating", before);
-            final Update update = new Update();
-            event.getEventDetail().setUpdate(update);
+        security.insecure(() -> {
+            try {
+                final Event event = createAction("Update", "Updating", before);
+                final Update update = new Update();
+                event.getEventDetail().setUpdate(update);
 
-            if (before != null) {
-                final MultiObject bef = new MultiObject();
-                update.setBefore(bef);
-                bef.getObjects().add(createBaseObject(before));
+                if (before != null) {
+                    final MultiObject bef = new MultiObject();
+                    update.setBefore(bef);
+                    bef.getObjects().add(createBaseObject(before));
+                }
+
+                if (after != null) {
+                    final MultiObject aft = new MultiObject();
+                    update.setAfter(aft);
+                    aft.getObjects().add(createBaseObject(after));
+                }
+
+                update.setOutcome(EventLoggingUtil.createOutcome(ex));
+
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to update event!", e);
             }
-
-            if (after != null) {
-                final MultiObject aft = new MultiObject();
-                update.setAfter(aft);
-                aft.getObjects().add(createBaseObject(after));
-            }
-
-            update.setOutcome(EventLoggingUtil.createOutcome(ex));
-
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to update event!", e);
-        }
+        });
     }
 
 //    @Override
@@ -177,98 +184,104 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void copy(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        try {
-            final Event event = createAction("Copy", "Copying", before);
-            final CopyMove copy = new CopyMove();
-            event.getEventDetail().setCopy(copy);
+        security.insecure(() -> {
+            try {
+                final Event event = createAction("Copy", "Copying", before);
+                final CopyMove copy = new CopyMove();
+                event.getEventDetail().setCopy(copy);
 
-            if (before != null) {
-                final MultiObject source = new MultiObject();
-                copy.setSource(source);
-                source.getObjects().add(createBaseObject(before));
+                if (before != null) {
+                    final MultiObject source = new MultiObject();
+                    copy.setSource(source);
+                    source.getObjects().add(createBaseObject(before));
+                }
+
+                if (after != null) {
+                    final MultiObject destination = new MultiObject();
+                    copy.setDestination(destination);
+                    destination.getObjects().add(createBaseObject(after));
+                }
+
+                if (ex != null && ex.getMessage() != null) {
+                    final CopyMoveOutcome outcome = new CopyMoveOutcome();
+                    outcome.setSuccess(Boolean.FALSE);
+                    outcome.setDescription(ex.getMessage());
+                    copy.setOutcome(outcome);
+                }
+
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to copy event!", e);
             }
-
-            if (after != null) {
-                final MultiObject destination = new MultiObject();
-                copy.setDestination(destination);
-                destination.getObjects().add(createBaseObject(after));
-            }
-
-            if (ex != null && ex.getMessage() != null) {
-                final CopyMoveOutcome outcome = new CopyMoveOutcome();
-                outcome.setSuccess(Boolean.FALSE);
-                outcome.setDescription(ex.getMessage());
-                copy.setOutcome(outcome);
-            }
-
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to copy event!", e);
-        }
+        });
     }
 
     @Override
     public void move(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        try {
-            final Event event = createAction("Move", "Moving", before);
-            final CopyMove move = new CopyMove();
-            event.getEventDetail().setMove(move);
+        security.insecure(() -> {
+            try {
+                final Event event = createAction("Move", "Moving", before);
+                final CopyMove move = new CopyMove();
+                event.getEventDetail().setMove(move);
 
-            if (before != null) {
-                final MultiObject source = new MultiObject();
-                move.setSource(source);
-                source.getObjects().add(createBaseObject(before));
+                if (before != null) {
+                    final MultiObject source = new MultiObject();
+                    move.setSource(source);
+                    source.getObjects().add(createBaseObject(before));
+                }
+
+                if (after != null) {
+                    final MultiObject destination = new MultiObject();
+                    move.setDestination(destination);
+                    destination.getObjects().add(createBaseObject(after));
+                }
+
+                if (ex != null && ex.getMessage() != null) {
+                    final CopyMoveOutcome outcome = new CopyMoveOutcome();
+                    outcome.setSuccess(Boolean.FALSE);
+                    outcome.setDescription(ex.getMessage());
+                    move.setOutcome(outcome);
+                }
+
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to move event!", e);
             }
-
-            if (after != null) {
-                final MultiObject destination = new MultiObject();
-                move.setDestination(destination);
-                destination.getObjects().add(createBaseObject(after));
-            }
-
-            if (ex != null && ex.getMessage() != null) {
-                final CopyMoveOutcome outcome = new CopyMoveOutcome();
-                outcome.setSuccess(Boolean.FALSE);
-                outcome.setDescription(ex.getMessage());
-                move.setOutcome(outcome);
-            }
-
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to move event!", e);
-        }
+        });
     }
 
     @Override
     public void rename(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        try {
-            final Event event = createAction("Rename", "Renaming", before);
-            final CopyMove move = new CopyMove();
-            event.getEventDetail().setMove(move);
+        security.insecure(() -> {
+            try {
+                final Event event = createAction("Rename", "Renaming", before);
+                final CopyMove move = new CopyMove();
+                event.getEventDetail().setMove(move);
 
-            if (before != null) {
-                final MultiObject source = new MultiObject();
-                move.setSource(source);
-                source.getObjects().add(createBaseObject(before));
+                if (before != null) {
+                    final MultiObject source = new MultiObject();
+                    move.setSource(source);
+                    source.getObjects().add(createBaseObject(before));
+                }
+
+                if (after != null) {
+                    final MultiObject destination = new MultiObject();
+                    move.setDestination(destination);
+                    destination.getObjects().add(createBaseObject(after));
+                }
+
+                if (ex != null && ex.getMessage() != null) {
+                    final CopyMoveOutcome outcome = new CopyMoveOutcome();
+                    outcome.setSuccess(Boolean.FALSE);
+                    outcome.setDescription(ex.getMessage());
+                    move.setOutcome(outcome);
+                }
+
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to rename event!", e);
             }
-
-            if (after != null) {
-                final MultiObject destination = new MultiObject();
-                move.setDestination(destination);
-                destination.getObjects().add(createBaseObject(after));
-            }
-
-            if (ex != null && ex.getMessage() != null) {
-                final CopyMoveOutcome outcome = new CopyMoveOutcome();
-                outcome.setSuccess(Boolean.FALSE);
-                outcome.setDescription(ex.getMessage());
-                move.setOutcome(outcome);
-            }
-
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to rename event!", e);
-        }
+        });
     }
 
     //    @Override
@@ -278,40 +291,44 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void delete(final java.lang.Object object, final Throwable ex) {
-        try {
-            final Event event = createAction("Delete", "Deleting", object);
-            final ObjectOutcome objectOutcome = new ObjectOutcome();
-            event.getEventDetail().setDelete(objectOutcome);
-            objectOutcome.getObjects().add(createBaseObject(object));
-            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to delete event!", e);
-        }
+        security.insecure(() -> {
+            try {
+                final Event event = createAction("Delete", "Deleting", object);
+                final ObjectOutcome objectOutcome = new ObjectOutcome();
+                event.getEventDetail().setDelete(objectOutcome);
+                objectOutcome.getObjects().add(createBaseObject(object));
+                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to delete event!", e);
+            }
+        });
     }
 
     @Override
     public void view(final java.lang.Object object, final Throwable ex) {
-        try {
-            final Event event = createAction("View", "Viewing", object);
-            final ObjectOutcome objectOutcome = new ObjectOutcome();
-            event.getEventDetail().setView(objectOutcome);
-            objectOutcome.getObjects().add(createBaseObject(object));
-            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to view event!", e);
-        }
+        security.insecure(() -> {
+            try {
+                final Event event = createAction("View", "Viewing", object);
+                final ObjectOutcome objectOutcome = new ObjectOutcome();
+                event.getEventDetail().setView(objectOutcome);
+                objectOutcome.getObjects().add(createBaseObject(object));
+                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to view event!", e);
+            }
+        });
     }
 
     @Override
     public void delete(final BaseCriteria criteria, final Query query, final Long size) {
-        doDelete(criteria, query, size, null);
+        security.insecure(() -> doDelete(criteria, query, size, null));
     }
 
     @Override
     public void delete(final BaseCriteria criteria, final Query query, final Throwable ex) {
-        doDelete(criteria, query, null, ex);
+        security.insecure(() -> doDelete(criteria, query, null, ex));
     }
 
     private void doDelete(final BaseCriteria criteria, final Query query, final Long size, final Throwable ex) {
@@ -339,32 +356,34 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void download(final java.lang.Object object, final Throwable ex) {
-        try {
-            final Event event = createAction("Download", "Downloading", object);
+        security.insecure(() -> {
+            try {
+                final Event event = createAction("Download", "Downloading", object);
 
-            final MultiObject multiObject = new MultiObject();
-            multiObject.getObjects().add(createBaseObject(object));
+                final MultiObject multiObject = new MultiObject();
+                multiObject.getObjects().add(createBaseObject(object));
 
-            final Export exp = new Export();
-            exp.setSource(multiObject);
-            exp.setOutcome(EventLoggingUtil.createOutcome(ex));
+                final Export exp = new Export();
+                exp.setSource(multiObject);
+                exp.setOutcome(EventLoggingUtil.createOutcome(ex));
 
-            event.getEventDetail().setExport(exp);
+                event.getEventDetail().setExport(exp);
 
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
     public void search(final BaseCriteria criteria, final Query query, final BaseResultList<?> results) {
-        doSearch(criteria, query, results, null);
+        security.insecure(() -> doSearch(criteria, query, results, null));
     }
 
     @Override
     public void search(final BaseCriteria criteria, final Query query, final Throwable ex) {
-        doSearch(criteria, query, null, ex);
+        security.insecure(() -> doSearch(criteria, query, null, ex));
     }
 
     private void doSearch(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
@@ -394,12 +413,12 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void searchSummary(final BaseCriteria criteria, final Query query, final BaseResultList<?> results) {
-        doSearchSummary(criteria, query, results, null);
+        security.insecure(() -> doSearchSummary(criteria, query, results, null));
     }
 
     @Override
     public void searchSummary(final BaseCriteria criteria, final Query query, final Throwable ex) {
-        doSearchSummary(criteria, query, null, ex);
+        security.insecure(() -> doSearchSummary(criteria, query, null, ex));
     }
 
     private void doSearchSummary(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
@@ -430,17 +449,14 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     private ResultPage getResultPage(final PageResponse pageResponse) {
         ResultPage resultPage = null;
         if (pageResponse.getOffset() != null) {
-            if (resultPage == null) {
-                resultPage = new ResultPage();
-            }
+            resultPage = new ResultPage();
             resultPage.setFrom(BigInteger.valueOf(pageResponse.getOffset()));
-        }
-        if (pageResponse.getOffset() != null && pageResponse.getOffset() != null && pageResponse.getLength() != null) {
-            if (resultPage == null) {
-                resultPage = new ResultPage();
+
+            if (pageResponse.getLength() != null) {
+                resultPage.setTo(BigInteger.valueOf(pageResponse.getOffset() + pageResponse.getLength()));
             }
-            resultPage.setTo(BigInteger.valueOf(pageResponse.getOffset() + pageResponse.getLength()));
         }
+
         return resultPage;
     }
 

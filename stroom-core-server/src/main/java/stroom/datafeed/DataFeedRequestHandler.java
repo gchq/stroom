@@ -28,7 +28,6 @@ import stroom.feed.StroomStreamException;
 import stroom.feed.shared.Feed;
 import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
-import stroom.security.Insecure;
 import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
@@ -49,7 +48,7 @@ import java.util.stream.Collectors;
  * Handle the incoming requests and stream them to disk checking a few things.
  * </p>
  */
-public class DataFeedRequestHandler implements RequestHandler {
+class DataFeedRequestHandler implements RequestHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedRequestHandler.class);
 
     private final Security security;
@@ -77,7 +76,6 @@ public class DataFeedRequestHandler implements RequestHandler {
     }
 
     @Override
-    @Insecure
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
         if (metaMapFilter == null) {
             final String receiptPolicyUuid = stroomPropertyService.getProperty("stroom.feed.receiptPolicyUuid");

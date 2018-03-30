@@ -19,6 +19,7 @@ package stroom.document;
 
 import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.logging.DocumentEventLog;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedObject;
@@ -29,17 +30,21 @@ import javax.inject.Inject;
 class DocumentServiceWriteHandler extends AbstractTaskHandler<DocumentServiceWriteAction<SharedObject>, SharedObject> {
     private final DocumentService documentService;
     private final DocumentEventLog documentEventLog;
+    private final Security security;
 
     @Inject
     DocumentServiceWriteHandler(final DocumentService documentService,
-                                final DocumentEventLog documentEventLog) {
+                                final DocumentEventLog documentEventLog,
+                                final Security security) {
         this.documentService = documentService;
         this.documentEventLog = documentEventLog;
+        this.security = security;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public SharedObject exec(final DocumentServiceWriteAction action) {
+        return security.secureResult(() -> {
 //        final Object bean = beanRegistry.getEntityService(action.getEntity().getClass());
 //        if (bean == null) {
 //            throw new EntityServiceException("No entity service can be found");
@@ -90,13 +95,14 @@ class DocumentServiceWriteHandler extends AbstractTaskHandler<DocumentServiceWri
 //
 //        return result;
 
-        try {
-            final SharedObject doc = (SharedObject) documentService.writeDocument(action.getDocRef(), action.getDocument());
-            documentEventLog.delete(action.getDocRef(), null);
-            return doc;
-        } catch (final RuntimeException e) {
-            documentEventLog.delete(action.getDocRef(), e);
-            throw e;
-        }
+            try {
+                final SharedObject doc = (SharedObject) documentService.writeDocument(action.getDocRef(), action.getDocument());
+                documentEventLog.delete(action.getDocRef(), null);
+                return doc;
+            } catch (final RuntimeException e) {
+                documentEventLog.delete(action.getDocRef(), e);
+                throw e;
+            }
+        });
     }
 }

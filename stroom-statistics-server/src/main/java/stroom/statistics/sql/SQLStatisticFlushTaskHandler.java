@@ -19,6 +19,7 @@ package stroom.statistics.sql;
 import org.apache.commons.lang.mutable.MutableLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.Security;
 import stroom.statistics.shared.StatisticType;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
@@ -39,10 +40,11 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
     /**
      * The number of records to flush to the DB in one go.
      */
-    public static final int BATCH_SIZE = 5000;
+    private static final int BATCH_SIZE = 5000;
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticFlushTaskHandler.class);
     private final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     private final TaskContext taskContext;
+    private final Security security;
 
     private LogExecutionTime logExecutionTime;
     private int count;
@@ -51,15 +53,19 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
 
     @Inject
     SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
-                                 final TaskContext taskContext) {
+                                 final TaskContext taskContext,
+                                 final Security security) {
         this.sqlStatisticValueBatchSaveService = sqlStatisticValueBatchSaveService;
         this.taskContext = taskContext;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final SQLStatisticFlushTask task) {
-        flush(task.getMap());
-        return new VoidResult();
+        return security.secureResult(() -> {
+            flush(task.getMap());
+            return new VoidResult();
+        });
     }
 
     private void flush(final SQLStatisticAggregateMap map) {

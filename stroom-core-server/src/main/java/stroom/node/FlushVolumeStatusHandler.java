@@ -19,6 +19,7 @@ package stroom.node;
 
 import stroom.entity.cluster.FlushServiceClusterTask;
 import stroom.node.shared.FlushVolumeStatusAction;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
@@ -30,17 +31,22 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = FlushVolumeStatusAction.class)
 class FlushVolumeStatusHandler extends AbstractTaskHandler<FlushVolumeStatusAction, VoidResult> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final Security security;
 
     @Inject
-    FlushVolumeStatusHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+    FlushVolumeStatusHandler(final ClusterDispatchAsyncHelper dispatchHelper,
+                             final Security security) {
         this.dispatchHelper = dispatchHelper;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final FlushVolumeStatusAction action) {
-        final FlushServiceClusterTask clusterTask = new FlushServiceClusterTask(action.getUserToken(), action.getTaskName(), VolumeService.class);
+        return security.secureResult(() -> {
+            final FlushServiceClusterTask clusterTask = new FlushServiceClusterTask(action.getUserToken(), action.getTaskName(), VolumeService.class);
 
-        dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
-        return new VoidResult();
+            dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
+            return new VoidResult();
+        });
     }
 }

@@ -18,7 +18,7 @@ package stroom.explorer;
 
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.security.Insecure;
+import stroom.security.Security;
 import stroom.util.concurrent.ModelCache;
 
 import javax.inject.Inject;
@@ -28,28 +28,31 @@ import java.util.concurrent.TimeUnit;
 class ExplorerTreeModel {
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerActionHandlers explorerActionHandlers;
+    private final Security security;
     private final ModelCache<TreeModel> modelCache;
 
     @Inject
-    ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlers explorerActionHandlers) {
+    ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlers explorerActionHandlers, final Security security) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerActionHandlers = explorerActionHandlers;
+        this.security = security;
         this.modelCache = new ModelCache.Builder<TreeModel>()
                 .valueSupplier(this::createModel)
                 .maxAge(10, TimeUnit.MINUTES)
                 .build();
     }
 
-    @Insecure
     public TreeModel getModel() {
         return modelCache.get();
     }
 
     private TreeModel createModel() {
-        final TreeModel newTreeModel = new TreeModelImpl();
-        final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-        addChildren(newTreeModel, sort(roots), null);
-        return newTreeModel;
+        return security.asProcessingUserResult(() -> {
+            final TreeModel newTreeModel = new TreeModelImpl();
+            final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
+            addChildren(newTreeModel, sort(roots), null);
+            return newTreeModel;
+        });
     }
 
     private void addChildren(final TreeModel treeModel, final List<ExplorerTreeNode> children, final ExplorerNode parentNode) {

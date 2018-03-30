@@ -22,7 +22,7 @@ import java.util.zip.ZipOutputStream;
 /**
  * Handler class that forwards the request to a URL.
  */
-public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
+class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
     private static Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandler.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 

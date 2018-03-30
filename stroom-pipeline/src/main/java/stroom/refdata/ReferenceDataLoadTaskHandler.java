@@ -37,6 +37,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.security.Security;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
@@ -44,9 +45,9 @@ import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Severity;
-import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -75,6 +76,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private final ErrorReceiverProxy errorReceiverProxy;
     private final TaskContext taskContext;
     private final PipelineDataCache pipelineDataCache;
+    private final Security security;
 
     private ErrorReceiverIdDecorator errorReceiver;
 
@@ -91,7 +93,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final StreamCloser streamCloser,
                                  final ErrorReceiverProxy errorReceiverProxy,
                                  final TaskContext taskContext,
-                                 final PipelineDataCache pipelineDataCache) {
+                                 final PipelineDataCache pipelineDataCache,
+                                 final Security security) {
         this.streamStore = streamStore;
         this.pipelineFactory = pipelineFactory;
         this.mapStoreHolder = mapStoreHolder;
@@ -105,6 +108,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.errorReceiverProxy = errorReceiverProxy;
         this.taskContext = taskContext;
         this.pipelineDataCache = pipelineDataCache;
+        this.security = security;
     }
 
     /**
@@ -113,56 +117,58 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
      */
     @Override
     public MapStore exec(final ReferenceDataLoadTask task) {
-        final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
-        final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(storedErrorReceiver);
-        errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
-        errorReceiverProxy.setErrorReceiver(errorReceiver);
+        return security.secureResult(() -> {
+            final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
+            final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(storedErrorReceiver);
+            errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
+            errorReceiverProxy.setErrorReceiver(errorReceiver);
 
-        try {
-            final MapStoreCacheKey mapStorePoolKey = task.getMapStorePoolKey();
+            try {
+                final MapStoreCacheKey mapStorePoolKey = task.getMapStorePoolKey();
 
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Loading reference data: " + mapStorePoolKey.toString());
-            }
-
-            // Open the stream source.
-            final StreamSource streamSource = streamStore.openStreamSource(mapStorePoolKey.getStreamId());
-            if (streamSource != null) {
-                final Stream stream = streamSource.getStream();
-                try {
-                    // Load the feed.
-                    final Feed feed = feedService.load(stream.getFeed());
-                    feedHolder.setFeed(feed);
-
-                    // Set the pipeline so it can be used by a filter if needed.
-                    final PipelineEntity pipelineEntity = pipelineService
-                            .loadByUuid(mapStorePoolKey.getPipeline().getUuid());
-                    pipelineHolder.setPipeline(pipelineEntity);
-
-                    // Create the parser.
-                    final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
-                    final Pipeline pipeline = pipelineFactory.create(pipelineData);
-
-                    populateMaps(pipeline, stream, streamSource, feed, stream.getStreamType(), mapStoreBuilder);
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Finished loading reference data: " + mapStorePoolKey.toString());
-                    }
-                } finally {
-                    try {
-                        // Close all open streams.
-                        streamCloser.close();
-                    } catch (final IOException e) {
-                        log(Severity.FATAL_ERROR, e.getMessage(), e);
-                    }
-
-                    streamStore.closeStreamSource(streamSource);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Loading reference data: " + mapStorePoolKey.toString());
                 }
-            }
-        } catch (final RuntimeException e) {
-            log(Severity.FATAL_ERROR, e.getMessage(), e);
-        }
 
-        return mapStoreBuilder.getMapStore();
+                // Open the stream source.
+                final StreamSource streamSource = streamStore.openStreamSource(mapStorePoolKey.getStreamId());
+                if (streamSource != null) {
+                    final Stream stream = streamSource.getStream();
+                    try {
+                        // Load the feed.
+                        final Feed feed = feedService.load(stream.getFeed());
+                        feedHolder.setFeed(feed);
+
+                        // Set the pipeline so it can be used by a filter if needed.
+                        final PipelineEntity pipelineEntity = pipelineService
+                                .loadByUuid(mapStorePoolKey.getPipeline().getUuid());
+                        pipelineHolder.setPipeline(pipelineEntity);
+
+                        // Create the parser.
+                        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+
+                        populateMaps(pipeline, stream, streamSource, feed, stream.getStreamType(), mapStoreBuilder);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Finished loading reference data: " + mapStorePoolKey.toString());
+                        }
+                    } finally {
+                        try {
+                            // Close all open streams.
+                            streamCloser.close();
+                        } catch (final IOException e) {
+                            log(Severity.FATAL_ERROR, e.getMessage(), e);
+                        }
+
+                        streamStore.closeStreamSource(streamSource);
+                    }
+                }
+            } catch (final RuntimeException e) {
+                log(Severity.FATAL_ERROR, e.getMessage(), e);
+            }
+
+            return mapStoreBuilder.getMapStore();
+        });
     }
 
     private void populateMaps(final Pipeline pipeline, final Stream stream, final StreamSource streamSource,

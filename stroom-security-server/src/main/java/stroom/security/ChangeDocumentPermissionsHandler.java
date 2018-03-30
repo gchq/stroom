@@ -24,8 +24,6 @@ import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRef;
-import stroom.security.Insecure;
-import stroom.security.SecurityContext;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.DocumentPermissionNames;
@@ -43,7 +41,6 @@ import java.util.Map;
 import java.util.Set;
 
 @TaskHandlerBean(task = ChangeDocumentPermissionsAction.class)
-@Insecure
 class ChangeDocumentPermissionsHandler
         extends AbstractTaskHandler<ChangeDocumentPermissionsAction, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangeDocumentPermissionsHandler.class);
@@ -52,44 +49,49 @@ class ChangeDocumentPermissionsHandler
     private final DocumentPermissionsCache documentPermissionsCache;
     private final SecurityContext securityContext;
     private final ExplorerNodeService explorerNodeService;
+    private final Security security;
 
     @Inject
     ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService,
                                      final DocumentPermissionsCache documentPermissionsCache,
                                      final SecurityContext securityContext,
-                                     final ExplorerNodeService explorerNodeService) {
+                                     final ExplorerNodeService explorerNodeService,
+                                     final Security security) {
         this.documentPermissionService = documentPermissionService;
         this.documentPermissionsCache = documentPermissionsCache;
         this.securityContext = securityContext;
         this.explorerNodeService = explorerNodeService;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final ChangeDocumentPermissionsAction action) {
-        final DocRef docRef = action.getDocRef();
+        return security.insecureResult(() -> {
+            final DocRef docRef = action.getDocRef();
 
-        // Check that the current user has permission to change the permissions of the document.
-        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.OWNER)) {
-            // Record what documents and what users are affected by these changes so we can clear the relevant caches.
-            final Set<DocRef> affectedDocRefs = new HashSet<>();
-            final Set<UserRef> affectedUserRefs = new HashSet<>();
+            // Check that the current user has permission to change the permissions of the document.
+            if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.OWNER)) {
+                // Record what documents and what users are affected by these changes so we can clear the relevant caches.
+                final Set<DocRef> affectedDocRefs = new HashSet<>();
+                final Set<UserRef> affectedUserRefs = new HashSet<>();
 
-            // Change the permissions of the document.
-            final ChangeSet<UserPermission> changeSet = action.getChangeSet();
-            changeDocPermissions(docRef, changeSet, affectedDocRefs, affectedUserRefs, false);
+                // Change the permissions of the document.
+                final ChangeSet<UserPermission> changeSet = action.getChangeSet();
+                changeDocPermissions(docRef, changeSet, affectedDocRefs, affectedUserRefs, false);
 
-            // Cascade changes if this is a folder and we have been asked to do so.
-            if (action.getCascade() != null) {
-                cascadeChanges(docRef, changeSet, affectedDocRefs, affectedUserRefs, action.getCascade());
+                // Cascade changes if this is a folder and we have been asked to do so.
+                if (action.getCascade() != null) {
+                    cascadeChanges(docRef, changeSet, affectedDocRefs, affectedUserRefs, action.getCascade());
+                }
+
+                // Force refresh of cached permissions.
+                affectedDocRefs.forEach(documentPermissionsCache::remove);
+
+                return VoidResult.INSTANCE;
             }
 
-            // Force refresh of cached permissions.
-            affectedDocRefs.forEach(documentPermissionsCache::remove);
-
-            return VoidResult.INSTANCE;
-        }
-
-        throw new EntityServiceException("You do not have sufficient privileges to change permissions for this document");
+            throw new EntityServiceException("You do not have sufficient privileges to change permissions for this document");
+        });
     }
 
     private void changeDocPermissions(final DocRef docRef, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<UserRef> affectedUserRefs, final boolean clear) {

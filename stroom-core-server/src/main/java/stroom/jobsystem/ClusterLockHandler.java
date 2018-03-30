@@ -18,6 +18,7 @@ package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
@@ -34,40 +35,45 @@ class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, SharedBool
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockHandler.class);
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final Security security;
 
     @Inject
-    ClusterLockHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+    ClusterLockHandler(final ClusterDispatchAsyncHelper dispatchHelper,
+                       final Security security) {
         this.dispatchHelper = dispatchHelper;
+        this.security = security;
     }
 
     @Override
     public SharedBoolean exec(final ClusterLockTask task) {
-        // If the cluster state is not yet initialised then don't try and call
-        // master.
-        if (!dispatchHelper.isClusterStateInitialised()) {
-            return SharedBoolean.wrap(Boolean.FALSE);
-        }
-
-        final DefaultClusterResultCollector<SharedBoolean> collector = dispatchHelper
-                .execAsync(new ClusterLockClusterTask(task), TargetType.MASTER);
-        final ClusterCallEntry<SharedBoolean> response = collector.getSingleResponse();
-
-        if (response == null) {
-            LOGGER.error("No response");
-            return SharedBoolean.wrap(Boolean.FALSE);
-        }
-        if (response.getError() != null) {
-            try {
-                throw response.getError();
-            } catch (final MalformedURLException e) {
-                LOGGER.warn(response.getError().getMessage());
-            } catch (final Throwable e) {
-                LOGGER.error(response.getError().getMessage(), response.getError());
+        return security.secureResult(() -> {
+            // If the cluster state is not yet initialised then don't try and call
+            // master.
+            if (!dispatchHelper.isClusterStateInitialised()) {
+                return SharedBoolean.wrap(Boolean.FALSE);
             }
 
-            return SharedBoolean.wrap(Boolean.FALSE);
-        }
+            final DefaultClusterResultCollector<SharedBoolean> collector = dispatchHelper
+                    .execAsync(new ClusterLockClusterTask(task), TargetType.MASTER);
+            final ClusterCallEntry<SharedBoolean> response = collector.getSingleResponse();
 
-        return response.getResult();
+            if (response == null) {
+                LOGGER.error("No response");
+                return SharedBoolean.wrap(Boolean.FALSE);
+            }
+            if (response.getError() != null) {
+                try {
+                    throw response.getError();
+                } catch (final MalformedURLException e) {
+                    LOGGER.warn(response.getError().getMessage());
+                } catch (final Throwable e) {
+                    LOGGER.error(response.getError().getMessage(), response.getError());
+                }
+
+                return SharedBoolean.wrap(Boolean.FALSE);
+            }
+
+            return response.getResult();
+        });
     }
 }

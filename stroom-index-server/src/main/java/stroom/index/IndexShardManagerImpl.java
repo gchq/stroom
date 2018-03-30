@@ -23,8 +23,8 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.security.Insecure;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskContext;
 import stroom.task.TaskManager;
@@ -63,7 +63,6 @@ import java.util.concurrent.locks.Lock;
  * Pool API into open index shards.
  */
 @Singleton
-@Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
 public class IndexShardManagerImpl implements IndexShardManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardManagerImpl.class);
 
@@ -72,6 +71,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
     private final TaskContext taskContext;
+    private final Security security;
 
     private final StripedLock shardUpdateLocks = new StripedLock();
     private final AtomicBoolean deletingShards = new AtomicBoolean();
@@ -83,12 +83,14 @@ public class IndexShardManagerImpl implements IndexShardManager {
                           final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
                           final NodeCache nodeCache,
                           final TaskManager taskManager,
-                          final TaskContext taskContext) {
+                          final TaskContext taskContext,
+                          final Security security) {
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
         this.taskContext = taskContext;
+        this.security = security;
 
         allowedStateTransitions.put(IndexShardStatus.CLOSED, new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
         allowedStateTransitions.put(IndexShardStatus.OPEN, new HashSet<>(Arrays.asList(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
@@ -103,54 +105,56 @@ public class IndexShardManagerImpl implements IndexShardManager {
     @JobTrackedSchedule(jobName = "Index Shard Delete", description = "Job to delete index shards from disk that have been marked as deleted")
     @Override
     public void deleteFromDisk() {
-        if (deletingShards.compareAndSet(false, true)) {
-            try {
-                final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
+        security.secure(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            if (deletingShards.compareAndSet(false, true)) {
+                try {
+                    final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
-                final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-                criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
-                criteria.getFetchSet().add(Index.ENTITY_TYPE);
-                criteria.getFetchSet().add(Node.ENTITY_TYPE);
-                criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
-                final List<IndexShard> shards = indexShardService.find(criteria);
+                    final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+                    criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
+                    criteria.getFetchSet().add(Index.ENTITY_TYPE);
+                    criteria.getFetchSet().add(Node.ENTITY_TYPE);
+                    criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
+                    final List<IndexShard> shards = indexShardService.find(criteria);
 
-                final GenericServerTask task = GenericServerTask.create("Delete Logically Deleted Shards", "Deleting Logically Deleted Shards...");
-                final Runnable runnable = () -> {
-                    try {
-                        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                        final Iterator<IndexShard> iter = shards.iterator();
-                        while (!taskContext.isTerminated() && iter.hasNext()) {
-                            final IndexShard shard = iter.next();
-                            final IndexShardWriter writer = indexShardWriterCache.getWriterByShardId(shard.getId());
-                            try {
-                                if (writer != null) {
-                                    LOGGER.debug(() -> "deleteLogicallyDeleted() - Unable to delete index shard " + shard.getId() + " as it is currently in use");
-                                } else {
-                                    deleteFromDisk(shard);
+                    final GenericServerTask task = GenericServerTask.create("Delete Logically Deleted Shards", "Deleting Logically Deleted Shards...");
+                    final Runnable runnable = () -> {
+                        try {
+                            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+                            final Iterator<IndexShard> iter = shards.iterator();
+                            while (!taskContext.isTerminated() && iter.hasNext()) {
+                                final IndexShard shard = iter.next();
+                                final IndexShardWriter writer = indexShardWriterCache.getWriterByShardId(shard.getId());
+                                try {
+                                    if (writer != null) {
+                                        LOGGER.debug(() -> "deleteLogicallyDeleted() - Unable to delete index shard " + shard.getId() + " as it is currently in use");
+                                    } else {
+                                        deleteFromDisk(shard);
+                                    }
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e::getMessage, e);
                                 }
-                            } catch (final RuntimeException e) {
-                                LOGGER.error(e::getMessage, e);
                             }
+                            LOGGER.debug(() -> "deleteLogicallyDeleted() - Completed in " + logExecutionTime);
+                        } finally {
+                            deletingShards.set(false);
                         }
-                        LOGGER.debug(() -> "deleteLogicallyDeleted() - Completed in " + logExecutionTime);
-                    } finally {
-                        deletingShards.set(false);
+                    };
+
+                    // In tests we don't have a task manager.
+                    if (taskManager == null) {
+                        runnable.run();
+                    } else {
+                        task.setRunnable(runnable);
+                        taskManager.execAsync(task);
                     }
-                };
 
-                // In tests we don't have a task manager.
-                if (taskManager == null) {
-                    runnable.run();
-                } else {
-                    task.setRunnable(runnable);
-                    taskManager.execAsync(task);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
+                    deletingShards.set(false);
                 }
-
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                deletingShards.set(false);
             }
-        }
+        });
     }
 
     private void deleteFromDisk(final IndexShard shard) {
@@ -179,7 +183,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
      */
     @Override
     public Long findFlush(final FindIndexShardCriteria criteria) {
-        return performAction(criteria, IndexShardAction.FLUSH);
+        return security.secureResult(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> performAction(criteria, IndexShardAction.FLUSH));
     }
 
 //    /**
@@ -198,7 +202,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
      */
     @Override
     public Long findDelete(final FindIndexShardCriteria criteria) {
-        return performAction(criteria, IndexShardAction.DELETE);
+        return security.secureResult(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> performAction(criteria, IndexShardAction.DELETE));
     }
 
     private Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
@@ -256,14 +260,16 @@ public class IndexShardManagerImpl implements IndexShardManager {
     @JobTrackedSchedule(jobName = "Index Shard Retention", description = "Job to set index shards to have a status of deleted that have past their retention period")
     @Override
     public void checkRetention() {
-        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
-        criteria.getFetchSet().add(Index.ENTITY_TYPE);
-        criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        final List<IndexShard> shards = indexShardService.find(criteria);
-        for (final IndexShard shard : shards) {
-            checkRetention(shard);
-        }
+        security.secure(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+            criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
+            criteria.getFetchSet().add(Index.ENTITY_TYPE);
+            criteria.getFetchSet().add(Node.ENTITY_TYPE);
+            final List<IndexShard> shards = indexShardService.find(criteria);
+            for (final IndexShard shard : shards) {
+                checkRetention(shard);
+            }
+        });
     }
 
     private void checkRetention(final IndexShard shard) {
@@ -288,21 +294,22 @@ public class IndexShardManagerImpl implements IndexShardManager {
 
     @Override
     public IndexShard load(final long indexShardId) {
-        // Allow the thing to run without a service (e.g. benchmark mode)
-        if (indexShardService != null) {
-            final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
-            lock.lock();
-            try {
-                return indexShardService.loadById(indexShardId);
-            } finally {
-                lock.unlock();
+        return security.secureResult(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            // Allow the thing to run without a service (e.g. benchmark mode)
+            if (indexShardService != null) {
+                final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
+                lock.lock();
+                try {
+                    return indexShardService.loadById(indexShardId);
+                } finally {
+                    lock.unlock();
+                }
             }
-        }
 
-        return null;
+            return null;
+        });
     }
 
-    @Insecure
     @Override
     public void setStatus(final long indexShardId, final IndexShardStatus status) {
         // Allow the thing to run without a service (e.g. benchmark mode)
@@ -327,7 +334,6 @@ public class IndexShardManagerImpl implements IndexShardManager {
         }
     }
 
-    @Insecure
     @Override
     public void update(final long indexShardId, final Integer documentCount, final Long commitDurationMs, final Long commitMs, final Long fileSize) {
         // Allow the thing to run without a service (e.g. benchmark mode)

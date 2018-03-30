@@ -19,9 +19,9 @@ package stroom.streamstore;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.logging.StreamEventLog;
 import stroom.resource.ResourceStore;
-import stroom.security.Secured;
+import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.Security;
 import stroom.streamstore.shared.DownloadDataAction;
-import stroom.streamstore.shared.Stream;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.task.TaskManager;
@@ -33,38 +33,42 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 @TaskHandlerBean(task = DownloadDataAction.class)
-@Secured(Stream.EXPORT_DATA_PERMISSION)
 class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, ResourceGeneration> {
     private final ResourceStore resourceStore;
     private final TaskManager taskManager;
     private final StreamEventLog streamEventLog;
+    private final Security security;
 
     @Inject
     DownloadDataHandler(final ResourceStore resourceStore,
                         final TaskManager taskManager,
-                        final StreamEventLog streamEventLog) {
+                        final StreamEventLog streamEventLog,
+                        final Security security) {
         this.resourceStore = resourceStore;
         this.taskManager = taskManager;
         this.streamEventLog = streamEventLog;
+        this.security = security;
     }
 
     @Override
     public ResourceGeneration exec(final DownloadDataAction action) {
-        ResourceKey resourceKey;
-        try {
-            // Import file.
-            resourceKey = resourceStore.createTempFile("StroomData.zip");
-            final Path file = resourceStore.getTempFile(resourceKey);
+        return security.secureResult(ApplicationPermissionNames.EXPORT_DATA_PERMISSION, () -> {
+            ResourceKey resourceKey;
+            try {
+                // Import file.
+                resourceKey = resourceStore.createTempFile("StroomData.zip");
+                final Path file = resourceStore.getTempFile(resourceKey);
 
-            final StreamDownloadSettings settings = new StreamDownloadSettings();
-            taskManager.exec(new StreamDownloadTask(action.getUserToken(), action.getCriteria(), file, settings));
+                final StreamDownloadSettings settings = new StreamDownloadSettings();
+                taskManager.exec(new StreamDownloadTask(action.getUserToken(), action.getCriteria(), file, settings));
 
-            streamEventLog.exportStream(action.getCriteria(), null);
+                streamEventLog.exportStream(action.getCriteria(), null);
 
-        } catch (final RuntimeException e) {
-            streamEventLog.exportStream(action.getCriteria(), e);
-            throw EntityServiceExceptionUtil.create(e);
-        }
-        return new ResourceGeneration(resourceKey, new ArrayList<>());
+            } catch (final RuntimeException e) {
+                streamEventLog.exportStream(action.getCriteria(), e);
+                throw EntityServiceExceptionUtil.create(e);
+            }
+            return new ResourceGeneration(resourceKey, new ArrayList<>());
+        });
     }
 }

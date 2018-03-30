@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
 import stroom.entity.DocumentPermissionCache;
-import stroom.entity.shared.Clearable;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
@@ -28,11 +27,9 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pool.AbstractEntityPool;
-import stroom.security.Insecure;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.xml.converter.ParserFactory;
@@ -42,7 +39,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@Insecure
 class ParserFactoryPoolImpl
         extends AbstractEntityPool<TextConverter, StoredParserFactory>
         implements ParserFactoryPool {

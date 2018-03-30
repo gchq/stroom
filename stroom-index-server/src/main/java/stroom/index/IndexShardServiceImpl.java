@@ -20,14 +20,13 @@ package stroom.index;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
+import stroom.entity.shared.PermissionException;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.PermissionException;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
@@ -35,9 +34,9 @@ import stroom.index.shared.IndexShardKey;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.security.Insecure;
-import stroom.security.Secured;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
 
 import javax.inject.Inject;
@@ -46,20 +45,23 @@ import java.util.List;
 import java.util.Set;
 
 @Singleton
-@Insecure
-// @Transactional
 public class IndexShardServiceImpl
         extends SystemEntityServiceImpl<IndexShard, FindIndexShardCriteria> implements IndexShardService {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardServiceImpl.class);
 
     private static final String VOLUME_ERROR = "One or more volumes must been assigned to an index for a shard to be created";
 
+    private final Security security;
     private final VolumeService volumeService;
     private final SecurityContext securityContext;
 
     @Inject
-    IndexShardServiceImpl(final StroomEntityManager entityManager, final VolumeService volumeService, final SecurityContext securityContext) {
-        super(entityManager);
+    IndexShardServiceImpl(final StroomEntityManager entityManager,
+                          final Security security,
+                          final VolumeService volumeService,
+                          final SecurityContext securityContext) {
+        super(entityManager, security);
+        this.security = security;
         this.volumeService = volumeService;
         this.securityContext = securityContext;
     }
@@ -120,15 +122,16 @@ public class IndexShardServiceImpl
         super.appendCriteria(items, criteria);
     }
 
-    @Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
     @Override
     public Boolean delete(final IndexShard entity) {
-        final Index index = entity.getIndex();
-        if (!securityContext.hasDocumentPermission(index.getType(), index.getUuid(), DocumentPermissionNames.DELETE)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");
-        }
+        return security.secureResult(ApplicationPermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            final Index index = entity.getIndex();
+            if (!securityContext.hasDocumentPermission(index.getType(), index.getUuid(), DocumentPermissionNames.DELETE)) {
+                throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");
+            }
 
-        return super.delete(entity);
+            return super.delete(entity);
+        });
     }
 
     @Override
@@ -142,8 +145,13 @@ public class IndexShardServiceImpl
                 .add(FindIndexShardCriteria.FIELD_PARTITION, IndexShard.PARTITION, "partition");
     }
 
+    @Override
+    protected String permission() {
+        return null;
+    }
+
     private static class IndexShardQueryAppender extends QueryAppender<IndexShard, FindIndexShardCriteria> {
-        public IndexShardQueryAppender(final StroomEntityManager entityManager) {
+        IndexShardQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 

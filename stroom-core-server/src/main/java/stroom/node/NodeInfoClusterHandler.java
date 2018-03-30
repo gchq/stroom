@@ -17,6 +17,7 @@
 package stroom.node;
 
 import stroom.node.shared.NodeInfoResult;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -25,17 +26,22 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = NodeInfoClusterTask.class)
 class NodeInfoClusterHandler extends AbstractTaskHandler<NodeInfoClusterTask, NodeInfoResult> {
     private final NodeCache nodeCache;
+    private final Security security;
 
     @Inject
-    NodeInfoClusterHandler(final NodeCache nodeCache) {
+    NodeInfoClusterHandler(final NodeCache nodeCache,
+                           final Security security) {
         this.nodeCache = nodeCache;
+        this.security = security;
     }
 
     @Override
     public NodeInfoResult exec(final NodeInfoClusterTask action) {
-        final NodeInfoResult nodeInfoResult = new NodeInfoResult();
-        nodeInfoResult.setEntity(nodeCache.getDefaultNode());
-        nodeInfoResult.setPing(System.currentTimeMillis());
-        return nodeInfoResult;
+        return security.secureResult(() -> {
+            final NodeInfoResult nodeInfoResult = new NodeInfoResult();
+            nodeInfoResult.setEntity(nodeCache.getDefaultNode());
+            nodeInfoResult.setPing(System.currentTimeMillis());
+            return nodeInfoResult;
+        });
     }
 }

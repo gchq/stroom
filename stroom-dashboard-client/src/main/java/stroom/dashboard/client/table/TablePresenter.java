@@ -49,7 +49,6 @@ import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
@@ -71,10 +70,10 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.widget.button.client.ButtonView;
@@ -173,7 +172,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Download
         downloadButton = dataGrid.addButton(SvgPresets.DOWNLOAD);
-        downloadButton.setVisible(securityContext.hasAppPermission(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+        downloadButton.setVisible(securityContext.hasAppPermission(ApplicationPermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenter, formatPresenter,
                 filterPresenter);

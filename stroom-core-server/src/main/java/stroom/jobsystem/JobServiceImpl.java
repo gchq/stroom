@@ -26,13 +26,14 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.FieldMap;
+import stroom.guice.StroomBeanStore;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
-import stroom.security.Secured;
-import stroom.util.shared.CompareUtil;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.util.lifecycle.MethodReference;
-import stroom.guice.StroomBeanStore;
 import stroom.util.lifecycle.StroomStartup;
+import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -44,8 +45,6 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-// @Transactional
-@Secured(Job.MANAGE_JOBS_PERMISSION)
 public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
@@ -54,15 +53,15 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
 
     @Inject
     JobServiceImpl(final StroomEntityManager entityManager,
+                   final Security security,
                    final StroomBeanStore stroomBeanStore,
                    final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
-        super(entityManager);
+        super(entityManager, security);
         this.stroomBeanStore = stroomBeanStore;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }
 
     @Override
-//    @Secured(permission = DocumentPermissionNames.UPDATE)
     public Job save(final Job entity) {
         // We always want to update a job even if we have a stale version.
         if (entity.isPersistent()) {
@@ -114,11 +113,16 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
                 .add(FindJobCriteria.FIELD_ADVANCED, null, null);
     }
 
+    @Override
+    protected String permission() {
+        return ApplicationPermissionNames.MANAGE_JOBS_PERMISSION;
+    }
+
     private static class JobQueryAppender extends QueryAppender<Job, FindJobCriteria> {
         private final Map<String, String> jobDescriptionMap = new HashMap<>();
         private final Set<String> jobAdvancedSet = new HashSet<>();
 
-        public JobQueryAppender(final StroomEntityManager entityManager) {
+        JobQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 
@@ -167,11 +171,11 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
             return postLoadList;
         }
 
-        public Map<String, String> getJobDescriptionMap() {
+        Map<String, String> getJobDescriptionMap() {
             return jobDescriptionMap;
         }
 
-        public Set<String> getJobAdvancedSet() {
+        Set<String> getJobAdvancedSet() {
             return jobAdvancedSet;
         }
     }

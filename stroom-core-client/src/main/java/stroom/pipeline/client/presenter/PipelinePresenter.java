@@ -28,11 +28,10 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.query.api.v2.DocRef;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
-import stroom.streamstore.shared.Stream;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -68,7 +67,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
         tabContentProvider.add(SETTINGS, settingsPresenter);
         addTab(SETTINGS);
 
-        if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(ApplicationPermissionNames.VIEW_DATA_PERMISSION)) {
             tabContentProvider.add(DATA, streamPresenterProvider);
             addTab(DATA);
         }
@@ -76,7 +75,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
         tabContentProvider.add(STRUCTURE, structurePresenter);
         addTab(STRUCTURE);
 
-        if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             hasManageProcessorsPermission = true;
 
             tabContentProvider.add(PROCESSORS, processorPresenter);

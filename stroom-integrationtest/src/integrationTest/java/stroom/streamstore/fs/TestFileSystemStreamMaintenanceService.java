@@ -37,7 +37,7 @@ import java.util.List;
 
 public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest {
     @Inject
-    private StreamMaintenanceService streamMaintenanceService;
+    private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject

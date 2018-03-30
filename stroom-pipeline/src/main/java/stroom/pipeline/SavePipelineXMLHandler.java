@@ -18,6 +18,7 @@ package stroom.pipeline;
 
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.SavePipelineXMLAction;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
@@ -27,21 +28,26 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = SavePipelineXMLAction.class)
 class SavePipelineXMLHandler extends AbstractTaskHandler<SavePipelineXMLAction, VoidResult> {
     private final PipelineService pipelineService;
+    private final Security security;
 
     @Inject
-    SavePipelineXMLHandler(final PipelineService pipelineService) {
+    SavePipelineXMLHandler(final PipelineService pipelineService,
+                           final Security security) {
         this.pipelineService = pipelineService;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final SavePipelineXMLAction action) {
-        final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
+        return security.secureResult(() -> {
+            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
 
-        if (pipelineEntity != null) {
-            pipelineEntity.setData(action.getXml());
-            pipelineService.saveWithoutMarshal(pipelineEntity);
-        }
+            if (pipelineEntity != null) {
+                pipelineEntity.setData(action.getXml());
+                pipelineService.saveWithoutMarshal(pipelineEntity);
+            }
 
-        return VoidResult.INSTANCE;
+            return VoidResult.INSTANCE;
+        });
     }
 }

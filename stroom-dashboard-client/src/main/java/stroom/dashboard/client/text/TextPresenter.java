@@ -37,10 +37,9 @@ import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.ClientSecurityContext;
-import stroom.streamstore.shared.Stream;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
 
@@ -93,7 +92,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         Scheduler.get().scheduleDeferred(() -> {
             // Determine if we should show tha play button.
             playButtonVisible = !isHtml
-                    && securityContext.hasAppPermission(PipelineEntity.STEPPING_PERMISSION);
+                    && securityContext.hasAppPermission(ApplicationPermissionNames.STEPPING_PERMISSION);
 
             // Show the play button if we have fetched input data.
             getView().setPlayVisible(playButtonVisible);
@@ -278,8 +277,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     private String checkPermissions() {
-        if (!securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION)) {
-            if (!securityContext.hasAppPermission(Stream.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
+        if (!securityContext.hasAppPermission(ApplicationPermissionNames.VIEW_DATA_PERMISSION)) {
+            if (!securityContext.hasAppPermission(ApplicationPermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
                 return "You do not have permission to display this item";
             } else if (textSettings.getPipeline() == null) {
                 return "You must choose a pipeline to display this item";

@@ -19,7 +19,8 @@ package stroom.importexport;
 import stroom.importexport.shared.ImportConfigConfirmationAction;
 import stroom.importexport.shared.ImportState;
 import stroom.resource.ResourceStore;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -31,23 +32,27 @@ class ImportConfigConfirmationHandler
         extends AbstractTaskHandler<ImportConfigConfirmationAction, SharedList<ImportState>> {
     private final ImportExportService importExportService;
     private final ResourceStore resourceStore;
+    private final Security security;
 
     @Inject
     ImportConfigConfirmationHandler(final ImportExportService importExportService,
-                                    final ResourceStore resourceStore) {
+                                    final ResourceStore resourceStore,
+                                    final Security security) {
         this.importExportService = importExportService;
         this.resourceStore = resourceStore;
+        this.security = security;
     }
 
     @Override
-    @Secured("Import Configuration")
     public SharedList<ImportState> exec(final ImportConfigConfirmationAction task) {
-        try {
-            return importExportService.createImportConfirmationList(resourceStore.getTempFile(task.getKey()));
-        } catch (final RuntimeException rex) {
-            // In case of error delete the temp file
-            resourceStore.deleteTempFile(task.getKey());
-            throw rex;
-        }
+        return security.secureResult(ApplicationPermissionNames.IMPORT_CONFIGURATION, () -> {
+            try {
+                return importExportService.createImportConfirmationList(resourceStore.getTempFile(task.getKey()));
+            } catch (final RuntimeException rex) {
+                // In case of error delete the temp file
+                resourceStore.deleteTempFile(task.getKey());
+                throw rex;
+            }
+        });
     }
 }

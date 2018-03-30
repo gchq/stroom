@@ -30,7 +30,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 @EntityEventHandler(type = Index.ENTITY_TYPE)
-public class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
+class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
     private final NodeCache nodeCache;
     private final IndexConfigCacheImpl indexConfigCache;
     private final IndexShardService indexShardService;

@@ -19,13 +19,12 @@ package stroom.streamstore;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.util.FieldMap;
-import stroom.security.Insecure;
+import stroom.security.Security;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.util.cache.CacheManager;
@@ -36,8 +35,6 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-// @Transactional
-@Insecure
 class StreamAttributeKeyServiceImpl
         extends SystemEntityServiceImpl<StreamAttributeKey, FindStreamAttributeKeyCriteria>
         implements StreamAttributeKeyService, Clearable {
@@ -48,8 +45,9 @@ class StreamAttributeKeyServiceImpl
     @Inject
     @SuppressWarnings("unchecked")
     StreamAttributeKeyServiceImpl(final StroomEntityManager entityManager,
+                                  final Security security,
                                   final CacheManager cacheManager) {
-        super(entityManager);
+        super(entityManager, security);
         final CacheLoader<String, BaseResultList<StreamAttributeKey>> cacheLoader = CacheLoader.from(k -> find(new FindStreamAttributeKeyCriteria()));
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
@@ -82,5 +80,10 @@ class StreamAttributeKeyServiceImpl
     @Override
     public void clear() {
         CacheUtil.clear(cache);
+    }
+
+    @Override
+    protected String permission() {
+        return null;
     }
 }

@@ -19,15 +19,13 @@ package stroom.node;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.FetchClientPropertiesAction;
-import stroom.security.Insecure;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchClientPropertiesAction.class)
-@Insecure
-public class FetchClientPropertiesHandler extends AbstractTaskHandler<FetchClientPropertiesAction, ClientProperties> {
+class FetchClientPropertiesHandler extends AbstractTaskHandler<FetchClientPropertiesAction, ClientProperties> {
     private final ClientPropertiesService clientPropertiesService;
 
     @Inject

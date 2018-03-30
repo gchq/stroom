@@ -27,7 +27,6 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
-import stroom.security.Insecure;
 import stroom.security.Security;
 
 import javax.inject.Inject;
@@ -48,8 +47,6 @@ import java.util.List;
  * </p>
  */
 public class StatusServlet extends HttpServlet {
-    public static final String BEAN_NAME = "statusServlet";
-
     private static final long serialVersionUID = 1L;
     private static final String INFO = "INFO";
     private static final String WARN = "WARN";
@@ -84,9 +81,16 @@ public class StatusServlet extends HttpServlet {
      * details.
      */
     @Override
-    @Insecure
-    public void service(final ServletRequest arg0, final ServletResponse arg1) throws ServletException, IOException {
-        super.service(arg0, arg1);
+    public void service(final ServletRequest arg0, final ServletResponse arg1) {
+        security.insecure(() -> {
+            try {
+                super.service(arg0, arg1);
+            } catch (ServletException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     @Override
@@ -110,8 +114,6 @@ public class StatusServlet extends HttpServlet {
 
     /**
      * Sub reporting method.
-     *
-     * @param pw
      */
     private void reportHTTP(final PrintWriter pw) {
         writeInfoLine(pw, AREA_HTTP, MSG_OK);
@@ -119,8 +121,6 @@ public class StatusServlet extends HttpServlet {
 
     /**
      * Sub reporting method.
-     *
-     * @param pw
      */
     private void reportNodeStatus(final PrintWriter pw) {
         try {
@@ -139,8 +139,6 @@ public class StatusServlet extends HttpServlet {
 
     /**
      * Sub reporting method.
-     *
-     * @param pw
      */
     private void reportVolumeStatus(final PrintWriter pw) {
         try {

@@ -16,9 +16,8 @@
 
 package stroom.security;
 
-import stroom.security.Secured;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.shared.CreateUserAction;
-import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -26,21 +25,25 @@ import stroom.task.TaskHandlerBean;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = CreateUserAction.class)
-@Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
 class CreateUserHandler extends AbstractTaskHandler<CreateUserAction, UserRef> {
     private final UserService userService;
+    private final Security security;
 
     @Inject
-    CreateUserHandler(final UserService userService) {
+    CreateUserHandler(final UserService userService,
+                      final Security security) {
         this.userService = userService;
+        this.security = security;
     }
 
     @Override
     public UserRef exec(final CreateUserAction action) {
-        if (action.isGroup()) {
-            return userService.createUserGroup(action.getName());
-        } else {
-            return userService.createUser(action.getName());
-        }
+        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+            if (action.isGroup()) {
+                return userService.createUserGroup(action.getName());
+            } else {
+                return userService.createUser(action.getName());
+            }
+        });
     }
 }

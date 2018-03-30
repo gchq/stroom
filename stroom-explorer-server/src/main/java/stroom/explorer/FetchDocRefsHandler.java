@@ -22,6 +22,7 @@ import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchDocRefsAction;
 import stroom.query.api.v2.DocRef;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.AbstractTaskHandler;
@@ -31,38 +32,43 @@ import stroom.util.shared.SharedSet;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchDocRefsAction.class)
-public class FetchDocRefsHandler
+class FetchDocRefsHandler
         extends AbstractTaskHandler<FetchDocRefsAction, SharedSet<SharedDocRef>> {
     private final Logger LOGGER = LoggerFactory.getLogger(FetchDocRefsHandler.class);
     private final ExplorerNodeService explorerNodeService;
     private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     FetchDocRefsHandler(final ExplorerNodeService explorerNodeService,
-                        final SecurityContext securityContext) {
+                        final SecurityContext securityContext,
+                        final Security security) {
         this.explorerNodeService = explorerNodeService;
         this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
     public SharedSet<SharedDocRef> exec(final FetchDocRefsAction action) {
-        final SharedSet<SharedDocRef> result = new SharedSet<>();
-        if (action.getDocRefs() != null) {
-            for (final DocRef docRef : action.getDocRefs()) {
-                try {
-                    // Only return entries the user has permission to see.
-                    if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.USE)) {
-                        explorerNodeService.getNode(docRef)
-                                .map(ExplorerNode::getDocRef)
-                                .map(SharedDocRef::create)
-                                .ifPresent(result::add);
+        return security.secureResult(() -> {
+            final SharedSet<SharedDocRef> result = new SharedSet<>();
+            if (action.getDocRefs() != null) {
+                for (final DocRef docRef : action.getDocRefs()) {
+                    try {
+                        // Only return entries the user has permission to see.
+                        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.USE)) {
+                            explorerNodeService.getNode(docRef)
+                                    .map(ExplorerNode::getDocRef)
+                                    .map(SharedDocRef::create)
+                                    .ifPresent(result::add);
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
                     }
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(e.getMessage(), e);
                 }
             }
-        }
 
-        return result;
+            return result;
+        });
     }
 }

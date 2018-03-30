@@ -22,6 +22,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.logging.DocumentEventLog;
 import stroom.resource.ResourceStore;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.io.StreamUtil;
@@ -39,34 +40,39 @@ class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAc
     private final ResourceStore resourceStore;
     private final DocumentEventLog documentEventLog;
     private final DictionaryStore dictionaryStore;
+    private final Security security;
 
     @Inject
     DownloadDictionaryHandler(final ResourceStore resourceStore,
                               final DocumentEventLog documentEventLog,
-                              final DictionaryStore dictionaryStore) {
+                              final DictionaryStore dictionaryStore,
+                              final Security security) {
         this.resourceStore = resourceStore;
         this.documentEventLog = documentEventLog;
         this.dictionaryStore = dictionaryStore;
+        this.security = security;
     }
 
     @Override
     public ResourceGeneration exec(final DownloadDictionaryAction action) {
-        // Get dictionary.
-        final DictionaryDoc dictionary = dictionaryStore.read(action.getUuid());
-        if (dictionary == null) {
-            throw new EntityServiceException("Unable to find dictionary");
-        }
+        return security.secureResult(() -> {
+            // Get dictionary.
+            final DictionaryDoc dictionary = dictionaryStore.read(action.getUuid());
+            if (dictionary == null) {
+                throw new EntityServiceException("Unable to find dictionary");
+            }
 
-        try {
-            final ResourceKey resourceKey = resourceStore.createTempFile("dictionary.txt");
-            final Path file = resourceStore.getTempFile(resourceKey);
-            Files.write(file, dictionary.getData().getBytes(StreamUtil.DEFAULT_CHARSET));
-            documentEventLog.download(dictionary, null);
-            return new ResourceGeneration(resourceKey, new ArrayList<>());
+            try {
+                final ResourceKey resourceKey = resourceStore.createTempFile("dictionary.txt");
+                final Path file = resourceStore.getTempFile(resourceKey);
+                Files.write(file, dictionary.getData().getBytes(StreamUtil.DEFAULT_CHARSET));
+                documentEventLog.download(dictionary, null);
+                return new ResourceGeneration(resourceKey, new ArrayList<>());
 
-        } catch (final IOException e) {
-            documentEventLog.download(dictionary, null);
-            throw EntityServiceExceptionUtil.create(e);
-        }
+            } catch (final IOException e) {
+                documentEventLog.download(dictionary, null);
+                throw EntityServiceExceptionUtil.create(e);
+            }
+        });
     }
 }

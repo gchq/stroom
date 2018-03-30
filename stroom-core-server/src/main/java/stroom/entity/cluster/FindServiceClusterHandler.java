@@ -20,10 +20,11 @@ package stroom.entity.cluster;
 import stroom.entity.FindService;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.ResultList;
+import stroom.guice.StroomBeanStore;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedObject;
-import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 
@@ -31,27 +32,32 @@ import javax.inject.Inject;
 class FindServiceClusterHandler
         extends AbstractTaskHandler<FindServiceClusterTask<BaseCriteria, SharedObject>, ResultList<SharedObject>> {
     private final StroomBeanStore stroomBeanStore;
+    private final Security security;
 
     @Inject
-    FindServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
+    FindServiceClusterHandler(final StroomBeanStore stroomBeanStore,
+                              final Security security) {
         this.stroomBeanStore = stroomBeanStore;
+        this.security = security;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public ResultList<SharedObject> exec(final FindServiceClusterTask<BaseCriteria, SharedObject> task) {
-        if (task == null) {
-            throw new RuntimeException("No task supplied");
-        }
-        if (task.getBeanClass() == null) {
-            throw new RuntimeException("No task bean class supplied");
-        }
+        return security.secureResult(() -> {
+            if (task == null) {
+                throw new RuntimeException("No task supplied");
+            }
+            if (task.getBeanClass() == null) {
+                throw new RuntimeException("No task bean class supplied");
+            }
 
-        final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
-        if (obj == null) {
-            throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
-        }
+            final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
+            if (obj == null) {
+                throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
+            }
 
-        return ((FindService) obj).find(task.getCriteria());
+            return ((FindService) obj).find(task.getCriteria());
+        });
     }
 }

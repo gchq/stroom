@@ -18,14 +18,15 @@ package stroom.streamstore.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.Security;
 import stroom.streamstore.ScanVolumePathResult;
 import stroom.streamstore.StreamMaintenanceService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskCallbackAdaptor;
+import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
-import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 
@@ -38,63 +39,68 @@ class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanS
 
     private final StreamMaintenanceService streamMaintenanceService;
     private final TaskContext taskContext;
+    private final Security security;
 
     @Inject
     FileSystemCleanSubTaskHandler(final StreamMaintenanceService streamMaintenanceService,
-                                  final TaskContext taskContext) {
+                                  final TaskContext taskContext,
+                                  final Security security) {
         this.streamMaintenanceService = streamMaintenanceService;
         this.taskContext = taskContext;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final FileSystemCleanSubTask task) {
-        taskContext.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
+        return security.secureResult(() -> {
+            taskContext.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
 
-        if (taskContext.isTerminated()) {
-            LOGGER.info("exec() - Been asked to Quit");
-            return VoidResult.INSTANCE;
-        }
+            if (taskContext.isTerminated()) {
+                LOGGER.info("exec() - Been asked to Quit");
+                return VoidResult.INSTANCE;
+            }
 
-        final ScanVolumePathResult result = streamMaintenanceService.scanVolumePath(task.getVolume(),
-                task.getParentHandler().isDelete(), task.getPath(), task.getParentHandler().getOldAge());
+            final ScanVolumePathResult result = streamMaintenanceService.scanVolumePath(task.getVolume(),
+                    task.getParentHandler().isDelete(), task.getPath(), task.getParentHandler().getOldAge());
 
-        task.getTaskProgress().addResult(result);
+            task.getTaskProgress().addResult(result);
 
-        // Add a log line to indicate progress 1/3,44/100
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("createRunableForPath() -" + task.getLogPrefix() + "  - " + task.getPath() + ".  Scanned "
-                    + ModelStringUtil.formatCsv(result.getFileCount()) + " files, deleted "
-                    + ModelStringUtil.formatCsv(result.getDeleteList().size()) + ", too new to delete "
-                    + ModelStringUtil.formatCsv(result.getTooNewToDeleteCount()) + ".  Totals "
-                    + task.getTaskProgress().traceInfo());
-        }
+            // Add a log line to indicate progress 1/3,44/100
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("createRunableForPath() -" + task.getLogPrefix() + "  - " + task.getPath() + ".  Scanned "
+                        + ModelStringUtil.formatCsv(result.getFileCount()) + " files, deleted "
+                        + ModelStringUtil.formatCsv(result.getDeleteList().size()) + ", too new to delete "
+                        + ModelStringUtil.formatCsv(result.getTooNewToDeleteCount()) + ".  Totals "
+                        + task.getTaskProgress().traceInfo());
+            }
 
-        if (taskContext.isTerminated()) {
-            LOGGER.info("exec() - Been asked to Quit");
-            return VoidResult.INSTANCE;
-        }
+            if (taskContext.isTerminated()) {
+                LOGGER.info("exec() - Been asked to Quit");
+                return VoidResult.INSTANCE;
+            }
 
-        if (result.getChildDirectoryList() != null && result.getChildDirectoryList().size() > 0) {
-            // Add to the task steps remaining.
-            task.getTaskProgress().addScanPending(result.getChildDirectoryList().size());
+            if (result.getChildDirectoryList() != null && result.getChildDirectoryList().size() > 0) {
+                // Add to the task steps remaining.
+                task.getTaskProgress().addScanPending(result.getChildDirectoryList().size());
 
-            for (final String subPath : result.getChildDirectoryList()) {
-                final FileSystemCleanSubTask subTask = new FileSystemCleanSubTask(task.getParentHandler(),
-                        task.getParentTask(), task.getTaskProgress(), task.getVolume(), subPath, task.getLogPrefix());
-                if (!taskContext.isTerminated()) {
-                    task.getParentHandler().getAsyncTaskHelper().fork(subTask,
-                            new FileSystemCleanProgressCallback(task.getTaskProgress()));
+                for (final String subPath : result.getChildDirectoryList()) {
+                    final FileSystemCleanSubTask subTask = new FileSystemCleanSubTask(task.getParentHandler(),
+                            task.getParentTask(), task.getTaskProgress(), task.getVolume(), subPath, task.getLogPrefix());
+                    if (!taskContext.isTerminated()) {
+                        task.getParentHandler().getAsyncTaskHelper().fork(subTask,
+                                new FileSystemCleanProgressCallback(task.getTaskProgress()));
+                    }
                 }
             }
-        }
 
-        return VoidResult.INSTANCE;
+            return VoidResult.INSTANCE;
+        });
     }
 
     private static class FileSystemCleanProgressCallback extends TaskCallbackAdaptor<VoidResult> {
         private final FileSystemCleanProgress taskProgress;
 
-        public FileSystemCleanProgressCallback(final FileSystemCleanProgress taskProgress) {
+        FileSystemCleanProgressCallback(final FileSystemCleanProgress taskProgress) {
             this.taskProgress = taskProgress;
         }
 

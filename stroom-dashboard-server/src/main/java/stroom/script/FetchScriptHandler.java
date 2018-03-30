@@ -32,10 +32,6 @@ import java.util.List;
 import java.util.Set;
 
 @TaskHandlerBean(task = FetchScriptAction.class)
-/**
- * For now we deliberately require visualisation view permissions to access
- * scripts.
- */
 class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedList<Script>> {
     private final ScriptService scriptService;
     private final Security security;
@@ -49,19 +45,21 @@ class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedLi
 
     @Override
     public SharedList<Script> exec(final FetchScriptAction action) {
-        // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
-        return security.useAsReadResult(() -> {
-            final List<Script> scripts = new ArrayList<>();
+        return security.secureResult(() -> {
+            // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
+            return security.useAsReadResult(() -> {
+                final List<Script> scripts = new ArrayList<>();
 
-            Set<DocRef> uiLoadedScripts = action.getLoadedScripts();
-            if (uiLoadedScripts == null) {
-                uiLoadedScripts = new HashSet<>();
-            }
+                Set<DocRef> uiLoadedScripts = action.getLoadedScripts();
+                if (uiLoadedScripts == null) {
+                    uiLoadedScripts = new HashSet<>();
+                }
 
-            // Load the script and it's dependencies.
-            loadScripts(action.getScript(), uiLoadedScripts, new HashSet<>(), scripts, action.getFetchSet());
+                // Load the script and it's dependencies.
+                loadScripts(action.getScript(), uiLoadedScripts, new HashSet<>(), scripts, action.getFetchSet());
 
-            return new SharedList<>(scripts);
+                return new SharedList<>(scripts);
+            });
         });
     }
 

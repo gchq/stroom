@@ -23,6 +23,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.CachingEntityManager;
 import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
+import stroom.security.Security;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.TaskHandler;
 
@@ -58,7 +59,8 @@ public class StreamStoreModule extends AbstractModule {
 
     @Provides
     @Named("cachedStreamTypeService")
-    public StreamTypeService cachedStreamTypeService(final CachingEntityManager entityManager) {
-        return new StreamTypeServiceImpl(entityManager);
+    public StreamTypeService cachedStreamTypeService(final CachingEntityManager entityManager,
+                                                     final Security security) {
+        return new StreamTypeServiceImpl(entityManager, security);
     }
 }

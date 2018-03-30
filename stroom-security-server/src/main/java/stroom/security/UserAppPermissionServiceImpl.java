@@ -18,21 +18,20 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import stroom.entity.StroomEntityManager;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.ClusterLockService;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.util.lifecycle.MethodReference;
-import stroom.guice.StroomBeanStore;
 import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.PersistenceException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -106,7 +105,6 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
     }
 
     private final ClusterLockService clusterLockService;
-    private final StroomBeanStore beanStore;
     private final AtomicBoolean doneInit = new AtomicBoolean();
     private final StroomEntityManager entityManager;
 
@@ -115,11 +113,9 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
     @Inject
     UserAppPermissionServiceImpl(final StroomEntityManager entityManager,
-                                 final ClusterLockService clusterLockService,
-                                 final StroomBeanStore beanStore) {
+                                 final ClusterLockService clusterLockService) {
         this.entityManager = entityManager;
         this.clusterLockService = clusterLockService;
-        this.beanStore = beanStore;
     }
 
     /**
@@ -216,6 +212,7 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         return new UserAppPermissions(userRef, allPermissions, userPermissions);
     }
 
+    @SuppressWarnings("unchecked")
     private Set<String> getPermissionSetForUser(final UserRef userRef) {
         try {
             final SqlBuilder sqlBuilder = new SqlBuilder(SQL_GET_PERMISSION_KEYSET_FOR_USER, userRef.getUuid());
@@ -263,49 +260,7 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         }
     }
 
-    public Set<String> getRequiredPermissionSet() {
-        final Set<String> requiredPermissionSet = new HashSet<>();
-
-        // Add class level permissions
-        final Set<Class<?>> securityBeans = beanStore.getAnnotatedClasses(Secured.class);
-
-        for (final Class<?> securityBean : securityBeans) {
-            requiredPermissionSet.addAll(buildAppPermissionKey(securityBean));
-        }
-
-        // Add all method level permissions
-        final Set<MethodReference> securityMethods = beanStore.getAnnotatedMethods(Secured.class);
-
-        for (final MethodReference methodReference : securityMethods) {
-            requiredPermissionSet.addAll(buildAppPermissionKey(methodReference));
-        }
-
-        return requiredPermissionSet;
-    }
-
-    private Set<String> buildAppPermissionKey(final MethodReference methodReference) {
-        final Set<String> appPermissionSet = new HashSet<>();
-
-        final Secured secured = methodReference.getMethod().getAnnotation(Secured.class);
-
-        final String name = secured.value();
-        if (name != null && !name.isEmpty()) {
-            appPermissionSet.add(name);
-        }
-
-        return appPermissionSet;
-    }
-
-    private Set<String> buildAppPermissionKey(final Class<?> stroomBeanName) {
-        final Set<String> appPermissionSet = new HashSet<>();
-
-        final Secured secured = stroomBeanName.getAnnotation(Secured.class);
-
-        final String name = secured.value();
-        if (name != null && !name.isEmpty()) {
-            appPermissionSet.add(name);
-        }
-
-        return appPermissionSet;
+    Set<String> getRequiredPermissionSet() {
+        return new HashSet<>(Arrays.asList(ApplicationPermissionNames.PERMISSIONS));
     }
 }

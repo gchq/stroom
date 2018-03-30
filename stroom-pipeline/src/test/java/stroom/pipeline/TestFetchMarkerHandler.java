@@ -30,7 +30,7 @@ import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.List;
 
-public class TestFetchMarkerHandler extends StroomUnitTest {
+class TestFetchMarkerHandler extends StroomUnitTest {
     @Test
     public void test() throws IOException {
         doTest(4, 12);

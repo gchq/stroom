@@ -45,9 +45,9 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.security.Secured;
 import stroom.security.Security;
 import stroom.security.UserTokenUtil;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTypeService;
@@ -77,7 +77,6 @@ import java.util.List;
 import java.util.Set;
 
 @TaskHandlerBean(task = SteppingTask.class)
-@Secured(PipelineEntity.STEPPING_PERMISSION)
 class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingTaskHandler.class);
 
@@ -159,68 +158,70 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
     @Override
     public SteppingResult exec(final SteppingTask request) {
-        // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-        return security.useAsReadResult(() -> {
-            // Set the current user so they are visible during translation.
-            currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(request.getUserToken()));
+        return security.secureResult(ApplicationPermissionNames.STEPPING_PERMISSION, () -> {
+            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
+            return security.useAsReadResult(() -> {
+                // Set the current user so they are visible during translation.
+                currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(request.getUserToken()));
 
-            StepData stepData = null;
-            generalErrors = new HashSet<>();
+                StepData stepData = null;
+                generalErrors = new HashSet<>();
 
-            loggingErrorReceiver = new LoggingErrorReceiver();
-            errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
+                loggingErrorReceiver = new LoggingErrorReceiver();
+                errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
 
-            // Set the controller for the pipeline.
-            controller.setRequest(request);
-            controller.setTaskMonitor(taskContext);
+                // Set the controller for the pipeline.
+                controller.setRequest(request);
+                controller.setTaskMonitor(taskContext);
 
-            try {
-                // Initialise the process by finding streams to process and setting
-                // the step location.
-                initialise(request);
+                try {
+                    // Initialise the process by finding streams to process and setting
+                    // the step location.
+                    initialise(request);
 
-                // Get the first stream to try and process.
-                final Long streamId = getStreamId(request);
+                    // Get the first stream to try and process.
+                    final Long streamId = getStreamId(request);
 
-                // Start processing.
-                process(request, streamId);
-            } catch (final ProcessException e) {
-                error(e);
-            }
-
-            // Make sure all resources are returned to pools.
-            if (lastFeed != null) {
-                // destroy the last pipeline.
-                pipeline.endProcessing();
-                lastFeed = null;
-            }
-
-            // Set the output.
-            if (controller.getLastFoundLocation() != null) {
-                currentLocation = controller.getLastFoundLocation();
-
-                // FIXME : Sort out use of response cache so we don't run out of
-                // memory.
-                stepData = steppingResponseCache.getStepData(currentLocation);
-
-                // Fill in the source data if it hasn't been already.
-                for (final ElementData elementData : stepData.getElementMap().values()) {
-                    if (elementData.getElementType().hasRole(PipelineElementType.ROLE_PARSER)
-                            && elementData.getInput() == null) {
-                        final String data = getSourceData(currentLocation, stepData.getSourceHighlights());
-                        elementData.setInput(data);
-                    }
+                    // Start processing.
+                    process(request, streamId);
+                } catch (final ProcessException e) {
+                    error(e);
                 }
 
-            } else {
-                // Pick up any step data that remains so we can deliver any errors
-                // that caused the system not to step.
-                stepData = new StepData();
-                controller.storeStepData(stepData);
-            }
+                // Make sure all resources are returned to pools.
+                if (lastFeed != null) {
+                    // destroy the last pipeline.
+                    pipeline.endProcessing();
+                    lastFeed = null;
+                }
 
-            return new SteppingResult(request.getStepFilterMap(), currentLocation, stepData.convertToShared(),
-                    curentStreamOffset, controller.isFound(), generalErrors);
+                // Set the output.
+                if (controller.getLastFoundLocation() != null) {
+                    currentLocation = controller.getLastFoundLocation();
+
+                    // FIXME : Sort out use of response cache so we don't run out of
+                    // memory.
+                    stepData = steppingResponseCache.getStepData(currentLocation);
+
+                    // Fill in the source data if it hasn't been already.
+                    for (final ElementData elementData : stepData.getElementMap().values()) {
+                        if (elementData.getElementType().hasRole(PipelineElementType.ROLE_PARSER)
+                                && elementData.getInput() == null) {
+                            final String data = getSourceData(currentLocation, stepData.getSourceHighlights());
+                            elementData.setInput(data);
+                        }
+                    }
+
+                } else {
+                    // Pick up any step data that remains so we can deliver any errors
+                    // that caused the system not to step.
+                    stepData = new StepData();
+                    controller.storeStepData(stepData);
+                }
+
+                return new SteppingResult(request.getStepFilterMap(), currentLocation, stepData.convertToShared(),
+                        curentStreamOffset, controller.isFound(), generalErrors);
+            });
         });
     }
 

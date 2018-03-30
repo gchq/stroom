@@ -18,6 +18,7 @@ package stroom.task;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort.Direction;
+import stroom.security.Security;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -30,20 +31,25 @@ import javax.inject.Inject;
 class FindUserTaskProgressHandler
         extends FindTaskProgressHandlerBase<FindUserTaskProgressAction, BaseResultList<TaskProgress>> {
     private final transient HttpServletRequestHolder httpServletRequestHolder;
+    private final Security security;
 
     @Inject
     FindUserTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-                                final HttpServletRequestHolder httpServletRequestHolder) {
+                                final HttpServletRequestHolder httpServletRequestHolder,
+                                final Security security) {
         super(dispatchHelper);
         this.httpServletRequestHolder = httpServletRequestHolder;
+        this.security = security;
     }
 
     @Override
     public BaseResultList<TaskProgress> exec(final FindUserTaskProgressAction action) {
-        final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
-        criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
-        criteria.setSessionId(getSessionId());
-        return doExec(action, criteria);
+        return security.secureResult(() -> {
+            final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
+            criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
+            criteria.setSessionId(getSessionId());
+            return doExec(action, criteria);
+        });
     }
 
     private String getSessionId() {

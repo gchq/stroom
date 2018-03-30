@@ -24,7 +24,7 @@ import org.xml.sax.SAXParseException;
  * An error handler that will throw a runtime exception on all warnings, errors
  * and fatal errors.
  */
-public class FatalErrorHandler implements ErrorHandler {
+class FatalErrorHandler implements ErrorHandler {
     public void warning(final SAXParseException exception) throws SAXException {
         throw new RuntimeException(exception);
     }

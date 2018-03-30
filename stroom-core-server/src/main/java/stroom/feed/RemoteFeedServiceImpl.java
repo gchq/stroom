@@ -19,7 +19,6 @@ package stroom.feed;
 
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
-import stroom.security.Insecure;
 import stroom.security.Security;
 
 import javax.inject.Inject;
@@ -36,7 +35,6 @@ class RemoteFeedServiceImpl implements RemoteFeedService {
     }
 
     @Override
-    @Insecure
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
         return security.asProcessingUserResult(() -> {
             final Feed feed = feedService.loadByName(request.getFeedName());

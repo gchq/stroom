@@ -33,76 +33,82 @@ import stroom.entity.shared.DocRefs;
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.importexport.shared.ImportState;
-import stroom.security.Insecure;
+import stroom.security.Security;
 
 import javax.inject.Inject;
 import java.util.List;
 
-@Insecure
 public class ImportExportEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportEventLog.class);
 
     private final StroomEventLoggingService eventLoggingService;
+    private final Security security;
 
     @Inject
-    public ImportExportEventLog(final StroomEventLoggingService eventLoggingService) {
+    public ImportExportEventLog(final StroomEventLoggingService eventLoggingService,
+                                final Security security) {
         this.eventLoggingService = eventLoggingService;
+        this.security = security;
     }
 
     public void export(final ExportConfigAction exportDataAction) {
-        try {
-            final Event event = eventLoggingService.createAction("ExportConfig", "Exporting Configuration");
+        security.insecure(() -> {
+            try {
+                final Event event = eventLoggingService.createAction("ExportConfig", "Exporting Configuration");
 
-            final Criteria criteria = new Criteria();
-            criteria.setType("Configuration");
-            appendCriteria(criteria, exportDataAction.getDocRefs());
+                final Criteria criteria = new Criteria();
+                criteria.setType("Configuration");
+                appendCriteria(criteria, exportDataAction.getDocRefs());
 
-            final MultiObject multiObject = new MultiObject();
-            multiObject.getObjects().add(criteria);
+                final MultiObject multiObject = new MultiObject();
+                multiObject.getObjects().add(criteria);
 
-            final Export exp = new Export();
-            exp.setSource(multiObject);
+                final Export exp = new Export();
+                exp.setSource(multiObject);
 
-            event.getEventDetail().setExport(exp);
+                event.getEventDetail().setExport(exp);
 
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to export event!", e);
-        }
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to export event!", e);
+            }
+        });
     }
 
     public void _import(final ImportConfigAction importDataAction) {
-        try {
-            final List<ImportState> confirmList = importDataAction.getConfirmList();
-            if (confirmList != null && confirmList.size() > 0) {
-                for (final ImportState confirmation : confirmList) {
-                    try {
-                        final Event event = eventLoggingService.createAction("ImportConfig", "Importing Configuration");
+        security.insecure(() -> {
+            try {
+                final List<ImportState> confirmList = importDataAction.getConfirmList();
+                if (confirmList != null && confirmList.size() > 0) {
+                    for (final ImportState confirmation : confirmList) {
+                        try {
+                            final Event event = eventLoggingService.createAction("ImportConfig", "Importing Configuration");
 
-                        final event.logging.Object object = new event.logging.Object();
-                        object.setType(confirmation.getDocRef().getType());
-                        object.setId(confirmation.getDocRef().getUuid());
-                        object.setName(confirmation.getSourcePath());
-                        object.getData().add(EventLoggingUtil.createData("ImportAction",
-                                confirmation.getState().getDisplayValue()));
+                            final event.logging.Object object = new event.logging.Object();
+                            object.setType(confirmation.getDocRef().getType());
+                            object.setId(confirmation.getDocRef().getUuid());
+                            object.setName(confirmation.getSourcePath());
+                            object.getData().add(EventLoggingUtil.createData("ImportAction",
+                                    confirmation.getState().getDisplayValue()));
 
-                        final MultiObject multiObject = new MultiObject();
-                        multiObject.getObjects().add(object);
+                            final MultiObject multiObject = new MultiObject();
+                            multiObject.getObjects().add(object);
 
-                        final Import imp = new Import();
-                        imp.setSource(multiObject);
+                            final Import imp = new Import();
+                            imp.setSource(multiObject);
 
-                        event.getEventDetail().setImport(imp);
+                            event.getEventDetail().setImport(imp);
 
-                        eventLoggingService.log(event);
-                    } catch (final RuntimeException e) {
-                        LOGGER.error("Unable to import event!", e);
+                            eventLoggingService.log(event);
+                        } catch (final RuntimeException e) {
+                            LOGGER.error("Unable to import event!", e);
+                        }
                     }
                 }
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to import event!", e);
             }
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to import event!", e);
-        }
+        });
     }
 
     private void appendCriteria(final Criteria parent, final DocRefs docRefs) {

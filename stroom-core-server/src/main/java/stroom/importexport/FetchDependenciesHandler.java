@@ -19,22 +19,26 @@ package stroom.importexport;
 import stroom.entity.shared.ResultList;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.FetchDependenciesAction;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchDependenciesAction.class)
-public class FetchDependenciesHandler extends AbstractTaskHandler<FetchDependenciesAction, ResultList<Dependency>> {
+class FetchDependenciesHandler extends AbstractTaskHandler<FetchDependenciesAction, ResultList<Dependency>> {
     private final DependencyService dependencyService;
+    private final Security security;
 
     @Inject
-    FetchDependenciesHandler(final DependencyService dependencyService) {
+    FetchDependenciesHandler(final DependencyService dependencyService,
+                             final Security security) {
         this.dependencyService = dependencyService;
+        this.security = security;
     }
 
     @Override
     public ResultList<Dependency> exec(final FetchDependenciesAction task) {
-        return dependencyService.getDependencies(task.getCriteria());
+        return security.secureResult(() -> dependencyService.getDependencies(task.getCriteria()));
     }
 }

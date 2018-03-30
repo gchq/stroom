@@ -20,11 +20,11 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.cache.client.presenter.CachePresenter;
-import stroom.cache.shared.CacheRow;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.MonitoringPlugin;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -38,7 +38,7 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(CacheRow.MANAGE_CACHE_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(ApplicationPermissionNames.MANAGE_CACHE_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem(12, SvgPresets.MONITORING, SvgPresets.MONITORING, "Caches", null, true, () -> open()));
         }

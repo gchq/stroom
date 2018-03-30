@@ -18,7 +18,6 @@ package stroom.statistics.stroomstats.rollup;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.security.Insecure;
 import stroom.stats.shared.CustomRollUpMask;
 import stroom.stats.shared.StroomStatsRollUpBitMaskPermGenerationAction;
 import stroom.task.AbstractTaskHandler;
@@ -29,7 +28,6 @@ import java.util.List;
 import java.util.Set;
 
 @TaskHandlerBean(task = StroomStatsRollUpBitMaskPermGenerationAction.class)
-@Insecure
 class StroomStatsRollUpBitMaskPermGenerationHandler
         extends AbstractTaskHandler<StroomStatsRollUpBitMaskPermGenerationAction, ResultList<CustomRollUpMask>> {
     @Override

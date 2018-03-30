@@ -19,7 +19,8 @@ package stroom.importexport;
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.logging.ImportExportEventLog;
 import stroom.resource.ResourceStore;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Message;
@@ -36,27 +37,31 @@ class ExportConfigHandler extends AbstractTaskHandler<ExportConfigAction, Resour
     private final ImportExportService importExportService;
     private final ImportExportEventLog eventLog;
     private final ResourceStore resourceStore;
+    private final Security security;
 
     @Inject
     ExportConfigHandler(final ImportExportService importExportService,
                         final ImportExportEventLog eventLog,
-                        final ResourceStore resourceStore) {
+                        final ResourceStore resourceStore,
+                        final Security security) {
         this.importExportService = importExportService;
         this.eventLog = eventLog;
         this.resourceStore = resourceStore;
+        this.security = security;
     }
 
     @Override
-    @Secured("Export Configuration")
     public ResourceGeneration exec(final ExportConfigAction action) {
-        // Log the export.
-        eventLog.export(action);
-        final List<Message> messageList = new ArrayList<>();
+        return security.secureResult(ApplicationPermissionNames.EXPORT_CONFIGURATION, () -> {
+            // Log the export.
+            eventLog.export(action);
+            final List<Message> messageList = new ArrayList<>();
 
-        final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
-        final Path file = resourceStore.getTempFile(guiKey);
-        importExportService.exportConfig(action.getDocRefs(), file, messageList);
+            final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
+            final Path file = resourceStore.getTempFile(guiKey);
+            importExportService.exportConfig(action.getDocRefs(), file, messageList);
 
-        return new ResourceGeneration(guiKey, messageList);
+            return new ResourceGeneration(guiKey, messageList);
+        });
     }
 }

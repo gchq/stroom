@@ -24,6 +24,7 @@ import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipOutputStream;
 import stroom.proxy.repo.StroomZipOutputStreamImpl;
+import stroom.security.Security;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -53,18 +54,23 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
     private final TaskContext taskContext;
     private final StreamStore streamStore;
+    private final Security security;
 
     @Inject
     StreamDownloadTaskHandler(final TaskContext taskContext,
-                              final StreamStore streamStore) {
+                              final StreamStore streamStore,
+                              final Security security) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
+        this.security = security;
     }
 
     @Override
     public StreamDownloadResult exec(final StreamDownloadTask task) {
-        taskContext.info(task.getFile().toString());
-        return downloadData(task, task.getCriteria(), task.getFile(), task.getSettings());
+        return security.secureResult(() -> {
+            taskContext.info(task.getFile().toString());
+            return downloadData(task, task.getCriteria(), task.getFile(), task.getSettings());
+        });
     }
 
     private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria findStreamCriteria,

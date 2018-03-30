@@ -43,7 +43,7 @@ public class StroomBeanStore {
 
     private static final String PACKAGE = "stroom";
 
-    private final Map<Class<? extends Annotation>, Set<Class<?>>> classMap = new ConcurrentHashMap<>();
+//    private final Map<Class<? extends Annotation>, Set<Class<?>>> classMap = new ConcurrentHashMap<>();
     private final Map<Class<? extends Annotation>, Set<MethodReference>> methodMap = new ConcurrentHashMap<>();
 
     private final Injector injector;
@@ -53,15 +53,15 @@ public class StroomBeanStore {
         this.injector = injector;
     }
 
-    public Set<Class<?>> getAnnotatedClasses(final Class<? extends Annotation> annotation) {
-        return classMap.computeIfAbsent(annotation, a -> {
-            final Set<Class<?>> classes = new HashSet<>();
-            new FastClasspathScanner(PACKAGE)
-                    .matchClassesWithAnnotation(annotation, classes::add)
-                    .scan();
-            return Collections.unmodifiableSet(classes);
-        });
-    }
+//    public Set<Class<?>> getAnnotatedClasses(final Class<? extends Annotation> annotation) {
+//        return classMap.computeIfAbsent(annotation, a -> {
+//            final Set<Class<?>> classes = new HashSet<>();
+//            new FastClasspathScanner(PACKAGE)
+//                    .matchClassesWithAnnotation(annotation, classes::add)
+//                    .scan();
+//            return Collections.unmodifiableSet(classes);
+//        });
+//    }
 
     public Set<MethodReference> getAnnotatedMethods(final Class<? extends Annotation> annotation) {
         return methodMap.computeIfAbsent(annotation, a -> {

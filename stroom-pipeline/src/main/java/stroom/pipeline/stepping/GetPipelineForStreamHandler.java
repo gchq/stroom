@@ -53,22 +53,23 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
 
     @Override
     public SharedDocRef exec(final GetPipelineForStreamAction action) {
-        DocRef docRef = null;
+        return security.secureResult(() -> {
+            DocRef docRef = null;
 
-        // First try and get the pipeline from the selected child stream.
-        Stream childStream = getStream(action.getChildStreamId());
-        if (childStream != null) {
-            docRef = getPipeline(childStream);
-        }
-
-        if (docRef == null) {
-            // If we didn't get a pipeline docRef from a child stream then try and
-            // find a child stream to get one from.
-            childStream = getFirstChildStream(action.getStreamId());
+            // First try and get the pipeline from the selected child stream.
+            Stream childStream = getStream(action.getChildStreamId());
             if (childStream != null) {
                 docRef = getPipeline(childStream);
             }
-        }
+
+            if (docRef == null) {
+                // If we didn't get a pipeline docRef from a child stream then try and
+                // find a child stream to get one from.
+                childStream = getFirstChildStream(action.getStreamId());
+                if (childStream != null) {
+                    docRef = getPipeline(childStream);
+                }
+            }
 
 //        if (docRef == null) {
 //            // If we still don't have a pipeline docRef then just try and find the
@@ -94,7 +95,8 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
 //            }
 //        }
 
-        return SharedDocRef.create(docRef);
+            return SharedDocRef.create(docRef);
+        });
     }
 
     private Stream getStream(final Long id) {

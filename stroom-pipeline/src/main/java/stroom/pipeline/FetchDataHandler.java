@@ -28,18 +28,18 @@ import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.security.Secured;
 import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.streamstore.StreamStore;
-import stroom.streamstore.shared.Stream;
 import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @TaskHandlerBean(task = FetchDataAction.class)
-@Secured(Stream.VIEW_DATA_PERMISSION)
 class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
+    private final Security security;
+
     @Inject
     FetchDataHandler(final StreamStore streamStore,
                      final FeedService feedService,
@@ -65,17 +65,20 @@ class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
                 streamEventLog,
                 security,
                 pipelineScopeRunnable);
+        this.security = security;
     }
 
     @Override
     public AbstractFetchDataResult exec(final FetchDataAction action) {
-        final Long streamId = action.getStreamId();
+        return security.secureResult(ApplicationPermissionNames.VIEW_DATA_PERMISSION, () -> {
+            final Long streamId = action.getStreamId();
 
-        if (streamId != null) {
-            return getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
-                    action.isMarkerMode(), null, action.isShowAsHtml(), action.getExpandedSeverities());
-        }
+            if (streamId != null) {
+                return getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
+                        action.isMarkerMode(), null, action.isShowAsHtml(), action.getExpandedSeverities());
+            }
 
-        return null;
+            return null;
+        });
     }
 }

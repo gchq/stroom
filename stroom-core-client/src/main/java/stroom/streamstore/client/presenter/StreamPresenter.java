@@ -52,17 +52,18 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -128,13 +129,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         dataPresenter.setBeginSteppingHandler(this);
 
         // Process
-        if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             streamListProcess = streamListPresenter.add(SvgPresets.PROCESS);
             streamRelationListProcess = streamRelationListPresenter.add(SvgPresets.PROCESS);
         }
 
         // Delete, Undelete, DE-duplicate
-        if (securityContext.hasAppPermission(Stream.DELETE_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(ApplicationPermissionNames.DELETE_DATA_PERMISSION)) {
             streamListDelete = streamListPresenter.add(SvgPresets.DELETE);
             streamListDelete.setEnabled(false);
             streamRelationListDelete = streamRelationListPresenter.add(SvgPresets.DELETE);
@@ -146,13 +147,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         // Download
-        if (securityContext.hasAppPermission(Stream.EXPORT_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(ApplicationPermissionNames.EXPORT_DATA_PERMISSION)) {
             streamListDownload = streamListPresenter.add(SvgPresets.DOWNLOAD);
             streamRelationListDownload = streamRelationListPresenter.add(SvgPresets.DOWNLOAD);
         }
 
         // Upload
-        if (securityContext.hasAppPermission(Stream.IMPORT_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(ApplicationPermissionNames.IMPORT_DATA_PERMISSION)) {
             streamListUpload = streamListPresenter.add(SvgPresets.UPLOAD);
         }
 
@@ -338,16 +339,6 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
 
-
-
-
-
-
-
-
-
-
-
     private static StreamStatus getSingleStatus(final FindStreamAttributeMapCriteria criteria) {
         if (criteria == null) {
             return null;
@@ -407,16 +398,6 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             }
         }
     }
-
-
-
-
-
-
-
-
-
-
 
 
     private void showData() {
@@ -564,7 +545,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private void setStreamRelationListSelectableEnabled(final IdSet streamIdSet,
-                                                       final StreamStatus streamStatus) {
+                                                        final StreamStatus streamStatus) {
         final boolean someSelected = isSomeSelected(streamRelationListPresenter, streamIdSet);
 
         if (streamRelationListDownload != null) {

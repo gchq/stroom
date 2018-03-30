@@ -18,8 +18,7 @@ package stroom.security;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.security.Secured;
-import stroom.security.SecurityContext;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
@@ -32,43 +31,44 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchUserRefAction.class)
-@Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
-public class FetchUserRefHandler
+class FetchUserRefHandler
         extends AbstractTaskHandler<FetchUserRefAction, ResultList<UserRef>> {
     private final UserService userService;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     FetchUserRefHandler(final UserService userService,
-                        final SecurityContext securityContext) {
+                        final Security security) {
         this.userService = userService;
-        this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
     public ResultList<UserRef> exec(final FetchUserRefAction action) {
-        final FindUserCriteria findUserCriteria = action.getCriteria();
-        findUserCriteria.setSort(FindUserCriteria.FIELD_NAME);
-        if (findUserCriteria.getRelatedUser() != null) {
-            UserRef userRef = findUserCriteria.getRelatedUser();
-            List<UserRef> list;
-            if (userRef.isGroup()) {
-                list = userService.findUsersInGroup(userRef);
-            } else {
-                list = userService.findGroupsForUser(userRef);
+        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+            final FindUserCriteria findUserCriteria = action.getCriteria();
+            findUserCriteria.setSort(FindUserCriteria.FIELD_NAME);
+            if (findUserCriteria.getRelatedUser() != null) {
+                UserRef userRef = findUserCriteria.getRelatedUser();
+                List<UserRef> list;
+                if (userRef.isGroup()) {
+                    list = userService.findUsersInGroup(userRef);
+                } else {
+                    list = userService.findGroupsForUser(userRef);
+                }
+
+                if (action.getCriteria().getName() != null) {
+                    list = list.stream().filter(user -> action.getCriteria().getName().isMatch(user.getName())).collect(Collectors.toList());
+                }
+
+                // Create a result list limited by the page request.
+                return BaseResultList.createPageLimitedList(list, findUserCriteria.getPageRequest());
             }
 
-            if (action.getCriteria().getName() != null) {
-                list = list.stream().filter(user -> action.getCriteria().getName().isMatch(user.getName())).collect(Collectors.toList());
-            }
-
-            // Create a result list limited by the page request.
-            return BaseResultList.createPageLimitedList(list, findUserCriteria.getPageRequest());
-        }
-
-        final BaseResultList<User> users = userService.find(findUserCriteria);
-        final List<UserRef> userRefs = new ArrayList<>();
-        users.stream().forEachOrdered(user -> userRefs.add(UserRefFactory.create(user)));
-        return new BaseResultList<>(userRefs, users.getPageResponse().getOffset(), users.getPageResponse().getTotal(), users.getPageResponse().isExact());
+            final BaseResultList<User> users = userService.find(findUserCriteria);
+            final List<UserRef> userRefs = new ArrayList<>();
+            users.forEach(user -> userRefs.add(UserRefFactory.create(user)));
+            return new BaseResultList<>(userRefs, users.getPageResponse().getOffset(), users.getPageResponse().getTotal(), users.getPageResponse().isExact());
+        });
     }
 }

@@ -24,6 +24,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.query.api.v2.ResultRequest;
 import stroom.resource.ResourceStore;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.json.JsonUtil;
@@ -46,53 +47,57 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
 
     private final SearchRequestMapper searchRequestMapper;
     private final ResourceStore resourceStore;
+    private final Security security;
 
     @Inject
     DownloadQueryActionHandler(final SearchRequestMapper searchRequestMapper,
-                               final ResourceStore resourceStore) {
+                               final ResourceStore resourceStore,
+                               final Security security) {
         this.searchRequestMapper = searchRequestMapper;
         this.resourceStore = resourceStore;
+        this.security = security;
     }
 
     @Override
     public ResourceGeneration exec(final DownloadQueryAction action) {
+        return security.secureResult(() -> {
+            try {
+                if (action.getSearchRequest() == null) {
+                    throw new EntityServiceException("Query is empty");
+                }
+                final SearchRequest searchRequest = action.getSearchRequest();
 
-        try {
-            if (action.getSearchRequest() == null) {
-                throw new EntityServiceException("Query is empty");
+                //API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
+                if (searchRequest != null && searchRequest.getComponentResultRequests() != null) {
+                    searchRequest.getComponentResultRequests()
+                            .forEach((k, componentResultRequest) ->
+                                    componentResultRequest.setFetch(ResultRequest.Fetch.ALL));
+                }
+
+                //convert our internal model to the model used by the api
+                stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
+                        action.getDashboardQueryKey(),
+                        searchRequest);
+
+                if (apiSearchRequest == null) {
+                    throw new EntityServiceException("Query could not be mapped to a SearchRequest");
+                }
+
+                //generate the export file
+                String fileName = action.getDashboardQueryKey().toString();
+                fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
+                fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
+                fileName = fileName + ".json";
+
+                final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
+                final Path outputFile = resourceStore.getTempFile(resourceKey);
+
+                JsonUtil.writeValue(outputFile, apiSearchRequest);
+
+                return new ResourceGeneration(resourceKey, new ArrayList<>());
+            } catch (final RuntimeException e) {
+                throw EntityServiceExceptionUtil.create(e);
             }
-            final SearchRequest searchRequest = action.getSearchRequest();
-
-            //API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
-            if (searchRequest != null && searchRequest.getComponentResultRequests() != null) {
-                searchRequest.getComponentResultRequests()
-                        .forEach((k, componentResultRequest) ->
-                                componentResultRequest.setFetch(ResultRequest.Fetch.ALL));
-            }
-
-            //convert our internal model to the model used by the api
-            stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
-                    action.getDashboardQueryKey(),
-                    searchRequest);
-
-            if (apiSearchRequest == null) {
-                throw new EntityServiceException("Query could not be mapped to a SearchRequest");
-            }
-
-            //generate the export file
-            String fileName = action.getDashboardQueryKey().toString();
-            fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
-            fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
-            fileName = fileName + ".json";
-
-            final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
-            final Path outputFile = resourceStore.getTempFile(resourceKey);
-
-            JsonUtil.writeValue(outputFile, apiSearchRequest);
-
-            return new ResourceGeneration(resourceKey, new ArrayList<>());
-        } catch (final RuntimeException e) {
-            throw EntityServiceExceptionUtil.create(e);
-        }
+        });
     }
 }

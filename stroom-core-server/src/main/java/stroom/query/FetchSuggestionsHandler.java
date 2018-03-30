@@ -26,6 +26,7 @@ import stroom.feed.FeedService;
 import stroom.node.NodeService;
 import stroom.pipeline.PipelineService;
 import stroom.query.shared.FetchSuggestionsAction;
+import stroom.security.Security;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
@@ -47,49 +48,54 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     private final PipelineService pipelineService;
     private final StreamTypeService streamTypeService;
     private final NodeService nodeService;
+    private final Security security;
 
     @Inject
     FetchSuggestionsHandler(@Named("cachedFeedService") final FeedService feedService,
                             @Named("cachedPipelineService") final PipelineService pipelineService,
                             @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
-                            @Named("cachedNodeService") final NodeService nodeService) {
+                            @Named("cachedNodeService") final NodeService nodeService,
+                            final Security security) {
         this.feedService = feedService;
         this.pipelineService = pipelineService;
         this.streamTypeService = streamTypeService;
         this.nodeService = nodeService;
+        this.security = security;
     }
 
     @Override
     public SharedList<SharedString> exec(final FetchSuggestionsAction task) {
-        if (task.getDataSource() != null) {
-            if (StreamDataSource.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
-                if (task.getField().getName().equals(StreamDataSource.FEED)) {
-                    return createList(feedService, task.getText());
-                }
+        return security.secureResult(() -> {
+            if (task.getDataSource() != null) {
+                if (StreamDataSource.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
+                    if (task.getField().getName().equals(StreamDataSource.FEED)) {
+                        return createList(feedService, task.getText());
+                    }
 
-                if (task.getField().getName().equals(StreamDataSource.PIPELINE)) {
-                    return createList(pipelineService, task.getText());
-                }
+                    if (task.getField().getName().equals(StreamDataSource.PIPELINE)) {
+                        return createList(pipelineService, task.getText());
+                    }
 
-                if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE)) {
-                    return createList(streamTypeService, task.getText());
-                }
+                    if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE)) {
+                        return createList(streamTypeService, task.getText());
+                    }
 
-                if (task.getField().getName().equals(StreamDataSource.STATUS)) {
-                    return new SharedList<>(Arrays.stream(StreamStatus.values())
-                            .map(StreamStatus::getDisplayValue)
-                            .map(SharedString::wrap)
-                            .sorted()
-                            .collect(Collectors.toList()));
-                }
+                    if (task.getField().getName().equals(StreamDataSource.STATUS)) {
+                        return new SharedList<>(Arrays.stream(StreamStatus.values())
+                                .map(StreamStatus::getDisplayValue)
+                                .map(SharedString::wrap)
+                                .sorted()
+                                .collect(Collectors.toList()));
+                    }
 
-                if (task.getField().getName().equals(StreamDataSource.NODE)) {
-                    return createList(nodeService, task.getText());
+                    if (task.getField().getName().equals(StreamDataSource.NODE)) {
+                        return createList(nodeService, task.getText());
+                    }
                 }
             }
-        }
 
-        return new SharedList<>();
+            return new SharedList<>();
+        });
     }
 
     @SuppressWarnings("unchecked")

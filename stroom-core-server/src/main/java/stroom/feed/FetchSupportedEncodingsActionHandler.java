@@ -41,9 +41,7 @@ class FetchSupportedEncodingsActionHandler
         list.add("ASCII");
         list.add("");
 
-        for (final String charset : Charset.availableCharsets().keySet()) {
-            list.add(charset);
-        }
+        list.addAll(Charset.availableCharsets().keySet());
 
         SUPPORTED_ENCODINGS = SharedList.convert(list);
     }

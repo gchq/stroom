@@ -26,6 +26,7 @@ import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.StreamStore;
+import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
@@ -49,7 +50,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private StreamMaintenanceService streamMaintenanceService;
+    private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject

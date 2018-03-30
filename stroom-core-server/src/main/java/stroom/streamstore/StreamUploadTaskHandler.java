@@ -28,6 +28,7 @@ import stroom.feed.shared.Feed;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
+import stroom.security.Security;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -64,25 +65,30 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     private final StreamTypeService streamTypeService;
     private final FeedService feedService;
     private final MetaDataStatistic metaDataStatistics;
+    private final Security security;
 
     @Inject
     StreamUploadTaskHandler(final TaskContext taskContext,
                             final StreamStore streamStore,
                             @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                             @Named("cachedFeedService") final FeedService feedService,
-                            final MetaDataStatistic metaDataStatistics) {
+                            final MetaDataStatistic metaDataStatistics,
+                            final Security security) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
         this.streamTypeService = streamTypeService;
         this.feedService = feedService;
         this.metaDataStatistics = metaDataStatistics;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final StreamUploadTask task) {
-        taskContext.info(task.getFile().toString());
-        uploadData(task);
-        return VoidResult.INSTANCE;
+        return security.secureResult(() -> {
+            taskContext.info(task.getFile().toString());
+            uploadData(task);
+            return VoidResult.INSTANCE;
+        });
     }
 
     private void uploadData(final StreamUploadTask task) {

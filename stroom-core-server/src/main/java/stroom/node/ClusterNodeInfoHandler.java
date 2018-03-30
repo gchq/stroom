@@ -23,6 +23,7 @@ import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.node.shared.Node;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -30,30 +31,35 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 @TaskHandlerBean(task = ClusterNodeInfoAction.class)
-public class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, ClusterNodeInfo> {
+class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, ClusterNodeInfo> {
     private final ClusterCallService clusterCallService;
     private final NodeCache nodeCache;
     private final NodeService nodeService;
+    private final Security security;
 
     @Inject
     ClusterNodeInfoHandler(@Named("clusterCallServiceRemote") final ClusterCallService clusterCallService,
                            final NodeCache nodeCache,
-                           final NodeService nodeService) {
+                           final NodeService nodeService,
+                           final Security security) {
         this.clusterCallService = clusterCallService;
         this.nodeCache = nodeCache;
         this.nodeService = nodeService;
+        this.security = security;
     }
 
     @Override
     public ClusterNodeInfo exec(final ClusterNodeInfoAction action) {
-        final Node sourceNode = nodeCache.getDefaultNode();
-        final Node targetNode = nodeService.loadById(action.getNodeId());
+        return security.secureResult(() -> {
+            final Node sourceNode = nodeCache.getDefaultNode();
+            final Node targetNode = nodeService.loadById(action.getNodeId());
 
-        try {
-            return (ClusterNodeInfo) clusterCallService.call(sourceNode, targetNode, ClusterNodeManager.BEAN_NAME,
-                    ClusterNodeManager.GET_CLUSTER_NODE_INFO_METHOD, new Class[]{}, new Object[]{});
-        } catch (final RuntimeException e) {
-            throw EntityServiceExceptionUtil.create(e);
-        }
+            try {
+                return (ClusterNodeInfo) clusterCallService.call(sourceNode, targetNode, ClusterNodeManager.BEAN_NAME,
+                        ClusterNodeManager.GET_CLUSTER_NODE_INFO_METHOD, new Class[]{}, new Object[]{});
+            } catch (final RuntimeException e) {
+                throw EntityServiceExceptionUtil.create(e);
+            }
+        });
     }
 }

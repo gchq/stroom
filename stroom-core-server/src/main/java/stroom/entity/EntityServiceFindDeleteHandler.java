@@ -23,6 +23,7 @@ import event.logging.Query.Advanced;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
 import stroom.logging.DocumentEventLog;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedLong;
@@ -35,45 +36,50 @@ class EntityServiceFindDeleteHandler
         extends AbstractTaskHandler<EntityServiceFindDeleteAction<BaseCriteria, SharedObject>, SharedLong> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog documentEventLog;
+    private final Security security;
 
     @Inject
     EntityServiceFindDeleteHandler(final EntityServiceBeanRegistry beanRegistry,
-                                   final DocumentEventLog documentEventLog) {
+                                   final DocumentEventLog documentEventLog,
+                                   final Security security) {
         this.beanRegistry = beanRegistry;
         this.documentEventLog = documentEventLog;
+        this.security = security;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public SharedLong exec(final EntityServiceFindDeleteAction<BaseCriteria, SharedObject> action) {
-        Long result = null;
+        return security.secureResult(() -> {
+            Long result;
 
-        final And and = new And();
-        final Advanced advanced = new Advanced();
-        advanced.getAdvancedQueryItems().add(and);
-        final Query query = new Query();
-        query.setAdvanced(advanced);
-
-        try {
-            final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
+            final And and = new And();
+            final Advanced advanced = new Advanced();
+            advanced.getAdvancedQueryItems().add(and);
+            final Query query = new Query();
+            query.setAdvanced(advanced);
 
             try {
-                if (entityService != null) {
-                    final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
-                    logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
+                final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
+
+                try {
+                    if (entityService != null) {
+                        final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
+                        logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
+                    }
+                } catch (final RuntimeException e) {
+                    // Ignore.
                 }
+
+                result = (Long) beanRegistry.invoke(entityService, "findDelete", action.getCriteria());
+                documentEventLog.delete(action.getCriteria(), query, result);
             } catch (final RuntimeException e) {
-                // Ignore.
+                documentEventLog.delete(action.getCriteria(), query, e);
+
+                throw e;
             }
 
-            result = (Long) beanRegistry.invoke(entityService,"findDelete", action.getCriteria());
-            documentEventLog.delete(action.getCriteria(), query, result);
-        } catch (final RuntimeException e) {
-            documentEventLog.delete(action.getCriteria(), query, e);
-
-            throw e;
-        }
-
-        return new SharedLong(result);
+            return new SharedLong(result);
+        });
     }
 }

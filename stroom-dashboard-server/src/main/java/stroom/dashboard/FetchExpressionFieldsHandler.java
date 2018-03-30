@@ -39,10 +39,12 @@ class FetchExpressionFieldsHandler extends AbstractTaskHandler<FetchDataSourceFi
 
     @Override
     public DataSourceFields exec(final FetchDataSourceFieldsAction action) {
-        // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-        return security.useAsReadResult(() -> dataSourceProviderRegistry.getDataSourceProvider(action.getDataSourceRef())
-                .map(provider ->
-                        new DataSourceFields(provider.getDataSource(action.getDataSourceRef()).getFields()))
-                .orElse(null));
+        return security.secureResult(() -> {
+            // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
+            return security.useAsReadResult(() -> dataSourceProviderRegistry.getDataSourceProvider(action.getDataSourceRef())
+                    .map(provider ->
+                            new DataSourceFields(provider.getDataSource(action.getDataSourceRef()).getFields()))
+                    .orElse(null));
+        });
     }
 }

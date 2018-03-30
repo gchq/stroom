@@ -16,7 +16,6 @@
 
 package stroom.statistics.sql.rollup;
 
-import stroom.security.Insecure;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
 import stroom.statistics.shared.common.CustomRollUpMask;
@@ -28,7 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @TaskHandlerBean(task = StatisticsDataSourceFieldChangeAction.class)
-@Insecure
 class StatisticsDataSourceFieldChangeHandler
         extends AbstractTaskHandler<StatisticsDataSourceFieldChangeAction, StatisticsDataSourceData> {
     @Override

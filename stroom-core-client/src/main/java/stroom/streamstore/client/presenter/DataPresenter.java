@@ -34,9 +34,9 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.StepLocation;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.EqualsUtil;
@@ -115,7 +115,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         addTab(metaTab);
         addTab(contextTab);
 
-        userHasPipelineSteppingPermission = securityContext.hasAppPermission(PipelineEntity.STEPPING_PERMISSION);
+        userHasPipelineSteppingPermission = securityContext.hasAppPermission(ApplicationPermissionNames.STEPPING_PERMISSION);
     }
 
     private void addTab(final TabData tab) {

@@ -22,11 +22,11 @@ import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
 import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
@@ -41,11 +41,10 @@ import java.util.List;
 import java.util.Set;
 
 @Singleton
-// @Transactional
-@Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 class StreamProcessorFilterServiceImpl
         extends SystemEntityServiceImpl<StreamProcessorFilter, FindStreamProcessorFilterCriteria>
         implements StreamProcessorFilterService {
+    private final Security security;
     private final EntityManagerSupport entityManagerSupport;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterMarshaller marshaller;
@@ -53,10 +52,12 @@ class StreamProcessorFilterServiceImpl
 
     @Inject
     StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
+                                     final Security security,
                                      final EntityManagerSupport entityManagerSupport,
                                      final StreamProcessorService streamProcessorService,
                                      final ExpressionToFindCriteria expressionToFindCriteria) {
-        super(entityManager);
+        super(entityManager, security);
+        this.security = security;
         this.entityManagerSupport = entityManagerSupport;
         this.streamProcessorService = streamProcessorService;
         this.marshaller = new StreamProcessorFilterMarshaller();
@@ -78,19 +79,21 @@ class StreamProcessorFilterServiceImpl
     public void addFindStreamCriteria(final StreamProcessor streamProcessor,
                                       final int priority,
                                       final QueryData queryData) {
-        entityManagerSupport.transaction(entityManager -> {
-            StreamProcessorFilter filter = new StreamProcessorFilter();
-            // Blank tracker
-            filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
-            filter.setPriority(priority);
-            filter.setStreamProcessor(streamProcessor);
-            filter.setQueryData(queryData);
-            filter.setEnabled(true);
-            filter = marshaller.marshal(filter);
-            // Save initial tracker
-            getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());
-            getEntityManager().flush();
-            save(filter);
+        security.secure(permission(), () -> {
+            entityManagerSupport.transaction(entityManager -> {
+                StreamProcessorFilter filter = new StreamProcessorFilter();
+                // Blank tracker
+                filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
+                filter.setPriority(priority);
+                filter.setStreamProcessor(streamProcessor);
+                filter.setQueryData(queryData);
+                filter.setEnabled(true);
+                filter = marshaller.marshal(filter);
+                // Save initial tracker
+                getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());
+                getEntityManager().flush();
+                save(filter);
+            });
         });
     }
 
@@ -99,7 +102,7 @@ class StreamProcessorFilterServiceImpl
                                                  final QueryData queryData,
                                                  final boolean enabled,
                                                  final int priority) {
-        return entityManagerSupport.transactionResult(entityManager -> {
+        return security.secureResult(permission(), () -> entityManagerSupport.transactionResult(entityManager -> {
             // First see if we can find a stream processor for this pipeline.
             final FindStreamProcessorCriteria findStreamProcessorCriteria = new FindStreamProcessorCriteria(pipelineEntity);
             final List<StreamProcessor> list = streamProcessorService.find(findStreamProcessorCriteria);
@@ -128,7 +131,7 @@ class StreamProcessorFilterServiceImpl
             filter = marshaller.unmarshal(filter);
 
             return filter;
-        });
+        }));
     }
 
     @Override
@@ -138,15 +141,12 @@ class StreamProcessorFilterServiceImpl
 
     @Override
     public Boolean delete(final StreamProcessorFilter entity) {
-        if (Boolean.TRUE.equals(super.delete(entity))) {
-            return getEntityManager().deleteEntity(entity.getStreamProcessorFilterTracker());
-        }
-        return Boolean.FALSE;
-    }
-
-    @Override
-    public BaseResultList<StreamProcessorFilter> find(final FindStreamProcessorFilterCriteria criteria) {
-        return super.find(criteria);
+        return security.secureResult(permission(), () -> {
+            if (Boolean.TRUE.equals(super.delete(entity))) {
+                return getEntityManager().deleteEntity(entity.getStreamProcessorFilterTracker());
+            }
+            return Boolean.FALSE;
+        });
     }
 
     @Override
@@ -166,6 +166,11 @@ class StreamProcessorFilterServiceImpl
     @Override
     protected QueryAppender<StreamProcessorFilter, FindStreamProcessorFilterCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new StreamProcessorFilterQueryAppender(entityManager);
+    }
+
+    @Override
+    protected String permission() {
+        return ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION;
     }
 
     private static class StreamProcessorFilterQueryAppender extends QueryAppender<StreamProcessorFilter, FindStreamProcessorFilterCriteria> {

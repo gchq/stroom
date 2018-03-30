@@ -28,7 +28,6 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pool.VersionedEntityDecorator;
-import stroom.security.Insecure;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -42,7 +41,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-@Insecure
 public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 

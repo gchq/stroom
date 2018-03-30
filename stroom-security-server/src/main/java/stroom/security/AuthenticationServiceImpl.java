@@ -46,23 +46,24 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    @Insecure
     public UserRef getUserRef(final AuthenticationToken token) {
-        if (token == null || token.getUserId() == null || token.getUserId().trim().length() == 0) {
-            return null;
-        }
+        return security.insecureResult(() -> {
+            if (token == null || token.getUserId() == null || token.getUserId().trim().length() == 0) {
+                return null;
+            }
 
-        UserRef userRef = loadUserByUsername(token.getUserId());
+            UserRef userRef = loadUserByUsername(token.getUserId());
 
-        if (userRef == null) {
-            // At this point the user has been authenticated using JWT.
-            // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
-            // some way of sensibly referencing the user and something to attach permissions to.
-            // We need to elevate the user because no one is currently logged in.
-            userRef = security.asProcessingUserResult(() -> userService.createUser(token.getUserId()));
-        }
+            if (userRef == null) {
+                // At this point the user has been authenticated using JWT.
+                // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
+                // some way of sensibly referencing the user and something to attach permissions to.
+                // We need to elevate the user because no one is currently logged in.
+                userRef = security.asProcessingUserResult(() -> userService.createUser(token.getUserId()));
+            }
 
-        return userRef;
+            return userRef;
+        });
     }
 
     private UserRef loadUserByUsername(final String username) {

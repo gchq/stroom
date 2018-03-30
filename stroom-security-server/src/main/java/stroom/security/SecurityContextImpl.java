@@ -20,8 +20,6 @@ package stroom.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.query.api.v2.DocRef;
-import stroom.security.Insecure;
-import stroom.security.SecurityContext;
 import stroom.security.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
@@ -30,7 +28,6 @@ import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.persistence.RollbackException;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +80,7 @@ class SecurityContextImpl implements SecurityContext {
 
             final String type = parts[0];
             final String name = parts[1];
-            final String jSessionId = parts[2];
+//            final String jSessionId = parts[2];
 
             if (SYSTEM.equals(type)) {
                 if (INTERNAL.equals(name)) {
@@ -162,7 +159,6 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    @Insecure
     public boolean hasAppPermission(final String permission) {
         // Get the current user.
         final UserRef userRef = getUserRef();
@@ -206,7 +202,7 @@ class SecurityContextImpl implements SecurityContext {
             for (final UserRef userGroup : userGroups) {
                 final boolean result = hasUserAppPermission(userGroup, permission);
                 if (result) {
-                    return result;
+                    return true;
                 }
             }
         }
@@ -267,7 +263,7 @@ class SecurityContextImpl implements SecurityContext {
             for (final UserRef userGroup : userGroups) {
                 final boolean result = hasUserDocumentPermission(userGroup, docRef, permission);
                 if (result) {
-                    return result;
+                    return true;
                 }
             }
         }

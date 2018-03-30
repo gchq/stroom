@@ -31,6 +31,7 @@ import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
 import stroom.streamstore.fs.FileSystemCleanExecutor;
+import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -58,7 +59,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private StreamMaintenanceService streamMaintenanceService;
+    private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
     @Inject

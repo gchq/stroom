@@ -19,6 +19,7 @@ package stroom.entity.event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
@@ -36,35 +37,40 @@ class DispatchEntityEventTaskHandler extends AbstractTaskHandler<DispatchEntityE
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final TargetNodeSetFactory targetNodeSetFactory;
+    private final Security security;
 
     @Inject
     DispatchEntityEventTaskHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-                                   final TargetNodeSetFactory targetNodeSetFactory) {
+                                   final TargetNodeSetFactory targetNodeSetFactory,
+                                   final Security security) {
         this.dispatchHelper = dispatchHelper;
         this.targetNodeSetFactory = targetNodeSetFactory;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final DispatchEntityEventTask task) {
-        try {
-            // Get this node.
-            final Node sourceNode = targetNodeSetFactory.getSourceNode();
+        return security.secureResult(() -> {
+            try {
+                // Get this node.
+                final Node sourceNode = targetNodeSetFactory.getSourceNode();
 
-            // Get the nodes that we are going to send the entity event to.
-            final Set<Node> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                // Get the nodes that we are going to send the entity event to.
+                final Set<Node> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
 
-            // Only send the event to remote nodes and not this one.
-            targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
-                // Send the entity event.
-                final ClusterEntityEventTask clusterEntityEventTask = new ClusterEntityEventTask(task, task.getEntityEvent());
-                dispatchHelper.execAsync(clusterEntityEventTask, targetNode);
-            });
-        } catch (final NullClusterStateException | NodeNotFoundException e) {
-            LOGGER.warn(e.getMessage());
-            LOGGER.debug(e.getMessage(), e);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-        return VoidResult.INSTANCE;
+                // Only send the event to remote nodes and not this one.
+                targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
+                    // Send the entity event.
+                    final ClusterEntityEventTask clusterEntityEventTask = new ClusterEntityEventTask(task, task.getEntityEvent());
+                    dispatchHelper.execAsync(clusterEntityEventTask, targetNode);
+                });
+            } catch (final NullClusterStateException | NodeNotFoundException e) {
+                LOGGER.warn(e.getMessage());
+                LOGGER.debug(e.getMessage(), e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+            return VoidResult.INSTANCE;
+        });
     }
 }

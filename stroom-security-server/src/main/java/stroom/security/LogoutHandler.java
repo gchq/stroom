@@ -17,7 +17,6 @@
 package stroom.security;
 
 import stroom.logging.AuthenticationEventLog;
-import stroom.security.Insecure;
 import stroom.security.shared.LogoutAction;
 import stroom.security.shared.UserRef;
 import stroom.servlet.HttpServletRequestHolder;
@@ -29,31 +28,35 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpSession;
 
 @TaskHandlerBean(task = LogoutAction.class)
-@Insecure
 class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult> {
     private final HttpServletRequestHolder httpServletRequestHolder;
     private final AuthenticationEventLog eventLog;
+    private final Security security;
 
     @Inject
     LogoutHandler(final HttpServletRequestHolder httpServletRequestHolder,
-                  final AuthenticationEventLog eventLog) {
+                  final AuthenticationEventLog eventLog,
+                  final Security security) {
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.eventLog = eventLog;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final LogoutAction task) {
-        final HttpSession session = httpServletRequestHolder.get().getSession();
-        final UserRef userRef = UserRefSessionUtil.get(session);
-        if (session != null) {
-            // Invalidate the current user session
-            session.invalidate();
-        }
-        if (userRef != null) {
-            // Create an event for logout
-            eventLog.logoff(userRef.getName());
-        }
+        return security.insecureResult(() -> {
+            final HttpSession session = httpServletRequestHolder.get().getSession();
+            final UserRef userRef = UserRefSessionUtil.get(session);
+            if (session != null) {
+                // Invalidate the current user session
+                session.invalidate();
+            }
+            if (userRef != null) {
+                // Create an event for logout
+                eventLog.logoff(userRef.getName());
+            }
 
-        return new VoidResult();
+            return new VoidResult();
+        });
     }
 }

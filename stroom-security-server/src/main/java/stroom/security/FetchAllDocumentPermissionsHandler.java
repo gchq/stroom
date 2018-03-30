@@ -17,8 +17,6 @@
 package stroom.security;
 
 import stroom.entity.shared.EntityServiceException;
-import stroom.security.Insecure;
-import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;
@@ -28,25 +26,29 @@ import stroom.task.TaskHandlerBean;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchAllDocumentPermissionsAction.class)
-@Insecure
 class FetchAllDocumentPermissionsHandler
         extends AbstractTaskHandler<FetchAllDocumentPermissionsAction, DocumentPermissions> {
     private final DocumentPermissionsCache documentPermissionsCache;
     private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     FetchAllDocumentPermissionsHandler(final DocumentPermissionsCache documentPermissionsCache,
-                                       final SecurityContext securityContext) {
+                                       final SecurityContext securityContext,
+                                       final Security security) {
         this.documentPermissionsCache = documentPermissionsCache;
         this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
     public DocumentPermissions exec(final FetchAllDocumentPermissionsAction action) {
-        if (securityContext.hasDocumentPermission(action.getDocRef().getType(), action.getDocRef().getUuid(), DocumentPermissionNames.OWNER)) {
-            return documentPermissionsCache.get(action.getDocRef());
-        }
+        return security.insecureResult(() -> {
+            if (securityContext.hasDocumentPermission(action.getDocRef().getType(), action.getDocRef().getUuid(), DocumentPermissionNames.OWNER)) {
+                return documentPermissionsCache.get(action.getDocRef());
+            }
 
-        throw new EntityServiceException("You do not have sufficient privileges to fetch permissions for this document");
+            throw new EntityServiceException("You do not have sufficient privileges to fetch permissions for this document");
+        });
     }
 }

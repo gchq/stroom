@@ -17,15 +17,25 @@
 package stroom.streamstore;
 
 import stroom.entity.shared.DataSourceFields;
+import stroom.security.Security;
 import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
+import javax.inject.Inject;
+
 @TaskHandlerBean(task = FetchFieldsAction.class)
 class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, DataSourceFields> {
+    private final Security security;
+
+    @Inject
+    FetchFieldsHandler(final Security security) {
+        this.security = security;
+    }
+
     @Override
     public DataSourceFields exec(final FetchFieldsAction task) {
-        return new DataSourceFields(StreamDataSource.getFields());
+        return security.secureResult(() -> new DataSourceFields(StreamDataSource.getFields()));
     }
 }

@@ -26,9 +26,9 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.FetchUserAppPermissionsAction;
-import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 
@@ -123,7 +123,7 @@ public class AppPermissionsPresenter extends
         getView().addColumn(selectionColumn, "<br/>", 50);
     }
 
-    protected boolean isCurrentUserUpdate() {
-        return securityContext.hasAppPermission(FindUserCriteria.MANAGE_USERS_PERMISSION);
+    private boolean isCurrentUserUpdate() {
+        return securityContext.hasAppPermission(ApplicationPermissionNames.MANAGE_USERS_PERMISSION);
     }
 }

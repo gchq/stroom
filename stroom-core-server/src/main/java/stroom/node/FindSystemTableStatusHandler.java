@@ -21,23 +21,27 @@ import stroom.entity.shared.ResultList;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindSystemTableStatusAction;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindSystemTableStatusAction.class)
-public class FindSystemTableStatusHandler
+class FindSystemTableStatusHandler
         extends AbstractTaskHandler<FindSystemTableStatusAction, ResultList<DBTableStatus>> {
     private final DBTableService dbTableService;
+    private final Security security;
 
     @Inject
-    FindSystemTableStatusHandler(final DBTableService dbTableService) {
+    FindSystemTableStatusHandler(final DBTableService dbTableService,
+                                 final Security security) {
         this.dbTableService = dbTableService;
+        this.security = security;
     }
 
     @Override
     public BaseResultList<DBTableStatus> exec(final FindSystemTableStatusAction action) {
-        return BaseResultList.createUnboundedList(dbTableService.findSystemTableStatus(action.getCriteria()));
+        return security.secureResult(() -> BaseResultList.createUnboundedList(dbTableService.findSystemTableStatus(action.getCriteria())));
     }
 }

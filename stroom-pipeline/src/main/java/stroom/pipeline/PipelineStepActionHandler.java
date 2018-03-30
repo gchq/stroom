@@ -16,9 +16,10 @@
 
 package stroom.pipeline;
 
-import stroom.pipeline.stepping.SteppingTask;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.SteppingResult;
+import stroom.pipeline.stepping.SteppingTask;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.task.TaskManager;
@@ -28,30 +29,35 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = PipelineStepAction.class)
 class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, SteppingResult> {
     private final TaskManager taskManager;
+    private final Security security;
 
     @Inject
-    PipelineStepActionHandler(final TaskManager taskManager) {
+    PipelineStepActionHandler(final TaskManager taskManager,
+                              final Security security) {
         this.taskManager = taskManager;
+        this.security = security;
     }
 
     @Override
     public SteppingResult exec(final PipelineStepAction action) {
-        // Copy the action settings to the server task.
-        final SteppingTask task = new SteppingTask(action.getUserToken());
-        task.setCriteria(action.getCriteria());
-        task.setChildStreamType(action.getChildStreamType());
-        task.setStepLocation(action.getStepLocation());
-        task.setStepFilterMap(action.getStepFilterMap());
-        task.setStepType(action.getStepType());
-        task.setPipeline(action.getPipeline());
-        task.setCode(action.getCode());
+        return security.secureResult(() -> {
+            // Copy the action settings to the server task.
+            final SteppingTask task = new SteppingTask(action.getUserToken());
+            task.setCriteria(action.getCriteria());
+            task.setChildStreamType(action.getChildStreamType());
+            task.setStepLocation(action.getStepLocation());
+            task.setStepFilterMap(action.getStepFilterMap());
+            task.setStepType(action.getStepType());
+            task.setPipeline(action.getPipeline());
+            task.setCode(action.getCode());
 
-        // Make sure stepping can only happen on streams that are visible to
-        // the user.
-        // FIXME : Constrain available streams.
-        // folderValidator.constrainCriteria(task.getCriteria());
+            // Make sure stepping can only happen on streams that are visible to
+            // the user.
+            // FIXME : Constrain available streams.
+            // folderValidator.constrainCriteria(task.getCriteria());
 
-        // Execute the stepping task.
-        return taskManager.exec(task);
+            // Execute the stepping task.
+            return taskManager.exec(task);
+        });
     }
 }

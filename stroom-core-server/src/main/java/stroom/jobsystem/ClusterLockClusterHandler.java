@@ -18,41 +18,51 @@ package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
+import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedBoolean;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 @TaskHandlerBean(task = ClusterLockClusterTask.class)
 class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, SharedBoolean> {
-    // 10 minr
+    // 10 minutes
     private static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
     private final ConcurrentHashMap<String, Lock> lockMap = new ConcurrentHashMap<>();
+    private final Security security;
+
+    @Inject
+    ClusterLockClusterHandler(final Security security) {
+        this.security = security;
+    }
 
     @Override
     public SharedBoolean exec(final ClusterLockClusterTask task) {
-        boolean success = false;
+        return security.secureResult(() -> {
+            boolean success = false;
 
-        final ClusterLockKey clusterLockKey = task.getKey();
-        switch (task.getLockStyle()) {
-            case Try:
-                success = tryLock(clusterLockKey);
-                break;
-            case Release:
-                success = release(clusterLockKey);
-                break;
-            case KeepAlive:
-                success = keepAlive(clusterLockKey);
-                break;
-        }
+            final ClusterLockKey clusterLockKey = task.getKey();
+            switch (task.getLockStyle()) {
+                case Try:
+                    success = tryLock(clusterLockKey);
+                    break;
+                case Release:
+                    success = release(clusterLockKey);
+                    break;
+                case KeepAlive:
+                    success = keepAlive(clusterLockKey);
+                    break;
+            }
 
-        return new SharedBoolean(success);
+            return new SharedBoolean(success);
+        });
     }
 
     /**

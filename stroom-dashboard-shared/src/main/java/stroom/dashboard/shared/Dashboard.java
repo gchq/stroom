@@ -34,7 +34,6 @@ public class Dashboard extends DocumentEntity {
     public static final String ENTITY_TYPE = "Dashboard";
     public static final String TABLE_NAME = SQLNameConstants.DASHBOARD;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String DOWNLOAD_SEARCH_RESULTS_PERMISSION = "Download Search Results";
 
     private static final long serialVersionUID = 3598996730392094523L;
 

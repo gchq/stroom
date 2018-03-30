@@ -18,6 +18,7 @@ package stroom.pipeline;
 
 import stroom.pipeline.shared.FetchPipelineXMLAction;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedString;
@@ -27,22 +28,27 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = FetchPipelineXMLAction.class)
 class FetchPipelineXMLHandler extends AbstractTaskHandler<FetchPipelineXMLAction, SharedString> {
     private final PipelineService pipelineService;
+    private final Security security;
 
     @Inject
-    FetchPipelineXMLHandler(final PipelineService pipelineService) {
+    FetchPipelineXMLHandler(final PipelineService pipelineService,
+                            final Security security) {
         this.pipelineService = pipelineService;
+        this.security = security;
     }
 
     @Override
     public SharedString exec(final FetchPipelineXMLAction action) {
-        SharedString result = null;
+        return security.secureResult(() -> {
+            SharedString result = null;
 
-        final PipelineEntity pipelineEntity = pipelineService.loadByUuidWithoutUnmarshal(action.getPipeline().getUuid());
+            final PipelineEntity pipelineEntity = pipelineService.loadByUuidWithoutUnmarshal(action.getPipeline().getUuid());
 
-        if (pipelineEntity != null) {
-            result = SharedString.wrap(pipelineEntity.getData());
-        }
+            if (pipelineEntity != null) {
+                result = SharedString.wrap(pipelineEntity.getData());
+            }
 
-        return result;
+            return result;
+        });
     }
 }

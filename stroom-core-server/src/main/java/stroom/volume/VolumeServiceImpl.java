@@ -18,7 +18,6 @@
 package stroom.volume;
 
 import com.google.common.collect.ImmutableMap;
-
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,6 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.HqlBuilder;
-import stroom.guice.StroomBeanStore;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
@@ -42,10 +40,10 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
-import stroom.properties.StroomPropertyService;
-import stroom.security.Insecure;
-import stroom.security.Secured;
 import stroom.persist.EntityManagerSupport;
+import stroom.properties.StroomPropertyService;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
@@ -79,8 +77,6 @@ import java.util.stream.Stream;
  * Implementation for the volume API.
  */
 @Singleton
-// @Transactional
-@Secured(Volume.MANAGE_VOLUMES_PERMISSION)
 @EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolumeCriteria>
         implements VolumeService, EntityEvent.Handler, Clearable {
@@ -125,26 +121,26 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private final StroomEntityManager stroomEntityManager;
+    private final Security security;
     private final EntityManagerSupport entityManagerSupport;
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
-    private final StroomBeanStore stroomBeanStore;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
 
     @Inject
     VolumeServiceImpl(final StroomEntityManager stroomEntityManager,
+                      final Security security,
                       final EntityManagerSupport entityManagerSupport,
                       final NodeCache nodeCache,
                       final StroomPropertyService stroomPropertyService,
-                      final StroomBeanStore stroomBeanStore,
                       final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
-        super(stroomEntityManager);
+        super(stroomEntityManager, security);
         this.stroomEntityManager = stroomEntityManager;
+        this.security = security;
         this.entityManagerSupport = entityManagerSupport;
         this.nodeCache = nodeCache;
         this.stroomPropertyService = stroomPropertyService;
-        this.stroomBeanStore = stroomBeanStore;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
     }
 
@@ -152,24 +148,22 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         volumeSelectorMap.put(volumeSelector.getName(), volumeSelector);
     }
 
-    // @Transactional
-    @Insecure
     @Override
     public Set<Volume> getStreamVolumeSet(final Node node) {
-        LocalVolumeUse localVolumeUse = null;
-        if (isPreferLocalVolumes()) {
-            localVolumeUse = LocalVolumeUse.PREFERRED;
-        }
+        return security.insecureResult(() -> {
+            LocalVolumeUse localVolumeUse = null;
+            if (isPreferLocalVolumes()) {
+                localVolumeUse = LocalVolumeUse.PREFERRED;
+            }
 
-        return getVolumeSet(node, VolumeType.PUBLIC, VolumeUseStatus.ACTIVE, null, localVolumeUse, null,
-                getResilientReplicationCount());
+            return getVolumeSet(node, VolumeType.PUBLIC, VolumeUseStatus.ACTIVE, null, localVolumeUse, null,
+                    getResilientReplicationCount());
+        });
     }
 
-    // @Transactional
-    @Insecure
     @Override
     public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {
-        return getVolumeSet(node, null, null, VolumeUseStatus.ACTIVE, LocalVolumeUse.REQUIRED, allowedVolumes, 1);
+        return security.insecureResult(() -> getVolumeSet(node, null, null, VolumeUseStatus.ACTIVE, LocalVolumeUse.REQUIRED, allowedVolumes, 1));
     }
 
     private Set<Volume> getVolumeSet(final Node node, final VolumeType volumeType, final VolumeUseStatus streamStatus,
@@ -633,6 +627,11 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
 
     private enum LocalVolumeUse {
         REQUIRED, PREFERRED
+    }
+
+    @Override
+    protected String permission() {
+        return ApplicationPermissionNames.MANAGE_VOLUMES_PERMISSION;
     }
 
     private static class VolumeQueryAppender extends QueryAppender<Volume, FindVolumeCriteria> {

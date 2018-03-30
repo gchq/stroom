@@ -25,7 +25,8 @@ import stroom.guice.StroomBeanStore;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
@@ -38,74 +39,78 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-@Secured(DBTableStatus.MANAGE_DB_PERMISSION)
 public class DBTableServiceImpl implements DBTableService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableServiceImpl.class);
 
     private final StroomBeanStore beanStore;
     private final StroomDatabaseInfo stroomDatabaseInfo;
+    private final Security security;
 
     @Inject
     DBTableServiceImpl(final StroomBeanStore beanStore,
-                       final StroomDatabaseInfo stroomDatabaseInfo) {
+                       final StroomDatabaseInfo stroomDatabaseInfo,
+                       final Security security) {
         this.beanStore = beanStore;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
+        this.security = security;
     }
 
     @Override
     public List<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
-        final List<DBTableStatus> rtnList = new ArrayList<>();
+        return security.secureResult(ApplicationPermissionNames.MANAGE_DB_PERMISSION, () -> {
+            final List<DBTableStatus> rtnList = new ArrayList<>();
 
-        if (beanStore != null) {
-            final Object dataSource = beanStore.getInstance("dataSource");
-            final Object statisticsDataSource = beanStore.getInstance("statisticsDataSource");
+            if (beanStore != null) {
+                final Object dataSource = beanStore.getInstance("dataSource");
+                final Object statisticsDataSource = beanStore.getInstance("statisticsDataSource");
 
-            addTableStatus(dataSource, rtnList);
-            addTableStatus(statisticsDataSource, rtnList);
-        }
-
-        rtnList.sort((o1, o2) -> {
-            if (criteria.getSortList() != null && criteria.getSortList().size() > 0) {
-                for (final Sort sort : criteria.getSortList()) {
-                    final String field = sort.getField();
-
-                    int compare = 0;
-                    if (DBTableStatus.FIELD_DATABASE.equals(field)) {
-                        compare = CompareUtil.compareString(o1.getDb(), o2.getDb());
-                    } else if (DBTableStatus.FIELD_TABLE.equals(field)) {
-                        compare = CompareUtil.compareString(o1.getTable(), o2.getTable());
-                    } else if (DBTableStatus.FIELD_ROW_COUNT.equals(field)) {
-                        compare = CompareUtil.compareLong(o1.getCount(), o2.getCount());
-                    } else if (DBTableStatus.FIELD_DATA_SIZE.equals(field)) {
-                        compare = CompareUtil.compareLong(o1.getDataSize(), o2.getDataSize());
-                    } else if (DBTableStatus.FIELD_INDEX_SIZE.equals(field)) {
-                        compare = CompareUtil.compareLong(o1.getIndexSize(), o2.getIndexSize());
-                    }
-                    if (Direction.DESCENDING.equals(sort.getDirection())) {
-                        compare = compare * -1;
-                    }
-
-                    if (compare != 0) {
-                        return compare;
-                    }
-                }
-            } else {
-                int compare = o1.getDb().compareToIgnoreCase(o2.getDb());
-                if (compare == 0) {
-                    compare = o1.getTable().compareToIgnoreCase(o2.getTable());
-                }
-                return compare;
+                addTableStatus(dataSource, rtnList);
+                addTableStatus(statisticsDataSource, rtnList);
             }
 
-            return 0;
-        });
+            rtnList.sort((o1, o2) -> {
+                if (criteria.getSortList() != null && criteria.getSortList().size() > 0) {
+                    for (final Sort sort : criteria.getSortList()) {
+                        final String field = sort.getField();
 
-        return rtnList;
+                        int compare = 0;
+                        if (DBTableStatus.FIELD_DATABASE.equals(field)) {
+                            compare = CompareUtil.compareString(o1.getDb(), o2.getDb());
+                        } else if (DBTableStatus.FIELD_TABLE.equals(field)) {
+                            compare = CompareUtil.compareString(o1.getTable(), o2.getTable());
+                        } else if (DBTableStatus.FIELD_ROW_COUNT.equals(field)) {
+                            compare = CompareUtil.compareLong(o1.getCount(), o2.getCount());
+                        } else if (DBTableStatus.FIELD_DATA_SIZE.equals(field)) {
+                            compare = CompareUtil.compareLong(o1.getDataSize(), o2.getDataSize());
+                        } else if (DBTableStatus.FIELD_INDEX_SIZE.equals(field)) {
+                            compare = CompareUtil.compareLong(o1.getIndexSize(), o2.getIndexSize());
+                        }
+                        if (Direction.DESCENDING.equals(sort.getDirection())) {
+                            compare = compare * -1;
+                        }
+
+                        if (compare != 0) {
+                            return compare;
+                        }
+                    }
+                } else {
+                    int compare = o1.getDb().compareToIgnoreCase(o2.getDb());
+                    if (compare == 0) {
+                        compare = o1.getTable().compareToIgnoreCase(o2.getTable());
+                    }
+                    return compare;
+                }
+
+                return 0;
+            });
+
+            return rtnList;
+        });
     }
 
 
     private void addTableStatus(final Object bean, final List<DBTableStatus> rtnList) {
-        if (bean == null || !(bean instanceof DataSource)) {
+        if (!(bean instanceof DataSource)) {
             return;
         }
 

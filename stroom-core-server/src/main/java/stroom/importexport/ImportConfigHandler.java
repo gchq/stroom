@@ -20,7 +20,8 @@ import stroom.importexport.shared.ImportConfigAction;
 import stroom.importexport.shared.ImportState;
 import stroom.logging.ImportExportEventLog;
 import stroom.resource.ResourceStore;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.ResourceKey;
@@ -33,41 +34,45 @@ class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, Resour
     private final ImportExportService importExportService;
     private final ImportExportEventLog eventLog;
     private final ResourceStore resourceStore;
+    private final Security security;
 
     @Inject
     ImportConfigHandler(final ImportExportService importExportService,
                         final ImportExportEventLog eventLog,
-                        final ResourceStore resourceStore) {
+                        final ResourceStore resourceStore,
+                        final Security security) {
         this.importExportService = importExportService;
         this.eventLog = eventLog;
         this.resourceStore = resourceStore;
+        this.security = security;
     }
 
     @Override
-    @Secured("Import Configuration")
     public ResourceKey exec(final ImportConfigAction action) {
-        // Import file.
-        final Path file = resourceStore.getTempFile(action.getKey());
+        return security.secureResult(ApplicationPermissionNames.IMPORT_CONFIGURATION, () -> {
+            // Import file.
+            final Path file = resourceStore.getTempFile(action.getKey());
 
-        // Log the import.
-        eventLog._import(action);
+            // Log the import.
+            eventLog._import(action);
 
-        boolean foundOneAction = false;
-        for (final ImportState importState : action.getConfirmList()) {
-            if (importState.isAction()) {
-                foundOneAction = true;
-                break;
+            boolean foundOneAction = false;
+            for (final ImportState importState : action.getConfirmList()) {
+                if (importState.isAction()) {
+                    foundOneAction = true;
+                    break;
+                }
             }
-        }
-        if (!foundOneAction) {
+            if (!foundOneAction) {
+                return action.getKey();
+            }
+
+            importExportService.performImportWithConfirmation(file, action.getConfirmList());
+
+            // Delete the import if it was successful
+            resourceStore.deleteTempFile(action.getKey());
+
             return action.getKey();
-        }
-
-        importExportService.performImportWithConfirmation(file, action.getConfirmList());
-
-        // Delete the import if it was successful
-        resourceStore.deleteTempFile(action.getKey());
-
-        return action.getKey();
+        });
     }
 }

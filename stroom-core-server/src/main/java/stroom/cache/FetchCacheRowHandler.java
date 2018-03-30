@@ -20,7 +20,8 @@ import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FetchCacheRowAction;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.security.Secured;
+import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.cache.CacheManager;
@@ -31,24 +32,28 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchCacheRowAction.class)
-@Secured(CacheRow.MANAGE_CACHE_PERMISSION)
 class FetchCacheRowHandler extends AbstractTaskHandler<FetchCacheRowAction, ResultList<CacheRow>> {
     private final CacheManager cacheManager;
+    private final Security security;
 
     @Inject
-    FetchCacheRowHandler(final CacheManager cacheManager) {
+    FetchCacheRowHandler(final CacheManager cacheManager,
+                         final Security security) {
         this.cacheManager = cacheManager;
+        this.security = security;
     }
 
     @Override
     public ResultList<CacheRow> exec(final FetchCacheRowAction action) {
-        final List<CacheRow> values = cacheManager.getCaches()
-                .keySet()
-                .stream()
-                .sorted(Comparator.naturalOrder())
-                .map(CacheRow::new)
-                .collect(Collectors.toList());
+        return security.secureResult(ApplicationPermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+            final List<CacheRow> values = cacheManager.getCaches()
+                    .keySet()
+                    .stream()
+                    .sorted(Comparator.naturalOrder())
+                    .map(CacheRow::new)
+                    .collect(Collectors.toList());
 
-        return BaseResultList.createUnboundedList(values);
+            return BaseResultList.createUnboundedList(values);
+        });
     }
 }

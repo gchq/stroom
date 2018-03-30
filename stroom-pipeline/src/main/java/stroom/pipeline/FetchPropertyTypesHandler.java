@@ -19,6 +19,7 @@ package stroom.pipeline;
 import stroom.pipeline.factory.ElementRegistryFactory;
 import stroom.pipeline.shared.FetchPropertyTypesAction;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -27,14 +28,17 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = FetchPropertyTypesAction.class)
 class FetchPropertyTypesHandler extends AbstractTaskHandler<FetchPropertyTypesAction, FetchPropertyTypesResult> {
     private final ElementRegistryFactory pipelineElementRegistryFactory;
+    private final Security security;
 
     @Inject
-    FetchPropertyTypesHandler(final ElementRegistryFactory pipelineElementRegistryFactory) {
+    FetchPropertyTypesHandler(final ElementRegistryFactory pipelineElementRegistryFactory,
+                              final Security security) {
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
+        this.security = security;
     }
 
     @Override
     public FetchPropertyTypesResult exec(final FetchPropertyTypesAction action) {
-        return new FetchPropertyTypesResult(pipelineElementRegistryFactory.get().getPropertyTypes());
+        return security.secureResult(() -> new FetchPropertyTypesResult(pipelineElementRegistryFactory.get().getPropertyTypes()));
     }
 }

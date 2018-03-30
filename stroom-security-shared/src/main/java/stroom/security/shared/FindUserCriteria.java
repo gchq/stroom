@@ -23,7 +23,6 @@ import stroom.entity.shared.Period;
  * Criteria class.
  */
 public class FindUserCriteria extends FindDocumentEntityCriteria {
-    public static final String MANAGE_USERS_PERMISSION = "Manage Users";
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_LAST_LOGIN = "Last Login";
     /**

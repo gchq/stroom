@@ -27,6 +27,7 @@ import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SharedDocRef;
 import stroom.logging.DocumentEventLog;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -39,56 +40,61 @@ class EntityReferenceFindHandler
         extends AbstractTaskHandler<EntityReferenceFindAction<BaseCriteria>, ResultList<SharedDocRef>> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog documentEventLog;
+    private final Security security;
 
     @Inject
     EntityReferenceFindHandler(final EntityServiceBeanRegistry beanRegistry,
-                               final DocumentEventLog documentEventLog) {
+                               final DocumentEventLog documentEventLog,
+                               final Security security) {
         this.beanRegistry = beanRegistry;
         this.documentEventLog = documentEventLog;
+        this.security = security;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public ResultList<SharedDocRef> exec(final EntityReferenceFindAction<BaseCriteria> action) {
-        BaseResultList<BaseEntity> resultList = null;
+        return security.secureResult(() -> {
+            BaseResultList<BaseEntity> resultList;
 
-        final And and = new And();
-        final Advanced advanced = new Advanced();
-        advanced.getAdvancedQueryItems().add(and);
-        final Query query = new Query();
-        query.setAdvanced(advanced);
+            final And and = new And();
+            final Advanced advanced = new Advanced();
+            advanced.getAdvancedQueryItems().add(and);
+            final Query query = new Query();
+            query.setAdvanced(advanced);
 
-
-        try {
-            final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
 
             try {
-                if (entityService != null && entityService instanceof SupportsCriteriaLogging) {
-                    final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
-                    logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
+                final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
+
+                try {
+                    if (entityService instanceof SupportsCriteriaLogging) {
+                        final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
+                        logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
+                    }
+                } catch (final RuntimeException e) {
+                    // Ignore.
                 }
+
+                resultList = (BaseResultList<BaseEntity>) beanRegistry.invoke(entityService, "find", action.getCriteria());
+                documentEventLog.search(action.getCriteria(), query, resultList);
             } catch (final RuntimeException e) {
-                // Ignore.
+                documentEventLog.search(action.getCriteria(), query, e);
+
+                throw e;
             }
 
-            resultList = (BaseResultList<BaseEntity>) beanRegistry.invoke(entityService,"find", action.getCriteria());
-            documentEventLog.search(action.getCriteria(), query, resultList);
-        } catch (final RuntimeException e) {
-            documentEventLog.search(action.getCriteria(), query, e);
-
-            throw e;
-        }
-
-        ResultList<SharedDocRef> docRefs = null;
-        if (resultList != null && resultList.size() > 0) {
-            final List<SharedDocRef> list = new ArrayList<>(resultList.size());
-            for (final BaseEntity baseEntity : resultList) {
-                list.add(SharedDocRef.create(DocRefUtil.create(baseEntity)));
+            ResultList<SharedDocRef> docRefs = null;
+            if (resultList != null && resultList.size() > 0) {
+                final List<SharedDocRef> list = new ArrayList<>(resultList.size());
+                for (final BaseEntity baseEntity : resultList) {
+                    list.add(SharedDocRef.create(DocRefUtil.create(baseEntity)));
+                }
+                docRefs = new BaseResultList<>(list, (long) resultList.getStart(),
+                        (long) resultList.getSize(), resultList.isExact());
             }
-            docRefs = new BaseResultList<>(list, (long) resultList.getStart(),
-                    (long) resultList.getSize(), resultList.isExact());
-        }
 
-        return docRefs;
+            return docRefs;
+        });
     }
 }

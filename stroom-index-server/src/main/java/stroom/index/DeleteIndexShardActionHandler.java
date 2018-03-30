@@ -19,10 +19,11 @@ package stroom.index;
 import stroom.entity.cluster.FindDeleteServiceClusterTask;
 import stroom.index.shared.DeleteIndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -30,18 +31,23 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = DeleteIndexShardAction.class)
 class DeleteIndexShardActionHandler extends AbstractTaskHandler<DeleteIndexShardAction, VoidResult> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final Security security;
 
     @Inject
-    DeleteIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+    DeleteIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper,
+                                  final Security security) {
         this.dispatchHelper = dispatchHelper;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final DeleteIndexShardAction action) {
-        final FindDeleteServiceClusterTask<FindIndexShardCriteria> clusterTask = new FindDeleteServiceClusterTask<>(
-                action.getUserToken(), action.getTaskName(), IndexShardManager.class,
-                action.getCriteria());
-        dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
-        return new VoidResult();
+        return security.secureResult(() -> {
+            final FindDeleteServiceClusterTask<FindIndexShardCriteria> clusterTask = new FindDeleteServiceClusterTask<>(
+                    action.getUserToken(), action.getTaskName(), IndexShardManager.class,
+                    action.getCriteria());
+            dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
+            return new VoidResult();
+        });
     }
 }

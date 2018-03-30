@@ -16,40 +16,45 @@
 
 package stroom.properties;
 
-import stroom.security.Insecure;
+import stroom.security.Security;
 import stroom.util.config.StroomProperties;
+
+import javax.inject.Inject;
 
 /**
  * A service that can be injected that caches and delegates property
  * lookups to StroomProperties.
  */
 public class StroomPropertyServiceImpl implements StroomPropertyService {
+    private final Security security;
+
+    @Inject
+    StroomPropertyServiceImpl(final Security security) {
+        this.security = security;
+    }
+
     @Override
-    @Insecure
     public String getProperty(final String name) {
-        return StroomProperties.getProperty(name);
+        return security.insecureResult(() -> StroomProperties.getProperty(name));
     }
 
     @Override
     public String getProperty(final String name, final String defaultValue) {
-        return StroomProperties.getProperty(name, defaultValue);
+        return security.insecureResult(() -> StroomProperties.getProperty(name, defaultValue));
     }
 
     @Override
-    @Insecure
     public int getIntProperty(final String name, final int defaultValue) {
-        return StroomProperties.getIntProperty(name, defaultValue);
+        return security.insecureResult(() -> StroomProperties.getIntProperty(name, defaultValue));
     }
 
     @Override
-    @Insecure
     public long getLongProperty(final String name, final long defaultValue) {
-        return StroomProperties.getLongProperty(name, defaultValue);
+        return security.insecureResult(() -> StroomProperties.getLongProperty(name, defaultValue));
     }
 
     @Override
-    @Insecure
     public boolean getBooleanProperty(final String name, final boolean defaultValue) {
-        return StroomProperties.getBooleanProperty(name, defaultValue);
+        return security.insecureResult(() -> StroomProperties.getBooleanProperty(name, defaultValue));
     }
 }

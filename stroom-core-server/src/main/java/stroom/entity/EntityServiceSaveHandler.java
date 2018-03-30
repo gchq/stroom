@@ -20,6 +20,7 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.logging.DocumentEventLog;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -29,59 +30,64 @@ import javax.inject.Inject;
 class EntityServiceSaveHandler extends AbstractTaskHandler<EntityServiceSaveAction<BaseEntity>, BaseEntity> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog entityEventLog;
+    private final Security security;
 
     @Inject
     EntityServiceSaveHandler(final EntityServiceBeanRegistry beanRegistry,
-                             final DocumentEventLog entityEventLog) {
+                             final DocumentEventLog entityEventLog,
+                             final Security security) {
         this.beanRegistry = beanRegistry;
         this.entityEventLog = entityEventLog;
+        this.security = security;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public BaseEntity exec(final EntityServiceSaveAction<BaseEntity> action) {
-        final Object bean = beanRegistry.getEntityServiceByType(action.getEntity().getType());
-        if (bean == null) {
-            throw new EntityServiceException("No entity service can be found");
-        }
-        if (!(bean instanceof EntityService<?>)) {
-            throw new EntityServiceException("Bean is not an entity service");
-        }
+        return security.secureResult(() -> {
+            final Object bean = beanRegistry.getEntityServiceByType(action.getEntity().getType());
+            if (bean == null) {
+                throw new EntityServiceException("No entity service can be found");
+            }
+            if (!(bean instanceof EntityService<?>)) {
+                throw new EntityServiceException("Bean is not an entity service");
+            }
 
-        final EntityService<BaseEntity> entityService = (EntityService<BaseEntity>) bean;
-        final BaseEntity entity = action.getEntity();
-        final boolean persistent = entity.isPersistent();
+            final EntityService<BaseEntity> entityService = (EntityService<BaseEntity>) bean;
+            final BaseEntity entity = action.getEntity();
+            final boolean persistent = entity.isPersistent();
 
-        BaseEntity result = null;
+            BaseEntity result = null;
 
-        try {
-            if (persistent) {
-                // Get the before version.
-                final BaseEntity before = entityService.load(entity);
+            try {
+                if (persistent) {
+                    // Get the before version.
+                    final BaseEntity before = entityService.load(entity);
 
 //                // Validate the entity name.
 //                NameValidationUtil.validate(entityService, before, entity);
 
-                result = entityService.save(entity);
-                entityEventLog.update(before, result, null);
+                    result = entityService.save(entity);
+                    entityEventLog.update(before, result, null);
 
-            } else {
+                } else {
 //                // Validate the entity name.
 //                NameValidationUtil.validate(entityService, entity);
 
-                result = entityService.save(entity);
-                entityEventLog.create(result, null);
+                    result = entityService.save(entity);
+                    entityEventLog.create(result, null);
+                }
+            } catch (final RuntimeException e) {
+                if (persistent) {
+                    // Get the before version.
+                    entityEventLog.update(null, entity, e);
+                } else {
+                    entityEventLog.create(entity, e);
+                }
+                throw e;
             }
-        } catch (final RuntimeException e) {
-            if (persistent) {
-                // Get the before version.
-                entityEventLog.update(null, entity, e);
-            } else {
-                entityEventLog.create(entity, e);
-            }
-            throw e;
-        }
 
-        return result;
+            return result;
+        });
     }
 }

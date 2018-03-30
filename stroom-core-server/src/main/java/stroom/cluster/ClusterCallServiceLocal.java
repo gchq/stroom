@@ -22,7 +22,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.guice.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.security.Insecure;
+import stroom.security.Security;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -38,36 +38,41 @@ class ClusterCallServiceLocal implements ClusterCallService {
 
     private final StroomBeanStore beanStore;
     private final NodeCache nodeCache;
+    private final Security security;
 
     @Inject
-    ClusterCallServiceLocal(final StroomBeanStore beanStore, final NodeCache nodeCache) {
+    ClusterCallServiceLocal(final StroomBeanStore beanStore,
+                            final NodeCache nodeCache,
+                            final Security security) {
         this.beanStore = beanStore;
         this.nodeCache = nodeCache;
+        this.security = security;
     }
 
     @Override
-    @Insecure
     public Object call(final Node sourceNode, final Node targetNode, final String beanName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        return security.insecureResult(() -> {
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        final Node thisNode = nodeCache.getDefaultNode();
-        if (!targetNode.equals(thisNode)) {
-            throw new EntityServiceException("Something wrong with routing rules as we have just had a request for "
-                    + targetNode.getName() + " when we are " + thisNode.getName());
-        }
-
-        try {
-            final Object service = beanStore.getInstance(beanName);
-            final Method method = service.getClass().getMethod(methodName, parameterTypes);
-
-            return method.invoke(service, args);
-        } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(ClusterCallUtil.logString("call() - remoting ", sourceNode, targetNode, beanName,
-                        methodName, logExecutionTime.getDuration()));
+            final Node thisNode = nodeCache.getDefaultNode();
+            if (!targetNode.equals(thisNode)) {
+                throw new EntityServiceException("Something wrong with routing rules as we have just had a request for "
+                        + targetNode.getName() + " when we are " + thisNode.getName());
             }
-        }
+
+            try {
+                final Object service = beanStore.getInstance(beanName);
+                final Method method = service.getClass().getMethod(methodName, parameterTypes);
+
+                return method.invoke(service, args);
+            } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            } finally {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(ClusterCallUtil.logString("call() - remoting ", sourceNode, targetNode, beanName,
+                            methodName, logExecutionTime.getDuration()));
+                }
+            }
+        });
     }
 }

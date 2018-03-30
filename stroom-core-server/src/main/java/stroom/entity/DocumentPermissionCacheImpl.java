@@ -20,7 +20,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import stroom.entity.shared.Clearable;
-import stroom.security.Insecure;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
@@ -30,7 +30,6 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-@Insecure
 class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
@@ -40,10 +39,13 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
     @Inject
     @SuppressWarnings("unchecked")
     DocumentPermissionCacheImpl(final CacheManager cacheManager,
-                                final SecurityContext securityContext) {
+                                final SecurityContext securityContext,
+                                final Security security) {
         this.securityContext = securityContext;
 
-        final CacheLoader<DocumentPermission, Boolean> cacheLoader = CacheLoader.from(k -> securityContext.hasDocumentPermission(k.documentType, k.documentUuid, k.permission));
+        final CacheLoader<DocumentPermission, Boolean> cacheLoader = CacheLoader.from(k ->
+                security.insecureResult(() ->
+                        securityContext.hasDocumentPermission(k.documentType, k.documentUuid, k.permission)));
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
                 .expireAfterAccess(10, TimeUnit.MINUTES);
@@ -69,7 +71,7 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
         private final String documentUuid;
         private final String permission;
 
-        public DocumentPermission(final String userId, final String documentType, final String documentUuid, final String permission) {
+        DocumentPermission(final String userId, final String documentType, final String documentUuid, final String permission) {
             this.userId = userId;
             this.documentType = documentType;
             this.documentUuid = documentUuid;

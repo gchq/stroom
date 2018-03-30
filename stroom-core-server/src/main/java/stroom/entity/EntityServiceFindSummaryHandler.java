@@ -26,6 +26,7 @@ import stroom.entity.shared.EntityServiceFindSummaryAction;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.logging.DocumentEventLog;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -36,44 +37,49 @@ class EntityServiceFindSummaryHandler
         extends AbstractTaskHandler<EntityServiceFindSummaryAction<BaseCriteria>, ResultList<SummaryDataRow>> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog documentEventLog;
+    private final Security security;
 
     @Inject
     EntityServiceFindSummaryHandler(final EntityServiceBeanRegistry beanRegistry,
-                                    final DocumentEventLog documentEventLog) {
+                                    final DocumentEventLog documentEventLog,
+                                    final Security security) {
         this.beanRegistry = beanRegistry;
         this.documentEventLog = documentEventLog;
+        this.security = security;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public ResultList<SummaryDataRow> exec(final EntityServiceFindSummaryAction<BaseCriteria> action) {
-        BaseResultList<SummaryDataRow> result = null;
+        return security.secureResult(() -> {
+            BaseResultList<SummaryDataRow> result;
 
-        final And and = new And();
-        final Advanced advanced = new Advanced();
-        advanced.getAdvancedQueryItems().add(and);
-        final Query query = new Query();
-        query.setAdvanced(advanced);
+            final And and = new And();
+            final Advanced advanced = new Advanced();
+            advanced.getAdvancedQueryItems().add(and);
+            final Query query = new Query();
+            query.setAdvanced(advanced);
 
-        try {
-            final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
             try {
-                if (entityService instanceof SupportsCriteriaLogging<?>) {
-                    final SupportsCriteriaLogging<BaseCriteria> usesCriteria = (SupportsCriteriaLogging<BaseCriteria>) entityService;
-                    usesCriteria.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
+                final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
+                try {
+                    if (entityService instanceof SupportsCriteriaLogging<?>) {
+                        final SupportsCriteriaLogging<BaseCriteria> usesCriteria = (SupportsCriteriaLogging<BaseCriteria>) entityService;
+                        usesCriteria.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
+                    }
+                } catch (final RuntimeException e) {
+                    // Ignore.
                 }
+
+                result = (BaseResultList<SummaryDataRow>) beanRegistry.invoke(entityService, "findSummary", action.getCriteria());
+                documentEventLog.searchSummary(action.getCriteria(), query, result);
             } catch (final RuntimeException e) {
-                // Ignore.
+                documentEventLog.searchSummary(action.getCriteria(), query, e);
+
+                throw e;
             }
 
-            result = (BaseResultList<SummaryDataRow>) beanRegistry.invoke(entityService, "findSummary", action.getCriteria());
-            documentEventLog.searchSummary(action.getCriteria(), query, result);
-        } catch (final RuntimeException e) {
-            documentEventLog.searchSummary(action.getCriteria(), query, e);
-
-            throw e;
-        }
-
-        return result;
+            return result;
+        });
     }
 }

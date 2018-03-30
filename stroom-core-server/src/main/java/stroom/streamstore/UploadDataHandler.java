@@ -18,8 +18,8 @@ package stroom.streamstore;
 
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.resource.ResourceStore;
-import stroom.security.Secured;
-import stroom.streamstore.shared.Stream;
+import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.Security;
 import stroom.streamstore.shared.UploadDataAction;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -30,34 +30,38 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 
 @TaskHandlerBean(task = UploadDataAction.class)
-@Secured(Stream.IMPORT_DATA_PERMISSION)
-public class UploadDataHandler extends AbstractTaskHandler<UploadDataAction, ResourceKey> {
+class UploadDataHandler extends AbstractTaskHandler<UploadDataAction, ResourceKey> {
     private final ResourceStore resourceStore;
     private final TaskManager taskManager;
+    private final Security security;
 
     @Inject
     UploadDataHandler(final ResourceStore resourceStore,
-                      final TaskManager taskManager) {
+                      final TaskManager taskManager,
+                      final Security security) {
         this.resourceStore = resourceStore;
         this.taskManager = taskManager;
+        this.security = security;
     }
 
     @Override
     public ResourceKey exec(final UploadDataAction action) {
-        try {
-            // Import file.
-            final Path file = resourceStore.getTempFile(action.getKey());
+        return security.secureResult(ApplicationPermissionNames.IMPORT_DATA_PERMISSION, () -> {
+            try {
+                // Import file.
+                final Path file = resourceStore.getTempFile(action.getKey());
 
-            taskManager.exec(new StreamUploadTask(action.getUserToken(), action.getFileName(), file,
-                    action.getFeed(), action.getStreamType(), action.getEffectiveMs(), action.getMetaData()));
+                taskManager.exec(new StreamUploadTask(action.getUserToken(), action.getFileName(), file,
+                        action.getFeed(), action.getStreamType(), action.getEffectiveMs(), action.getMetaData()));
 
-        } catch (final RuntimeException e) {
-            throw EntityServiceExceptionUtil.create(e);
-        } finally {
-            // Delete the import if it was successful
-            resourceStore.deleteTempFile(action.getKey());
-        }
+            } catch (final RuntimeException e) {
+                throw EntityServiceExceptionUtil.create(e);
+            } finally {
+                // Delete the import if it was successful
+                resourceStore.deleteTempFile(action.getKey());
+            }
 
-        return action.getKey();
+            return action.getKey();
+        });
     }
 }

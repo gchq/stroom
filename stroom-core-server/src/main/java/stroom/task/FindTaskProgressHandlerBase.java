@@ -36,13 +36,12 @@ import stroom.util.shared.TaskId;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedObject>
+abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedObject>
         extends AbstractTaskHandler<T, R> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
 
@@ -51,7 +50,7 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
         this.dispatchHelper = dispatchHelper;
     }
 
-    protected BaseResultList<TaskProgress> doExec(final Action<?> action, final FindTaskProgressCriteria criteria) {
+    BaseResultList<TaskProgress> doExec(final Action<?> action, final FindTaskProgressCriteria criteria) {
         final PageRequest originalPageRequest = criteria.getPageRequest();
         try {
             // Don't page limit the first query
@@ -118,12 +117,7 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
                         if (newChild) {
                             // Add this task progress to the child list for this
                             // parent.
-                            List<TaskProgress> childList = totalChildMap.get(parentId);
-                            if (childList == null) {
-                                childList = new ArrayList<>();
-                                totalChildMap.put(parentId, childList);
-                            }
-                            childList.add(child);
+                            totalChildMap.computeIfAbsent(parentId, k -> new ArrayList<>()).add(child);
                         }
 
                         // Assign the parent to the child for the next ancestor
@@ -160,7 +154,7 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
     }
 
     private void sortTaskProgressList(final List<TaskProgress> rtnList) {
-        Collections.sort(rtnList, (lhs, rhs) -> CompareUtil.compareLong(lhs.getSubmitTimeMs(), rhs.getSubmitTimeMs()));
+        rtnList.sort((lhs, rhs) -> CompareUtil.compareLong(lhs.getSubmitTimeMs(), rhs.getSubmitTimeMs()));
     }
 
     private void buildTreeNode(final List<TaskProgress> rtnList, final FindTaskProgressCriteria criteria,

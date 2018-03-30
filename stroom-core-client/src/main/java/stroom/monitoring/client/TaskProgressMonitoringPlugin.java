@@ -23,9 +23,9 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.presenter.TaskProgressMonitoringPresenter;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
-import stroom.task.shared.FindTaskProgressAction;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class TaskProgressMonitoringPlugin extends MonitoringPlugin<TaskProgressMonitoringPresenter> {
@@ -38,7 +38,7 @@ public class TaskProgressMonitoringPlugin extends MonitoringPlugin<TaskProgressM
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(FindTaskProgressAction.MANAGE_TASKS_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(ApplicationPermissionNames.MANAGE_TASKS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem(13, SvgPresets.JOBS, SvgPresets.JOBS, "Server Tasks", null, true, () -> open()));
         }

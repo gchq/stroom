@@ -19,6 +19,7 @@ package stroom.explorer;
 
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.shared.ExplorerServiceCreateAction;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -27,14 +28,17 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = ExplorerServiceCreateAction.class)
 class ExplorerServiceCreateHandler extends AbstractTaskHandler<ExplorerServiceCreateAction, SharedDocRef> {
     private final ExplorerService explorerService;
+    private final Security security;
 
     @Inject
-    ExplorerServiceCreateHandler(final ExplorerService explorerService) {
+    ExplorerServiceCreateHandler(final ExplorerService explorerService,
+                                 final Security security) {
         this.explorerService = explorerService;
+        this.security = security;
     }
 
     @Override
     public SharedDocRef exec(final ExplorerServiceCreateAction action) {
-        return SharedDocRef.create(explorerService.create(action.getDocType(), action.getDocName(), action.getDestinationFolderRef(), action.getPermissionInheritance()));
+        return security.secureResult(() -> SharedDocRef.create(explorerService.create(action.getDocType(), action.getDocName(), action.getDestinationFolderRef(), action.getPermissionInheritance())));
     }
 }

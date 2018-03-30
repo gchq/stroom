@@ -46,6 +46,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.security.Security;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
@@ -65,7 +66,7 @@ import java.io.InputStream;
 import java.util.List;
 
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
-public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTranslationTask, VoidResult> {
+class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTranslationTask, VoidResult> {
     private final PipelineFactory pipelineFactory;
     private final FeedService feedService;
     private final PipelineService pipelineService;
@@ -77,6 +78,7 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
     private final RecordErrorReceiver recordErrorReceiver;
     private final PipelineDataCache pipelineDataCache;
     private final StreamHolder streamHolder;
+    private final Security security;
 
     @Inject
     HeadlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
@@ -89,7 +91,8 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
                                    final ErrorWriterProxy errorWriterProxy,
                                    final RecordErrorReceiver recordErrorReceiver,
                                    final PipelineDataCache pipelineDataCache,
-                                   final StreamHolder streamHolder) {
+                                   final StreamHolder streamHolder,
+                                   final Security security) {
         this.pipelineFactory = pipelineFactory;
         this.feedService = feedService;
         this.pipelineService = pipelineService;
@@ -101,101 +104,104 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
         this.recordErrorReceiver = recordErrorReceiver;
         this.pipelineDataCache = pipelineDataCache;
         this.streamHolder = streamHolder;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final HeadlessTranslationTask task) {
-        try {
-            // Setup the error handler and receiver.
-            errorWriterProxy.setErrorWriter(task.getHeadlessFilter());
-            errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
-
-            final InputStream dataStream = task.getDataStream();
-            final InputStream metaStream = task.getMetaStream();
-
-            if (metaStream == null) {
-                throw new RuntimeException("No meta data found");
-            }
-
-            // Load the meta and context data.
-            final MetaMap metaData = new MetaMap();
-            metaData.read(metaStream, false);
-
-            // Get the feed.
-            final String feedName = metaData.get(StroomHeaderArguments.FEED);
-            final Feed feed = getFeed(feedName);
-            feedHolder.setFeed(feed);
-
-            // Set the pipeline so it can be used by a filter if needed.
-            final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria(feedName);
-            final BaseResultList<PipelineEntity> pipelines = pipelineService.find(findPipelineCriteria);
-            if (pipelines == null || pipelines.size() == 0) {
-                throw new ProcessException("No pipeline found for feed name '" + feedName + "'");
-            }
-            if (pipelines.size() > 1) {
-                throw new ProcessException("More than one pipeline found for feed name '" + feedName + "'");
-            }
-
-            final PipelineEntity pipelineEntity = pipelines.getFirst();
-            pipelineHolder.setPipeline(pipelineEntity);
-
-            // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
-            final Pipeline pipeline = pipelineFactory.create(pipelineData);
-
-            // Find last XSLT filter.
-            final XMLFilter lastFilter = getLastFilter(pipeline);
-            if (lastFilter == null || !(lastFilter instanceof HasTargets)) {
-                throw new ProcessException(
-                        "No appendable filters can be found in pipeline '" + pipelineEntity.getName() + "'");
-            }
-            ((HasTargets) lastFilter).setTarget(task.getHeadlessFilter());
-
-            // Output the meta data for the new stream.
-            this.metaData.putAll(metaData);
-            task.getHeadlessFilter().changeMetaData(metaData);
-
-            // Create the stream.
-            final Stream stream = new Stream();
-            // Set the feed.
-            stream.setFeed(feed);
-
-            // Set effective time.
+        return security.secureResult(() -> {
             try {
-                final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
-                if (effectiveTime != null && !effectiveTime.isEmpty()) {
-                    stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
+                // Setup the error handler and receiver.
+                errorWriterProxy.setErrorWriter(task.getHeadlessFilter());
+                errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
+
+                final InputStream dataStream = task.getDataStream();
+                final InputStream metaStream = task.getMetaStream();
+
+                if (metaStream == null) {
+                    throw new RuntimeException("No meta data found");
                 }
-            } catch (final RuntimeException e) {
+
+                // Load the meta and context data.
+                final MetaMap metaData = new MetaMap();
+                metaData.read(metaStream, false);
+
+                // Get the feed.
+                final String feedName = metaData.get(StroomHeaderArguments.FEED);
+                final Feed feed = getFeed(feedName);
+                feedHolder.setFeed(feed);
+
+                // Set the pipeline so it can be used by a filter if needed.
+                final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria(feedName);
+                final BaseResultList<PipelineEntity> pipelines = pipelineService.find(findPipelineCriteria);
+                if (pipelines == null || pipelines.size() == 0) {
+                    throw new ProcessException("No pipeline found for feed name '" + feedName + "'");
+                }
+                if (pipelines.size() > 1) {
+                    throw new ProcessException("More than one pipeline found for feed name '" + feedName + "'");
+                }
+
+                final PipelineEntity pipelineEntity = pipelines.getFirst();
+                pipelineHolder.setPipeline(pipelineEntity);
+
+                // Create the parser.
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                final Pipeline pipeline = pipelineFactory.create(pipelineData);
+
+                // Find last XSLT filter.
+                final XMLFilter lastFilter = getLastFilter(pipeline);
+                if (!(lastFilter instanceof HasTargets)) {
+                    throw new ProcessException(
+                            "No appendable filters can be found in pipeline '" + pipelineEntity.getName() + "'");
+                }
+                ((HasTargets) lastFilter).setTarget(task.getHeadlessFilter());
+
+                // Output the meta data for the new stream.
+                this.metaData.putAll(metaData);
+                task.getHeadlessFilter().changeMetaData(metaData);
+
+                // Create the stream.
+                final Stream stream = new Stream();
+                // Set the feed.
+                stream.setFeed(feed);
+
+                // Set effective time.
+                try {
+                    final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
+                    if (effectiveTime != null && !effectiveTime.isEmpty()) {
+                        stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
+                    }
+                } catch (final RuntimeException e) {
+                    outputError(e);
+                }
+
+                // Add stream providers for lookups etc.
+                final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
+                        new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
+                streamHolder.setStream(stream);
+                streamHolder.addProvider(streamProvider, StreamType.RAW_EVENTS);
+                if (task.getMetaStream() != null) {
+                    final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
+                            new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
+                    streamHolder.addProvider(metaStreamProvider, StreamType.META);
+                }
+                if (task.getContextStream() != null) {
+                    final BasicInputStreamProvider contextStreamProvider = new BasicInputStreamProvider(
+                            new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
+                    streamHolder.addProvider(contextStreamProvider, StreamType.CONTEXT);
+                }
+
+                try {
+                    pipeline.process(dataStream, feed.getEncoding());
+                } catch (final RuntimeException e) {
+                    outputError(e);
+                }
+            } catch (final IOException | RuntimeException e) {
                 outputError(e);
             }
 
-            // Add stream providers for lookups etc.
-            final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
-                    new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-            streamHolder.setStream(stream);
-            streamHolder.addProvider(streamProvider, StreamType.RAW_EVENTS);
-            if (task.getMetaStream() != null) {
-                final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
-                        new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
-                streamHolder.addProvider(metaStreamProvider, StreamType.META);
-            }
-            if (task.getContextStream() != null) {
-                final BasicInputStreamProvider contextStreamProvider = new BasicInputStreamProvider(
-                        new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
-                streamHolder.addProvider(contextStreamProvider, StreamType.CONTEXT);
-            }
-
-            try {
-                pipeline.process(dataStream, feed.getEncoding());
-            } catch (final RuntimeException e) {
-                outputError(e);
-            }
-        } catch (final IOException | RuntimeException e) {
-            outputError(e);
-        }
-
-        return VoidResult.INSTANCE;
+            return VoidResult.INSTANCE;
+        });
     }
 
     private XMLFilter getLastFilter(final Pipeline pipeline) {

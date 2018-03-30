@@ -54,25 +54,27 @@ class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataActi
 
     @Override
     public SharedList<PipelineData> exec(final FetchPipelineDataAction action) {
-        final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
+        return security.secureResult(() -> {
+            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
 
-        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-        return security.useAsReadResult(() -> {
-            final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
-            final SharedList<PipelineData> result = new SharedList<>(pipelines.size());
+            // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+            return security.useAsReadResult(() -> {
+                final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
+                final SharedList<PipelineData> result = new SharedList<>(pipelines.size());
 
-            final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
-            for (final PipelineEntity pipe : pipelines) {
-                final PipelineData pipelineData = pipe.getPipelineData();
+                final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
+                for (final PipelineEntity pipe : pipelines) {
+                    final PipelineData pipelineData = pipe.getPipelineData();
 
-                // Validate the pipeline data and add element and property type
-                // information.
-                final SourcePipeline source = new SourcePipeline(pipe);
-                pipelineDataValidator.validate(source, pipelineData, elementMap);
-                result.add(pipelineData);
-            }
+                    // Validate the pipeline data and add element and property type
+                    // information.
+                    final SourcePipeline source = new SourcePipeline(pipe);
+                    pipelineDataValidator.validate(source, pipelineData, elementMap);
+                    result.add(pipelineData);
+                }
 
-            return result;
+                return result;
+            });
         });
     }
 }

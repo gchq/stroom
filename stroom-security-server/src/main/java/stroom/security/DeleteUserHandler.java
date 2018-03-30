@@ -16,9 +16,8 @@
 
 package stroom.security;
 
-import stroom.security.Secured;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.shared.DeleteUserAction;
-import stroom.security.shared.FindUserCriteria;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
@@ -26,21 +25,25 @@ import stroom.util.shared.VoidResult;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = DeleteUserAction.class)
-@Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
 class DeleteUserHandler extends AbstractTaskHandler<DeleteUserAction, VoidResult> {
     private final UserService userService;
+    private final Security security;
 
     @Inject
-    DeleteUserHandler(final UserService userService) {
+    DeleteUserHandler(final UserService userService,
+                      final Security security) {
         this.userService = userService;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final DeleteUserAction action) {
-        User user = userService.loadByUuid(action.getUserRef().getUuid());
-        if (user != null) {
-            userService.delete(user);
-        }
-        return VoidResult.INSTANCE;
+        return security.secureResult(ApplicationPermissionNames.MANAGE_USERS_PERMISSION, () -> {
+            User user = userService.loadByUuid(action.getUserRef().getUuid());
+            if (user != null) {
+                userService.delete(user);
+            }
+            return VoidResult.INSTANCE;
+        });
     }
 }

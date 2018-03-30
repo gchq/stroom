@@ -22,16 +22,16 @@ import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.util.BaseEntityUtil;
 import stroom.node.shared.FindGlobalPropertyCriteria;
 import stroom.node.shared.GlobalProperty;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,14 +40,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
-// @Transactional
-@Secured(GlobalProperty.MANAGE_PROPERTIES_PERMISSION)
 public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProperty, FindGlobalPropertyCriteria>
         implements GlobalPropertyService {
 
     @Inject
-    GlobalPropertyServiceImpl(final StroomEntityManager entityManager) {
-        super(entityManager);
+    GlobalPropertyServiceImpl(final StroomEntityManager entityManager,
+                              final Security security) {
+        super(entityManager, security);
     }
 
     @Override
@@ -79,9 +78,8 @@ public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProp
                 .filter(databaseKey -> criteria.getName() == null || criteria.getName().isMatch(databaseKey))
                 .collect(Collectors.toList()));
 
-        final List<String> keyList = new ArrayList<>();
-        keyList.addAll(keySet);
-        Collections.sort(keyList);
+        final List<String> keyList = new ArrayList<>(keySet);
+        keyList.sort(Comparator.naturalOrder());
 
         final List<GlobalProperty> rtnList = new ArrayList<>();
         for (int i = 0; i < keyList.size(); i++) {
@@ -122,7 +120,7 @@ public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProp
             }
         }
 
-        return BaseResultList.createCriterialBasedList(rtnList, criteria, Long.valueOf(keyList.size()));
+        return BaseResultList.createCriterialBasedList(rtnList, criteria, (long) keyList.size());
     }
 
     @Override
@@ -140,8 +138,13 @@ public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProp
         return new GlobalPropertyQueryAppender(entityManager);
     }
 
+    @Override
+    protected String permission() {
+        return ApplicationPermissionNames.MANAGE_PROPERTIES_PERMISSION;
+    }
+
     private static class GlobalPropertyQueryAppender extends QueryAppender<GlobalProperty, FindGlobalPropertyCriteria> {
-        public GlobalPropertyQueryAppender(final StroomEntityManager entityManager) {
+        GlobalPropertyQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 

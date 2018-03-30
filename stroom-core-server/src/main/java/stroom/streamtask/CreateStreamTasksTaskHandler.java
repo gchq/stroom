@@ -16,10 +16,11 @@
 
 package stroom.streamtask;
 
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 
@@ -27,17 +28,22 @@ import javax.inject.Inject;
 class CreateStreamTasksTaskHandler extends AbstractTaskHandler<CreateStreamTasksTask, VoidResult> {
     private final StreamTaskCreator streamTaskCreator;
     private final TaskContext taskContext;
+    private final Security security;
 
     @Inject
     CreateStreamTasksTaskHandler(final StreamTaskCreator streamTaskCreator,
-                                 final TaskContext taskContext) {
+                                 final TaskContext taskContext,
+                                 final Security security) {
         this.streamTaskCreator = streamTaskCreator;
         this.taskContext = taskContext;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final CreateStreamTasksTask task) {
-        streamTaskCreator.createTasks(taskContext);
-        return new VoidResult();
+        return security.secureResult(() -> {
+            streamTaskCreator.createTasks(taskContext);
+            return new VoidResult();
+        });
     }
 }

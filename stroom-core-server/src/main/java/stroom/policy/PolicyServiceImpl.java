@@ -17,30 +17,29 @@
 
 package stroom.policy;
 
-import com.google.inject.ScopeAnnotation;
-
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
 import stroom.ruleset.shared.FindPolicyCriteria;
 import stroom.ruleset.shared.Policy;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
 @Singleton
-// @Transactional
-@Secured(Policy.MANAGE_POLICIES_PERMISSION)
 public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicyCriteria>
         implements PolicyService {
+    private final Security security;
 
     @Inject
-    PolicyServiceImpl(final StroomEntityManager entityManager) {
-        super(entityManager);
+    PolicyServiceImpl(final StroomEntityManager entityManager,
+                      final Security security) {
+        super(entityManager, security);
+        this.security = security;
     }
 
     /**
@@ -48,25 +47,22 @@ public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicy
      */
     @SuppressWarnings("unchecked")
     public Policy get(final String name) {
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT e FROM ");
-        sql.append(getEntityClass().getName());
-        sql.append(" AS e");
-        sql.append(" WHERE e.name = ");
-        sql.arg(name);
+        return security.secureResult(permission(), () -> {
+            final HqlBuilder sql = new HqlBuilder();
+            sql.append("SELECT e FROM ");
+            sql.append(getEntityClass().getName());
+            sql.append(" AS e");
+            sql.append(" WHERE e.name = ");
+            sql.arg(name);
 
-        // This should just bring back 1
-        final List<Policy> results = getEntityManager().executeQueryResultList(sql);
+            // This should just bring back 1
+            final List<Policy> results = getEntityManager().executeQueryResultList(sql);
 
-        if (results == null || results.size() == 0) {
-            return null;
-        }
-        return results.get(0);
-    }
-
-    @Override
-    public BaseResultList<Policy> find(final FindPolicyCriteria criteria) {
-        return super.find(criteria);
+            if (results == null || results.size() == 0) {
+                return null;
+            }
+            return results.get(0);
+        });
     }
 
     @Override
@@ -82,6 +78,11 @@ public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicy
     @Override
     protected QueryAppender<Policy, FindPolicyCriteria> createQueryAppender(StroomEntityManager entityManager) {
         return new PolicyQueryAppender(entityManager);
+    }
+
+    @Override
+    protected String permission() {
+        return ApplicationPermissionNames.MANAGE_POLICIES_PERMISSION;
     }
 
     private static class PolicyQueryAppender extends QueryAppender<Policy, FindPolicyCriteria> {

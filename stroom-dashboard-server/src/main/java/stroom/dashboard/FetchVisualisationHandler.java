@@ -40,7 +40,9 @@ class FetchVisualisationHandler extends AbstractTaskHandler<FetchVisualisationAc
 
     @Override
     public Visualisation exec(final FetchVisualisationAction action) {
-        // Elevate the users permissions for the duration of this task so they can read the visualisation if they have 'use' permission.
-        return security.useAsReadResult(() -> visualisationService.loadByUuid(action.getVisualisation().getUuid()));
+        return security.secureResult(() -> {
+            // Elevate the users permissions for the duration of this task so they can read the visualisation if they have 'use' permission.
+            return security.useAsReadResult(() -> visualisationService.loadByUuid(action.getVisualisation().getUuid()));
+        });
     }
 }

@@ -19,9 +19,9 @@ package stroom.streamtask;
 
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.security.Secured;
+import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.Security;
 import stroom.streamtask.shared.CreateProcessorAction;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -29,22 +29,26 @@ import stroom.task.TaskHandlerBean;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = CreateProcessorAction.class)
-@Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorAction, StreamProcessorFilter> {
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final PipelineService pipelineService;
+    private final Security security;
 
     @Inject
     CreateProcessorHandler(final StreamProcessorFilterService streamProcessorFilterService,
-                           final PipelineService pipelineService) {
+                           final PipelineService pipelineService,
+                           final Security security) {
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.pipelineService = pipelineService;
+        this.security = security;
     }
 
     @Override
     public StreamProcessorFilter exec(final CreateProcessorAction action) {
-        final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
-        return streamProcessorFilterService.createNewFilter(pipelineEntity, action.getQueryData(),
-                action.isEnabled(), action.getPriority());
+        return security.secureResult(ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
+            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
+            return streamProcessorFilterService.createNewFilter(pipelineEntity, action.getQueryData(),
+                    action.isEnabled(), action.getPriority());
+        });
     }
 }

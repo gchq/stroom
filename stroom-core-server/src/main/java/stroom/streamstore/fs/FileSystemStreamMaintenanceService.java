@@ -26,7 +26,8 @@ import stroom.entity.SupportsCriteriaLogging;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
 import stroom.node.shared.Volume;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.streamstore.FileArrayList;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.ScanVolumePathResult;
@@ -45,8 +46,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,128 +56,134 @@ import java.util.Map.Entry;
  */
 @Singleton
 // @Transactional
-@Secured(Stream.DELETE_DATA_PERMISSION)
 public class FileSystemStreamMaintenanceService
         implements StreamMaintenanceService, SupportsCriteriaLogging<FindStreamVolumeCriteria> {
     /**
      * Here are our types of chart query. We use a prefix to understand the
      * value for the dynamic names (e.g. Fee - XYZ)
      */
-    public static final String STYLE_STREAM_PERIOD = "Stream Period Total";
-    public static final String PREFIX_STREAM_TYPE = "Type - ";
-    public static final String PREFIX_STAGE = "Stage - ";
-    public static final String PREFIX_GROUP = "Group - ";
-    public static final String PREFIX_NODE = "Node - ";
-    public static final String PREFIX_VOLUME = "Volume - ";
-    public static final String PREFIX_FEED = "Feed - ";
+//    public static final String STYLE_STREAM_PERIOD = "Stream Period Total";
+//    public static final String PREFIX_STREAM_TYPE = "Type - ";
+//    public static final String PREFIX_STAGE = "Stage - ";
+//    public static final String PREFIX_GROUP = "Group - ";
+//    public static final String PREFIX_NODE = "Node - ";
+//    public static final String PREFIX_VOLUME = "Volume - ";
+//    public static final String PREFIX_FEED = "Feed - ";
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamMaintenanceService.class);
 
     private final StroomEntityManager entityManager;
     private final StreamTypeService streamTypeService;
+    private final Security security;
 
     @Inject
     public FileSystemStreamMaintenanceService(final StroomEntityManager entityManager,
-                                              @Named("cachedStreamTypeService") final StreamTypeService streamTypeService) {
+                                              @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
+                                              final Security security) {
         this.entityManager = entityManager;
         this.streamTypeService = streamTypeService;
+        this.security = security;
     }
 
-    @Override
-    public Long deleteStreamVolume(final StreamVolume streamVolume) {
-        deleteStreamVolume(Arrays.asList(streamVolume));
-        return 1L;
-    }
+//    @Override
+//    public Long deleteStreamVolume(final StreamVolume streamVolume) {
+//        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> {
+//            deleteStreamVolume(Arrays.asList(streamVolume));
+//            return 1L;
+//        });
+//    }
 
     @SuppressWarnings("unchecked")
     @Override
     // @Transactional
     public BaseResultList<StreamVolume> find(final FindStreamVolumeCriteria criteria) {
-        if (!criteria.isValidCriteria()) {
-            throw new IllegalArgumentException("Not enough criteria to run");
-        }
+        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> {
+            if (!criteria.isValidCriteria()) {
+                throw new IllegalArgumentException("Not enough criteria to run");
+            }
 
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT sv FROM ");
-        sql.append(StreamVolume.class.getName());
-        sql.append(" sv");
-        sql.append(" WHERE 1=1");
+            final HqlBuilder sql = new HqlBuilder();
+            sql.append("SELECT sv FROM ");
+            sql.append(StreamVolume.class.getName());
+            sql.append(" sv");
+            sql.append(" WHERE 1=1");
 
-        sql.appendEntityIdSetQuery("sv.volume.node", criteria.getNodeIdSet());
-        sql.appendEntityIdSetQuery("sv.volume", criteria.getVolumeIdSet());
-        sql.appendEntityIdSetQuery("sv.stream", criteria.getStreamIdSet());
-        sql.appendPrimitiveValueSetQuery("sv.stream.pstatus", criteria.getStreamStatusSet());
+            sql.appendEntityIdSetQuery("sv.volume.node", criteria.getNodeIdSet());
+            sql.appendEntityIdSetQuery("sv.volume", criteria.getVolumeIdSet());
+            sql.appendEntityIdSetQuery("sv.stream", criteria.getStreamIdSet());
+            sql.appendPrimitiveValueSetQuery("sv.stream.pstatus", criteria.getStreamStatusSet());
 
-        if (criteria.getStreamRange() != null && criteria.getStreamRange().getStreamTypePath() != null) {
-            sql.append(" AND sv.stream.streamType.path = ");
-            sql.arg(criteria.getStreamRange().getStreamTypePath());
-        }
-        if (criteria.getStreamRange() != null && criteria.getStreamRange().isFileLocation()) {
-            sql.appendRangeQuery("sv.stream.id", criteria.getStreamRange());
-            sql.appendRangeQuery("sv.stream.createMs", criteria.getStreamRange().getCreatePeriod());
-        }
-        // Create the query
-        final List<StreamVolume> results = entityManager.executeQueryResultList(sql, criteria);
+            if (criteria.getStreamRange() != null && criteria.getStreamRange().getStreamTypePath() != null) {
+                sql.append(" AND sv.stream.streamType.path = ");
+                sql.arg(criteria.getStreamRange().getStreamTypePath());
+            }
+            if (criteria.getStreamRange() != null && criteria.getStreamRange().isFileLocation()) {
+                sql.appendRangeQuery("sv.stream.id", criteria.getStreamRange());
+                sql.appendRangeQuery("sv.stream.createMs", criteria.getStreamRange().getCreatePeriod());
+            }
+            // Create the query
+            final List<StreamVolume> results = entityManager.executeQueryResultList(sql, criteria);
 
-        return BaseResultList.createCriterialBasedList(results, criteria);
+            return BaseResultList.createCriterialBasedList(results, criteria);
+        });
     }
 
-    @Override
-//    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
-    public StreamVolume save(final StreamVolume streamVolume) {
-        return entityManager.saveEntity(streamVolume);
-    }
+//    @Override
+////    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
+//    public StreamVolume save(final StreamVolume streamVolume) {
+//        return entityManager.saveEntity(streamVolume);
+//    }
 
-    @Override
+    //    @Override
 //    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
     public Stream save(final Stream stream) {
         return entityManager.saveEntity(stream);
     }
 
-    //    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.DELETE)
-    public Long deleteStreamVolume(final Collection<StreamVolume> toDelete) {
-        if (deleteFileSystemFiles(toDelete)) {
-            for (final StreamVolume metaDataVolume : toDelete) {
-                entityManager.deleteEntity(metaDataVolume);
-            }
-            return Long.valueOf(toDelete.size());
-        }
-        return 0L;
-    }
-
-    private boolean deleteFileSystemFiles(final Collection<StreamVolume> toDelete) {
-        boolean allOk = true;
-
-        for (final StreamVolume streamVolume : toDelete) {
-            final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(),
-                    streamVolume.getStream(), streamTypeService.load(streamVolume.getStream().getStreamType()));
-            allOk &= deleteAllFiles(rootFile);
-        }
-
-        return allOk;
-    }
-
-    private boolean deleteAllFiles(final Path file) {
-        boolean allOk = true;
-        if (Files.isRegularFile(file)) {
-            if (!FileUtil.delete(file)) {
-                LOGGER.error("Failed to delete file {}", FileUtil.getCanonicalPath(file));
-                allOk = false;
-            }
-            final List<Path> kids = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(file);
-
-            for (final Path kid : kids) {
-                if (!FileUtil.delete(kid)) {
-                    LOGGER.error("Failed to delete file {}", FileUtil.getCanonicalPath(kid));
-                    allOk = false;
-                }
-            }
-        }
-        return allOk;
-    }
+//    //    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.DELETE)
+//    public Long deleteStreamVolume(final Collection<StreamVolume> toDelete) {
+//        if (deleteFileSystemFiles(toDelete)) {
+//            for (final StreamVolume metaDataVolume : toDelete) {
+//                entityManager.deleteEntity(metaDataVolume);
+//            }
+//            return Long.valueOf(toDelete.size());
+//        }
+//        return 0L;
+//    }
+//
+//    private boolean deleteFileSystemFiles(final Collection<StreamVolume> toDelete) {
+//        boolean allOk = true;
+//
+//        for (final StreamVolume streamVolume : toDelete) {
+//            final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(),
+//                    streamVolume.getStream(), streamTypeService.load(streamVolume.getStream().getStreamType()));
+//            allOk &= deleteAllFiles(rootFile);
+//        }
+//
+//        return allOk;
+//    }
+//
+//    private boolean deleteAllFiles(final Path file) {
+//        boolean allOk = true;
+//        if (Files.isRegularFile(file)) {
+//            if (!FileUtil.delete(file)) {
+//                LOGGER.error("Failed to delete file {}", FileUtil.getCanonicalPath(file));
+//                allOk = false;
+//            }
+//            final List<Path> kids = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(file);
+//
+//            for (final Path kid : kids) {
+//                if (!FileUtil.delete(kid)) {
+//                    LOGGER.error("Failed to delete file {}", FileUtil.getCanonicalPath(kid));
+//                    allOk = false;
+//                }
+//            }
+//        }
+//        return allOk;
+//    }
 
     @SuppressWarnings("unchecked")
-    @Override
-    // @Transactional
+//    @Override
+        // @Transactional
     public FileArrayList findAllStreamFile(final Stream stream) {
         final FileArrayList results = new FileArrayList();
         final HqlBuilder sql = new HqlBuilder();
@@ -205,54 +210,56 @@ public class FileSystemStreamMaintenanceService
     // @Transactional
     public ScanVolumePathResult scanVolumePath(final Volume volume, final boolean doDelete, final String repoPath,
                                                final long oldFileAge) {
-        final ScanVolumePathResult result = new ScanVolumePathResult();
+        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> {
+            final ScanVolumePathResult result = new ScanVolumePathResult();
 
-        final long oldFileTime = System.currentTimeMillis() - oldFileAge;
+            final long oldFileTime = System.currentTimeMillis() - oldFileAge;
 
-        final Map<String, List<String>> filesKeyedByBaseName = new HashMap<>();
-        final Map<String, StreamVolume> streamsKeyedByBaseName = new HashMap<>();
-        final Path directory;
+            final Map<String, List<String>> filesKeyedByBaseName = new HashMap<>();
+            final Map<String, StreamVolume> streamsKeyedByBaseName = new HashMap<>();
+            final Path directory;
 
-        if (repoPath != null && !repoPath.isEmpty()) {
-            directory = FileSystemUtil.createFileTypeRoot(volume).resolve(repoPath);
-        } else {
-            directory = FileSystemUtil.createFileTypeRoot(volume);
-        }
+            if (repoPath != null && !repoPath.isEmpty()) {
+                directory = FileSystemUtil.createFileTypeRoot(volume).resolve(repoPath);
+            } else {
+                directory = FileSystemUtil.createFileTypeRoot(volume);
+            }
 
-        if (!Files.isDirectory(directory)) {
-            LOGGER.debug("scanDirectory() - {} - Skipping as root is not a directory !!", directory);
+            if (!Files.isDirectory(directory)) {
+                LOGGER.debug("scanDirectory() - {} - Skipping as root is not a directory !!", directory);
+                return result;
+            }
+            // Get the list of kids
+            final List<String> kids = new ArrayList<>();
+            try (final DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+                stream.forEach(file -> kids.add(file.getFileName().toString()));
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+
+            LOGGER.debug("scanDirectory() - {}", FileUtil.getCanonicalPath(directory));
+
+            result.setFileCount(kids.size());
+
+            // Here we check the file system for files before querying the database.
+            // The idea is that entries are written in the database before the file
+            // system. We can safely delete entries on the file system that do not
+            // have a entries on the database.
+            checkEmptyDirectory(result, doDelete, directory, oldFileTime, kids);
+
+            // Loop around all the kids build a list of file names or sub processing
+            // directories.
+            buildFilesKeyedByBaseName(result, repoPath, filesKeyedByBaseName, directory, kids);
+
+            if (repoPath != null && !repoPath.isEmpty()) {
+                buildStreamsKeyedByBaseName(volume, repoPath, streamsKeyedByBaseName);
+
+                deleteUnknownFiles(result, doDelete, directory, oldFileTime, filesKeyedByBaseName, streamsKeyedByBaseName);
+
+            }
+
             return result;
-        }
-        // Get the list of kids
-        final List<String> kids = new ArrayList<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
-            stream.forEach(file -> kids.add(file.getFileName().toString()));
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        LOGGER.debug("scanDirectory() - {}", FileUtil.getCanonicalPath(directory));
-
-        result.setFileCount(kids.size());
-
-        // Here we check the file system for files before querying the database.
-        // The idea is that entries are written in the database before the file
-        // system. We can safely delete entries on the file system that do not
-        // have a entries on the database.
-        checkEmptyDirectory(result, doDelete, directory, oldFileTime, kids);
-
-        // Loop around all the kids build a list of file names or sub processing
-        // directories.
-        buildFilesKeyedByBaseName(result, repoPath, filesKeyedByBaseName, directory, kids);
-
-        if (repoPath != null && !repoPath.isEmpty()) {
-            buildStreamsKeyedByBaseName(volume, repoPath, streamsKeyedByBaseName);
-
-            deleteUnknownFiles(result, doDelete, directory, oldFileTime, filesKeyedByBaseName, streamsKeyedByBaseName);
-
-        }
-
-        return result;
+        });
     }
 
     private void buildStreamsKeyedByBaseName(final Volume volume, final String repoPath,
@@ -291,21 +298,15 @@ public class FileSystemStreamMaintenanceService
 
                 } else {
                     // Add to our list
-                    final String fileName = kid;
-                    String baseName = fileName;
-                    final int baseNameSplit = fileName.indexOf(".");
+                    String baseName = kid;
+                    final int baseNameSplit = kid.indexOf(".");
                     if (baseNameSplit != -1) {
-                        baseName = fileName.substring(0, baseNameSplit);
+                        baseName = kid.substring(0, baseNameSplit);
                     }
                     // Ignore any OS hidden files ".xyz" (e.g.
                     // .nfs0000000001a5674600004012)
                     if (baseName.length() > 0) {
-                        List<String> names = filesKeyedByBaseName.get(baseName);
-                        if (names == null) {
-                            names = new ArrayList<>();
-                            filesKeyedByBaseName.put(baseName, names);
-                        }
-                        names.add(fileName);
+                        filesKeyedByBaseName.computeIfAbsent(baseName, k -> new ArrayList<>()).add(kid);
                     }
                 }
             }
@@ -378,12 +379,12 @@ public class FileSystemStreamMaintenanceService
                         streamBaseName));
     }
 
-    /**
-     * Root match
-     */
-    public boolean isChartTypeStreamPeriod(final String chartName) {
-        return chartName.startsWith(STYLE_STREAM_PERIOD);
-    }
+//    /**
+//     * Root match
+//     */
+//    public boolean isChartTypeStreamPeriod(final String chartName) {
+//        return chartName.startsWith(STYLE_STREAM_PERIOD);
+//    }
 
     @Override
     public FindStreamVolumeCriteria createCriteria() {

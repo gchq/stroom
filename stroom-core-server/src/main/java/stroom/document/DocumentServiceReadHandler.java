@@ -19,6 +19,7 @@ package stroom.document;
 
 import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.logging.DocumentEventLog;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedObject;
@@ -30,17 +31,20 @@ class DocumentServiceReadHandler
         extends AbstractTaskHandler<DocumentServiceReadAction<SharedObject>, SharedObject> {
     private final DocumentService documentService;
     private final DocumentEventLog documentEventLog;
+    private final Security security;
 
     @Inject
     DocumentServiceReadHandler(final DocumentService documentService,
-                               final DocumentEventLog documentEventLog) {
+                               final DocumentEventLog documentEventLog,
+                               final Security security) {
         this.documentService = documentService;
         this.documentEventLog = documentEventLog;
+        this.security = security;
     }
 
     @Override
     public SharedObject exec(final DocumentServiceReadAction action) {
-
+        return security.secureResult(() -> {
 //        BaseEntity result = null;
 //
 //        try {
@@ -64,13 +68,14 @@ class DocumentServiceReadHandler
 //
 //        return result;
 
-        try {
-            final SharedObject doc = (SharedObject) documentService.readDocument(action.getDocRef());
-            documentEventLog.view(action.getDocRef(), null);
-            return doc;
-        } catch (final RuntimeException e) {
-            documentEventLog.view(action.getDocRef(), e);
-            throw e;
-        }
+            try {
+                final SharedObject doc = (SharedObject) documentService.readDocument(action.getDocRef());
+                documentEventLog.view(action.getDocRef(), null);
+                return doc;
+            } catch (final RuntimeException e) {
+                documentEventLog.view(action.getDocRef(), e);
+                throw e;
+            }
+        });
     }
 }

@@ -22,18 +22,16 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Entity;
 import stroom.entity.util.FieldMap;
-import stroom.security.Secured;
+import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-@Secured(PermissionNames.ADMINISTRATOR)
-// Ensures you must be an administrator to perform any action unless specifically overridden.
-// @Transactional
 public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCriteria> implements BaseEntityService<E>, FindService<E, C>, SupportsCriteriaLogging<C> {
     private final StroomEntityManager entityManager;
+    private final Security security;
     private final QueryAppender<E, C> queryAppender;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
@@ -41,74 +39,48 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
     private String entityType;
     private FieldMap sqlFieldMap;
 
-    protected SystemEntityServiceImpl(final StroomEntityManager entityManager) {
+    protected SystemEntityServiceImpl(final StroomEntityManager entityManager,
+                                      final Security security) {
         this.entityManager = entityManager;
+        this.security = security;
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
         this.findServiceHelper = new FindServiceHelper<>(entityManager, getEntityClass(), queryAppender);
     }
 
-//    @Secured(permission = DocumentPermissionNames.CREATE)
-//    @Override
-//    public E create(final E entity) {
-//        return entityServiceHelper.create(entity);
-//    }
-
-    //    @Secured(permission = DocumentPermissionNames.READ)
-    // @Transactional
     @Override
     public E load(final E entity) {
-        return entityServiceHelper.load(entity, Collections.emptySet(), queryAppender);
+        return security.secureResult(permission(), () -> entityServiceHelper.load(entity, Collections.emptySet(), queryAppender));
     }
 
-    //    @Secured(permission = DocumentPermissionNames.READ)
-    // @Transactional
     @Override
     public E load(final E entity, final Set<String> fetchSet) {
-        return entityServiceHelper.load(entity, fetchSet, queryAppender);
+        return security.secureResult(permission(), () -> entityServiceHelper.load(entity, fetchSet, queryAppender));
     }
 
-    //    @Secured(permission = DocumentPermissionNames.READ)
-    // @Transactional
     @Override
     public E loadById(final long id) {
-        return entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender);
+        return security.secureResult(permission(), () -> entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender));
     }
 
-    //    @Secured(permission = DocumentPermissionNames.READ)
-    // @Transactional
     @Override
     public E loadById(final long id, final Set<String> fetchSet) {
-        return entityServiceHelper.loadById(id, fetchSet, queryAppender);
+        return security.secureResult(permission(), () -> entityServiceHelper.loadById(id, fetchSet, queryAppender));
     }
 
-//    // @Transactional
-//    @Override
-//    public E loadByIdInsecure(final long id, final Set<String> fetchSet) {
-//        return entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender);
-//    }
-
-    //    @Secured(permission = DocumentPermissionNames.UPDATE)
     @Override
     public E save(final E entity) {
-        return entityServiceHelper.save(entity, queryAppender);
+        return security.secureResult(permission(), () -> entityServiceHelper.save(entity, queryAppender));
     }
 
-//    @Secured(permission = DocumentPermissionNames.USE)
-//    @Override
-//    public BaseResultList<E> find(final C criteria) {
-//        return super.find(criteria);
-//    }
-
-    //    @Secured(permission = DocumentPermissionNames.DELETE)
     @Override
     public Boolean delete(final E entity) {
-        return entityServiceHelper.delete(entity);
+        return security.secureResult(permission(), () -> entityServiceHelper.delete(entity));
     }
 
     @Override
     public BaseResultList<E> find(C criteria) {
-        return findServiceHelper.find(criteria, getSqlFieldMap());
+        return security.secureResult(permission(), () -> findServiceHelper.find(criteria, getSqlFieldMap()));
     }
 
     public String getEntityType() {
@@ -149,5 +121,9 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
             sqlFieldMap = createFieldMap();
         }
         return sqlFieldMap;
+    }
+
+    protected String permission() {
+        return PermissionNames.ADMINISTRATOR;
     }
 }

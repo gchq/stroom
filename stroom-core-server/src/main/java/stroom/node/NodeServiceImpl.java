@@ -24,7 +24,8 @@ import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.properties.StroomPropertyService;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -35,8 +36,6 @@ import javax.inject.Singleton;
  * </p>
  */
 @Singleton
-// @Transactional
-@Secured(Node.MANAGE_NODES_PERMISSION)
 public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriteria>
         implements NodeService, NodeServiceGetDefaultNode {
     private final NodeServiceTransactionHelper nodeServiceUtil;
@@ -45,9 +44,10 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
 
     @Inject
     NodeServiceImpl(final StroomEntityManager entityManager,
+                    final Security security,
                     final NodeServiceTransactionHelper nodeServiceUtil,
                     final StroomPropertyService propertyService) {
-        super(entityManager);
+        super(entityManager, security);
 
         this.nodeServiceUtil = nodeServiceUtil;
         this.nodeName = propertyService.getProperty("stroom.node");
@@ -91,5 +91,10 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
     @Override
     public FindNodeCriteria createCriteria() {
         return new FindNodeCriteria();
+    }
+
+    @Override
+    protected String permission() {
+        return ApplicationPermissionNames.MANAGE_NODES_PERMISSION;
     }
 }

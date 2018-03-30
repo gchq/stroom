@@ -23,6 +23,7 @@ import stroom.node.NodeCache;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskHandlerBean;
@@ -42,38 +43,43 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
     private final NodeCache nodeCache;
     private final ClusterCallServiceRemote clusterCallServiceRemote;
     private final TaskManager taskManager;
+    private final Security security;
 
     @Inject
     UpdateClusterStateTaskHandler(final NodeService nodeService,
                                   final NodeCache nodeCache,
                                   final ClusterCallServiceRemote clusterCallServiceRemote,
-                                  final TaskManager taskManager) {
+                                  final TaskManager taskManager,
+                                  final Security security) {
         this.nodeService = nodeService;
         this.nodeCache = nodeCache;
         this.clusterCallServiceRemote = clusterCallServiceRemote;
         this.taskManager = taskManager;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final UpdateClusterStateTask task) {
-        try {
-            // We sometimes want to wait a bit before we try and establish the
-            // cluster state. This is often the case during startup when multiple
-            // nodes start to ping each other which triggers an update but we want
-            // to give other nodes some time to start also.
-            if (task.getDelay() > 0) {
-                Thread.sleep(task.getDelay());
+        return security.secureResult(() -> {
+            try {
+                // We sometimes want to wait a bit before we try and establish the
+                // cluster state. This is often the case during startup when multiple
+                // nodes start to ping each other which triggers an update but we want
+                // to give other nodes some time to start also.
+                if (task.getDelay() > 0) {
+                    Thread.sleep(task.getDelay());
+                }
+
+                updateState(task);
+            } catch (final InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
 
-            updateState(task);
-        } catch (final InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-
-            // Continue to interrupt this thread.
-            Thread.currentThread().interrupt();
-        }
-
-        return VoidResult.INSTANCE;
+            return VoidResult.INSTANCE;
+        });
     }
 
     private void updateState(final UpdateClusterStateTask task) {

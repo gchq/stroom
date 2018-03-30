@@ -18,15 +18,14 @@
 package stroom.streamtask;
 
 import event.logging.BaseAdvancedQueryItem;
-
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.HqlBuilder;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.security.Insecure;
-import stroom.security.Secured;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 
@@ -36,19 +35,20 @@ import java.util.List;
 import java.util.Set;
 
 @Singleton
-// @Transactional
-@Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamProcessor, FindStreamProcessorCriteria>
         implements StreamProcessorService {
+    private final Security security;
+
     @Inject
-    StreamProcessorServiceImpl(final StroomEntityManager entityManager) {
-        super(entityManager);
+    StreamProcessorServiceImpl(final StroomEntityManager entityManager,
+                               final Security security) {
+        super(entityManager, security);
+        this.security = security;
     }
 
-    @Insecure
     @Override
     public StreamProcessor loadByIdInsecure(final long id) {
-        return loadById(id);
+        return security.insecureResult(() -> loadById(id));
     }
 
     @Override
@@ -72,8 +72,13 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
         return new StreamProcessorQueryAppender(entityManager);
     }
 
+    @Override
+    protected String permission() {
+        return ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION;
+    }
+
     private static class StreamProcessorQueryAppender extends QueryAppender<StreamProcessor, FindStreamProcessorCriteria> {
-        public StreamProcessorQueryAppender(StroomEntityManager entityManager) {
+        StreamProcessorQueryAppender(StroomEntityManager entityManager) {
             super(entityManager);
         }
 

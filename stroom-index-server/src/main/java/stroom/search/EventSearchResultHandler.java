@@ -29,7 +29,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class EventSearchResultHandler implements ResultHandler {
+class EventSearchResultHandler implements ResultHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchResultHandler.class);
 
     private final LinkedBlockingQueue<EventRefs> pendingMerges = new LinkedBlockingQueue<>();

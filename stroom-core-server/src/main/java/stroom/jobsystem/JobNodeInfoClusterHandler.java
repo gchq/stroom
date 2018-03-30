@@ -19,6 +19,7 @@ package stroom.jobsystem;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeInfo;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.scheduler.Scheduler;
@@ -31,36 +32,41 @@ import java.util.Collection;
 class JobNodeInfoClusterHandler
         extends AbstractTaskHandler<JobNodeInfoClusterTask, SharedMap<JobNode, JobNodeInfo>> {
     private final JobNodeTrackerCache jobNodeTrackerCache;
+    private final Security security;
 
     @Inject
-    JobNodeInfoClusterHandler(final JobNodeTrackerCache jobNodeTrackerCache) {
+    JobNodeInfoClusterHandler(final JobNodeTrackerCache jobNodeTrackerCache,
+                              final Security security) {
         this.jobNodeTrackerCache = jobNodeTrackerCache;
+        this.security = security;
     }
 
     @Override
     public stroom.util.shared.SharedMap<JobNode, JobNodeInfo> exec(final JobNodeInfoClusterTask task) {
-        final SharedMap<JobNode, JobNodeInfo> result = new SharedMap<>();
-        final Trackers trackers = jobNodeTrackerCache.getTrackers();
-        if (trackers != null) {
-            final Collection<JobNodeTracker> trackerList = trackers.getTrackerList();
-            if (trackerList != null) {
-                for (final JobNodeTracker tracker : trackerList) {
-                    final JobNode jobNode = tracker.getJobNode();
-                    final int currentTaskCount = tracker.getCurrentTaskCount();
+        return security.secureResult(() -> {
+            final SharedMap<JobNode, JobNodeInfo> result = new SharedMap<>();
+            final Trackers trackers = jobNodeTrackerCache.getTrackers();
+            if (trackers != null) {
+                final Collection<JobNodeTracker> trackerList = trackers.getTrackerList();
+                if (trackerList != null) {
+                    for (final JobNodeTracker tracker : trackerList) {
+                        final JobNode jobNode = tracker.getJobNode();
+                        final int currentTaskCount = tracker.getCurrentTaskCount();
 
-                    Long scheduleReferenceTime = null;
-                    final Scheduler scheduler = trackers.getScheduler(jobNode);
-                    if (scheduler != null) {
-                        scheduleReferenceTime = scheduler.getScheduleReferenceTime();
+                        Long scheduleReferenceTime = null;
+                        final Scheduler scheduler = trackers.getScheduler(jobNode);
+                        if (scheduler != null) {
+                            scheduleReferenceTime = scheduler.getScheduleReferenceTime();
+                        }
+
+                        final JobNodeInfo info = new JobNodeInfo(currentTaskCount, scheduleReferenceTime,
+                                tracker.getLastExecutedTime());
+                        result.put(jobNode, info);
                     }
-
-                    final JobNodeInfo info = new JobNodeInfo(currentTaskCount, scheduleReferenceTime,
-                            tracker.getLastExecutedTime());
-                    result.put(jobNode, info);
                 }
             }
-        }
 
-        return result;
+            return result;
+        });
     }
 }

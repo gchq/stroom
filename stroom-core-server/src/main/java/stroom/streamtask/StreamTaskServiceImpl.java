@@ -18,7 +18,6 @@
 package stroom.streamtask;
 
 import event.logging.BaseAdvancedQueryItem;
-
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -33,8 +32,8 @@ import stroom.entity.util.SqlBuilder;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.security.Secured;
-import stroom.streamstore.StreamStore;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -51,22 +50,16 @@ import java.util.Set;
  * Base class the API stream task services.
  */
 @Singleton
-// @Transactional
-@Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, FindStreamTaskCriteria>
         implements StreamTaskService {
-    public static final String TABLE_PREFIX_STREAM_TASK = "ST.";
-    public static final String TABLE_PREFIX_FEED = "F.";
-    public static final String TABLE_PREFIX_STREAM = "S.";
-    public static final String TABLE_PREFIX_PIPELINE = "P.";
-
-    private final StreamStore streamStore;
+    private static final String TABLE_PREFIX_STREAM_TASK = "ST.";
+    private final Security security;
 
     @Inject
     StreamTaskServiceImpl(final StroomEntityManager entityManager,
-                          final StreamStore streamStore) {
-        super(entityManager);
-        this.streamStore = streamStore;
+                          final Security security) {
+        super(entityManager, security);
+        this.security = security;
     }
 
     @Override
@@ -76,71 +69,73 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
 
     @Override
     public BaseResultList<SummaryDataRow> findSummary(final FindStreamTaskCriteria criteria) {
-        final SqlBuilder sql = new SqlBuilder();
-        sql.append("SELECT D.* FROM (");
-        sql.append("SELECT P.");
-        sql.append(PipelineEntity.ID);
-        sql.append(" PIPE_ID, P.");
-        sql.append(SQLNameConstants.NAME);
-        sql.append(" P_NAME, F.");
-        sql.append(Feed.ID);
-        sql.append(" FEED_ID, F.");
-        sql.append(SQLNameConstants.NAME);
-        sql.append(" F_NAME, SPF.");
-        sql.append(StreamProcessorFilter.PRIORITY);
-        sql.append(" PRIORITY_1, SPF.");
-        sql.append(StreamProcessorFilter.PRIORITY);
-        sql.append(" PRIORITY_2, ST.");
-        sql.append(StreamTask.STATUS);
-        sql.append(" STAT_ID1, ST.");
-        sql.append(StreamTask.STATUS);
-        sql.append(" STAT_ID2, COUNT(*) AS ");
-        sql.append(SQLNameConstants.COUNT);
-        sql.append(" FROM ");
-        sql.append(StreamTask.TABLE_NAME);
-        sql.append(" ST JOIN ");
-        sql.append(Stream.TABLE_NAME);
-        sql.append(" S ON (S.");
-        sql.append(Stream.ID);
-        sql.append(" = ST.");
-        sql.append(Stream.FOREIGN_KEY);
-        sql.append(") JOIN ");
-        sql.append(Feed.TABLE_NAME);
-        sql.append(" F ON (F.");
-        sql.append(Feed.ID);
-        sql.append(" = S.");
-        sql.append(Feed.FOREIGN_KEY);
-        sql.append(") JOIN ");
-        sql.append(StreamProcessorFilter.TABLE_NAME);
-        sql.append(" SPF ON (SPF.");
-        sql.append(StreamProcessorFilter.ID);
-        sql.append(" = ST.");
-        sql.append(StreamProcessorFilter.FOREIGN_KEY);
-        sql.append(") JOIN ");
-        sql.append(StreamProcessor.TABLE_NAME);
-        sql.append(" SP ON (SP.");
-        sql.append(StreamProcessor.ID);
-        sql.append(" = SPF.");
-        sql.append(StreamProcessor.FOREIGN_KEY);
-        sql.append(") JOIN ");
-        sql.append(PipelineEntity.TABLE_NAME);
-        sql.append(" P ON (P.");
-        sql.append(PipelineEntity.ID);
-        sql.append(" = SP.");
-        sql.append(PipelineEntity.FOREIGN_KEY);
-        sql.append(")");
-        sql.append(" WHERE 1=1");
+        return security.secureResult(permission(), () -> {
+            final SqlBuilder sql = new SqlBuilder();
+            sql.append("SELECT D.* FROM (");
+            sql.append("SELECT P.");
+            sql.append(PipelineEntity.ID);
+            sql.append(" PIPE_ID, P.");
+            sql.append(SQLNameConstants.NAME);
+            sql.append(" P_NAME, F.");
+            sql.append(Feed.ID);
+            sql.append(" FEED_ID, F.");
+            sql.append(SQLNameConstants.NAME);
+            sql.append(" F_NAME, SPF.");
+            sql.append(StreamProcessorFilter.PRIORITY);
+            sql.append(" PRIORITY_1, SPF.");
+            sql.append(StreamProcessorFilter.PRIORITY);
+            sql.append(" PRIORITY_2, ST.");
+            sql.append(StreamTask.STATUS);
+            sql.append(" STAT_ID1, ST.");
+            sql.append(StreamTask.STATUS);
+            sql.append(" STAT_ID2, COUNT(*) AS ");
+            sql.append(SQLNameConstants.COUNT);
+            sql.append(" FROM ");
+            sql.append(StreamTask.TABLE_NAME);
+            sql.append(" ST JOIN ");
+            sql.append(Stream.TABLE_NAME);
+            sql.append(" S ON (S.");
+            sql.append(Stream.ID);
+            sql.append(" = ST.");
+            sql.append(Stream.FOREIGN_KEY);
+            sql.append(") JOIN ");
+            sql.append(Feed.TABLE_NAME);
+            sql.append(" F ON (F.");
+            sql.append(Feed.ID);
+            sql.append(" = S.");
+            sql.append(Feed.FOREIGN_KEY);
+            sql.append(") JOIN ");
+            sql.append(StreamProcessorFilter.TABLE_NAME);
+            sql.append(" SPF ON (SPF.");
+            sql.append(StreamProcessorFilter.ID);
+            sql.append(" = ST.");
+            sql.append(StreamProcessorFilter.FOREIGN_KEY);
+            sql.append(") JOIN ");
+            sql.append(StreamProcessor.TABLE_NAME);
+            sql.append(" SP ON (SP.");
+            sql.append(StreamProcessor.ID);
+            sql.append(" = SPF.");
+            sql.append(StreamProcessor.FOREIGN_KEY);
+            sql.append(") JOIN ");
+            sql.append(PipelineEntity.TABLE_NAME);
+            sql.append(" P ON (P.");
+            sql.append(PipelineEntity.ID);
+            sql.append(" = SP.");
+            sql.append(PipelineEntity.FOREIGN_KEY);
+            sql.append(")");
+            sql.append(" WHERE 1=1");
 
-        sql.appendPrimitiveValueSetQuery("S." + Stream.STATUS, criteria.getStatusSet());
-        sql.appendEntityIdSetQuery("P." + BaseEntity.ID, criteria.getPipelineIdSet());
-        sql.appendEntityIdSetQuery("F." + BaseEntity.ID, criteria.getFeedIdSet());
+            sql.appendPrimitiveValueSetQuery("S." + Stream.STATUS, criteria.getStatusSet());
+            sql.appendEntityIdSetQuery("P." + BaseEntity.ID, criteria.getPipelineIdSet());
+            sql.appendEntityIdSetQuery("F." + BaseEntity.ID, criteria.getFeedIdSet());
 
-        sql.append(" GROUP BY PIPE_ID, FEED_ID, PRIORITY_1, STAT_ID1");
-        sql.append(") D");
+            sql.append(" GROUP BY PIPE_ID, FEED_ID, PRIORITY_1, STAT_ID1");
+            sql.append(") D");
 
-        sql.appendOrderBy(getSqlFieldMap().getSqlFieldMap(), criteria, null);
+            sql.appendOrderBy(getSqlFieldMap().getSqlFieldMap(), criteria, null);
 
-        return getEntityManager().executeNativeQuerySummaryDataResult(sql, 4);
+            return getEntityManager().executeNativeQuerySummaryDataResult(sql, 4);
+        });
     }
 
     @Override
@@ -181,6 +176,11 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
                 .add(FindStreamTaskCriteria.FIELD_STATUS, "STAT_ID1", "pstatus")
                 .add(FindStreamTaskCriteria.FIELD_COUNT, SQLNameConstants.COUNT, "NA")
                 .add(FindStreamTaskCriteria.FIELD_NODE, null, "node.name");
+    }
+
+    @Override
+    protected String permission() {
+        return ApplicationPermissionNames.MANAGE_PROCESSORS_PERMISSION;
     }
 
     private static class StreamTaskQueryAppender extends QueryAppender<StreamTask, FindStreamTaskCriteria> {

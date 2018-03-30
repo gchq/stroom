@@ -43,7 +43,6 @@ public class PipelineEntity extends DocumentEntity {
     public static final String DATA = SQLNameConstants.DATA;
 
     public static final String ENTITY_TYPE = "Pipeline";
-    public static final String STEPPING_PERMISSION = "Pipeline Stepping";
 
     private static final long serialVersionUID = 4519634323788508083L;
 

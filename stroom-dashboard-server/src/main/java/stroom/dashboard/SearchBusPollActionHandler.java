@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 @TaskHandlerBean(task = SearchBusPollAction.class)
-public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction, SearchBusPollResult> {
+class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction, SearchBusPollResult> {
     private transient static final Logger LOGGER = LoggerFactory.getLogger(SearchBusPollActionHandler.class);
 
     private final QueryService queryService;
@@ -70,23 +70,24 @@ public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPol
 
     @Override
     public SearchBusPollResult exec(final SearchBusPollAction action) {
-        // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-        return security.useAsReadResult(() -> {
-            if (LOGGER.isDebugEnabled()) {
-                final StringBuilder sb = new StringBuilder(
-                        "Only the following search queries should be active for session '");
-                sb.append(action.getUserToken());
-                sb.append("'\n");
-                for (final DashboardQueryKey queryKey : action.getSearchActionMap().keySet()) {
-                    sb.append("\t");
-                    sb.append(queryKey.toString());
+        return security.secureResult(() -> {
+            // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
+            return security.useAsReadResult(() -> {
+                if (LOGGER.isDebugEnabled()) {
+                    final StringBuilder sb = new StringBuilder(
+                            "Only the following search queries should be active for session '");
+                    sb.append(action.getUserToken());
+                    sb.append("'\n");
+                    for (final DashboardQueryKey queryKey : action.getSearchActionMap().keySet()) {
+                        sb.append("\t");
+                        sb.append(queryKey.toString());
+                    }
+                    LOGGER.debug(sb.toString());
                 }
-                LOGGER.debug(sb.toString());
-            }
 
-            final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
-            final ActiveQueries activeQueries = activeQueriesManager.get(searchSessionId);
-            final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
+                final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
+                final ActiveQueries activeQueries = activeQueriesManager.get(searchSessionId);
+                final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
 
 //            // Fix query keys so they have session and user info.
 //            for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
@@ -95,24 +96,25 @@ public class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPol
 //                queryKey.setUserId(action.getUserId());
 //            }
 
-            // Kill off any queries that are no longer required by the UI.
-            activeQueries.destroyUnusedQueries(action.getSearchActionMap().keySet());
+                // Kill off any queries that are no longer required by the UI.
+                activeQueries.destroyUnusedQueries(action.getSearchActionMap().keySet());
 
-            // Get query results for every active query.
-            for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
-                final DashboardQueryKey queryKey = entry.getKey();
+                // Get query results for every active query.
+                for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
+                    final DashboardQueryKey queryKey = entry.getKey();
 
-                final SearchRequest searchRequest = entry.getValue();
+                    final SearchRequest searchRequest = entry.getValue();
 
-                if (searchRequest != null && searchRequest.getSearch() != null) {
-                    final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
-                    if (searchResponse != null) {
-                        searchResultMap.put(queryKey, searchResponse);
+                    if (searchRequest != null && searchRequest.getSearch() != null) {
+                        final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
+                        if (searchResponse != null) {
+                            searchResultMap.put(queryKey, searchResponse);
+                        }
                     }
                 }
-            }
 
-            return new SearchBusPollResult(searchResultMap);
+                return new SearchBusPollResult(searchResultMap);
+            });
         });
     }
 

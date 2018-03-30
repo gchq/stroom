@@ -20,6 +20,7 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceFindReferenceAction;
 import stroom.entity.shared.ResultList;
 import stroom.query.api.v2.DocRef;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -29,16 +30,21 @@ import javax.inject.Inject;
 class EntityServiceFindReferenceHandler
         extends AbstractTaskHandler<EntityServiceFindReferenceAction<BaseEntity>, ResultList<DocRef>> {
     private final EntityServiceBeanRegistry beanRegistry;
+    private final Security security;
 
     @Inject
-    EntityServiceFindReferenceHandler(final EntityServiceBeanRegistry beanRegistry) {
+    EntityServiceFindReferenceHandler(final EntityServiceBeanRegistry beanRegistry,
+                                      final Security security) {
         this.beanRegistry = beanRegistry;
+        this.security = security;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public ResultList<DocRef> exec(final EntityServiceFindReferenceAction<BaseEntity> action) {
-        final Object entityService = beanRegistry.getEntityServiceByType(action.getEntity().getType());
-        return (ResultList<DocRef>) beanRegistry.invoke(entityService, "findReference", action.getEntity());
+        return security.secureResult(() -> {
+            final Object entityService = beanRegistry.getEntityServiceByType(action.getEntity().getType());
+            return (ResultList<DocRef>) beanRegistry.invoke(entityService, "findReference", action.getEntity());
+        });
     }
 }

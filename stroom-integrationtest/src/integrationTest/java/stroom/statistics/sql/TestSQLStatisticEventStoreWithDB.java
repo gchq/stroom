@@ -25,6 +25,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
+import stroom.security.Security;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
@@ -73,6 +74,9 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     private SQLStatisticEventStore sqlStatisticEventStore;
     @Inject
     private StroomDatabaseInfo stroomDatabaseInfo;
+    @Inject
+    private Security security;
+
     private boolean ignoreAllTests = false;
 
     @Override
@@ -253,7 +257,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, new SimpleTaskContext());
+                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
 
         final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(sqlStatisticAggregateMap);
 

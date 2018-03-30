@@ -24,6 +24,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerPermissions;
 import stroom.explorer.shared.FetchExplorerPermissionsAction;
 import stroom.query.api.v2.DocRef;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.AbstractTaskHandler;
@@ -42,53 +43,58 @@ class FetchExplorerPermissionsHandler
         extends AbstractTaskHandler<FetchExplorerPermissionsAction, SharedMap<ExplorerNode, ExplorerPermissions>> {
     private final ExplorerService explorerService;
     private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     FetchExplorerPermissionsHandler(final ExplorerService explorerService,
-                                    final SecurityContext securityContext) {
+                                    final SecurityContext securityContext,
+                                    final Security security) {
         this.explorerService = explorerService;
         this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
     public SharedMap<ExplorerNode, ExplorerPermissions> exec(final FetchExplorerPermissionsAction action) {
-        final List<ExplorerNode> explorerNodeList = action.getExplorerNodeList();
-        final Map<ExplorerNode, ExplorerPermissions> resultMap = new HashMap<>();
+        return security.secureResult(() -> {
+            final List<ExplorerNode> explorerNodeList = action.getExplorerNodeList();
+            final Map<ExplorerNode, ExplorerPermissions> resultMap = new HashMap<>();
 
-        for (final ExplorerNode explorerNode : explorerNodeList) {
-            final Set<DocumentType> createPermissions = new HashSet<>();
-            final Set<String> documentPermissions = new HashSet<>();
-            DocRef docRef = explorerNode.getDocRef();
+            for (final ExplorerNode explorerNode : explorerNodeList) {
+                final Set<DocumentType> createPermissions = new HashSet<>();
+                final Set<String> documentPermissions = new HashSet<>();
+                DocRef docRef = explorerNode.getDocRef();
 
-            if (docRef != null) {
-                for (final String permissionName : DocumentPermissionNames.DOCUMENT_PERMISSIONS) {
-                    if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(),
-                            permissionName)) {
-                        documentPermissions.add(permissionName);
+                if (docRef != null) {
+                    for (final String permissionName : DocumentPermissionNames.DOCUMENT_PERMISSIONS) {
+                        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(),
+                                permissionName)) {
+                            documentPermissions.add(permissionName);
+                        }
                     }
                 }
-            }
 
-            // If no entity reference has been passed then assume root folder.
-            if (docRef == null) {
-                docRef = ExplorerConstants.ROOT_DOC_REF;
-            }
+                // If no entity reference has been passed then assume root folder.
+                if (docRef == null) {
+                    docRef = ExplorerConstants.ROOT_DOC_REF;
+                }
 
-            // Add special permissions for folders to control creation of sub items.
-            if (DocumentTypes.isFolder(docRef.getType())) {
-                final DocumentTypes documentTypes = explorerService.getDocumentTypes();
-                for (final DocumentType documentType : documentTypes.getNonSystemTypes()) {
-                    final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(documentType.getType());
-                    if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(),
-                            permissionName)) {
-                        createPermissions.add(documentType);
+                // Add special permissions for folders to control creation of sub items.
+                if (DocumentTypes.isFolder(docRef.getType())) {
+                    final DocumentTypes documentTypes = explorerService.getDocumentTypes();
+                    for (final DocumentType documentType : documentTypes.getNonSystemTypes()) {
+                        final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(documentType.getType());
+                        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(),
+                                permissionName)) {
+                            createPermissions.add(documentType);
+                        }
                     }
                 }
+
+                resultMap.put(explorerNode, new ExplorerPermissions(createPermissions, documentPermissions, securityContext.isAdmin()));
             }
 
-            resultMap.put(explorerNode, new ExplorerPermissions(createPermissions, documentPermissions, securityContext.isAdmin()));
-        }
-
-        return new SharedMap<>(resultMap);
+            return new SharedMap<>(resultMap);
+        });
     }
 }

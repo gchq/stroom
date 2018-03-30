@@ -29,7 +29,7 @@ import stroom.task.TaskHandlerBean;
 import java.text.ParseException;
 
 @TaskHandlerBean(task = ValidateExpressionAction.class)
-public class ValidateExpressionHandler extends AbstractTaskHandler<ValidateExpressionAction, ValidateExpressionResult> {
+class ValidateExpressionHandler extends AbstractTaskHandler<ValidateExpressionAction, ValidateExpressionResult> {
     @Override
     public ValidateExpressionResult exec(final ValidateExpressionAction action) {
         try {

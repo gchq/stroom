@@ -29,18 +29,18 @@ import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.security.Secured;
 import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.streamstore.StreamStore;
-import stroom.streamstore.shared.Stream;
 import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @TaskHandlerBean(task = FetchDataWithPipelineAction.class)
-@Secured(Stream.VIEW_DATA_WITH_PIPELINE_PERMISSION)
 class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWithPipelineAction> {
+    private final Security security;
+
     @Inject
     FetchDataWithPipelineHandler(final StreamStore streamStore,
                                  final FeedService feedService,
@@ -66,23 +66,26 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
                 streamEventLog,
                 security,
                 pipelineScopeRunnable);
+        this.security = security;
     }
 
     @Override
     public AbstractFetchDataResult exec(final FetchDataWithPipelineAction action) {
-        // Because we are securing this to require XSLT then we must check that
-        // some has been provided
-        if (action.getPipeline() == null) {
-            throw new EntityServiceException("No pipeline has been supplied");
-        }
+        return security.secureResult(ApplicationPermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION, () -> {
+            // Because we are securing this to require XSLT then we must check that
+            // some has been provided
+            if (action.getPipeline() == null) {
+                throw new EntityServiceException("No pipeline has been supplied");
+            }
 
-        final Long streamId = action.getStreamId();
+            final Long streamId = action.getStreamId();
 
-        if (streamId != null) {
-            return getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
-                    action.isMarkerMode(), action.getPipeline(), action.isShowAsHtml());
-        }
+            if (streamId != null) {
+                return getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
+                        action.isMarkerMode(), action.getPipeline(), action.isShowAsHtml());
+            }
 
-        return null;
+            return null;
+        });
     }
 }

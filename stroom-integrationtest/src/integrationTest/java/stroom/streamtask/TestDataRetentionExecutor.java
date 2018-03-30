@@ -32,6 +32,7 @@ import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.StreamStore;
+import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
@@ -52,7 +53,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private StreamMaintenanceService streamMaintenanceService;
+    private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
     private FeedService feedService;
     @Inject

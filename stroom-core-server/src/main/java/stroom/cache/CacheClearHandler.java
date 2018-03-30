@@ -17,10 +17,10 @@
 package stroom.cache;
 
 import stroom.cache.shared.CacheClearAction;
-import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.cluster.FindClearServiceClusterTask;
-import stroom.security.Secured;
+import stroom.security.shared.ApplicationPermissionNames;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
@@ -30,28 +30,32 @@ import stroom.util.shared.VoidResult;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = CacheClearAction.class)
-@Secured(CacheRow.MANAGE_CACHE_PERMISSION)
 class CacheClearHandler extends AbstractTaskHandler<CacheClearAction, VoidResult> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final Security security;
 
     @Inject
-    CacheClearHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+    CacheClearHandler(final ClusterDispatchAsyncHelper dispatchHelper,
+                      final Security security) {
         this.dispatchHelper = dispatchHelper;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final CacheClearAction action) {
-        final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
-        criteria.getName().setString(action.getCacheName());
+        return security.secureResult(ApplicationPermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+            final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
+            criteria.getName().setString(action.getCacheName());
 
-        final FindClearServiceClusterTask<FindCacheInfoCriteria> clusterTask = new FindClearServiceClusterTask<>(
-                action.getUserToken(), action.getTaskName(), StroomCacheManager.class, criteria);
+            final FindClearServiceClusterTask<FindCacheInfoCriteria> clusterTask = new FindClearServiceClusterTask<>(
+                    action.getUserToken(), action.getTaskName(), StroomCacheManager.class, criteria);
 
-        if (action.getNode() != null) {
-            dispatchHelper.execAsync(clusterTask, action.getNode());
-        } else {
-            dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
-        }
-        return new VoidResult();
+            if (action.getNode() != null) {
+                dispatchHelper.execAsync(clusterTask, action.getNode());
+            } else {
+                dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
+            }
+            return new VoidResult();
+        });
     }
 }

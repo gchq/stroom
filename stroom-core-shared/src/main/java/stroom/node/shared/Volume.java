@@ -48,7 +48,6 @@ public class Volume extends AuditedEntity {
     public static final String INDEX_STATUS = SQLNameConstants.INDEX + SQLNameConstants.STATUS_SUFFIX;
     public static final String BYTES_LIMIT = SQLNameConstants.BYTES + SQLNameConstants.LIMIT_SUFFIX;
     public static final String ENTITY_TYPE = "Volume";
-    public static final String MANAGE_VOLUMES_PERMISSION = "Manage Volumes";
 
     private static final long serialVersionUID = 2100406585501252906L;
     private static final long TEN_GB = 10 * 1024 * 1024 * 1024;

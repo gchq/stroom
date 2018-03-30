@@ -25,6 +25,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.logging.DocumentEventLog;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedObject;
@@ -36,46 +37,51 @@ class EntityServiceFindHandler
         extends AbstractTaskHandler<EntityServiceFindAction<BaseCriteria, SharedObject>, ResultList<SharedObject>> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog documentEventLog;
+    private final Security security;
 
     @Inject
     EntityServiceFindHandler(final EntityServiceBeanRegistry beanRegistry,
-                             final DocumentEventLog documentEventLog) {
+                             final DocumentEventLog documentEventLog,
+                             final Security security) {
         this.beanRegistry = beanRegistry;
         this.documentEventLog = documentEventLog;
+        this.security = security;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public ResultList<SharedObject> exec(final EntityServiceFindAction<BaseCriteria, SharedObject> action) {
-        BaseResultList<SharedObject> result = null;
+        return security.secureResult(() -> {
+            BaseResultList<SharedObject> result;
 
-        final And and = new And();
-        final Advanced advanced = new Advanced();
-        advanced.getAdvancedQueryItems().add(and);
-        final Query query = new Query();
-        query.setAdvanced(advanced);
-
-        try {
-            final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
+            final And and = new And();
+            final Advanced advanced = new Advanced();
+            advanced.getAdvancedQueryItems().add(and);
+            final Query query = new Query();
+            query.setAdvanced(advanced);
 
             try {
-                if (entityService != null) {
-                    final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
-                    logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
+                final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
+
+                try {
+                    if (entityService != null) {
+                        final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
+                        logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
+                    }
+                } catch (final RuntimeException e) {
+                    // Ignore.
                 }
+
+                result = (BaseResultList<SharedObject>) beanRegistry.invoke(entityService, "find", action.getCriteria());
+                documentEventLog.search(action.getCriteria(), query, result);
             } catch (final RuntimeException e) {
-                // Ignore.
+                documentEventLog.search(action.getCriteria(), query, e);
+
+                throw e;
             }
 
-            result = (BaseResultList<SharedObject>) beanRegistry.invoke(entityService, "find", action.getCriteria());
-            documentEventLog.search(action.getCriteria(), query, result);
-        } catch (final RuntimeException e) {
-            documentEventLog.search(action.getCriteria(), query, e);
 
-            throw e;
-        }
-
-
-        return result;
+            return result;
+        });
     }
 }

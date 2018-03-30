@@ -20,7 +20,6 @@ import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
 import stroom.pool.AbstractPoolCache;
 import stroom.pool.PoolItem;
-import stroom.security.Insecure;
 import stroom.security.Security;
 import stroom.util.cache.CacheManager;
 import stroom.xmlschema.XMLSchemaCache;
@@ -30,7 +29,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@Insecure
 @EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
 class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
         implements SchemaPool, EntityEvent.Handler {

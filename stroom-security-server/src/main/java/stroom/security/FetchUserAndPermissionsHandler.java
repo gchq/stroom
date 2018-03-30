@@ -27,7 +27,6 @@ import stroom.util.config.StroomProperties;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchUserAndPermissionsAction.class)
-@Insecure
 class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPermissionsAction, UserAndPermissions> {
     private static final String PREVENT_LOGIN_PROPERTY = "stroom.maintenance.preventLogin";
 
@@ -46,20 +45,22 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
 
     @Override
     public UserAndPermissions exec(final FetchUserAndPermissionsAction task) {
-        final UserRef userRef = CurrentUserState.currentUserRef();
-        if (userRef == null) {
-            return null;
-        }
+        return security.insecureResult(() -> {
+            final UserRef userRef = CurrentUserState.currentUserRef();
+            if (userRef == null) {
+                return null;
+            }
 
-        final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
-        if (preventLogin) {
-            security.asUser(UserTokenUtil.create(userRef.getName(), null), () -> {
-                if (!securityContext.isAdmin()) {
-                    throw new AuthenticationException("You are not allowed access at this time");
-                }
-            });
-        }
+            final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
+            if (preventLogin) {
+                security.asUser(UserTokenUtil.create(userRef.getName(), null), () -> {
+                    if (!securityContext.isAdmin()) {
+                        throw new AuthenticationException("You are not allowed access at this time");
+                    }
+                });
+            }
 
-        return new UserAndPermissions(userRef, userAndPermissionsHelper.get(userRef));
+            return new UserAndPermissions(userRef, userAndPermissionsHelper.get(userRef));
+        });
     }
 }

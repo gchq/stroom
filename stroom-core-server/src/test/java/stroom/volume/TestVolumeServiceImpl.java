@@ -24,7 +24,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.properties.MockStroomPropertyService;
 import stroom.node.NodeCache;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
@@ -32,12 +31,13 @@ import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeState;
-import stroom.properties.StroomPropertyService;
 import stroom.persist.EntityManagerSupport;
+import stroom.properties.MockStroomPropertyService;
+import stroom.properties.StroomPropertyService;
+import stroom.security.Security;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
-import stroom.guice.StroomBeanStore;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -76,10 +76,12 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
             VolumeState.create(0, 1000));
     private final Volume public2b = Volume.create(node2b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private List<Volume> volumeList = null;
+
     private MockVolumeService volumeServiceImpl = null;
     @Mock
     private StroomEntityManager stroomEntityManager;
+    @Mock
+    private Security security;
     @Mock
     private EntityManagerSupport entityManagerSupport;
 
@@ -88,8 +90,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         MockitoAnnotations.initMocks(this);
         deleteDefaultVolumesDir();
 
-        volumeList = new ArrayList<>();
-//        volumeList.clear();
+        final List<Volume> volumeList = new ArrayList<>();
         volumeList.add(public1a);
         volumeList.add(public1b);
         volumeList.add(public2a);
@@ -97,7 +98,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
         mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, "2");
 
-        volumeServiceImpl = new MockVolumeService(stroomEntityManager, entityManagerSupport, new NodeCache(node1a), mockStroomPropertyService, null, null);
+        volumeServiceImpl = new MockVolumeService(stroomEntityManager, security, entityManagerSupport, new NodeCache(node1a), mockStroomPropertyService, null);
         volumeServiceImpl.volumeList = volumeList;
     }
 
@@ -189,7 +190,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         Assert.assertTrue(volumeServiceImpl.saveCalled);
         //make sure both paths have been saved
         Assert.assertEquals(2, volumeServiceImpl.savedVolumes.stream()
-                .map(vol -> vol.getPath())
+                .map(Volume::getPath)
                 .filter(path -> path.equals(FileUtil.getCanonicalPath(DEFAULT_INDEX_VOLUME_PATH)) ||
                         path.equals(FileUtil.getCanonicalPath(DEFAULT_STREAM_VOLUME_PATH)))
                 .count());
@@ -209,12 +210,17 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         private List<Volume> savedVolumes = new ArrayList<>();
 
         MockVolumeService(final StroomEntityManager stroomEntityManager,
+                          final Security security,
                           final EntityManagerSupport entityManagerSupport,
                           final NodeCache nodeCache,
                           final StroomPropertyService stroomPropertyService,
-                          final StroomBeanStore stroomBeanStore,
                           final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
-            super(stroomEntityManager, entityManagerSupport, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsReceiverProvider);
+            super(stroomEntityManager,
+                    security,
+                    entityManagerSupport,
+                    nodeCache,
+                    stroomPropertyService,
+                    internalStatisticsReceiverProvider);
         }
 
         @Override

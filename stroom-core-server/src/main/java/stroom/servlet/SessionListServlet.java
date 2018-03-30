@@ -16,10 +16,10 @@
 
 package stroom.servlet;
 
-import stroom.security.Insecure;
+import stroom.security.Security;
+import stroom.task.TaskIdFactory;
 import stroom.task.TaskManager;
 import stroom.util.date.DateUtil;
-import stroom.task.TaskIdFactory;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -30,18 +30,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class SessionListServlet extends HttpServlet {
     private static final long serialVersionUID = 8723931558071593017L;
 
     private final TaskManager taskManager;
+    private final Security security;
 
     @Inject
-    SessionListServlet(final TaskManager taskManager) {
+    SessionListServlet(final TaskManager taskManager,
+                       final Security security) {
         this.taskManager = taskManager;
+        this.security = security;
     }
 
     /**
@@ -51,14 +54,21 @@ public class SessionListServlet extends HttpServlet {
      * details.
      */
     @Override
-    @Insecure
-    public void service(final ServletRequest arg0, final ServletResponse arg1) throws ServletException, IOException {
-        super.service(arg0, arg1);
+    public void service(final ServletRequest req, final ServletResponse res) {
+        security.insecure(() -> {
+            try {
+                super.service(req, res);
+            } catch (ServletException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
-            throws ServletException, IOException {
+            throws IOException {
         response.setContentType("text/html");
 
         final List<List<String>> table = new ArrayList<>();
@@ -89,7 +99,7 @@ public class SessionListServlet extends HttpServlet {
             table.add(row);
         }
 
-        Collections.sort(table, (l1, l2) -> l2.get(0).compareTo(l1.get(0)));
+        table.sort((l1, l2) -> l2.get(0).compareTo(l1.get(0)));
 
         response.getWriter().write(
                 "<html><head><link type=\"text/css\" href=\"css/SessionList.css\" rel=\"stylesheet\" /></head><body>");

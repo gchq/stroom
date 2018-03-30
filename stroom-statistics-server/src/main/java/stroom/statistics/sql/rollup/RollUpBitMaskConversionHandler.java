@@ -18,7 +18,6 @@ package stroom.statistics.sql.rollup;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.security.Insecure;
 import stroom.statistics.shared.common.CustomRollUpMaskFields;
 import stroom.statistics.shared.common.RollUpBitMaskConversionAction;
 import stroom.task.AbstractTaskHandler;
@@ -30,7 +29,6 @@ import java.util.List;
 import java.util.Set;
 
 @TaskHandlerBean(task = RollUpBitMaskConversionAction.class)
-@Insecure
 class RollUpBitMaskConversionHandler
         extends AbstractTaskHandler<RollUpBitMaskConversionAction, ResultList<CustomRollUpMaskFields>> {
     @Override

@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.StroomDatabaseInfo;
+import stroom.security.Security;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
@@ -62,6 +63,8 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     private SQLStatisticAggregationTransactionHelper sqlStatisticAggregationTransactionHelper;
     @Inject
     private StroomDatabaseInfo stroomDatabaseInfo;
+    @Inject
+    private Security security;
 
     @Override
     public void onBefore() {
@@ -651,7 +654,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, new SimpleTaskContext());
+                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
 
         final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(sqlStatisticAggregateMap);
 

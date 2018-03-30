@@ -19,10 +19,11 @@ package stroom.entity.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
+import stroom.guice.StroomBeanStore;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import java.util.Set;
@@ -32,32 +33,37 @@ class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceCluster
     private static final Logger LOGGER = LoggerFactory.getLogger(ClearServiceClusterHandler.class);
 
     private final StroomBeanStore stroomBeanStore;
+    private final Security security;
 
     @Inject
-    ClearServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
+    ClearServiceClusterHandler(final StroomBeanStore stroomBeanStore,
+                               final Security security) {
         this.stroomBeanStore = stroomBeanStore;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final ClearServiceClusterTask task) {
-        if (task == null) {
-            throw new RuntimeException("No task supplied");
-        }
-        if (task.getBeanClass() == null) {
-            final Set<Clearable> set = stroomBeanStore.getInstancesOfType(Clearable.class);
-            set.forEach(clearable -> {
-                LOGGER.info("Calling clear on {}", clearable);
-                clearable.clear();
-            });
-        } else {
-            LOGGER.info("Calling clear on {}", task.getBeanClass());
-            final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
-            if (obj == null) {
-                throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
+        return security.secureResult(() -> {
+            if (task == null) {
+                throw new RuntimeException("No task supplied");
             }
+            if (task.getBeanClass() == null) {
+                final Set<Clearable> set = stroomBeanStore.getInstancesOfType(Clearable.class);
+                set.forEach(clearable -> {
+                    LOGGER.info("Calling clear on {}", clearable);
+                    clearable.clear();
+                });
+            } else {
+                LOGGER.info("Calling clear on {}", task.getBeanClass());
+                final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
+                if (obj == null) {
+                    throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
+                }
 
-            ((Clearable) obj).clear();
-        }
-        return new VoidResult();
+                ((Clearable) obj).clear();
+            }
+            return new VoidResult();
+        });
     }
 }

@@ -64,11 +64,6 @@ public class Stream extends BaseEntityBig {
     public static final String PARENT_STREAM_ID = SQLNameConstants.PARENT + SEP + SQLNameConstants.STREAM + SEP + ID;
     public static final String STREAM_TASK_ID = StreamTask.TABLE_NAME + SEP + ID;
     public static final String ENTITY_TYPE = "Stream";
-    public static final String VIEW_DATA_PERMISSION = "Data - View";
-    public static final String VIEW_DATA_WITH_PIPELINE_PERMISSION = "Data - View With Pipeline";
-    public static final String DELETE_DATA_PERMISSION = "Data - Delete";
-    public static final String IMPORT_DATA_PERMISSION = "Data - Import";
-    public static final String EXPORT_DATA_PERMISSION = "Data - Export";
     private static final long serialVersionUID = -497426444934457256L;
     /**
      * We don't eager fetch this one ... you need to call loadFeed.

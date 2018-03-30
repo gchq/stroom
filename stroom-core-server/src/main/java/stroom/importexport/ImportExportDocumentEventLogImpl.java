@@ -27,39 +27,43 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.logging.StroomEventLoggingService;
 import stroom.query.api.v2.DocRef;
-import stroom.security.Insecure;
+import stroom.security.Security;
 
 import javax.inject.Inject;
 
-@Insecure
 class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportDocumentEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
+    private final Security security;
 
     @Inject
-    ImportExportDocumentEventLogImpl(final StroomEventLoggingService eventLoggingService) {
+    ImportExportDocumentEventLogImpl(final StroomEventLoggingService eventLoggingService,
+                                     final Security security) {
         this.eventLoggingService = eventLoggingService;
+        this.security = security;
     }
 
     @Override
     public void importDocument(final String type, final String uuid, final String name, final Exception e) {
-        try {
-            final Event event = createAction("Import", "Importing", type, name);
-            final ObjectOutcome objectOutcome = new ObjectOutcome();
-            event.getEventDetail().setCreate(objectOutcome);
+        security.insecure(() -> {
+            try {
+                final Event event = createAction("Import", "Importing", type, name);
+                final ObjectOutcome objectOutcome = new ObjectOutcome();
+                event.getEventDetail().setCreate(objectOutcome);
 
-            final Object object = new Object();
-            object.setType(type);
-            object.setId(uuid);
-            object.setName(name);
+                final Object object = new Object();
+                object.setType(type);
+                object.setId(uuid);
+                object.setName(name);
 
-            objectOutcome.getObjects().add(object);
-            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(e));
-            eventLoggingService.log(event);
-        } catch (final RuntimeException ex) {
-            LOGGER.error("Unable to create event!", ex);
-        }
+                objectOutcome.getObjects().add(object);
+                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(e));
+                eventLoggingService.log(event);
+            } catch (final RuntimeException ex) {
+                LOGGER.error("Unable to create event!", ex);
+            }
+        });
     }
 
     @Override

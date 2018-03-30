@@ -38,13 +38,14 @@ import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
-import stroom.security.Secured;
-import stroom.util.scheduler.SimpleCron;
-import stroom.util.shared.ModelStringUtil;
+import stroom.security.Security;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.lifecycle.StroomStartup;
+import stroom.util.scheduler.SimpleCron;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -55,13 +56,11 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-// @Transactional
-@Secured(Job.MANAGE_JOBS_PERMISSION)
 public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCriteria> implements JobNodeService {
-    public static final String DELETE_ORPHAN_JOBS_MYSQL = "DELETE JB FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN "
+    private static final String DELETE_ORPHAN_JOBS_MYSQL = "DELETE JB FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN "
             + JobNode.TABLE_NAME + " JB_ND ON (JB." + Job.ID + " = JB_ND." + Job.FOREIGN_KEY + ") WHERE JB_ND."
             + JobNode.ID + " IS NULL;";
-    public static final String DELETE_ORPHAN_JOBS_HSQLDB = "DELETE FROM " + Job.TABLE_NAME + " WHERE " + Job.ID
+    private static final String DELETE_ORPHAN_JOBS_HSQLDB = "DELETE FROM " + Job.TABLE_NAME + " WHERE " + Job.ID
             + " IN (" + "SELECT " + Job.ID + " FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN " + JobNode.TABLE_NAME
             + " JB_ND ON (JB." + Job.ID + " = JB_ND." + Job.FOREIGN_KEY + ") WHERE JB_ND." + JobNode.ID + " IS NULL);";
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeServiceImpl.class);
@@ -79,6 +78,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
     @Inject
     JobNodeServiceImpl(final StroomEntityManager entityManager,
+                       final Security security,
                        final EntityManagerSupport entityManagerSupport,
                        final ClusterLockService clusterLockService,
                        final NodeCache nodeCache,
@@ -86,7 +86,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                        final StroomBeanStore stroomBeanStore,
                        final StroomDatabaseInfo stroomDatabaseInfo,
                        final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
-        super(entityManager);
+        super(entityManager, security);
         this.entityManager = entityManager;
         this.entityManagerSupport = entityManagerSupport;
         this.clusterLockService = clusterLockService;
@@ -98,7 +98,6 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     }
 
     @Override
-//    @Secured(permission = DocumentPermissionNames.UPDATE)
     public JobNode save(final JobNode entity) {
         // We always want to update a job instance even if we have a stale
         // version.
@@ -256,7 +255,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     }
 
     private Job getOrCreateJob(final Job job) {
-        Job result = null;
+        Job result;
 
         // During unit testing jobs are deleted from the database
         // and need to be added back in but because they are added in
@@ -310,8 +309,13 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         return new JobNodeQueryAppender(entityManager);
     }
 
+    @Override
+    protected String permission() {
+        return ApplicationPermissionNames.MANAGE_JOBS_PERMISSION;
+    }
+
     private static class JobNodeQueryAppender extends QueryAppender<JobNode, FindJobNodeCriteria> {
-        public JobNodeQueryAppender(final StroomEntityManager entityManager) {
+        JobNodeQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 

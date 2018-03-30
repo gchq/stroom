@@ -33,21 +33,23 @@ import stroom.entity.QueryDataLogUtil;
 import stroom.logging.StroomEventLoggingService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.security.Insecure;
+import stroom.security.Security;
 
 import javax.inject.Inject;
 
-@Insecure
 public class SearchEventLogImpl implements SearchEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
+    private final Security security;
     private final DictionaryStore dictionaryStore;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
+                              final Security security,
                               final DictionaryStore dictionaryStore) {
         this.eventLoggingService = eventLoggingService;
+        this.security = security;
         this.dictionaryStore = dictionaryStore;
     }
 
@@ -55,7 +57,7 @@ public class SearchEventLogImpl implements SearchEventLog {
     public void search(final DocRef dataSourceRef,
                        final ExpressionOperator expression,
                        final String queryInfo) {
-        search("Search", dataSourceRef, expression, queryInfo, null);
+        security.insecure(() -> search("Search", dataSourceRef, expression, queryInfo, null));
     }
 
     @Override
@@ -63,14 +65,14 @@ public class SearchEventLogImpl implements SearchEventLog {
                        final ExpressionOperator expression,
                        final String queryInfo,
                        final Exception e) {
-        search("Search", dataSourceRef, expression, queryInfo, e);
+        security.insecure(() -> search("Search", dataSourceRef, expression, queryInfo, e));
     }
 
     @Override
     public void batchSearch(final DocRef dataSourceRef,
                             final ExpressionOperator expression,
                             final String queryInfo) {
-        search("Batch search", dataSourceRef, expression, queryInfo, null);
+        security.insecure(() -> search("Batch search", dataSourceRef, expression, queryInfo, null));
     }
 
     @Override
@@ -78,14 +80,14 @@ public class SearchEventLogImpl implements SearchEventLog {
                             final ExpressionOperator expression,
                             final String queryInfo,
                             final Exception e) {
-        search("Batch search", dataSourceRef, expression, queryInfo, e);
+        security.insecure(() -> search("Batch search", dataSourceRef, expression, queryInfo, e));
     }
 
     @Override
     public void downloadResults(final DocRef dataSourceRef,
                                 final ExpressionOperator expression,
                                 final String queryInfo) {
-        downloadResults("Batch search", dataSourceRef, expression, queryInfo, null);
+        security.insecure(() -> downloadResults("Batch search", dataSourceRef, expression, queryInfo, null));
     }
 
     @Override
@@ -93,7 +95,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                                 final ExpressionOperator expression,
                                 final String queryInfo,
                                 final Exception e) {
-        downloadResults("Download search results", dataSourceRef, expression, queryInfo, e);
+        security.insecure(() -> downloadResults("Download search results", dataSourceRef, expression, queryInfo, e));
     }
 
     @Override
@@ -102,32 +104,34 @@ public class SearchEventLogImpl implements SearchEventLog {
                                 final ExpressionOperator expression,
                                 final String queryInfo,
                                 final Exception e) {
-        try {
-            final String dataSourceName = getDataSourceName(dataSourceRef);
+        security.insecure(() -> {
+            try {
+                final String dataSourceName = getDataSourceName(dataSourceRef);
 
-            final DataSources dataSources = new DataSources();
-            dataSources.getDataSource().add(dataSourceName);
+                final DataSources dataSources = new DataSources();
+                dataSources.getDataSource().add(dataSourceName);
 
-            final Criteria criteria = new Criteria();
-            criteria.setDataSources(dataSources);
-            criteria.setQuery(getQuery(expression));
+                final Criteria criteria = new Criteria();
+                criteria.setDataSources(dataSources);
+                criteria.setQuery(getQuery(expression));
 
-            final MultiObject multiObject = new MultiObject();
-            multiObject.getObjects().add(criteria);
+                final MultiObject multiObject = new MultiObject();
+                multiObject.getObjects().add(criteria);
 
-            final Export exp = new Export();
-            exp.setSource(multiObject);
-            exp.setOutcome(EventLoggingUtil.createOutcome(e));
+                final Export exp = new Export();
+                exp.setSource(multiObject);
+                exp.setOutcome(EventLoggingUtil.createOutcome(e));
 
-            final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
+                final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
 
-            event.getEventDetail().setExport(exp);
-            event.getEventDetail().setPurpose(getPurpose(queryInfo));
+                event.getEventDetail().setExport(exp);
+                event.getEventDetail().setPurpose(getPurpose(queryInfo));
 
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e2) {
-            LOGGER.error(e.getMessage(), e2);
-        }
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e2) {
+                LOGGER.error(e.getMessage(), e2);
+            }
+        });
     }
 
     @Override
@@ -136,28 +140,30 @@ public class SearchEventLogImpl implements SearchEventLog {
                        final ExpressionOperator expression,
                        final String queryInfo,
                        final Exception e) {
-        try {
-            String dataSourceName = getDataSourceName(dataSourceRef);
-            if (dataSourceName == null || dataSourceName.isEmpty()) {
-                dataSourceName = "NULL";
+        security.insecure(() -> {
+            try {
+                String dataSourceName = getDataSourceName(dataSourceRef);
+                if (dataSourceName == null || dataSourceName.isEmpty()) {
+                    dataSourceName = "NULL";
+                }
+
+                final DataSources dataSources = new DataSources();
+                dataSources.getDataSource().add(dataSourceName);
+
+                final Search search = new Search();
+                search.setDataSources(dataSources);
+                search.setQuery(getQuery(expression));
+                search.setOutcome(EventLoggingUtil.createOutcome(e));
+
+                final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
+                event.getEventDetail().setSearch(search);
+                event.getEventDetail().setPurpose(getPurpose(queryInfo));
+
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e2) {
+                LOGGER.error(e.getMessage(), e2);
             }
-
-            final DataSources dataSources = new DataSources();
-            dataSources.getDataSource().add(dataSourceName);
-
-            final Search search = new Search();
-            search.setDataSources(dataSources);
-            search.setQuery(getQuery(expression));
-            search.setOutcome(EventLoggingUtil.createOutcome(e));
-
-            final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
-            event.getEventDetail().setSearch(search);
-            event.getEventDetail().setPurpose(getPurpose(queryInfo));
-
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e2) {
-            LOGGER.error(e.getMessage(), e2);
-        }
+        });
     }
 
     private String getDataSourceName(final DocRef docRef) {

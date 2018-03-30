@@ -23,19 +23,18 @@ import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
-import stroom.security.Insecure;
+import stroom.security.Security;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
 
 import javax.inject.Inject;
 import java.util.List;
 
-// @Transactional
-@Insecure
 public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria> implements StreamTypeService {
     @Inject
-    StreamTypeServiceImpl(final StroomEntityManager entityManager) {
-        super(entityManager);
+    StreamTypeServiceImpl(final StroomEntityManager entityManager,
+                          final Security security) {
+        super(entityManager, security);
     }
 
     /**
@@ -60,7 +59,6 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
     }
 
     @Override
-    @Insecure
     public BaseResultList<StreamType> find(final FindStreamTypeCriteria criteria) {
         return super.find(criteria);
     }
@@ -78,6 +76,11 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
     @Override
     protected QueryAppender<StreamType, FindStreamTypeCriteria> createQueryAppender(StroomEntityManager entityManager) {
         return new StreamTypeQueryAppender(entityManager);
+    }
+
+    @Override
+    protected String permission() {
+        return null;
     }
 
     private static class StreamTypeQueryAppender extends QueryAppender<StreamType, FindStreamTypeCriteria> {

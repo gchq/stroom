@@ -18,10 +18,8 @@ package stroom.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.Secured;
 import stroom.util.shared.Task;
 
-@Secured
 public abstract class AbstractTaskHandler<T extends Task<R>, R> implements TaskHandler<T, R> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTaskHandler.class);
 

@@ -37,7 +37,6 @@ public class GlobalProperty extends NamedEntity implements HasPassword {
     public static final String TABLE_NAME = SQLNameConstants.GLOBAL + SEP + SQLNameConstants.PROPERTY;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String ENTITY_TYPE = "GlobalProperty";
-    public static final String MANAGE_PROPERTIES_PERMISSION = "Manage Properties";
     public static final String SOURCE_FILE = "File";
     public static final String SOURCE_DB = "DB";
     public static final String SOURCE_DB_DEPRECATED = "DB (Deprecated)";

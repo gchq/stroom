@@ -47,8 +47,9 @@ import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.security.Secured;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
+import stroom.security.shared.ApplicationPermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.ExpressionToFindCriteria;
@@ -131,6 +132,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final VolumeService volumeService;
     private final ExpressionToFindCriteria expressionToFindCriteria;
     private final SecurityContext securityContext;
+    private final Security security;
 
     // /**
     // * Convenience method to use the id from a pre-existing stream object to
@@ -181,7 +183,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               final VolumeService volumeService,
                               final StreamAttributeValueFlush streamAttributeValueFlush,
                               final ExpressionToFindCriteria expressionToFindCriteria,
-                              final SecurityContext securityContext) {
+                              final SecurityContext securityContext,
+                              final Security security) {
         this.entityManager = entityManager;
         this.entityManagerSupport = entityManagerSupport;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
@@ -195,6 +198,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         this.streamAttributeValueFlush = streamAttributeValueFlush;
         this.expressionToFindCriteria = expressionToFindCriteria;
         this.securityContext = securityContext;
+        this.security = security;
     }
 
     public static void main(final String[] args) {
@@ -203,7 +207,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         outerCriteria.obtainPageRequest().setLength(1000);
         outerCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
         final FileSystemStreamStoreImpl fileSystemStreamStore = new FileSystemStreamStoreImpl(null, null, null, null, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
         final SqlBuilder sql = new SqlBuilder();
 
         sql.append("SELECT U.* FROM ( ");
@@ -274,8 +278,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     // @Override
     @SuppressWarnings("unchecked")
-    private Stream loadStreamById(final long id, final Set<String> fetchSet, final boolean anyStatus)
-            {
+    private Stream loadStreamById(final long id, final Set<String> fetchSet, final boolean anyStatus) {
         Stream entity = null;
 
         final HqlBuilder sql = new HqlBuilder();
@@ -551,9 +554,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     // }
 
     @Override
-    @Secured(Stream.DELETE_DATA_PERMISSION)
     public Long deleteStream(final Stream stream) {
-        return doLogicalDeleteStream(stream, true);
+        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDeleteStream(stream, true));
     }
 
     private Long doLogicalDeleteStream(final Stream stream, final boolean lockCheck) {
@@ -1329,12 +1331,13 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-    @Secured(Stream.DELETE_DATA_PERMISSION)
     // @Transactional
     public Long findDelete(final FindStreamCriteria criteria) {
-        final Context context = new Context(null, System.currentTimeMillis());
-        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
-        return findDelete(oldFindStreamCriteria);
+        return security.secureResult(ApplicationPermissionNames.DELETE_DATA_PERMISSION, () -> {
+            final Context context = new Context(null, System.currentTimeMillis());
+            final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
+            return findDelete(oldFindStreamCriteria);
+        });
     }
 
     private Long findDelete(final OldFindStreamCriteria criteria) {

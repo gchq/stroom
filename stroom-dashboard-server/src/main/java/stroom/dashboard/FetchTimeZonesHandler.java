@@ -18,7 +18,6 @@ package stroom.dashboard;
 
 import stroom.dashboard.shared.FetchTimeZonesAction;
 import stroom.dashboard.shared.TimeZoneData;
-import stroom.security.Insecure;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -28,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 
 @TaskHandlerBean(task = FetchTimeZonesAction.class)
-@Insecure
 class FetchTimeZonesHandler extends AbstractTaskHandler<FetchTimeZonesAction, TimeZoneData> {
     @Override
     public TimeZoneData exec(final FetchTimeZonesAction action) {

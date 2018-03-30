@@ -19,10 +19,11 @@ package stroom.index;
 import stroom.entity.cluster.FindFlushServiceClusterTask;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.FlushIndexShardAction;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
+import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -30,19 +31,24 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = FlushIndexShardAction.class)
 class FlushIndexShardActionHandler extends AbstractTaskHandler<FlushIndexShardAction, VoidResult> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final Security security;
 
     @Inject
-    FlushIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+    FlushIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper,
+                                 final Security security) {
         this.dispatchHelper = dispatchHelper;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final FlushIndexShardAction action) {
-        final FindFlushServiceClusterTask<FindIndexShardCriteria> clusterTask = new FindFlushServiceClusterTask<>(
-                action.getUserToken(), action.getTaskName(), IndexShardManager.class,
-                action.getCriteria());
+        return security.secureResult(() -> {
+            final FindFlushServiceClusterTask<FindIndexShardCriteria> clusterTask = new FindFlushServiceClusterTask<>(
+                    action.getUserToken(), action.getTaskName(), IndexShardManager.class,
+                    action.getCriteria());
 
-        dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
-        return new VoidResult();
+            dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
+            return new VoidResult();
+        });
     }
 }

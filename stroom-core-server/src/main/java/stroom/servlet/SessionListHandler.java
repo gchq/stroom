@@ -17,11 +17,10 @@
 package stroom.servlet;
 
 import stroom.entity.cluster.FindServiceClusterTask;
-import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.node.shared.Node;
-import stroom.security.Insecure;
+import stroom.security.Security;
 import stroom.security.UserTokenUtil;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -35,33 +34,37 @@ import java.util.ArrayList;
 import java.util.Map.Entry;
 
 @TaskHandlerBean(task = SessionListAction.class)
-@Insecure
 class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultList<SessionDetails>> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final Security security;
 
     @Inject
-    SessionListHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+    SessionListHandler(final ClusterDispatchAsyncHelper dispatchHelper,
+                       final Security security) {
         this.dispatchHelper = dispatchHelper;
+        this.security = security;
     }
 
     @Override
     public ResultList<SessionDetails> exec(final SessionListAction action) {
-        final DefaultClusterResultCollector<ResultList<SessionDetails>> collector = dispatchHelper
-                .execAsync(
-                        new FindServiceClusterTask<BaseCriteria, SessionDetails>(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "Get session list", SessionListService.class, null),
-                        TargetType.ACTIVE);
+        return security.insecureResult(() -> {
+            final DefaultClusterResultCollector<ResultList<SessionDetails>> collector = dispatchHelper
+                    .execAsync(
+                            new FindServiceClusterTask<>(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "Get session list", SessionListService.class, null),
+                            TargetType.ACTIVE);
 
-        final ArrayList<SessionDetails> rtnList = new ArrayList<>();
+            final ArrayList<SessionDetails> rtnList = new ArrayList<>();
 
-        for (final Entry<Node, ClusterCallEntry<ResultList<SessionDetails>>> call : collector.getResponseMap()
-                .entrySet()) {
-            if (call.getValue().getResult() != null) {
-                for (final SessionDetails sessionDetails : call.getValue().getResult()) {
-                    sessionDetails.setNodeName(call.getKey().getName());
-                    rtnList.add(sessionDetails);
+            for (final Entry<Node, ClusterCallEntry<ResultList<SessionDetails>>> call : collector.getResponseMap()
+                    .entrySet()) {
+                if (call.getValue().getResult() != null) {
+                    for (final SessionDetails sessionDetails : call.getValue().getResult()) {
+                        sessionDetails.setNodeName(call.getKey().getName());
+                        rtnList.add(sessionDetails);
+                    }
                 }
             }
-        }
-        return BaseResultList.createUnboundedList(rtnList);
+            return BaseResultList.createUnboundedList(rtnList);
+        });
     }
 }

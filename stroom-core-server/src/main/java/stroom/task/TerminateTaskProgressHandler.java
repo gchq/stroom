@@ -18,6 +18,7 @@ package stroom.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.Security;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.cluster.TerminateTaskClusterTask;
@@ -31,22 +32,27 @@ class TerminateTaskProgressHandler extends AbstractTaskHandler<TerminateTaskProg
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskProgressHandler.class);
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final Security security;
 
     @Inject
-    TerminateTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
+    TerminateTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper,
+                                 final Security security) {
         this.dispatchHelper = dispatchHelper;
+        this.security = security;
     }
 
     @Override
     public VoidResult exec(final TerminateTaskProgressAction action) {
-        final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(action.getUserToken(), action.getTaskName(), action.getCriteria(), action.isKill());
-        if (action.getCriteria() != null && action.getCriteria().isConstrained()) {
-            // Terminate matching tasks.
-            dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);
-        }
+        return security.secureResult(() -> {
+            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(action.getUserToken(), action.getTaskName(), action.getCriteria(), action.isKill());
+            if (action.getCriteria() != null && action.getCriteria().isConstrained()) {
+                // Terminate matching tasks.
+                dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);
+            }
 
-        LOGGER.info("exec() - Finished");
+            LOGGER.info("exec() - Finished");
 
-        return VoidResult.INSTANCE;
+            return VoidResult.INSTANCE;
+        });
     }
 }
