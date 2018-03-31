@@ -80,6 +80,7 @@ ext.versions = [
     jetty: '9.4.2.v20170220', //in line with dropwizard 1.1.0
     logback: '1.2.1', //in line with dropwizard 1.1.0
     lucene: '5.5.3',
+    rxjava: '2.1.10',
     slf4j: '1.7.24', //in line with dropwizard 1.1.0
     swagger: '1.5.16',
     unirest: '1.4.9',
@@ -182,6 +183,8 @@ ext.libs = [
     mysql_connector_java: "mysql:mysql-connector-java:5.1.40",
     poi: "org.apache.poi:poi:3.15",
     poi_ooxml: "org.apache.poi:poi-ooxml:3.15",
+    reactivestreams: "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
+    rxjava: "io.reactivex.rxjava2:rxjava:$versions.rxjava",
     saxon_he: "net.sf.saxon:Saxon-HE:9.7.0-18",
     slf4j_api: "org.slf4j:slf4j-api:$versions.slf4j",
     stax_api: "stax:stax-api:1.0.1",

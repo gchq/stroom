@@ -26,6 +26,8 @@ dependencies {
     compile(libs.hbase) { transitive = false }
     //hbase-common is currently only used for its Bytes class, so exclude all its deps
     compile libs.javax_inject
+    compile libs.reactivestreams
+    compile libs.rxjava
     compile libs.slf4j_api
     compile libs.vavr
     compile libs.xml_apis

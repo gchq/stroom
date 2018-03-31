@@ -16,29 +16,26 @@
 
 package stroom.refdata;
 
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
+import stroom.util.date.DateUtil;
 
-public class EffectiveStream implements Comparable<EffectiveStream> {
+import java.util.Objects;
+
+class EffectiveStream implements Comparable<EffectiveStream> {
     private final long streamId;
     private final long effectiveMs;
     private final int hashCode;
 
-    public EffectiveStream(final long streamId, final long effectiveMs) {
+    EffectiveStream(final long streamId, final long effectiveMs) {
         this.streamId = streamId;
         this.effectiveMs = effectiveMs;
-
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(streamId);
-        builder.append(effectiveMs);
-        hashCode = builder.toHashCode();
+        this.hashCode = Objects.hash(streamId, effectiveMs);
     }
 
-    public long getStreamId() {
+    long getStreamId() {
         return streamId;
     }
 
-    public long getEffectiveMs() {
+    long getEffectiveMs() {
         return effectiveMs;
     }
 
@@ -48,28 +45,30 @@ public class EffectiveStream implements Comparable<EffectiveStream> {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final EffectiveStream that = (EffectiveStream) o;
+        return streamId == that.streamId &&
+                effectiveMs == that.effectiveMs;
+    }
+
+    @Override
     public int hashCode() {
         return hashCode;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || !(o instanceof EffectiveStream)) {
-            return false;
-        }
-
-        final EffectiveStream effectiveStream = (EffectiveStream) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(streamId, effectiveStream.streamId);
-        builder.append(effectiveMs, effectiveStream.effectiveMs);
-        return builder.isEquals();
+    public void append(final StringBuilder sb) {
+        sb.append("streamId = ");
+        sb.append(streamId);
+        sb.append(", effectiveTime = ");
+        sb.append(DateUtil.createNormalDateTimeString(effectiveMs));
     }
 
     @Override
     public String toString() {
-        return "streamId=" + streamId + ", effectiveMs=" + effectiveMs;
+        final StringBuilder sb = new StringBuilder();
+        append(sb);
+        return sb.toString();
     }
 }

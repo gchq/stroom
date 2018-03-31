@@ -40,7 +40,7 @@ stroom.advertisedUrl=https://IP_ADDRESS/stroom/ui
 
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true
-stroom.auth.services.url=http://IP_ADDRESS:8099
+stroom.auth.services.url=http://IP_ADDRESS:8101
 stroom.auth.ui.url=https://IP_ADDRESS:5000
 stroom.auth.authentication.service.url=http://IP_ADDRESS/authenticationService/v1
 

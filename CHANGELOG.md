@@ -6,6 +6,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#588** : Fixed display of horizontal scrollbar on explorer tree in export, create, copy and move dialogs.
+
+* Issue **#691** : Volumes now reload on edit so that the entities are no longer stale the second time they are edited.
+
+* Issue **#692** : Properties now reload on edit so that the entities are no longer stale the second time they are edited.
+
+* Issue **#703** : Removed logging of InterruptedException stack trace on SQL stat queries, improved concurrency code.
+
+* Issue **#697** : Improved XSLT `Lookup` trace messages.
+
+* Issue **#697** : Added a feature to trace XSLT `Lookup` attempts so that reference data lookups can be debugged.
+
+* Issue **#702** : Fix for hanging search extraction tasks
+
+* Issue **#701** : The search `maxDocIdQueueSize` is now 1000 by default.
+
+* Issue **#700** : The format-date XSLT function now defaults years, months and days to the stream receipt time regardless of whether the input date pattern specifies them.
+
+* Issue **#657** : Change SQL Stats query code to process/transform the data as it comes back from the database rather than holding the full resultset before processing. This will reduce memory overhead and improve performance.
+
+* Issue **#634** : Remove excessive thread sleeping in index shard searching. Sleeps were causing a significant percentage of inactivity and increasing memory use as data backed up. Add more logging and logging of durations of chunks of code. Add an integration test for testing index searching for large data volumes.
+
+## [v6.0-alpha.18]
+
+* Issue **#698** : Migration of Processing Filters now protects against folders that have since been deleted
+
 * Issue **#634** : Remove excessive thread sleeping in index shard searching. Sleeps were causing a significant percentage of inactivity and increasing memory use as data backed up. Add more logging and logging of durations of chunks of code. Add an integration test for testing index searching for large data volumes.
 
 * Issue **#659** : Made format-date XSLT function default year if none specified to the year the data was received unless this would make the date later then the received time in which case a year is subtracted.
@@ -834,7 +860,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.17...6.0
+<<<<<<< HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.18...6.0
+[v6.0-alpha.18]: https://github.com/gchq/stroom/compare/v6.0-alpha.17...v6.0-alpha.18
 [v6.0-alpha.17]: https://github.com/gchq/stroom/compare/v6.0-alpha.16...v6.0-alpha.17
 [v6.0-alpha.16]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...v6.0-alpha.16
 [v6.0-alpha.15]: https://github.com/gchq/stroom/compare/v6.0-alpha.14...v6.0-alpha.15
@@ -847,3 +875,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v6.0-alpha.8]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...v6.0-alpha.8
 [v6.0-alpha.7]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...v6.0-alpha.7
 [v6.0-alpha.4]: https://github.com/gchq/stroom/commits/v6.0-alpha.4
+=======
+* Issue **#202** : Initial release of the new data retention policy functionality.
+
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.2.3...HEAD
+[v5.2.3]: https://github.com/gchq/stroom/compare/v5.2.2...v5.2.3
+[v5.2.2]: https://github.com/gchq/stroom/compare/v5.2.1...v5.2.2
+[v5.2.1]: https://github.com/gchq/stroom/compare/v5.2.0...v5.2.1
+[v5.2.0]: https://github.com/gchq/stroom/compare/v5.1.0...v5.2.0
+[v5.1.0]: https://github.com/gchq/stroom/compare/v5.1-beta.16...v5.1.0
+[v5.1-beta.16]: https://github.com/gchq/stroom/compare/v5.1-beta.15...v5.1-beta.16
+[v5.1-beta.15]: https://github.com/gchq/stroom/compare/v5.1-beta.14...v5.1-beta.15
+[v5.1-beta.14]: https://github.com/gchq/stroom/compare/v5.1-beta.13...v5.1-beta.14
+[v5.1-beta.13]: https://github.com/gchq/stroom/compare/v5.1-beta.12...v5.1-beta.13
+[v5.1-beta.12]: https://github.com/gchq/stroom/compare/v5.1-beta.11...v5.1-beta.12
+[v5.1-beta.11]: https://github.com/gchq/stroom/compare/v5.1-beta.10...v5.1-beta.11
+[v5.1-beta.10]: https://github.com/gchq/stroom/compare/v5.1-beta.9...v5.1-beta.10
+[v5.1-beta.9]: https://github.com/gchq/stroom/compare/v5.1-beta.8...v5.1-beta.9
+[v5.1-beta.8]: https://github.com/gchq/stroom/compare/v5.1-beta.7...v5.1-beta.8
+[v5.1-beta.7]: https://github.com/gchq/stroom/compare/v5.1-beta.6...v5.1-beta.7
+[v5.1-beta.6]: https://github.com/gchq/stroom/compare/v5.1-beta.5...v5.1-beta.6
+[v5.1-beta.5]: https://github.com/gchq/stroom/compare/v5.1-beta.4...v5.1-beta.5
+[v5.1-beta.4]: https://github.com/gchq/stroom/compare/v5.1-beta.3...v5.1-beta.4
+[v5.1-beta.3]: https://github.com/gchq/stroom/compare/v5.1-beta.2...v5.1-beta.3
+[v5.1-beta.2]: https://github.com/gchq/stroom/compare/v5.1-beta.1...v5.1-beta.2
+[v5.1-beta.1]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...v5.1-beta.1
+[v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
+[v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
+>>>>>>> 5.2

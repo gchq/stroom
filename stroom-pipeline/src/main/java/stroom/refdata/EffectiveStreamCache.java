@@ -43,13 +43,6 @@ import java.util.concurrent.TimeUnit;
 public class EffectiveStreamCache implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
 
-    //    // = 86 400 000
-//    private static final long ONE_DAY = 1000 * 60 * 60 * 24;
-//    // round up one day to 100000000
-//    private static final long APPROX_DAY = 100000000;
-    // actually 11.5 days but this is fine for the purposes of reference data.
-    private static final long APPROX_TEN_DAYS = 1000000000;
-
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
@@ -58,11 +51,20 @@ public class EffectiveStreamCache implements Clearable {
     private final Security security;
 
     @Inject
-    @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
                          final StreamStore streamStore,
                          final EffectiveStreamInternPool internPool,
                          final Security security) {
+        this(cacheManager, streamStore, internPool, security, 10, TimeUnit.MINUTES);
+    }
+
+    @SuppressWarnings("unchecked")
+    EffectiveStreamCache(final CacheManager cacheManager,
+                         final StreamStore streamStore,
+                         final EffectiveStreamInternPool internPool,
+                         final Security security,
+                         final long duration,
+                         final TimeUnit unit) {
         this.streamStore = streamStore;
         this.internPool = internPool;
         this.security = security;
@@ -70,7 +72,7 @@ public class EffectiveStreamCache implements Clearable {
         final CacheLoader<EffectiveStreamKey, NavigableSet> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.MINUTES);
+                .expireAfterAccess(duration, unit);
         cache = cacheBuilder.build(cacheLoader);
         cacheManager.registerCache("Reference Data - Effective Stream Cache", cacheBuilder, cache);
     }
@@ -101,12 +103,8 @@ public class EffectiveStreamCache implements Clearable {
                 criteria.setFeed(key.getFeed());
                 criteria.setStreamType(key.getStreamType());
 
-                // Limit the stream set to the day starting from the supplied
-                // effective time.
-                final long effectiveMs = key.getEffectiveMs();
-                // final Period window = new Period(effectiveMs, effectiveMs +
-                // ONE_DAY);
-                final Period window = new Period(effectiveMs, effectiveMs + APPROX_TEN_DAYS);
+                // Limit the stream set to the requested effective time window.
+                final Period window = new Period(key.getFromMs(), key.getToMs());
                 criteria.setEffectivePeriod(window);
 
                 // Locate all streams that fit the supplied criteria.
@@ -150,15 +148,6 @@ public class EffectiveStreamCache implements Clearable {
 
             return effectiveStreamSet;
         });
-    }
-
-    /**
-     * Gets a time less than the supplied time, rounded down to the nearest 11.5
-     * days (one billion milliseconds).
-     */
-    long getBaseTime(final long time) {
-        final long multiple = time / APPROX_TEN_DAYS;
-        return multiple * APPROX_TEN_DAYS;
     }
 
     long size() {

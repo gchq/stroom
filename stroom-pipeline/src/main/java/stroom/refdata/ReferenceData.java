@@ -41,10 +41,11 @@ import java.util.Map;
 import java.util.NavigableSet;
 
 public class ReferenceData {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
+    // Actually 11.5 days but this is fine for the purposes of reference data.
+    private static final long APPROX_TEN_DAYS = 1000000000;
 
     // Maps can be nested during the look up process e.g. "MAP1/MAP2"
-    private static final String NEST_SEPERATOR = "/";
+    private static final String NEST_SEPARATOR = "/";
     private static final int MINIMUM_BYTE_COUNT = 10;
     private final Map<String, CachedMapStore> nestedStreamCache = new HashMap<>();
     private final Map<MapStoreCacheKey, MapStore> localMapStoreCache = new HashMap<>();
@@ -76,63 +77,68 @@ public class ReferenceData {
      * Given a date and a map name get some reference data value.
      * </p>
      *
-     * @param time    The event time (or the time the reference data is valid for)
-     * @param mapName The map name
-     * @param key     The key of the reference data
-     * @return the value of ref data
+     * @param pipelineReferences The references to look for reference data in.
+     * @param time               The event time (or the time the reference data is valid for)
+     * @param mapName            The map name
+     * @param key                The key of the reference data
+     * @param result             The reference result object.
      */
-    public EventList getValue(final List<PipelineReference> pipelineReferences, final ErrorReceiver errorReceiver,
-                              final long time, final String mapName, final String key) {
+    public void getValue(final List<PipelineReference> pipelineReferences,
+                         final long time,
+                         final String mapName,
+                         final String key,
+                         final ReferenceDataResult result) {
         // Do we have a nested token?
-        final int splitPos = mapName.indexOf(NEST_SEPERATOR);
+        final int splitPos = mapName.indexOf(NEST_SEPARATOR);
         if (splitPos != -1) {
             // Yes ... pull out the first map
             final String startMap = mapName.substring(0, splitPos);
-            final String nextMap = mapName.substring(splitPos + NEST_SEPERATOR.length());
+            final String nextMap = mapName.substring(splitPos + NEST_SEPARATOR.length());
 
             // Look up the KV then use that to recurse
-            final EventList nextKey = doGetValue(pipelineReferences, errorReceiver, time, startMap, key);
+            doGetValue(pipelineReferences, time, startMap, key, result);
+            final EventList nextKey = result.getEventList();
             if (nextKey == null) {
                 // map broken ... no link found
-                return null;
+                result.log(Severity.WARNING, () -> "No map found for '" + startMap + "'");
+            } else {
+                getValue(pipelineReferences, time, nextMap, nextKey.toString(), result);
             }
-
-            return getValue(pipelineReferences, errorReceiver, time, nextMap, nextKey.toString());
+        } else {
+            doGetValue(pipelineReferences, time, mapName, key, result);
         }
-
-        return doGetValue(pipelineReferences, errorReceiver, time, mapName, key);
     }
 
-    private EventList doGetValue(final List<PipelineReference> pipelineReferences, final ErrorReceiver errorReceiver,
-                                 final long time, final String mapName, final String keyName) {
+    private void doGetValue(final List<PipelineReference> pipelineReferences,
+                            final long time,
+                            final String mapName,
+                            final String keyName,
+                            final ReferenceDataResult referenceDataResult) {
         for (final PipelineReference pipelineReference : pipelineReferences) {
-            EventList eventList;
-
             // Handle context data differently loading it from the
             // current stream context.
             if (pipelineReference.getStreamType() != null
                     && StreamType.CONTEXT.getName().equals(pipelineReference.getStreamType())) {
-                eventList = getNestedStreamEventList(pipelineReference, errorReceiver, mapName, keyName);
+                getNestedStreamEventList(pipelineReference, mapName, keyName, referenceDataResult);
             } else {
-                eventList = getExternalEventList(pipelineReference, errorReceiver, time, mapName, keyName);
+                getExternalEventList(pipelineReference, time, mapName, keyName, referenceDataResult);
             }
 
-            if (eventList != null) {
-                return eventList;
+            // If we have a list of events then we are done.
+            if (referenceDataResult.getEventList() != null) {
+                return;
             }
         }
-
-        return null;
     }
 
     /**
      * Get an event list from a stream that is a nested child of the current
      * stream context and is therefore not effective time sensitive.
      */
-    private EventList getNestedStreamEventList(final PipelineReference pipelineReference,
-                                               final ErrorReceiver errorReceiver, final String mapName, final String keyName) {
-        EventList events = null;
-
+    private void getNestedStreamEventList(final PipelineReference pipelineReference,
+                                          final String mapName,
+                                          final String keyName,
+                                          final ReferenceDataResult result) {
         try {
             // Get nested stream.
             final String streamTypeString = pipelineReference.getStreamType();
@@ -155,8 +161,7 @@ public class ReferenceData {
                 // have any context data stream.
                 if (provider != null) {
                     final StreamSourceInputStream inputStream = provider.getStream(streamNo);
-                    mapStore = getContextData(streamHolder.getStream(), inputStream, pipelineReference.getPipeline(),
-                            errorReceiver);
+                    mapStore = getContextData(streamHolder.getStream(), inputStream, pipelineReference.getPipeline());
                 }
 
                 cachedMapStore = new CachedMapStore(streamNo, mapStore);
@@ -164,21 +169,31 @@ public class ReferenceData {
             }
 
             if (mapStore != null) {
+                result.log(Severity.INFO, () -> "Retrieved map store from context data");
+
                 if (mapStore.getErrorReceiver() != null) {
-                    mapStore.getErrorReceiver().replay(errorReceiver);
+                    mapStore.getErrorReceiver().replay(result);
                 }
-                events = mapStore.getEvents(mapName, keyName);
+
+                final EventList eventList = mapStore.getEvents(mapName, keyName);
+                if (eventList != null) {
+                    result.log(Severity.WARNING, () -> "Map store has no reference data for context data");
+                } else {
+                    result.log(Severity.INFO, () -> "Map store contains reference data for context data");
+                }
+
+                result.setEventList(eventList);
+            } else {
+                result.log(Severity.WARNING, () -> "No map store can be retrieved for context data");
             }
         } catch (final IOException e) {
-            LOGGER.debug(e.getMessage(), e);
-            errorReceiver.log(Severity.ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
+            result.log(Severity.ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         }
-
-        return events;
     }
 
-    private MapStore getContextData(final Stream stream, final StreamSourceInputStream contextStream,
-                                    final DocRef contextPipeline, final ErrorReceiver errorReceiver) {
+    private MapStore getContextData(final Stream stream,
+                                    final StreamSourceInputStream contextStream,
+                                    final DocRef contextPipeline) {
         if (contextStream != null) {
             // Check the size of the input stream.
             final long byteCount = contextStream.size();
@@ -195,11 +210,15 @@ public class ReferenceData {
      * Get an event list from a store level/non nested stream that is sensitive
      * to effective time.
      */
-    private EventList getExternalEventList(final PipelineReference pipelineReference, final ErrorReceiver errorReceiver,
-                                           final long time, final String mapName, final String keyName) {
-        // First round down the time to the nearest 10 days approx (actually
-        // more like 11.5, one billion milliseconds).
-        final long baseTime = effectiveStreamCache.getBaseTime(time);
+    private void getExternalEventList(final PipelineReference pipelineReference,
+                                      final long time,
+                                      final String mapName,
+                                      final String keyName,
+                                      final ReferenceDataResult result) {
+        // Create a window of approx 10 days to cache effective streams.
+        // First round down the time to the nearest 10 days approx (actually more like 11.5, one billion milliseconds).
+        final long fromMs = (time / APPROX_TEN_DAYS) * APPROX_TEN_DAYS;
+        final long toMs = fromMs + APPROX_TEN_DAYS;
 
         // Make sure the reference feed is persistent otherwise lookups will
         // fail as the equals method will only test for feeds that are the
@@ -211,11 +230,13 @@ public class ReferenceData {
         if (documentPermissionCache == null || documentPermissionCache.hasDocumentPermission(Feed.ENTITY_TYPE, pipelineReference.getFeed().getUuid(), DocumentPermissionNames.USE)) {
             // Create a key to find a set of effective times in the pool.
             final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
-                    pipelineReference.getStreamType(), baseTime);
+                    pipelineReference.getStreamType(), fromMs, toMs);
             // Try and fetch a tree set of effective streams for this key.
             final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
 
             if (streamSet != null && streamSet.size() > 0) {
+                result.log(Severity.INFO, () -> "Got " + streamSet.size() + " effective streams (" + effectiveStreamKey + ")");
+
                 // Try and find the stream before the requested time that is less
                 // than or equal to it.
                 final EffectiveStream effectiveStream = streamSet.floor(new EffectiveStream(0, time));
@@ -227,16 +248,32 @@ public class ReferenceData {
                     // Get the map store associated with this effective feed.
                     final MapStore mapStore = getMapStore(mapStorePoolKey);
                     if (mapStore != null) {
-                        if (mapStore.getErrorReceiver() != null) {
-                            mapStore.getErrorReceiver().replay(errorReceiver);
-                        }
-                        return mapStore.getEvents(mapName, keyName);
-                    }
-                }
-            }
-        }
+                        result.log(Severity.INFO, () -> "Retrieved map store (" + effectiveStream + ")");
 
-        return null;
+                        if (mapStore.getErrorReceiver() != null) {
+                            mapStore.getErrorReceiver().replay(result);
+                        }
+
+                        final EventList eventList = mapStore.getEvents(mapName, keyName);
+                        if (eventList != null) {
+                            result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
+                            result.setEventList(eventList);
+
+                        } else {
+                            result.log(Severity.WARNING, () -> "Map store has no reference data (" + effectiveStream + ")");
+                        }
+                    } else {
+                        result.log(Severity.WARNING, () -> "No map store can be retrieved (" + effectiveStream + ")");
+                    }
+                } else {
+                    result.log(Severity.WARNING, () -> "No effective streams can be found in the returned set (" + effectiveStreamKey + ")");
+                }
+            } else {
+                result.log(Severity.WARNING, () -> "No effective streams can be found (" + effectiveStreamKey + ")");
+            }
+        } else {
+            result.log(Severity.ERROR, () -> "User does not have permission to use data from feed '" + pipelineReference.getFeed().getName() + "'");
+        }
     }
 
     private MapStore getMapStore(final MapStoreCacheKey mapStoreCacheKey) {

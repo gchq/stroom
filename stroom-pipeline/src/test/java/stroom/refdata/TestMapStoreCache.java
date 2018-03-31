@@ -30,7 +30,7 @@ import stroom.util.test.StroomUnitTest;
 import stroom.xml.event.EventList;
 
 @RunWith(StroomJUnit4ClassRunner.class)
-public class TestCache extends StroomUnitTest {
+public class TestMapStoreCache extends StroomUnitTest {
     private static final int MAX_CACHE_ITEMS = 200;
 
     @Test

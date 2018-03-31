@@ -3,10 +3,10 @@ server:
   adminContextPath: ${ADMIN_CONTEXT_PATH:- /admin}
   applicationConnectors:
     - type: http
-      port: 8080
+      port: ${STROOM_APP_PORT:-8080}
   adminConnectors:
     - type: http
-      port: 8081
+      port: ${STROOM_ADMIN_PORT:-8081}
   #The following two lines stop the logging of requests to the web server as this gets quite noisy with
   #lots of background rpc calls going on
   requestLog:
