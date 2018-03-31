@@ -22,6 +22,9 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
+import stroom.refdata.ReferenceDataResult;
+import stroom.util.date.DateUtil;
+import stroom.util.shared.Severity;
 import stroom.xml.event.np.NPEventList;
 
 import javax.inject.Inject;
@@ -34,8 +37,13 @@ class BitmapLookup extends AbstractLookup {
     }
 
     @Override
-    protected Sequence doLookup(final XPathContext context, final String map, final String key, final long eventTime,
-                                final boolean ignoreWarnings, final StringBuilder lookupIdentifier) throws XPathException {
+    protected Sequence doLookup(final XPathContext context,
+                                final String map,
+                                final String key,
+                                final long eventTime,
+                                final boolean ignoreWarnings,
+                                final boolean trace,
+                                final LookupIdentifier lookupIdentifier) throws XPathException {
         SequenceMaker sequenceMaker = null;
 
         int val;
@@ -55,14 +63,23 @@ class BitmapLookup extends AbstractLookup {
         if (bits.length > 0) {
             for (final int bit : bits) {
                 final String k = String.valueOf(bit);
-                final NPEventList eventList = (NPEventList) getReferenceData(map, k, eventTime, lookupIdentifier);
+                final ReferenceDataResult result = getReferenceData(map, k, eventTime, lookupIdentifier);
+                final NPEventList eventList = (NPEventList) result.getEventList();
                 if (eventList != null) {
                     if (sequenceMaker == null) {
                         sequenceMaker = new SequenceMaker(context);
                         sequenceMaker.open();
                     }
                     sequenceMaker.consume(eventList);
+
+                    if (trace) {
+                        outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
+                    }
                 } else if (!ignoreWarnings) {
+                    if (trace) {
+                        outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
+                    }
+
                     if (failedBits == null) {
                         failedBits = new StringBuilder();
                     }
@@ -75,7 +92,18 @@ class BitmapLookup extends AbstractLookup {
                 failedBits.setLength(failedBits.length() - 1);
                 failedBits.insert(0, "{");
                 failedBits.append("}");
-                createLookupFailWarning(context, map, failedBits.toString(), eventTime, null);
+
+                // Create the message.
+                final StringBuilder sb = new StringBuilder();
+                sb.append("Lookup failed ");
+                sb.append("(map = ");
+                sb.append(map);
+                sb.append(", key = ");
+                sb.append(failedBits.toString());
+                sb.append(", eventTime = ");
+                sb.append(DateUtil.createNormalDateTimeString(eventTime));
+                sb.append(")");
+                outputWarning(context, sb, null);
             }
 
             if (sequenceMaker != null) {

@@ -33,7 +33,7 @@ public class DefaultProperties {
                 .description("Temp folder to write stuff to. Should only be set per node in application property file")
                 .build());
 
-        // Stroom Proxy Repository and Aggregation 
+        // Stroom Proxy Repository and Aggregation
         list.add(new GlobalProperty.Builder()
                 .name("stroom.feed.receiptPolicyUuid")
                 .value("")
@@ -71,7 +71,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // STREAM STORE 
+        // STREAM STORE
         list.add(new GlobalProperty.Builder()
                 .name("stroom.streamstore.resilientReplicationCount")
                 .value("1")
@@ -134,7 +134,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // STREAM TASKS 
+        // STREAM TASKS
         list.add(new GlobalProperty.Builder()
                 .name("stroom.streamTask.fillTaskQueue")
                 .value("true")
@@ -172,7 +172,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // BENCHMARK 
+        // BENCHMARK
         list.add(new GlobalProperty.Builder()
                 .name("stroom.benchmark.streamCount")
                 .value("1000")
@@ -237,7 +237,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // INDEX PROPERTIES 
+        // INDEX PROPERTIES
         list.add(new GlobalProperty.Builder()
                 .name("stroom.index.ramBufferSizeMB")
                 .value("1024")
@@ -246,7 +246,7 @@ public class DefaultProperties {
                 .build());
 
 
-        // INDEX WRITER CACHE PROPERTIES 
+        // INDEX WRITER CACHE PROPERTIES
         list.add(new GlobalProperty.Builder()
                 .name("stroom.index.writer.cache.timeToLive")
                 .value("")
@@ -278,7 +278,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // QUERY HISTORY PROPERTIES 
+        // QUERY HISTORY PROPERTIES
         list.add(new GlobalProperty.Builder()
                 .name("stroom.query.history.itemsRetention")
                 .value("100")
@@ -292,7 +292,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // SEARCH PROPERTIES 
+        // SEARCH PROPERTIES
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.maxStoredDataQueueSize")
                 .value("1000")
@@ -300,7 +300,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // SEARCH SHARD 
+        // SEARCH SHARD
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.shard.maxOpen")
                 .value("5")
@@ -327,7 +327,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // SEARCH EXTRACTION 
+        // SEARCH EXTRACTION
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.extraction.maxThreads")
                 .value("4")
@@ -341,7 +341,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // SEARCH SENDER 
+        // SEARCH SENDER
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.maxBooleanClauseCount")
                 .value("1024")
@@ -361,7 +361,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // SEARCH BASED PROCESSING 
+        // SEARCH BASED PROCESSING
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.process.defaultTimeLimit")
                 .value("30")
@@ -375,7 +375,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // PIPELINE PROPERTIES 
+        // PIPELINE PROPERTIES
         list.add(new GlobalProperty.Builder()
                 .name("stroom.pipeline.xslt.maxElements")
                 .value("1000000")
@@ -389,7 +389,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // MAIN DATA SOURCE 
+        // MAIN DATA SOURCE
         list.add(new GlobalProperty.Builder()
                 .name("stroom.jpaHbm2DdlAuto")
                 .value("validate")
@@ -429,7 +429,7 @@ public class DefaultProperties {
                 .requireRestart(true)
                 .build());
 
-        // C3P0 
+        // C3P0
         list.add(new GlobalProperty.Builder()
                 .name("stroom.db.connectionPool.initialPoolSize")
                 .value("1")
@@ -522,7 +522,7 @@ public class DefaultProperties {
                 .requireRestart(true)
                 .build());
 
-        // SQL STATISTICS DATA SOURCE 
+        // SQL STATISTICS DATA SOURCE
         list.add(new GlobalProperty.Builder()
                 .name("stroom.statistics.sql.jdbcDriverClassName")
                 .value("org.hsqldb.jdbcDriver")
@@ -552,7 +552,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // C3P0 
+        // C3P0
         list.add(new GlobalProperty.Builder()
                 .name("stroom.statistics.sql.db.connectionPool.initialPoolSize")
                 .value("1")
@@ -645,7 +645,7 @@ public class DefaultProperties {
                 .requireRestart(true)
                 .build());
 
-        // Entity Names 
+        // Entity Names
         list.add(new GlobalProperty.Builder()
                 .name("stroom.namePattern")
                 .value("^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$")
@@ -659,7 +659,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // Welcome text 
+        // Welcome text
         list.add(new GlobalProperty.Builder()
                 .name("stroom.pageTitle")
                 .value("Stroom")
@@ -688,7 +688,7 @@ public class DefaultProperties {
                 .requireRestart(true)
                 .build());
 
-        // CLUSTER COMMUNICATION 
+        // CLUSTER COMMUNICATION
         list.add(new GlobalProperty.Builder()
                 .name("stroom.clusterCallUseLocal")
                 .value("true")
@@ -717,7 +717,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // EXPORT 
+        // EXPORT
         list.add(new GlobalProperty.Builder()
                 .name("stroom.export.enabled")
                 .value("false")
@@ -725,7 +725,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // UI 
+        // UI
         list.add(new GlobalProperty.Builder()
                 .name("stroom.theme.background-attachment")
                 .value("scroll")
@@ -735,7 +735,7 @@ public class DefaultProperties {
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.theme.background-color")
-                .value("#1E88E5") // #FF6F00 
+                .value("#1E88E5") // #FF6F00
                 .description("GUI")
                 .editable(true)
                 .requireUiRestart(true)
@@ -804,7 +804,7 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
-        // Query info popup 
+        // Query info popup
         list.add(new GlobalProperty.Builder()
                 .name("stroom.query.infoPopup.enabled")
                 .value("false")
@@ -827,7 +827,7 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
-        // SQL statistics store properties 
+        // SQL statistics store properties
         list.add(new GlobalProperty.Builder()
                 .name("stroom.statistics.sql.statisticAggregationBatchSize")
                 .value("1000000")
@@ -838,6 +838,12 @@ public class DefaultProperties {
                 .name("stroom.statistics.sql.search.maxResults")
                 .value("100000")
                 .description("The maximum number of records that can be returned from the statistics DB in a single query prior to aggregation")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.statistics.sql.search.fetchSize")
+                .value("5000")
+                .description("Gives the JDBC driver a hint as to the number of rows that should be fetched from the database when more rows are needed for ResultSet objects generated by this Statement. Depends on 'useCursorFetch=true' being set in the JDBC connect string. If not set, the JDBC driver's default will be used.")
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()

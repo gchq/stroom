@@ -44,7 +44,6 @@ import org.junit.runners.Suite;
         stroom.security.TestUserServiceImpl.class,
         stroom.statistics.common.TestStatisticsDataSourceImportExportSerializer.class,
         stroom.statistics.sql.TestSQLStatisticAggregationManager.class,
-        stroom.statistics.sql.TestSQLStatisticEventStoreWithDB.class,
         stroom.statistics.sql.TestSQLStatisticFlushTaskHandler.class,
         stroom.stats.TestStroomStatsStoreImportExportSerializer.class,
         stroom.streamstore.TestFileSystemZipProcessor.class,

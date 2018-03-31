@@ -7,9 +7,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.thread.ThreadUtil;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -114,7 +112,7 @@ public class TestFlowable {
 
     @Ignore //manual test
     @Test
-    public void testFlowableWithDispose() throws ExecutionException, InterruptedException {
+    public void testFlowableWithDispose() throws InterruptedException {
 
         final AtomicInteger counter = new AtomicInteger();
         final Disposable disposable = Flowable
@@ -125,7 +123,7 @@ public class TestFlowable {
                         },
                         (i, emitter) -> {
                             int j = i.incrementAndGet();
-                            ThreadUtil.sleep(500);
+                            Thread.sleep(500);
                             if (j <= 20) {
                                 LOGGER.debug("emitting {}", j);
                                 emitter.onNext(j);
@@ -154,7 +152,7 @@ public class TestFlowable {
                         });
 
         LOGGER.debug("Subscribed");
-        ThreadUtil.sleep(2250);
+        Thread.sleep(2250);
         LOGGER.debug("calling dispose");
         disposable.dispose();
         LOGGER.debug("disposed");
@@ -162,7 +160,7 @@ public class TestFlowable {
 
     @Ignore //manual test
     @Test
-    public void testFlowableWithUsingAndDispose() throws ExecutionException, InterruptedException {
+    public void testFlowableWithUsingAndDispose() throws InterruptedException {
 
         Flowable<Integer> flowableInt = Flowable
                 .using(
@@ -180,7 +178,7 @@ public class TestFlowable {
                                     },
                                     (i, emitter) -> {
                                         int j = i.get().incrementAndGet();
-                                        ThreadUtil.sleep(500);
+                                        Thread.sleep(500);
                                         if (j <= 20) {
                                             LOGGER.debug("emitting {}", j);
                                             emitter.onNext(j);
@@ -219,7 +217,7 @@ public class TestFlowable {
                         });
 
         LOGGER.debug("Subscribed");
-        ThreadUtil.sleep(2250);
+        Thread.sleep(2250);
         LOGGER.debug("calling dispose");
         disposable.dispose();
         LOGGER.debug("disposed");
@@ -240,7 +238,7 @@ public class TestFlowable {
                             int j = i.incrementAndGet();
                             if (j <= 20) {
                                 LOGGER.debug("sleeping");
-                                ThreadUtil.sleep(500);
+                                Thread.sleep(500);
                                 LOGGER.debug("emitting {}", j);
                                 emitter.onNext(j);
                             } else {
@@ -292,7 +290,7 @@ public class TestFlowable {
                         },
                         (i, emitter) -> {
                             //immediate complete
-                                emitter.onComplete();
+                            emitter.onComplete();
                         })
                 .map(i -> {
                     LOGGER.debug("mapping");

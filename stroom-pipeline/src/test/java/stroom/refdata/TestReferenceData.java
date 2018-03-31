@@ -27,7 +27,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
 import stroom.feed.MockFeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.MockPipelineService;
+import stroom.pipeline.MockPipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.impl.MockReferenceDataLoader;

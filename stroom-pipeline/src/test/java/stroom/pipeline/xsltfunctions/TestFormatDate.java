@@ -43,9 +43,11 @@ public class TestFormatDate extends StroomUnitTest {
         Assert.assertEquals("2009-04-01T00:00:00.000Z", test(formatDate, "MM", "04"));
         Assert.assertEquals("2010-03-01T00:00:00.000Z", test(formatDate, "dd", "01"));
         Assert.assertEquals("2010-02-04T00:00:00.000Z", test(formatDate, "dd", "04"));
+        Assert.assertEquals("2010-03-01T12:00:00.000Z", test(formatDate, "HH", "12"));
+        Assert.assertEquals("2010-03-01T12:30:00.000Z", test(formatDate, "HH:mm", "12:30"));
     }
 
     private String test(final FormatDate formatDate, final String pattern, final String date) {
-        return DateUtil.createNormalDateTimeString(formatDate.parseDateWithoutYear(null, "UTC", pattern, date));
+        return DateUtil.createNormalDateTimeString(formatDate.parseDate(null, "UTC", pattern, date));
     }
 }

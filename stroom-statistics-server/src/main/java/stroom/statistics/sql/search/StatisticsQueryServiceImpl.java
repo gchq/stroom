@@ -1,6 +1,8 @@
 package stroom.statistics.sql.search;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
@@ -15,74 +17,58 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap;
 import stroom.query.common.v2.Payload;
+import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.SearchResponseCreator;
+import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.StoreSize;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
-import stroom.statistics.sql.SQLStatisticEventStore;
+import stroom.statistics.sql.SQLStatisticCacheImpl;
 import stroom.statistics.sql.StatisticsQueryService;
 import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.statistics.sql.entity.StatisticsDataSourceProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class StatisticsQueryServiceImpl implements StatisticsQueryService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsQueryServiceImpl.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 
     private static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
+    private static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
 
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;
     private final StatisticStoreCache statisticStoreCache;
-    private final SQLStatisticEventStore sqlStatisticEventStore;
     private final StroomPropertyService stroomPropertyService;
+    private final StatisticsSearchService statisticsSearchService;
 
     @Inject
     public StatisticsQueryServiceImpl(final StatisticsDataSourceProvider statisticsDataSourceProvider,
                                       final StatisticStoreCache statisticStoreCache,
-                                      final SQLStatisticEventStore sqlStatisticEventStore,
-                                      final StroomPropertyService stroomPropertyService) {
+                                      final StroomPropertyService stroomPropertyService,
+                                      final StatisticsSearchService statisticsSearchService) {
         this.statisticsDataSourceProvider = statisticsDataSourceProvider;
         this.statisticStoreCache = statisticStoreCache;
-        this.sqlStatisticEventStore = sqlStatisticEventStore;
         this.stroomPropertyService = stroomPropertyService;
+        this.statisticsSearchService = statisticsSearchService;
     }
 
-    private static Coprocessor createCoprocessor(final CoprocessorSettings settings,
-                                                final FieldIndexMap fieldIndexMap,
-                                                final Map<String, String> paramMap) {
-        if (settings instanceof TableCoprocessorSettings) {
-            final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
-            final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
-                    fieldIndexMap, paramMap);
-            return tableCoprocessor;
-        }
-        return null;
-    }
-
-    private static String getPrecision(StatisticDataPoint statisticDataPoint) {
-
-        final EventStoreTimeIntervalEnum interval = EventStoreTimeIntervalEnum.fromColumnInterval(
-                statisticDataPoint.getPrecisionMs());
-        if (interval != null) {
-            return interval.longName();
-        } else {
-            // could be a precision that doesn't match one of our interval sizes
-            return "-";
-        }
-    }
 
     @Override
     public DataSource getDataSource(final DocRef docRef) {
@@ -92,116 +78,174 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     @Override
     public SearchResponse search(final SearchRequest searchRequest) {
 
-        DocRef docRef = Preconditions.checkNotNull(
-                Preconditions.checkNotNull(Preconditions.checkNotNull(searchRequest).getQuery()).getDataSource());
+        final DocRef docRef = Preconditions.checkNotNull(
+                Preconditions.checkNotNull(
+                        Preconditions.checkNotNull(searchRequest)
+                                .getQuery())
+                        .getDataSource());
         Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
         Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
 
-        StatisticStoreEntity statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
+        final StatisticStoreEntity statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
+
         if (statisticStoreEntity == null) {
             return buildEmptyResponse(
                     searchRequest,
                     "Statistic configuration could not be found for uuid " + docRef.getUuid());
-        }
-
-        StatisticDataSet statisticDataSet = sqlStatisticEventStore.searchStatisticsData(
-                searchRequest,
-                statisticStoreEntity);
-
-        if (statisticDataSet.isEmpty()) {
-            return buildEmptyResponse(searchRequest, Collections.emptyList());
         } else {
-            return buildResponse(searchRequest, statisticStoreEntity, statisticDataSet);
+            return buildResponse(searchRequest, statisticStoreEntity);
         }
     }
 
     @Override
     public Boolean destroy(final QueryKey queryKey) {
+
+        //TODO need to implement this - see stroom.search.server.SearchResultCreatorManager
+        //Could do with making that generic, see https://github.com/gchq/stroom/issues/629
+
         LOGGER.trace("destroy called for queryKey {}", queryKey);
         //No concept of destroying a search for sql statistics so just return true
         return Boolean.TRUE;
     }
 
+    private static Coprocessor createCoprocessor(final CoprocessorSettings settings,
+                                                 final FieldIndexMap fieldIndexMap,
+                                                 final Map<String, String> paramMap) {
+        if (settings instanceof TableCoprocessorSettings) {
+            final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
+            return new TableCoprocessor(tableCoprocessorSettings, fieldIndexMap, paramMap);
+        }
+        return null;
+    }
+
     private SearchResponse buildResponse(final SearchRequest searchRequest,
-                                         final StatisticStoreEntity statisticStoreEntity,
-                                         final StatisticDataSet statisticDataSet) {
+                                         final StatisticStoreEntity statisticStoreEntity) {
 
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(statisticStoreEntity);
-        Preconditions.checkNotNull(statisticDataSet);
-        Preconditions.checkArgument(!statisticDataSet.isEmpty());
 
-        // TODO: possibly the mapping from the componentId to the coprocessorsettings map is a bit odd.
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
+        Preconditions.checkNotNull(coprocessorSettingsMap);
 
-        Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap = new HashMap<>();
-        // TODO: Mapping to this is complicated! it'd be nice not to have to do this.
         final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
+        final Map<String, String> paramMap = getParamMap(searchRequest);
 
-        // Compile all of the result component options to optimise pattern matching etc.
-        if (coprocessorSettingsMap.getMap() != null) {
-            for (final Map.Entry<CoprocessorSettingsMap.CoprocessorKey, CoprocessorSettings> entry : coprocessorSettingsMap.getMap().entrySet()) {
-                final CoprocessorSettingsMap.CoprocessorKey coprocessorId = entry.getKey();
-                final CoprocessorSettings coprocessorSettings = entry.getValue();
+        final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap = coprocessorSettingsMap.getMap()
+                .entrySet()
+                .stream()
+                .map(entry -> Maps.immutableEntry(
+                        entry.getKey(),
+                        createCoprocessor(entry.getValue(), fieldIndexMap, paramMap)))
+                .filter(entry -> entry.getKey() != null)
+                .collect(ImmutableMap.toImmutableMap(Map.Entry::getKey, Map.Entry::getValue));
 
-                // Create a parameter map.
-                final Map<String, String> paramMap;
-                if (searchRequest.getQuery().getParams() != null) {
-                    paramMap = searchRequest.getQuery().getParams().stream()
-                            .collect(Collectors.toMap(Param::getKey, Param::getValue));
-                } else {
-                    paramMap = Collections.emptyMap();
-                }
+        // convert the search into something stats understands
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, statisticStoreEntity);
 
-                final Coprocessor coprocessor = createCoprocessor(coprocessorSettings, fieldIndexMap, paramMap);
-                if (coprocessor != null) {
-                    coprocessorMap.put(coprocessorId, coprocessor);
-                }
-            }
-        }
+        final AtomicLong counter = new AtomicLong(0);
 
-        Function<StatisticDataPoint, String[]> dataPointMapper = buildDataPointMapper(
-                fieldIndexMap, statisticStoreEntity);
+        final StoreSize storeSize = new StoreSize(getStoreSizes());
+        final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
 
-        statisticDataSet.stream()
-                .map(dataPointMapper)
-                .forEach(dataArray ->
-                        coprocessorMap.forEach(
-                                (key, value) -> value.receive(dataArray)));
+        //TODO should be inside a Store which should be inside a SearchResponseCreator
+        final CompletionState completionState = new CompletionState();
+        final SearchResultHandler resultHandler = new SearchResultHandler(
+                completionState,
+                coprocessorSettingsMap,
+                defaultMaxResultsSizes,
+                storeSize);
 
-        Map<CoprocessorSettingsMap.CoprocessorKey, Payload> payloadMap = coprocessorMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> entry.getValue().createPayload()));
 
-        StoreSize storeSize = new StoreSize(getStoreSizes());
-        List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-        SqlStatisticsStore store = new SqlStatisticsStore(
+        // subscribe to the flowable, mapping each resultSet to a String[]
+        // After the window period has elapsed a new flowable is create for those rows received
+        // in that window, which can all be processed and sent
+        // If the task is canceled, the flowable produced by search() will stop emitting
+        // Set up the results flowable, the search wont be executed until subscribe is called
+        statisticsSearchService.search(statisticStoreEntity, criteria, fieldIndexMap)
+                .window(PROCESS_PAYLOAD_INTERVAL_SECS, TimeUnit.SECONDS)
+                .subscribe(
+                        windowedFlowable -> {
+                            LOGGER.trace("onNext called for outer flowable");
+                            windowedFlowable.subscribe(
+                                    data -> {
+                                        LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
+                                        counter.incrementAndGet();
+
+                                        // give the data array to each of our coprocessors
+                                        coprocessorMap.values().forEach(coprocessor ->
+                                                coprocessor.receive(data));
+                                    },
+                                    throwable -> {
+                                        throw new RuntimeException(String.format("Error in flow, %s",
+                                                throwable.getMessage()), throwable);
+                                    },
+                                    () -> {
+                                        LAMBDA_LOGGER.debug(() ->
+                                                String.format("onComplete of inner flowable called, processing results so far, counter: %s",
+                                                        counter.get()));
+                                        //completed our timed window so create and pass on a payload for the
+                                        //data we have gathered so far
+                                        processPayloads(resultHandler, coprocessorMap);
+
+//                                        taskMonitor.info(task.getSearchName() +
+//                                                " - running database query (" + counter.get() + " rows fetched)");
+
+                                        // Tell the completion state that we are complete.
+                                        completionState.complete();
+                                    });
+                        },
+                        throwable -> {
+                            throw new RuntimeException(String.format("Error in flow, %s",
+                                    throwable.getMessage()), throwable);
+                        },
+                        () -> LOGGER.debug("onComplete of outer flowable called"));
+
+        LOGGER.debug("Out of flowable");
+
+        //flows all complete, so process any remaining data
+        processPayloads(resultHandler, coprocessorMap);
+
+        //wrap the resulthandler with a store
+        final SqlStatisticsStore store = new SqlStatisticsStore(
                 defaultMaxResultsSizes,
                 storeSize,
-                coprocessorSettingsMap,
-                payloadMap);
+                resultHandler);
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);
         return searchResponseCreator.create(searchRequest);
     }
 
-    private Function<StatisticDataPoint, String[]> buildDataPointMapper(final FieldIndexMap fieldIndexMap,
-                                                                        final StatisticStoreEntity statisticStoreEntity) {
-        return statisticDataPoint -> {
-            String[] dataArray = new String[fieldIndexMap.size()];
+    private Map<String, String> getParamMap(final SearchRequest searchRequest) {
+        final Map<String, String> paramMap;
+        if (searchRequest.getQuery().getParams() != null) {
+            paramMap = searchRequest.getQuery().getParams().stream()
+                    .collect(Collectors.toMap(Param::getKey, Param::getValue));
+        } else {
+            paramMap = Collections.emptyMap();
+        }
+        return paramMap;
+    }
 
-            //TODO should probably drive this off a new fieldIndexMap.getEntries() method or similar
-            //then we only loop round fields we car about
-            statisticStoreEntity.getAllFieldNames().forEach(fieldName -> {
-                int posInDataArray = fieldIndexMap.get(fieldName);
-                //if the fieldIndexMap returns -1 the field has not been requested
-                if (posInDataArray != -1) {
-                    dataArray[posInDataArray] = statisticDataPoint.getFieldValue(fieldName);
-                }
-            });
-            return dataArray;
-        };
+    /**
+     * Synchronized to ensure multiple threads don't fight over the coprocessors which is unlikely to
+     * happen anyway as it is mostly used in
+     */
+    private synchronized void processPayloads(final ResultHandler resultHandler,
+                                              final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap) {
+
+        LAMBDA_LOGGER.debug(() ->
+                LambdaLogger.buildMessage("processPayloads called for {} coprocessors", coprocessorMap.size()));
+
+        //build a payload map from whatever the coprocessors have in them, if anything
+        final Map<CoprocessorSettingsMap.CoprocessorKey, Payload> payloadMap = coprocessorMap.entrySet().stream()
+                .map(entry ->
+                        Maps.immutableEntry(entry.getKey(), entry.getValue().createPayload()))
+                .filter(entry ->
+                        entry.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // give the processed results to the collector, it will handle nulls
+        resultHandler.handle(payloadMap);
     }
 
     private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final String errorMessage) {

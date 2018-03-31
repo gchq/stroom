@@ -32,7 +32,6 @@ import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
-import stroom.util.thread.ThreadUtil;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -124,7 +123,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
     }
 
     @Test
-    public void testExpiry() {
+    public void testExpiry() throws InterruptedException {
         final Feed referenceFeed = new Feed();
         referenceFeed.setReference(true);
         referenceFeed.setName("TEST_REF");
@@ -136,10 +135,10 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
         DocRef feedRef = DocRefUtil.create(referenceFeed);
 
         try (CacheManager cacheManager = new CacheManager()) {
-            final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(
-                    cacheManager, mockStore, null, null, 100, TimeUnit.MILLISECONDS);
+            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
+                    cacheManager, mockStore, new EffectiveStreamInternPool(), new Security(new MockSecurityContext()), 100, TimeUnit.MILLISECONDS);
 
-            Assert.assertEquals("No pooled times yet", 0, effectiveStreamPool.size());
+            Assert.assertEquals("No pooled times yet", 0, effectiveStreamCache.size());
             Assert.assertEquals("No calls to the database yet", 0, mockStore.getCallCount());
 
             long time = DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z");
@@ -148,7 +147,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             Set<EffectiveStream> streams;
 
             // Make sure we've got no effective streams.
-            streams = effectiveStreamPool.get(
+            streams = effectiveStreamCache.get(
                     new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 1, mockStore.getCallCount());
             Assert.assertEquals("Effective streams", 0, streams.size());
@@ -156,17 +155,17 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             // Add a stream.
             mockStore.addEffectiveStream(referenceFeed, time);
 
-            // Make sure we've stil got no effective streams as we are getting from cache now.
-            streams = effectiveStreamPool.get(
+            // Make sure we've still got no effective streams as we are getting from cache now.
+            streams = effectiveStreamCache.get(
                     new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 1, mockStore.getCallCount());
             Assert.assertEquals("Effective streams", 0, streams.size());
 
             // Expire items in the cache.
-            ThreadUtil.sleep(100);
+            Thread.sleep(100);
 
             // Make sure we get one now
-            streams = effectiveStreamPool.get(
+            streams = effectiveStreamCache.get(
                     new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 2, mockStore.getCallCount());
             Assert.assertEquals("Effective streams", 1, streams.size());
@@ -177,22 +176,19 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
                     DateUtil.parseNormalDateTimeString("2010-01-01T13:00:00.000Z"));
 
             // Make sure we still get one now
-            streams = effectiveStreamPool.get(
+            streams = effectiveStreamCache.get(
                     new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 2, mockStore.getCallCount());
             Assert.assertEquals("Effective streams", 1, streams.size());
 
             // Expire items in the cache.
-            ThreadUtil.sleep(100);
+            Thread.sleep(100);
 
             // Make sure we get two now
-            streams = effectiveStreamPool.get(
+            streams = effectiveStreamCache.get(
                     new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 3, mockStore.getCallCount());
             Assert.assertEquals("Effective streams", 2, streams.size());
-
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

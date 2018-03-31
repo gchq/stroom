@@ -35,11 +35,12 @@ public class StroomXSLTFunctionLibrary {
                 .library(this)
                 .delegateClass(BitmapLookup.class)
                 .minArgs(2)
-                .maxArgs(4)
+                .maxArgs(5)
                 .argTypes(new SequenceType[]{
                         SequenceType.SINGLE_STRING,
                         SequenceType.SINGLE_STRING,
                         SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_BOOLEAN,
                         SequenceType.OPTIONAL_BOOLEAN
                 })
                 .resultType(SequenceType.NODE_SEQUENCE)
@@ -198,11 +199,12 @@ public class StroomXSLTFunctionLibrary {
                 .library(this)
                 .delegateClass(Lookup.class)
                 .minArgs(2)
-                .maxArgs(4)
+                .maxArgs(5)
                 .argTypes(new SequenceType[]{
                         SequenceType.SINGLE_STRING,
                         SequenceType.SINGLE_STRING,
                         SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_BOOLEAN,
                         SequenceType.OPTIONAL_BOOLEAN
                 })
                 .resultType(SequenceType.NODE_SEQUENCE)

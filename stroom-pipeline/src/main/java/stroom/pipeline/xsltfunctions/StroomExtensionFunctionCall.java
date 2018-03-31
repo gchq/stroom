@@ -112,7 +112,9 @@ abstract class StroomExtensionFunctionCall {
         return locationFactory.create();
     }
 
-    void configure(final ErrorReceiver errorReceiver, final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences) {
+    void configure(final ErrorReceiver errorReceiver,
+                   final LocationFactory locationFactory,
+                   final List<PipelineReference> pipelineReferences) {
         this.errorReceiver = errorReceiver;
         this.locationFactory = locationFactory;
         this.pipelineReferences = pipelineReferences;

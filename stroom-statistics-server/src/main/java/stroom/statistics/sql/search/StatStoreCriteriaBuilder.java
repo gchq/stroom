@@ -1,4 +1,4 @@
-package stroom.statistics.server.sql.search;
+package stroom.statistics.sql.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,13 +9,13 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.statistics.server.sql.rollup.RollUpBitMask;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.common.StatisticRollUpType;
+import stroom.statistics.sql.rollup.RollUpBitMask;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,7 +23,7 @@ import java.util.Set;
 public class StatStoreCriteriaBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatStoreCriteriaBuilder.class);
 
-    private static final List<ExpressionTerm.Condition> SUPPORTED_DATE_CONDITIONS = Arrays.asList(ExpressionTerm.Condition.BETWEEN);
+    private static final List<ExpressionTerm.Condition> SUPPORTED_DATE_CONDITIONS = Collections.singletonList(ExpressionTerm.Condition.BETWEEN);
 
     public static FindEventCriteria buildCriteria(final SearchRequest search, final StatisticStoreEntity dataSource) {
 

@@ -101,11 +101,10 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
 
         if (storedErrorReceiver.getTotalErrors() == 0 && parserFactory != null) {
             return parserFactory.getParser();
-        } else {
-            storedErrorReceiver.replay(new ErrorReceiverIdDecorator(getElementId(), getErrorReceiverProxy()));
         }
 
-        return null;
+        storedErrorReceiver.replay(new ErrorReceiverIdDecorator(getElementId(), getErrorReceiverProxy()));
+        throw new ProcessException("Unable to create parser");
     }
 
     @Override

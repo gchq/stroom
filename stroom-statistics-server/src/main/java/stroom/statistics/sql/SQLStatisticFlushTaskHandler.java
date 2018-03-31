@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 @TaskHandlerBean(task = SQLStatisticFlushTask.class)
-class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlushTask, VoidResult> {
+public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlushTask, VoidResult> {
     /**
      * The number of records to flush to the DB in one go.
      */
@@ -52,9 +52,9 @@ class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlush
     private int total;
 
     @Inject
-    SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
-                                 final TaskContext taskContext,
-                                 final Security security) {
+    public SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
+                                        final TaskContext taskContext,
+                                        final Security security) {
         this.sqlStatisticValueBatchSaveService = sqlStatisticValueBatchSaveService;
         this.taskContext = taskContext;
         this.security = security;

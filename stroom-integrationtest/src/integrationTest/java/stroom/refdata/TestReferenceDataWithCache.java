@@ -25,6 +25,8 @@ import org.xml.sax.SAXException;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.guice.PipelineScopeRunnable;
+import stroom.guice.StroomBeanStore;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
@@ -35,8 +37,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
-import stroom.guice.PipelineScopeRunnable;
-import stroom.guice.StroomBeanStore;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
@@ -111,10 +111,10 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 // works.
                 addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
                 addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
-                checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_1");
-                checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_2");
-                checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_3");
-                checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_4");
+                checkData(referenceData, pipelineReferences, "SID_TO_PF_1");
+                checkData(referenceData, pipelineReferences, "SID_TO_PF_2");
+                checkData(referenceData, pipelineReferences, "SID_TO_PF_3");
+                checkData(referenceData, pipelineReferences, "SID_TO_PF_4");
             } catch (final RuntimeException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }

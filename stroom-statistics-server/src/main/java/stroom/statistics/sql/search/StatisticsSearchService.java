@@ -1,4 +1,4 @@
-package stroom.statistics.server.sql.search;
+package stroom.statistics.sql.search;
 
 import io.reactivex.Flowable;
 import stroom.dashboard.expression.v1.FieldIndexMap;

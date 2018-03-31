@@ -40,7 +40,7 @@ public final class ManageGlobalPropertyEditPresenter
                                              final ClientDispatchAsync dispatcher,
                                              final ClientSecurityContext securityContext,
                                              final ClientPropertyCache clientPropertyCache) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view, dispatcher, securityContext);
         this.dispatcher = dispatcher;
         this.clientPropertyCache = clientPropertyCache;
     }

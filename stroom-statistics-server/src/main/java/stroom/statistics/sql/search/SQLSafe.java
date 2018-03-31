@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util.sql;
+package stroom.statistics.sql.search;
 
 import java.util.regex.Matcher;
 

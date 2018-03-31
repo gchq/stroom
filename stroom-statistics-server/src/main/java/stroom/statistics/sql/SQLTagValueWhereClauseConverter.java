@@ -16,16 +16,17 @@
 
 package stroom.statistics.sql;
 
+import stroom.entity.util.SqlBuilder;
 import stroom.statistics.sql.search.FilterOperationMode;
 import stroom.statistics.sql.search.FilterTermsTree;
+import stroom.statistics.sql.search.FilterTermsTree.OperatorNode;
+import stroom.statistics.sql.search.FilterTermsTree.TermNode;
 import stroom.statistics.sql.search.PrintableNode;
 
 import java.util.EnumMap;
-import java.util.List;
 
-public class SQLTagValueWhereClauseConverter {
-    // map to provide a lookup from the FilterOperationMode enum to the SQL
-    // reserved word
+class SQLTagValueWhereClauseConverter {
+    // map to provide a lookup from the FilterOperationMode enum to the SQL reserved word
     private static final EnumMap<FilterOperationMode, String> OPERATOR_TO_SQL_TERM_MAP;
 
     static {
@@ -35,27 +36,22 @@ public class SQLTagValueWhereClauseConverter {
         OPERATOR_TO_SQL_TERM_MAP.put(FilterOperationMode.NOT, "NOT");
     }
 
-    public static String buildTagValueWhereClause(final FilterTermsTree filterTermsTree,
-                                                  final List<String> bindVariables) {
-        final StringBuilder whereClause = new StringBuilder("");
-
+    public static void buildTagValueWhereClause(final FilterTermsTree filterTermsTree, final SqlBuilder sql) {
         if (filterTermsTree != null && filterTermsTree.getRootNode() != null) {
-            convertNode(filterTermsTree.getRootNode(), whereClause, bindVariables);
+            sql.append(" AND");
+            convertNode(filterTermsTree.getRootNode(), sql);
         }
-
-        return whereClause.toString();
     }
 
     /**
      * Recursive method to build up a where clause string (and associated list
      * of bind variables) from a tree of {@link PrintableNode} objects
      */
-    private static void convertNode(final PrintableNode oldNode, final StringBuilder whereClause,
-                                    final List<String> bindVariables) {
-        if (oldNode instanceof FilterTermsTree.TermNode) {
-            convertTermNode((FilterTermsTree.TermNode) oldNode, whereClause, bindVariables);
-        } else if (oldNode instanceof FilterTermsTree.OperatorNode) {
-            convertOperatorNode((FilterTermsTree.OperatorNode) oldNode, whereClause, bindVariables);
+    private static void convertNode(final PrintableNode oldNode, final SqlBuilder sql) {
+        if (oldNode instanceof TermNode) {
+            convertTermNode((TermNode) oldNode, sql);
+        } else if (oldNode instanceof OperatorNode) {
+            convertOperatorNode((OperatorNode) oldNode, sql);
 
         } else {
             throw new RuntimeException(
@@ -63,8 +59,7 @@ public class SQLTagValueWhereClauseConverter {
         }
     }
 
-    private static void convertTermNode(final FilterTermsTree.TermNode oldNode, final StringBuilder whereClause,
-                                        final List<String> bindVariables) {
+    private static void convertTermNode(final TermNode oldNode, final SqlBuilder sql) {
         final String valueString = oldNode.getValue();
 
         final String cleanedValue;
@@ -79,17 +74,15 @@ public class SQLTagValueWhereClauseConverter {
         // bind: '¬Tag1¬Val1(¬|$)'
         // which equates to: ' name REGEXP '¬Tag1¬Val1(¬|$)' '
 
-        whereClause.append(" " + SQLStatisticNames.NAME + " REGEXP ? ");
+        sql.append(" " + SQLStatisticNames.NAME + " REGEXP ");
 
         final String regexTerm = SQLStatisticConstants.NAME_SEPARATOR + oldNode.getTag()
                 + SQLStatisticConstants.NAME_SEPARATOR + cleanedValue + "($|" + SQLStatisticConstants.NAME_SEPARATOR
                 + ")";
-
-        bindVariables.add(regexTerm);
+        sql.arg(regexTerm);
     }
 
-    private static void convertOperatorNode(final FilterTermsTree.OperatorNode oldNode, final StringBuilder whereClause,
-                                            final List<String> bindVariables) {
+    private static void convertOperatorNode(final FilterTermsTree.OperatorNode oldNode, final SqlBuilder sql) {
         if (oldNode.getChildren().size() < 1) {
             throw new RuntimeException("Operator node cannot have no children");
         }
@@ -99,26 +92,26 @@ public class SQLTagValueWhereClauseConverter {
                 throw new RuntimeException("NOT node has more than one children");
             }
             // should get something like ' NOT (.......) '
-            whereClause.append(" " + OPERATOR_TO_SQL_TERM_MAP.get(oldNode.getFilterOperationMode()) + " (");
-            convertNode(oldNode.getChildren().get(0), whereClause, bindVariables);
-            whereClause.append(" ) ");
+            sql.append(" " + OPERATOR_TO_SQL_TERM_MAP.get(oldNode.getFilterOperationMode()) + " (");
+            convertNode(oldNode.getChildren().get(0), sql);
+            sql.append(")");
 
         } else {
             // OR or AND
             // should get something like ' (... AND ... AND ...) '
             // where ... could be a term or another operator set
-            whereClause.append(" ( ");
+            sql.append(" (");
             int i = 1;
             for (final PrintableNode oldChild : oldNode.getChildren()) {
-                convertNode(oldChild, whereClause, bindVariables);
+                convertNode(oldChild, sql);
 
                 if (i != oldNode.getChildren().size()) {
                     // not the last child so add the operator in between
-                    whereClause.append(" " + OPERATOR_TO_SQL_TERM_MAP.get(oldNode.getFilterOperationMode()) + " ");
+                    sql.append(" " + OPERATOR_TO_SQL_TERM_MAP.get(oldNode.getFilterOperationMode()));
                 }
                 i++;
             }
-            whereClause.append(" ) ");
+            sql.append(" )");
         }
     }
 }

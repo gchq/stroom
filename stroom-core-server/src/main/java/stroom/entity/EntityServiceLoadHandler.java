@@ -14,54 +14,58 @@
  * limitations under the License.
  */
 
-package stroom.entity.server;
+package stroom.entity;
 
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.logging.DocumentEventLog;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
+import stroom.security.Security;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = EntityServiceLoadAction.class)
-@Scope(value = StroomScope.TASK)
 class EntityServiceLoadHandler extends AbstractTaskHandler<EntityServiceLoadAction<BaseEntity>, BaseEntity> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog entityEventLog;
+    private final Security security;
 
     @Inject
-    EntityServiceLoadHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog entityEventLog) {
+    EntityServiceLoadHandler(final EntityServiceBeanRegistry beanRegistry,
+                             final DocumentEventLog entityEventLog,
+                             final Security security) {
         this.beanRegistry = beanRegistry;
         this.entityEventLog = entityEventLog;
+        this.security = security;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public BaseEntity exec(final EntityServiceLoadAction<BaseEntity> action) {
-        final Object bean = beanRegistry.getEntityService(action.getEntity().getClass());
-        if (bean == null) {
-            throw new EntityServiceException("No entity service can be found");
-        }
-        if (!(bean instanceof EntityService<?>)) {
-            throw new EntityServiceException("Bean is not an entity service");
-        }
+        return security.secureResult(() -> {
+            final Object bean = beanRegistry.getEntityServiceByType(action.getEntity().getType());
+            if (bean == null) {
+                throw new EntityServiceException("No entity service can be found");
+            }
+            if (!(bean instanceof EntityService<?>)) {
+                throw new EntityServiceException("Bean is not an entity service");
+            }
 
-        final EntityService<BaseEntity> entityService = (EntityService<BaseEntity>) bean;
-        final BaseEntity entity = action.getEntity();
+            final EntityService<BaseEntity> entityService = (EntityService<BaseEntity>) bean;
+            final BaseEntity entity = action.getEntity();
 
-        BaseEntity result;
-        try {
-            result = entityService.load(entity);
-            entityEventLog.view(result, null);
-        } catch (final RuntimeException e) {
-            entityEventLog.view(entity, e);
-            throw e;
-        }
+            BaseEntity result;
+            try {
+                result = entityService.load(entity);
+                entityEventLog.view(result, null);
+            } catch (final RuntimeException e) {
+                entityEventLog.view(entity, e);
+                throw e;
+            }
 
-        return result;
+            return result;
+        });
     }
 }

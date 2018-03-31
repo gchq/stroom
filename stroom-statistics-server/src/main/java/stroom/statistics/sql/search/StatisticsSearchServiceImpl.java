@@ -1,20 +1,19 @@
-package stroom.statistics.server.sql.search;
+package stroom.statistics.sql.search;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.reactivex.Flowable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.entity.server.util.PreparedStatementUtil;
-import stroom.entity.server.util.SqlBuilder;
-import stroom.node.server.StroomPropertyService;
-import stroom.statistics.server.sql.SQLStatisticConstants;
-import stroom.statistics.server.sql.SQLStatisticNames;
-import stroom.statistics.server.sql.rollup.RollUpBitMask;
+import stroom.entity.util.PreparedStatementUtil;
+import stroom.entity.util.SqlBuilder;
+import stroom.properties.StroomPropertyService;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
+import stroom.statistics.sql.SQLStatisticConstants;
+import stroom.statistics.sql.SQLStatisticNames;
+import stroom.statistics.sql.rollup.RollUpBitMask;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -36,9 +35,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("unused") //called by DI
-@Component
-//@Scope(value = StroomScope.TASK)
+@SuppressWarnings("unused")
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
@@ -352,7 +349,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     }
 
     private Flowable<String[]> getFlowableQueryResults(final SqlBuilder sql,
-                                                        final Function<ResultSet, String[]> resultSetMapper) {
+                                                       final Function<ResultSet, String[]> resultSetMapper) {
 
         //Not thread safe as each onNext will get the same ResultSet instance, however its position
         // will have mode on each time.
@@ -512,6 +509,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             }
         }
     }
+
     /**
      * TODO: This is a bit simplistic as a user could create a filter that said
      * user=user1 AND user='*' which makes no sense. At the moment we would

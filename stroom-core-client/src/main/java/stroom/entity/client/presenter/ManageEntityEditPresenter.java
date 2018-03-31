@@ -22,10 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.EntityServiceLoadAction;
-import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.NamedEntity;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -35,12 +32,17 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public abstract class ManageEntityEditPresenter<V extends View, E extends NamedEntity> extends MyPresenterWidget<V> {
+    private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
     private E entity;
 
     @Inject
-    public ManageEntityEditPresenter(final EventBus eventBus, final V view, final ClientSecurityContext securityContext) {
+    public ManageEntityEditPresenter(final EventBus eventBus,
+                                     final V view,
+                                     final ClientDispatchAsync dispatcher,
+                                     final ClientSecurityContext securityContext) {
         super(eventBus, view);
+        this.dispatcher = dispatcher;
         this.securityContext = securityContext;
     }
 
@@ -48,7 +50,7 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
         return securityContext;
     }
 
-    public void showEntity(final E entity, final PopupUiHandlers popupUiHandlers) {
+    void showEntity(final E entity, final PopupUiHandlers popupUiHandlers) {
         final String caption = getEntityDisplayType() + " - " + entity.getName();
 
         final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {

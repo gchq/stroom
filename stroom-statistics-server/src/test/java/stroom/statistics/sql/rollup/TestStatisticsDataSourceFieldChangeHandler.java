@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
+public class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
     /**
      * Go from B, C, D to A,B,D
      */

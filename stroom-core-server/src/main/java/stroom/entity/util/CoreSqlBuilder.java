@@ -155,6 +155,10 @@ public abstract class CoreSqlBuilder {
         return args;
     }
 
+    public int getArgCount() {
+        return args.size();
+    }
+
     private void checkValueAppend(final String type) {
         if (VALIDATE) {
             try {

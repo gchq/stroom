@@ -73,6 +73,7 @@ ext.versions = [
     curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
     dropwizard: '1.1.0', //if you change this version you should check the versions below that need to move in sync with it
     dropwizard_metrics: '3.2.2', //should be kept in step with dropwizard
+    guava: '21.0',
     gwt: '2.8.2',
     hibernate: '5.2.13.Final', //dropwiz 1.1.0 uses -validator 5.3.4.Final and -core 5.2.8.Final
     jackson: '2.8.6',
@@ -133,7 +134,7 @@ ext.libs = [
     fast_classpath_scanner: "io.github.lukehutch:fast-classpath-scanner:2.9.4",
     flyway_core: "org.flywaydb:flyway-core:4.0.3",
     gin: "com.google.gwt.inject:gin:2.1.2",
-    guava: "com.google.guava:guava:21.0", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
+    guava: "com.google.guava:guava:$versions.guava", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
     guice4: "com.google.inject:guice:4.2.0",
     guice3: "com.google.inject:guice:3.0",
     guice_multibindings: "com.google.inject.extensions:guice-multibindings:4.2.0",
@@ -284,6 +285,7 @@ subprojects {
             resolutionStrategy {
                 dependencySubstitution {
                     substitute module('log4j:log4j') with module("org.slf4j:log4j-over-slf4j:$versions.slf4j")
+                    substitute module('com.google.guava:guava') with module("com.google.guava:guava:$versions.guava")
                 }
 
                 forcedModules = [

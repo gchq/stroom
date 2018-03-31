@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.statistics.server.sql.search;
+package stroom.statistics.sql.search;
 
-import stroom.entity.server.util.SqlBuilder;
-import stroom.statistics.server.sql.search.FilterTermsTree.OperatorNode;
-import stroom.statistics.server.sql.search.FilterTermsTree.TermNode;
-import stroom.statistics.server.sql.SQLStatisticConstants;
-import stroom.statistics.server.sql.SQLStatisticNames;
-import stroom.util.sql.SQLSafe;
+import stroom.entity.util.SqlBuilder;
+import stroom.statistics.sql.SQLStatisticConstants;
+import stroom.statistics.sql.SQLStatisticNames;
+import stroom.statistics.sql.search.FilterTermsTree.OperatorNode;
+import stroom.statistics.sql.search.FilterTermsTree.TermNode;
 
 import java.util.EnumMap;
 
