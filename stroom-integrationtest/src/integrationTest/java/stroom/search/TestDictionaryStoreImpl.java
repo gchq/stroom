@@ -34,7 +34,7 @@ public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     @Test
     public void test() {
         // Create a dictionary and save it.
-        final DocRef docRef = dictionaryStore.createDocument("TEST", null);
+        final DocRef docRef = dictionaryStore.createDocument("TEST");
         final DictionaryDoc dictionary = dictionaryStore.read(docRef.getUuid());
         dictionary.setData("This\nis\na\nlist\nof\nwords");
         dictionaryStore.update(dictionary);
@@ -49,20 +49,20 @@ public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     @Test
     public void testImport() {
         // Create a dictionary and save it.
-        final DocRef docRef1 = dictionaryStore.createDocument("TEST", null);
+        final DocRef docRef1 = dictionaryStore.createDocument("TEST");
         final DictionaryDoc dictionary1 = dictionaryStore.read(docRef1.getUuid());
         dictionary1.setData("dic1");
         dictionaryStore.update(dictionary1);
 
         // Create a dictionary and save it.
-        final DocRef docRef2 = dictionaryStore.createDocument("TEST", null);
+        final DocRef docRef2 = dictionaryStore.createDocument("TEST");
         final DictionaryDoc dictionary2 = dictionaryStore.read(docRef2.getUuid());
         dictionary2.setData("dic2");
         dictionary2.setImports(Collections.singletonList(docRef1));
         dictionaryStore.update(dictionary2);
 
         // Create a dictionary and save it.
-        final DocRef docRef3 = dictionaryStore.createDocument("TEST", null);
+        final DocRef docRef3 = dictionaryStore.createDocument("TEST");
         final DictionaryDoc dictionary3 = dictionaryStore.read(docRef3.getUuid());
         dictionary3.setData("dic3");
         dictionary3.setImports(Collections.singletonList(docRef2));

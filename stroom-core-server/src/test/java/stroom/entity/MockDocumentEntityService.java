@@ -423,14 +423,13 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    public final DocRef createDocument(final String name, final String parentFolderUUID) {
+    public final DocRef createDocument(final String name) {
         return DocRefUtil.create(create(name));
     }
 
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid,
-                               final String parentFolderUUID) {
+                               final Map<String, String> otherCopiesByOriginalUuid) {
         final E entity = loadByUuid(originalUuid);
 
         // This is going to be a copy so clear the persistence so save will create a new DB entry.
@@ -441,7 +440,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         return DocRefUtil.create(result);
     }
 
-    public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
+    public DocRef moveDocument(final String uuid) {
         final E entity = loadByUuid(uuid);
 
         final E result = save(entity);

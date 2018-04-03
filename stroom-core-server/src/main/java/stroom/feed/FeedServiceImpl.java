@@ -60,7 +60,7 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
     }
 
     @Override
-    public DocRef copyDocument(String uuid, String parentFolderUUID) {
+    public DocRef copyDocument(String uuid) {
         throw new EntityServiceException("You cannot copy Feeds");
     }
 

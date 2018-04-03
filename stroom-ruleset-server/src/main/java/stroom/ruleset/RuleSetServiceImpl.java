@@ -49,21 +49,20 @@ public class RuleSetServiceImpl implements RuleSetService {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name, final String parentFolderUUID) {
-        return store.createDocument(name, parentFolderUUID);
+    public DocRef createDocument(final String name) {
+        return store.createDocument(name);
     }
 
     @Override
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid,
-                               final String parentFolderUUID) {
-        return store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid, parentFolderUUID);
+                               final Map<String, String> otherCopiesByOriginalUuid) {
+        return store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid);
     }
 
     @Override
-    public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
-        return store.moveDocument(uuid, parentFolderUUID);
+    public DocRef moveDocument(final String uuid) {
+        return store.moveDocument(uuid);
     }
 
     @Override

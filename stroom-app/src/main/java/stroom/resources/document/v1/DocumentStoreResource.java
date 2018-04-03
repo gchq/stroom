@@ -18,7 +18,6 @@
 package stroom.resources.document.v1;
 
 import com.codahale.metrics.annotation.Timed;
-import stroom.document.Destination;
 import stroom.document.DocumentStore;
 import stroom.query.api.v2.DocRef;
 
@@ -31,7 +30,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
 
 @Path("document")
 @Produces(MediaType.APPLICATION_JSON)
@@ -39,7 +37,7 @@ public class DocumentStoreResource {
     private final DocumentStore documentStore;
 
     @Inject
-    public DocumentStoreResource(final DocumentStore documentStore) throws IOException {
+    public DocumentStoreResource(final DocumentStore documentStore) {
         this.documentStore = documentStore;
     }
 
@@ -48,8 +46,8 @@ public class DocumentStoreResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("")
     @Timed
-    public DocRef create(final Destination destination) {
-        return documentStore.createDocument(destination.getParentFolderUUID(), destination.getName());
+    public DocRef create(final String name) {
+        return documentStore.createDocument(name);
     }
 
     @POST
@@ -57,8 +55,8 @@ public class DocumentStoreResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/copy/{uuid}")
     @Timed
-    public DocRef copy(final @PathParam("uuid") String uuid, final Destination destination) {
-        return documentStore.copyDocument(uuid, destination.getParentFolderUUID());
+    public DocRef copy(final @PathParam("uuid") String uuid) {
+        return documentStore.copyDocument(uuid);
     }
 
     @PUT
@@ -66,8 +64,8 @@ public class DocumentStoreResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/move/{uuid}")
     @Timed
-    public DocRef move(final @PathParam("uuid") String uuid, final Destination destination) {
-        return documentStore.moveDocument(uuid, destination.getParentFolderUUID());
+    public DocRef move(final @PathParam("uuid") String uuid) {
+        return documentStore.moveDocument(uuid);
     }
 
     @PUT
@@ -75,8 +73,8 @@ public class DocumentStoreResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/rename/{uuid}")
     @Timed
-    public DocRef rename(final @PathParam("uuid") String uuid, final Destination destination) {
-        return documentStore.renameDocument(uuid, destination.getName());
+    public DocRef rename(final @PathParam("uuid") String uuid, final String name) {
+        return documentStore.renameDocument(uuid, name);
     }
 
 

@@ -42,9 +42,8 @@ import stroom.task.TaskManager;
 import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -92,7 +91,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     public void positiveCaseInsensitiveTestWithoutExtraction() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
-        final List<String> componentIds = Arrays.asList("table-1");
+        final List<String> componentIds = Collections.singletonList("table-1");
         test(expression, 5, componentIds, false);
     }
 
@@ -247,11 +246,11 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                    .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                        .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
-                        .build())
-                    .build());
+                        .addOperator(new ExpressionOperator.Builder(Op.OR)
+                                .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                                .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
+                                .build())
+                        .build());
         test(expression, 23);
     }
 
@@ -263,11 +262,11 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                    .addOperator(new ExpressionOperator.Builder(Op.AND)
-                        .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                        .addTerm("UserId", Condition.EQUALS, "user4")
-                        .build())
-                    .build());
+                        .addOperator(new ExpressionOperator.Builder(Op.AND)
+                                .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                                .addTerm("UserId", Condition.EQUALS, "user4")
+                                .build())
+                        .build());
         test(expression, 24);
     }
 
@@ -279,14 +278,14 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                    .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addOperator(new ExpressionOperator.Builder(Op.AND)
-                            .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                            .addTerm("UserId", Condition.EQUALS, "user4")
-                            .build())
-                        .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
-                        .build())
-                    .build());
+                        .addOperator(new ExpressionOperator.Builder(Op.OR)
+                                .addOperator(new ExpressionOperator.Builder(Op.AND)
+                                        .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                                        .addTerm("UserId", Condition.EQUALS, "user4")
+                                        .build())
+                                .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
+                                .build())
+                        .build());
         test(expression, 23);
     }
 
@@ -295,7 +294,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest1() {
-        final DocRef docRef = dictionaryStore.createDocument("users", null);
+        final DocRef docRef = dictionaryStore.createDocument("users");
         final DictionaryDoc dic = dictionaryStore.read(docRef.getUuid());
         dic.setData("user1\nuser2\nuser5");
         dictionaryStore.update(dic);
@@ -313,12 +312,12 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest2() {
-        final DocRef docRef1 = dictionaryStore.createDocument("users", null);
+        final DocRef docRef1 = dictionaryStore.createDocument("users");
         DictionaryDoc dic1 = dictionaryStore.read(docRef1.getUuid());
         dic1.setData("user1\nuser2\nuser5");
         dictionaryStore.update(dic1);
 
-        final DocRef docRef2 = dictionaryStore.createDocument("command", null);
+        final DocRef docRef2 = dictionaryStore.createDocument("command");
         DictionaryDoc dic2 = dictionaryStore.read(docRef2.getUuid());
         dic2.setData("msg");
         dictionaryStore.update(dic2);
@@ -338,12 +337,12 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest3() {
-        final DocRef docRef1 = dictionaryStore.createDocument("users", null);
+        final DocRef docRef1 = dictionaryStore.createDocument("users");
         DictionaryDoc dic1 = dictionaryStore.read(docRef1.getUuid());
         dic1.setData("user1\nuser2\nuser5");
         dictionaryStore.update(dic1);
 
-        final DocRef docRef2 = dictionaryStore.createDocument("command", null);
+        final DocRef docRef2 = dictionaryStore.createDocument("command");
         DictionaryDoc dic2 = dictionaryStore.read(docRef2.getUuid());
         dic2.setData("msg foo bar");
         dictionaryStore.update(dic2);
@@ -369,7 +368,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     }
 
     private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
-        final List<String> componentIds = Arrays.asList("table-1");
+        final List<String> componentIds = Collections.singletonList("table-1");
         test(expressionIn, expectResultCount, componentIds, true);
     }
 

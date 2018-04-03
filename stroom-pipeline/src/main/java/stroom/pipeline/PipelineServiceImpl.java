@@ -18,7 +18,6 @@ package stroom.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.ObjectMarshaller;
 import stroom.entity.QueryAppender;
@@ -27,13 +26,13 @@ import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
+import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
-import stroom.persist.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -83,12 +82,10 @@ public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntit
     @Override
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid,
-                               final String parentFolderUUID) {
+                               final Map<String, String> otherCopiesByOriginalUuid) {
         final DocRef copiedDocRef = super.copyDocument(originalUuid,
                 copyUuid,
-                otherCopiesByOriginalUuid,
-                parentFolderUUID);
+                otherCopiesByOriginalUuid);
 
         return makeCopyUuidReplacements(copiedDocRef,
                 otherCopiesByOriginalUuid,
