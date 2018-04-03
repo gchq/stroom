@@ -3,7 +3,6 @@ package stroom.test;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -16,6 +15,6 @@ public class TestWorkingDirectory {
     @Test
     public void test() {
         Path workingDir = Paths.get(".");
-        Assertions.assertThat(workingDir.toAbsolutePath().toString()).doesNotContain(".idea" + File.pathSeparator + "modules");
+        Assertions.assertThat(workingDir.toAbsolutePath().toString()).doesNotContain(".idea/modules");
     }
 }
