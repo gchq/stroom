@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Application security code is now implemented using lambda expressions rather than AOP. This simplifies debugging and makes the code easier to understand.
+
+* Changed the task system to allow task threads to be interrupted from the task UI.
+
+* Made changes to improve search performance by making various parts of search wait for interruptible conditions.
+
+* Migrated code from Spring to Guice for managing dependency injection.
+
 * Issue **#588** : Fixed display of horizontal scrollbar on explorer tree in export, create, copy and move dialogs.
 
 * Issue **#691** : Volumes now reload on edit so that the entities are no longer stale the second time they are edited.
