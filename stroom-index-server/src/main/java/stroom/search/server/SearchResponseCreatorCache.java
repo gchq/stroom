@@ -4,7 +4,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.SearchResponseCreator;
 
-public interface SearchResultCreatorCache {
+public interface SearchResponseCreatorCache {
 
     SearchResponseCreator get(final Key key);
 

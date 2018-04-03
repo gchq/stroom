@@ -31,7 +31,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.search.server.IndexDataSourceFieldUtil;
-import stroom.search.server.SearchResultCreatorCache;
+import stroom.search.server.SearchResponseCreatorCache;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
@@ -93,7 +93,7 @@ public class StroomIndexQueryResource implements HasHealthCheck {
         //a lifespan beyond the scope of this request and then begin the search for the data
         //If it is not the first call for this query key then it will return the existing searchResponseCreator with
         //access to whatever data has been found so far
-        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(new SearchResultCreatorCache.Key(request));
+        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(new SearchResponseCreatorCache.Key(request));
 
         //create a response from the data found so far, this could be complete/incomplete
         return searchResponseCreator.create(request);
@@ -108,7 +108,7 @@ public class StroomIndexQueryResource implements HasHealthCheck {
             value = "Destroy a running query",
             response = Boolean.class)
     public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
-        searchResultCreatorManager.remove(new SearchResultCreatorCache.Key(queryKey));
+        searchResultCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
         return Boolean.TRUE;
     }
 

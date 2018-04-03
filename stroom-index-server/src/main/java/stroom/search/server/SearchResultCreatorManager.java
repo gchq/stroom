@@ -26,22 +26,22 @@ import javax.inject.Named;
 @Component
 public class SearchResultCreatorManager {
 
-    private final SearchResultCreatorCache cache;
+    private final SearchResponseCreatorCache cache;
 
     @Inject
     public SearchResultCreatorManager(
-            @Named("luceneInMemorySearchResultCreatorCacheFactory") final SearchResultCreatorCacheFactory cacheFactory,
+            @Named("luceneInMemorySearchResultCreatorCacheFactory") final SearchResponseCreatorCacheFactory cacheFactory,
             @Named("luceneSearchStoreFactory") final StoreFactory storeFactory) {
 
-        SearchResultCreatorCache cache = cacheFactory.create(storeFactory);
+        SearchResponseCreatorCache cache = cacheFactory.create(storeFactory);
         this.cache = cache;
     }
 
-    public SearchResponseCreator get(final SearchResultCreatorCache.Key key) {
+    public SearchResponseCreator get(final SearchResponseCreatorCache.Key key) {
         return cache.get(key);
     }
 
-    public void remove(final SearchResultCreatorCache.Key key) {
+    public void remove(final SearchResponseCreatorCache.Key key) {
         cache.remove(key);
     }
 

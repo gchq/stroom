@@ -11,7 +11,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @Component("luceneInMemorySearchResultCreatorCacheFactory")
-public class LuceneInMemorySearchResultCreatorCacheFactory extends AbstractInMemorySearchResultCreatorCacheFactory {
+public class LuceneInMemorySearchResponseCreatorCacheFactory extends AbstractInMemorySearchResponseCreatorCacheFactory {
 
     private static final long DEFAULT_MAX_ACTIVE_QUERIES = 10000;
     private static final Duration DEFAULT_EXPIRE_AFTER_ACCESS_DURATION = Duration.ofMinutes(10);
@@ -22,7 +22,7 @@ public class LuceneInMemorySearchResultCreatorCacheFactory extends AbstractInMem
 
 
     @Inject
-    public LuceneInMemorySearchResultCreatorCacheFactory(final CacheManager cacheManager) {
+    public LuceneInMemorySearchResponseCreatorCacheFactory(final CacheManager cacheManager) {
         this.cacheManager = cacheManager;
 
         //TODO replace these with props
@@ -31,15 +31,15 @@ public class LuceneInMemorySearchResultCreatorCacheFactory extends AbstractInMem
     }
 
     @Override
-    void buildCache(final CacheBuilder<SearchResultCreatorCache.Key, SearchResponseCreator> cacheBuilder) {
+    void buildCache(final CacheBuilder<SearchResponseCreatorCache.Key, SearchResponseCreator> cacheBuilder) {
        cacheBuilder
                 .maximumSize(maxActiveQueries)
                 .expireAfterAccess(expireAfterAccessDuration.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override
-    void registerCache(final CacheBuilder<SearchResultCreatorCache.Key, SearchResponseCreator> cacheBuilder,
-                       final Cache<SearchResultCreatorCache.Key, SearchResponseCreator> cache) {
+    void registerCache(final CacheBuilder<SearchResponseCreatorCache.Key, SearchResponseCreator> cacheBuilder,
+                       final Cache<SearchResponseCreatorCache.Key, SearchResponseCreator> cache) {
         cacheManager.registerCache("Lucene Search Result Creators", cacheBuilder, cache);
     }
 }

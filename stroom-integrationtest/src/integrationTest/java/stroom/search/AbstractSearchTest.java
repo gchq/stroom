@@ -34,7 +34,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchResponseCreator;
-import stroom.search.server.SearchResultCreatorCache;
+import stroom.search.server.SearchResponseCreatorCache;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
@@ -63,7 +63,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     protected static SearchResponse search(final SearchRequest searchRequest,
                                            final SearchResultCreatorManager searchResultCreatorManager) {
         final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(
-                new SearchResultCreatorCache.Key(searchRequest));
+                new SearchResponseCreatorCache.Key(searchRequest));
 
         SearchResponse response = searchResponseCreator.create(searchRequest);
         try {
@@ -75,7 +75,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 }
             }
         } finally {
-            searchResultCreatorManager.remove(new SearchResultCreatorCache.Key(searchRequest.getKey()));
+            searchResultCreatorManager.remove(new SearchResponseCreatorCache.Key(searchRequest.getKey()));
         }
 
         return response;
