@@ -19,14 +19,14 @@ public interface SearchResultCreatorCache {
         private final QueryKey queryKey;
         private final SearchRequest searchRequest;
 
-        public Key(final QueryKey queryKey) {
-            this.queryKey = queryKey;
-            this.searchRequest = null;
-        }
-
         public Key(final SearchRequest searchRequest) {
             this.queryKey = searchRequest.getKey();
             this.searchRequest = searchRequest;
+        }
+
+        public Key(final QueryKey queryKey) {
+            this.queryKey = queryKey;
+            this.searchRequest = null;
         }
 
         public QueryKey getQueryKey() {

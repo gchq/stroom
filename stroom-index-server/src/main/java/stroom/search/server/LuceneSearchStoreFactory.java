@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 
 
 @SuppressWarnings("unused") //used by DI
-@Component
+@Component("luceneSearchStoreFactory")
 public class LuceneSearchStoreFactory implements StoreFactory {
     public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
