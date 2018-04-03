@@ -3,6 +3,7 @@ package stroom.db.migration;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import org.apache.commons.lang3.NotImplementedException;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationInfo;
 import org.slf4j.Logger;
@@ -62,10 +63,24 @@ public class FlywayHelper {
     else if("info".equals(action)){
       printInfo(flyway.info().all());
     }
-    else{
-      LOGGER.error("Unsupported flyway action");
+    else if("clean".equals(action)){
+      flyway.clean();
     }
-
+    else if("validate".equals(action)){
+      flyway.validate();
+    }
+    else if("undo".equals(action)){
+      throw new UnsupportedOperationException("'Undo' is only supported in Flyway Pro.");
+    }
+    else if("baseline".equals(action)){
+      flyway.baseline();
+    }
+    else if("repair".equals(action)){
+      flyway.repair();
+    }
+    else{
+      LOGGER.error("Unsupported flyway action: '{}'", action);
+    }
   }
 
   private void printInfo(MigrationInfo[] migrationInfo){
