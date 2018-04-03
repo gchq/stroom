@@ -25,29 +25,8 @@ import javax.inject.Named;
 
 @Component
 public class SearchResultCreatorManager {
-//    private static final int MAX_ACTIVE_QUERIES = 10000;
-
-//    private final StoreFactory storeFactory;
-//    private final LoadingCache<SearchResultCreatorManager.Key, SearchResponseCreator> cache;
 
     private final SearchResultCreatorCache cache;
-
-//    @Inject
-//    @SuppressWarnings("unchecked")
-//    public SearchResultCreatorManager(final CacheManager cacheManager,
-//                                      final StoreFactory storeFactory) {
-//        this.storeFactory = storeFactory;
-//
-//        final RemovalListener<SearchResultCreatorManager.Key, SearchResponseCreator> removalListener = notification ->
-//                destroy(notification.getKey(), notification.getValue());
-//        final CacheLoader<SearchResultCreatorManager.Key, SearchResponseCreator> cacheLoader = CacheLoader.from(this::create);
-//        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-//                .maximumSize(MAX_ACTIVE_QUERIES)
-//                .expireAfterAccess(10, TimeUnit.MINUTES)
-//                .removalListener(removalListener);
-//        cache = cacheBuilder.build(cacheLoader);
-//        cacheManager.registerCache("Search Result Creators", cacheBuilder, cache);
-//    }
 
     @Inject
     public SearchResultCreatorManager(
@@ -66,56 +45,8 @@ public class SearchResultCreatorManager {
         cache.remove(key);
     }
 
-//    private SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
-//        Store store = storeFactory.create(key.searchRequest);
-//        return new SearchResponseCreator(store);
-//    }
-//
-//    private void destroy(final Key key, final SearchResponseCreator value) {
-//        if (value != null) {
-//            value.destroy();
-//        }
-//    }
-
     @StroomFrequencySchedule("10s")
     public void evictExpiredElements() {
         cache.evictExpiredElements();
     }
-
-//    public static class Key {
-//        private final QueryKey queryKey;
-//        private final SearchRequest searchRequest;
-//
-//        public Key(final QueryKey queryKey) {
-//            this.queryKey = queryKey;
-//            this.searchRequest = null;
-//        }
-//
-//        public Key(final SearchRequest searchRequest) {
-//            this.queryKey = searchRequest.getKey();
-//            this.searchRequest = searchRequest;
-//        }
-//
-//        @Override
-//        public boolean equals(final Object o) {
-//            if (this == o) return true;
-//            if (o == null || getClass() != o.getClass()) return false;
-//
-//            final Key key = (Key) o;
-//
-//            return queryKey.equals(key.queryKey);
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            return queryKey.hashCode();
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return "Key{" +
-//                    "queryKey=" + queryKey +
-//                    '}';
-//        }
-//    }
 }

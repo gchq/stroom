@@ -48,12 +48,12 @@ public abstract class AbstractInMemorySearchResultCreatorCacheFactory implements
     }
 
     private CacheLoader<SearchResultCreatorCache.Key, SearchResponseCreator> buildLoaderFunc(final StoreFactory storeFactory) {
-            Function<SearchResultCreatorCache.Key, SearchResponseCreator> loaderFunc = (SearchResultCreatorCache.Key key) -> {
-                LOGGER.debug("Loading new store for key {}", key);
-                final Store store = storeFactory.create(key.getSearchRequest());
-                return new SearchResponseCreator(store);
-            };
-            return CacheLoader.from(loaderFunc::apply);
+        final Function<SearchResultCreatorCache.Key, SearchResponseCreator> loaderFunc = (SearchResultCreatorCache.Key key) -> {
+            LOGGER.debug("Loading new store for key {}", key);
+            final Store store = storeFactory.create(key.getSearchRequest());
+            return new SearchResponseCreator(store);
+        };
+        return CacheLoader.from(loaderFunc::apply);
     }
 
     /**
