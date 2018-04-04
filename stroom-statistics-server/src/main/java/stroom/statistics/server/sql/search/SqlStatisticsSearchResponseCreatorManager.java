@@ -16,6 +16,8 @@
 
 package stroom.statistics.server.sql.search;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
@@ -28,6 +30,8 @@ import javax.inject.Named;
 
 @Component
 public class SqlStatisticsSearchResponseCreatorManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsSearchResponseCreatorManager.class);
 
     private final SearchResponseCreatorCache cache;
 
@@ -46,6 +50,7 @@ public class SqlStatisticsSearchResponseCreatorManager {
      * Get a {@link SearchResponseCreator} from the cache or create one if it doesn't exist
      */
     public SearchResponseCreator get(final SearchResponseCreatorCache.Key key) {
+        LOGGER.debug("get called for key {}", key);
         return cache.get(key);
     }
 
@@ -53,6 +58,8 @@ public class SqlStatisticsSearchResponseCreatorManager {
      * Remove an entry from the cache, this will also terminate any running search for that entry
      */
     public void remove(final SearchResponseCreatorCache.Key key) {
+        LOGGER.debug("remove called for key {}", key);
+
         cache.remove(key);
     }
 

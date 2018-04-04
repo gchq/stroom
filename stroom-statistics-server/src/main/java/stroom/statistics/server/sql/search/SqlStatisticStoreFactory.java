@@ -68,7 +68,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
 
     @Override
     public Store create(final SearchRequest searchRequest) {
-        LOGGER.debug("create called for searchRequest {} ", searchRequest.toString());
+        LOGGER.debug("create called for searchRequest {} ", searchRequest);
 
         final DocRef docRef = Preconditions.checkNotNull(
                 Preconditions.checkNotNull(

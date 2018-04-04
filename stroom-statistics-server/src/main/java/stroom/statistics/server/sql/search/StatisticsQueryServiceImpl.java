@@ -62,11 +62,13 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
     @Override
     public DataSource getDataSource(final DocRef docRef) {
+        LOGGER.debug("getDataSource called for docRef {}", docRef);
         return statisticsDataSourceProvider.getDataSource(docRef);
     }
 
     @Override
     public SearchResponse search(final SearchRequest searchRequest) {
+        LOGGER.debug("search called for searchRequest {}", searchRequest);
 
         final DocRef docRef = Preconditions.checkNotNull(
                 Preconditions.checkNotNull(
