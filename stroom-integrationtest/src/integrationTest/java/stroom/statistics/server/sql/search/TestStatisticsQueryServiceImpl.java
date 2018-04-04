@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +66,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -176,12 +178,44 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
             tags.add(new StatisticTag(TAG2, TAG2_VAL));
 
             fillStatValSrc(tags);
-            SearchResponse searchResponse = doSearch(tags);
+            SearchResponse searchResponse = doSearch(tags, false);
             Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL));
 
             doAsserts(searchResponse, 1, expectedValuesMap);
+        }
+    }
+
+    @Test
+    public void testSearchStatistcsData_TwoTags_incremental() throws SQLException {
+
+        if (!ignoreAllTests) {
+            final List<StatisticTag> tags = new ArrayList<>();
+            tags.add(new StatisticTag(TAG1, TAG1_VAL));
+            tags.add(new StatisticTag(TAG2, TAG2_VAL));
+
+            fillStatValSrc(tags);
+            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+                    TAG1, ImmutableSet.of(TAG1_VAL),
+                    TAG2, ImmutableSet.of(TAG2_VAL));
+
+            String queryKey = UUID.randomUUID().toString();
+
+            SearchResponse searchResponse1 = doSearch(tags, true, queryKey);
+
+            // Incremental search so first n responses will not be complete
+            Assertions.assertThat(searchResponse1.complete()).isFalse();
+            Assertions.assertThat(searchResponse1.getResults()).isNull();
+
+            // keep asking for results till we get a complete one
+            Instant timeoutTime = Instant.now().plusSeconds(10);
+            SearchResponse searchResponse2;
+            do {
+                searchResponse2 = doSearch(tags, true, queryKey);
+            } while (!searchResponse2.complete() || Instant.now().isAfter(timeoutTime));
+
+            doAsserts(searchResponse1, 1, expectedValuesMap);
         }
     }
 
@@ -203,7 +237,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL, TAG2_OTHER_VALUE_1));
 
-            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR);
+            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR, false);
             doAsserts(searchResponse, 2, expectedValuesMap);
         }
     }
@@ -225,7 +259,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                     TAG1, Collections.singleton(null),
                     TAG2, Collections.singleton(TAG2_VAL));
 
-            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR);
+            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR, false);
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
     }
@@ -250,7 +284,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                     TAG1, Collections.singleton(nastyVal),
                     TAG2, Collections.singleton(TAG2_VAL));
 
-            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR);
+            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR, false);
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
     }
@@ -298,11 +332,28 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                 });
     }
 
-    private SearchResponse doSearch(final List<StatisticTag> searchTags) {
-        return doSearch(searchTags, ExpressionOperator.Op.AND);
+    private SearchResponse doSearch(final List<StatisticTag> searchTags,
+                                    final boolean isIncremental) {
+        return doSearch(searchTags, ExpressionOperator.Op.AND, isIncremental, UUID.randomUUID().toString());
     }
 
-    private SearchResponse doSearch(final List<StatisticTag> searchTags, final ExpressionOperator.Op op) {
+    private SearchResponse doSearch(final List<StatisticTag> searchTags,
+                                    final boolean isIncremental,
+                                    final String queryKey) {
+        return doSearch(searchTags, ExpressionOperator.Op.AND, isIncremental, queryKey);
+    }
+
+    private SearchResponse doSearch(final List<StatisticTag> searchTags,
+                                    final ExpressionOperator.Op op,
+                                    final boolean isIncremental) {
+
+        return doSearch(searchTags, ExpressionOperator.Op.AND, isIncremental, UUID.randomUUID().toString());
+    }
+
+    private SearchResponse doSearch(final List<StatisticTag> searchTags,
+                                    final ExpressionOperator.Op op,
+                                    final boolean isIncremental,
+                                    final String queryKey) {
 
         final ExpressionOperator.Builder operatorBuilder = new ExpressionOperator.Builder(op);
         operatorBuilder
@@ -313,8 +364,8 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
         }
 
         final SearchRequest.Builder searchBuilder = new SearchRequest.Builder()
-                .key(UUID.randomUUID().toString())
-                .incremental(false)
+                .key(queryKey)
+                .incremental(isIncremental)
                 .query(new Query.Builder()
                         .expression(operatorBuilder.build())
                         .dataSource(DocRefUtil.create(statisticStoreEntity))
