@@ -145,6 +145,9 @@ public class SqlStatisticsStore implements Store {
 
     private void notifyListenersOfCompletion() {
         //Call isComplete to ensure we are complete and not terminated
+        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("notifyListenersOfCompletion called for {} listeners",
+                completionListeners.size()));
+
         if (isComplete()) {
             for (CompletionListener listener; (listener = completionListeners.poll()) != null;){
                 //when notified they will check isComplete
@@ -200,7 +203,7 @@ public class SqlStatisticsStore implements Store {
                         throwable -> {
                             LOGGER.error("Error in flow: {}", throwable.getMessage(), throwable);
                             errors.add(throwable.getMessage());
-                            isComplete.set(true);
+                            completeSearch();
 //                            throw new RuntimeException(String.format("Error in flow, %s",
 //                                    throwable.getMessage()), throwable);
                         },
@@ -208,13 +211,20 @@ public class SqlStatisticsStore implements Store {
                             LOGGER.debug("onComplete of outer flowable called");
                             //flows all complete, so process any remaining data
                             processPayloads(resultHandler, coprocessorMap, taskMonitor);
-                            isComplete.set(true);
-                            notifyListenersOfCompletion();
+                            completeSearch();
                         });
 
         LOGGER.debug("Out of flowable");
 
         return searchResultsDisposable;
+    }
+
+    private void completeSearch() {
+        LOGGER.debug("completeSearch called");
+        isComplete.set(true);
+        notifyListenersOfCompletion();
+        resultHandler.setComplete(true);
+
     }
 
     /**
