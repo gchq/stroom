@@ -82,10 +82,8 @@ public class FSPersistence implements Persistence {
         try {
             final Path path = getPath(docRef);
             Files.delete(path);
-        } catch (final RuntimeException e) {
-            throw e;
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 

@@ -24,7 +24,7 @@ import stroom.cache.ParserFactoryPool;
 import stroom.cache.StoredParserFactory;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
-import stroom.pipeline.TextConverterService;
+import stroom.pipeline.TextConverterStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -35,7 +35,7 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.reader.InvalidCharFilterReader;
 import stroom.pipeline.shared.ElementIcons;
-import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
@@ -69,7 +69,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     private final ParserFactoryPool parserFactoryPool;
-    private final TextConverterService textConverterService;
+    private final TextConverterStore textConverterStore;
 
     private String type;
     private boolean fixInvalidChars = false;
@@ -82,27 +82,27 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     public CombinedParser(final ErrorReceiverProxy errorReceiverProxy,
                           final LocationFactoryProxy locationFactory,
                           final ParserFactoryPool parserFactoryPool,
-                          final TextConverterService textConverterService) {
+                          final TextConverterStore textConverterStore) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
-        this.textConverterService = textConverterService;
+        this.textConverterStore = textConverterStore;
     }
 
     @Override
     protected XMLReader createReader() throws SAXException {
-        XMLReader xmlReader = null;
+        XMLReader xmlReader;
 
         if (type != null && type.trim().length() > 0) {
             // TODO : Create a parser type registry that the UI selects from to
             // reduce the danger of incorrect names.
             if (type.equalsIgnoreCase("XML")
-                    || type.equalsIgnoreCase(TextConverter.TextConverterType.NONE.getDisplayValue())) {
+                    || type.equalsIgnoreCase(TextConverterDoc.TextConverterType.NONE.getDisplayValue())) {
                 xmlReader = createXMLReader();
             } else if (type.equalsIgnoreCase("JSON")) {
                 xmlReader = createJSONReader();
-            } else if (type.equalsIgnoreCase(TextConverter.TextConverterType.DATA_SPLITTER.getDisplayValue())) {
+            } else if (type.equalsIgnoreCase(TextConverterDoc.TextConverterType.DATA_SPLITTER.getDisplayValue())) {
                 xmlReader = createTextConverter();
-            } else if (type.equalsIgnoreCase(TextConverter.TextConverterType.XML_FRAGMENT.getDisplayValue())) {
+            } else if (type.equalsIgnoreCase(TextConverterDoc.TextConverterType.XML_FRAGMENT.getDisplayValue())) {
                 xmlReader = createTextConverter();
             } else {
                 throw new ProcessException("Unknown parser type '" + type + "'");
@@ -123,7 +123,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     private XMLReader createXMLReader() throws SAXException {
-        SAXParser parser = null;
+        SAXParser parser;
         try {
             parser = PARSER_FACTORY.newSAXParser();
         } catch (final ParserConfigurationException e) {
@@ -132,7 +132,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         return parser.getXMLReader();
     }
 
-    private XMLReader createJSONReader() throws SAXException {
+    private XMLReader createJSONReader() {
         return new JSONParserFactory().getParser();
     }
 
@@ -148,7 +148,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         // TODO: We need to use the cached TextConverter service ideally but
         // before we do it needs to be aware cluster wide when TextConverter has
         // been updated.
-        final TextConverter tc = textConverterService.loadByUuid(textConverterRef.getUuid());
+        final TextConverterDoc tc = textConverterStore.readDocument(textConverterRef);
         if (tc == null) {
             throw new ProcessException(
                     "TextConverter \"" + textConverterRef.getName() + "\" appears to have been deleted");
@@ -231,7 +231,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.")
-    @PipelinePropertyDocRef(types = TextConverter.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = TextConverterDoc.ENTITY_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

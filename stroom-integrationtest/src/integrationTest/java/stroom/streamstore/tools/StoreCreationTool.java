@@ -17,6 +17,7 @@
 package stroom.streamstore.tools;
 
 import org.junit.Assert;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
@@ -29,19 +30,19 @@ import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.PipelineTestUtil;
-import stroom.pipeline.TextConverterService;
+import stroom.pipeline.TextConverterStore;
 import stroom.pipeline.XSLTService;
 import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
-import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.StreamSource;
@@ -75,6 +76,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A tool used to add data to a stream store.
@@ -97,7 +99,7 @@ public final class StoreCreationTool {
 
     private final StreamStore streamStore;
     private final FeedService feedService;
-    private final TextConverterService textConverterService;
+    private final TextConverterStore textConverterStore;
     private final XSLTService xsltService;
     private final PipelineService pipelineService;
     private final CommonTestScenarioCreator commonTestScenarioCreator;
@@ -109,7 +111,7 @@ public final class StoreCreationTool {
     @Inject
     public StoreCreationTool(final StreamStore streamStore,
                              final FeedService feedService,
-                             final TextConverterService textConverterService,
+                             final TextConverterStore textConverterStore,
                              final XSLTService xsltService,
                              final PipelineService pipelineService,
                              final CommonTestScenarioCreator commonTestScenarioCreator,
@@ -119,7 +121,7 @@ public final class StoreCreationTool {
                              final IndexService indexService) {
         this.streamStore = streamStore;
         this.feedService = feedService;
-        this.textConverterService = textConverterService;
+        this.textConverterStore = textConverterStore;
         this.xsltService = xsltService;
         this.pipelineService = pipelineService;
         this.commonTestScenarioCreator = commonTestScenarioCreator;
@@ -229,10 +231,10 @@ public final class StoreCreationTool {
         final PipelineEntity pipeline = getPipeline(feedName, data);
 
         // Setup the text converter.
-        final TextConverter textConverter = getTextConverter(feedName, textConverterType, textConverterLocation);
+        final TextConverterDoc textConverter = getTextConverter(feedName, textConverterType, textConverterLocation);
         if (textConverter != null) {
             pipeline.getPipelineData().addProperty(
-                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
+                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", DocRefUtil.create(textConverter)));
         }
         // Setup the xslt.
         final XSLT xslt = getXSLT(feedName, xsltLocation);
@@ -390,7 +392,7 @@ public final class StoreCreationTool {
 
     private PipelineEntity getContextPipeline(final Feed feed, final TextConverterType textConverterType,
                                               final Path contextTextConverterLocation, final Path contextXsltLocation) {
-        final TextConverter contextTextConverter = getTextConverter(feed.getName() + "_CONTEXT", textConverterType,
+        final TextConverterDoc contextTextConverter = getTextConverter(feed.getName() + "_CONTEXT", textConverterType,
                 contextTextConverterLocation);
         final XSLT contextXSLT = getXSLT(feed.getName() + "_CONTEXT", contextXsltLocation);
 
@@ -400,7 +402,7 @@ public final class StoreCreationTool {
 
         if (contextTextConverter != null) {
             pipeline.getPipelineData().addProperty(PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME,
-                    "textConverter", contextTextConverter));
+                    "textConverter", DocRefUtil.create(contextTextConverter)));
         }
         if (contextXSLT != null) {
             pipeline.getPipelineData()
@@ -421,7 +423,7 @@ public final class StoreCreationTool {
         final PipelineEntity pipeline = getPipeline(feed.getName(), StreamUtil.fileToString(eventDataPipeline));
 
         // Setup the text converter.
-        final TextConverter translationTextConverter = getTextConverter(feed.getName(), textConverterType,
+        final TextConverterDoc translationTextConverter = getTextConverter(feed.getName(), textConverterType,
                 translationTextConverterLocation);
 
         // Setup the xslt.
@@ -437,7 +439,7 @@ public final class StoreCreationTool {
             // final PropertyType propertyType = new PropertyType(elementType,
             // "textConverter", "TextConverter", false);
             pipelineData.addProperty(PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter",
-                    translationTextConverter));
+                    DocRefUtil.create(translationTextConverter)));
         }
         if (translationXSLT != null) {
             // final ElementType elementType = new ElementType("XSLTFilter");
@@ -512,14 +514,12 @@ public final class StoreCreationTool {
         return pipelineService.save(pipeline);
     }
 
-    private TextConverter getTextConverter(final String name, final TextConverterType textConverterType,
-                                           final Path textConverterLocation) {
+    private TextConverterDoc getTextConverter(final String name, final TextConverterType textConverterType,
+                                              final Path textConverterLocation) {
         // Try to find an existing one first.
-        final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
-        criteria.getName().setString(name);
-        final BaseResultList<TextConverter> list = textConverterService.find(criteria);
-        if (list != null && list.size() > 0) {
-            return list.getFirst();
+        final List<DocRef> refs = textConverterStore.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
+        if (refs != null && refs.size() > 0) {
+            return textConverterStore.readDocument(refs.get(0));
         }
 
         // Get the data to use.
@@ -530,13 +530,13 @@ public final class StoreCreationTool {
         }
 
         // Create a new text converter entity.
-        TextConverter textConverter = null;
+        TextConverterDoc textConverter = null;
         if (data != null) {
-            textConverter = textConverterService.create(name);
+            textConverter = textConverterStore.readDocument(textConverterStore.createDocument(name));
             textConverter.setDescription("Description " + name);
             textConverter.setConverterType(textConverterType);
             textConverter.setData(data);
-            textConverter = textConverterService.save(textConverter);
+            textConverter = textConverterStore.writeDocument(textConverter);
         }
 
         return textConverter;

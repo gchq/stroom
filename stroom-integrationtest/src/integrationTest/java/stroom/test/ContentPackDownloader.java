@@ -7,6 +7,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,8 +44,8 @@ public class ContentPackDownloader extends AbstractContentDownloader {
                     FileUtil.getCanonicalPath(destFilePath));
             try {
                 Files.delete(destFilePath);
-            } catch (IOException e) {
-                throw new RuntimeException(String.format("Unable to remove existing content pack %s",
+            } catch (final IOException e) {
+                throw new UncheckedIOException(String.format("Unable to remove existing content pack %s",
                         FileUtil.getCanonicalPath(destFilePath)), e);
             }
         }

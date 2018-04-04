@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -65,8 +66,8 @@ public class TestDataGenerator {
         return stringStream -> {
             try {
                 Files.write(filePath, (Iterable<String>) stringStream::iterator);
-            } catch (IOException e) {
-                throw new RuntimeException(String.format("Error writing to file %s",
+            } catch (final IOException e) {
+                throw new UncheckedIOException(String.format("Error writing to file %s",
                         filePath.toAbsolutePath().toString()), e);
             }
         };

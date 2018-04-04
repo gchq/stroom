@@ -16,6 +16,8 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docstore.shared.Doc;
 import stroom.entity.shared.Copyable;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
@@ -26,29 +28,31 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.util.shared.HasDisplayValue;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.Lob;
-import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
-@Entity
-@Table(name = "TXT_CONV")
-public class TextConverter extends DocumentEntity implements Copyable<TextConverter>, HasData {
-    public static final String TABLE_NAME = SQLNameConstants.TEXT + SEP + SQLNameConstants.CONVERTER;
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String CONVERTER_TYPE = SQLNameConstants.CONVERTER + SEP + SQLNameConstants.TYPE;
-    public static final String DATA = SQLNameConstants.DATA;
+@XmlAccessorType(XmlAccessType.FIELD)
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "converterType"})
+@XmlRootElement(name = "textConverter")
+@XmlType(name = "TextConverterDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "converterType"})
+public class TextConverterDoc extends Doc implements HasData {
     public static final String ENTITY_TYPE = "TextConverter";
 
     private static final long serialVersionUID = 4519634323788508083L;
 
+    @XmlElement(name = "description")
     private String description;
+    @XmlElement(name = "data")
     private String data;
-    private byte pConverterType = TextConverterType.NONE.getPrimitiveValue();
+    @XmlElement(name = "converterType")
+    private String converterType = TextConverterType.NONE.getDisplayValue();
 
-    @Column(name = SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -57,9 +61,6 @@ public class TextConverter extends DocumentEntity implements Copyable<TextConver
         this.description = description;
     }
 
-    @Column(name = DATA, length = Integer.MAX_VALUE)
-    @Lob
-    @ExternalFile(extensionProvider = TextConverterExtensionProvider.class)
     @Override
     public String getData() {
         return data;
@@ -70,46 +71,53 @@ public class TextConverter extends DocumentEntity implements Copyable<TextConver
         this.data = data;
     }
 
-    @Column(name = CONVERTER_TYPE, nullable = false)
-    public byte getPConverterType() {
-        return pConverterType;
-    }
-
-    public void setPConverterType(final byte pConverterType) {
-        this.pConverterType = pConverterType;
-    }
-
-    @Transient
     public TextConverterType getConverterType() {
-        return TextConverterType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pConverterType);
+        return TextConverterType.valueOf(converterType);
     }
 
     public void setConverterType(final TextConverterType converterType) {
-        this.pConverterType = converterType.getPrimitiveValue();
+        this.converterType = converterType.getDisplayValue();
+    }
+//
+//    /**
+//     * @return generic UI drop down value
+//     */
+//    @Transient
+//    @Override
+//    public String getDisplayValue() {
+//        return String.valueOf(getName());
+//    }
+//
+//    @Override
+//    public void copyFrom(final TextConverterDoc textConverter) {
+//        this.setDescription(textConverter.description);
+//        this.setPConverterType(textConverter.pConverterType);
+//        this.setData(textConverter.data);
+//
+//        super.copyFrom(textConverter);
+//    }
+//
+//    @Transient
+//    @Override
+//    public final String getType() {
+//        return ENTITY_TYPE;
+//    }
+
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        final TextConverterDoc that = (TextConverterDoc) o;
+        return Objects.equals(description, that.description) &&
+                Objects.equals(data, that.data) &&
+                Objects.equals(converterType, that.converterType);
     }
 
-    /**
-     * @return generic UI drop down value
-     */
-    @Transient
     @Override
-    public String getDisplayValue() {
-        return String.valueOf(getName());
-    }
-
-    @Override
-    public void copyFrom(final TextConverter textConverter) {
-        this.setDescription(textConverter.description);
-        this.setPConverterType(textConverter.pConverterType);
-        this.setData(textConverter.data);
-
-        super.copyFrom(textConverter);
-    }
-
-    @Transient
-    @Override
-    public final String getType() {
-        return ENTITY_TYPE;
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), description, data, converterType);
     }
 
     public enum TextConverterType implements HasDisplayValue, HasPrimitiveValue {

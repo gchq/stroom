@@ -25,6 +25,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
+import stroom.guice.StroomBeanStore;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.shared.Index;
@@ -40,7 +41,6 @@ import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
 import stroom.ruleset.shared.Policy;
 import stroom.script.shared.Script;
@@ -65,7 +65,6 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.io.FileUtil;
-import stroom.guice.StroomBeanStore;
 import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 
@@ -117,7 +116,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             StroomStatsStoreEntity.TABLE_NAME,
             StreamTask.TABLE_NAME,
             StreamVolume.TABLE_NAME,
-            TextConverter.TABLE_NAME,
             User.TABLE_NAME,
             UserGroupUser.TABLE_NAME,
             Visualisation.TABLE_NAME,

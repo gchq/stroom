@@ -35,6 +35,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
@@ -147,9 +148,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to delete this item");
         }
 
-        try (final RWLock lock = persistence.getLockFactory().lock(uuid)) {
-            persistence.delete(new DocRef(type, uuid));
-        }
+        persistence.getLockFactory().lock(uuid, () -> persistence.delete(new DocRef(type, uuid)));
     }
 
     public DocRefInfo info(final String uuid) {
@@ -233,14 +232,16 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
             if (importState.ok(importMode)) {
                 final byte[] data = dataMap.get(KEY).getBytes(CHARSET);
 
-                try (final RWLock lock = persistence.getLockFactory().lock(uuid)) {
+                persistence.getLockFactory().lock(uuid, () -> {
                     try (final OutputStream outputStream = persistence.getOutputStream(docRef, exists)) {
                         outputStream.write(data);
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
                     }
-                }
+                });
             }
 
-        } catch (final IOException e) {
+        } catch (final RuntimeException e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
@@ -300,18 +301,15 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
 
     private D create(final D document) {
         final DocRef docRef = createDocRef(document);
-        try {
-            try (final RWLock lock = persistence.getLockFactory().lock(document.getUuid())) {
+        persistence.getLockFactory().lock(document.getUuid(), () -> {
+            try {
                 serialiser.write(persistence.getOutputStream(docRef, false), document);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
             }
+        });
 
-            return document;
-
-        } catch (final RuntimeException e) {
-            throw e;
-        } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return document;
     }
 
     private D create(final String type, final String uuid, final String name) {
@@ -327,55 +325,56 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
     }
 
     public D read(final String uuid) {
-        try (final RWLock lock = persistence.getLockFactory().lock(uuid)) {
-            // Check that the user has permission to read this item.
-            if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
-                throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document");
-            }
+        return persistence.getLockFactory().lockResult(uuid, () -> {
+            try {
+                // Check that the user has permission to read this item.
+                if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
+                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document");
+                }
 
-            final InputStream inputStream = persistence.getInputStream(new DocRef(type, uuid));
-            return serialiser.read(inputStream, clazz);
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+                final InputStream inputStream = persistence.getInputStream(new DocRef(type, uuid));
+                return serialiser.read(inputStream, clazz);
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     public D update(final D document) {
         final DocRef docRef = createDocRef(document);
-        try (final RWLock lock = persistence.getLockFactory().lock(document.getUuid())) {
-            // Check that the user has permission to update this item.
-            if (!securityContext.hasDocumentPermission(type, document.getUuid(), DocumentPermissionNames.UPDATE)) {
-                throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document");
-            }
-
-            try (final InputStream inputStream = persistence.getInputStream(docRef)) {
-                final D existingDocument = serialiser.read(inputStream, clazz);
-
-                // Perform version check to ensure the item hasn't been updated by somebody else before we try to update it.
-                if (!existingDocument.getVersion().equals(document.getVersion())) {
-                    throw new RuntimeException("Document has already been updated");
+        return persistence.getLockFactory().lockResult(document.getUuid(), () -> {
+            try {
+                // Check that the user has permission to update this item.
+                if (!securityContext.hasDocumentPermission(type, document.getUuid(), DocumentPermissionNames.UPDATE)) {
+                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document");
                 }
 
-                final long now = System.currentTimeMillis();
-                final String userId = securityContext.getUserId();
+                try (final InputStream inputStream = persistence.getInputStream(docRef)) {
+                    final D existingDocument = serialiser.read(inputStream, clazz);
 
-                document.setVersion(UUID.randomUUID().toString());
-                document.setUpdateTime(now);
-                document.setUpdateUser(userId);
+                    // Perform version check to ensure the item hasn't been updated by somebody else before we try to update it.
+                    if (!existingDocument.getVersion().equals(document.getVersion())) {
+                        throw new RuntimeException("Document has already been updated");
+                    }
 
-                try (final OutputStream outputStream = persistence.getOutputStream(docRef, true)) {
-                    serialiser.write(outputStream, document);
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
+
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setUpdateTime(now);
+                    document.setUpdateUser(userId);
+
+                    try (final OutputStream outputStream = persistence.getOutputStream(docRef, true)) {
+                        serialiser.write(outputStream, document);
+                    }
+
+                    return document;
                 }
-
-                return document;
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
             }
-
-        } catch (final RuntimeException e) {
-            throw e;
-        } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        });
     }
 
     public List<DocRef> list() {

@@ -20,7 +20,7 @@ import stroom.entity.shared.HasPrimitiveValue;
 import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.shared.TaskStatus;
 

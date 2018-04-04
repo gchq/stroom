@@ -79,7 +79,7 @@ class CustomURIResolver implements URIResolver {
             sb.append(RESOURCE_NOT_FOUND_END);
             throw new IOException(sb.toString());
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new TransformerException(e);
         }
     }

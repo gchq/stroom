@@ -30,11 +30,7 @@ public class CacheManager implements AutoCloseable {
 
     @StroomShutdown
     public void stop() {
-        try {
-            close();
-        } catch (final RuntimeException e) {
-            throw e;
-        }
+        close();
     }
 
     @Override

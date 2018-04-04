@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,16 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.pipeline.shared;
+package stroom.pipeline;
 
-import stroom.entity.shared.FindDocumentEntityCriteria;
+import stroom.document.DocumentStore;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.query.api.v2.DocRef;
 
-public class FindTextConverterCriteria extends FindDocumentEntityCriteria {
-    private static final long serialVersionUID = 1L;
+import java.util.List;
 
-    public FindTextConverterCriteria() {
-        // Default constructor necessary for GWT serialisation.
-    }
+public interface TextConverterStore extends DocumentStore<TextConverterDoc> {
+    TextConverterDoc read(String uuid);
+
+    TextConverterDoc update(TextConverterDoc doc);
+
+    List<DocRef> list();
 }

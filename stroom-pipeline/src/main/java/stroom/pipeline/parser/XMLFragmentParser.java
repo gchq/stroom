@@ -23,7 +23,7 @@ import stroom.cache.ParserFactoryPool;
 import stroom.cache.StoredParserFactory;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
-import stroom.pipeline.TextConverterService;
+import stroom.pipeline.TextConverterStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -33,8 +33,8 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
@@ -58,7 +58,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     }
 
     private final ParserFactoryPool parserFactoryPool;
-    private final TextConverterService textConverterService;
+    private final TextConverterStore textConverterStore;
 
     private String injectedCode;
     private boolean usePool = true;
@@ -69,10 +69,10 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     public XMLFragmentParser(final ErrorReceiverProxy errorReceiverProxy,
                              final LocationFactoryProxy locationFactory,
                              final ParserFactoryPool parserFactoryPool,
-                             final TextConverterService textConverterService) {
+                             final TextConverterStore textConverterStore) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
-        this.textConverterService = textConverterService;
+        this.textConverterStore = textConverterStore;
     }
 
     @Override
@@ -89,7 +89,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         // TODO: We need to use the cached TextConverter service ideally but
         // before we do it needs to be aware cluster
         // wide when TextConverter has been updated.
-        final TextConverter tc = textConverterService.loadByUuid(textConverterRef.getUuid());
+        final TextConverterDoc tc = textConverterStore.readDocument(textConverterRef);
         if (tc == null) {
             throw new ProcessException(
                     "TextConverter \"" + textConverterRef.getName() + "\" appears to have been deleted");
@@ -122,7 +122,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     }
 
     @Override
-    protected InputSource getInputSource(final InputSource inputSource) throws IOException {
+    protected InputSource getInputSource(final InputSource inputSource) {
         return inputSource;
     }
 
@@ -148,7 +148,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     }
 
     @PipelineProperty(description = "The XML fragment wrapper that should be used to wrap the input XML.")
-    @PipelinePropertyDocRef(types = TextConverter.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = TextConverterDoc.ENTITY_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

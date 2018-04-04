@@ -21,7 +21,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
 import stroom.guice.StroomBeanStore;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.xml.F2XTestUtil;

@@ -20,13 +20,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
-import stroom.entity.event.EntityEvent.Handler;
 import stroom.entity.shared.Clearable;
-import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.pipeline.MockPipelineService;
-import stroom.pipeline.MockTextConverterService;
-import stroom.pipeline.MockXSLTService;
 import stroom.xmlschema.shared.XMLSchema;
 
 public class MockXmlSchemaModule extends AbstractModule {

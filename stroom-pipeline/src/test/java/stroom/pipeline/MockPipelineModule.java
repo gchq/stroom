@@ -24,7 +24,7 @@ import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XSLT;
 
 import javax.xml.transform.URIResolver;
@@ -34,7 +34,7 @@ public class MockPipelineModule extends AbstractModule {
     protected void configure() {
         bind(PipelineService.class).to(MockPipelineService.class);
         bind(XSLTService.class).to(MockXSLTService.class);
-        bind(TextConverterService.class).to(MockTextConverterService.class);
+        bind(TextConverterStore.class).to(TextConverterStoreImpl.class);
         bind(URIResolver.class).to(CustomURIResolver.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
         bind(PipelineService.class).annotatedWith(Names.named("cachedPipelineService")).to(MockPipelineService.class);
@@ -42,7 +42,7 @@ public class MockPipelineModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(MockPipelineService.class);
         clearableBinder.addBinding().to(MockXSLTService.class);
-        clearableBinder.addBinding().to(MockTextConverterService.class);
+//        clearableBinder.addBinding().to(TextConverterStoreImpl.class);
 
 //
 //        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
@@ -62,16 +62,16 @@ public class MockPipelineModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(MockPipelineService.class);
         importExportActionHandlerBinder.addBinding().to(MockXSLTService.class);
-        importExportActionHandlerBinder.addBinding().to(MockTextConverterService.class);
+        importExportActionHandlerBinder.addBinding().to(TextConverterStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
         entityServiceByTypeBinder.addBinding(PipelineEntity.ENTITY_TYPE).to(MockPipelineService.class);
-        entityServiceByTypeBinder.addBinding(TextConverter.ENTITY_TYPE).to(MockTextConverterService.class);
+        entityServiceByTypeBinder.addBinding(TextConverterDoc.ENTITY_TYPE).to(TextConverterStoreImpl.class);
         entityServiceByTypeBinder.addBinding(XSLT.ENTITY_TYPE).to(MockXSLTService.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(MockPipelineService.class);
-        findServiceBinder.addBinding().to(MockTextConverterService.class);
+//        findServiceBinder.addBinding().to(TextConverterStoreImpl.class);
         findServiceBinder.addBinding().to(MockXSLTService.class);
     }
 

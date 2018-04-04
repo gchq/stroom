@@ -29,6 +29,7 @@ import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalInt;
@@ -69,8 +70,8 @@ public class CommonIndexingTest {
         try {
             // Add data.
             commonTranslationTest.setup();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
         runProcessing(1, maxDocsPerShard);
     }
@@ -80,8 +81,8 @@ public class CommonIndexingTest {
             // Add data.
             commonTranslationTest.setup(dataFiles.stream()
                     .collect(Collectors.toList()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
         runProcessing(dataFiles.size(), maxDocsPerShard);
     }

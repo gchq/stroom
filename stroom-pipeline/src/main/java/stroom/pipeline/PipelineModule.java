@@ -26,7 +26,7 @@ import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XSLT;
 import stroom.security.SecurityContext;
 import stroom.persist.EntityManagerSupport;
@@ -40,8 +40,8 @@ public class PipelineModule extends AbstractModule {
     protected void configure() {
         bind(PipelineService.class).to(PipelineServiceImpl.class);
         bind(XSLTService.class).to(XSLTServiceImpl.class);
-        bind(TextConverterService.class).to(TextConverterServiceImpl.class);
-        bind(TextConverterService.class).to(TextConverterServiceImpl.class);
+        bind(TextConverterStore.class).to(TextConverterStoreImpl.class);
+        bind(TextConverterStore.class).to(TextConverterStoreImpl.class);
         bind(URIResolver.class).to(CustomURIResolver.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
 
@@ -56,22 +56,22 @@ public class PipelineModule extends AbstractModule {
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(stroom.pipeline.PipelineServiceImpl.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterServiceImpl.class);
+        explorerActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterStoreImpl.class);
         explorerActionHandlerBinder.addBinding().to(stroom.pipeline.XSLTServiceImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.PipelineServiceImpl.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterServiceImpl.class);
+        importExportActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterStoreImpl.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.XSLTServiceImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
         entityServiceByTypeBinder.addBinding(PipelineEntity.ENTITY_TYPE).to(stroom.pipeline.PipelineServiceImpl.class);
-        entityServiceByTypeBinder.addBinding(TextConverter.ENTITY_TYPE).to(stroom.pipeline.TextConverterServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(TextConverterDoc.ENTITY_TYPE).to(stroom.pipeline.TextConverterStoreImpl.class);
         entityServiceByTypeBinder.addBinding(XSLT.ENTITY_TYPE).to(stroom.pipeline.XSLTServiceImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(stroom.pipeline.PipelineServiceImpl.class);
-        findServiceBinder.addBinding().to(stroom.pipeline.TextConverterServiceImpl.class);
+//        findServiceBinder.addBinding().to(stroom.pipeline.TextConverterStoreImpl.class);
         findServiceBinder.addBinding().to(stroom.pipeline.XSLTServiceImpl.class);
     }
 

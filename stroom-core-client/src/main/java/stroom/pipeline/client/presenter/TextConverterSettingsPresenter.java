@@ -27,13 +27,13 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
 public class TextConverterSettingsPresenter
-        extends DocumentSettingsPresenter<TextConverterSettingsView, TextConverter> {
+        extends DocumentSettingsPresenter<TextConverterSettingsView, TextConverterDoc> {
     @Inject
     public TextConverterSettingsPresenter(final EventBus eventBus, final TextConverterSettingsView view,
                                           final ClientSecurityContext securityContext) {
@@ -59,17 +59,17 @@ public class TextConverterSettingsPresenter
 
     @Override
     public String getType() {
-        return TextConverter.ENTITY_TYPE;
+        return TextConverterDoc.ENTITY_TYPE;
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final TextConverter textConverter) {
+    protected void onRead(final DocRef docRef, final TextConverterDoc textConverter) {
         getView().getDescription().setText(textConverter.getDescription());
         getView().getConverterType().setSelectedItem(textConverter.getConverterType());
     }
 
     @Override
-    protected void onWrite(final TextConverter textConverter) {
+    protected void onWrite(final TextConverterDoc textConverter) {
         final TextConverterType converterType = getView().getConverterType().getSelectedItem();
         textConverter.setDescription(getView().getDescription().getText().trim());
         textConverter.setConverterType(converterType);
@@ -78,6 +78,6 @@ public class TextConverterSettingsPresenter
     public interface TextConverterSettingsView extends View {
         TextArea getDescription();
 
-        ItemListBox<TextConverter.TextConverterType> getConverterType();
+        ItemListBox<TextConverterDoc.TextConverterType> getConverterType();
     }
 }

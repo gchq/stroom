@@ -24,9 +24,9 @@ import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.pool.AbstractEntityPool;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.pool.AbstractDocPool;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
@@ -40,7 +40,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class ParserFactoryPoolImpl
-        extends AbstractEntityPool<TextConverter, StoredParserFactory>
+        extends AbstractDocPool<TextConverterDoc, StoredParserFactory>
         implements ParserFactoryPool {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParserFactoryPool.class);
 
@@ -57,7 +57,7 @@ class ParserFactoryPoolImpl
     }
 
     @Override
-    protected StoredParserFactory createValue(final TextConverter textConverter) {
+    protected StoredParserFactory createValue(final TextConverterDoc textConverter) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Creating parser factory: " + textConverter.toString());
         }

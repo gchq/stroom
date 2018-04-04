@@ -19,6 +19,7 @@ package stroom.pipeline;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -27,16 +28,16 @@ import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
+import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.guice.PipelineScopeRunnable;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -78,7 +79,7 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     @Inject
     private XSLTService xsltService;
     @Inject
-    private TextConverterService textConverterService;
+    private TextConverterStore textConverterStore;
     @Inject
     private PipelineService pipelineService;
     @Inject
@@ -137,16 +138,17 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private PipelineEntity createFragmentPipeline() {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(FRAGMENT_WRAPPER);
-        TextConverter textConverter = textConverterService.create("Test Text Converter");
+        final DocRef docRef = textConverterStore.createDocument("Test Text Converter");
+        TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
         textConverter.setConverterType(TextConverterType.XML_FRAGMENT);
         textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
-        textConverter = textConverterService.save(textConverter);
+        textConverter = textConverterStore.writeDocument(textConverter);
 
         // Get the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(FRAGMENT_PIPELINE);
         final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
         pipelineEntity.getPipelineData().addProperty(
-                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
+                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
         pipelineEntity.setParentPipeline(DocRefUtil.create(createTransformerPipeline()));
         return pipelineService.save(pipelineEntity);
     }
