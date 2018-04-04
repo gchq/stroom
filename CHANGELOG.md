@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#708** : Removed parent folder UUID from ExplorerActionHandler.
+
 * Application security code is now implemented using lambda expressions rather than AOP. This simplifies debugging and makes the code easier to understand.
 
 * Changed the task system to allow task threads to be interrupted from the task UI.
