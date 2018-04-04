@@ -1,4 +1,4 @@
-package stroom.search.server;
+package stroom.statistics.server.sql.search;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -12,8 +12,8 @@ import javax.inject.Inject;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-@Component("luceneInMemorySearchResultCreatorCacheFactory")
-public class LuceneInMemorySearchResponseCreatorCacheFactory extends AbstractInMemorySearchResponseCreatorCacheFactory {
+@Component("sqlStatisticsInMemorySearchResponseCreatorCacheFactory")
+public class SqlStatisticsInMemorySearchResponseCreatorCacheFactory extends AbstractInMemorySearchResponseCreatorCacheFactory {
 
     private static final long DEFAULT_MAX_ACTIVE_QUERIES = 10000;
     private static final Duration DEFAULT_EXPIRE_AFTER_ACCESS_DURATION = Duration.ofMinutes(10);
@@ -24,7 +24,7 @@ public class LuceneInMemorySearchResponseCreatorCacheFactory extends AbstractInM
 
 
     @Inject
-    public LuceneInMemorySearchResponseCreatorCacheFactory(final CacheManager cacheManager) {
+    public SqlStatisticsInMemorySearchResponseCreatorCacheFactory(final CacheManager cacheManager) {
         this.cacheManager = cacheManager;
 
         //TODO replace these with props
@@ -42,6 +42,6 @@ public class LuceneInMemorySearchResponseCreatorCacheFactory extends AbstractInM
     @Override
     protected void registerCache(final CacheBuilder<SearchResponseCreatorCache.Key, SearchResponseCreator> cacheBuilder,
                        final Cache<SearchResponseCreatorCache.Key, SearchResponseCreator> cache) {
-        cacheManager.registerCache("Lucene Search Result Creators", cacheBuilder, cache);
+        cacheManager.registerCache("SQL Statistics Search Result Creators", cacheBuilder, cache);
     }
 }

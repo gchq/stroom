@@ -36,13 +36,14 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CoprocessorSettingsMap;
 import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.Store;
+import stroom.query.common.v2.StoreFactory;
 import stroom.query.common.v2.StoreSize;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
+import stroom.security.UserTokenUtil;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
 import stroom.util.config.PropertyUtil;
-import stroom.security.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.Arrays;

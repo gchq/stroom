@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.server;
+package stroom.statistics.server.sql.search;
 
 import org.springframework.stereotype.Component;
 import stroom.query.common.v2.SearchResponseCreator;
@@ -27,23 +27,31 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 @Component
-public class SearchResultCreatorManager {
+public class SqlStatisticsSearchResponseCreatorManager {
 
     private final SearchResponseCreatorCache cache;
 
     @Inject
-    public SearchResultCreatorManager(
-            @Named("luceneInMemorySearchResultCreatorCacheFactory") final SearchResponseCreatorCacheFactory cacheFactory,
-            @Named("luceneSearchStoreFactory") final StoreFactory storeFactory) {
+    public SqlStatisticsSearchResponseCreatorManager(
+            @Named("sqlStatisticsInMemorySearchResponseCreatorCacheFactory") final SearchResponseCreatorCacheFactory cacheFactory,
+            @Named("sqlStatisticStoreFactory") final StoreFactory storeFactory) {
 
+        // Create a cache using the supplied cacheFactory, providing it the storeFactory for it
+        // to use when creating new cache entries
         SearchResponseCreatorCache cache = cacheFactory.create(storeFactory);
         this.cache = cache;
     }
 
+    /**
+     * Get a {@link SearchResponseCreator} from the cache or create one if it doesn't exist
+     */
     public SearchResponseCreator get(final SearchResponseCreatorCache.Key key) {
         return cache.get(key);
     }
 
+    /**
+     * Remove an entry from the cache, this will also terminate any running search for that entry
+     */
     public void remove(final SearchResponseCreatorCache.Key key) {
         cache.remove(key);
     }

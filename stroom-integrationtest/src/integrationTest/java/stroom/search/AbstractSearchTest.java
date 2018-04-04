@@ -34,7 +34,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchResponseCreator;
-import stroom.search.server.SearchResponseCreatorCache;
+import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
