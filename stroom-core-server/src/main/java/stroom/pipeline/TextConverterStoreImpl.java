@@ -186,6 +186,8 @@ class TextConverterStoreImpl implements TextConverterStore {
                         document.setCreateUser(userId);
                         document.setUpdateUser(userId);
 
+                        document.setDescription(oldTextConverter.getDescription());
+
                         if (oldTextConverter.getConverterType() != null) {
                             document.setConverterType(TextConverterType.valueOf(oldTextConverter.getConverterType().name()));
                         }

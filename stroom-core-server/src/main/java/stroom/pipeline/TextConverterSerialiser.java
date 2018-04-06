@@ -7,10 +7,10 @@ import stroom.pipeline.shared.TextConverterDoc;
 import java.io.IOException;
 import java.util.Map;
 
-class TextConverterSerialiser extends JsonSerialiser2<TextConverterDoc> {
+public class TextConverterSerialiser extends JsonSerialiser2<TextConverterDoc> {
     private static final String XML = "xml";
 
-    TextConverterSerialiser() {
+    public TextConverterSerialiser() {
         super(TextConverterDoc.class);
     }
 

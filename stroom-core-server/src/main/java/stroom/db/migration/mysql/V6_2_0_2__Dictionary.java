@@ -97,5 +97,9 @@ public class V6_2_0_2__Dictionary implements JdbcMigration {
                 }
             }
         }
+
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE DICT TO OLD_DICT")) {
+            preparedStatement.execute();
+        }
     }
 }
