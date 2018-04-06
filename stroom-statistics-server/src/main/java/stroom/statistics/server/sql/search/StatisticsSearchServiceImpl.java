@@ -375,7 +375,6 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                     },
                                     (rs, emitter) -> {
                                         //advance the resultSet, if it is a row emit it, else finish the flow
-//                                        if (taskMonitor.isTerminated() || Thread.currentThread().isInterrupted()) {
                                         if (Thread.currentThread().isInterrupted()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
