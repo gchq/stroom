@@ -274,7 +274,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
                 try {
                     currentStatisticValue = Double.valueOf(textBuffer.toString());
                 } catch (final RuntimeException e) {
-                    throw new RuntimeException(String.format("Statistic vlaue [%s] cannot be converted to a double",
+                    throw new RuntimeException(String.format("Statistic value [%s] cannot be converted to a double",
                             textBuffer.toString()), e);
                 }
             } else if (COUNT.equals(localName)) {

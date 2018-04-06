@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.dictionary.shared;
+package stroom.db.migration;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.DocRef;
@@ -26,30 +25,28 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "imports"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "includes"})
 @XmlRootElement(name = "dictionary")
-@XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "imports"})
-public class DictionaryDoc extends Doc {
+@XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
+public class OldDictionaryDoc extends Doc {
     public static final String ENTITY_TYPE = "Dictionary";
 
     private static final long serialVersionUID = -4208920620555926044L;
 
     @XmlElement(name = "description")
     private String description;
-    @XmlTransient
-    @JsonIgnore
+    @XmlElement(name = "data")
     private String data;
     @XmlElementWrapper(name = "imports")
     @XmlElement(name = "docRef")
     private List<DocRef> imports;
 
-    public DictionaryDoc() {
+    public OldDictionaryDoc() {
         // Default constructor for GWT serialisation.
     }
 
@@ -82,7 +79,7 @@ public class DictionaryDoc extends Doc {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
-        final DictionaryDoc that = (DictionaryDoc) o;
+        final OldDictionaryDoc that = (OldDictionaryDoc) o;
         return Objects.equals(description, that.description) &&
                 Objects.equals(data, that.data) &&
                 Objects.equals(imports, that.imports);

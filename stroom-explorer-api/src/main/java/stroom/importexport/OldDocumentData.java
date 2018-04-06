@@ -7,6 +7,7 @@ import stroom.query.api.v2.DocRef;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
@@ -16,7 +17,7 @@ import java.util.Map;
 @XmlRootElement(name = "documentData")
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "Raw data representation of a document")
-public class DocumentData implements Serializable {
+public class OldDocumentData implements Serializable {
     @XmlElement(name = "docRef")
     @ApiModelProperty(
             value = "The document reference for the document",
@@ -27,12 +28,12 @@ public class DocumentData implements Serializable {
     @ApiModelProperty(
             value = "A map of file extensions to file contents that are used to represent all of the document contents",
             required = true)
-    private Map<String, byte[]> dataMap;
+    private Map<String, String> dataMap;
 
-    private DocumentData() {
+    private OldDocumentData() {
     }
 
-    public DocumentData(final DocRef docRef, final Map<String, byte[]> dataMap) {
+    public OldDocumentData(final DocRef docRef, final Map<String, String> dataMap) {
         this.docRef = docRef;
         this.dataMap = dataMap;
     }
@@ -41,7 +42,7 @@ public class DocumentData implements Serializable {
         return docRef;
     }
 
-    public Map<String, byte[]> getDataMap() {
+    public Map<String, String> getDataMap() {
         return dataMap;
     }
 }

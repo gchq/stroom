@@ -31,14 +31,9 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,13 +45,10 @@ import java.util.stream.Collectors;
 public class Store<D extends Doc> implements DocumentActionHandler<D> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Store.class);
 
-    private static final Charset CHARSET = Charset.forName("UTF-8");
-    private static final String KEY = "dat";
-
     private final SecurityContext securityContext;
     private final Persistence persistence;
 
-    private Serialiser<D> serialiser;
+    private Serialiser2<D> serialiser;
     private String type;
     private Class<D> clazz;
 
@@ -66,7 +58,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         this.securityContext = securityContext;
     }
 
-    public void setSerialiser(final Serialiser<D> serialiser) {
+    public void setSerialiser(final Serialiser2<D> serialiser) {
         this.serialiser = serialiser;
     }
 
@@ -221,7 +213,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                 .collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         final String uuid = docRef.getUuid();
         try {
             final boolean exists = persistence.exists(docRef);
@@ -230,11 +222,9 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
             }
 
             if (importState.ok(importMode)) {
-                final byte[] data = dataMap.get(KEY).getBytes(CHARSET);
-
                 persistence.getLockFactory().lock(uuid, () -> {
-                    try (final OutputStream outputStream = persistence.getOutputStream(docRef, exists)) {
-                        outputStream.write(data);
+                    try {
+                        persistence.write(docRef, exists, dataMap);
                     } catch (final IOException e) {
                         throw new UncheckedIOException(e);
                     }
@@ -248,10 +238,10 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         return docRef;
     }
 
-    public Map<String, String> exportDocument(final DocRef docRef,
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        Map<String, String> data = Collections.emptyMap();
+        Map<String, byte[]> data = Collections.emptyMap();
 
         final String uuid = docRef.getUuid();
 
@@ -274,11 +264,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                     document.setUpdateUser(null);
                 }
 
-                final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                serialiser.write(byteArrayOutputStream, document);
-
-                data = new HashMap<>();
-                data.put(KEY, new String(byteArrayOutputStream.toByteArray(), CHARSET));
+                data = serialiser.write(document);
             }
         } catch (final IOException e) {
             messageList.add(new Message(Severity.ERROR, e.getMessage()));
@@ -300,14 +286,19 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
     }
 
     private D create(final D document) {
-        final DocRef docRef = createDocRef(document);
-        persistence.getLockFactory().lock(document.getUuid(), () -> {
-            try {
-                serialiser.write(persistence.getOutputStream(docRef, false), document);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
+        try {
+            final DocRef docRef = createDocRef(document);
+            final Map<String, byte[]> data = serialiser.write(document);
+            persistence.getLockFactory().lock(document.getUuid(), () -> {
+                try {
+                    persistence.write(docRef, false, data);
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
         return document;
     }
@@ -325,56 +316,76 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
     }
 
     public D read(final String uuid) {
-        return persistence.getLockFactory().lockResult(uuid, () -> {
-            try {
-                // Check that the user has permission to read this item.
-                if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
-                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document");
-                }
+        // Check that the user has permission to read this item.
+        if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
+            throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document");
+        }
 
-                final InputStream inputStream = persistence.getInputStream(new DocRef(type, uuid));
-                return serialiser.read(inputStream, clazz);
+        final Map<String, byte[]> data = persistence.getLockFactory().lockResult(uuid, () -> {
+            try {
+                return persistence.read(new DocRef(type, uuid));
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw new UncheckedIOException(e);
             }
         });
+
+        try {
+            return serialiser.read(data);
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new UncheckedIOException(e);
+        }
     }
 
     public D update(final D document) {
         final DocRef docRef = createDocRef(document);
-        return persistence.getLockFactory().lockResult(document.getUuid(), () -> {
-            try {
-                // Check that the user has permission to update this item.
-                if (!securityContext.hasDocumentPermission(type, document.getUuid(), DocumentPermissionNames.UPDATE)) {
-                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document");
-                }
 
-                try (final InputStream inputStream = persistence.getInputStream(docRef)) {
-                    final D existingDocument = serialiser.read(inputStream, clazz);
+        // Check that the user has permission to update this item.
+        if (!securityContext.hasDocumentPermission(type, document.getUuid(), DocumentPermissionNames.UPDATE)) {
+            throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document");
+        }
+
+        try {
+            // Get the current document version to make sure the document hasn't been changed by somebody else since we last read it.
+            final String currentVersion = document.getVersion();
+
+            final long now = System.currentTimeMillis();
+            final String userId = securityContext.getUserId();
+
+            document.setVersion(UUID.randomUUID().toString());
+            document.setUpdateTime(now);
+            document.setUpdateUser(userId);
+
+            final Map<String, byte[]> newData = serialiser.write(document);
+
+            persistence.getLockFactory().lock(document.getUuid(), () -> {
+                try {
+                    // Read existing data for this document.
+                    final Map<String, byte[]> data = persistence.read(docRef);
 
                     // Perform version check to ensure the item hasn't been updated by somebody else before we try to update it.
-                    if (!existingDocument.getVersion().equals(document.getVersion())) {
-                        throw new RuntimeException("Document has already been updated");
+                    if (data == null) {
+                        throw new RuntimeException("Document does not exist " + docRef);
                     }
 
-                    final long now = System.currentTimeMillis();
-                    final String userId = securityContext.getUserId();
+                    final D existingDocument = serialiser.read(data);
 
-                    document.setVersion(UUID.randomUUID().toString());
-                    document.setUpdateTime(now);
-                    document.setUpdateUser(userId);
-
-                    try (final OutputStream outputStream = persistence.getOutputStream(docRef, true)) {
-                        serialiser.write(outputStream, document);
+                    // Perform version check to ensure the item hasn't been updated by somebody else before we try to update it.
+                    if (!existingDocument.getVersion().equals(currentVersion)) {
+                        throw new RuntimeException("Document has already been updated " + docRef);
                     }
 
-                    return document;
+                    persistence.write(docRef, true, newData);
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
                 }
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
+            });
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        return document;
     }
 
     public List<DocRef> list() {

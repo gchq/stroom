@@ -19,27 +19,24 @@ package stroom.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docstore.JsonSerialiser;
 import stroom.docstore.Persistence;
-import stroom.docstore.Serialiser;
+import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
-import stroom.entity.shared.PermissionException;
 import stroom.explorer.shared.DocumentType;
+import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -53,13 +50,16 @@ class TextConverterStoreImpl implements TextConverterStore {
     private final Store<TextConverterDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
-    private final Serialiser<TextConverterDoc> serialiser = new JsonSerialiser<>();
+    private final Serialiser2<TextConverterDoc> serialiser;
 
     @Inject
     TextConverterStoreImpl(final Store<TextConverterDoc> store, final SecurityContext securityContext, final Persistence persistence) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
+
+        serialiser = new TextConverterSerialiser();
+
         store.setType(TextConverterDoc.ENTITY_TYPE, TextConverterDoc.class);
         store.setSerialiser(serialiser);
     }
@@ -142,34 +142,37 @@ class TextConverterStoreImpl implements TextConverterStore {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
-        if (!legacyImport(docRef, dataMap, importState, importMode)) {
-            return store.importDocument(docRef, dataMap, importState, importMode);
+    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+        // Convert legacy import format to the new format.
+        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
+        if (map != null) {
+            return store.importDocument(docRef, map, importState, importMode);
         }
 
         return docRef;
     }
 
     @Override
-    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
         return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
-    private boolean legacyImport(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
-        if (dataMap.size() > 1 && !dataMap.containsKey("dat")) {
+    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+        Map<String, byte[]> result = dataMap;
+        if (dataMap.size() > 1 && !dataMap.containsKey("meta") && dataMap.containsKey("xml")) {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (exists && !securityContext.hasDocumentPermission(docRef.getType(), uuid, DocumentPermissionNames.UPDATE)) {
-                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
-                }
-
                 if (importState.ok(importMode)) {
                     TextConverterDoc document;
                     if (exists) {
                         document = read(uuid);
 
                     } else {
+                        final OldTextConverter oldTextConverter = new OldTextConverter();
+                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                        legacySerialiser.performImport(oldTextConverter, dataMap);
+
                         final long now = System.currentTimeMillis();
                         final String userId = securityContext.getUserId();
 
@@ -182,27 +185,25 @@ class TextConverterStoreImpl implements TextConverterStore {
                         document.setUpdateTime(now);
                         document.setCreateUser(userId);
                         document.setUpdateUser(userId);
+
+                        if (oldTextConverter.getConverterType() != null) {
+                            document.setConverterType(TextConverterType.valueOf(oldTextConverter.getConverterType().name()));
+                        }
                     }
 
-                    document.setData(dataMap.get("data.txt"));
-
-                    persistence.getLockFactory().lock(uuid, () -> {
-                        try (final OutputStream outputStream = persistence.getOutputStream(docRef, exists)) {
-                            serialiser.write(outputStream, document);
-                        } catch (final IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    });
+                    result = serialiser.write(document);
+                    if (dataMap.containsKey("data.xml")) {
+                        result.put("xml", dataMap.remove("data.xml"));
+                    }
                 }
 
-            } catch (final RuntimeException e) {
+            } catch (final IOException | RuntimeException e) {
                 importState.addMessage(Severity.ERROR, e.getMessage());
+                result = null;
             }
-
-            return true;
         }
 
-        return false;
+        return result;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -220,8 +221,8 @@ class TextConverterStoreImpl implements TextConverterStore {
     }
 
     @Override
-    public TextConverterDoc update(final TextConverterDoc dataReceiptPolicy) {
-        return store.update(dataReceiptPolicy);
+    public TextConverterDoc update(final TextConverterDoc document) {
+        return store.update(document);
     }
 
     @Override

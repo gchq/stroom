@@ -33,7 +33,6 @@ import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.io.AbstractFileVisitor;
-import stroom.util.io.StreamUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -41,9 +40,6 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -63,7 +59,6 @@ import java.util.stream.Collectors;
 class ImportExportSerializerImpl implements ImportExportSerializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
 
-    private static final Charset CHARSET = StreamUtil.DEFAULT_CHARSET;
     public static final String FOLDER = ExplorerConstants.FOLDER;
 
     private final ExplorerService explorerService;
@@ -160,7 +155,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
             try {
                 // Get other associated data.
-                final Map<String, String> dataMap = new HashMap<>();
+                final Map<String, byte[]> dataMap = new HashMap<>();
                 final String filePrefix = ImportExportFileNameUtil.createFilePrefix(docRef);
                 final Path dir = nodeFile.getParent();
                 try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, filePrefix + "*")) {
@@ -169,8 +164,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             if (!file.equals(nodeFile)) {
                                 final String key = file.getFileName().toString().substring(filePrefix.length() + 1);
                                 final byte[] bytes = Files.readAllBytes(file);
-                                final String string = new String(bytes, CHARSET);
-                                dataMap.put(key, string);
+                                dataMap.put(key, bytes);
                             }
                         } catch (final IOException e) {
                             LOGGER.error(e.getMessage(), e);
@@ -341,7 +335,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(docRef.getType());
         if (importExportActionHandler != null) {
             LOGGER.debug("Exporting: " + docRef);
-            final Map<String, String> dataMap = importExportActionHandler.exportDocument(docRef, omitAuditFields, messageList);
+            final Map<String, byte[]> dataMap = importExportActionHandler.exportDocument(docRef, omitAuditFields, messageList);
 
             // Get an explorer node for this doc ref.
             final ExplorerNode explorerNode = explorerNodeService.getNode(docRef)
@@ -371,9 +365,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     final String fileName = filePrefix + "." + k;
                     try {
                         final OutputStream outputStream = Files.newOutputStream(parentDir.resolve(fileName));
-                        final Writer writer = new OutputStreamWriter(outputStream, CHARSET);
-                        writer.write(v);
-                        writer.close();
+                        outputStream.write(v);
+                        outputStream.close();
 
                     } catch (final IOException e) {
                         messageList.add(new Message(Severity.ERROR, "Failed to write file '" + fileName + "'"));

@@ -37,6 +37,7 @@ dependencies {
     compile libs.validation_api
     compile libs.ws_rs_api
     compile libs.curator_x_discovery
+    compile libs.jackson_databind
     compile libs.jersey_client
     compile libs.jersey_common
     compile libs.hibernate_jpa_api

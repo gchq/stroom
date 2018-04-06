@@ -20,7 +20,6 @@ import stroom.entity.shared.HasPrimitiveValue;
 import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.shared.TaskStatus;
 
@@ -57,6 +56,5 @@ public class EnumSqlTool {
         process("VolumeUseStatus", VolumeUseStatus.values());
         process("VolumeType", VolumeType.values());
         process("StreamStatus", StreamStatus.values());
-        process("TextConverterType", TextConverterType.values());
     }
 }

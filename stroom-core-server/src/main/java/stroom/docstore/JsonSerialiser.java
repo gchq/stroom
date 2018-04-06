@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * THIS CLASS IS HERE PURELY TO MAINTAIN BACKWARDS COMPATIBILITY WITH THE V6_0_0_21__Dictionary CLASS
+ */
 public final class JsonSerialiser<D> implements Serialiser<D> {
     private final ObjectMapper mapper;
 

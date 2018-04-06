@@ -21,9 +21,8 @@ import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import stroom.docstore.EncodingUtil;
 import stroom.importexport.DocRefs;
-import stroom.importexport.OldDocumentData;
+import stroom.importexport.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
@@ -38,20 +37,18 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Api(
-        value = "ruleset - /v1",
+        value = "ruleset - /v2",
         description = "Ruleset API")
-@Path("/ruleset/v1")
+@Path("/ruleset/v2")
 @Produces(MediaType.APPLICATION_JSON)
-public class RuleSetResource implements HasHealthCheck {
+public class RuleSetResource2 implements HasHealthCheck {
     private final RuleSetService ruleSetService;
 
     @Inject
-    public RuleSetResource(final RuleSetService ruleSetService) {
+    public RuleSetResource2(final RuleSetService ruleSetService) {
         this.ruleSetService = ruleSetService;
     }
 
@@ -74,13 +71,9 @@ public class RuleSetResource implements HasHealthCheck {
     @ApiOperation(
             value = "Submit an import request",
             response = DocRef.class)
-    public DocRef importDocument(@ApiParam("DocumentData") final OldDocumentData documentData) {
+    public DocRef importDocument(@ApiParam("DocumentData") final DocumentData documentData) {
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-        if (documentData.getDataMap() == null) {
-            return ruleSetService.importDocument(documentData.getDocRef(), null, importState, ImportMode.IGNORE_CONFIRMATION);
-        }
-        final Map<String, byte[]> data = documentData.getDataMap().entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> EncodingUtil.asBytes(e.getValue())));
-        return ruleSetService.importDocument(documentData.getDocRef(), data, importState, ImportMode.IGNORE_CONFIRMATION);
+        return ruleSetService.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
     }
 
     @POST
@@ -90,14 +83,10 @@ public class RuleSetResource implements HasHealthCheck {
     @Timed
     @ApiOperation(
             value = "Submit an export request",
-            response = OldDocumentData.class)
-    public OldDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
+            response = DocumentData.class)
+    public DocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
         final Map<String, byte[]> map = ruleSetService.exportDocument(docRef, true, new ArrayList<>());
-        if (map == null) {
-            return new OldDocumentData(docRef, null);
-        }
-        final Map<String, String> data = map.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> EncodingUtil.asString(e.getValue())));
-        return new OldDocumentData(docRef, data);
+        return new DocumentData(docRef, map);
     }
 
     @Override

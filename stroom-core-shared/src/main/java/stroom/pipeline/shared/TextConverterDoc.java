@@ -16,31 +16,24 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
-import stroom.entity.shared.Copyable;
-import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.HasData;
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.PrimitiveValueConverter;
-import stroom.entity.shared.SQLNameConstants;
 import stroom.util.shared.HasDisplayValue;
 
-import javax.persistence.Column;
-import javax.persistence.Lob;
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "converterType"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "converterType"})
 @XmlRootElement(name = "textConverter")
-@XmlType(name = "TextConverterDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "converterType"})
+@XmlType(name = "TextConverterDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "converterType"})
 public class TextConverterDoc extends Doc implements HasData {
     public static final String ENTITY_TYPE = "TextConverter";
 
@@ -48,10 +41,11 @@ public class TextConverterDoc extends Doc implements HasData {
 
     @XmlElement(name = "description")
     private String description;
-    @XmlElement(name = "data")
+    @XmlTransient
+    @JsonIgnore
     private String data;
     @XmlElement(name = "converterType")
-    private String converterType = TextConverterType.NONE.getDisplayValue();
+    private TextConverterType converterType = TextConverterType.NONE;
 
     public String getDescription() {
         return description;
@@ -72,11 +66,11 @@ public class TextConverterDoc extends Doc implements HasData {
     }
 
     public TextConverterType getConverterType() {
-        return TextConverterType.valueOf(converterType);
+        return converterType;
     }
 
     public void setConverterType(final TextConverterType converterType) {
-        this.converterType = converterType.getDisplayValue();
+        this.converterType = converterType;
     }
 //
 //    /**
@@ -120,40 +114,18 @@ public class TextConverterDoc extends Doc implements HasData {
         return Objects.hash(super.hashCode(), description, data, converterType);
     }
 
-    public enum TextConverterType implements HasDisplayValue, HasPrimitiveValue {
-        NONE("None", 0, "txt"), DATA_SPLITTER("Data Splitter", 1, "xml"), XML_FRAGMENT("XML Fragment", 3, "xml");
-
-        public static final PrimitiveValueConverter<TextConverterType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                TextConverterType.values());
-
-        // Add fudge to cope with old DATA_SPLITTER_2 enumeration that mapped to
-        // 4.
-        static {
-            PRIMITIVE_VALUE_CONVERTER.put((byte) 4, DATA_SPLITTER);
-        }
+    public enum TextConverterType implements HasDisplayValue {
+        NONE("None"), DATA_SPLITTER("Data Splitter"), XML_FRAGMENT("XML Fragment");
 
         private final String displayValue;
-        private final byte primitiveValue;
-        private final String fileExtension;
 
-        TextConverterType(final String displayValue, final int primitiveValue, final String fileExtension) {
+        TextConverterType(final String displayValue) {
             this.displayValue = displayValue;
-            this.primitiveValue = (byte) primitiveValue;
-            this.fileExtension = fileExtension;
         }
 
         @Override
         public String getDisplayValue() {
             return displayValue;
-        }
-
-        @Override
-        public byte getPrimitiveValue() {
-            return primitiveValue;
-        }
-
-        public String getFileExtension() {
-            return fileExtension;
         }
     }
 }

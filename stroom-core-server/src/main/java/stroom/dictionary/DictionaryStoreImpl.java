@@ -19,12 +19,13 @@ package stroom.dictionary;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.db.migration.OldDictionaryDoc;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docstore.JsonSerialiser;
+import stroom.docstore.EncodingUtil;
+import stroom.docstore.JsonSerialiser2;
 import stroom.docstore.Persistence;
-import stroom.docstore.Serialiser;
+import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
-import stroom.entity.shared.PermissionException;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -38,8 +39,6 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -56,13 +55,16 @@ class DictionaryStoreImpl implements DictionaryStore {
     private final Store<DictionaryDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
-    private final Serialiser<DictionaryDoc> serialiser = new JsonSerialiser<>();
+    private final Serialiser2<DictionaryDoc> serialiser;
 
     @Inject
     DictionaryStoreImpl(final Store<DictionaryDoc> store, final SecurityContext securityContext, final Persistence persistence) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
+
+        serialiser = new DictionarySerialiser();
+
         store.setType(DictionaryDoc.ENTITY_TYPE, DictionaryDoc.class);
         store.setSerialiser(serialiser);
     }
@@ -189,32 +191,55 @@ class DictionaryStoreImpl implements DictionaryStore {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
-        if (!legacyImport(docRef, dataMap, importState, importMode)) {
-            return store.importDocument(docRef, dataMap, importState, importMode);
+    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+        // Convert legacy import format to the new format.
+        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
+        if (map != null) {
+            return store.importDocument(docRef, map, importState, importMode);
         }
 
         return docRef;
     }
 
     @Override
-    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
         return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
-    private boolean legacyImport(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
-        if (dataMap.size() > 1 && !dataMap.containsKey("dat")) {
-            final String uuid = docRef.getUuid();
-            try {
-                final boolean exists = persistence.exists(docRef);
-                if (exists && !securityContext.hasDocumentPermission(docRef.getType(), uuid, DocumentPermissionNames.UPDATE)) {
-                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
-                }
+    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+        Map<String, byte[]> result = dataMap;
 
-                if (importState.ok(importMode)) {
+        try {
+            if (!dataMap.containsKey("meta")) {
+                // The latest version has a 'meta' file for the core details about the dictionary so convert this data.
+
+                if (dataMap.containsKey("dat")) {
+                    // Version 6.0 stored the whole dictionary in a single JSON file ending in 'dat' so convert this.
+                    dataMap.put("meta", dataMap.remove("dat"));
+                    final JsonSerialiser2<OldDictionaryDoc> oldSerialiser = new JsonSerialiser2<>(OldDictionaryDoc.class);
+                    final OldDictionaryDoc oldDocument = oldSerialiser.read(dataMap);
+
+                    final DictionaryDoc document = new DictionaryDoc();
+                    document.setVersion(oldDocument.getVersion());
+                    document.setCreateTime(oldDocument.getCreateTime());
+                    document.setUpdateTime(oldDocument.getUpdateTime());
+                    document.setCreateUser(oldDocument.getCreateUser());
+                    document.setUpdateUser(oldDocument.getUpdateUser());
+                    document.setType(oldDocument.getType());
+                    document.setUuid(oldDocument.getUuid());
+                    document.setName(oldDocument.getName());
+                    document.setDescription(oldDocument.getDescription());
+                    document.setImports(oldDocument.getImports());
+                    document.setData(oldDocument.getData());
+
+                    result = serialiser.write(document);
+                } else {
+                    // If we don't have a 'dat' file then this version is pre 6.0. We need to create the dictionary meta and put the data in the map.
+
+                    final boolean exists = persistence.exists(docRef);
                     DictionaryDoc document;
                     if (exists) {
-                        document = read(uuid);
+                        document = read(docRef.getUuid());
 
                     } else {
                         final long now = System.currentTimeMillis();
@@ -222,7 +247,7 @@ class DictionaryStoreImpl implements DictionaryStore {
 
                         document = new DictionaryDoc();
                         document.setType(docRef.getType());
-                        document.setUuid(uuid);
+                        document.setUuid(docRef.getUuid());
                         document.setName(docRef.getName());
                         document.setVersion(UUID.randomUUID().toString());
                         document.setCreateTime(now);
@@ -231,25 +256,19 @@ class DictionaryStoreImpl implements DictionaryStore {
                         document.setUpdateUser(userId);
                     }
 
-                    document.setData(dataMap.get("data.txt"));
+                    if (dataMap.containsKey("data.xml")) {
+                        document.setData(EncodingUtil.asString(dataMap.get("data.xml")));
+                    }
 
-                    persistence.getLockFactory().lock(uuid, () -> {
-                        try (final OutputStream outputStream = persistence.getOutputStream(docRef, exists)) {
-                            serialiser.write(outputStream, document);
-                        } catch (final IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    });
+                    result = serialiser.write(document);
                 }
-
-            } catch (final RuntimeException e) {
-                importState.addMessage(Severity.ERROR, e.getMessage());
             }
-
-            return true;
+        } catch (final IOException | RuntimeException e) {
+            importState.addMessage(Severity.ERROR, e.getMessage());
+            result = null;
         }
 
-        return false;
+        return result;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -267,8 +286,8 @@ class DictionaryStoreImpl implements DictionaryStore {
     }
 
     @Override
-    public DictionaryDoc update(final DictionaryDoc dataReceiptPolicy) {
-        return store.update(dataReceiptPolicy);
+    public DictionaryDoc update(final DictionaryDoc document) {
+        return store.update(document);
     }
 
     @Override

@@ -20,8 +20,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import stroom.explorer.ExplorerActionHandlerFactory;
-import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.TaskHandler;
 
 public class HeadlessModule extends AbstractModule {
@@ -32,7 +32,7 @@ public class HeadlessModule extends AbstractModule {
         install(new stroom.cluster.ClusterModule());
         install(new stroom.dictionary.DictionaryModule());
         install(new stroom.dictionary.DictionaryHandlerModule());
-        install(new stroom.docstore.db.DBPersistenceModule());
+        install(new stroom.docstore.fs.FSPersistenceModule());
         install(new stroom.document.DocumentModule());
         install(new stroom.entity.EntityModule());
         install(new stroom.entity.cluster.EntityClusterModule());

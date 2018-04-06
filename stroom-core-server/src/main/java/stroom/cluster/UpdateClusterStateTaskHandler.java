@@ -72,7 +72,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
 
                 updateState(task);
             } catch (final InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.debug(e.getMessage(), e);
 
                 // Continue to interrupt this thread.
                 Thread.currentThread().interrupt();
