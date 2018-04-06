@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Moved XmlSchema entities over to the new multi part document store.
+
 * Moved TextConverter entities over to the new multi part document store.
 
 * Modified the storage of dictionaries to use the new multi part document store.
