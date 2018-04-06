@@ -12,7 +12,8 @@ import javax.inject.Inject;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-@Component("luceneInMemorySearchResultCreatorCacheFactory")
+@SuppressWarnings("unused") //Used by DI
+@Component("luceneInMemorySearchResponseCreatorCacheFactory")
 public class LuceneInMemorySearchResponseCreatorCacheFactory extends AbstractInMemorySearchResponseCreatorCacheFactory {
 
     private static final long DEFAULT_MAX_ACTIVE_QUERIES = 10000;
@@ -21,7 +22,6 @@ public class LuceneInMemorySearchResponseCreatorCacheFactory extends AbstractInM
     private final CacheManager cacheManager;
     private final long maxActiveQueries;
     private final Duration expireAfterAccessDuration;
-
 
     @Inject
     public LuceneInMemorySearchResponseCreatorCacheFactory(final CacheManager cacheManager) {
@@ -33,7 +33,8 @@ public class LuceneInMemorySearchResponseCreatorCacheFactory extends AbstractInM
     }
 
     @Override
-    protected void buildCache(final CacheBuilder<SearchResponseCreatorCache.Key, SearchResponseCreator> cacheBuilder) {
+    protected void addAdditionalBuildOptions(
+            final CacheBuilder<SearchResponseCreatorCache.Key, SearchResponseCreator> cacheBuilder) {
        cacheBuilder
                 .maximumSize(maxActiveQueries)
                 .expireAfterAccess(expireAfterAccessDuration.toMillis(), TimeUnit.MILLISECONDS);

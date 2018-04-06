@@ -12,6 +12,7 @@ import javax.inject.Inject;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("unused") //Used by DI
 @Component("sqlStatisticsInMemorySearchResponseCreatorCacheFactory")
 public class SqlStatisticsInMemorySearchResponseCreatorCacheFactory extends AbstractInMemorySearchResponseCreatorCacheFactory {
 
@@ -21,7 +22,6 @@ public class SqlStatisticsInMemorySearchResponseCreatorCacheFactory extends Abst
     private final CacheManager cacheManager;
     private final long maxActiveQueries;
     private final Duration expireAfterAccessDuration;
-
 
     @Inject
     public SqlStatisticsInMemorySearchResponseCreatorCacheFactory(final CacheManager cacheManager) {
@@ -33,7 +33,8 @@ public class SqlStatisticsInMemorySearchResponseCreatorCacheFactory extends Abst
     }
 
     @Override
-    protected void buildCache(final CacheBuilder<SearchResponseCreatorCache.Key, SearchResponseCreator> cacheBuilder) {
+    protected void addAdditionalBuildOptions(
+            final CacheBuilder<SearchResponseCreatorCache.Key, SearchResponseCreator> cacheBuilder) {
        cacheBuilder
                 .maximumSize(maxActiveQueries)
                 .expireAfterAccess(expireAfterAccessDuration.toMillis(), TimeUnit.MILLISECONDS);

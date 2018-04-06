@@ -14,6 +14,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.statistics.server.sql.SQLStatisticCacheImpl;
 import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
@@ -23,6 +24,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,23 +41,15 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;
     private final StatisticStoreCache statisticStoreCache;
-//    private final SQLStatisticEventStore sqlStatisticEventStore;
-//    private final StroomPropertyService stroomPropertyService;
-//    private final StatisticsSearchService statisticsSearchService;
-    private final SqlStatisticsSearchResponseCreatorManager searchResponseCreatorManager;
+    private final SearchResponseCreatorManager searchResponseCreatorManager;
 
     @Inject
     public StatisticsQueryServiceImpl(final StatisticsDataSourceProvider statisticsDataSourceProvider,
                                       final StatisticStoreCache statisticStoreCache,
-//                                      final SQLStatisticEventStore sqlStatisticEventStore,
-//                                      final StroomPropertyService stroomPropertyService,
-//                                      final StatisticsSearchService statisticsSearchService,
-                                      final SqlStatisticsSearchResponseCreatorManager searchResponseCreatorManager) {
+                                      @Named("sqlStatisticsSearchResponseCreatorManager")
+                                          final SearchResponseCreatorManager searchResponseCreatorManager) {
         this.statisticsDataSourceProvider = statisticsDataSourceProvider;
         this.statisticStoreCache = statisticStoreCache;
-//        this.sqlStatisticEventStore = sqlStatisticEventStore;
-//        this.stroomPropertyService = stroomPropertyService;
-//        this.statisticsSearchService = statisticsSearchService;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
     }
 

@@ -35,7 +35,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
-import stroom.search.server.SearchResultCreatorManager;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
 import stroom.util.thread.ThreadUtil;
@@ -53,16 +53,16 @@ import java.util.function.Function;
 
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
 
-    @Resource
-    private SearchResultCreatorManager searchResultCreatorManager;
+    @Resource(name="luceneSearchResponseCreatorManager")
+    private SearchResponseCreatorManager searchResponseCreatorManager;
 
     protected SearchResponse search(SearchRequest searchRequest) {
-        return search(searchRequest, searchResultCreatorManager);
+        return search(searchRequest, searchResponseCreatorManager);
     }
 
     protected static SearchResponse search(final SearchRequest searchRequest,
-                                           final SearchResultCreatorManager searchResultCreatorManager) {
-        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(
+                                           final SearchResponseCreatorManager searchResponseCreatorManager) {
+        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(
                 new SearchResponseCreatorCache.Key(searchRequest));
 
         SearchResponse response = searchResponseCreator.create(searchRequest);
@@ -75,7 +75,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 }
             }
         } finally {
-            searchResultCreatorManager.remove(new SearchResponseCreatorCache.Key(searchRequest.getKey()));
+            searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(searchRequest.getKey()));
         }
 
         return response;
@@ -94,7 +94,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final IndexService indexService) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
                 extractValues, resultMapConsumer, sleepTimeMs, maxShardTasks,
-                maxExtractionTasks, indexService, searchResultCreatorManager);
+                maxExtractionTasks, indexService, searchResponseCreatorManager);
     }
 
     public static void testInteractive(
@@ -108,7 +108,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final int maxShardTasks,
             final int maxExtractionTasks,
             final IndexService indexService,
-            final SearchResultCreatorManager searchResultCreatorManager) {
+            final SearchResponseCreatorManager searchResponseCreatorManager) {
 
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty(
@@ -137,7 +137,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = new Query(dataSourceRef, expressionIn.build());
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
-        final SearchResponse searchResponse = AbstractSearchTest.search(searchRequest, searchResultCreatorManager);
+        final SearchResponse searchResponse = AbstractSearchTest.search(searchRequest, searchResponseCreatorManager);
 
         final Map<String, List<Row>> rows = new HashMap<>();
         if (searchResponse != null && searchResponse.getResults() != null) {

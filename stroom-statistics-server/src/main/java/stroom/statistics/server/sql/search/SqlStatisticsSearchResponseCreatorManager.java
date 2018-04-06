@@ -22,14 +22,16 @@ import org.springframework.stereotype.Component;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorCacheFactory;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.StoreFactory;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Component
-public class SqlStatisticsSearchResponseCreatorManager {
+@SuppressWarnings("unused") // used by DI
+@Component("sqlStatisticsSearchResponseCreatorManager")
+public class SqlStatisticsSearchResponseCreatorManager implements SearchResponseCreatorManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsSearchResponseCreatorManager.class);
 

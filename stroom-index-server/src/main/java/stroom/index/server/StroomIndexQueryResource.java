@@ -31,13 +31,14 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.server.IndexDataSourceFieldUtil;
-import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -51,15 +52,16 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Component
 public class StroomIndexQueryResource implements HasHealthCheck {
-    private final SearchResultCreatorManager searchResultCreatorManager;
+    private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final IndexService indexService;
     private final SecurityContext securityContext;
 
     @Inject
-    public StroomIndexQueryResource(final SearchResultCreatorManager searchResultCreatorManager,
+    public StroomIndexQueryResource(@Named("luceneSearchResponseCreatorManager")
+                                        final SearchResponseCreatorManager searchResponseCreatorManager,
                                     final IndexService indexService,
                                     final SecurityContext securityContext) {
-        this.searchResultCreatorManager = searchResultCreatorManager;
+        this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.indexService = indexService;
         this.securityContext = securityContext;
     }
@@ -93,7 +95,7 @@ public class StroomIndexQueryResource implements HasHealthCheck {
         //a lifespan beyond the scope of this request and then begin the search for the data
         //If it is not the first call for this query key then it will return the existing searchResponseCreator with
         //access to whatever data has been found so far
-        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(new SearchResponseCreatorCache.Key(request));
+        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(request));
 
         //create a response from the data found so far, this could be complete/incomplete
         return searchResponseCreator.create(request);
@@ -108,7 +110,7 @@ public class StroomIndexQueryResource implements HasHealthCheck {
             value = "Destroy a running query",
             response = Boolean.class)
     public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
-        searchResultCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
+        searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
         return Boolean.TRUE;
     }
 
