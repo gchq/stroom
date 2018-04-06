@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Moved TextConverter entities over to the new multi part document store.
+
+* Modified the storage of dictionaries to use the new multi part document store.
+
+* Changed the document store to hold multiple entries for a document so that various parts of a document can be written separately, e.g. the meta data about a dictionary and the dictionary text are now written as separate DB entries. Entries are combined during the serialisation/deserialisation process.
+
+* Changed the import export API to use byte arrays to hold values rather than strings. *POSSIBLE BREAKING CHANGE*
+
 * Issue **#708** : Removed parent folder UUID from ExplorerActionHandler.
 
 * Application security code is now implemented using lambda expressions rather than AOP. This simplifies debugging and makes the code easier to understand.
