@@ -375,7 +375,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                                     final ExpressionOperator.Op op,
                                     final boolean isIncremental) {
 
-        return doSearch(searchTags, ExpressionOperator.Op.AND, isIncremental, UUID.randomUUID().toString(), OptionalLong.empty());
+        return doSearch(searchTags, op, isIncremental, UUID.randomUUID().toString(), OptionalLong.empty());
     }
 
     private SearchResponse doSearch(final List<StatisticTag> searchTags,
