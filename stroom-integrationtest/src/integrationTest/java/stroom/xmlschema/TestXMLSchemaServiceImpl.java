@@ -22,14 +22,14 @@ import org.junit.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
 import java.util.List;
 
 public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
-    private XMLSchemaService xmlSchemaService;
+    private XmlSchemaStore xmlSchemaService;
     @Inject
     private CommonTestControl commonTestControl;
 
@@ -41,7 +41,7 @@ public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
         // Now make sure we can find a resource that we expect to be there.
         FindXMLSchemaCriteria criteria = new FindXMLSchemaCriteria();
 
-        List<XMLSchema> list = xmlSchemaService.find(criteria);
+        List<XmlSchemaDoc> list = xmlSchemaService.find(criteria);
         Assert.assertNotNull(list);
         Assert.assertTrue(list.size() > 1);
 

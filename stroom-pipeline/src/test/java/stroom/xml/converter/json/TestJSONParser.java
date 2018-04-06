@@ -43,13 +43,8 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
-import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
-import stroom.xmlschema.MockXMLSchemaService;
-import stroom.xmlschema.XMLSchemaService;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XMLSchema;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -66,8 +61,6 @@ import java.util.zip.ZipInputStream;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestJSONParser extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestJSONParser.class);
-
-    private final XMLSchemaService xmlSchemaService = new MockXMLSchemaService();
 
     @Test
     public void testKV() throws IOException {
@@ -243,27 +236,6 @@ public class TestJSONParser extends StroomUnitTest {
         final XMLReader reader = factory.getParser();
         reader.setErrorHandler(new ErrorHandlerAdaptor("JSONParser", locationFactory, errorReceiver));
         return reader;
-    }
-
-    public void loadXMLSchema(final String schemaGroup, final String schemaName, final String namespaceURI,
-                              final String systemId, final String fileName) throws IOException {
-        final Path dir = FileSystemTestUtil.getConfigXSDDir();
-
-        final Path file = dir.resolve(fileName);
-
-        final XMLSchema xmlSchema = new XMLSchema();
-        xmlSchema.setSchemaGroup(schemaGroup);
-        xmlSchema.setName(schemaName);
-        xmlSchema.setNamespaceURI(namespaceURI);
-        xmlSchema.setSystemId(systemId);
-        xmlSchema.setData(StreamUtil.fileToString(file));
-
-        final FindXMLSchemaCriteria criteria = new FindXMLSchemaCriteria();
-        criteria.getName().setString(schemaName);
-
-        if (xmlSchemaService.find(criteria).size() == 0) {
-            xmlSchemaService.save(xmlSchema);
-        }
     }
 
     private void compareFiles(final Path actualFile, final Path expectedFile) {

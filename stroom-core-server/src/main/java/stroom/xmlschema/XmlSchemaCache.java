@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,20 +34,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-@EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
-public class XMLSchemaCache implements EntityEvent.Handler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(XMLSchemaCache.class);
+@EntityEventHandler(type = XmlSchemaDoc.ENTITY_TYPE)
+public class XmlSchemaCache implements EntityEvent.Handler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaCache.class);
     private static final long TEN_MINUTES = 1000 * 60 * 10;
 
 
-    private final XMLSchemaService xmlSchemaService;
+    private final XmlSchemaStore xmlSchemaStore;
     private final List<ClearHandler> clearHandlers = new ArrayList<>();
     private final Map<FindXMLSchemaCriteria, SchemaSet> schemaSets = new ConcurrentHashMap<>();
     private volatile long lastClearTime;
 
     @Inject
-    public XMLSchemaCache(final XMLSchemaService xmlSchemaService) {
-        this.xmlSchemaService = xmlSchemaService;
+    public XmlSchemaCache(final XmlSchemaStore xmlSchemaStore) {
+        this.xmlSchemaStore = xmlSchemaStore;
         lastClearTime = System.currentTimeMillis();
     }
 
@@ -76,26 +76,25 @@ public class XMLSchemaCache implements EntityEvent.Handler {
         SchemaSet schemaSet = schemaSets.get(criteria);
         if (schemaSet == null) {
             try {
+                final Map<String, List<XmlSchemaDoc>> schemaNameMap = new HashMap<>();
+                final Map<String, List<XmlSchemaDoc>> schemaNamespaceURIMap = new HashMap<>();
+                final Map<String, List<XmlSchemaDoc>> schemaSystemIdMap = new HashMap<>();
+                final List<String> systemIdList = new ArrayList<>();
+
                 // Get a list of matching schemas.
-                final List<XMLSchema> xmlSchemas = xmlSchemaService.find(criteria);
+                final List<XmlSchemaDoc> schemas = xmlSchemaStore.find(criteria);
+                schemas.forEach(schema -> {
+                    addToMap(schemaNameMap, schema.getName(), schema);
+                    addToMap(schemaNamespaceURIMap, schema.getNamespaceURI(), schema);
+                    addToMap(schemaSystemIdMap, schema.getSystemId(), schema);
 
-                final Map<String, List<XMLSchema>> schemaNameMap = new HashMap<>();
-                final Map<String, List<XMLSchema>> schemaNamespaceURIMap = new HashMap<>();
-                final Map<String, List<XMLSchema>> schemaSystemIdMap = new HashMap<>();
-                final List<String> systemIdList = new ArrayList<>(xmlSchemas.size());
-
-                for (final XMLSchema xmlSchema : xmlSchemas) {
-                    addToMap(schemaNameMap, xmlSchema.getName(), xmlSchema);
-                    addToMap(schemaNamespaceURIMap, xmlSchema.getNamespaceURI(), xmlSchema);
-                    addToMap(schemaSystemIdMap, xmlSchema.getSystemId(), xmlSchema);
-
-                    if (xmlSchema.getSystemId() != null) {
-                        final String systemId = xmlSchema.getSystemId().trim();
+                    if (schema.getSystemId() != null) {
+                        final String systemId = schema.getSystemId().trim();
                         if (systemId.length() > 0) {
                             systemIdList.add(systemId);
                         }
                     }
-                }
+                });
 
                 // Create location string.
                 Collections.sort(systemIdList);
@@ -138,7 +137,7 @@ public class XMLSchemaCache implements EntityEvent.Handler {
         return schemaSet;
     }
 
-    private void addToMap(final Map<String, List<XMLSchema>> map, final String name, final XMLSchema xmlSchema) {
+    private void addToMap(final Map<String, List<XmlSchemaDoc>> map, final String name, final XmlSchemaDoc xmlSchema) {
         map.computeIfAbsent(name, k -> new ArrayList<>()).add(xmlSchema);
     }
 
@@ -160,14 +159,14 @@ public class XMLSchemaCache implements EntityEvent.Handler {
     }
 
     public static class SchemaSet {
-        private final Map<String, List<XMLSchema>> schemaNameMap;
-        private final Map<String, List<XMLSchema>> schemaNamespaceURIMap;
-        private final Map<String, List<XMLSchema>> schemaSystemIdMap;
+        private final Map<String, List<XmlSchemaDoc>> schemaNameMap;
+        private final Map<String, List<XmlSchemaDoc>> schemaNamespaceURIMap;
+        private final Map<String, List<XmlSchemaDoc>> schemaSystemIdMap;
         private final String locations;
 
-        SchemaSet(final Map<String, List<XMLSchema>> schemaNameMap,
-                  final Map<String, List<XMLSchema>> schemaNamespaceURIMap,
-                  final Map<String, List<XMLSchema>> schemaSystemIdMap, final String locations) {
+        SchemaSet(final Map<String, List<XmlSchemaDoc>> schemaNameMap,
+                  final Map<String, List<XmlSchemaDoc>> schemaNamespaceURIMap,
+                  final Map<String, List<XmlSchemaDoc>> schemaSystemIdMap, final String locations) {
             this.schemaNameMap = schemaNameMap;
             this.schemaNamespaceURIMap = schemaNamespaceURIMap;
             this.schemaSystemIdMap = schemaSystemIdMap;
@@ -178,21 +177,21 @@ public class XMLSchemaCache implements EntityEvent.Handler {
             return locations;
         }
 
-        public List<XMLSchema> getSchemaByName(final String name) {
+        public List<XmlSchemaDoc> getSchemaByName(final String name) {
             return schemaNameMap.get(name);
         }
 
-        public List<XMLSchema> getSchemaBySystemId(final String systemId) {
+        public List<XmlSchemaDoc> getSchemaBySystemId(final String systemId) {
             return schemaSystemIdMap.get(systemId);
         }
 
-        public List<XMLSchema> getSchemaByNamespaceURI(final String namespaceURI) {
+        public List<XmlSchemaDoc> getSchemaByNamespaceURI(final String namespaceURI) {
             return schemaNamespaceURIMap.get(namespaceURI);
         }
 
-        public XMLSchema getBestMatch(final String systemId, final String namespaceURI) {
+        public XmlSchemaDoc getBestMatch(final String systemId, final String namespaceURI) {
             // Try and find a matching schema by system id.
-            List<XMLSchema> matches = schemaSystemIdMap.get(systemId);
+            List<XmlSchemaDoc> matches = schemaSystemIdMap.get(systemId);
             if (matches != null && matches.size() > 0) {
                 return matches.get(0);
             }

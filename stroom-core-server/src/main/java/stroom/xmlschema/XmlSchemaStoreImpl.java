@@ -15,26 +15,30 @@
  *
  */
 
-package stroom.pipeline;
+package stroom.xmlschema;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.docstore.Persistence;
 import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
+import stroom.entity.shared.BaseResultList;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
+import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,21 +46,23 @@ import java.util.Set;
 import java.util.UUID;
 
 @Singleton
-class TextConverterStoreImpl implements TextConverterStore {
-    private final Store<TextConverterDoc> store;
+public class XmlSchemaStoreImpl implements XmlSchemaStore {
+    private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaStoreImpl.class);
+
+    private final Store<XmlSchemaDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
-    private final Serialiser2<TextConverterDoc> serialiser;
+    private final Serialiser2<XmlSchemaDoc> serialiser;
 
     @Inject
-    TextConverterStoreImpl(final Store<TextConverterDoc> store, final SecurityContext securityContext, final Persistence persistence) {
+    public XmlSchemaStoreImpl(final Store<XmlSchemaDoc> store, final SecurityContext securityContext, final Persistence persistence) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
 
-        serialiser = new TextConverterSerialiser();
+        serialiser = new XmlSchemaSerialiser();
 
-        store.setType(TextConverterDoc.ENTITY_TYPE, TextConverterDoc.class);
+        store.setType(XmlSchemaDoc.ENTITY_TYPE, XmlSchemaDoc.class);
         store.setSerialiser(serialiser);
     }
 
@@ -98,7 +104,7 @@ class TextConverterStoreImpl implements TextConverterStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(9, TextConverterDoc.ENTITY_TYPE, TextConverterDoc.ENTITY_TYPE);
+        return new DocumentType(9, XmlSchemaDoc.ENTITY_TYPE, XmlSchemaDoc.ENTITY_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -110,12 +116,12 @@ class TextConverterStoreImpl implements TextConverterStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public TextConverterDoc readDocument(final DocRef docRef) {
+    public XmlSchemaDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
 
     @Override
-    public TextConverterDoc writeDocument(final TextConverterDoc document) {
+    public XmlSchemaDoc writeDocument(final XmlSchemaDoc document) {
         return store.writeDocument(document);
     }
 
@@ -160,19 +166,19 @@ class TextConverterStoreImpl implements TextConverterStore {
             try {
                 final boolean exists = persistence.exists(docRef);
                 if (importState.ok(importMode)) {
-                    TextConverterDoc document;
+                    XmlSchemaDoc document;
                     if (exists) {
                         document = read(uuid);
 
                     } else {
-                        final OldTextConverter oldTextConverter = new OldTextConverter();
+                        final OldXMLSchema oldXmlSchema = new OldXMLSchema();
                         final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldTextConverter, dataMap);
+                        legacySerialiser.performImport(oldXmlSchema, dataMap);
 
                         final long now = System.currentTimeMillis();
                         final String userId = securityContext.getUserId();
 
-                        document = new TextConverterDoc();
+                        document = new XmlSchemaDoc();
                         document.setType(docRef.getType());
                         document.setUuid(uuid);
                         document.setName(docRef.getName());
@@ -181,17 +187,17 @@ class TextConverterStoreImpl implements TextConverterStore {
                         document.setUpdateTime(now);
                         document.setCreateUser(userId);
                         document.setUpdateUser(userId);
-
-                        document.setDescription(oldTextConverter.getDescription());
-
-                        if (oldTextConverter.getConverterType() != null) {
-                            document.setConverterType(TextConverterType.valueOf(oldTextConverter.getConverterType().name()));
-                        }
+                        document.setDescription(oldXmlSchema.getDescription());
+                        document.setNamespaceURI(oldXmlSchema.getNamespaceURI());
+                        document.setSystemId(oldXmlSchema.getSystemId());
+                        document.setData(oldXmlSchema.getData());
+                        document.setDeprecated(oldXmlSchema.isDeprecated());
+                        document.setSchemaGroup(oldXmlSchema.getSchemaGroup());
                     }
 
                     result = serialiser.write(document);
-                    if (dataMap.containsKey("data.xml")) {
-                        result.put("xml", dataMap.remove("data.xml"));
+                    if (dataMap.containsKey("data.xsd")) {
+                        result.put("xsd", dataMap.remove("data.xsd"));
                     }
                 }
 
@@ -209,17 +215,36 @@ class TextConverterStoreImpl implements TextConverterStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public String getDocType() {
-        return TextConverterDoc.ENTITY_TYPE;
+    public BaseResultList<XmlSchemaDoc> find(final FindXMLSchemaCriteria criteria) {
+        final List<XmlSchemaDoc> result = new ArrayList<>();
+
+        final List<DocRef> docRefs = list();
+        docRefs.forEach(docRef -> {
+            try {
+                final XmlSchemaDoc doc = readDocument(docRef);
+                if (criteria.matches(doc)) {
+                    result.add(doc);
+                }
+
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
+            }
+        });
+        return BaseResultList.createCriterialBasedList(result, criteria);
     }
 
     @Override
-    public TextConverterDoc read(final String uuid) {
+    public String getDocType() {
+        return XmlSchemaDoc.ENTITY_TYPE;
+    }
+
+    @Override
+    public XmlSchemaDoc read(final String uuid) {
         return store.read(uuid);
     }
 
     @Override
-    public TextConverterDoc update(final TextConverterDoc document) {
+    public XmlSchemaDoc update(final XmlSchemaDoc document) {
         return store.update(document);
     }
 

@@ -19,32 +19,27 @@ package stroom.xmlschema;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import stroom.dictionary.shared.DictionaryDoc;
-import stroom.entity.FindService;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEvent.Handler;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 public class XmlSchemaModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(XMLSchemaService.class).to(XMLSchemaServiceImpl.class);
+        bind(XmlSchemaStore.class).to(XmlSchemaStoreImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(XMLSchemaCache.class);
+        entityEventHandlerBinder.addBinding().to(XmlSchemaCache.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.xmlschema.XMLSchemaServiceImpl.class);
+        explorerActionHandlerBinder.addBinding().to(stroom.xmlschema.XmlSchemaStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.xmlschema.XMLSchemaServiceImpl.class);
+        importExportActionHandlerBinder.addBinding().to(stroom.xmlschema.XmlSchemaStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(XMLSchema.ENTITY_TYPE).to(stroom.xmlschema.XMLSchemaServiceImpl.class);
-
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(stroom.xmlschema.XMLSchemaServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(XmlSchemaDoc.ENTITY_TYPE).to(stroom.xmlschema.XmlSchemaStoreImpl.class);
     }
 }

@@ -17,8 +17,8 @@
 package stroom.xmlschema.shared;
 
 import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
+
+import java.util.Objects;
 
 public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
     private static final long serialVersionUID = 8723582276742882390L;
@@ -68,35 +68,36 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
         this.user = user;
     }
 
-    @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.appendSuper(super.hashCode());
-        builder.append(namespaceURI);
-        builder.append(systemId);
-        builder.append(schemaGroup);
-        builder.append(user);
-        return builder.toHashCode();
+    public boolean matches(final XmlSchemaDoc doc) {
+        if (getName() != null && !getName().isMatch(doc.getName())) {
+            return false;
+        }
+        if (namespaceURI != null && !namespaceURI.equals(doc.getNamespaceURI())) {
+            return false;
+        }
+        if (systemId != null && !systemId.equals(doc.getSystemId())) {
+            return false;
+        }
+        if (schemaGroup != null && !schemaGroup.equals(doc.getSchemaGroup())) {
+            return false;
+        }
+        return true;
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj == null || !(obj instanceof FindXMLSchemaCriteria)) {
-            return false;
-        }
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        final FindXMLSchemaCriteria that = (FindXMLSchemaCriteria) o;
+        return Objects.equals(namespaceURI, that.namespaceURI) &&
+                Objects.equals(systemId, that.systemId) &&
+                Objects.equals(schemaGroup, that.schemaGroup) &&
+                Objects.equals(user, that.user);
+    }
 
-        final FindXMLSchemaCriteria criteria = (FindXMLSchemaCriteria) obj;
-
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.appendSuper(super.equals(obj));
-        builder.append(namespaceURI, criteria.namespaceURI);
-        builder.append(systemId, criteria.systemId);
-        builder.append(schemaGroup, criteria.schemaGroup);
-        builder.append(user, criteria.user);
-
-        return builder.isEquals();
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), namespaceURI, systemId, schemaGroup, user);
     }
 }

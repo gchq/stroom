@@ -22,14 +22,14 @@ import stroom.pool.AbstractPoolCache;
 import stroom.pool.PoolItem;
 import stroom.security.Security;
 import stroom.util.cache.CacheManager;
-import stroom.xmlschema.XMLSchemaCache;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.XmlSchemaCache;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
+@EntityEventHandler(type = XmlSchemaDoc.ENTITY_TYPE)
 class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
         implements SchemaPool, EntityEvent.Handler {
     private final SchemaLoader schemaLoader;
@@ -38,7 +38,7 @@ class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
     @Inject
     SchemaPoolImpl(final CacheManager cacheManager,
                    final SchemaLoader schemaLoader,
-                   final XMLSchemaCache xmlSchemaCache,
+                   final XmlSchemaCache xmlSchemaCache,
                    final Security security) {
         super(cacheManager, "Schema Pool");
         this.schemaLoader = schemaLoader;

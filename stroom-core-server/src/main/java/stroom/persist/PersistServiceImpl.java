@@ -130,7 +130,6 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.node.shared.Volume",
                 "stroom.node.shared.VolumeState",
                 "stroom.pipeline.shared.PipelineEntity",
-                "stroom.pipeline.shared.TextConverter",
                 "stroom.pipeline.shared.XSLT",
                 "stroom.ruleset.shared.Policy",
                 "stroom.script.shared.Script",
@@ -150,8 +149,7 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.streamtask.shared.StreamProcessorFilter",
                 "stroom.streamtask.shared.StreamProcessorFilterTracker",
                 "stroom.streamtask.shared.StreamTask",
-                "stroom.visualisation.shared.Visualisation",
-                "stroom.xmlschema.shared.XMLSchema"
+                "stroom.visualisation.shared.Visualisation"
         );
 
         return new PersistenceUnitInfoImpl(name, entityClassNames, properties(dataSource));

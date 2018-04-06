@@ -19,7 +19,6 @@ package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
@@ -41,9 +40,8 @@ import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
-import stroom.xmlschema.XMLSchemaService;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.XmlSchemaStore;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -62,7 +60,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     @Inject
     private FeedService feedService;
     @Inject
-    private XMLSchemaService xmlSchemaService;
+    private XmlSchemaStore xmlSchemaStore;
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
@@ -85,7 +83,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         commonTestControl.createRequiredXMLSchemas();
 
-        BaseResultList<XMLSchema> allSchemas = xmlSchemaService.find(new FindXMLSchemaCriteria());
+        List<DocRef> allSchemas = xmlSchemaStore.list();
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
@@ -109,9 +107,10 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         eventFeed = feedService.readDocument(docRef);
         eventFeed.setDescription("New Description");
         feedService.save(eventFeed);
-        for (final XMLSchema xmlSchema : allSchemas) {
+        for (final DocRef ref : allSchemas) {
+            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
             xmlSchema.setData("XML");
-            xmlSchemaService.save(xmlSchema);
+            xmlSchemaStore.writeDocument(xmlSchema);
         }
 
         list = new ArrayList<>();
@@ -137,10 +136,11 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         Assert.assertEquals(State.NEW, list.get(1).getState());
 
         importExportSerializer.read(testDataDir, list, ImportMode.IGNORE_CONFIRMATION);
-        allSchemas = xmlSchemaService.find(new FindXMLSchemaCriteria());
+        allSchemas = xmlSchemaStore.list();
 
-        for (final XMLSchema xmlSchema : allSchemas) {
-            Assert.assertNotSame("XML", xmlSchemaService.load(xmlSchema).getData());
+        for (final DocRef ref : allSchemas) {
+            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
+            Assert.assertNotSame("XML", xmlSchema.getData());
         }
 
         Assert.assertNotNull(testDataDir);

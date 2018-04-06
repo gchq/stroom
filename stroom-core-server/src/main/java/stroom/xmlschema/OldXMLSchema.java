@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.xmlschema.shared;
+package stroom.xmlschema;
 
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
@@ -25,11 +25,10 @@ import javax.persistence.Entity;
 import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "XML_SCHEMA")
-public class XMLSchema extends DocumentEntity {
+public class OldXMLSchema extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.XML + SEP + SQLNameConstants.SCHEMA;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String SYSTEM_ID = SQLNameConstants.SYSTEM + ID_SUFFIX;

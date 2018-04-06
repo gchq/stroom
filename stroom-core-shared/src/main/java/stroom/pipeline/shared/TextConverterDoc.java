@@ -72,31 +72,6 @@ public class TextConverterDoc extends Doc implements HasData {
     public void setConverterType(final TextConverterType converterType) {
         this.converterType = converterType;
     }
-//
-//    /**
-//     * @return generic UI drop down value
-//     */
-//    @Transient
-//    @Override
-//    public String getDisplayValue() {
-//        return String.valueOf(getName());
-//    }
-//
-//    @Override
-//    public void copyFrom(final TextConverterDoc textConverter) {
-//        this.setDescription(textConverter.description);
-//        this.setPConverterType(textConverter.pConverterType);
-//        this.setData(textConverter.data);
-//
-//        super.copyFrom(textConverter);
-//    }
-//
-//    @Transient
-//    @Override
-//    public final String getType() {
-//        return ENTITY_TYPE;
-//    }
-
 
     @Override
     public boolean equals(final Object o) {

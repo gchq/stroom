@@ -17,11 +17,20 @@
 
 package stroom.xmlschema;
 
-import stroom.entity.DocumentEntityService;
-import stroom.entity.FindService;
+import stroom.document.DocumentStore;
+import stroom.entity.shared.BaseResultList;
+import stroom.query.api.v2.DocRef;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
-public interface XMLSchemaService
-        extends DocumentEntityService<XMLSchema>, FindService<XMLSchema, FindXMLSchemaCriteria> {
+import java.util.List;
+
+public interface XmlSchemaStore extends DocumentStore<XmlSchemaDoc> {
+    BaseResultList<XmlSchemaDoc> find(FindXMLSchemaCriteria criteria);
+
+    XmlSchemaDoc read(String uuid);
+
+    XmlSchemaDoc update(XmlSchemaDoc doc);
+
+    List<DocRef> list();
 }

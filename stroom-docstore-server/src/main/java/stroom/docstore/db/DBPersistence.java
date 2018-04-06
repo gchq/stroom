@@ -108,7 +108,7 @@ public class DBPersistence implements Persistence {
                 // Rollback any changes.
                 connection.rollback();
 
-                LOGGER.debug(e.getMessage(), e);
+                LOGGER.error(e.getMessage(), e);
                 throw new RuntimeException(e.getMessage(), e);
             } finally {
                 // Turn auto commit back on.

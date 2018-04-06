@@ -17,10 +17,9 @@
 package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
-import stroom.pipeline.OldTextConverter;
-import stroom.pipeline.TextConverterSerialiser;
 import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.xmlschema.XmlSchemaSerialiser;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,12 +28,12 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 
-public class V6_2_0_3__TextConverter implements JdbcMigration {
+public class V6_2_0_4__XmlSchema implements JdbcMigration {
     @Override
     public void migrate(final Connection connection) throws Exception {
-        final TextConverterSerialiser serialiser = new TextConverterSerialiser();
+        final XmlSchemaSerialiser serialiser = new XmlSchemaSerialiser();
 
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, CONV_TP, DAT FROM TXT_CONV")) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, DAT, DEPRC, SCHEMA_GRP, NS, SYSTEM_ID FROM XML_SCHEMA")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -44,11 +43,14 @@ public class V6_2_0_3__TextConverter implements JdbcMigration {
                     final String name = resultSet.getString(5);
                     final String uuid = resultSet.getString(6);
                     final String descrip = resultSet.getString(7);
-                    final byte convTp = resultSet.getByte(8);
-                    final String dat = resultSet.getString(9);
+                    final String dat = resultSet.getString(8);
+                    final boolean deprc = resultSet.getBoolean(9);
+                    final String schemaGrp = resultSet.getString(10);
+                    final String ns = resultSet.getString(11);
+                    final String systemId = resultSet.getString(12);
 
-                    final TextConverterDoc document = new TextConverterDoc();
-                    document.setType(TextConverterDoc.ENTITY_TYPE);
+                    final XmlSchemaDoc document = new XmlSchemaDoc();
+                    document.setType(XmlSchemaDoc.ENTITY_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -57,13 +59,11 @@ public class V6_2_0_3__TextConverter implements JdbcMigration {
                     document.setCreateUser(crtUser);
                     document.setUpdateUser(updUser);
                     document.setDescription(descrip);
-
-                    final OldTextConverter.TextConverterType converterType = OldTextConverter.TextConverterType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(convTp);
-                    if (converterType != null) {
-                        document.setConverterType(TextConverterType.valueOf(converterType.name()));
-                    }
-
                     document.setData(dat);
+                    document.setDeprecated(deprc);
+                    document.setSchemaGroup(schemaGrp);
+                    document.setNamespaceURI(ns);
+                    document.setSystemId(systemId);
 
                     final Map<String, byte[]> dataMap = serialiser.write(document);
 
@@ -84,7 +84,7 @@ public class V6_2_0_3__TextConverter implements JdbcMigration {
             }
         }
 
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE TXT_CONV TO OLD_TXT_CONV")) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE XML_SCHEMA TO OLD_XML_SCHEMA")) {
             preparedStatement.execute();
         }
     }
