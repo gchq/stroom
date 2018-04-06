@@ -170,7 +170,7 @@ public class StroomZipRepository {
             if (path != null && Files.isDirectory(path)) {
                 scanDir(path, minId, maxId);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -212,7 +212,7 @@ public class StroomZipRepository {
                                 }
                             }
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);
@@ -332,7 +332,7 @@ public class StroomZipRepository {
                 final Path renamedFile = file.getParent().resolve(file.getFileName().toString() + BAD_EXTENSION);
                 try {
                     zipFile.renameTo(renamedFile);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.warn("Failed to rename zip file to " + renamedFile);
                 }
                 if (Files.isRegularFile(errorFile)) {
@@ -364,7 +364,7 @@ public class StroomZipRepository {
 
                 cleanDir(path, tenSecondsAgoMs, oldestLockFileMs);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
@@ -386,7 +386,7 @@ public class StroomZipRepository {
                                 }
                             }
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);
@@ -405,7 +405,7 @@ public class StroomZipRepository {
                                 delete(dir);
                             }
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                     }
                     return super.preVisitDirectory(dir, attrs);
@@ -454,7 +454,7 @@ public class StroomZipRepository {
                                     LOGGER.debug("Deleted dir: " + dir.toString());
                                 }
                             }
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException | IOException e) {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug("Failed to delete dir: " + dir.toString());
                             }
@@ -520,7 +520,7 @@ public class StroomZipRepository {
                         if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
                             list.add(file);
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);

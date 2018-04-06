@@ -20,10 +20,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.apache.xmlgraphics                    | batik-util                                   | 1.7              | APL 2.0       |         |               |
 | cglib                                     | cglib-nodep                                  | 3.1              | APL 2.0       |         |               |
 | com.fasterxml                             | classmate                                    | 1.0.0            | APL 2.0       |         |               |
-| commons-beanutils                         | commons-beanutils                            | 1.7.0            | APL 2.0       |         |               |
-| commons-beanutils                         | commons-beanutils                            | 1.8.3            | APL 2.0       |         |               |
-| commons-beanutils                         | commons-beanutils-core                       | 1.7.0            | APL 2.0       |         |               |
-| commons-beanutils                         | commons-beanutils-core                       | 1.8.0            | APL 2.0       |         |               |
 | commons-cli                               | commons-cli                                  | 1.2              | APL 2.0       |         |               |
 | commons-codec                             | commons-codec                                | 1.4              | APL 2.0       |         |               |
 | commons-codec                             | commons-codec                                | 1.9              | APL 2.0       |         |               |
@@ -63,7 +59,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | com.gwtplatform                           | gwtp-dispatch-client                         | 0.7              | APL 2.0       |         |               |
 | com.gwtplatform                           | gwtp-dispatch-server                         | 0.7              | APL 2.0       |         |               |
 | com.gwtplatform                           | gwtp-dispatch-server-guice                   | 0.7              | APL 2.0       |         |               |
-| com.gwtplatform                           | gwtp-dispatch-server-spring                  | 0.7              | APL 2.0       |         |               |
 | com.gwtplatform                           | gwtp-dispatch-shared                         | 0.7              | APL 2.0       |         |               |
 | com.gwtplatform                           | gwtp-mvp-client                              | 0.7              | APL 2.0       |         |               |
 | com.gwtplatform                           | gwtp-processors                              | 0.7              | APL 2.0       |         |               |
@@ -146,16 +141,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.apache.poi                            | poi-ooxml                                    | 3.11             | APL 2.0       |         |               |
 | org.apache.poi                            | poi-ooxml-schemas                            | 3.11             | APL 2.0       |         |               |
 | org.xerial.snappy                         | snappy-java                                  | 1.0.4.1          | APL 2.0       |         |               |
-| org.springframework                       | spring-aop                                   | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-beans                                 | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-context                               | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-context-support                       | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-core                                  | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-expression                            | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-jdbc                                  | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-orm                                   | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-test                                  | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-tx                                    | 4.2.4.RELEASE    | APL 2.0       |         |               |
 | stax                                      | stax-api                                     | 1.0.1            | APL 2.0       |         |               |
 | javax.validation                          | validation-api                               | 1.1.0.Final      | APL 2.0       |         |               |
 | javax.validation                          | validation-api                               | sources          | APL 2.0       |         |               |
@@ -196,8 +181,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.jamon                                 | jamon-runtime                                | 2.4.1            | Custom BSD    |         |               |
 | com.jcraft                                | jsch                                         | 0.1.42           | Custom BSD    |         |               |
 | com.google.protobuf                       | protobuf-java                                | 2.5.0            | Custom BSD    |         |               |
-| org.aspectj                               | aspectjrt                                    | 1.8.9            | EPL 1.0       |         |               |
-| org.aspectj                               | aspectjweaver                                | 1.8.9            | EPL 1.0       |         |               |
 | com.mchange                               | c3p0                                         | 0.9.5.2          | EPL 1.0       |         |               |
 | junit                                     | junit                                        | 4.12             | EPL 1.0       |         |               |
 | com.mchange                               | mchange-commons-java                         | 0.2.9            | EPL 1.0       |         |               |
@@ -205,9 +188,9 @@ The table below includes licences for all Maven dependencies. Not included in th
 | mysql                                     | mysql-connector-java                         | 5.1.40           | GPL\*         |         |               |
 | org.beanshell                             | bsh-core                                     | 2.0b4            | LGPL          |         |               |
 | org.hibernate.common                      | hibernate-commons-annotations                | 4.0.5.Final      | LGPL          |         |               |
-| org.hibernate                             | hibernate-core                               | 4.3.8.Final      | LGPL          |         |               |
+| org.hibernate                             | hibernate-core                               | 5.2.13.Final     | LGPL          |         |               |
 | org.hibernate                             | hibernate-entitymanager                      | 4.3.8.Final      | LGPL          |         |               |
-| org.hibernate.javax.persistence           | hibernate-jpa-2.1-api                        | 1.0.0.Final      | LGPL          |         |               |
+| org.hibernate.javax.persistence           | hibernate-jpa-2.1-api                        | 1.0.2.Final      | LGPL          |         |               |
 | org.hibernate                             | hibernate-validator                          | 5.1.3.Final      | LGPL          |         |               |
 | org.jboss.logging                         | jboss-logging                                | 3.1.3.GA         | LGPL          |         |               |
 | org.jboss.logging                         | jboss-logging-annotations                    | 1.2.0.Beta1      | LGPL          |         |               |
@@ -227,6 +210,7 @@ The table below includes licences for all Maven dependencies. Not included in th
 | Roboto Fonts                              | n/a                                          | n/a              | AL 2.0        |         |               |
 | Roboto Mono Fonts                         | n/a                                          | n/a              | AL 2.0        |         |               |
 | Droid Sans Mono Font                      | n/a                                          | n/a              | AL 2.0        |         |               |
+| io.github.lukehutch                       | fast-classpath-scanner                       | 2.9.4            | MIT           |         |               |
 
 \* The mysql-client-connector is distributed under a GPL license but has exceptions that allow it to be distributed with OSS without requiring the GPL license to be applied to the OSS. See [http://www.mysql.com/about/legal/licensing/foss-exception/](http://www.mysql.com/about/legal/licensing/foss-exception/) for details.
 

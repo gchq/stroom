@@ -25,9 +25,8 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.node.shared.Volume;
@@ -42,7 +41,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import java.util.List;
 
 public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolumesPresenter.ManageVolumesProxy> {
-    public static final String LIST = "LIST";
     private final VolumeStatusListPresenter volumeStatusListPresenter;
     private final Provider<VolumeEditPresenter> editProvider;
     private final ClientDispatchAsync dispatcher;
@@ -97,7 +95,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
     private void open(final PopupUiHandlers popupUiHandlers) {
         final Volume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            dispatcher.exec(new DocumentServiceReadAction<Volume>(DocRefUtil.create(volume)))
+            dispatcher.exec(new EntityServiceLoadAction<>(volume))
                     .onSuccess(result -> {
                         final VolumeEditPresenter editor = editProvider.get();
                         editor.editVolume(result, popupUiHandlers);

@@ -2,6 +2,5 @@
 <pipeline>
    <description/>
    <name>Statistic</name>
-   <pipelineType>Statistic</pipelineType>
    <uuid>kdyu6a2e-8881-4f5d-9316-e994717233f9</uuid>
 </pipeline>

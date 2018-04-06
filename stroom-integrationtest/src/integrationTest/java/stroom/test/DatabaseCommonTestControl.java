@@ -18,10 +18,6 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
 import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryEntity;
@@ -29,42 +25,41 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
-import stroom.index.server.IndexShardManager;
-import stroom.index.server.IndexShardWriterCache;
+import stroom.guice.StroomBeanStore;
+import stroom.index.IndexShardManager;
+import stroom.index.IndexShardWriterCache;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
-import stroom.node.server.NodeConfig;
-import stroom.node.server.VolumeService;
+import stroom.node.NodeConfig;
+import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
 import stroom.ruleset.shared.Policy;
 import stroom.script.shared.Script;
-import stroom.security.server.AppPermission;
-import stroom.security.server.DocumentPermission;
-import stroom.security.server.Permission;
-import stroom.security.server.User;
-import stroom.security.server.UserGroupUser;
+import stroom.security.AppPermission;
+import stroom.security.DocumentPermission;
+import stroom.security.Permission;
+import stroom.security.User;
+import stroom.security.UserGroupUser;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
-import stroom.streamstore.server.StreamAttributeKeyService;
-import stroom.streamstore.server.StreamAttributeValueFlush;
-import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.streamstore.StreamAttributeKeyService;
+import stroom.streamstore.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.streamtask.server.StreamTaskCreator;
+import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
@@ -79,15 +74,14 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
  * Class to help with testing.
  * </p>
  */
-@Component
-public class DatabaseCommonTestControl implements CommonTestControl, ApplicationContextAware {
+public class DatabaseCommonTestControl implements CommonTestControl {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
     private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
@@ -122,7 +116,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             StroomStatsStoreEntity.TABLE_NAME,
             StreamTask.TABLE_NAME,
             StreamVolume.TABLE_NAME,
-            TextConverter.TABLE_NAME,
             User.TABLE_NAME,
             UserGroupUser.TABLE_NAME,
             Visualisation.TABLE_NAME,
@@ -134,42 +127,35 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     private final VolumeService volumeService;
     private final ContentImportService contentImportService;
     private final StreamAttributeKeyService streamAttributeKeyService;
-    private final StreamAttributeValueFlush streamAttributeValueFlush;
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
     private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
     private final NodeConfig nodeConfig;
     private final StreamTaskCreator streamTaskCreator;
     private final StroomCacheManager stroomCacheManager;
-
-    private ApplicationContext applicationContext;
+    private final StroomBeanStore beanStore;
 
     @Inject
     DatabaseCommonTestControl(final VolumeService volumeService,
                               final ContentImportService contentImportService,
                               final StreamAttributeKeyService streamAttributeKeyService,
-                              final StreamAttributeValueFlush streamAttributeValueFlush,
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
                               final NodeConfig nodeConfig,
                               final StreamTaskCreator streamTaskCreator,
-                              final StroomCacheManager stroomCacheManager) {
+                              final StroomCacheManager stroomCacheManager,
+                              final StroomBeanStore beanStore) {
         this.volumeService = volumeService;
         this.contentImportService = contentImportService;
         this.streamAttributeKeyService = streamAttributeKeyService;
-        this.streamAttributeValueFlush = streamAttributeValueFlush;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
         this.databaseCommonTestControlTransactionHelper = databaseCommonTestControlTransactionHelper;
         this.nodeConfig = nodeConfig;
         this.streamTaskCreator = streamTaskCreator;
         this.stroomCacheManager = stroomCacheManager;
-    }
-
-    @Override
-    public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+        this.beanStore = beanStore;
     }
 
     @Override
@@ -206,9 +192,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             FileUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParent());
         }
 
-        //Clear any un-flushed stream attributes
-        streamAttributeValueFlush.clear();
-
         //ensure any hibernate entities are flushed down before we clear the tables
         databaseCommonTestControlTransactionHelper.clearContext();
 
@@ -220,11 +203,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         //ensure all the caches are empty
         stroomCacheManager.clear();
 
-        final Map<String, Clearable> clearableBeanMap = applicationContext.getBeansOfType(Clearable.class, false,
-                false);
-        for (final Clearable clearable : clearableBeanMap.values()) {
-            clearable.clear();
-        }
+        final Set<Clearable> set = beanStore.getInstancesOfType(Clearable.class);
+        set.forEach(Clearable::clear);
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
     }
 
@@ -240,8 +220,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
                 try {
                     streamAttributeKeyService.save(new StreamAttributeKey(name,
                             StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
-                } catch (final Exception ex) {
-                    ex.printStackTrace();
+                } catch (final RuntimeException e) {
+                    e.printStackTrace();
                 }
             }
         }

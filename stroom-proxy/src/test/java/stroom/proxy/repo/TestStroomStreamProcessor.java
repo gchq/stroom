@@ -25,7 +25,7 @@ import java.util.zip.ZipOutputStream;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStroomStreamProcessor extends StroomUnitTest {
     @Test
-    public void testSimple() throws Exception {
+    public void testSimple() throws IOException {
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
                 "Sample Data".getBytes(StreamUtil.DEFAULT_CHARSET));
 
@@ -54,7 +54,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
     }
 
     @Test
-    public void testGZIPErrorSimple() throws Exception {
+    public void testGZIPErrorSimple() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
         gzipOutputStream.write("Sample Data".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -90,7 +90,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
     }
 
     @Test
-    public void testZIPErrorSimple() throws Exception {
+    public void testZIPErrorSimple() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         zipOutputStream.putNextEntry(new ZipEntry("001.hdr"));
@@ -132,7 +132,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
     }
 
     @Test
-    public void testZIPNoEntries() throws Exception {
+    public void testZIPNoEntries() throws IOException {
         final InputStream inputStream = getClass().getClassLoader().getResourceAsStream("stroom/proxy/repo/BlankZip.zip");
         final byte[] fullData = StreamUtil.streamToBuffer(inputStream).toByteArray();
 
@@ -158,7 +158,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
     }
 
     @Test
-    public void testOrder1() throws Exception {
+    public void testOrder1() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 1; i <= 10; i++) {
@@ -183,7 +183,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
     }
 
     @Test
-    public void testOrder2() throws Exception {
+    public void testOrder2() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 1; i <= 10; i++) {
@@ -212,7 +212,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
     }
 
     @Test
-    public void testOrder3() throws Exception {
+    public void testOrder3() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 1; i <= 10; i++) {
@@ -241,7 +241,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
     }
 
     @Test
-    public void testOrder4() throws Exception {
+    public void testOrder4() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 10; i > 0; i--) {
@@ -270,7 +270,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
     }
 
     @Test
-    public void testOrder5_Pass() throws Exception {
+    public void testOrder5_Pass() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 10; i > 0; i--) {
@@ -301,7 +301,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
     }
 
     @Test
-    public void testOrder5_PassDueToHeaderBuffer() throws Exception {
+    public void testOrder5_PassDueToHeaderBuffer() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 10; i > 0; i--) {
@@ -333,7 +333,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
     }
 
     @Test
-    public void testOrder5_FailDueToHeaderBufferNotUsed() throws Exception {
+    public void testOrder5_FailDueToHeaderBufferNotUsed() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 10; i > 0; i--) {
@@ -386,9 +386,9 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
             if (fail) {
                 Assert.fail("Expecting a fail");
             }
-        } catch (final Exception ex) {
+        } catch (final RuntimeException e) {
             if (!fail) {
-                throw ex;
+                throw e;
             }
         }
         stroomZipOutputStream.close();

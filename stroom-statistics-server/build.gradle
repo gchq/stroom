@@ -9,6 +9,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
+    compile project(':stroom-explorer-api')
 
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
 
@@ -22,18 +23,17 @@ dependencies {
     compile libs.commons_pool2
     compile libs.flyway_core
     compile libs.guava
-    compile (libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
-    compile libs.javax_annotation_api
+    compile(libs.hbase) { transitive = false }
+    //hbase-common is currently only used for its Bytes class, so exclude all its deps
     compile libs.javax_inject
+    compile libs.reactivestreams
+    compile libs.rxjava
     compile libs.slf4j_api
-    compile libs.spring_beans
-    compile libs.spring_context
-    compile libs.spring_core
-    compile libs.spring_tx
     compile libs.vavr
     compile libs.xml_apis
     compile libs.swagger_annotations
     compile libs.ws_rs_api
+    compile libs.guice4
 
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks

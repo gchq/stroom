@@ -26,12 +26,11 @@ import stroom.entity.client.presenter.TabContentProvider;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.process.client.presenter.ProcessorPresenter;
+import stroom.security.shared.PermissionNames;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
-import stroom.streamstore.shared.Stream;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.ImageUtil;
@@ -60,13 +59,13 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
 
         TabData selectedTab = null;
 
-        if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
             addTab(DATA);
             tabContentProvider.add(DATA, streamPresenterProvider);
             selectedTab = DATA;
         }
 
-        if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(PROCESSORS);
             tabContentProvider.add(PROCESSORS, processorPresenterProvider);
             addTab(TASKS);

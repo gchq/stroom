@@ -61,7 +61,6 @@ public class IndexShard extends AuditedEntity {
             + SQLNameConstants.MS_SUFFIX;
     public static final String INDEX_VERSION = SQLNameConstants.INDEX + SEP + SQLNameConstants.VERSION;
     public static final String ENTITY_TYPE = "IndexShard";
-    public static final String MANAGE_INDEX_SHARDS_PERMISSION = "Manage Index Shards";
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
     public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections

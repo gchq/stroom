@@ -16,6 +16,7 @@
 
 package stroom.util.client;
 
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,7 +76,7 @@ public final class KVMapUtil {
 
                         int index = text.lastIndexOf(' ');
                         if (index != -1) {
-                            if (key != null && key.length() > 0) {
+                            if (key != null && !key.isEmpty()) {
                                 final String value = text.substring(0, index).trim();
                                 paramMap.put(key, value);
                             }
@@ -93,7 +94,7 @@ public final class KVMapUtil {
             }
         }
 
-        if (key != null && key.length() > 0) {
+        if (key != null && !key.isEmpty()) {
             final String value = sb.toString().trim();
             paramMap.put(key, value);
         }

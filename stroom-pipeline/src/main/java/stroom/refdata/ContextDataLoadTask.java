@@ -19,7 +19,7 @@ package stroom.refdata;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.Stream;
-import stroom.util.task.ServerTask;
+import stroom.task.ServerTask;
 
 import java.io.InputStream;
 

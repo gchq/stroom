@@ -16,7 +16,7 @@ public class TestProxyRepositoryManager extends StroomUnitTest {
 //    }
 
     @Test
-    public void testRolling() throws IOException {
+    public void testRolling() throws IOException, InterruptedException {
         final Scheduler scheduler = new Scheduler() {
             @Override
             public boolean execute() {
@@ -41,11 +41,7 @@ public class TestProxyRepositoryManager extends StroomUnitTest {
         // Roll this REPO
         proxyRepositoryManager.doRunWork();
 
-        try {
-            Thread.sleep(10L);
-        } catch (InterruptedException e) {
-            //ignore it as only 10ms
-        }
+        Thread.sleep(10L);
 
         final StroomZipRepository proxyRepository2 = proxyRepositoryManager.getActiveRepository();
         final StroomZipOutputStream stream2 = proxyRepository2.getStroomZipOutputStream();

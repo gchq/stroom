@@ -8,8 +8,7 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.util.spring.StroomShutdown;
+import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -22,7 +21,6 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-@Component
 public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
@@ -35,26 +33,22 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
 
     @Inject
-    public ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
+    ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
         //create the service providers once service discovery has started up
         serviceDiscoveryManager.registerStartupListener(this::initProviders);
     }
 
     @Override
     public Optional<ServiceInstance<String>> getServiceInstance(final ExternalService externalService) {
-        try {
-            LOGGER.trace("Getting service instance for {}", externalService.getServiceKey());
-            return Optional.ofNullable(serviceProviders.get(externalService))
-                    .flatMap(stringServiceProvider -> {
-                        try {
-                            return Optional.ofNullable(stringServiceProvider.getInstance());
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        LOGGER.trace("Getting service instance for {}", externalService.getServiceKey());
+        return Optional.ofNullable(serviceProviders.get(externalService))
+                .flatMap(stringServiceProvider -> {
+                    try {
+                        return Optional.ofNullable(stringServiceProvider.getInstance());
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     private void initProviders(final ServiceDiscovery<String> serviceDiscovery) {
@@ -78,7 +72,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                 .build();
         try {
             provider.start();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Unable to start service provider for {}", externalService.getVersionedServiceName(), e);
         }
 
@@ -87,12 +81,12 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     @StroomShutdown
     public void shutdown() {
-        serviceProviders.entrySet().forEach(entry -> {
+        serviceProviders.forEach((key, value) -> {
             try {
-                entry.getValue().close();
+                value.close();
             } catch (IOException e) {
                 LOGGER.error("Failed to close serviceProvider {} with error",
-                        entry.getKey().getVersionedServiceName(), e);
+                        key.getVersionedServiceName(), e);
             }
         });
     }
@@ -107,7 +101,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                         .flatMap(entry -> {
                             try {
                                 return entry.getValue().getAllInstances().stream();
-                            } catch (Exception e) {
+                            } catch (final Exception e) {
                                 throw new RuntimeException(String.format("Error querying instances for service %s",
                                         entry.getKey().getVersionedServiceName()), e);
                             }
@@ -137,7 +131,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                 return builder.withDetail("discovered-service-instances", serviceInstanceMap)
                         .build();
 
-            } catch (Exception e) {
+            } catch (final RuntimeException e) {
                 return HealthCheck.Result.unhealthy("Error getting service provider details, error: " +
                         e.getCause().getMessage());
             }

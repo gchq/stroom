@@ -28,19 +28,19 @@ public class CloseableUtil {
     public static void closeLogAndIgnoreException(Closeable... closeableList) {
         try {
             close(closeableList);
-        } catch (Exception ex) {
+        } catch (final IOException e) {
             // Already Logged
         }
     }
 
     public static void close(Closeable... closeableList) throws IOException {
-        Exception lastException = null;
+        IOException lastException = null;
         if (closeableList != null) {
             for (Closeable closeable : closeableList) {
                 if (closeable != null) {
                     try {
                         closeable.close();
-                    } catch (Exception e) {
+                    } catch (final IOException e) {
                         lastException = e;
                         LOGGER.error("closeStream()", e);
                     }
@@ -48,14 +48,7 @@ public class CloseableUtil {
             }
         }
         if (lastException != null) {
-            if (lastException instanceof RuntimeException) {
-                throw (RuntimeException) lastException;
-            } else {
-                if (lastException instanceof IOException) {
-                    throw (IOException) lastException;
-                }
-                throw new RuntimeException(lastException);
-            }
+            throw lastException;
         }
     }
 }

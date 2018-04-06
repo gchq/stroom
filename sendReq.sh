@@ -40,10 +40,22 @@ if [ "x" == "x${TOKEN}" ]; then
     exit 1
 fi
 
+showUsage() {
+    echo -e "${RED}ERROR${NC} - Invalid arguments"
+    echo -e "Usage: ${BLUE}$0${GREEN} [-g] [-u UUID] [-i] [-h baseUrl] requestFile urlPath"
+    echo -e "e.g:   ${BLUE}$0${GREEN} -g ~/req.json /api/sqlstatistics/v2/search"
+    echo -e "e.g:   ${BLUE}$0${GREEN} -u query-123456 -i -h http://some.domain:8080 ~/req.json /api/stroom-index/v2/search"
+    echo -e "${GREEN}-g${NC}:           Replace key.uuid with an auto-generated uuid using ${BLUE}uuidgen${NC}"
+    echo -e "${GREEN}-u UUID${NC}:      Replace key.uuid with the user supplied UUID string"
+    echo -e "${GREEN}-i${NC}:           Show info (uuid used, request content, file name, etc)"
+    echo -e "${GREEN}-h baseUrl${NC}:   Override base URL with supplied baseUrl (e.g. \"http://some.domain:8080\")"
+}
+
 uuid=""
 showInfo=false
+urlBase="http://localhost:8080"
 
-optspec="gu:i"
+optspec="gu:ih:"
 while getopts "$optspec" optchar; do
     #echo "Parsing $optchar"
     case "${optchar}" in
@@ -62,6 +74,15 @@ while getopts "$optspec" optchar; do
         i)
             showInfo=true
             ;;
+        h)
+            if [ "x${OPTARG}" = "x" ]; then
+                echo -e "${RED}-h argument requires a URL base to be specified, e.g. '${GREEN}-h http://some.domain:8080${NC}'${NC}" >&2
+                echo
+                showUsage
+                exit 1
+            fi
+            urlBase="${OPTARG}"
+            ;;
         *)
             echo -e "${RED}ERROR${NC} Unknown argument: '-${OPTARG}'" >&2
             echo
@@ -71,7 +92,6 @@ while getopts "$optspec" optchar; do
     esac
 done
 
-
 #discard the args parsed so far
 shift $((OPTIND -1))
 #echo "Remaining args [${@}]"
@@ -80,13 +100,7 @@ requestFile="$1"
 path=$2
 
 if [ "x" == "x${requestFile}" ] || [ "x" == "x${path}" ]; then
-    echo -e "${RED}ERROR${NC} - Invalid arguments"
-    echo -e "Usage: ${BLUE}$0${GREEN} [-g] [-u UUID] [-i] file path"
-    echo -e "e.g:   ${BLUE}$0${GREEN} -g ~/req.json /api/sqlstatistics/v2/search"
-    echo -e "e.g:   ${BLUE}$0${GREEN} -u query-123456 ~/req.json /api/stroom-index/v2/search"
-    echo -e "${GREEN}-g${NC}:      Replace key.uuid with an auto-generated uuid using ${BLUE}uuidgen${NC}"
-    echo -e "${GREEN}-u UUID${NC}: Replace key.uuid with the user supplied UUID string"
-    echo -e "${GREEN}-i${NC}:      Show info (uuid used, request content, file name, etc)"
+    showUsage
     exit 1
 fi
 
@@ -94,9 +108,12 @@ if [ "x" == "x${uuid}" ]; then
     uuid="$(cat "${requestFile}" | jq -r '.key.uuid')"
 fi
 req="$(cat "$requestFile" | jq ".key.uuid = \"${uuid}\"")"
+fullUrl="${urlBase}${path}"
+
 if ${showInfo}; then
     echo -e "Using uuid [${GREEN}${uuid}${NC}] for the request"
     echo -e "Request file [${GREEN}${requestFile}${NC}]"
+    echo -e "URL [${GREEN}${fullUrl}${NC}]"
 
     echo -e "Request content:"
     #cat "$requestFile" | jq ".key.uuid = \"${uuid}\"" 
@@ -106,4 +123,9 @@ if ${showInfo}; then
     echo -e "Response content:"
 fi
 
-echo -e "${req}" | jq -r ".key.uuid = \"${uuid}\"" | http POST http://localhost:8080${path} "Authorization:Bearer ${TOKEN}" 
+# Disable certificate verification to cope with stroom's self-signed cert
+if [[ "${fullUrl}" =~ ^https.* ]]; then
+    extraHttpieArgs="${extraHttpieArgs} --verify=no"
+fi
+
+echo -e "${req}" | jq -r ".key.uuid = \"${uuid}\"" | http ${extraHttpieArgs} POST ${fullUrl} "Authorization:Bearer ${TOKEN}" 

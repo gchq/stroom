@@ -2,12 +2,14 @@ dependencies {
     //testCompile project(':stroom-core-server')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
+    compile project(':stroom-docstore-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
     //permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+    compile project(':stroom-explorer-api')
 
     compile project(':stroom-connectors')
     permitUnusedDeclared project(':stroom-connectors')
@@ -16,9 +18,6 @@ dependencies {
     compile urlDependencies.get(urlLibs.hadoopHdfsShaded)
 
     compile libs.stroomQueryApi
-    compile libs.spring_beans
-    compile libs.spring_context
-    compile libs.spring_tx
     compile libs.jersey_client
     compile libs.slf4j_api
     compile libs.guava
@@ -29,7 +28,7 @@ dependencies {
     compile libs.stax_api
     compile libs.javax_inject
     compile libs.ws_rs_api
-    compile libs.javax_annotation_api
+    compile libs.guice4
 
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
@@ -37,6 +36,8 @@ dependencies {
 
     testCompile libs.commons_io
     testCompile libs.junit
+    testCompile libs.mockito_core
+    testCompile libs.assertj_core
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

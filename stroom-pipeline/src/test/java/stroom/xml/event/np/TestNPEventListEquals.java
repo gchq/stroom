@@ -19,6 +19,7 @@ package stroom.xml.event.np;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -27,7 +28,7 @@ import stroom.xml.event.EventList;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestNPEventListEquals extends StroomUnitTest {
     @Test
-    public void test() throws Exception {
+    public void test() throws SAXException {
         final EventList list1 = createList();
         final EventList list2 = createList();
 
@@ -35,7 +36,7 @@ public class TestNPEventListEquals extends StroomUnitTest {
         Assert.assertTrue(list1.equals(list2));
     }
 
-    private EventList createList() throws Exception {
+    private EventList createList() throws SAXException {
         final NPEventListBuilder builder = new NPEventListBuilder();
 
         final AttributesImpl atts = new AttributesImpl();

@@ -45,7 +45,7 @@ public final class ClientDateUtil {
                 if (res > 0) {
                     millis = (long) res;
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 GWT.log(e.getMessage());
             }
         }

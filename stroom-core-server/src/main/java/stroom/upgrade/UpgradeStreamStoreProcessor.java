@@ -19,27 +19,23 @@ package stroom.upgrade;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import stroom.entity.server.util.ConnectionUtil;
-import stroom.entity.server.util.PreparedStatementUtil;
+import stroom.entity.util.ConnectionUtil;
+import stroom.entity.util.PreparedStatementUtil;
 import stroom.feed.MetaMap;
-import stroom.streamstore.server.StreamAttributeMapService;
-import stroom.streamstore.server.StreamSource;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.StreamAttributeMapService;
+import stroom.streamstore.StreamSource;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamtask.server.StreamProcessorTaskExecutor;
+import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -48,22 +44,27 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
-@Scope(StroomScope.PROTOTYPE)
-@Component("upgradeStreamStoreProcessor")
-public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
-    public static final String TASK_TABLE = "TRANSLATION_STREAM_TASK";
-    public static final String TASK_ARCHIVE_TABLE = TASK_TABLE + "_ARCHIVE";
+class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
+    private static final String TASK_TABLE = "TRANSLATION_STREAM_TASK";
+    private static final String TASK_ARCHIVE_TABLE = TASK_TABLE + "_ARCHIVE";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(UpgradeStreamStoreProcessor.class);
     private static volatile String query;
     private static volatile int args;
     private static ReentrantLock lock = new ReentrantLock();
 
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private StreamAttributeMapService streamAttributeMapService;
-    @Resource
-    private DataSource dataSource;
+    private final StreamStore streamStore;
+    private final StreamAttributeMapService streamAttributeMapService;
+    private final DataSource dataSource;
+
+    @Inject
+    UpgradeStreamStoreProcessor(final StreamStore streamStore,
+                                final StreamAttributeMapService streamAttributeMapService,
+                                final DataSource dataSource) {
+        this.streamStore = streamStore;
+        this.streamAttributeMapService = streamAttributeMapService;
+        this.dataSource = dataSource;
+    }
 
     private static void buildQuery(final StringBuilder builder, final String taskTable) {
         builder.append("SELECT ");
@@ -197,7 +198,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
                 argObjs.add(stream.getId());
             }
 
-            if (StringUtils.hasText(query)) {
+            if (query != null && !query.isEmpty()) {
                 try (final PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                     PreparedStatementUtil.setArguments(preparedStatement, argObjs);
                     try (final ResultSet resultSet = preparedStatement.executeQuery()) {

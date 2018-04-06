@@ -16,9 +16,10 @@
 
 package stroom.refdata;
 
-import org.springframework.stereotype.Component;
 import stroom.pool.InternPool;
 
-@Component
-public class MapStoreInternPool extends InternPool<MapStore> {
+import javax.inject.Singleton;
+
+@Singleton
+class MapStoreInternPool extends InternPool<MapStore> {
 }

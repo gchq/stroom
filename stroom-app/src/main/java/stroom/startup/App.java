@@ -19,7 +19,6 @@ package stroom.startup;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
-import io.dropwizard.Configuration;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
@@ -32,45 +31,34 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.cluster.server.ClusterCallServiceRPC;
+import stroom.cluster.ClusterCallServiceRPC;
 import stroom.content.ContentSyncService;
 import stroom.content.ProxySecurityFilter;
-import stroom.dashboard.spring.DashboardConfiguration;
-import stroom.datafeed.server.DataFeedServlet;
-import stroom.dictionary.server.DictionaryResource;
-import stroom.dictionary.server.DictionaryStore;
+import stroom.datafeed.DataFeedServlet;
+import stroom.dictionary.DictionaryResource;
+import stroom.dictionary.DictionaryResource2;
+import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
-import stroom.elastic.spring.ElasticIndexConfiguration;
-import stroom.entity.server.SpringRequestFactoryServlet;
-import stroom.explorer.server.ExplorerConfiguration;
-import stroom.externaldoc.spring.ExternalDocRefConfiguration;
-import stroom.feed.server.RemoteFeedServiceRPC;
-import stroom.importexport.server.ImportExportActionHandler;
-import stroom.index.server.StroomIndexQueryResource;
-import stroom.index.spring.IndexConfiguration;
+import stroom.feed.RemoteFeedServiceRPC;
+import stroom.guice.AppModule;
+import stroom.importexport.ImportExportActionHandler;
+import stroom.index.StroomIndexQueryResource;
 import stroom.lifecycle.LifecycleService;
-import stroom.logging.spring.EventLoggingConfiguration;
-import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
-import stroom.ruleset.server.RuleSetResource;
-import stroom.ruleset.server.RuleSetService;
+import stroom.resource.SessionResourceStoreImpl;
+import stroom.ruleset.RuleSetResource;
+import stroom.ruleset.RuleSetResource2;
+import stroom.ruleset.RuleSetService;
 import stroom.ruleset.shared.RuleSet;
-import stroom.ruleset.spring.RuleSetConfiguration;
-import stroom.script.server.ScriptServlet;
-import stroom.script.spring.ScriptConfiguration;
-import stroom.search.spring.SearchConfiguration;
-import stroom.security.server.AuthorisationResource;
-import stroom.security.server.SecurityFilter;
-import stroom.security.server.SessionResource;
-import stroom.security.spring.SecurityConfiguration;
+import stroom.script.ScriptServlet;
+import stroom.security.AuthorisationResource;
+import stroom.security.SecurityFilter;
+import stroom.security.SessionResource;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
@@ -85,18 +73,9 @@ import stroom.servlet.ImportFileServlet;
 import stroom.servlet.RejectPostFilter;
 import stroom.servlet.SessionListListener;
 import stroom.servlet.SessionListServlet;
-import stroom.servlet.SessionResourceStoreImpl;
 import stroom.servlet.StatusServlet;
 import stroom.servlet.StroomServlet;
-import stroom.spring.MetaDataStatisticConfiguration;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ServerComponentScanConfiguration;
-import stroom.spring.ServerConfiguration;
-import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
-import stroom.statistics.spring.StatisticsConfiguration;
-import stroom.util.spring.StroomSpringProfiles;
-import stroom.visualisation.spring.VisualisationConfiguration;
+import stroom.statistics.sql.search.SqlStatisticsQueryResource;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -161,7 +140,9 @@ public class App extends Application<Config> {
 
         // Add health checks
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, ProxySecurityFilter.class, "/*");
@@ -176,7 +157,9 @@ public class App extends Application<Config> {
 
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
@@ -194,88 +177,60 @@ public class App extends Application<Config> {
     }
 
     private void startApp(final Config configuration, final Environment environment) {
-        // Start the spring context.
-        LOGGER.info("Loading Spring context");
-        final ApplicationContext applicationContext = loadApplcationContext(configuration, environment);
+        final AppModule appModule = new AppModule();
+        final Injector injector = Guice.createInjector(appModule);
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add health checks
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscoveryRegistrar.class);
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscovererImpl.class);
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, DictionaryResource.class);
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, RuleSetResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, ServiceDiscoveryRegistrar.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, ServiceDiscovererImpl.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, SqlStatisticsQueryResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, StroomIndexQueryResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
 
         // Add filters
-        SpringUtil.addFilter(servletContextHandler, applicationContext, HttpServletRequestFilter.class, "/*");
+        GuiceUtil.addFilter(servletContextHandler, injector, HttpServletRequestFilter.class, "/*");
         FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter").setInitParameter("rejectUri", "/");
         FilterUtil.addFilter(servletContextHandler, CacheControlFilter.class, "cacheControlFilter").setInitParameter("seconds", "600");
-        SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*");
+        GuiceUtil.addFilter(servletContextHandler, injector, SecurityFilter.class, "/*");
 
         // Add servlets
-        SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, ResourcePaths.ROOT_PATH + "/ui");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DashboardServlet.class, ResourcePaths.ROOT_PATH + "/dashboard");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DynamicCSSServlet.class, ResourcePaths.ROOT_PATH + "/dynamic.css");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DispatchService.class, ResourcePaths.ROOT_PATH + "/dispatch.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ImportFileServlet.class, ResourcePaths.ROOT_PATH + "/importfile.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ScriptServlet.class, ResourcePaths.ROOT_PATH + "/script");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ClusterCallServiceRPC.class, ResourcePaths.ROOT_PATH + "/clustercall.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ExportConfigServlet.class, ResourcePaths.ROOT_PATH + "/export");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, StatusServlet.class, ResourcePaths.ROOT_PATH + "/status");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, EchoServlet.class, ResourcePaths.ROOT_PATH + "/echo");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionListServlet.class, ResourcePaths.ROOT_PATH + "/sessionList");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, ResourcePaths.ROOT_PATH + "/resourcestore/*");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, ResourcePaths.ROOT_PATH + "/gwtRequest");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*");
+        GuiceUtil.addServlet(servletContextHandler, injector, StroomServlet.class, ResourcePaths.ROOT_PATH + "/ui");
+        GuiceUtil.addServlet(servletContextHandler, injector, DashboardServlet.class, ResourcePaths.ROOT_PATH + "/dashboard");
+        GuiceUtil.addServlet(servletContextHandler, injector, DynamicCSSServlet.class, ResourcePaths.ROOT_PATH + "/dynamic.css");
+        GuiceUtil.addServlet(servletContextHandler, injector, DispatchService.class, ResourcePaths.ROOT_PATH + "/dispatch.rpc");
+        GuiceUtil.addServlet(servletContextHandler, injector, ImportFileServlet.class, ResourcePaths.ROOT_PATH + "/importfile.rpc");
+        GuiceUtil.addServlet(servletContextHandler, injector, ScriptServlet.class, ResourcePaths.ROOT_PATH + "/script");
+        GuiceUtil.addServlet(servletContextHandler, injector, ClusterCallServiceRPC.class, ResourcePaths.ROOT_PATH + "/clustercall.rpc");
+        GuiceUtil.addServlet(servletContextHandler, injector, ExportConfigServlet.class, ResourcePaths.ROOT_PATH + "/export");
+        GuiceUtil.addServlet(servletContextHandler, injector, StatusServlet.class, ResourcePaths.ROOT_PATH + "/status");
+        GuiceUtil.addServlet(servletContextHandler, injector, EchoServlet.class, ResourcePaths.ROOT_PATH + "/echo");
+        GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug");
+        GuiceUtil.addServlet(servletContextHandler, injector, SessionListServlet.class, ResourcePaths.ROOT_PATH + "/sessionList");
+        GuiceUtil.addServlet(servletContextHandler, injector, SessionResourceStoreImpl.class, ResourcePaths.ROOT_PATH + "/resourcestore/*");
+        GuiceUtil.addServlet(servletContextHandler, injector, RemoteFeedServiceRPC.class, ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc");
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed");
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*");
 
         // Add session listeners.
-        SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
+        GuiceUtil.addServletListener(environment.servlets(), injector, SessionListListener.class);
 
         // Add resources.
-        SpringUtil.addResource(environment.jersey(), applicationContext, DictionaryResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, RuleSetResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
+        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
+        GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, SqlStatisticsQueryResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
 
         // Listen to the lifecycle of the Dropwizard app.
-        SpringUtil.manage(environment.lifecycle(), applicationContext, LifecycleService.class);
-    }
-
-    private ApplicationContext loadApplcationContext(final Configuration configuration, final Environment environment) {
-        final AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
-        applicationContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD, SecurityConfiguration.PROD_SECURITY);
-        applicationContext.getBeanFactory().registerSingleton("dwConfiguration", configuration);
-        applicationContext.getBeanFactory().registerSingleton("dwEnvironment", environment);
-        applicationContext.register(
-                ScopeConfiguration.class,
-                PersistenceConfiguration.class,
-                ServerComponentScanConfiguration.class,
-                ServerConfiguration.class,
-                EventLoggingConfiguration.class,
-                DictionaryConfiguration.class,
-                PipelineConfiguration.class,
-                ExplorerConfiguration.class,
-                IndexConfiguration.class,
-                SearchConfiguration.class,
-                ScriptConfiguration.class,
-                VisualisationConfiguration.class,
-                DashboardConfiguration.class,
-                MetaDataStatisticConfiguration.class,
-                StatisticsConfiguration.class,
-                SecurityConfiguration.class,
-                ExternalDocRefConfiguration.class,
-                ElasticIndexConfiguration.class,
-                RuleSetConfiguration.class
-        );
-        applicationContext.refresh();
-        return applicationContext;
+        GuiceUtil.manage(environment.lifecycle(), injector, LifecycleService.class);
     }
 
     private static void configureCors(io.dropwizard.setup.Environment environment) {

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -383,8 +384,8 @@ public final class StreamUtil {
             if (outputStream != null) {
                 outputStream.close();
             }
-        } catch (final Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -393,8 +394,8 @@ public final class StreamUtil {
             if (inputStream != null) {
                 inputStream.close();
             }
-        } catch (final Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

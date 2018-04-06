@@ -54,17 +54,17 @@ import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.process.shared.CreateProcessorAction;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.EqualsBuilder;
@@ -177,7 +177,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
         downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD);
 
-        if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
         }
 
@@ -264,7 +264,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     public void setErrors(final String errors) {
         currentWarnings = errors;
-        warningsButton.setVisible(currentWarnings != null && currentWarnings.length() > 0);
+        warningsButton.setVisible(currentWarnings != null && !currentWarnings.isEmpty());
     }
 
     private void setButtonsEnabled() {
@@ -414,7 +414,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void showWarnings() {
-        if (currentWarnings != null && currentWarnings.length() > 0) {
+        if (currentWarnings != null && !currentWarnings.isEmpty()) {
             AlertEvent.fireWarn(this, "The following warnings have been created while running this search:",
                     currentWarnings, null);
         }
@@ -608,7 +608,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     }
                 };
                 autoRefreshTimer.schedule(millis);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 // Ignore as we cannot display this error now.
             }
         }

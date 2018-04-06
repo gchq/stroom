@@ -25,7 +25,7 @@ public class PropertyUtil {
     public static int toInt(final String string, final int defaultValue) {
         int value = defaultValue;
 
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             try {
                 value = Integer.parseInt(string);
             } catch (final NumberFormatException e) {
@@ -40,7 +40,7 @@ public class PropertyUtil {
     public static long toLong(final String string, final long defaultValue) {
         long value = defaultValue;
 
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             try {
                 value = Long.parseLong(string);
             } catch (final NumberFormatException e) {
@@ -55,7 +55,7 @@ public class PropertyUtil {
     public static boolean toBoolean(final String string, final boolean defaultValue) {
         boolean value = defaultValue;
 
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             if (string.equalsIgnoreCase("TRUE")) {
                 value = true;
             } else if (string.equalsIgnoreCase("FALSE")) {

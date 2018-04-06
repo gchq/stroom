@@ -19,8 +19,8 @@ package stroom.cache;
 
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.entity.server.FindClearService;
-import stroom.entity.server.FindService;
+import stroom.entity.FindClearService;
+import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
 
 /**

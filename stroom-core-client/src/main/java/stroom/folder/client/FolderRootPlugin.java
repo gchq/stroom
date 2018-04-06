@@ -31,8 +31,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.ClientSecurityContext;
-import stroom.streamstore.shared.Stream;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;
 import stroom.util.client.ImageUtil;
@@ -94,7 +93,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
     }
 
     private FolderRootPresenter createEditor() {
-        if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION) || securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION) || securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             return editorProvider.get();
         }
 

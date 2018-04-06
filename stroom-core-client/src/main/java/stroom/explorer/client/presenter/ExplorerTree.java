@@ -29,7 +29,7 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
@@ -51,7 +51,7 @@ import java.util.Set;
 public class ExplorerTree extends AbstractExplorerTree {
     private final ExplorerTreeModel treeModel;
     private final MultiSelectionModel<ExplorerNode> selectionModel;
-    private final ScrollPanel scrollPanel;
+    private final MaxScrollPanel scrollPanel;
     private final CellTable<ExplorerNode> cellTable;
     private final DoubleSelectTest doubleClickTest = new DoubleSelectTest();
     private final boolean allowMultiSelect;
@@ -103,9 +103,7 @@ public class ExplorerTree extends AbstractExplorerTree {
 
         treeModel = new ExplorerTreeModel(this, spinnerSmall, dispatcher);
 
-        scrollPanel = new ScrollPanel();
-        scrollPanel.setWidth("100%");
-        scrollPanel.setHeight("100%");
+        scrollPanel = new MaxScrollPanel();
         scrollPanel.setWidget(cellTable);
 
         final FlowPanel flowPanel = new FlowPanel();

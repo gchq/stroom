@@ -1,12 +1,12 @@
 package stroom.test;
 
-import org.springframework.stereotype.Component;
-import stroom.importexport.server.ImportExportService;
+import stroom.importexport.ImportExportService;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -17,7 +17,6 @@ import java.util.List;
  * task that is part of the setupSampleData task should be used when you need stroom content for manual testing
  * inside stroom
  */
-@Component
 public class ContentImportService {
 
     public static final String CONTENT_PACK_IMPORT_DIR = "transientContentPacks";
@@ -29,7 +28,7 @@ public class ContentImportService {
     private ImportExportService importExportService;
 
     @Inject
-    public ContentImportService(final ImportExportService importExportService) {
+    ContentImportService(final ImportExportService importExportService) {
         this.importExportService = importExportService;
     }
 
@@ -63,8 +62,8 @@ public class ContentImportService {
         Path contentPackDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(CONTENT_PACK_IMPORT_DIR);
         try {
             Files.createDirectories(contentPackDir);
-        } catch (IOException e) {
-            throw new RuntimeException(String.format("Error creating directory %s for content packs",
+        } catch (final IOException e) {
+            throw new UncheckedIOException(String.format("Error creating directory %s for content packs",
                     FileUtil.getCanonicalPath(contentPackDir)), e);
         }
         return contentPackDir;

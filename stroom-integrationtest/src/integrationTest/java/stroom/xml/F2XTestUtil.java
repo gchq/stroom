@@ -17,33 +17,30 @@
 package stroom.xml;
 
 import org.junit.Assert;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.PipelineTestUtil;
-import stroom.pipeline.server.TextConverterService;
-import stroom.pipeline.server.XSLTService;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.server.factory.Pipeline;
-import stroom.pipeline.server.factory.PipelineFactory;
-import stroom.pipeline.server.parser.CombinedParser;
-import stroom.pipeline.server.writer.TestAppender;
+import stroom.pipeline.PipelineTestUtil;
+import stroom.pipeline.TextConverterStore;
+import stroom.pipeline.XSLTService;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.factory.Pipeline;
+import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
-import stroom.streamstore.server.StreamStore;
+import stroom.pipeline.writer.TestAppender;
+import stroom.query.api.v2.DocRef;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
@@ -53,23 +50,28 @@ import java.util.List;
  * Reusable Functions for the tests.
  * </p>
  */
-@Component
-@Scope(StroomScope.TASK)
 public class F2XTestUtil {
-    @Resource
-    private PipelineFactory pipelineFactory;
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private TextConverterService textConverterService;
-    @Resource
-    private XSLTService xsltService;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    @Resource
-    private RecordCount recordCount;
-    @Resource
-    private StreamStore streamStore;
+    private final PipelineFactory pipelineFactory;
+    private final FeedHolder feedHolder;
+    private final TextConverterStore textConverterStore;
+    private final XSLTService xsltService;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final RecordCount recordCount;
+
+    @Inject
+    F2XTestUtil(final PipelineFactory pipelineFactory,
+                final FeedHolder feedHolder,
+                final TextConverterStore textConverterStore,
+                final XSLTService xsltService,
+                final ErrorReceiverProxy errorReceiverProxy,
+                final RecordCount recordCount) {
+        this.pipelineFactory = pipelineFactory;
+        this.feedHolder = feedHolder;
+        this.textConverterStore = textConverterStore;
+        this.xsltService = xsltService;
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.recordCount = recordCount;
+    }
 
     /**
      * Run a XML and XSLT transform.
@@ -86,9 +88,9 @@ public class F2XTestUtil {
     /**
      * Run a XML and XSLT transform.
      */
-    public String runFullTest(final Feed feed, final TextConverterType textConverterType,
-                              final String textConverterLocation, final String xsltLocation, final InputStream dataStream,
-                              final int expectedWarnings) {
+    private String runFullTest(final Feed feed, final TextConverterType textConverterType,
+                               final String textConverterLocation, final String xsltLocation, final InputStream dataStream,
+                               final int expectedWarnings) {
         // Create an output stream.
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -96,11 +98,11 @@ public class F2XTestUtil {
         feedHolder.setFeed(feed);
 
         // Persist the text converter.
-        TextConverter textConverter = new TextConverter();
-        textConverter.setName("TEST_TRANSLATION");
+        final DocRef textConverterRef = textConverterStore.createDocument("TEST_TRANSLATION");
+        final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
         textConverter.setConverterType(textConverterType);
         textConverter.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
-        textConverter = textConverterService.save(textConverter);
+        textConverterStore.update(textConverter);
 
         // Persist the XSLT.
         XSLT xslt = new XSLT();
@@ -121,7 +123,7 @@ public class F2XTestUtil {
         // final PropertyType textConverterPropertyType = new PropertyType(
         // parserElementType, "textConverter", "TextConverter", false);
         pipelineData.addProperty(
-                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
+                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
 
         if (feed.isReference()) {
             // final ElementType schemaFilterElementType = new ElementType(
@@ -170,10 +172,11 @@ public class F2XTestUtil {
     public String runF2XTest(final TextConverterType textConverterType, final String textConverterLocation,
                              final InputStream inputStream) {
         // Persist the text converter.
-        TextConverter textConverter = textConverterService.create("TEST_TRANSLATION");
+        final DocRef docRef = textConverterStore.createDocument("TEST_TRANSLATION");
+        TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
         textConverter.setConverterType(textConverterType);
         textConverter.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
-        textConverter = textConverterService.save(textConverter);
+        textConverterStore.update(textConverter);
 
         // Setup the error receiver.
         final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
@@ -188,7 +191,7 @@ public class F2XTestUtil {
         // final PropertyType textConverterPropertyType = new PropertyType(
         // parserElementType, "textConverter", "TextConverter", false);
         pipelineData.addProperty(
-                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
+                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
 
         // final ElementType schemaFilterElementType = new ElementType(
         // "SchemaFilter");

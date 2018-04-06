@@ -62,7 +62,7 @@ public class PermissionException extends EntityServiceException {
         if (message != null) {
             message = message.replace("You do", "User does");
 
-            if (user != null && user.length() > 0) {
+            if (user != null && !user.isEmpty()) {
                 message = message.replace("User does", "User '" + user + "' does");
             }
         }

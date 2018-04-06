@@ -121,8 +121,8 @@ public abstract class RollingDestination implements Destination {
                 if (force || shouldFlush(currentTime)) {
                     try {
                         flush();
-                    } catch (final Throwable t) {
-                        exceptions.add(t);
+                    } catch (final RuntimeException e) {
+                        exceptions.add(e);
                     }
                 }
 
@@ -130,13 +130,13 @@ public abstract class RollingDestination implements Destination {
                 if (force || shouldRoll(currentTime)) {
                     try {
                         roll();
-                    } catch (final Throwable t) {
-                        exceptions.add(t);
+                    } catch (final RuntimeException e) {
+                        exceptions.add(e);
                     }
                 }
             }
-        } catch (final Throwable t) {
-            exceptions.add(t);
+        } catch (final RuntimeException e) {
+            exceptions.add(e);
         }
 
         throwFirstAsIOExceptions(exceptions);
@@ -167,7 +167,7 @@ public abstract class RollingDestination implements Destination {
             // Write the footer.
             try {
                 write(footer);
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 exceptions.add(e);
             }
         }
@@ -175,7 +175,7 @@ public abstract class RollingDestination implements Destination {
         // Try and close the output stream.
         try {
             close();
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             exceptions.add(e);
         }
 

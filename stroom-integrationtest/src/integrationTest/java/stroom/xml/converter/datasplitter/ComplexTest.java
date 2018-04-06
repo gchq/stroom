@@ -19,9 +19,9 @@ package stroom.xml.converter.datasplitter;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.util.spring.StroomBeanStore;
+import stroom.guice.StroomBeanStore;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 // FIXME : Fix this test.
 @Ignore("Create a new test")
@@ -30,11 +30,11 @@ public class ComplexTest extends AbstractProcessIntegrationTest {
     private static final String OUTPUT = "ComplexTest/ComplexTestOutput.xml";
     private static final String SPLITTER = "ComplexTest/ComplexTestSplitter.xml";
 
-    @Resource
+    @Inject
     private StroomBeanStore beanStore;
 
     @Test
-    public void test() throws Exception {
+    public void test() {
 //		final Path expectedFile = StroomProcessTestFileUtil.getTestResourcesFile(OUTPUT);
 //		final Path actualFile = getCurrentTestDir().resolve("ComplexTestOutput.xml");
 //
@@ -50,7 +50,7 @@ public class ComplexTest extends AbstractProcessIntegrationTest {
 //		final LocationFactory locationFactory = new DefaultLocationFactory();
 //		final ErrorHandlerAdaptor errorHandler = new ErrorHandlerAdaptor("DataSplitterParserFactory", locationFactory,
 //				errorReceiver);
-//		final DataSplitterParserFactory factory = beanStore.getBean(DataSplitterParserFactory.class);
+//		final DataSplitterParserFactory factory = beanStore.getInstance(DataSplitterParserFactory.class);
 //		factory.configure(splitter, errorHandler);
 //		final DataSplitterParser parser = new DataSplitterParser(factory);
 //

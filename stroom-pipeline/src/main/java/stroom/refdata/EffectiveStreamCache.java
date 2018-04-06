@@ -21,55 +21,58 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.security.SecurityHelper;
-import stroom.security.SecurityContext;
-import stroom.streamstore.server.EffectiveMetaDataCriteria;
-import stroom.streamstore.server.StreamStore;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.security.Security;
+import stroom.streamstore.EffectiveMetaDataCriteria;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
-@Component
-public class EffectiveStreamCache {
+@Singleton
+public class EffectiveStreamCache implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
-
-    //    // = 86 400 000
-//    private static final long ONE_DAY = 1000 * 60 * 60 * 24;
-//    // round up one day to 100000000
-//    private static final long APPROX_DAY = 100000000;
-    // actually 11.5 days but this is fine for the purposes of reference data.
-    private static final long APPROX_TEN_DAYS = 1000000000;
 
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
     private final StreamStore streamStore;
     private final EffectiveStreamInternPool internPool;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
+    EffectiveStreamCache(final CacheManager cacheManager,
+                         final StreamStore streamStore,
+                         final EffectiveStreamInternPool internPool,
+                         final Security security) {
+        this(cacheManager, streamStore, internPool, security, 10, TimeUnit.MINUTES);
+    }
+
     @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
                          final StreamStore streamStore,
                          final EffectiveStreamInternPool internPool,
-                         final SecurityContext securityContext) {
+                         final Security security,
+                         final long duration,
+                         final TimeUnit unit) {
         this.streamStore = streamStore;
         this.internPool = internPool;
-        this.securityContext = securityContext;
+        this.security = security;
 
         final CacheLoader<EffectiveStreamKey, NavigableSet> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.MINUTES);
+                .expireAfterAccess(duration, unit);
         cache = cacheBuilder.build(cacheLoader);
         cacheManager.registerCache("Reference Data - Effective Stream Cache", cacheBuilder, cache);
     }
@@ -87,7 +90,7 @@ public class EffectiveStreamCache {
     }
 
     protected NavigableSet<EffectiveStream> create(final EffectiveStreamKey key) {
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        return security.asProcessingUserResult(() -> {
             NavigableSet<EffectiveStream> effectiveStreamSet = Collections.emptyNavigableSet();
 
             try {
@@ -100,12 +103,8 @@ public class EffectiveStreamCache {
                 criteria.setFeed(key.getFeed());
                 criteria.setStreamType(key.getStreamType());
 
-                // Limit the stream set to the day starting from the supplied
-                // effective time.
-                final long effectiveMs = key.getEffectiveMs();
-                // final Period window = new Period(effectiveMs, effectiveMs +
-                // ONE_DAY);
-                final Period window = new Period(effectiveMs, effectiveMs + APPROX_TEN_DAYS);
+                // Limit the stream set to the requested effective time window.
+                final Period window = new Period(key.getFromMs(), key.getToMs());
                 criteria.setEffectivePeriod(window);
 
                 // Locate all streams that fit the supplied criteria.
@@ -143,24 +142,20 @@ public class EffectiveStreamCache {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Created effective stream set: " + key.toString());
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
 
             return effectiveStreamSet;
-        }
-    }
-
-    /**
-     * Gets a time less than the supplied time, rounded down to the nearest 11.5
-     * days (one billion milliseconds).
-     */
-    long getBaseTime(final long time) {
-        final long multiple = time / APPROX_TEN_DAYS;
-        return multiple * APPROX_TEN_DAYS;
+        });
     }
 
     long size() {
         return cache.size();
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

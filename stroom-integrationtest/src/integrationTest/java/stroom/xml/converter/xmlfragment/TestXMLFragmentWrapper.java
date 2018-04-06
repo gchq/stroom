@@ -18,45 +18,41 @@ package stroom.xml.converter.xmlfragment;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.guice.PipelineScopeRunnable;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.ByteArrayInputStream;
 
 public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
-    @Resource
-    private StroomBeanStore beanStore;
+    @Inject
+    private Provider<F2XTestUtil> f2XTestUtilProvider;
+    @Inject
+    private Provider<XMLValidator> xmlValidatorProvider;
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
 
     /**
      * Tests a basic XML fragment.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testBasicFragment() throws Exception {
-        final TextConverterType textConverterType = TextConverterType.XML_FRAGMENT;
-        final String textConverterLocation = "TestXMLFragmentWrapper/XMLFragmentWrapper.xml";
+    public void testBasicFragment() {
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            final TextConverterType textConverterType = TextConverterType.XML_FRAGMENT;
+            final String textConverterLocation = "TestXMLFragmentWrapper/XMLFragmentWrapper.xml";
 
-        // Start by validating the resource.
-        if (textConverterType == TextConverterType.DATA_SPLITTER) {
-            try {
-                TaskScopeContextHolder.addContext();
-                final XMLValidator xmlValidator = beanStore.getBean(XMLValidator.class);
+            // Start by validating the resource.
+            if (textConverterType == TextConverterType.DATA_SPLITTER) {
+                final XMLValidator xmlValidator = xmlValidatorProvider.get();
                 final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
                 Assert.assertTrue(message, message.length() == 0);
-            } finally {
-                TaskScopeContextHolder.removeContext();
             }
-        }
 
-        try {
-            TaskScopeContextHolder.addContext();
-            final F2XTestUtil f2xTestUtil = beanStore.getBean(F2XTestUtil.class);
+            final F2XTestUtil f2xTestUtil = f2XTestUtilProvider.get();
             final String xml = f2xTestUtil.runF2XTest(textConverterType, textConverterLocation,
                     new ByteArrayInputStream(
                             "<record><data name=\"Test Name\" value=\"Test value\"/></record>".getBytes()));
@@ -67,8 +63,6 @@ public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
                     + "<record><data name=\"Test Name\" value=\"Test value\"/></record>" + "</records>";
 
             Assert.assertEquals(example, xml);
-        } finally {
-            TaskScopeContextHolder.removeContext();
-        }
+        });
     }
 }

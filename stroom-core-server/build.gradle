@@ -32,40 +32,34 @@ dependencies {
     compile libs.commons_compress
     compile libs.commons_io
     compile libs.jackson_annotations
-    compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.validation_api
     compile libs.ws_rs_api
     compile libs.curator_x_discovery
+    compile libs.jackson_databind
     compile libs.jersey_client
     compile libs.jersey_common
     compile libs.hibernate_jpa_api
     compile libs.hibernate_core
     compile libs.javassist
     compile libs.slf4j_api
-    compile libs.spring_beans
-    compile libs.spring_context
-    compile libs.spring_core
     compile libs.xml_apis
     compile libs.flyway_core
-    compile libs.findbugs_jsr
     compile libs.hsqldb
     permitUnusedDeclared libs.hsqldb
     compile libs.vavr
 
     compile libs.c3p0
-    compile libs.spring_tx
-    compile libs.spring_jdbc
-    compile libs.spring_orm
     compile libs.commons_fileupload
+    compile libs.guice4
+    compile libs.fast_classpath_scanner
 
     runtime libs.saxon_he
     runtime libs.jackson_annotations
     runtime libs.jackson_core
     runtime libs.hibernate_entitymanager
     runtime libs.aopalliance
-    runtime libs.aspectjrt
     // dropwizard 1.0.6 uses hibernate-validator 5.2.4.Final
     // dropwizard 1.1.0 uses hibernate-validator 5.3.4.Final
     // so be consistent with dropwizard to avoid problems with different versions of javax.el
@@ -75,7 +69,6 @@ dependencies {
     runtime libs.lucene_analyzers_common
     runtime libs.lucene_queryparser
 
-    testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
     testCompile libs.junit
@@ -87,7 +80,4 @@ dependencies {
     testRuntime libs.log4j_over_slf4j
     testRuntime libs.logback_classic
     testRuntime libs.logback_core
-
-    // The plugin has it's knickers in a twist about this library
-    compile 'com.google.code.findbugs:jsr305:3.0.1'
 }

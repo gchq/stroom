@@ -15,13 +15,13 @@ public class ProxyLifecycle implements Managed {
     }
 
     @Override
-    public void start() throws Exception {
+    public void start() {
         proxyRepositoryManager.start();
         proxyRepositoryReader.start();
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop() {
         proxyRepositoryReader.stop();
         proxyRepositoryManager.stop();
     }

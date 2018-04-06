@@ -18,22 +18,18 @@ package stroom.task.cluster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
+import stroom.properties.StroomPropertyService;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-@Scope(value = StroomScope.TASK)
-@Component
 public class ClusterDispatchAsyncHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncHelper.class);
 
@@ -43,18 +39,19 @@ public class ClusterDispatchAsyncHelper {
 
     private final StroomPropertyService stroomPropertyService;
     private final ClusterResultCollectorCache collectorCache;
-    private final ClusterDispatchAsync dispatcher;
+    private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final TargetNodeSetFactory targetNodeSetFactory;
 
     private volatile long lastClusterStateWarn;
 
     @Inject
     public ClusterDispatchAsyncHelper(final StroomPropertyService stroomPropertyService,
-                                      final ClusterResultCollectorCache collectorCache, final ClusterDispatchAsync dispatcher,
+                                      final ClusterResultCollectorCache collectorCache,
+                                      final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
                                       final TargetNodeSetFactory targetNodeSetFactory) {
         this.stroomPropertyService = stroomPropertyService;
         this.collectorCache = collectorCache;
-        this.dispatcher = dispatcher;
+        this.dispatchAsyncProvider = dispatchAsyncProvider;
         this.targetNodeSetFactory = targetNodeSetFactory;
     }
 
@@ -114,17 +111,17 @@ public class ClusterDispatchAsyncHelper {
                 // Remember the collector until we get all results.
                 collectorCache.put(collector.getId(), collector);
                 try {
-                    dispatcher.execAsync(task, collector, sourceNode, targetNodes);
+                    dispatchAsyncProvider.get().execAsync(task, collector, sourceNode, targetNodes);
                     collector.waitToComplete(waitTime, timeUnit);
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
                 } finally {
                     // Forget the collector from the cache.
                     collectorCache.remove(collector.getId());
                 }
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
         return collector;
@@ -138,7 +135,7 @@ public class ClusterDispatchAsyncHelper {
             if (tmp != null) {
                 timeout = tmp;
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -156,8 +153,8 @@ public class ClusterDispatchAsyncHelper {
                 lastClusterStateWarn = now;
                 LOGGER.warn(e.getMessage());
             }
-        } catch (final Throwable t) {
-            LOGGER.debug(t.getMessage(), t);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
         return initialised;
     }

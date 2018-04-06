@@ -41,7 +41,6 @@ public class Node extends NamedEntity {
     public static final String PATH = SQLNameConstants.PATH;
     public static final String NODE_STATUS = SQLNameConstants.NODE + SQLNameConstants.STATUS_SUFFIX;
     public static final String ENTITY_TYPE = "Node";
-    public static final String MANAGE_NODES_PERMISSION = "Manage Nodes";
     private static final long serialVersionUID = 3578705325508265924L;
     private String clusterURL;
 
@@ -116,5 +115,14 @@ public class Node extends NamedEntity {
     @Override
     public final String getType() {
         return ENTITY_TYPE;
+    }
+
+    public Node copy() {
+        final Node node = new Node();
+        node.setName(getName());
+        node.priority = priority;
+        node.rack = rack;
+        node.enabled = enabled;
+        return node;
     }
 }

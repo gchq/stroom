@@ -1,13 +1,13 @@
 package stroom.connectors.elastic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.connectors.ConnectorProperties;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -34,20 +34,20 @@ public class StroomElasticProducerImpl implements StroomElasticProducer {
             clusterName = properties.getProperty(StroomElasticProducer.CLUSTER_NAME);
             elasticHttpUrl = properties.getProperty(StroomElasticProducer.ELASTIC_HTTP_URL);
 
-            if (Strings.isNullOrEmpty(elasticHttpUrl)) {
+            if (elasticHttpUrl == null || elasticHttpUrl.isEmpty()) {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Elastic: %s is required.",
                         StroomElasticProducer.ELASTIC_HTTP_URL);
                 throw new RuntimeException(msg);
             }
-            if (Strings.isNullOrEmpty(clusterName)) {
+            if (clusterName == null || clusterName.isEmpty()) {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Elastic: %s is required.",
                         StroomElasticProducer.CLUSTER_NAME);
                 throw new RuntimeException(msg);
             }
             final String transportHostsStr = properties.getProperty(StroomElasticProducer.TRANSPORT_HOSTS);
-            if (Strings.isNullOrEmpty(transportHostsStr)) {
+            if (transportHostsStr == null || transportHostsStr.isEmpty()) {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Elastic: %s is required.",
                         StroomElasticProducer.TRANSPORT_HOSTS);
@@ -131,7 +131,7 @@ public class StroomElasticProducerImpl implements StroomElasticProducer {
                     exceptionHandler.accept(new Exception(msg));
                     break;
             }
-        } catch (Exception e) {
+        } catch (final IOException e) {
             final String msg = String.format("Error initialising elastic producer to %s, (%s)",
                     this.transportHosts,
                     e.getMessage());

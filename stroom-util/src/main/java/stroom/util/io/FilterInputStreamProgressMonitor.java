@@ -16,7 +16,7 @@
 
 package stroom.util.io;
 
-import stroom.util.task.TaskMonitor;
+import stroom.task.TaskContext;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,9 +24,9 @@ import java.io.InputStream;
 public class FilterInputStreamProgressMonitor extends WrappedInputStream {
     private final StreamProgressMonitor streamProgressMonitor;
 
-    public FilterInputStreamProgressMonitor(InputStream inputStream, TaskMonitor taskMonitor) {
+    public FilterInputStreamProgressMonitor(InputStream inputStream, TaskContext taskContext) {
         super(inputStream);
-        this.streamProgressMonitor = new StreamProgressMonitor(taskMonitor, "Read ");
+        this.streamProgressMonitor = new StreamProgressMonitor(taskContext, "Read ");
     }
 
     @Override

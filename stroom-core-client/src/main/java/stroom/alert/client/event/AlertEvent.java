@@ -81,7 +81,7 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
         } else {
             try {
                 throwable.printStackTrace(new PrintStream(new GwtStringBuilderOutputStream(detail)));
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 detail.append(e.getMessage());
             }
         }

@@ -2,6 +2,5 @@
 <pipeline>
    <description/>
    <name>RAW_STREAMING_FORK-EVENTS</name>
-   <pipelineType>Event Data</pipelineType>
    <uuid>a092e9bc-3e55-405a-a9ab-5927b78e2410</uuid>
 </pipeline>

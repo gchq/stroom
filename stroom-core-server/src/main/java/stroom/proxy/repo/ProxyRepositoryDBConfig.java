@@ -1,9 +1,7 @@
 package stroom.proxy.repo;
 
-import org.springframework.stereotype.Component;
 import stroom.util.config.StroomProperties;
 
-@Component
 public class ProxyRepositoryDBConfig implements ProxyRepositoryConfig {
     /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.

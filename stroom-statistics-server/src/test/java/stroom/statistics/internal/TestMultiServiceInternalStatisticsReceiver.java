@@ -11,7 +11,7 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.server.MockStroomPropertyService;
+import stroom.properties.MockStroomPropertyService;
 import stroom.query.api.v2.DocRef;
 
 import java.util.Arrays;
@@ -59,7 +59,7 @@ public class TestMultiServiceInternalStatisticsReceiver {
     }
 
     @Test
-    public void putEvents() throws Exception {
+    public void putEvents() {
 
         //keyA has a docRef for both services
         Mockito.when(internalStatisticDocRefCache.getDocRefs(Mockito.eq(STAT_KEY_A)))

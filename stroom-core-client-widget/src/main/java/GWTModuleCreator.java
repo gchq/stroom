@@ -71,7 +71,7 @@ public class GWTModuleCreator {
                             module = module.substring(0, module.length() - MODULE_EXTENSION.length());
                             module = module.replaceAll("/", ".");
                             modules.add(module);
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             // Ignore.
                         }
                     }

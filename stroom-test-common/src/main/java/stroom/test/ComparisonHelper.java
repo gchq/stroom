@@ -172,7 +172,7 @@ public final class ComparisonHelper {
                                     final boolean xml) {
         try {
             compare(expectedFile, actualFile, ignoreWhitespace, xml);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             Assert.fail(e.getMessage());
         }
     }
@@ -199,8 +199,8 @@ public final class ComparisonHelper {
                         + FileUtil.getCanonicalPath(actualFile));
             }
 
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         } finally {
             if (reader1 != null) {
                 try {
@@ -239,7 +239,7 @@ public final class ComparisonHelper {
             if (!compare(reader1, reader2, ignoreWhitespace)) {
                 return false;
             }
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             Assert.fail(e.getMessage());
         } finally {
             if (reader1 != null) {

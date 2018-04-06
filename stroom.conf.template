@@ -40,7 +40,7 @@ stroom.advertisedUrl=https://IP_ADDRESS/stroom/ui
 
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true
-stroom.auth.services.url=http://IP_ADDRESS:8099
+stroom.auth.services.url=http://IP_ADDRESS:8101
 stroom.auth.ui.url=https://IP_ADDRESS:5000
 stroom.auth.authentication.service.url=http://IP_ADDRESS/authenticationService/v1
 
@@ -83,11 +83,12 @@ stroom.url.dashboard=http://IP_ADDRESS/stroom/dashboard.jsp
 
 # External Doc Ref
 #~~~~~~~~~~~~~~~~~
-stroom.doc-ref.types=AnnotationsIndex,ElasticIndex
-stroom.url.doc-ref.service.AnnotationsIndex=http://IP_ADDRESS:8199
-stroom.url.doc-ref.service.ElasticIndex=http://IP_ADDRESS:8299
-stroom.url.doc-ref.ui.AnnotationsIndex=http://IP_ADDRESS:5001
-stroom.url.doc-ref.ui.ElasticIndex=http://IP_ADDRESS:5002
+stroom.docref.types=AnnotationsIndex,ElasticIndex
+stroom.docref.url.service.AnnotationsIndex=http://IP_ADDRESS/annotationsService
+stroom.docref.url.service.ElasticIndex=http://IP_ADDRESS/queryElasticService
+## Must use direct HTTP's otherwise GWT blocks the attempt to load the iframe
+stroom.docref.url.ui.AnnotationsIndex=https://IP_ADDRESS:9444
+stroom.docref.url.ui.ElasticIndex=https://IP_ADDRESS:9445
 
 # Internal statistic definitions
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

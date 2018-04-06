@@ -32,7 +32,6 @@ import javax.persistence.UniqueConstraint;
 @Table(name = "JB", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
 public class Job extends NamedEntity {
     public static final String ENTITY_TYPE = "Job";
-    public static final String MANAGE_JOBS_PERMISSION = "Manage Jobs";
     public static final String TABLE_NAME = SQLNameConstants.JOB;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     private static final long serialVersionUID = -2692414627588961565L;

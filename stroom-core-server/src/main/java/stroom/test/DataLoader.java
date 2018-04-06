@@ -20,20 +20,20 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
+import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
-import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
+import stroom.streamstore.fs.serializable.RASegmentOutputStream;
+import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.StreamTargetStroomStreamHandler;
+import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 
@@ -79,7 +79,7 @@ public class DataLoader {
                         } else if (fileName.endsWith(ZIP_EXTENSION)) {
                             loadZipFile(file, mandateEffectiveDate, effectiveMs);
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);

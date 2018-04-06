@@ -32,21 +32,20 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.DocumentServiceWriteAction;
-import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.HasData;
 import stroom.entity.shared.StringCriteria;
-import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.SteppingFilterSettings;
-import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.query.api.v2.DocRef;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.SharedObject;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
@@ -61,11 +60,13 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private boolean refreshRequired = true;
     private boolean loaded;
     private boolean dirtyCode;
-    private Entity entity;
+    private DocRef loadedDoc;
+    private HasData hasData;
     private Indicators codeIndicators;
     private EditorPresenter codePresenter;
     private EditorPresenter inputPresenter;
     private EditorPresenter outputPresenter;
+
     @Inject
     public ElementPresenter(final EventBus eventBus, final ElementView view,
                             final Provider<EditorPresenter> editorProvider, final ClientDispatchAsync dispatcher) {
@@ -92,7 +93,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         loadEntityRef(future);
                         loading = true;
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     AlertEvent.fireErrorFromException(this, e, null);
                 }
             }
@@ -117,15 +118,18 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     private void loadFuzzyEntityRef(final FutureImpl<Boolean> future) {
-        if (TextConverter.ENTITY_TYPE.equals(fuzzyEntityRef.getType())) {
-            final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
-            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
-            criteria.setSort(FindXSLTCriteria.FIELD_ID);
-            final EntityServiceFindAction<FindTextConverterCriteria, TextConverter> findAction = new EntityServiceFindAction<>(criteria);
-            dispatcher.exec(findAction)
+        if (TextConverterDoc.ENTITY_TYPE.equals(fuzzyEntityRef.getType())) {
+            final DocumentServiceReadAction documentServiceReadAction = new DocumentServiceReadAction(fuzzyEntityRef);
+
+//            final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
+//            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
+//            criteria.setSort(FindXSLTCriteria.FIELD_ID);
+//            final EntityServiceFindAction<FindTextConverterCriteria, TextConverterDoc> findAction = new EntityServiceFindAction<>(criteria);
+            dispatcher.exec(documentServiceReadAction)
                     .onSuccess(result -> {
-                        if (result != null && result.size() > 0) {
-                            entity = result.get(0);
+                        if (result != null) {
+                            loadedDoc = fuzzyEntityRef;
+                            hasData = (HasData) result;
                             dirtyCode = false;
                             read();
                             future.setResult(true);
@@ -143,7 +147,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             dispatcher.exec(findAction)
                     .onSuccess(result -> {
                         if (result != null && result.size() > 0) {
-                            entity = result.get(0);
+                            loadedDoc = fuzzyEntityRef;
+                            hasData = result.get(0);
                             dirtyCode = false;
                             read();
                             future.setResult(true);
@@ -160,9 +165,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
     private void loadEntityRef(final FutureImpl<Boolean> future) {
         if (entityRef != null) {
-            dispatcher.exec(new DocumentServiceReadAction<Entity>(entityRef))
+            dispatcher.exec(new DocumentServiceReadAction<>(entityRef))
                     .onSuccess(result -> {
-                        entity = result;
+                        loadedDoc = entityRef;
+                        hasData = (HasData) result;
                         dirtyCode = false;
                         read();
 
@@ -175,18 +181,17 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     public void save() {
-        if (loaded && entity != null && dirtyCode) {
+        if (loaded && hasData != null && dirtyCode) {
             write();
-            dispatcher.exec(new DocumentServiceWriteAction<Entity>(entity)).onSuccess(result -> {
-                entity = result;
+            dispatcher.exec(new DocumentServiceWriteAction<>(loadedDoc, (SharedObject) hasData)).onSuccess(result -> {
+                hasData = (HasData) result;
                 dirtyCode = false;
             });
         }
     }
 
     private void read() {
-        if (entity != null && entity instanceof HasData) {
-            final HasData hasData = (HasData) entity;
+        if (hasData != null) {
             setCode(hasData.getData(), codeIndicators);
         } else {
             setCode("", codeIndicators);
@@ -194,10 +199,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     private void write() {
-        if (entity instanceof HasData) {
-            final HasData hasData = (HasData) entity;
-            hasData.setData(getCode());
-        }
+        hasData.setData(getCode());
     }
 
     public String getCode() {
