@@ -35,6 +35,8 @@ public class SqlStatisticStoreFactory implements StoreFactory {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticStoreFactory.class);
 
     private static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
+    private static final String PROP_KEY_RESULT_HANDLER_BATCH_SIZE = "stroom.statistics.sql.search.resultHandlerBatchSize";
+    private static final int DEFAULT_ROWS_IN_BATCH = 5_000;
 
     private final StatisticStoreCache statisticStoreCache;
     private final StroomPropertyService stroomPropertyService;
@@ -86,6 +88,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
 
         final StoreSize storeSize = new StoreSize(getStoreSizes());
         final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
+        final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
         //wrap the resultHandler in a new store, initiating the search in the process
         final SqlStatisticsStore store = new SqlStatisticsStore(
@@ -94,11 +97,14 @@ public class SqlStatisticStoreFactory implements StoreFactory {
                 statisticsSearchService,
                 defaultMaxResultsSizes,
                 storeSize,
+                resultHandlerBatchSize,
                 executor,
                 taskContext);
 
         return store;
     }
+
+
 
     private HasTerminate getTaskMonitor() {
 
@@ -128,6 +134,10 @@ public class SqlStatisticStoreFactory implements StoreFactory {
     private List<Integer> getStoreSizes() {
         final String value = stroomPropertyService.getProperty(PROP_KEY_STORE_SIZE);
         return extractValues(value);
+    }
+
+    private int getResultHandlerBatchSize() {
+        return stroomPropertyService.getIntProperty(PROP_KEY_RESULT_HANDLER_BATCH_SIZE, DEFAULT_ROWS_IN_BATCH);
     }
 
     private List<Integer> extractValues(String value) {

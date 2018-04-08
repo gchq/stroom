@@ -15,6 +15,7 @@ import stroom.statistics.server.sql.SQLStatisticNames;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
+import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -38,7 +39,6 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") //called by DI
 @Component
-//@Scope(value = StroomScope.TASK)
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
@@ -57,7 +57,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
-//    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
@@ -70,11 +70,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @SuppressWarnings("unused") // Called by DI
     @Inject
     StatisticsSearchServiceImpl(@Named("statisticsDataSource") final DataSource statisticsDataSource,
-                                final StroomPropertyService propertyService) {
-//                                final TaskMonitor taskMonitor) {
+                                final StroomPropertyService propertyService,
+                                final TaskContext taskContext) {
         this.statisticsDataSource = statisticsDataSource;
         this.propertyService = propertyService;
-//        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -375,7 +375,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                     },
                                     (rs, emitter) -> {
                                         //advance the resultSet, if it is a row emit it, else finish the flow
-                                        if (Thread.currentThread().isInterrupted()) {
+                                        if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
                                         } else {

@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.reactivex.Flowable;
+import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
@@ -36,9 +37,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -48,18 +49,21 @@ public class SqlStatisticsStore implements Store {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticsStore.class);
 
-    private static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
+//    private static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
+    private static final String TASK_NAME = "SqlStatisticSearch";
 
     private final ResultHandler resultHandler;
-    private final Disposable searchResultsDisposable;
+    private final int resultHandlerBatchSize;
+//    private final Disposable searchResultsDisposable;
 
     private final List<Integer> defaultMaxResultsSizes;
     private final StoreSize storeSize;
     private final AtomicBoolean isComplete;
-    private final AtomicBoolean isTerminated;
+//    private final AtomicBoolean isTerminated;
     private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
     private final HasTerminate terminationMonitor;
+    private final TaskContext taskContext;
     private final String searchKey;
 
     SqlStatisticsStore(final SearchRequest searchRequest,
@@ -67,14 +71,17 @@ public class SqlStatisticsStore implements Store {
                        final StatisticsSearchService statisticsSearchService,
                        final List<Integer> defaultMaxResultsSizes,
                        final StoreSize storeSize,
+                       final int resultHandlerBatchSize,
                        final Executor executor,
                        final TaskContext taskContext) {
 
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
         this.isComplete = new AtomicBoolean(false);
-        this.isTerminated = new AtomicBoolean(false);
+//        this.isTerminated = new AtomicBoolean(false);
         this.searchKey = searchRequest.getKey().toString();
+        this.taskContext = taskContext;
+        this.resultHandlerBatchSize = resultHandlerBatchSize;
 
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
         Preconditions.checkNotNull(coprocessorSettingsMap);
@@ -82,7 +89,8 @@ public class SqlStatisticsStore implements Store {
         final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
         final Map<String, String> paramMap = getParamMap(searchRequest);
 
-        terminationMonitor = getTerminationMonitor();
+//        terminationMonitor = getTerminationMonitor();
+        terminationMonitor = taskContext;
 
         final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap = getCoprocessorMap(
                 coprocessorSettingsMap, fieldIndexMap, paramMap);
@@ -96,7 +104,12 @@ public class SqlStatisticsStore implements Store {
         final Flowable<String[]> searchResultsFlowable = statisticsSearchService.search(
                 statisticStoreEntity, criteria, fieldIndexMap);
 
-        this.searchResultsDisposable = startSearch(searchResultsFlowable, coprocessorMap, executor, taskContext);
+//        this.searchResultsDisposable = startSearch(searchResultsFlowable, coprocessorMap, executor, taskContext);
+        //start the search as an async task
+        CompletableFuture.runAsync(
+                () -> startSearch(searchResultsFlowable, coprocessorMap, executor, taskContext),
+                executor);
+        LOGGER.debug("Async search task started for key {}", searchKey);
     }
 
 
@@ -104,9 +117,10 @@ public class SqlStatisticsStore implements Store {
     public void destroy() {
         LOGGER.debug("destroy called");
         //mark this store as terminated so the taskMonitor make it available
-        isTerminated.set(true);
+//        isTerminated.set(true);
+        taskContext.terminate();
         //terminate the search
-        searchResultsDisposable.dispose();
+//        searchResultsDisposable.dispose();
     }
 
     @Override
@@ -157,7 +171,7 @@ public class SqlStatisticsStore implements Store {
                 "defaultMaxResultsSizes=" + defaultMaxResultsSizes +
                 ", storeSize=" + storeSize +
                 ", isComplete=" + isComplete +
-                ", isTerminated=" + isTerminated +
+//                ", isTerminated=" + isTerminated +
                 ", searchKey='" + searchKey + '\'' +
                 '}';
     }
@@ -178,19 +192,39 @@ public class SqlStatisticsStore implements Store {
                                    final Executor executor,
                                    final TaskContext taskContext) {
 
+        LOGGER.debug("Starting search with key {}", searchKey);
+        taskContext.setName(TASK_NAME);
+        taskContext.info("Sql Statistics search " + searchKey + " - running query");
+
         final AtomicLong counter = new AtomicLong(0);
         // subscribe to the flowable, mapping each resultSet to a String[]
         // After the window period has elapsed a new flowable is create for those rows received
         // in that window, which can all be processed and sent
         // If the task is canceled, the flowable produced by search() will stop emitting
         // Set up the results flowable, the search wont be executed until subscribe is called
+        final Scheduler scheduler = Schedulers.from(executor);
+
+        // TODO Due to the current way task termination is done these needs to be blocking,
+        // so the Disposable will never be of any use as it will have finished when it is returned.
+        // In 6.1 this needs to be look at again with a view to task termination and monitoring.
+        // Ideally we want a top level task that we can terminate and pass info to.
         final Disposable searchResultsDisposable = searchResultsFlowable
-                .subscribeOn(Schedulers.from(executor))
-                .window(PROCESS_PAYLOAD_INTERVAL_SECS, TimeUnit.SECONDS)
+                .doOnSubscribe(subscription -> {
+                    LOGGER.debug("doOnSubscribeCalled");
+//                    taskContext.setName(TASK_NAME);
+//                    taskContext.info("Sql Statistics search " + searchKey + " - running query");
+                })
+//                .window(PROCESS_PAYLOAD_INTERVAL_SECS, TimeUnit.SECONDS, scheduler)
+//                .window(PROCESS_PAYLOAD_INTERVAL_SECS, TimeUnit.SECONDS)
+//                .subscribeOn(scheduler)
+                .window(resultHandlerBatchSize)
+                .takeWhile(data ->
+                        !taskContext.isTerminated()) // complete if the task is terminated
                 .subscribe(
                         windowedFlowable -> {
                             LOGGER.trace("onNext called for outer flowable");
-                            windowedFlowable.subscribe(
+                            windowedFlowable
+                                    .subscribe(
                                     data -> {
                                         LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
                                         counter.incrementAndGet();
@@ -207,13 +241,13 @@ public class SqlStatisticsStore implements Store {
                                         LAMBDA_LOGGER.debug(() ->
                                                 String.format("onComplete of inner flowable called, processing results so far, counter: %s",
                                                         counter.get()));
-                                        //completed our timed window so create and pass on a payload for the
+                                        //completed our window so create and pass on a payload for the
                                         //data we have gathered so far
                                         processPayloads(resultHandler, coprocessorMap, terminationMonitor);
-
-                                        taskContext.info("Sql Statistics search " + searchKey +
-                                                " - running database query (" + counter.get() + " rows fetched)");
                                     });
+                            taskContext.setName(TASK_NAME + counter.get());
+                            taskContext.info("Sql Statistics search " + searchKey +
+                                    " - processing results so far (" + counter.get() + " rows fetched)");
                         },
                         throwable -> {
                             LOGGER.error("Error in flow: {}", throwable.getMessage(), throwable);
@@ -293,21 +327,21 @@ public class SqlStatisticsStore implements Store {
         resultHandler.handle(payloadMap, terminationMonitor);
     }
 
-    private HasTerminate getTerminationMonitor() {
-
-        return new HasTerminate() {
-
-            @Override
-            public void terminate() {
-                isTerminated.set(true);
-            }
-
-            @Override
-            public boolean isTerminated() {
-                return isTerminated.get();
-            }
-        };
-    }
+//    private HasTerminate getTerminationMonitor() {
+//
+//        return new HasTerminate() {
+//
+//            @Override
+//            public void terminate() {
+//                isTerminated.set(true);
+//            }
+//
+//            @Override
+//            public boolean isTerminated() {
+//                return isTerminated.get();
+//            }
+//        };
+//    }
 
     private static Coprocessor createCoprocessor(final CoprocessorSettings settings,
                                                  final FieldIndexMap fieldIndexMap,
