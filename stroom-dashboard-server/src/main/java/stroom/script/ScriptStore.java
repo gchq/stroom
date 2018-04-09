@@ -17,14 +17,16 @@
 
 package stroom.script;
 
-import stroom.entity.DocumentEntityService;
-import stroom.entity.FindService;
-import stroom.script.shared.FindScriptCriteria;
-import stroom.script.shared.Script;
+import stroom.document.DocumentStore;
+import stroom.query.api.v2.DocRef;
+import stroom.script.shared.ScriptDoc;
 
-import java.util.Set;
+import java.util.List;
 
-public interface ScriptService extends DocumentEntityService<Script>, FindService<Script, FindScriptCriteria> {
-    // TODO : Remove this when IFrames are able to pass user tokens so that script can be loaded in the context of the current user.
-    Script loadByUuidInsecure(String uuid, Set<String> fetchSet);
+public interface ScriptStore extends DocumentStore<ScriptDoc> {
+    ScriptDoc read(String uuid);
+
+    ScriptDoc update(ScriptDoc doc);
+
+    List<DocRef> list();
 }

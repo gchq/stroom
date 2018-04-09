@@ -33,7 +33,7 @@ import stroom.xmlschema.TestXMLSchemaStoreImpl;
         stroom.pipeline.task.TestTranslationStepping.class,
         stroom.policy.TestDataRetentionStreamFinder.class,
         stroom.refdata.TestReferenceDataWithCache.class,
-        stroom.script.TestScriptServiceImpl.class,
+        stroom.script.TestScriptStoreImpl.class,
         stroom.search.TestBasicSearch.class,
         stroom.search.TestBasicSearch_EndToEnd.class,
         stroom.search.TestDictionaryStoreImpl.class,

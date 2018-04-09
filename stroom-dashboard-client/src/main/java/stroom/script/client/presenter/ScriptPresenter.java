@@ -22,45 +22,37 @@ import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.Res;
 import stroom.query.api.v2.DocRef;
-import stroom.script.shared.Script;
+import stroom.script.shared.ScriptDoc;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import javax.inject.Provider;
 
-public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Script> {
+public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ScriptDoc> {
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData SCRIPT_TAB = new TabDataImpl("Script");
 
     private final ScriptSettingsPresenter settingsPresenter;
-    private final ClientSecurityContext securityContext;
     private final Provider<EditorPresenter> editorPresenterProvider;
-    private final ClientDispatchAsync dispatcher;
 
     private EditorPresenter codePresenter;
     private boolean loadedResource;
-    private Res resource;
     private Boolean readOnly;
 
     private int loadCount;
 
     @Inject
     public ScriptPresenter(final EventBus eventBus, final LinkTabPanelView view,
-                           final ScriptSettingsPresenter settingsPresenter, final ClientSecurityContext securityContext, final Provider<EditorPresenter> editorPresenterProvider, final ClientDispatchAsync dispatcher) {
+                           final ScriptSettingsPresenter settingsPresenter, final ClientSecurityContext securityContext, final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
-        this.securityContext = securityContext;
         this.editorPresenterProvider = editorPresenterProvider;
-        this.dispatcher = dispatcher;
 
         settingsPresenter.addDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -90,7 +82,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
                     registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
                     registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
 
-                    loadResource(codePresenter, callback);
+                    loadResource(codePresenter);
                 }
             } else {
                 callback.onReady(codePresenter);
@@ -101,20 +93,20 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    public void onRead(final DocRef docRef, final Script script) {
+    public void onRead(final DocRef docRef, final ScriptDoc script) {
         super.onRead(docRef, script);
         loadCount++;
         settingsPresenter.read(docRef, script);
 
         // Reload the resource if we have loaded it before.
         if (codePresenter != null) {
-            loadResource(codePresenter, null);
+            loadResource(codePresenter);
         }
 
         if (loadCount > 1) {
             // Remove the script function from the cache so dashboards reload
             // it.
-            ClearScriptCacheEvent.fire(this, DocRefUtil.create(script));
+            ClearScriptCacheEvent.fire(this, docRef);
 
             // This script might be used by any visualisation so clear the vis
             // function cache so that scripts are requested again if needed.
@@ -123,14 +115,10 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    protected void onWrite(final Script script) {
+    protected void onWrite(final ScriptDoc script) {
         settingsPresenter.write(script);
         if (loadedResource) {
-            if (resource == null) {
-                resource = new Res();
-            }
-            resource.setData(codePresenter.getText());
-            script.setResource(resource);
+            script.setData(codePresenter.getText());
         }
         loadedResource = false;
     }
@@ -141,26 +129,15 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
         this.readOnly = readOnly;
     }
 
-    private void loadResource(final EditorPresenter codePresenter, final ContentCallback callback) {
+    private void loadResource(final EditorPresenter codePresenter) {
         if (!loadedResource) {
-//            final DocumentServiceReadAction<Script> action = new DocumentServiceReadAction<>(DocRefUtil.create(getEntity()));
-//            dispatcher.exec(action).onSuccess(script -> {
-            resource = getEntity().getResource();
-                if (resource != null) {
-                    codePresenter.setText(resource.getData());
-                }
-
-                if (callback != null) {
-                    callback.onReady(codePresenter);
-                }
-
-                loadedResource = true;
-//            });
+            codePresenter.setText(getEntity().getData());
+            loadedResource = true;
         }
     }
 
     @Override
     public String getType() {
-        return Script.ENTITY_TYPE;
+        return ScriptDoc.DOCUMENT_TYPE;
     }
 }

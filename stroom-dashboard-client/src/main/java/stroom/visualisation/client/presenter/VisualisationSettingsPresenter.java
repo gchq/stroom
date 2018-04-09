@@ -29,9 +29,8 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRef;
-import stroom.script.shared.Script;
+import stroom.script.shared.ScriptDoc;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
@@ -58,7 +57,7 @@ public class VisualisationSettingsPresenter
             }
         };
 
-        scriptPresenter.setIncludedTypes(Script.ENTITY_TYPE);
+        scriptPresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
         scriptPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));

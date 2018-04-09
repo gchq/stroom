@@ -113,9 +113,7 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
 //                .scan();
 
         final List<String> entityClassNames = Arrays.asList(
-                "stroom.dashboard.shared.Dashboard",
                 "stroom.dashboard.shared.QueryEntity",
-                "stroom.entity.shared.Res",
                 "stroom.explorer.ExplorerTreeNode",
                 "stroom.explorer.ExplorerTreePath",
                 "stroom.feed.shared.Feed",
@@ -132,7 +130,6 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.pipeline.shared.PipelineEntity",
                 "stroom.pipeline.shared.XSLT",
                 "stroom.ruleset.shared.Policy",
-                "stroom.script.shared.Script",
                 "stroom.security.AppPermission",
                 "stroom.security.DocumentPermission",
                 "stroom.security.Permission",

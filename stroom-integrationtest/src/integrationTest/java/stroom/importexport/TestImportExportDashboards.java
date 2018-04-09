@@ -21,9 +21,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.dashboard.DashboardStore;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardConfig;
-import stroom.dashboard.shared.FindDashboardCriteria;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
@@ -31,7 +30,6 @@ import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Res;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -50,8 +48,8 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.resource.ResourceStore;
-import stroom.script.ScriptService;
-import stroom.script.shared.Script;
+import stroom.script.ScriptStore;
+import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
@@ -75,7 +73,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     @Inject
     private VisualisationService visualisationService;
     @Inject
-    private ScriptService scriptService;
+    private ScriptStore scriptStore;
     @Inject
     private IndexService indexService;
     @Inject
@@ -125,17 +123,14 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         Visualisation vis = null;
         if (!skipVisCreation) {
-            final Res res = new Res();
-            res.setData("Test Data");
-
-            final DocRef scriptRef = explorerService.create(Script.ENTITY_TYPE, "Test Script", folder2, null);
-            Script script = scriptService.readDocument(scriptRef);
-            script.setResource(res);
-            script = scriptService.save(script);
+            final DocRef scriptRef = explorerService.create(ScriptDoc.DOCUMENT_TYPE, "Test Script", folder2, null);
+            ScriptDoc script = scriptStore.readDocument(scriptRef);
+            script.setData("Test Data");
+            scriptStore.writeDocument(script);
 
             final DocRef visRef = explorerService.create(Visualisation.ENTITY_TYPE, "Test Vis", folder2, null);
             vis = visualisationService.readDocument(visRef);
-            vis.setScriptRef(DocRefUtil.create(script));
+            vis.setScriptRef(scriptRef);
             vis = visualisationService.save(vis);
             Assert.assertEquals(1, commonTestControl.countEntity(Visualisation.class));
         }

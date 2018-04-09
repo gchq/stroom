@@ -1,0 +1,15 @@
+{
+  "type" : "Script",
+  "uuid" : "e733aa62-ede1-4530-bd05-5702de05f9fd",
+  "name" : "HourDayPointMap",
+  "version" : "a6ad007b-058a-4f99-8246-3a619a3c9d0a",
+  "dependencies" : [ {
+    "type" : "Script",
+    "uuid" : "49a5f46c-f627-49ed-afb9-0066b99e235a",
+    "name" : "Common"
+  }, {
+    "type" : "Script",
+    "uuid" : "5d4252d6-6f13-4f24-9481-9e98e038747c",
+    "name" : "GenericGrid"
+  } ]
+}

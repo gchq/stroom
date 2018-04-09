@@ -24,7 +24,6 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.Res;
 import stroom.entity.util.EntityServiceExceptionUtil;
 
 import java.io.IOException;
@@ -110,14 +109,7 @@ public class LegacyXMLSerialiser {
                     obj = values.iterator().next();
                 }
 
-                if (obj != null) {
-                    if (obj instanceof String) {
-                        final String string = (String) obj;
-                        if (!string.isEmpty()) {
-                            setStringProperty(entity, property, string);
-                        }
-                    }
-                } else {
+                if (obj == null) {
                     property.set(entity, null);
                 }
             } else if (Set.class.isAssignableFrom(property.getType())) {
@@ -158,26 +150,6 @@ public class LegacyXMLSerialiser {
             }
         } catch (final RuntimeException | IllegalAccessException | InvocationTargetException e) {
             throw EntityServiceExceptionUtil.create(e);
-        }
-    }
-
-    private void setStringProperty(final Entity entity,
-                                   final Property property,
-                                   final String value) throws IllegalAccessException, InvocationTargetException {
-
-        // See if this property is a resource. If it is then create
-        // a new resource or update an existing one.
-        if (Res.class.equals(property.getType())) {
-            Res res;
-            final Object existing = property.get(entity);
-            if (existing == null) {
-                res = new Res();
-            } else {
-                res = (Res) existing;
-            }
-
-            res.setData(value);
-            property.set(entity, res);
         }
     }
 }

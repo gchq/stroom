@@ -1,0 +1,15 @@
+{
+  "type" : "Script",
+  "uuid" : "866a3f1d-26e3-44d1-819e-968bc767a4af",
+  "name" : "Bubble",
+  "version" : "efa883cb-6648-471b-8fe7-ef3eb2fa14a5",
+  "dependencies" : [ {
+    "type" : "Script",
+    "uuid" : "49a5f46c-f627-49ed-afb9-0066b99e235a",
+    "name" : "Common"
+  }, {
+    "type" : "Script",
+    "uuid" : "5d4252d6-6f13-4f24-9481-9e98e038747c",
+    "name" : "GenericGrid"
+  } ]
+}

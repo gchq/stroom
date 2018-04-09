@@ -19,32 +19,26 @@ package stroom.script;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.shared.Res;
-import stroom.script.shared.Script;
+import stroom.query.api.v2.DocRef;
+import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.Set;
 
-public class TestScriptServiceImpl extends AbstractCoreIntegrationTest {
-    private static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
-
+public class TestScriptStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
-    private ScriptService scriptService;
+    private ScriptStore scriptStore;
 
     @Test
     public void testUTF8Resource() {
         final String data = "var π = Math.PI, τ = 2 * π, halfπ = π / 2, ε = 1e-6, ε2 = ε * ε, d3_radians = π / 180, d3_degrees = 180 / π;";
 
-        final Res res = new Res();
-        res.setData(data);
+        final DocRef docRef = scriptStore.createDocument("test");
+        final ScriptDoc script = scriptStore.readDocument(docRef);
+        script.setData(data);
+        scriptStore.writeDocument(script);
+        final ScriptDoc loaded = scriptStore.readDocument(docRef);
 
-        final Script script = scriptService.create("test");
-        script.setResource(res);
-        scriptService.save(script);
-        final Script loaded = scriptService.load(script, FETCH_SET);
-
-        Assert.assertEquals(data, loaded.getResource().getData());
+        Assert.assertEquals(data, loaded.getData());
     }
 }

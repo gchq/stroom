@@ -1,0 +1,15 @@
+{
+  "type" : "Script",
+  "uuid" : "788b5981-7199-4f7e-a9db-33594f910134",
+  "name" : "LineChart",
+  "version" : "10852175-0cfd-488c-9716-e5e5b2f3e936",
+  "dependencies" : [ {
+    "type" : "Script",
+    "uuid" : "49a5f46c-f627-49ed-afb9-0066b99e235a",
+    "name" : "Common"
+  }, {
+    "type" : "Script",
+    "uuid" : "5d4252d6-6f13-4f24-9481-9e98e038747c",
+    "name" : "GenericGrid"
+  } ]
+}
