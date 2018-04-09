@@ -23,5 +23,6 @@ public class SQLStatisticSearchModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StatisticsQueryService.class).to(StatisticsQueryServiceImpl.class);
+        bind(StatisticsSearchService.class).to(StatisticsSearchServiceImpl.class);
     }
 }
