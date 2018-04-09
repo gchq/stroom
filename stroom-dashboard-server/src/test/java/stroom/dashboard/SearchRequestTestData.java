@@ -43,7 +43,7 @@ public class SearchRequestTestData {
     static stroom.query.api.v2.SearchRequest apiSearchRequest() {
         stroom.dashboard.shared.SearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
-        SearchRequestMapper searchRequestMapper = new SearchRequestMapper(new MockVisualisationService());
+        SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
         stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                 DashboardQueryKey.create(
                         "queryKeyUuid",

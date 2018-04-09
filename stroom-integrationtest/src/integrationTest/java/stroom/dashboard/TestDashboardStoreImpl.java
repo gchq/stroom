@@ -26,13 +26,12 @@ import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.entity.shared.DocRefUtil;
 import stroom.query.api.v2.DocRef;
 import stroom.script.ScriptStore;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.visualisation.VisualisationService;
-import stroom.visualisation.shared.Visualisation;
+import stroom.visualisation.VisualisationStore;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ public class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
     private DashboardStore dashboardStore;
     @Inject
-    private VisualisationService visualisationService;
+    private VisualisationStore visualisationStore;
     @Inject
     private ScriptStore scriptStore;
 
@@ -106,16 +105,17 @@ public class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
 
     private VisComponentSettings getVisSettings() {
         final DocRef scriptRef = scriptStore.createDocument("Test");
-        ScriptDoc script = scriptStore.readDocument(scriptRef);
+        final ScriptDoc script = scriptStore.readDocument(scriptRef);
         script.setData("Test");
         scriptStore.writeDocument(script);
 
-        Visualisation vis = visualisationService.create("Test");
+        final DocRef visRef = visualisationStore.createDocument("Test");
+        final VisualisationDoc vis = visualisationStore.readDocument(visRef);
         vis.setScriptRef(scriptRef);
-        vis = visualisationService.save(vis);
+        visualisationStore.writeDocument(vis);
 
         final VisComponentSettings visSettings = new VisComponentSettings();
-        visSettings.setVisualisation(DocRefUtil.create(vis));
+        visSettings.setVisualisation(visRef);
 
         return visSettings;
     }

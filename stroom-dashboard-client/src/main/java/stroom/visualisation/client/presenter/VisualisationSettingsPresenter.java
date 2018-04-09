@@ -35,10 +35,10 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
-import stroom.visualisation.shared.Visualisation;
+import stroom.visualisation.shared.VisualisationDoc;
 
 public class VisualisationSettingsPresenter
-        extends DocumentSettingsPresenter<VisualisationSettingsView, Visualisation> {
+        extends DocumentSettingsPresenter<VisualisationSettingsView, VisualisationDoc> {
     private final EntityDropDownPresenter scriptPresenter;
     private final EditorPresenter editorPresenter;
 
@@ -72,7 +72,7 @@ public class VisualisationSettingsPresenter
 
     @Override
     public String getType() {
-        return Visualisation.ENTITY_TYPE;
+        return VisualisationDoc.DOCUMENT_TYPE;
     }
 
     @Override
@@ -86,7 +86,7 @@ public class VisualisationSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final Visualisation visualisation) {
+    protected void onRead(final DocRef docRef, final VisualisationDoc visualisation) {
         getView().getDescription().setText(visualisation.getDescription());
         getView().getFunctionName().setText(visualisation.getFunctionName());
         scriptPresenter.setSelectedEntityReference(visualisation.getScriptRef());
@@ -101,7 +101,7 @@ public class VisualisationSettingsPresenter
     }
 
     @Override
-    protected void onWrite(final Visualisation visualisation) {
+    protected void onWrite(final VisualisationDoc visualisation) {
         visualisation.setDescription(getView().getDescription().getText().trim());
         visualisation.setFunctionName(getView().getFunctionName().getText().trim());
         visualisation.setScriptRef(scriptPresenter.getSelectedEntityReference());

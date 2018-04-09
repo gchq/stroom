@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.visualisation.shared;
+package stroom.visualisation;
 
 import stroom.entity.shared.Copyable;
 import stroom.entity.shared.DocumentEntity;
@@ -27,12 +27,11 @@ import javax.persistence.Entity;
 import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 
 @Entity
 @Table(name = "VIS")
-public class Visualisation extends DocumentEntity implements Copyable<Visualisation> {
+public class OldVisualisation extends DocumentEntity implements Copyable<OldVisualisation> {
     public static final String TABLE_NAME = SQLNameConstants.VISUALISATION;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String FUNCTION_NAME = SQLNameConstants.FUNCTION + SEP + SQLNameConstants.NAME;
@@ -106,7 +105,7 @@ public class Visualisation extends DocumentEntity implements Copyable<Visualisat
     }
 
     @Override
-    public void copyFrom(final Visualisation other) {
+    public void copyFrom(final OldVisualisation other) {
         this.description = other.description;
         this.functionName = other.functionName;
         this.settings = other.settings;

@@ -62,7 +62,7 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.io.FileUtil;
-import stroom.visualisation.shared.Visualisation;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
 import java.time.Duration;
@@ -111,7 +111,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             StreamVolume.TABLE_NAME,
             User.TABLE_NAME,
             UserGroupUser.TABLE_NAME,
-            Visualisation.TABLE_NAME,
             Volume.TABLE_NAME,
             VolumeState.TABLE_NAME,
             XSLT.TABLE_NAME);

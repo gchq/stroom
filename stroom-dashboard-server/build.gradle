@@ -42,7 +42,6 @@ dependencies {
     compile libs.hibernate_jpa_api
 
     testCompile project(':stroom-test-common')
-    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 
     testCompile libs.hamcrest_core
     testCompile libs.junit

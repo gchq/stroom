@@ -145,8 +145,7 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.streamtask.shared.StreamProcessor",
                 "stroom.streamtask.shared.StreamProcessorFilter",
                 "stroom.streamtask.shared.StreamProcessorFilterTracker",
-                "stroom.streamtask.shared.StreamTask",
-                "stroom.visualisation.shared.Visualisation"
+                "stroom.streamtask.shared.StreamTask"
         );
 
         return new PersistenceUnitInfoImpl(name, entityClassNames, properties(dataSource));

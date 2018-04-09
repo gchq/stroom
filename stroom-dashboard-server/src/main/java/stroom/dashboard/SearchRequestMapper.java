@@ -54,8 +54,8 @@ import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.util.shared.OffsetRange;
-import stroom.visualisation.VisualisationService;
-import stroom.visualisation.shared.Visualisation;
+import stroom.visualisation.VisualisationStore;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -71,11 +71,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class SearchRequestMapper {
-    private final VisualisationService visualisationService;
+    private final VisualisationStore visualisationStore;
 
     @Inject
-    public SearchRequestMapper(final VisualisationService visualisationService) {
-        this.visualisationService = visualisationService;
+    public SearchRequestMapper(final VisualisationStore visualisationStore) {
+        this.visualisationStore = visualisationStore;
     }
 
     public stroom.query.api.v2.SearchRequest mapRequest(final DashboardQueryKey queryKey,
@@ -388,7 +388,7 @@ public class SearchRequestMapper {
                 return null;
             }
 
-            final Visualisation visualisation = visualisationService.loadByUuid(docRef.getUuid());
+            final VisualisationDoc visualisation = visualisationStore.readDocument(docRef);
 
             if (visualisation == null || visualisation.getSettings() == null || visualisation.getSettings().length() == 0) {
                 return null;
@@ -478,7 +478,7 @@ public class SearchRequestMapper {
 //                return null;
 //            }
 //
-//            final Visualisation visualisation = visualisationService.loadByUuid(docRef.getUuid());
+//            final Visualisation visualisation = visualisationStore.loadByUuid(docRef.getUuid());
 //
 //            if (visualisation == null || visualisation.getSettings() == null || visualisation.getSettings().length() == 0) {
 //                return null;

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Moved Visualisation entities over to the new multi part document store.
+
 * Moved Script entities over to the new multi part document store.
 
 * Moved Dashboard entities over to the new multi part document store.

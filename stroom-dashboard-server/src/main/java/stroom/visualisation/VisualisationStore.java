@@ -17,11 +17,16 @@
 
 package stroom.visualisation;
 
-import stroom.entity.DocumentEntityService;
-import stroom.entity.FindService;
-import stroom.visualisation.shared.FindVisualisationCriteria;
-import stroom.visualisation.shared.Visualisation;
+import stroom.document.DocumentStore;
+import stroom.query.api.v2.DocRef;
+import stroom.visualisation.shared.VisualisationDoc;
 
-public interface VisualisationService
-        extends DocumentEntityService<Visualisation>, FindService<Visualisation, FindVisualisationCriteria> {
+import java.util.List;
+
+public interface VisualisationStore extends DocumentStore<VisualisationDoc> {
+    VisualisationDoc read(String uuid);
+
+    VisualisationDoc update(VisualisationDoc doc);
+
+    List<DocRef> list();
 }
