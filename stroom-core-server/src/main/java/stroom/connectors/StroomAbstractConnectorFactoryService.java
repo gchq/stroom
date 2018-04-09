@@ -1,7 +1,5 @@
 package stroom.connectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.node.server.StroomPropertyService;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -27,7 +25,6 @@ public abstract class StroomAbstractConnectorFactoryService<
         C extends StroomConnector,
         F extends StroomConnectorFactory<C>> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomAbstractConnectorFactoryService.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StroomAbstractConnectorFactoryService.class);
 
     // If a class requests a producer, but gives no name, use this value as the name
@@ -123,13 +120,13 @@ public abstract class StroomAbstractConnectorFactoryService<
             // Retrieve the settings for this named kafka
             String connectorVersion = connectorProperties.getProperty(PROP_CONNECTOR_VERSION);
 
-            LOGGER.info("Attempting to initialise connector with version [{}] using factory [{}]",
+            LAMBDA_LOGGER.info(() -> LambdaLogger.buildMessage("Attempting to initialise connector with version [{}] using factory [{}]",
                     connectorVersion,
-                    factoryClass.getName());
+                    factoryClass.getName()));
 
             if (connectorVersion == null) {
                 //no point going to the factory as we have no version to look up
-                LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+                LAMBDA_LOGGER.warn(() -> LambdaLogger.buildMessage(
                         "ConnectorVersion is null for factoryClass [{}] and name [{}]",
                         factoryClass.getName(),
                         name));
@@ -153,16 +150,24 @@ public abstract class StroomAbstractConnectorFactoryService<
                 }
 
                 if (connector == null) {
-                    LOGGER.warn("Unable to find connector with version [{}] using factory [{}], is the implementation " +
-                                    "jar correctly installed", connectorVersion, factoryClass.getName());
+                    LAMBDA_LOGGER.warn(() ->
+                            LambdaLogger.buildMessage("Unable to find connector with version [{}] using factory [{}], is the implementation " +
+                                            "jar correctly installed",
+                                    connectorVersion,
+                                    factoryClass.getName()));
                 }
             } catch (Exception e) {
                 String factoryClassName = factoryClass.getName();
-                LOGGER.error("Unable to initialise connector [{}] [{}] due to [{}], (enable DEBUG for full stack)",
-                        factoryClassName,
-                        connectorVersion,
-                        e.getMessage());
-                LOGGER.debug("Unable to initialise connector [{}] [{}]", factoryClassName, connectorVersion, e);
+                LAMBDA_LOGGER.error(() ->
+                        LambdaLogger.buildMessage("Unable to initialise connector [{}] [{}] due to [{}], (enable DEBUG for full stack)",
+                                factoryClassName,
+                                connectorVersion,
+                                e.getMessage()));
+                LAMBDA_LOGGER.debug(() ->
+                        LambdaLogger.buildMessage("Unable to initialise connector [{}] [{}]",
+                                factoryClassName,
+                                connectorVersion,
+                                e));
                 //don't throw exception, callers can just handling having a null connector
             }
             return connector;
@@ -175,7 +180,7 @@ public abstract class StroomAbstractConnectorFactoryService<
     }
 
     public void shutdown() {
-        LOGGER.info("Shutting Down Stroom Connector Producer Factory Service");
+        LAMBDA_LOGGER.info(() -> "Shutting Down Stroom Connector Producer Factory Service");
         connectorsByName.values().forEach(StroomConnector::shutdown);
         connectorsByName.clear();
     }

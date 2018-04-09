@@ -19,7 +19,6 @@ import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.state.PipelineHolder;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
@@ -30,6 +29,8 @@ import stroom.util.spring.StroomScope;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
+
+import static stroom.security.server.UserService.STROOM_SERVICE_USER_NAME;
 
 /**
  * The index filter... takes the index XML and builds the LUCENE documents
@@ -63,7 +64,6 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private final StroomElasticProducerFactoryService elasticProducerFactoryService;
     private final SecurityContext securityContext;
-    private final PipelineHolder pipelineHolder;
 
     private StroomElasticProducer elasticProducer = null;
     private ElasticIndexDocRefEntity indexConfig = null;
@@ -75,14 +75,12 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
                                  final ElasticIndexCache elasticIndexCache,
                                  final SecurityContext securityContext,
                                  final ErrorReceiverProxy errorReceiverProxy,
-                                 final StroomElasticProducerFactoryService elasticProducerFactoryService,
-                                 final PipelineHolder pipelineHolder) {
+                                 final StroomElasticProducerFactoryService elasticProducerFactoryService) {
         this.locationFactory = locationFactory;
         this.elasticIndexCache = elasticIndexCache;
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticProducerFactoryService = elasticProducerFactoryService;
         this.securityContext = securityContext;
-        this.pipelineHolder = pipelineHolder;
     }
 
     @PipelineProperty(description = "The field name to use as the unique ID for records.")
@@ -120,7 +118,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
 
             try (final SecurityHelper sh = SecurityHelper.asUser(
                     securityContext,
-                    UserTokenUtil.create(pipelineHolder.getPipeline().getCreateUser(), null))) {
+                    UserTokenUtil.create(STROOM_SERVICE_USER_NAME, null))) {
                 // Get the index and index fields from the cache.
                 indexConfig = elasticIndexCache.get(indexRef);
                 if (indexConfig == null) {

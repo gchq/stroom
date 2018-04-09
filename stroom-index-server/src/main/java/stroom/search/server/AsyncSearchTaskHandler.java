@@ -158,6 +158,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         if (targetNodes.contains(node)) {
                             final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
                                     task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
+                            LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
                             dispatcher.execAsync(clusterSearchTask, resultCollector, sourceNode,
                                     Collections.singleton(node));
                             expectedNodeResultCount++;

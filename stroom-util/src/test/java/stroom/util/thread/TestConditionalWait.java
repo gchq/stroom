@@ -18,7 +18,7 @@ public class TestConditionalWait {
     @Test
     public void wait_zeroTimeout() {
 
-        assertTimeTaken(Duration.ZERO, 200L, () -> {
+        assertTimeTaken(Duration.ZERO, 300L, () -> {
             ConditionalWait.Outcome outcome = ConditionalWait.wait(() -> false, Duration.ZERO);
             Assertions.assertThat(outcome).isEqualTo(ConditionalWait.Outcome.TIMED_OUT);
         });
@@ -28,7 +28,7 @@ public class TestConditionalWait {
     public void wait_2secTimeout() {
 
         final Duration duration = Duration.of(2, ChronoUnit.SECONDS);
-        assertTimeTaken(duration, 200L, () -> {
+        assertTimeTaken(duration, 300L, () -> {
             ConditionalWait.Outcome outcome = ConditionalWait.wait(() -> false, duration);
             Assertions.assertThat(outcome).isEqualTo(ConditionalWait.Outcome.TIMED_OUT);
         });
@@ -39,14 +39,17 @@ public class TestConditionalWait {
 
         final Duration waitDuration = Duration.of(2, ChronoUnit.SECONDS);
         final Duration sleepDuration = Duration.of(100, ChronoUnit.MILLIS);
+        final long startTimeMs = System.currentTimeMillis();
 
-        assertTimeTaken(sleepDuration, 200L, () -> {
+        assertTimeTaken(sleepDuration, 300L, () -> {
 
             final AtomicBoolean atomicBoolean = new AtomicBoolean(false);
             //spawn a thread that will wait a short time then change the value used for the wait condition
             CompletableFuture.runAsync(() -> {
                 try {
-                    Thread.sleep(sleepDuration.toMillis());
+                    //removing the time taken to spin up this thread
+                    long sleepMs = sleepDuration.toMillis() - (System.currentTimeMillis() - startTimeMs);
+                    Thread.sleep(sleepMs);
                 } catch (InterruptedException e) {
                     throw new RuntimeException("Thread interrupted", e);
                 }

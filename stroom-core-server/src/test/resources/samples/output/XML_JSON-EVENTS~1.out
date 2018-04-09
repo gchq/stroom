@@ -29,6 +29,13 @@
          </Device>
          <User>
             <Id>user1</Id>
+            <Data Name="SHA256Hash"
+                  Value="a041b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90"/>
+            <Data Name="SHA256HashWithSalt"
+                  Value="fecee872821bc6fe82018eac462b2255911cc45a612e30f88af40bcb689aab94"/>
+            <Data Name="MD5HashWithSalt" Value="321865df6f0ce6bdf3ea16f74623534a"/>
+            <Data Name="TestDateMissingYear" Value="2006-03-12T00:00:00.000Z"/>
+            <Data Name="TestDateMissingYearAndMonth" Value="2006-03-12T00:00:00.000Z"/>
          </User>
       </EventSource>
       <EventDetail>
@@ -69,6 +76,13 @@
          </Device>
          <User>
             <Id>user2</Id>
+            <Data Name="SHA256Hash"
+                  Value="6025d18fe48abd45168528f18a82e265dd98d421a7084aa09f61b341703901a3"/>
+            <Data Name="SHA256HashWithSalt"
+                  Value="455be9711438b420d8dc7638bb9fd90bcd0236e3adf8306e077b3ec5b53b7b34"/>
+            <Data Name="MD5HashWithSalt" Value="fc29d0fba0196bccba291602e43f876e"/>
+            <Data Name="TestDateMissingYear" Value="2006-03-12T00:00:00.000Z"/>
+            <Data Name="TestDateMissingYearAndMonth" Value="2006-03-12T00:00:00.000Z"/>
          </User>
       </EventSource>
       <EventDetail>
@@ -109,6 +123,13 @@
          </Device>
          <User>
             <Id>user3</Id>
+            <Data Name="SHA256Hash"
+                  Value="5860faf02b6bc6222ba5aca523560f0e364ccd8b67bee486fe8bf7c01d492ccb"/>
+            <Data Name="SHA256HashWithSalt"
+                  Value="f05a848599673e3cf61e0db2e8a7fe5c6c89ff302bb660d52e9d561fd4971e09"/>
+            <Data Name="MD5HashWithSalt" Value="d853a1598303a1af58b2fbe7fd6e719c"/>
+            <Data Name="TestDateMissingYear" Value="2006-03-12T00:00:00.000Z"/>
+            <Data Name="TestDateMissingYearAndMonth" Value="2006-03-12T00:00:00.000Z"/>
          </User>
       </EventSource>
       <EventDetail>
@@ -149,6 +170,13 @@
          </Device>
          <User>
             <Id>user4</Id>
+            <Data Name="SHA256Hash"
+                  Value="5269ef980de47819ba3d14340f4665262c41e933dc92c1a27dd5d01b047ac80e"/>
+            <Data Name="SHA256HashWithSalt"
+                  Value="6cf5898bacc9b31ec84286d9f9cb474175462a465121d922006b2ec4a25d6e7c"/>
+            <Data Name="MD5HashWithSalt" Value="45fffa5c981c3bf177aa217c2a488f6a"/>
+            <Data Name="TestDateMissingYear" Value="2006-03-12T00:00:00.000Z"/>
+            <Data Name="TestDateMissingYearAndMonth" Value="2006-03-12T00:00:00.000Z"/>
          </User>
       </EventSource>
       <EventDetail>
@@ -189,6 +217,13 @@
          </Device>
          <User>
             <Id>user5</Id>
+            <Data Name="SHA256Hash"
+                  Value="5a39bead318f306939acb1d016647be2e38c6501c58367fdb3e9f52542aa2442"/>
+            <Data Name="SHA256HashWithSalt"
+                  Value="ca4d81468f6d79aee879f490d97b3ad5b32a71959e41c932a105597bce82f309"/>
+            <Data Name="MD5HashWithSalt" Value="d85b7b4479b845ec9630473ca9862093"/>
+            <Data Name="TestDateMissingYear" Value="2006-03-12T00:00:00.000Z"/>
+            <Data Name="TestDateMissingYearAndMonth" Value="2006-03-12T00:00:00.000Z"/>
          </User>
       </EventSource>
       <EventDetail>
@@ -229,6 +264,13 @@
          </Device>
          <User>
             <Id>user6</Id>
+            <Data Name="SHA256Hash"
+                  Value="ecb48a1cc94f951252ec462fe9ecc55c3ef123fadfe935661396c26a45a5809d"/>
+            <Data Name="SHA256HashWithSalt"
+                  Value="50126efc1bc46d5cfed00010621a5f4ff8807951637fed78cdd561d4513ad99a"/>
+            <Data Name="MD5HashWithSalt" Value="a34bac9a04fce73e691f2be722abbc57"/>
+            <Data Name="TestDateMissingYear" Value="2006-03-12T00:00:00.000Z"/>
+            <Data Name="TestDateMissingYearAndMonth" Value="2006-03-12T00:00:00.000Z"/>
          </User>
       </EventSource>
       <EventDetail>
@@ -269,6 +311,13 @@
          </Device>
          <User>
             <Id>user7</Id>
+            <Data Name="SHA256Hash"
+                  Value="3268151e52d97b4cacf97f5b46a5c76c8416e928e137e3b3dc447696a29afbaa"/>
+            <Data Name="SHA256HashWithSalt"
+                  Value="737c77c336d0cae1a90a00bd68c5713498e25ff16d9a10a6d143af73d3a0079d"/>
+            <Data Name="MD5HashWithSalt" Value="8a2ec529cc5fa4ce46bc73a2b113ef93"/>
+            <Data Name="TestDateMissingYear" Value="2006-03-12T00:00:00.000Z"/>
+            <Data Name="TestDateMissingYearAndMonth" Value="2006-03-12T00:00:00.000Z"/>
          </User>
       </EventSource>
       <EventDetail>
@@ -309,6 +358,13 @@
          </Device>
          <User>
             <Id>user8</Id>
+            <Data Name="SHA256Hash"
+                  Value="f60afa4989a7db13314a2ab9881372634b5402c30ba7257448b13fa388de1b78"/>
+            <Data Name="SHA256HashWithSalt"
+                  Value="f3261f47a47b5f39a3b0de1fad674d046e28496d01115814b655ae54870d8714"/>
+            <Data Name="MD5HashWithSalt" Value="6e8c9c7fb11e074b134fd4aa37894c21"/>
+            <Data Name="TestDateMissingYear" Value="2006-03-12T00:00:00.000Z"/>
+            <Data Name="TestDateMissingYearAndMonth" Value="2006-03-12T00:00:00.000Z"/>
          </User>
       </EventSource>
       <EventDetail>
@@ -349,6 +405,13 @@
          </Device>
          <User>
             <Id>user9</Id>
+            <Data Name="SHA256Hash"
+                  Value="fb8d3c5dfaf81a387bf0ba439ab40e6343d2155fb4ddf6978a52d9b9ea8d0f8"/>
+            <Data Name="SHA256HashWithSalt"
+                  Value="251593d4d56c8780408e02e86c14b73dee936b826384224b2479ca39f95656b3"/>
+            <Data Name="MD5HashWithSalt" Value="9bc8f44e5a04d2df0957b92967c85263"/>
+            <Data Name="TestDateMissingYear" Value="2006-03-12T00:00:00.000Z"/>
+            <Data Name="TestDateMissingYearAndMonth" Value="2006-03-12T00:00:00.000Z"/>
          </User>
       </EventSource>
       <EventDetail>
@@ -389,6 +452,13 @@
          </Device>
          <User>
             <Id>user10</Id>
+            <Data Name="SHA256Hash"
+                  Value="5bbf1a9e0de062225a1bb7df8d8b3719591527b74950810f16b1a6bc6d7bd29b"/>
+            <Data Name="SHA256HashWithSalt"
+                  Value="53d068b3e0e0cab4335a1fac89cea3930f420e2f40ce750817153596b4fdb149"/>
+            <Data Name="MD5HashWithSalt" Value="1d387ced0b84ebbab10751bfed6972b0"/>
+            <Data Name="TestDateMissingYear" Value="2006-03-12T00:00:00.000Z"/>
+            <Data Name="TestDateMissingYearAndMonth" Value="2006-03-12T00:00:00.000Z"/>
          </User>
       </EventSource>
       <EventDetail>

@@ -9,6 +9,5 @@
       &lt;name&gt;Common Test Event Pipeline&lt;/name&gt;
       &lt;/doc&gt;
    </parentPipelineXML>
-   <pipelineType>Event Data</pipelineType>
    <uuid>e40ifda1-0210-49cn-9695-c3f6fa8c67d7</uuid>
 </pipeline>

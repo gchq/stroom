@@ -35,6 +35,12 @@ import java.util.concurrent.TimeUnit;
 public class SearchResultCreatorManager {
     private static final int MAX_ACTIVE_QUERIES = 10000;
 
+    //TODO Need a StoreFactory interface in query-common implemented by LuceneSearchStoreFactory and SqlStatisticsStoreFactory
+    //TODO Then this class could go into query-common, with ctor taking a StoreFactory
+    //TODO Would need a mechanism for specifing props like TTL and MAX_ACTIVE_QUERIES in the ctor
+    //TODO Would need to get rid of StroomFrequencySchedule anno and let the calling code do that
+    //TODO May want an abstraction for the caching impl so we can replace it with something disk backed like LMDB
+
     private final LuceneSearchStoreFactory luceneSearchStoreFactory;
     private final LoadingCache<SearchResultCreatorManager.Key, SearchResponseCreator> cache;
 

@@ -6,6 +6,79 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#588** : Fixed display of horizontal scrollbar on explorer tree in export, create, copy and move dialogs.
+
+* Issue **#691** : Volumes now reload on edit so that the entities are no longer stale the second time they are edited.
+
+* Issue **#692** : Properties now reload on edit so that the entities are no longer stale the second time they are edited.
+
+* Issue **#703** : Removed logging of InterruptedException stack trace on SQL stat queries, improved concurrency code.
+
+* Issue **#697** : Improved XSLT `Lookup` trace messages.
+
+* Issue **#697** : Added a feature to trace XSLT `Lookup` attempts so that reference data lookups can be debugged.
+
+* Issue **#702** : Fix for hanging search extraction tasks
+
+* Issue **#701** : The search `maxDocIdQueueSize` is now 1000 by default.
+
+* Issue **#700** : The format-date XSLT function now defaults years, months and days to the stream receipt time regardless of whether the input date pattern specifies them.
+
+* Issue **#657** : Change SQL Stats query code to process/transform the data as it comes back from the database rather than holding the full resultset before processing. This will reduce memory overhead and improve performance.
+
+* Issue **#634** : Remove excessive thread sleeping in index shard searching. Sleeps were causing a significant percentage of inactivity and increasing memory use as data backed up. Add more logging and logging of durations of chunks of code. Add an integration test for testing index searching for large data volumes.
+
+## [v6.0-alpha.18]
+
+* Issue **#698** : Migration of Processing Filters now protects against folders that have since been deleted
+
+* Issue **#634** : Remove excessive thread sleeping in index shard searching. Sleeps were causing a significant percentage of inactivity and increasing memory use as data backed up. Add more logging and logging of durations of chunks of code. Add an integration test for testing index searching for large data volumes.
+
+* Issue **#659** : Made format-date XSLT function default year if none specified to the year the data was received unless this would make the date later then the received time in which case a year is subtracted.
+
+* Issue **#658** : Added a hashing function for XSLT translations.
+
+* Issue **#680** : Fixed the order of streams in the data viewer to descending by date
+
+* Issue **#679** : Fixed the editing of Stroom properties that are 'persistent'.
+
+* Issue **#681** : Added dry run to check processor filters will convert to find stream criteria. Throws error to UI if fails.
+
+## [v6.0-alpha.17]
+
+* Issue **#676** : Fixed use of custom stream type values in expression based processing filters.
+
+## [v6.0-alpha.16]
+
+* Issue **#673** : Fixed issue with Stream processing filters that specify Create Time
+
+* Issue **#675** : Fixed issue with datafeed requests authenticating incorrectly
+
+## [v6.0-alpha.15]
+
+* Issue **#666** : Fixed the duplicate dictionary issue in processing filter migrations, made querying more efficient too
+* Database migration fixes and tools
+
+* Issue **#668** : Fixed the issue that prevented editing of stroom volumes
+
+* Issue **#669** : Elastic Index Filter now uses stroomServiceUser to retrieve the index config from the Query Elastic service.
+
+## [v6.0-alpha.14]
+
+* Minor fix to migrations
+
+## [v6.0-alpha.13]
+
+* Add logging to migrations
+
+## [v6.0-alpha.12]
+
+* Add logging to migrations
+
+## [v6.0-alpha.11]
+
+* Issue **#651** : Removed the redundant concept of Pipeline Types, it's half implementation prevented certain picker dialogs from working.
+
 * Issue **#481** : Fix handling of non-incremental index queries on the query API. Adds timeout option in request and blocking code to wait for the query to complete. Exit early from wait loops in index/event search.
 
 * Issue **#626** : Fixed issue with document settings not being persisted
@@ -17,6 +90,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#546** : Fixed race conditions with the Explorer Tree, it was causing odd delays to population of the explorer in various places.
 
 * Issue **#495** : Fixed the temporary expansion of the Explorer Tree caused by filtering
+
+* Issue **#376** : Welcome tab details fixed since move to gradle
+
+## [v6.0-alpha.10]
 
 * Issue **#523** : Changed permission behaviours for copy and move to support `None`, `Source`, `Destination` and `Combined` behaviours. Creating new items now allows for `None` and `Destination` permission behaviours. Also imported items now receive permissions from the destination folder. Event logging now indicates the permission behaviour used during copy, move and create operations.
 
@@ -30,7 +107,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#568** : Fixed filtering streams by pipeline in the pipeline screen.
 
-* Issue **#376** : Welcome tab details fixed since move to gradle
+* Issue **#565** : Fixed authorisation issue on dashboards.
 
 ## [v6.0-alpha.9]
 
@@ -405,11 +482,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#314** : Improved description of `tags` property in `BadTextXMLFilterReader`.
 
-* Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
+* Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
 
-* Issue **#306** : Added a stroom `meta` XSLT function. The XSLT function now exposes `Feed`, `StreamType`, `CreatedTime`, `EffectiveTime` and `Pipeline` meta attributes from the currently processing stream in addition to any other meta data that might apply. To access these meta data attributes of the current stream use `stroom:meta('StreamType')` etc. The `feed-attribute` function is now an alias for the `meta` function and should be considered to be deprecated.
+* Issue **#306** : Added a stroom `meta` XSLT function. The XSLT function now exposes `Feed`, `StreamType`, `CreatedTime`, `EffectiveTime` and `Pipeline` meta attributes from the currently processing stream in addition to any other meta data that might apply. To access these meta data attributes of the current stream use `stroom:meta('StreamType')` etc. The `feed-attribute` function is now an alias for the `meta` function and should be considered to be deprecated.
 
-* Issue **#303** : The stream delete job now uses cron in preference to a frequency.
+* Issue **#303** : The stream delete job now uses cron in preference to a frequency.
 
 * Issue **#152** : Changed the way indexing is performed so that a single indexer object is now responsible for indexing documents and adding them to the appropriate shard.
 
@@ -783,7 +860,46 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...HEAD
+<<<<<<< HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.18...6.0
+[v6.0-alpha.18]: https://github.com/gchq/stroom/compare/v6.0-alpha.17...v6.0-alpha.18
+[v6.0-alpha.17]: https://github.com/gchq/stroom/compare/v6.0-alpha.16...v6.0-alpha.17
+[v6.0-alpha.16]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...v6.0-alpha.16
+[v6.0-alpha.15]: https://github.com/gchq/stroom/compare/v6.0-alpha.14...v6.0-alpha.15
+[v6.0-alpha.14]: https://github.com/gchq/stroom/compare/v6.0-alpha.13...v6.0-alpha.14
+[v6.0-alpha.13]: https://github.com/gchq/stroom/compare/v6.0-alpha.12...v6.0-alpha.13
+[v6.0-alpha.12]: https://github.com/gchq/stroom/compare/v6.0-alpha.11...v6.0-alpha.12
+[v6.0-alpha.11]: https://github.com/gchq/stroom/compare/v6.0-alpha.10...v6.0-alpha.11
+[v6.0-alpha.10]: https://github.com/gchq/stroom/compare/v6.0-alpha.9...v6.0-alpha.10
+[v6.0-alpha.9]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...v6.0-alpha.9
 [v6.0-alpha.8]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...v6.0-alpha.8
 [v6.0-alpha.7]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...v6.0-alpha.7
 [v6.0-alpha.4]: https://github.com/gchq/stroom/commits/v6.0-alpha.4
+=======
+* Issue **#202** : Initial release of the new data retention policy functionality.
+
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.2.3...HEAD
+[v5.2.3]: https://github.com/gchq/stroom/compare/v5.2.2...v5.2.3
+[v5.2.2]: https://github.com/gchq/stroom/compare/v5.2.1...v5.2.2
+[v5.2.1]: https://github.com/gchq/stroom/compare/v5.2.0...v5.2.1
+[v5.2.0]: https://github.com/gchq/stroom/compare/v5.1.0...v5.2.0
+[v5.1.0]: https://github.com/gchq/stroom/compare/v5.1-beta.16...v5.1.0
+[v5.1-beta.16]: https://github.com/gchq/stroom/compare/v5.1-beta.15...v5.1-beta.16
+[v5.1-beta.15]: https://github.com/gchq/stroom/compare/v5.1-beta.14...v5.1-beta.15
+[v5.1-beta.14]: https://github.com/gchq/stroom/compare/v5.1-beta.13...v5.1-beta.14
+[v5.1-beta.13]: https://github.com/gchq/stroom/compare/v5.1-beta.12...v5.1-beta.13
+[v5.1-beta.12]: https://github.com/gchq/stroom/compare/v5.1-beta.11...v5.1-beta.12
+[v5.1-beta.11]: https://github.com/gchq/stroom/compare/v5.1-beta.10...v5.1-beta.11
+[v5.1-beta.10]: https://github.com/gchq/stroom/compare/v5.1-beta.9...v5.1-beta.10
+[v5.1-beta.9]: https://github.com/gchq/stroom/compare/v5.1-beta.8...v5.1-beta.9
+[v5.1-beta.8]: https://github.com/gchq/stroom/compare/v5.1-beta.7...v5.1-beta.8
+[v5.1-beta.7]: https://github.com/gchq/stroom/compare/v5.1-beta.6...v5.1-beta.7
+[v5.1-beta.6]: https://github.com/gchq/stroom/compare/v5.1-beta.5...v5.1-beta.6
+[v5.1-beta.5]: https://github.com/gchq/stroom/compare/v5.1-beta.4...v5.1-beta.5
+[v5.1-beta.4]: https://github.com/gchq/stroom/compare/v5.1-beta.3...v5.1-beta.4
+[v5.1-beta.3]: https://github.com/gchq/stroom/compare/v5.1-beta.2...v5.1-beta.3
+[v5.1-beta.2]: https://github.com/gchq/stroom/compare/v5.1-beta.1...v5.1-beta.2
+[v5.1-beta.1]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...v5.1-beta.1
+[v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
+[v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
+>>>>>>> 5.2

@@ -16,6 +16,8 @@
 
 package stroom.search.server.extraction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.query.api.v2.DocRef;
@@ -43,8 +45,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ExtractionTaskProducer extends TaskProducer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
             "Extraction",
             5,
@@ -58,7 +62,7 @@ public class ExtractionTaskProducer extends TaskProducer {
     private final Provider<ExtractionTaskHandler> handlerProvider;
     private final Queue<ExtractionRunnable> taskQueue = new ConcurrentLinkedQueue<>();
 
-    private final CompletableFuture<Void> streamEventMapperCompletableFuture;
+    private final AtomicBoolean completedEventMapping = new AtomicBoolean();
     private final Map<Long, List<Event>> streamEventMap = new ConcurrentHashMap<>();
 
     private volatile boolean finishedAddingTasks;
@@ -83,24 +87,33 @@ public class ExtractionTaskProducer extends TaskProducer {
 
         // Start mapping streams.
         final Executor executor = executorProvider.getExecutor(THREAD_POOL);
-        streamEventMapperCompletableFuture = CompletableFuture.runAsync(() -> {
+        CompletableFuture.runAsync(() -> {
+            LOGGER.debug("Starting extraction task producer");
             try {
-                boolean complete = false;
-                while (!complete && !clusterSearchTask.isTerminated()) {
-                    // Check if search is finished before attempting to add to the stream map.
-                    final boolean searchFinished = searchTaskProducer.isComplete();
-                    // Poll for the next set of values.
-                    final String[] values = storedData.poll(1, TimeUnit.SECONDS);
+                while (!completedEventMapping.get() && !clusterSearchTask.isTerminated()) {
+                    try {
+                        // Check if search is finished before attempting to add to the stream map.
+                        final boolean searchFinished = searchTaskProducer.isComplete();
 
-                    if (values != null) {
-                        // If we have some values then map them.
-                        streamMapCreator.addEvent(streamEventMap, values);
+                        // Poll for the next set of values.
+                        final String[] values = storedData.poll(1, TimeUnit.SECONDS);
 
-                        // Tell the supplied executor that we are ready to deliver tasks.
-                        signalAvailable();
-                    } else {
-                        // If we did not get any values then there are no more to get if the search task producer is complete.
-                        complete = searchFinished;
+                        if (values != null) {
+                            // If we have some values then map them.
+                            streamMapCreator.addEvent(streamEventMap, values);
+
+                            // Tell the supplied executor that we are ready to deliver tasks.
+                            signalAvailable();
+                        } else {
+                            // If we did not get any values then there are no more to get if the search task producer is complete.
+                            completedEventMapping.set(searchFinished);
+                        }
+                    } catch (final InterruptedException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        completedEventMapping.set(true);
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                        completedEventMapping.set(true);
                     }
                 }
 
@@ -109,11 +122,13 @@ public class ExtractionTaskProducer extends TaskProducer {
                     streamEventMap.clear();
                 }
 
-                // Tell the supplied executor that we are ready to deliver final tasks.
-                signalAvailable();
-
             } catch (final Throwable t) {
                 error(t.getMessage(), t);
+            } finally {
+                completedEventMapping.set(true);
+
+                // Tell the supplied executor that we are ready to deliver final tasks.
+                signalAvailable();
             }
         }, executor);
 
@@ -153,17 +168,21 @@ public class ExtractionTaskProducer extends TaskProducer {
     }
 
     private boolean addTasks() {
-        final boolean completedEventMapping = streamEventMapperCompletableFuture.isDone();
+        final boolean completedEventMapping = this.completedEventMapping.get();
         for (final Entry<Long, List<Event>> entry : streamEventMap.entrySet()) {
             if (streamEventMap.remove(entry.getKey(), entry.getValue())) {
-                createTasks(entry.getKey(), entry.getValue());
-                return false;
+                final int tasksCreated = createTasks(entry.getKey(), entry.getValue());
+                if (tasksCreated > 0) {
+                    return false;
+                }
             }
         }
         return completedEventMapping;
     }
 
-    private void createTasks(final long streamId, final List<Event> events) {
+    private int createTasks(final long streamId, final List<Event> events) {
+        int tasksCreated = 0;
+
         long[] eventIds = null;
 
         for (final Entry<DocRef, Set<Coprocessor>> entry : extractionCoprocessorsMap.entrySet()) {
@@ -195,6 +214,7 @@ public class ExtractionTaskProducer extends TaskProducer {
                 getTasksTotal().incrementAndGet();
                 final ExtractionTask task = new ExtractionTask(streamId, eventIds, pipelineRef, extractionFieldIndexMap, resultReceiver, errorReceiver);
                 taskQueue.offer(new ExtractionRunnable(task, handlerProvider));
+                tasksCreated++;
 
             } else {
                 // Pass raw values to coprocessors that are not requesting values to be extracted.
@@ -205,6 +225,8 @@ public class ExtractionTaskProducer extends TaskProducer {
                 }
             }
         }
+
+        return tasksCreated;
     }
 
     private void error(final String message, final Throwable t) {

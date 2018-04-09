@@ -46,11 +46,6 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     @Override
-    protected String getEntityType() {
-        return GlobalProperty.ENTITY_TYPE;
-    }
-
-    @Override
     protected String getEntityDisplayType() {
         return "Application Property";
     }

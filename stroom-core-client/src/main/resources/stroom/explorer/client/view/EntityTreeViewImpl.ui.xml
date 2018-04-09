@@ -19,7 +19,7 @@
 			<v:QuickFilter ui:field="nameFilter" addStyleNames="{style.nameFilter}" />
 		</g:north>
 		<g:center>
-			<g:ScrollPanel styleName="{style.scrollPanel}" ui:field="scrollPanel" />
+			<g:MaxScrollPanel styleName="{style.scrollPanel}" ui:field="scrollPanel" />
 		</g:center>
 	</g:DockLayoutPanel>
 </ui:UiBinder> 
