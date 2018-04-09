@@ -43,7 +43,6 @@ import stroom.xml.converter.ParserFactory;
 
 import javax.inject.Inject;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.IOException;
 
 @ConfigurableElement(type = "XMLFragmentParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
@@ -148,7 +147,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     }
 
     @PipelineProperty(description = "The XML fragment wrapper that should be used to wrap the input XML.")
-    @PipelinePropertyDocRef(types = TextConverterDoc.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = TextConverterDoc.DOCUMENT_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

@@ -57,4 +57,8 @@ public class MemoryPersistence implements Persistence {
     public RWLockFactory getLockFactory() {
         return LOCK_FACTORY;
     }
+
+    public void clear() {
+        map.clear();
+    }
 }

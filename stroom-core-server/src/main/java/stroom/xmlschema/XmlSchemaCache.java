@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-@EntityEventHandler(type = XmlSchemaDoc.ENTITY_TYPE)
+@EntityEventHandler(type = XmlSchemaDoc.DOCUMENT_TYPE)
 public class XmlSchemaCache implements EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaCache.class);
     private static final long TEN_MINUTES = 1000 * 60 * 10;

@@ -56,7 +56,7 @@ class TextConverterStoreImpl implements TextConverterStore {
 
         serialiser = new TextConverterSerialiser();
 
-        store.setType(TextConverterDoc.ENTITY_TYPE, TextConverterDoc.class);
+        store.setType(TextConverterDoc.DOCUMENT_TYPE, TextConverterDoc.class);
         store.setSerialiser(serialiser);
     }
 
@@ -98,7 +98,7 @@ class TextConverterStoreImpl implements TextConverterStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(9, TextConverterDoc.ENTITY_TYPE, TextConverterDoc.ENTITY_TYPE);
+        return new DocumentType(9, TextConverterDoc.DOCUMENT_TYPE, TextConverterDoc.DOCUMENT_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -210,7 +210,7 @@ class TextConverterStoreImpl implements TextConverterStore {
 
     @Override
     public String getDocType() {
-        return TextConverterDoc.ENTITY_TYPE;
+        return TextConverterDoc.DOCUMENT_TYPE;
     }
 
     @Override

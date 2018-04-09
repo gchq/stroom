@@ -3,11 +3,13 @@ package stroom.test;
 import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
+import stroom.dashboard.TestDashboardStoreImpl;
+import stroom.xmlschema.TestXMLSchemaStoreImpl;
 
 @Ignore("Don't run this test suite automatically as the tests are already run on their own")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        stroom.dashboard.TestDashboardServiceImpl.class,
+        TestDashboardStoreImpl.class,
         stroom.docstore.db.TestDBPersistence.class,
         stroom.entity.TestEntityServiceImpl.class,
         stroom.explorer.TestExplorerTree.class,
@@ -67,7 +69,7 @@ import org.junit.runners.Suite;
         stroom.streamtask.TestTranslationStreamTaskServiceImportExport.class,
         stroom.task.TestTaskManagerImpl.class,
         stroom.test.TestAbstractCoreIntegrationTest.class,
-        stroom.xmlschema.TestXMLSchemaServiceImpl.class
+        TestXMLSchemaStoreImpl.class
 })
 public class AbstractCoreTestSuite {
 }

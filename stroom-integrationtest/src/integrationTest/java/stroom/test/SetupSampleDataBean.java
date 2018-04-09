@@ -19,7 +19,7 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.NamedEntity;
@@ -67,7 +67,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -324,7 +323,7 @@ public final class SetupSampleDataBean {
             LOGGER.info("Volume count = " + commonTestControl.countEntity(Volume.class));
             LOGGER.info("Feed count = " + commonTestControl.countEntity(Feed.class));
             LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
-            LOGGER.info("Dashboard count = " + commonTestControl.countEntity(Dashboard.class));
+            LOGGER.info("Dashboard count = " + commonTestControl.countEntity(DashboardDoc.class));
             LOGGER.info("Pipeline count = " + commonTestControl.countEntity(PipelineEntity.class));
             LOGGER.info("Index count = " + commonTestControl.countEntity(Index.class));
             LOGGER.info("StatisticDataSource count = " + commonTestControl.countEntity(StatisticStore.class));

@@ -19,8 +19,8 @@ package stroom.dashboard;
 
 import org.junit.Test;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
@@ -28,6 +28,7 @@ import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Res;
+import stroom.query.api.v2.DocRef;
 import stroom.script.ScriptService;
 import stroom.script.shared.Script;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -38,9 +39,9 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
+public class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
-    private DashboardService dashboardService;
+    private DashboardStore dashboardStore;
     @Inject
     private VisualisationService visualisationService;
     @Inject
@@ -50,7 +51,9 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
     public void test() {
         final VisComponentSettings visSettings = getVisSettings();
 
-        Dashboard dashboard = dashboardService.create("Test Dashboard");
+        final DocRef dashboardRef = dashboardStore.createDocument("Test Dashboard");
+        ;
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
 
         final List<ComponentConfig> components = new ArrayList<>();
 
@@ -93,13 +96,13 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
         dashboardData.setComponents(components);
         dashboardData.setLayout(down);
 
-        dashboard.setDashboardData(dashboardData);
+        dashboard.setDashboardConfig(dashboardData);
 
-        dashboard = dashboardService.save(dashboard);
+        dashboard = dashboardStore.writeDocument(dashboard);
 
-        System.out.println(dashboard.getData());
+        System.out.println(dashboard.getDashboardConfig());
 
-        dashboard = dashboardService.load(dashboard);
+        dashboard = dashboardStore.readDocument(dashboardRef);
     }
 
     private VisComponentSettings getVisSettings() {

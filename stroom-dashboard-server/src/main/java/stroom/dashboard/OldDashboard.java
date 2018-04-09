@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.dashboard;
 
+import stroom.dashboard.shared.DashboardConfig;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
@@ -25,12 +26,11 @@ import javax.persistence.Entity;
 import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 
 @Entity
 @Table(name = "DASH")
-public class Dashboard extends DocumentEntity {
+public class OldDashboard extends DocumentEntity {
     public static final String ENTITY_TYPE = "Dashboard";
     public static final String TABLE_NAME = SQLNameConstants.DASHBOARD;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -40,12 +40,12 @@ public class Dashboard extends DocumentEntity {
     private String data;
     private DashboardConfig dashboardData;
 
-    public Dashboard() {
+    public OldDashboard() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public static final Dashboard createStub(final long pk) {
-        final Dashboard dashboard = new Dashboard();
+    public static final OldDashboard createStub(final long pk) {
+        final OldDashboard dashboard = new OldDashboard();
         dashboard.setStub(pk);
         return dashboard;
     }

@@ -40,6 +40,6 @@ public class XmlSchemaModule extends AbstractModule {
         importExportActionHandlerBinder.addBinding().to(stroom.xmlschema.XmlSchemaStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(XmlSchemaDoc.ENTITY_TYPE).to(stroom.xmlschema.XmlSchemaStoreImpl.class);
+        entityServiceByTypeBinder.addBinding(XmlSchemaDoc.DOCUMENT_TYPE).to(stroom.xmlschema.XmlSchemaStoreImpl.class);
     }
 }

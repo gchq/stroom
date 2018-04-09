@@ -17,11 +17,16 @@
 
 package stroom.dashboard;
 
-import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.FindDashboardCriteria;
-import stroom.entity.DocumentEntityService;
-import stroom.entity.FindService;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.document.DocumentStore;
+import stroom.query.api.v2.DocRef;
 
-public interface DashboardService
-        extends DocumentEntityService<Dashboard>, FindService<Dashboard, FindDashboardCriteria> {
+import java.util.List;
+
+public interface DashboardStore extends DocumentStore<DashboardDoc> {
+    DashboardDoc read(String uuid);
+
+    DashboardDoc update(DashboardDoc doc);
+
+    List<DocRef> list();
 }

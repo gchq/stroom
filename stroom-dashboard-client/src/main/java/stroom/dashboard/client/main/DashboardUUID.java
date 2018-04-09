@@ -19,18 +19,18 @@ package stroom.dashboard.client.main;
 import stroom.util.client.RandomId;
 
 public class DashboardUUID {
-    private Long dashboardId;
+    private String dashboardUuid;
     private String dashboardName;
     private String componentId;
 
-    public DashboardUUID(final Long dashboardId, final String dashboardName, final String componentId) {
-        this.dashboardId = dashboardId;
+    public DashboardUUID(String dashboardUuid, final String dashboardName, final String componentId) {
+        this.dashboardUuid = dashboardUuid;
         this.dashboardName = dashboardName;
         this.componentId = componentId;
     }
 
-    public Long getDashboardId() {
-        return dashboardId;
+    public String getDashboardUuid() {
+        return dashboardUuid;
     }
 
     public String getComponentId() {
@@ -38,6 +38,6 @@ public class DashboardUUID {
     }
 
     public String getUUID() {
-        return dashboardId + "|" + dashboardName + "|" + componentId + "|" + RandomId.createDiscrimiator();
+        return dashboardUuid + "|" + dashboardName + "|" + componentId + "|" + RandomId.createDiscrimiator();
     }
 }

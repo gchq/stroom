@@ -29,7 +29,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@EntityEventHandler(type = XmlSchemaDoc.ENTITY_TYPE)
+@EntityEventHandler(type = XmlSchemaDoc.DOCUMENT_TYPE)
 class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
         implements SchemaPool, EntityEvent.Handler {
     private final SchemaLoader schemaLoader;

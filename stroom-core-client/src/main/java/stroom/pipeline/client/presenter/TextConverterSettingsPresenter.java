@@ -59,7 +59,7 @@ public class TextConverterSettingsPresenter
 
     @Override
     public String getType() {
-        return TextConverterDoc.ENTITY_TYPE;
+        return TextConverterDoc.DOCUMENT_TYPE;
     }
 
     @Override

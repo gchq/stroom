@@ -58,7 +58,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     private final ButtonView deleteButton;
     private QueryPresenter queryPresenter;
     private ExpressionOperator currentExpression;
-    private long currentDashboardId;
+    private String currentDashboardUuid;
     private DocRef currentDataSource;
 
     @Inject
@@ -121,7 +121,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 final Query query = new Query(currentDataSource, currentExpression);
                                 final QueryEntity queryEntity = new QueryEntity();
                                 queryEntity.setQuery(query);
-                                queryEntity.setDashboardId(currentDashboardId);
+                                queryEntity.setDashboardUuid(currentDashboardUuid);
                                 queryEntity.setQueryId(queryPresenter.getId());
                                 queryEntity.setName(entityName);
                                 queryEntity.setFavourite(true);
@@ -201,9 +201,9 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         }));
     }
 
-    public void show(final QueryPresenter queryPresenter, final long dashboardId,
+    public void show(final QueryPresenter queryPresenter, final String dashboardUuid,
                      final DocRef currentDataSource, final ExpressionOperator currentExpression) {
-        this.currentDashboardId = dashboardId;
+        this.currentDashboardUuid = dashboardUuid;
         this.currentDataSource = currentDataSource;
         this.currentExpression = currentExpression;
         this.queryPresenter = queryPresenter;
@@ -214,7 +214,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     private void refresh(final boolean showAfterRefresh) {
         final FindQueryCriteria criteria = new FindQueryCriteria();
 
-        criteria.setDashboardId(currentDashboardId);
+        criteria.setDashboardUuid(currentDashboardUuid);
         criteria.setQueryId(queryPresenter.getId());
         criteria.setSort(FindQueryCriteria.FIELD_NAME, Direction.ASCENDING, true);
         criteria.setFavourite(true);

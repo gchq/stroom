@@ -34,9 +34,9 @@ import java.util.Objects;
 @XmlRootElement(name = "xmlSchema")
 @XmlType(name = "XmlSchemaDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "systemId", "deprecated", "schemaGroup"})
 public class XmlSchemaDoc extends Doc implements HasData {
-    public static final String ENTITY_TYPE = "XMLSchema";
-
     private static final long serialVersionUID = 4519634323788508083L;
+
+    public static final String DOCUMENT_TYPE = "XMLSchema";
 
     @XmlElement(name = "description")
     private String description;

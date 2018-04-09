@@ -19,7 +19,6 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.StroomCacheManager;
-import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
@@ -66,7 +65,6 @@ import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.io.FileUtil;
 import stroom.visualisation.shared.Visualisation;
-import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
 import java.time.Duration;
@@ -87,7 +85,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
             AppPermission.TABLE_NAME,
             ClusterLock.TABLE_NAME,
-            Dashboard.TABLE_NAME,
             "doc",
             DocumentPermission.TABLE_NAME,
             "explorerTreeNode",
@@ -231,10 +228,10 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         return databaseCommonTestControlTransactionHelper.countEntity(clazz);
     }
 
-    @Override
-    public void deleteEntity(final Class<?> clazz) {
-        databaseCommonTestControlTransactionHelper.deleteClass(clazz);
-    }
+//    @Override
+//    public int countDocs(final String type) {
+//        return databaseCommonTestControlTransactionHelper.countDocs(type);
+//    }
 
     @Override
     public void shutdown() {

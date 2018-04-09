@@ -48,7 +48,7 @@ public class V6_2_0_3__TextConverter implements JdbcMigration {
                     final String dat = resultSet.getString(9);
 
                     final TextConverterDoc document = new TextConverterDoc();
-                    document.setType(TextConverterDoc.ENTITY_TYPE);
+                    document.setType(TextConverterDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -68,13 +68,13 @@ public class V6_2_0_3__TextConverter implements JdbcMigration {
                     final Map<String, byte[]> dataMap = serialiser.write(document);
 
                     // Add the records.
-                    dataMap.forEach((extension, data) -> {
-                        try (final PreparedStatement ps = connection.prepareStatement("INSERT INTO doc (type, uuid, name, extension, data) VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, TextConverterDoc.ENTITY_TYPE);
+                    dataMap.forEach((k, v) -> {
+                        try (final PreparedStatement ps = connection.prepareStatement("INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+                            ps.setString(1, TextConverterDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
-                            ps.setString(4, extension);
-                            ps.setBytes(5, data);
+                            ps.setString(4, k);
+                            ps.setBytes(5, v);
                             ps.executeUpdate();
                         } catch (final SQLException e) {
                             throw new RuntimeException(e.getMessage(), e);

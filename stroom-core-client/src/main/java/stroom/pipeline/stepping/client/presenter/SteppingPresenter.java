@@ -178,7 +178,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                             if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {
                                 fuzzyDocRef = new DocRef(XSLT.ENTITY_TYPE, null, value);
                             } else {
-                                fuzzyDocRef = new DocRef(TextConverterDoc.ENTITY_TYPE, null, value);
+                                fuzzyDocRef = new DocRef(TextConverterDoc.DOCUMENT_TYPE, null, value);
                             }
                         }
                     }

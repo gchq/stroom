@@ -16,6 +16,7 @@
 
 package stroom.test;
 
+import stroom.docstore.memory.MemoryPersistence;
 import stroom.entity.shared.Clearable;
 import stroom.guice.StroomBeanStore;
 
@@ -41,6 +42,13 @@ public class MockCommonTestControl implements CommonTestControl {
     public void teardown() {
         final Set<Clearable> set = beanStore.getInstancesOfType(Clearable.class);
         set.forEach(Clearable::clear);
+
+        try {
+            final MemoryPersistence memoryPersistence = beanStore.getInstance(MemoryPersistence.class);
+            memoryPersistence.clear();
+        } catch (final RuntimeException e) {
+            // Ignore.
+        }
     }
 
     @Override
@@ -49,18 +57,10 @@ public class MockCommonTestControl implements CommonTestControl {
         return 0;
     }
 
-    @Override
-    public void deleteEntity(Class<?> clazz) {
-    }
-
-    public void setMockStreamStore(final Clearable mockStreamStore) {
-    }
-
-    public void setMockTranslationStreamTaskService(final Clearable mockTranslationStreamTaskService) {
-    }
-
-    public void setMockFeedService(final Clearable mockFeedService) {
-    }
+//    @Override
+//    public int countDocs(final String type) {
+//        return 0;
+//    }
 
     @Override
     public void shutdown() {

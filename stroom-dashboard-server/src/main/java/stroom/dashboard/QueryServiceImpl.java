@@ -172,7 +172,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
 
 //    @Override
 //    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindQueryCriteria criteria) {
-//        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardId());
+//        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardUuid());
 //        CriteriaLoggingUtil.appendStringTerm(items, "queryId", criteria.getQueryId());
 //        super.appendCriteria(items, criteria);
 //    }
@@ -210,7 +210,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
                 sql.appendValueQuery(alias + ".favourite", criteria.getFavourite());
             }
 
-            sql.appendValueQuery(alias + ".dashboardId", criteria.getDashboardId());
+            sql.appendValueQuery(alias + ".dashboardUuid", criteria.getDashboardUuid());
             sql.appendValueQuery(alias + ".queryId", criteria.getQueryId());
         }
 

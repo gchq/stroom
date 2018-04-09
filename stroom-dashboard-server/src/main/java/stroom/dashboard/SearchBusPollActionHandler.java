@@ -205,7 +205,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
                 final QueryEntity queryEntity = queryService.create("History");
 
-                queryEntity.setDashboardId(queryKey.getDashboardId());
+                queryEntity.setDashboardUuid(queryKey.getDashboardUuid());
                 queryEntity.setQueryId(queryKey.getQueryId());
                 queryEntity.setQuery(query);
                 queryService.save(queryEntity);

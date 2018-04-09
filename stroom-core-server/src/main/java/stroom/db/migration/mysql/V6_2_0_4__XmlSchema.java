@@ -17,7 +17,6 @@
 package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
-import stroom.pipeline.shared.TextConverterDoc;
 import stroom.xmlschema.XmlSchemaSerialiser;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -50,7 +49,7 @@ public class V6_2_0_4__XmlSchema implements JdbcMigration {
                     final String systemId = resultSet.getString(12);
 
                     final XmlSchemaDoc document = new XmlSchemaDoc();
-                    document.setType(XmlSchemaDoc.ENTITY_TYPE);
+                    document.setType(XmlSchemaDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -68,13 +67,13 @@ public class V6_2_0_4__XmlSchema implements JdbcMigration {
                     final Map<String, byte[]> dataMap = serialiser.write(document);
 
                     // Add the records.
-                    dataMap.forEach((extension, data) -> {
-                        try (final PreparedStatement ps = connection.prepareStatement("INSERT INTO doc (type, uuid, name, extension, data) VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, TextConverterDoc.ENTITY_TYPE);
+                    dataMap.forEach((k, v) -> {
+                        try (final PreparedStatement ps = connection.prepareStatement("INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+                            ps.setString(1, XmlSchemaDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
-                            ps.setString(4, extension);
-                            ps.setBytes(5, data);
+                            ps.setString(4, k);
+                            ps.setBytes(5, v);
                             ps.executeUpdate();
                         } catch (final SQLException e) {
                             throw new RuntimeException(e.getMessage(), e);

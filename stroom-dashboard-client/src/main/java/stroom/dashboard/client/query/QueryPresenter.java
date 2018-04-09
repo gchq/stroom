@@ -37,7 +37,7 @@ import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadQueryAction;
@@ -230,7 +230,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }));
         registerHandler(historyButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId());
+                historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getUuid());
             }
         }));
         registerHandler(favouriteButton.addClickHandler(event -> {
@@ -238,7 +238,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 final ExpressionOperator root = expressionPresenter.write();
                 favouritesPresenter.show(
                         QueryPresenter.this,
-                        getComponents().getDashboard().getId(),
+                        getComponents().getDashboard().getUuid(),
                         getSettings().getDataSource(),
                         root);
 
@@ -479,8 +479,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         queryComponentSettings = getSettings();
 
         // Create and register the search model.
-        final Dashboard dashboard = getComponents().getDashboard();
-        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getId(), dashboard.getName(), getComponentData().getId());
+        final DashboardDoc dashboard = getComponents().getDashboard();
+        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getUuid(), dashboard.getName(), getComponentData().getId());
         searchModel.setDashboardUUID(dashboardUUID);
 
         // Read data source.
@@ -671,14 +671,14 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     false,
                     null);
 
-            final Dashboard dashboard = getComponents().getDashboard();
+            final DashboardDoc dashboard = getComponents().getDashboard();
             final DashboardUUID dashboardUUID = new DashboardUUID(
-                    dashboard.getId(),
+                    dashboard.getUuid(),
                     dashboard.getName(),
                     getComponentData().getId());
             final DashboardQueryKey dashboardQueryKey = DashboardQueryKey.create(
                     dashboardUUID.getUUID(),
-                    dashboard.getId(),
+                    dashboard.getUuid(),
                     dashboardUUID.getComponentId());
 
             if (dashboardQueryKey != null) {

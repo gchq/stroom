@@ -47,7 +47,7 @@ public class DBPersistence implements Persistence {
     public Map<String, byte[]> read(final DocRef docRef) throws IOException {
         final Map<String, byte[]> data = new HashMap<>();
         try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT extension, data FROM doc WHERE type = ? AND uuid = ?")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT ext, data FROM doc WHERE type = ? AND uuid = ?")) {
                 preparedStatement.setString(1, docRef.getType());
                 preparedStatement.setString(2, docRef.getUuid());
 
@@ -88,16 +88,16 @@ public class DBPersistence implements Persistence {
                     throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
                 }
 
-                data.forEach((extension, bytes) -> {
+                data.forEach((ext, bytes) -> {
                     if (update) {
-                        final Long existingId = getId(connection, docRef, extension);
+                        final Long existingId = getId(connection, docRef, ext);
                         if (existingId != null) {
-                            update(connection, existingId, docRef, extension, bytes);
+                            update(connection, existingId, docRef, ext, bytes);
                         } else {
-                            save(connection, docRef, extension, bytes);
+                            save(connection, docRef, ext, bytes);
                         }
                     } else {
-                        save(connection, docRef, extension, bytes);
+                        save(connection, docRef, ext, bytes);
                     }
                 });
 
@@ -181,11 +181,11 @@ public class DBPersistence implements Persistence {
         return null;
     }
 
-    private Long getId(final Connection connection, final DocRef docRef, final String extension) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id FROM doc WHERE type = ? AND uuid = ? AND extension = ?")) {
+    private Long getId(final Connection connection, final DocRef docRef, final String ext) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id FROM doc WHERE type = ? AND uuid = ? AND ext = ?")) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
-            preparedStatement.setString(3, extension);
+            preparedStatement.setString(3, ext);
 
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
@@ -200,12 +200,12 @@ public class DBPersistence implements Persistence {
         return null;
     }
 
-    private void save(final Connection connection, final DocRef docRef, final String extension, final byte[] bytes) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO doc (type, uuid, name, extension, data) VALUES (?, ?, ?, ?, ?)")) {
+    private void save(final Connection connection, final DocRef docRef, final String ext, final byte[] bytes) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
             preparedStatement.setString(3, docRef.getName());
-            preparedStatement.setString(4, extension);
+            preparedStatement.setString(4, ext);
             preparedStatement.setBytes(5, bytes);
 
             preparedStatement.execute();
@@ -215,12 +215,12 @@ public class DBPersistence implements Persistence {
         }
     }
 
-    private void update(final Connection connection, final Long id, final DocRef docRef, final String extension, final byte[] bytes) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE doc SET type = ?, uuid = ?, name = ?, extension = ?, data = ? WHERE id = ?")) {
+    private void update(final Connection connection, final Long id, final DocRef docRef, final String ext, final byte[] bytes) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE doc SET type = ?, uuid = ?, name = ?, ext = ?, data = ? WHERE id = ?")) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
             preparedStatement.setString(3, docRef.getName());
-            preparedStatement.setString(4, extension);
+            preparedStatement.setString(4, ext);
             preparedStatement.setBytes(5, bytes);
             preparedStatement.setLong(6, id);
 

@@ -1,7 +1,7 @@
 ALTER TABLE doc MODIFY COLUMN data LONGBLOB;
 ALTER TABLE doc DROP INDEX type;
-ALTER TABLE doc ADD COLUMN extension varchar(255) DEFAULT NULL;
-ALTER TABLE doc ADD CONSTRAINT type_uuid_extension UNIQUE (type, uuid, extension);
-UPDATE doc SET extension = "meta";
+ALTER TABLE doc ADD COLUMN ext varchar(255) DEFAULT NULL;
+ALTER TABLE doc ADD CONSTRAINT type_uuid_ext UNIQUE (type, uuid, ext);
+UPDATE doc SET ext = "meta";
 
-CREATE INDEX doc_type_uuid_extension_idx ON doc (type, uuid, extension);
+CREATE INDEX doc_type_uuid_ext_idx ON doc (type, uuid, ext);

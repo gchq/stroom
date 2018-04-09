@@ -44,7 +44,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
     private final ExpressionTreePresenter expressionPresenter;
     private final MySingleSelectionModel<QueryEntity> selectionModel;
     private QueryPresenter queryPresenter;
-    private long currentDashboardId;
+    private String currentDashboardUuid;
 
     @Inject
     public QueryHistoryPresenter(final EventBus eventBus, final QueryHistoryView view,
@@ -76,16 +76,16 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         registerHandler(selectionModel.addDoubleSelectHandler(event -> close(true)));
     }
 
-    public void show(final QueryPresenter queryPresenter, final long dashboardId) {
+    public void show(final QueryPresenter queryPresenter, final String dashboardUuid) {
         this.queryPresenter = queryPresenter;
-        this.currentDashboardId = dashboardId;
+        this.currentDashboardUuid = dashboardUuid;
 
         refresh(true);
     }
 
     private void refresh(final boolean showAfterRefresh) {
         final FindQueryCriteria criteria = new FindQueryCriteria();
-        criteria.setDashboardId(currentDashboardId);
+        criteria.setDashboardUuid(currentDashboardUuid);
         criteria.setQueryId(queryPresenter.getId());
         criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
         criteria.setFavourite(false);

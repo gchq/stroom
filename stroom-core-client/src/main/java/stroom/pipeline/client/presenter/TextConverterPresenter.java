@@ -112,6 +112,6 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
 
     @Override
     public String getType() {
-        return TextConverterDoc.ENTITY_TYPE;
+        return TextConverterDoc.DOCUMENT_TYPE;
     }
 }

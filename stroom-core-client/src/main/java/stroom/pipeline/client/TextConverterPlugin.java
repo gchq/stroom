@@ -50,7 +50,7 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
 
     @Override
     public String getType() {
-        return TextConverterDoc.ENTITY_TYPE;
+        return TextConverterDoc.DOCUMENT_TYPE;
     }
 
     @Override

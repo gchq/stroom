@@ -35,14 +35,14 @@ public class V6_2_0_2__Dictionary implements JdbcMigration {
         final JsonSerialiser2<OldDictionaryDoc> oldSerialiser = new JsonSerialiser2<>(OldDictionaryDoc.class);
         final DictionarySerialiser newSerialiser = new DictionarySerialiser();
 
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id, type, uuid, name, extension, data FROM doc WHERE type = 'Dictionary'")) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id, type, uuid, name, ext, data FROM doc WHERE type = 'Dictionary'")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final long id = resultSet.getLong(1);
                     final String type = resultSet.getString(2);
                     final String uuid = resultSet.getString(3);
                     final String name = resultSet.getString(4);
-                    final String extension = resultSet.getString(5);
+                    final String ext = resultSet.getString(5);
                     final byte[] data = resultSet.getBytes(6);
 
                     // Deserialise the old dictionary document format.
@@ -71,24 +71,24 @@ public class V6_2_0_2__Dictionary implements JdbcMigration {
 
                     // Update the meta record.
                     final byte[] newData = newDataMap.remove("meta");
-                    try (final PreparedStatement ps = connection.prepareStatement("UPDATE doc SET (type, uuid, name, extension, data) VALUES (?, ?, ?, ?, ?) WHERE id = ?")) {
+                    try (final PreparedStatement ps = connection.prepareStatement("UPDATE doc SET (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?) WHERE id = ?")) {
                         ps.setString(1, type);
                         ps.setString(2, uuid);
                         ps.setString(3, name);
-                        ps.setString(4, extension);
+                        ps.setString(4, ext);
                         ps.setBytes(5, newData);
                         ps.setLong(6, id);
                         ps.executeUpdate();
                     }
 
                     // Add the text record.
-                    newDataMap.forEach((ext, dat) -> {
-                        try (final PreparedStatement ps = connection.prepareStatement("INSERT INTO doc (type, uuid, name, extension, data) VALUES (?, ?, ?, ?, ?)")) {
+                    newDataMap.forEach((k, v) -> {
+                        try (final PreparedStatement ps = connection.prepareStatement("INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
                             ps.setString(1, type);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
-                            ps.setString(4, ext);
-                            ps.setBytes(5, dat);
+                            ps.setString(4, k);
+                            ps.setBytes(5, v);
                             ps.executeUpdate();
                         } catch (final SQLException e) {
                             throw new RuntimeException(e.getMessage(), e);

@@ -31,7 +31,7 @@ public class MockXmlSchemaModule extends AbstractModule {
 //        entityEventHandlerBinder.addBinding().to(XMLSchemaCache.class);
 //
 //        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-//        explorerActionHandlerBinder.addBinding().to(XMLSchemaServiceImpl.class);
+//        explorerActionHandlerBinder.addBinding().to(XmlSchemaStoreImpl.class);
 
 //        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
 //        clearableBinder.addBinding().to(XmlSchemaStoreImpl.class);
@@ -40,7 +40,7 @@ public class MockXmlSchemaModule extends AbstractModule {
         importExportActionHandlerBinder.addBinding().to(XmlSchemaStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(XmlSchemaDoc.ENTITY_TYPE).to(XmlSchemaStoreImpl.class);
+        entityServiceByTypeBinder.addBinding(XmlSchemaDoc.DOCUMENT_TYPE).to(XmlSchemaStoreImpl.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(XmlSchemaStoreImpl.class);

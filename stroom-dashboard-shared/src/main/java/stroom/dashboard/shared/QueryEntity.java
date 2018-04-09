@@ -34,13 +34,13 @@ public class QueryEntity extends DocumentEntity {
     public static final String ENTITY_TYPE = "Query";
     public static final String TABLE_NAME = SQLNameConstants.QUERY;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String DASHBOARD_ID = SQLNameConstants.DASHBOARD + ID_SUFFIX;
+    public static final String DASHBOARD_UUID = SQLNameConstants.DASHBOARD + "_" + SQLNameConstants.UUID;
     public static final String QUERY_ID = SQLNameConstants.QUERY + ID_SUFFIX;
     public static final String FAVOURITE = SQLNameConstants.FAVOURITE;
 
     private static final long serialVersionUID = 3598996730392094523L;
 
-    private Long dashboardId;
+    private String dashboardUuid;
     private String queryId;
     private String data;
     private Query query;
@@ -50,13 +50,13 @@ public class QueryEntity extends DocumentEntity {
         // Default constructor necessary for GWT serialisation.
     }
 
-    @Column(name = DASHBOARD_ID)
-    public Long getDashboardId() {
-        return dashboardId;
+    @Column(name = DASHBOARD_UUID)
+    public String getDashboardUuid() {
+        return dashboardUuid;
     }
 
-    public void setDashboardId(final Long dashboardId) {
-        this.dashboardId = dashboardId;
+    public void setDashboardUuid(final String dashboardUuid) {
+        this.dashboardUuid = dashboardUuid;
     }
 
     @Column(name = QUERY_ID)

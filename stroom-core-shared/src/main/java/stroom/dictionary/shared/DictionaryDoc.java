@@ -36,9 +36,9 @@ import java.util.Objects;
 @XmlRootElement(name = "dictionary")
 @XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "imports"})
 public class DictionaryDoc extends Doc {
-    public static final String ENTITY_TYPE = "Dictionary";
-
     private static final long serialVersionUID = -4208920620555926044L;
+
+    public static final String ENTITY_TYPE = "Dictionary";
 
     @XmlElement(name = "description")
     private String description;

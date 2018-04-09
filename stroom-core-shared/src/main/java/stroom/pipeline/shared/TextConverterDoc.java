@@ -35,9 +35,9 @@ import java.util.Objects;
 @XmlRootElement(name = "textConverter")
 @XmlType(name = "TextConverterDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "converterType"})
 public class TextConverterDoc extends Doc implements HasData {
-    public static final String ENTITY_TYPE = "TextConverter";
-
     private static final long serialVersionUID = 4519634323788508083L;
+
+    public static final String DOCUMENT_TYPE = "TextConverter";
 
     @XmlElement(name = "description")
     private String description;

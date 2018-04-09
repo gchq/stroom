@@ -50,7 +50,7 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
 
     @Override
     public String getType() {
-        return XmlSchemaDoc.ENTITY_TYPE;
+        return XmlSchemaDoc.DOCUMENT_TYPE;
     }
 
     @Override

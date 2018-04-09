@@ -66,7 +66,7 @@ public class MockPipelineModule extends AbstractModule {
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
         entityServiceByTypeBinder.addBinding(PipelineEntity.ENTITY_TYPE).to(MockPipelineService.class);
-        entityServiceByTypeBinder.addBinding(TextConverterDoc.ENTITY_TYPE).to(TextConverterStoreImpl.class);
+        entityServiceByTypeBinder.addBinding(TextConverterDoc.DOCUMENT_TYPE).to(TextConverterStoreImpl.class);
         entityServiceByTypeBinder.addBinding(XSLT.ENTITY_TYPE).to(MockXSLTService.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);

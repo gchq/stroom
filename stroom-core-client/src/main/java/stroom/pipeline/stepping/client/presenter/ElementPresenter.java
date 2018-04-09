@@ -118,7 +118,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     private void loadFuzzyEntityRef(final FutureImpl<Boolean> future) {
-        if (TextConverterDoc.ENTITY_TYPE.equals(fuzzyEntityRef.getType())) {
+        if (TextConverterDoc.DOCUMENT_TYPE.equals(fuzzyEntityRef.getType())) {
             final DocumentServiceReadAction documentServiceReadAction = new DocumentServiceReadAction(fuzzyEntityRef);
 
 //            final FindTextConverterCriteria criteria = new FindTextConverterCriteria();

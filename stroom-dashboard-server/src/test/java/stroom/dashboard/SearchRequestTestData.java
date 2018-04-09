@@ -47,7 +47,7 @@ public class SearchRequestTestData {
         stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                 DashboardQueryKey.create(
                         "queryKeyUuid",
-                        1l,
+                        "0",
                         "queryId-1"),
                 dashboardSearchRequest);
 

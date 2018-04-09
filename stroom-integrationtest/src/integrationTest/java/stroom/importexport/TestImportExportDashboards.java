@@ -19,9 +19,9 @@ package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.dashboard.DashboardService;
+import stroom.dashboard.DashboardStore;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryComponentSettings;
@@ -81,7 +81,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject
-    private DashboardService dashboardService;
+    private DashboardStore dashboardStore;
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
@@ -199,18 +199,18 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final DashboardConfig dashboardData = new DashboardConfig();
         dashboardData.setComponents(components);
 
-        final DocRef dashboardRef = explorerService.create(Dashboard.ENTITY_TYPE, "Test Dashboard", folder1, null);
-        Dashboard dashboard = dashboardService.readDocument(dashboardRef);
-        dashboard.setDashboardData(dashboardData);
-        dashboard = dashboardService.save(dashboard);
-        Assert.assertEquals(1, commonTestControl.countEntity(Dashboard.class));
+        final DocRef dashboardRef = explorerService.create(DashboardDoc.DOCUMENT_TYPE, "Test Dashboard", folder1, null);
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
+        dashboard.setDashboardConfig(dashboardData);
+        dashboard = dashboardStore.writeDocument(dashboard);
+        Assert.assertEquals(1, dashboardStore.list().size());
 
 //        int startFolderSize = commonTestControl.countEntity(Folder.class);
         int startVisualisationSize = commonTestControl.countEntity(Visualisation.class);
         final int startPipelineSize = commonTestControl.countEntity(PipelineEntity.class);
         final int startIndexSize = commonTestControl.countEntity(Index.class);
         final int startDictionarySize = dictionaryStore.list().size();
-        final int startDashboardSize = commonTestControl.countEntity(Dashboard.class);
+        final int startDashboardSize = dashboardStore.list().size();
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
         final DocRefs docRefs = new DocRefs();
@@ -249,15 +249,15 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         Assert.assertEquals(startPipelineSize, commonTestControl.countEntity(PipelineEntity.class));
         Assert.assertEquals(startIndexSize, commonTestControl.countEntity(Index.class));
         Assert.assertEquals(startDictionarySize, dictionaryStore.list().size());
-        Assert.assertEquals(startDashboardSize, commonTestControl.countEntity(Dashboard.class));
+        Assert.assertEquals(startDashboardSize, dashboardStore.list().size());
 
         // Load the dashboard.
         final Visualisation loadedVisualisation = visualisationService.find(new FindVisualisationCriteria()).getFirst();
         final PipelineEntity loadedPipeline = pipelineService.find(new FindPipelineEntityCriteria()).getFirst();
         final Index loadedIndex = indexService.find(new FindIndexCriteria()).getFirst();
         final DictionaryDoc loadedDictionary = dictionaryStore.readDocument(dictionaryStore.list().iterator().next());
-        final Dashboard loadedDashboard = dashboardService.find(new FindDashboardCriteria()).getFirst();
-        final List<ComponentConfig> loadedComponents = loadedDashboard.getDashboardData().getComponents();
+        final DashboardDoc loadedDashboard = dashboardStore.readDocument(dashboardStore.list().iterator().next());
+        final List<ComponentConfig> loadedComponents = loadedDashboard.getDashboardConfig().getComponents();
         final ComponentConfig loadedQuery = loadedComponents.get(0);
         final QueryComponentSettings loadedQueryData = (QueryComponentSettings) loadedQuery.getSettings();
         final ComponentConfig loadedTable = loadedComponents.get(1);
@@ -288,7 +288,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         Assert.assertEquals(0, commonTestControl.countEntity(PipelineEntity.class));
         Assert.assertEquals(0, commonTestControl.countEntity(Index.class));
         Assert.assertEquals(0, dictionaryStore.list().size());
-        Assert.assertEquals(0, commonTestControl.countEntity(Dashboard.class));
+        Assert.assertEquals(0, commonTestControl.countEntity(DashboardDoc.class));
     }
 
     private ExpressionOperator.Builder createExpression(final DictionaryDoc dictionary) {

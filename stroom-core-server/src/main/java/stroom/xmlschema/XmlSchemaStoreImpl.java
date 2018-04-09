@@ -62,7 +62,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
         serialiser = new XmlSchemaSerialiser();
 
-        store.setType(XmlSchemaDoc.ENTITY_TYPE, XmlSchemaDoc.class);
+        store.setType(XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaDoc.class);
         store.setSerialiser(serialiser);
     }
 
@@ -104,7 +104,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(9, XmlSchemaDoc.ENTITY_TYPE, XmlSchemaDoc.ENTITY_TYPE);
+        return new DocumentType(9, XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaDoc.DOCUMENT_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -235,7 +235,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     @Override
     public String getDocType() {
-        return XmlSchemaDoc.ENTITY_TYPE;
+        return XmlSchemaDoc.DOCUMENT_TYPE;
     }
 
     @Override

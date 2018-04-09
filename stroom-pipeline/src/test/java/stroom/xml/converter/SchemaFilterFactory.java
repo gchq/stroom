@@ -44,8 +44,8 @@ import java.nio.file.Path;
 public class SchemaFilterFactory {
     private final SecurityContext securityContext = new MockSecurityContext();
     private final Persistence persistence = new MemoryPersistence();
-    private final XmlSchemaStore xmlSchemaService = new XmlSchemaStoreImpl(new Store<>(persistence, securityContext), securityContext, persistence);
-    private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaService);
+    private final XmlSchemaStore xmlSchemaStore = new XmlSchemaStoreImpl(new Store<>(persistence, securityContext), securityContext, persistence);
+    private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore);
     private final SchemaLoaderImpl schemaLoader = new SchemaLoaderImpl(xmlSchemaCache);
 
     public SchemaFilterFactory() {
@@ -81,13 +81,13 @@ public class SchemaFilterFactory {
 
         final Path file = dir.resolve(fileName);
 
-        final DocRef docRef = xmlSchemaService.createDocument(schemaName);
-        final XmlSchemaDoc xmlSchema = xmlSchemaService.readDocument(docRef);
+        final DocRef docRef = xmlSchemaStore.createDocument(schemaName);
+        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef);
         xmlSchema.setSchemaGroup(schemaGroup);
         xmlSchema.setName(schemaName);
         xmlSchema.setNamespaceURI(namespaceURI);
         xmlSchema.setSystemId(systemId);
         xmlSchema.setData(StreamUtil.fileToString(file));
-        xmlSchemaService.writeDocument(xmlSchema);
+        xmlSchemaStore.writeDocument(xmlSchema);
     }
 }

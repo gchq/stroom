@@ -19,13 +19,9 @@ package stroom.visualisation;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import stroom.dashboard.shared.Dashboard;
 import stroom.entity.FindService;
-import stroom.entity.StroomEntityManager;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.importexport.ImportExportHelper;
-import stroom.security.SecurityContext;
 import stroom.visualisation.shared.Visualisation;
 
 public class VisualisationModule extends AbstractModule {

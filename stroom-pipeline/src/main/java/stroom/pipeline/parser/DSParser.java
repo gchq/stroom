@@ -129,7 +129,7 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
     }
 
     @PipelineProperty(description = "The data splitter configuration that should be used to parse the input data.")
-    @PipelinePropertyDocRef(types = TextConverterDoc.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = TextConverterDoc.DOCUMENT_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

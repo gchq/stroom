@@ -27,9 +27,9 @@ import stroom.xmlschema.shared.XmlSchemaDoc;
 import javax.inject.Inject;
 import java.util.List;
 
-public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
+public class TestXMLSchemaStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
-    private XmlSchemaStore xmlSchemaService;
+    private XmlSchemaStore xmlSchemaStore;
     @Inject
     private CommonTestControl commonTestControl;
 
@@ -41,25 +41,25 @@ public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
         // Now make sure we can find a resource that we expect to be there.
         FindXMLSchemaCriteria criteria = new FindXMLSchemaCriteria();
 
-        List<XmlSchemaDoc> list = xmlSchemaService.find(criteria);
+        List<XmlSchemaDoc> list = xmlSchemaStore.find(criteria);
         Assert.assertNotNull(list);
         Assert.assertTrue(list.size() > 1);
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setNamespaceURI("event-logging:3");
-        list = xmlSchemaService.find(criteria);
+        list = xmlSchemaStore.find(criteria);
         Assert.assertNotNull(list);
         Assert.assertEquals(2, list.size());
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSystemId("file://event-logging-v3.0.0.xsd");
-        list = xmlSchemaService.find(criteria);
+        list = xmlSchemaStore.find(criteria);
         Assert.assertNotNull(list);
         Assert.assertEquals(1, list.size());
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSchemaGroup("EVENTS");
-        list = xmlSchemaService.find(criteria);
+        list = xmlSchemaStore.find(criteria);
         Assert.assertNotNull(list);
         Assert.assertEquals(2, list.size());
     }

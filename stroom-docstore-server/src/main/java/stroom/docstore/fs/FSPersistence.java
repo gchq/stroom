@@ -59,10 +59,10 @@ public class FSPersistence implements Persistence {
                     final String fileName = file.getFileName().toString();
                     final int index = fileName.indexOf(".");
 //                    final String uuid = fileName.substring(0, index);
-                    final String extension = fileName.substring(index + 1);
+                    final String ext = fileName.substring(index + 1);
 
                     final byte[] bytes = Files.readAllBytes(file);
-                    data.put(extension, bytes);
+                    data.put(ext, bytes);
 
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
@@ -90,9 +90,9 @@ public class FSPersistence implements Persistence {
             throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
         }
 
-        data.forEach((extension, bytes) -> {
+        data.forEach((ext, bytes) -> {
             try {
-                Files.write(getPath(docRef, extension), bytes);
+                Files.write(getPath(docRef, ext), bytes);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -135,8 +135,8 @@ public class FSPersistence implements Persistence {
         return lockFactory;
     }
 
-    private Path getPath(final DocRef docRef, final String extension) {
-        return getPathForType(docRef.getType()).resolve(docRef.getUuid() + "." + extension);
+    private Path getPath(final DocRef docRef, final String ext) {
+        return getPathForType(docRef.getType()).resolve(docRef.getUuid() + "." + ext);
     }
 
     private Path getPathForType(final String type) {
