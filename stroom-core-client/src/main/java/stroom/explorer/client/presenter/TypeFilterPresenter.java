@@ -143,6 +143,15 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
         refreshView();
     }
 
+    public Set<String> getIncludedTypes() {
+        return selected;
+    }
+
+    @Override
+    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<TypeFilterPresenter> handler) {
+        return eventBus.addHandlerToSource(DataSelectionEvent.getType(), this, handler);
+    }
+
     private void showAll(){
         for (final DocumentType documentType : visibleTypes) {
             selected.add(documentType.getType());
@@ -161,14 +170,5 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
         // To refresh the view we need to set the row data again.
         getView().setRowData(0, selectableTypes);
         getView().setRowCount(selectableTypes.size());
-    }
-
-    public Set<String> getIncludedTypes() {
-        return selected;
-    }
-
-    @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<TypeFilterPresenter> handler) {
-        return eventBus.addHandlerToSource(DataSelectionEvent.getType(), this, handler);
     }
 }
