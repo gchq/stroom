@@ -40,20 +40,21 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.util.client.ImageUtil;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<DocumentType>>
         implements HasDataSelectionHandlers<TypeFilterPresenter> {
+    private final EventBus eventBus;
+
     private final Set<String> selected = new HashSet<>();
     private List<DocumentType> visibleTypes;
-    private final EventBus eventBus;
 
     private final String SELECT_ALL_OR_NONE_TEXT = "All/none";
     private final String SELECT_ALL_OR_NONE_ICON = "document/SelectAllOrNone.svg";
-
-    private DocumentType selectAllOrNoneDocumentType = new DocumentType(
+    private final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
             1, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_ICON);
 
     @Inject
@@ -66,16 +67,28 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
                 TickBoxCell.create(false, true)) {
             @Override
             public TickBoxState getValue(final DocumentType object) {
-                return TickBoxState.fromBoolean(selected.contains(object.getType()));
+                // If we're checking the TickBoxState of 'All/none' then we need some logic for half-ticks.
+                if(object.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
+                    if (selected.size()  == 0){
+                        return TickBoxState.UNTICK;
+                    }
+                    else if (selected.size()  < visibleTypes.size()) {
+                        return TickBoxState.HALF_TICK;
+                    }
+                    else {
+                        return TickBoxState.TICK;
+                    }
+                }
+                else {
+                    return TickBoxState.fromBoolean(selected.contains(object.getType()));
+                }
             }
         };
         checkedColumn.setFieldUpdater((index, object, value) -> {
-            if(object.equals(selectAllOrNoneDocumentType)){
-                // If it's ticked add everything
+            if(object.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)){
                 if(value.toBoolean()){
                     showAll();
                 }
-                // Otherwise clear everything
                 else {
                     hideAll();
                 }
@@ -86,6 +99,9 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
                     selected.add(object.getType());
                 }
             }
+            // We need to refresh the view here otherwise a selection change wouldn't mean a change
+            // to the TickBoxState of the 'All/none' TickBox.
+            refreshView();
             DataSelectionEvent.fire(TypeFilterPresenter.this, TypeFilterPresenter.this, false);
         });
         getView().addColumn(checkedColumn);
@@ -103,7 +119,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
         final Column<DocumentType, SafeHtml> textColumn = new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final DocumentType object) {
-                // We want to make the all/none entry bold, so we'll use SafeHtml.
+                // We want to make the 'All/none' entry bold, so we'll use some SafeHtml.
                 if(object.getType().equalsIgnoreCase(SELECT_ALL_OR_NONE_TEXT)){
                     return SafeHtmlUtils.fromTrustedString( "<strong>" + object.getType() + "</strong>");
                 }
@@ -123,33 +139,28 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
 
     public void setDocumentTypes(final DocumentTypes documentTypes) {
         visibleTypes = documentTypes.getVisibleTypes();
-
-        // We need to manually add the entry for 'All/none'.
-        visibleTypes.add(0, selectAllOrNoneDocumentType);
-
         showAll();
+        refreshView();
     }
 
     private void showAll(){
         for (final DocumentType documentType : visibleTypes) {
             selected.add(documentType.getType());
         }
-        refreshView();
     }
 
     private void hideAll() {
         selected.clear();
-        refreshView();
     }
 
-    /**
-     * A browser event, i.e. a click, will change the state of only one tick box, the one that was clicked.
-     * If we're programmatically changing the state of other tickboxes, which we are with 'All/none', then
-     * we need to make sure we refresh the whole view so the ticks are removed from the other entries.
-     */
     private void refreshView() {
-        getView().setRowData(0, visibleTypes);
-        getView().setRowCount(visibleTypes.size());
+        // We want to add in the 'All/none' DocumentType, at the top.
+        List<DocumentType> selectableTypes = new ArrayList<>(visibleTypes);
+        selectableTypes.add(0, SELECT_ALL_OR_NONE_DOCUMENT_TYPE);
+
+        // To refresh the view we need to set the row data again.
+        getView().setRowData(0, selectableTypes);
+        getView().setRowCount(selectableTypes.size());
     }
 
     public Set<String> getIncludedTypes() {
