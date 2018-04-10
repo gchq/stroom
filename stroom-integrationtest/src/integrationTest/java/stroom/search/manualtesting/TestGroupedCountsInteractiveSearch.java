@@ -45,12 +45,12 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTest;
-import stroom.search.server.SearchResultCreatorManager;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.spring.MetaDataStatisticConfiguration;
@@ -126,8 +126,8 @@ public class TestGroupedCountsInteractiveSearch {
     private DictionaryStore dictionaryStore;
     @Resource
     private TaskManager taskManager;
-    @Resource
-    private SearchResultCreatorManager searchResultCreatorManager;
+    @Resource(name="luceneSearchResponseCreatorManager")
+    private SearchResponseCreatorManager searchResponseCreatorManager;
     @Resource
     private CommonTestControl commonTestControl;
 
@@ -222,7 +222,7 @@ public class TestGroupedCountsInteractiveSearch {
                 5,
                 5,
                 indexService,
-                searchResultCreatorManager);
+                searchResponseCreatorManager);
 
         LOGGER.info("Completed search");
     }

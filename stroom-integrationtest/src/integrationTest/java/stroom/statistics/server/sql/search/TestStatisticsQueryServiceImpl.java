@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,11 +66,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -176,10 +179,69 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
             tags.add(new StatisticTag(TAG2, TAG2_VAL));
 
             fillStatValSrc(tags);
-            SearchResponse searchResponse = doSearch(tags);
+            SearchResponse searchResponse = doSearch(tags, false);
             Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL));
+
+            doAsserts(searchResponse, 1, expectedValuesMap);
+        }
+    }
+
+    @Test
+    public void testSearchStatistcsData_TwoTags_incrementalNoTimeout() throws SQLException {
+
+        if (!ignoreAllTests) {
+            final List<StatisticTag> tags = new ArrayList<>();
+            tags.add(new StatisticTag(TAG1, TAG1_VAL));
+            tags.add(new StatisticTag(TAG2, TAG2_VAL));
+
+            fillStatValSrc(tags);
+            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+                    TAG1, ImmutableSet.of(TAG1_VAL),
+                    TAG2, ImmutableSet.of(TAG2_VAL));
+
+            String queryKey = UUID.randomUUID().toString();
+
+            SearchResponse searchResponse = doSearch(tags, true, queryKey);
+
+            // Incremental search so first n responses will not be complete
+            Assertions.assertThat(searchResponse.complete()).isFalse();
+            Assertions.assertThat(searchResponse.getResults()).isNull();
+
+            Instant timeoutTime = Instant.now().plusSeconds(10);
+
+            // keep asking for results till we get a complete one (or timeout)
+            do {
+                searchResponse = doSearch(tags, true, queryKey);
+            } while (!searchResponse.complete() || Instant.now().isAfter(timeoutTime));
+
+            doAsserts(searchResponse, 1, expectedValuesMap);
+        }
+    }
+
+    @Test
+    public void testSearchStatistcsData_TwoTags_incremental10sTimeout() throws SQLException {
+
+        if (!ignoreAllTests) {
+            final List<StatisticTag> tags = new ArrayList<>();
+            tags.add(new StatisticTag(TAG1, TAG1_VAL));
+            tags.add(new StatisticTag(TAG2, TAG2_VAL));
+
+            fillStatValSrc(tags);
+            Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
+                    TAG1, ImmutableSet.of(TAG1_VAL),
+                    TAG2, ImmutableSet.of(TAG2_VAL));
+
+            String queryKey = UUID.randomUUID().toString();
+
+            //incremental but with a 10s timeout so should get our results on 1st try
+            SearchResponse searchResponse = doSearch(
+                    tags,
+                    ExpressionOperator.Op.AND,
+                    true,
+                    queryKey,
+                    OptionalLong.of(10_000));
 
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
@@ -203,7 +265,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL, TAG2_OTHER_VALUE_1));
 
-            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR);
+            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR, false);
             doAsserts(searchResponse, 2, expectedValuesMap);
         }
     }
@@ -225,7 +287,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                     TAG1, Collections.singleton(null),
                     TAG2, Collections.singleton(TAG2_VAL));
 
-            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR);
+            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR, false);
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
     }
@@ -250,7 +312,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                     TAG1, Collections.singleton(nastyVal),
                     TAG2, Collections.singleton(TAG2_VAL));
 
-            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR);
+            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR, false);
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
     }
@@ -298,11 +360,29 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                 });
     }
 
-    private SearchResponse doSearch(final List<StatisticTag> searchTags) {
-        return doSearch(searchTags, ExpressionOperator.Op.AND);
+    private SearchResponse doSearch(final List<StatisticTag> searchTags,
+                                    final boolean isIncremental) {
+        return doSearch(searchTags, ExpressionOperator.Op.AND, isIncremental, UUID.randomUUID().toString(), OptionalLong.empty());
     }
 
-    private SearchResponse doSearch(final List<StatisticTag> searchTags, final ExpressionOperator.Op op) {
+    private SearchResponse doSearch(final List<StatisticTag> searchTags,
+                                    final boolean isIncremental,
+                                    final String queryKey) {
+        return doSearch(searchTags, ExpressionOperator.Op.AND, isIncremental, queryKey, OptionalLong.empty());
+    }
+
+    private SearchResponse doSearch(final List<StatisticTag> searchTags,
+                                    final ExpressionOperator.Op op,
+                                    final boolean isIncremental) {
+
+        return doSearch(searchTags, op, isIncremental, UUID.randomUUID().toString(), OptionalLong.empty());
+    }
+
+    private SearchResponse doSearch(final List<StatisticTag> searchTags,
+                                    final ExpressionOperator.Op op,
+                                    final boolean isIncremental,
+                                    final String queryKey,
+                                    final OptionalLong optTimeout) {
 
         final ExpressionOperator.Builder operatorBuilder = new ExpressionOperator.Builder(op);
         operatorBuilder
@@ -313,12 +393,14 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
         }
 
         final SearchRequest.Builder searchBuilder = new SearchRequest.Builder()
-                .key(UUID.randomUUID().toString())
-                .incremental(false)
+                .key(queryKey)
+                .incremental(isIncremental)
                 .query(new Query.Builder()
                         .expression(operatorBuilder.build())
                         .dataSource(DocRefUtil.create(statisticStoreEntity))
                         .build());
+
+        optTimeout.ifPresent(searchBuilder::timeout);
 
         COMPONENT_IDS.forEach(componentId -> {
             final TableSettings tableSettings = createTableSettings(componentId);
@@ -334,7 +416,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
 
         SearchResponse searchResponse = statisticsQueryService.search(searchRequest);
 
-        LOGGER.debug("Search complete");
+        LOGGER.debug("Search response returned with completion state {}", searchResponse.getComplete());
 
         return searchResponse;
     }

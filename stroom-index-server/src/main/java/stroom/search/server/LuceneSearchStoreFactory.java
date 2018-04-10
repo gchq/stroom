@@ -36,13 +36,14 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CoprocessorSettingsMap;
 import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.Store;
+import stroom.query.common.v2.StoreFactory;
 import stroom.query.common.v2.StoreSize;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
+import stroom.security.UserTokenUtil;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
 import stroom.util.config.PropertyUtil;
-import stroom.security.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -52,8 +53,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-@Component
-public class LuceneSearchStoreFactory {
+@SuppressWarnings("unused") //used by DI
+@Component("luceneSearchStoreFactory")
+public class LuceneSearchStoreFactory implements StoreFactory {
     public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
@@ -87,6 +89,7 @@ public class LuceneSearchStoreFactory {
         this.securityContext = securityContext;
     }
 
+    @Override
     public Store create(final SearchRequest searchRequest) {
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();

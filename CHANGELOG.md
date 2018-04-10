@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#405** : Fixed quick filter on permissions dialog, for users and for groups. It will now match anywhere in the user or group name, not just at the start.
 
+## [v6.0-alpha.19]
+
 * Issue **#588** : Fixed display of horizontal scrollbar on explorer tree in export, create, copy and move dialogs.
 
 * Issue **#691** : Volumes now reload on edit so that the entities are no longer stale the second time they are edited.
@@ -862,8 +864,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-<<<<<<< HEAD
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.18...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.19...6.0
+[v6.0-alpha.19]: https://github.com/gchq/stroom/compare/v6.0-alpha.18...v6.0-alpha.19
 [v6.0-alpha.18]: https://github.com/gchq/stroom/compare/v6.0-alpha.17...v6.0-alpha.18
 [v6.0-alpha.17]: https://github.com/gchq/stroom/compare/v6.0-alpha.16...v6.0-alpha.17
 [v6.0-alpha.16]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...v6.0-alpha.16
@@ -877,31 +879,3 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v6.0-alpha.8]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...v6.0-alpha.8
 [v6.0-alpha.7]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...v6.0-alpha.7
 [v6.0-alpha.4]: https://github.com/gchq/stroom/commits/v6.0-alpha.4
-=======
-* Issue **#202** : Initial release of the new data retention policy functionality.
-
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.2.3...HEAD
-[v5.2.3]: https://github.com/gchq/stroom/compare/v5.2.2...v5.2.3
-[v5.2.2]: https://github.com/gchq/stroom/compare/v5.2.1...v5.2.2
-[v5.2.1]: https://github.com/gchq/stroom/compare/v5.2.0...v5.2.1
-[v5.2.0]: https://github.com/gchq/stroom/compare/v5.1.0...v5.2.0
-[v5.1.0]: https://github.com/gchq/stroom/compare/v5.1-beta.16...v5.1.0
-[v5.1-beta.16]: https://github.com/gchq/stroom/compare/v5.1-beta.15...v5.1-beta.16
-[v5.1-beta.15]: https://github.com/gchq/stroom/compare/v5.1-beta.14...v5.1-beta.15
-[v5.1-beta.14]: https://github.com/gchq/stroom/compare/v5.1-beta.13...v5.1-beta.14
-[v5.1-beta.13]: https://github.com/gchq/stroom/compare/v5.1-beta.12...v5.1-beta.13
-[v5.1-beta.12]: https://github.com/gchq/stroom/compare/v5.1-beta.11...v5.1-beta.12
-[v5.1-beta.11]: https://github.com/gchq/stroom/compare/v5.1-beta.10...v5.1-beta.11
-[v5.1-beta.10]: https://github.com/gchq/stroom/compare/v5.1-beta.9...v5.1-beta.10
-[v5.1-beta.9]: https://github.com/gchq/stroom/compare/v5.1-beta.8...v5.1-beta.9
-[v5.1-beta.8]: https://github.com/gchq/stroom/compare/v5.1-beta.7...v5.1-beta.8
-[v5.1-beta.7]: https://github.com/gchq/stroom/compare/v5.1-beta.6...v5.1-beta.7
-[v5.1-beta.6]: https://github.com/gchq/stroom/compare/v5.1-beta.5...v5.1-beta.6
-[v5.1-beta.5]: https://github.com/gchq/stroom/compare/v5.1-beta.4...v5.1-beta.5
-[v5.1-beta.4]: https://github.com/gchq/stroom/compare/v5.1-beta.3...v5.1-beta.4
-[v5.1-beta.3]: https://github.com/gchq/stroom/compare/v5.1-beta.2...v5.1-beta.3
-[v5.1-beta.2]: https://github.com/gchq/stroom/compare/v5.1-beta.1...v5.1-beta.2
-[v5.1-beta.1]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...v5.1-beta.1
-[v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
-[v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
->>>>>>> 5.2
