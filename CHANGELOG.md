@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#405** : Fixed quick filter on permissions dialog, for users and for groups. It will now match anywhere in the user or group name, not just at the start.
+
 * Issue **#588** : Fixed display of horizontal scrollbar on explorer tree in export, create, copy and move dialogs.
 
 * Issue **#691** : Volumes now reload on edit so that the entities are no longer stale the second time they are edited.
