@@ -63,7 +63,7 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     }
 
     @Override
-    public void setCascasdeVisible(boolean visible) {
+    public void setCascadeVisible(boolean visible) {
         layout.setWidgetHidden(cascadeGrid, !visible);
     }
 

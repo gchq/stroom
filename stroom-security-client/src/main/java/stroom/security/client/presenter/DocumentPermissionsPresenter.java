@@ -63,7 +63,7 @@ public class DocumentPermissionsPresenter
     }
 
     public void show(final ExplorerNode explorerNode) {
-        getView().setCascasdeVisible(DocumentTypes.isFolder(explorerNode.getType()));
+        getView().setCascadeVisible(DocumentTypes.isFolder(explorerNode.getType()));
         final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
         final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerNode);
 
@@ -90,17 +90,17 @@ public class DocumentPermissionsPresenter
                                     result -> {
                                         if (result) {
                                             dispatcher.exec(changeDocumentPermissionsAction)
-                                                    .onSuccess(res -> hide(autoClose, ok));
+                                                    .onSuccess(res -> hide(autoClose, true));
                                         }
                                     });
                         }
                         else {
                             dispatcher.exec(changeDocumentPermissionsAction)
-                                    .onSuccess(res -> hide(autoClose, ok));
+                                    .onSuccess(res -> hide(autoClose, true));
                         }
 
                     } else {
-                        hide(autoClose, ok);
+                        hide(autoClose, false);
                     }
                 }
 
@@ -120,6 +120,14 @@ public class DocumentPermissionsPresenter
         });
     }
 
+    public interface DocumentPermissionsView extends View {
+        void setTabsView(View view);
+
+        ItemListBox<ChangeDocumentPermissionsAction.Cascade> getCascade();
+
+        void setCascadeVisible(boolean visible);
+    }
+
     private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {
         if (DocumentTypes.isFolder(entity.getType())) {
             return folderPermissionsListPresenterProvider.get();
@@ -130,13 +138,5 @@ public class DocumentPermissionsPresenter
 
     private void hide(boolean autoClose, boolean ok) {
         HidePopupEvent.fire(this, this, autoClose, ok);
-    }
-
-    public interface DocumentPermissionsView extends View {
-        void setTabsView(View view);
-
-        ItemListBox<ChangeDocumentPermissionsAction.Cascade> getCascade();
-
-        void setCascasdeVisible(boolean visible);
     }
 }
