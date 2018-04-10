@@ -17,11 +17,11 @@
 package stroom.statistics.sql.entity;
 
 import stroom.query.api.v2.DocRef;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 
 public interface StatisticStoreCache {
-    StatisticStoreEntity getStatisticsDataSource(String statisticName);
+    StatisticStoreDoc getStatisticsDataSource(String statisticName);
 
-    StatisticStoreEntity getStatisticsDataSource(DocRef docRef);
+    StatisticStoreDoc getStatisticsDataSource(DocRef docRef);
 
 }

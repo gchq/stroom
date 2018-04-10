@@ -1,9 +1,10 @@
 dependencies {
     compile project(':stroom-entity-shared')
+    compile project(':stroom-docstore-shared')
     compile project(':stroom-statistics-api')
     compile project(':stroom-util-shared')
 
-    compile libs.hibernate_jpa_api
+    compile libs.jackson_annotations
 
     testCompile libs.junit
 

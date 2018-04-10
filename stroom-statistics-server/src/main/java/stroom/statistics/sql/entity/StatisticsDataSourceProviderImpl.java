@@ -23,7 +23,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.Security;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.sql.Statistics;
@@ -50,7 +50,7 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
     @Override
     public DataSource getDataSource(final DocRef docRef) {
         return security.useAsReadResult(() -> {
-            final StatisticStoreEntity entity = statisticStoreCache.getStatisticsDataSource(docRef);
+            final StatisticStoreDoc entity = statisticStoreCache.getStatisticsDataSource(docRef);
             if (entity == null) {
                 return null;
             }
@@ -62,21 +62,21 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
     }
 
     /**
-     * Turn the {@link StatisticStoreEntity} into an {@link List<DataSourceField>} object
+     * Turn the {@link StatisticStoreDoc} into an {@link List<DataSourceField>} object
      * <p>
      * This builds the standard set of fields for a statistics store, which can
      * be filtered by the relevant statistics store instance
      */
-    private List<DataSourceField> buildFields(final StatisticStoreEntity entity) {
+    private List<DataSourceField> buildFields(final StatisticStoreDoc entity) {
         List<DataSourceField> fields = new ArrayList<>();
 
         // TODO currently only BETWEEN is supported, but need to add support for
         // more conditions like >, >=, <, <=, =
-        addField(StatisticStoreEntity.FIELD_NAME_DATE_TIME, DataSourceFieldType.DATE_FIELD, true,
+        addField(StatisticStoreDoc.FIELD_NAME_DATE_TIME, DataSourceFieldType.DATE_FIELD, true,
                 Arrays.asList(ExpressionTerm.Condition.BETWEEN), fields);
 
         // one field per tag
-        if (entity.getStatisticDataSourceDataObject() != null) {
+        if (entity.getConfig() != null) {
             final List<Condition> supportedConditions = Arrays.asList(Condition.EQUALS, Condition.IN);
 
             for (final StatisticField statisticField : entity.getStatisticFields()) {
@@ -87,16 +87,16 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
             }
         }
 
-        addField(StatisticStoreEntity.FIELD_NAME_COUNT, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
+        addField(StatisticStoreDoc.FIELD_NAME_COUNT, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
 
         if (entity.getStatisticType().equals(StatisticType.VALUE)) {
-            addField(StatisticStoreEntity.FIELD_NAME_VALUE, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
+            addField(StatisticStoreDoc.FIELD_NAME_VALUE, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
         }
 
-        addField(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
+        addField(StatisticStoreDoc.FIELD_NAME_PRECISION_MS, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
 
         // Filter fields.
-        if (entity.getStatisticDataSourceDataObject() != null) {
+        if (entity.getConfig() != null) {
             fields = statistics.getSupportedFields(fields);
         }
 

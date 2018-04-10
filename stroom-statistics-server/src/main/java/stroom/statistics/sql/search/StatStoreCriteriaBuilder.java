@@ -9,7 +9,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.sql.rollup.RollUpBitMask;
 
@@ -25,7 +25,7 @@ public class StatStoreCriteriaBuilder {
 
     private static final List<ExpressionTerm.Condition> SUPPORTED_DATE_CONDITIONS = Collections.singletonList(ExpressionTerm.Condition.BETWEEN);
 
-    public static FindEventCriteria buildCriteria(final SearchRequest search, final StatisticStoreEntity dataSource) {
+    public static FindEventCriteria buildCriteria(final SearchRequest search, final StatisticStoreDoc dataSource) {
 
         LOGGER.trace(String.format("buildCriteria called for statistic %s", dataSource.getName()));
 
@@ -65,7 +65,7 @@ public class StatStoreCriteriaBuilder {
                         throw new IllegalArgumentException("Expression term does not have a field specified");
                     }
 
-                    if (expressionTerm.getField().equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
+                    if (expressionTerm.getField().equals(StatisticStoreDoc.FIELD_NAME_DATE_TIME)) {
                         dateTermsFound++;
 
                         if (SUPPORTED_DATE_CONDITIONS.contains(expressionTerm.getCondition())) {
@@ -86,15 +86,15 @@ public class StatStoreCriteriaBuilder {
         if (dateTermsFound != 1 || validDateTermsFound != 1) {
             throw new UnsupportedOperationException(
                     "Search queries on the statistic store must contain one term using the '"
-                            + StatisticStoreEntity.FIELD_NAME_DATE_TIME
+                            + StatisticStoreDoc.FIELD_NAME_DATE_TIME
                             + "' field with one of the following condtitions [" + SUPPORTED_DATE_CONDITIONS.toString()
                             + "].  Please amend the query");
         }
 
         // ensure the value field is not used in the query terms
-        if (contains(topLevelExpressionOperator, StatisticStoreEntity.FIELD_NAME_VALUE)) {
+        if (contains(topLevelExpressionOperator, StatisticStoreDoc.FIELD_NAME_VALUE)) {
             throw new UnsupportedOperationException("Search queries containing the field '"
-                    + StatisticStoreEntity.FIELD_NAME_VALUE + "' are not supported.  Please remove it from the query");
+                    + StatisticStoreDoc.FIELD_NAME_VALUE + "' are not supported.  Please remove it from the query");
         }
 
         // if we have got here then we have a single BETWEEN date term, so parse
@@ -135,7 +135,7 @@ public class StatStoreCriteriaBuilder {
         // in the conversion
         final Set<String> blackListedFieldNames = new HashSet<>();
         blackListedFieldNames.addAll(rolledUpFieldNames);
-        blackListedFieldNames.add(StatisticStoreEntity.FIELD_NAME_DATE_TIME);
+        blackListedFieldNames.add(StatisticStoreDoc.FIELD_NAME_DATE_TIME);
 
         final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder
                 .convertExpresionItemsTree(topLevelExpressionOperator, blackListedFieldNames);

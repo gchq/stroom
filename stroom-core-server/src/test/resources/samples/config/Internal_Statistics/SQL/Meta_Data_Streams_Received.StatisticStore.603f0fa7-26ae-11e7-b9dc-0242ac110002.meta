@@ -1,0 +1,17 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "603f0fa7-26ae-11e7-b9dc-0242ac110002",
+  "name" : "Meta Data-Streams Received",
+  "version" : "0ee6b5ac-ae88-46c6-a95b-a8a39c2abc43",
+  "description" : "Meta Data-Streams Received",
+  "statisticType" : "COUNT",
+  "rollUpType" : "ALL",
+  "precision" : 3600000,
+  "enabled" : true,
+  "config" : {
+    "statisticFields" : [ {
+      "fieldName" : "feed"
+    } ],
+    "customRollUpMasks" : [ ]
+  }
+}

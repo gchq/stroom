@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Moved both Statistic Store entity types over to the new multi part document store.
+
 * Moved XSLT entities over to the new multi part document store.
 
 * Moved Visualisation entities over to the new multi part document store.

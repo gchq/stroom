@@ -28,7 +28,7 @@ import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.StoreSize;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.SQLStatisticCacheImpl;
 import stroom.statistics.sql.StatisticsQueryService;
 import stroom.statistics.sql.entity.StatisticStoreCache;
@@ -86,7 +86,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
         Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
         Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
 
-        final StatisticStoreEntity statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
+        final StatisticStoreDoc statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
 
         if (statisticStoreEntity == null) {
             return buildEmptyResponse(
@@ -119,7 +119,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     }
 
     private SearchResponse buildResponse(final SearchRequest searchRequest,
-                                         final StatisticStoreEntity statisticStoreEntity) {
+                                         final StatisticStoreDoc statisticStoreEntity) {
 
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(statisticStoreEntity);

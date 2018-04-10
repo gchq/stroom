@@ -134,8 +134,6 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.security.Permission",
                 "stroom.security.User",
                 "stroom.security.UserGroupUser",
-                "stroom.statistics.shared.StatisticStoreEntity",
-                "stroom.stats.shared.StroomStatsStoreEntity",
                 "stroom.streamstore.shared.Stream",
                 "stroom.streamstore.shared.StreamAttributeKey",
                 "stroom.streamstore.shared.StreamAttributeValue",

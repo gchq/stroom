@@ -24,13 +24,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.shared.DocRefUtil;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.client.common.presenter.StatisticsDataSourcePresenter;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticField;
@@ -39,7 +40,7 @@ import stroom.statistics.shared.common.StatisticRollUpType;
 import java.util.List;
 import java.util.Set;
 
-public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
+public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     private final Provider<StatisticsDataSourcePresenter> editorProvider;
 
     @Inject
@@ -54,8 +55,14 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
 
     @Override
     public String getType() {
-        return StatisticStoreEntity.ENTITY_TYPE;
+        return StatisticStoreDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected DocRef getDocRef(final StatisticStoreDoc document) {
+        return DocRefUtil.create(document);
+    }
+
 
     @Override
     protected DocumentEditPresenter<?, ?> createEditor() {
@@ -64,10 +71,10 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
 
     @Override
     public void save(final DocumentTabData tabData) {
-        if (tabData != null && tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, StatisticStoreEntity> presenter = (DocumentEditPresenter<?, StatisticStoreEntity>) tabData;
+        if (tabData instanceof DocumentEditPresenter<?, ?>) {
+            final DocumentEditPresenter<?, StatisticStoreDoc> presenter = (DocumentEditPresenter<?, StatisticStoreDoc>) tabData;
             if (presenter.isDirty()) {
-                final StatisticStoreEntity entity = presenter.getEntity();
+                final StatisticStoreDoc entity = presenter.getEntity();
 
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
@@ -77,8 +84,8 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
         }
     }
 
-    private void doConfirmSave(final DocumentEditPresenter<?, StatisticStoreEntity> presenter,
-                               final StatisticStoreEntity entity, final StatisticStoreEntity entityFromDb) {
+    private void doConfirmSave(final DocumentEditPresenter<?, StatisticStoreDoc> presenter,
+                               final StatisticStoreDoc entity, final StatisticStoreDoc entityFromDb) {
         // get the persisted versions of the fields we care about
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
@@ -114,8 +121,8 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
         }
     }
 
-    private void doSave(final DocumentEditPresenter<?, StatisticStoreEntity> presenter,
-                        final StatisticStoreEntity entity) {
+    private void doSave(final DocumentEditPresenter<?, StatisticStoreDoc> presenter,
+                        final StatisticStoreDoc entity) {
         save(DocRefUtil.create(entity), entity).onSuccess(doc -> presenter.read(DocRefUtil.create(doc), doc));
     }
 }

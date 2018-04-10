@@ -23,7 +23,7 @@ package stroom.statistics.sql.search;
 
 import com.google.common.collect.ImmutableMap;
 import stroom.statistics.sql.StatisticTag;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 
 import java.util.List;
@@ -48,7 +48,7 @@ public class CountStatisticDataPoint implements StatisticDataPoint {
     static {
         //hold a map of field names to functions that we get a value for that named field, converted to a string
         FIELD_VALUE_FUNCTION_MAP = ImmutableMap.<String, Function<CountStatisticDataPoint, String>>builder()
-                .put(StatisticStoreEntity.FIELD_NAME_COUNT, dataPoint -> Long.toString(dataPoint.getCount()))
+                .put(StatisticStoreDoc.FIELD_NAME_COUNT, dataPoint -> Long.toString(dataPoint.getCount()))
                 .build();
     }
 

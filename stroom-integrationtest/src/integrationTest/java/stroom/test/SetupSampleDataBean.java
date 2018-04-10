@@ -40,15 +40,12 @@ import stroom.node.shared.Volume;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.statistics.shared.StatisticStore;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.sql.entity.FindStatisticsEntityCriteria;
-import stroom.statistics.sql.entity.StatisticStoreEntityService;
-import stroom.statistics.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
-import stroom.statistics.stroomstats.entity.StroomStatsStoreEntityService;
-import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.statistics.sql.entity.StatisticStoreStore;
+import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.streamstore.StreamAttributeKeyService;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
@@ -107,8 +104,8 @@ public final class SetupSampleDataBean {
     private final PipelineService pipelineService;
     private final VolumeService volumeService;
     private final IndexService indexService;
-    private final StatisticStoreEntityService statisticsDataSourceService;
-    private final StroomStatsStoreEntityService stroomStatsStoreEntityService;
+    private final StatisticStoreStore statisticStoreStore;
+    private final StroomStatsStoreStore stroomStatsStoreStore;
 
     @Inject
     SetupSampleDataBean(final FeedService feedService,
@@ -120,8 +117,8 @@ public final class SetupSampleDataBean {
                         final PipelineService pipelineService,
                         final VolumeService volumeService,
                         final IndexService indexService,
-                        final StatisticStoreEntityService statisticsDataSourceService,
-                        final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
+                        final StatisticStoreStore statisticStoreStore,
+                        final StroomStatsStoreStore stroomStatsStoreStore) {
         this.feedService = feedService;
         this.streamStore = streamStore;
         this.streamAttributeKeyService = streamAttributeKeyService;
@@ -131,8 +128,8 @@ public final class SetupSampleDataBean {
         this.pipelineService = pipelineService;
         this.volumeService = volumeService;
         this.indexService = indexService;
-        this.statisticsDataSourceService = statisticsDataSourceService;
-        this.stroomStatsStoreEntityService = stroomStatsStoreEntityService;
+        this.statisticStoreStore = statisticStoreStore;
+        this.stroomStatsStoreStore = stroomStatsStoreStore;
     }
 
     private void createStreamAttributes() {
@@ -154,7 +151,7 @@ public final class SetupSampleDataBean {
         }
     }
 
-    public void run(final boolean shutdown) throws IOException {
+    public void run(final boolean shutdown) {
         // Ensure admin user exists.
 //        LOGGER.info("Creating admin user");
 //        authenticationService.getUserRef(new AuthenticationToken("admin", null));
@@ -228,13 +225,11 @@ public final class SetupSampleDataBean {
 
         // code to check that the statisticsDataSource objects are stored
         // correctly
-        final BaseResultList<StatisticStoreEntity> statisticsDataSources = statisticsDataSourceService
-                .find(FindStatisticsEntityCriteria.instance());
-        logEntities(statisticsDataSources, "statisticStores");
+        final List<DocRef> statisticsDataSources = statisticStoreStore.list();
+        logDocRefs(statisticsDataSources, "statisticStores");
 
-        final BaseResultList<StroomStatsStoreEntity> stroomStatsStoreEntities = stroomStatsStoreEntityService
-                .find(FindStroomStatsStoreEntityCriteria.instance());
-        logEntities(stroomStatsStoreEntities, "stroomStatsStores");
+        final List<DocRef> stroomStatsStoreEntities = stroomStatsStoreStore.list();
+        logDocRefs(stroomStatsStoreEntities, "stroomStatsStores");
 
         // Create stream processors for all feeds.
         for (final Feed feed : feeds) {
@@ -300,7 +295,15 @@ public final class SetupSampleDataBean {
                 .forEach(name -> LOGGER.info("  {}", name));
     }
 
-    public void loadDirectory(final boolean shutdown, final Path importRootDir) throws IOException {
+    private static void logDocRefs(List<DocRef> entities, String entityTypes) {
+        LOGGER.info("Listing loaded {}:", entityTypes);
+        entities.stream()
+                .map(DocRef::getName)
+                .sorted()
+                .forEach(name -> LOGGER.info("  {}", name));
+    }
+
+    public void loadDirectory(final boolean shutdown, final Path importRootDir) {
         LOGGER.info("Loading sample data for directory: " + FileUtil.getCanonicalPath(importRootDir));
 
         final Path configDir = importRootDir.resolve("config");

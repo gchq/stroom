@@ -9,7 +9,7 @@ import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.entity.util.PreparedStatementUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.properties.StroomPropertyService;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.SQLStatisticConstants;
 import stroom.statistics.sql.SQLStatisticNames;
@@ -58,10 +58,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
-            .put(StatisticStoreEntity.FIELD_NAME_DATE_TIME, Collections.singletonList(ALIASED_TIME_MS_COL))
-            .put(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, Collections.singletonList(ALIASED_PRECISION_COL))
-            .put(StatisticStoreEntity.FIELD_NAME_COUNT, Collections.singletonList(ALIASED_COUNT_COL))
-            .put(StatisticStoreEntity.FIELD_NAME_VALUE, Arrays.asList(ALIASED_COUNT_COL, ALIASED_VALUE_COL))
+            .put(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Collections.singletonList(ALIASED_TIME_MS_COL))
+            .put(StatisticStoreDoc.FIELD_NAME_PRECISION_MS, Collections.singletonList(ALIASED_PRECISION_COL))
+            .put(StatisticStoreDoc.FIELD_NAME_COUNT, Collections.singletonList(ALIASED_COUNT_COL))
+            .put(StatisticStoreDoc.FIELD_NAME_VALUE, Arrays.asList(ALIASED_COUNT_COL, ALIASED_VALUE_COL))
             .build();
 
     @SuppressWarnings("unused") // Called by DI
@@ -75,7 +75,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     }
 
     @Override
-    public Flowable<String[]> search(final StatisticStoreEntity statisticStoreEntity,
+    public Flowable<String[]> search(final StatisticStoreDoc statisticStoreEntity,
                                      final FindEventCriteria criteria,
                                      final FieldIndexMap fieldIndexMap) {
 
@@ -90,7 +90,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         return getFlowableQueryResults(sql, resultSetMapper);
     }
 
-    private List<String> getSelectColumns(final StatisticStoreEntity statisticStoreEntity,
+    private List<String> getSelectColumns(final StatisticStoreDoc statisticStoreEntity,
                                           final FieldIndexMap fieldIndexMap) {
         //assemble a map of how fields map to 1-* select cols
 
@@ -120,7 +120,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     /**
      * Construct the sql select for the query's criteria
      */
-    private SqlBuilder buildSql(final StatisticStoreEntity statisticStoreEntity,
+    private SqlBuilder buildSql(final StatisticStoreDoc statisticStoreEntity,
                                 final FindEventCriteria criteria,
                                 final FieldIndexMap fieldIndexMap) {
         /**
@@ -218,16 +218,16 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
      */
     private Function<ResultSet, String[]> buildResultSetMapper(
             final FieldIndexMap fieldIndexMap,
-            final StatisticStoreEntity statisticStoreEntity) {
+            final StatisticStoreDoc statisticStoreEntity) {
 
         LAMBDA_LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
                 fieldIndexMap, statisticStoreEntity.getUuid()));
 
         final List<String> allFields = new ArrayList<>();
-        allFields.add(StatisticStoreEntity.FIELD_NAME_DATE_TIME);
-        allFields.add(StatisticStoreEntity.FIELD_NAME_COUNT);
-        allFields.add(StatisticStoreEntity.FIELD_NAME_VALUE);
-        allFields.add(StatisticStoreEntity.FIELD_NAME_PRECISION_MS);
+        allFields.add(StatisticStoreDoc.FIELD_NAME_DATE_TIME);
+        allFields.add(StatisticStoreDoc.FIELD_NAME_COUNT);
+        allFields.add(StatisticStoreDoc.FIELD_NAME_VALUE);
+        allFields.add(StatisticStoreDoc.FIELD_NAME_PRECISION_MS);
         allFields.addAll(statisticStoreEntity.getFieldNames());
 
         //construct a list of field extractors that can populate the appropriate bit of the data arr
@@ -240,11 +240,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         return Optional.<ValueExtractor>empty();
                     } else {
                         ValueExtractor extractor;
-                        if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
+                        if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_DATE_TIME)) {
                             extractor = buildLongValueExtractor(SQLStatisticNames.TIME_MS, idx);
-                        } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_COUNT)) {
+                        } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_COUNT)) {
                             extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
-                        } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_PRECISION_MS)) {
+                        } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_PRECISION_MS)) {
                             extractor = (rs, arr, cache) -> {
 
                                 // the precision in the table represents the number of zeros
@@ -258,7 +258,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                 }
                                 arr[idx] = Long.toString(precisionMs);
                             };
-                        } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_VALUE)) {
+                        } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_VALUE)) {
                             if (statisticStoreEntity.getStatisticType().equals(StatisticType.COUNT)) {
                                 extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
                             } else {
@@ -517,7 +517,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
      * found in the data and thus would return no data.
      */
     public static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
-                                                               final StatisticStoreEntity statisticsDataSource) {
+                                                               final StatisticStoreDoc statisticsDataSource) {
         final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
 
         final RollUpBitMask result;

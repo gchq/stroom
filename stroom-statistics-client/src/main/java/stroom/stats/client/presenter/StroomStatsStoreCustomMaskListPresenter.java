@@ -41,7 +41,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.stats.shared.CustomRollUpMask;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsRollUpBitMaskPermGenerationAction;
-import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.stats.shared.StroomStatsStoreDoc;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.stats.shared.StroomStatsStoreFieldChangeAction;
 import stroom.svg.client.SvgPresets;
@@ -56,7 +56,7 @@ import java.util.Set;
 
 public class StroomStatsStoreCustomMaskListPresenter
         extends MyPresenterWidget<DataGridView<StroomStatsStoreCustomMaskListPresenter.MaskHolder>>
-        implements HasDocumentRead<StroomStatsStoreEntity>, HasWrite<StroomStatsStoreEntity>, HasDirtyHandlers {
+        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers {
 
     private final ButtonView newButton;
     private final ButtonView removeButton;
@@ -64,13 +64,12 @@ public class StroomStatsStoreCustomMaskListPresenter
     private final List<Column<MaskHolder, ?>> columns = new ArrayList<>();
     private final ClientDispatchAsync dispatcher;
     private MaskHolder selectedElement;
-    private StroomStatsStoreEntity stroomStatsStoreEntity;
+    private StroomStatsStoreDoc stroomStatsStoreEntity;
     private MaskHolderList maskList = new MaskHolderList();
 
     @SuppressWarnings("unchecked")
     @Inject
-    public StroomStatsStoreCustomMaskListPresenter(final EventBus eventBus, final Resources resources,
-                                                   final ClientDispatchAsync dispatcher) {
+    public StroomStatsStoreCustomMaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<>(true, true));
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
@@ -202,7 +201,7 @@ public class StroomStatsStoreCustomMaskListPresenter
         }
     }
 
-    private void refreshFromEntity(final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    private void refreshFromEntity(final StroomStatsStoreDoc stroomStatsStoreEntity) {
         maskList.clear();
         maskList.addMasks(stroomStatsStoreEntity.getCustomRollUpMasks());
 
@@ -219,13 +218,13 @@ public class StroomStatsStoreCustomMaskListPresenter
         }
     }
 
-    public void refreshModel() {
+    private void refreshModel() {
         getView().setRowData(0, maskList);
         getView().setRowCount(maskList.size(), true);
     }
 
     @Override
-    public void read(final DocRef docRef, final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    public void read(final DocRef docRef, final StroomStatsStoreDoc stroomStatsStoreEntity) {
         // initialise the columns and hold the statDataSource on first time
         // or if we are passed a different object
         if (this.stroomStatsStoreEntity == null || this.stroomStatsStoreEntity != stroomStatsStoreEntity) {
@@ -239,8 +238,8 @@ public class StroomStatsStoreCustomMaskListPresenter
     }
 
     @Override
-    public void write(final StroomStatsStoreEntity entity) {
-        entity.getDataObject().setCustomRollUpMasks(
+    public void write(final StroomStatsStoreDoc entity) {
+        entity.getConfig().setCustomRollUpMasks(
                 new HashSet<>(maskList.getMasks()));
     }
 

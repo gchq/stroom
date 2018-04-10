@@ -20,8 +20,7 @@ package stroom.statistics.common;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.datasource.api.v2.DataSource;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -29,12 +28,11 @@ import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.shared.StatisticStore;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
-import stroom.statistics.sql.entity.FindStatisticsEntityCriteria;
-import stroom.statistics.sql.entity.StatisticStoreEntityService;
+import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.sql.entity.StatisticsDataSourceProvider;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -42,12 +40,13 @@ import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
+import java.util.List;
 
 public class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
-    private StatisticStoreEntityService statisticsDataSourceService;
+    private StatisticStoreStore statisticStoreStore;
     @Inject
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
     @Inject
@@ -66,16 +65,16 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
      */
     @Test
     public void testStatisticsDataSource() {
-        final DocRef docRef = explorerService.create(StatisticStoreEntity.ENTITY_TYPE,"StatName1", null, null);
-        final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.readDocument(docRef);
+        final DocRef docRef = explorerService.create(StatisticStoreDoc.DOCUMENT_TYPE, "StatName1", null, null);
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
-        statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData());
-        statisticsDataSource.getStatisticDataSourceDataObject().addStatisticField(new StatisticField("tag1"));
-        statisticsDataSource.getStatisticDataSourceDataObject().addStatisticField(new StatisticField("tag2"));
-        statisticsDataSourceService.save(statisticsDataSource);
+        statisticsDataSource.setConfig(new StatisticsDataSourceData());
+        statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag1"));
+        statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag2"));
+        statisticStoreStore.update(statisticsDataSource);
 
-        Assert.assertEquals(1, statisticsDataSourceService.find(FindStatisticsEntityCriteria.instance()).size());
+        Assert.assertEquals(1, statisticStoreStore.list().size());
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
@@ -84,54 +83,53 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
         importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, null);
 
-        Assert.assertEquals(3, FileUtil.count(testDataDir));
+        Assert.assertEquals(2, FileUtil.count(testDataDir));
 
         // now clear out the java entities and import from file
         clean(true);
 
-        Assert.assertEquals(0, statisticsDataSourceService.find(FindStatisticsEntityCriteria.instance()).size());
+        Assert.assertEquals(0, statisticStoreStore.list().size());
 
         importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        final BaseResultList<StatisticStoreEntity> dataSources = statisticsDataSourceService
-                .find(FindStatisticsEntityCriteria.instance());
+        final List<DocRef> dataSources = statisticStoreStore.list();
 
         Assert.assertEquals(1, dataSources.size());
 
-        final StatisticStoreEntity importedDataSource = dataSources.get(0);
+        final StatisticStoreDoc importedDataSource = statisticStoreStore.readDocument(dataSources.get(0));
 
         Assert.assertEquals(statisticsDataSource.getName(), importedDataSource.getName());
         Assert.assertEquals(statisticsDataSource.getStatisticType(), importedDataSource.getStatisticType());
         Assert.assertEquals(statisticsDataSource.getDescription(), importedDataSource.getDescription());
 
-        Assert.assertEquals(statisticsDataSource.getStatisticDataSourceDataObject(),
-                importedDataSource.getStatisticDataSourceDataObject());
+        Assert.assertEquals(statisticsDataSource.getConfig(),
+                importedDataSource.getConfig());
     }
 
     @Test
     public void testDeSerialiseOnLoad() {
-        final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create("StatName1");
+        final DocRef docRef = statisticStoreStore.createDocument("StatName1");
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
 
-        statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData());
-        statisticsDataSource.getStatisticDataSourceDataObject().addStatisticField(new StatisticField("tag1"));
-        statisticsDataSource.getStatisticDataSourceDataObject().addStatisticField(new StatisticField("tag2"));
+        statisticsDataSource.setConfig(new StatisticsDataSourceData());
+        statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag1"));
+        statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag2"));
 
-        statisticsDataSourceService.save(statisticsDataSource);
+        statisticStoreStore.update(statisticsDataSource);
 
-        StatisticStoreEntity statisticsDataSource2 = statisticsDataSourceService
-                .find(FindStatisticsEntityCriteria.instance()).getFirst();
+        final StatisticStoreDoc statisticsDataSource2 = statisticStoreStore.readDocument(statisticStoreStore.list().get(0));
         Assert.assertNotNull(statisticsDataSource2);
 
         final String uuid = statisticsDataSource2.getUuid();
 
-        final StatisticStoreEntity statisticsDataSource3 = statisticsDataSourceService.loadByUuid(uuid);
+        final StatisticStoreDoc statisticsDataSource3 = statisticStoreStore.read(uuid);
 
         // Assert.assertNotNull(((StatisticsDataSource)
         // statisticsDataSource3).getStatisticDataSourceData());
         Assert.assertNotNull(statisticsDataSource3);
-        Assert.assertNotNull(statisticsDataSource3.getStatisticDataSourceDataObject());
+        Assert.assertNotNull(statisticsDataSource3.getConfig());
 
         DocRef statisticDataSource3DocRef = DocRefUtil.create(statisticsDataSource3);
 

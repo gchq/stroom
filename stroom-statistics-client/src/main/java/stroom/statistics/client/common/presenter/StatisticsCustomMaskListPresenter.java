@@ -37,7 +37,7 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.client.common.presenter.StatisticsCustomMaskListPresenter.MaskHolder;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
 import stroom.statistics.shared.common.CustomRollUpMask;
@@ -54,14 +54,14 @@ import java.util.List;
 import java.util.Set;
 
 public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGridView<MaskHolder>>
-        implements HasDocumentRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers {
+        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers {
     private final ButtonView newButton;
     private final ButtonView removeButton;
     private final ButtonView autoGenerateButton;
     private final List<Column<MaskHolder, ?>> columns = new ArrayList<>();
     private final ClientDispatchAsync dispatcher;
     private MaskHolder selectedElement;
-    private StatisticStoreEntity statisticsDataSource;
+    private StatisticStoreDoc statisticsDataSource;
     private MaskHolderList maskList = new MaskHolderList();
 
     @SuppressWarnings("unchecked")
@@ -196,7 +196,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         }
     }
 
-    private void refreshFromEntity(final StatisticStoreEntity statisticsDataSource) {
+    private void refreshFromEntity(final StatisticStoreDoc statisticsDataSource) {
         maskList.clear();
         maskList.addMasks(statisticsDataSource.getCustomRollUpMasks());
 
@@ -219,7 +219,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     }
 
     @Override
-    public void read(final DocRef docRef, final StatisticStoreEntity statisticsDataSource) {
+    public void read(final DocRef docRef, final StatisticStoreDoc statisticsDataSource) {
         // initialise the columns and hold the statDataSource on first time
         // or if we are passed a different object
         if (this.statisticsDataSource == null || this.statisticsDataSource != statisticsDataSource) {
@@ -233,8 +233,8 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     }
 
     @Override
-    public void write(final StatisticStoreEntity entity) {
-        entity.getStatisticDataSourceDataObject()
+    public void write(final StatisticStoreDoc entity) {
+        entity.getConfig()
                 .setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
     }
 

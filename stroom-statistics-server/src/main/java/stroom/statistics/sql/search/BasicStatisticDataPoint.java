@@ -22,13 +22,11 @@ package stroom.statistics.sql.search;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import stroom.statistics.sql.StatisticTag;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 class BasicStatisticDataPoint implements StatisticDataPoint {
 
@@ -36,8 +34,8 @@ class BasicStatisticDataPoint implements StatisticDataPoint {
 
     static {
         FIELD_VALUE_FUNCTION_MAP = ImmutableMap.<String, Function<StatisticDataPoint, String>>builder()
-                .put(StatisticStoreEntity.FIELD_NAME_DATE_TIME, dataPoint -> Long.toString(dataPoint.getTimeMs()))
-                .put(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, dataPoint -> Long.toString(dataPoint.getPrecisionMs()))
+                .put(StatisticStoreDoc.FIELD_NAME_DATE_TIME, dataPoint -> Long.toString(dataPoint.getTimeMs()))
+                .put(StatisticStoreDoc.FIELD_NAME_PRECISION_MS, dataPoint -> Long.toString(dataPoint.getPrecisionMs()))
                 .build();
     }
 
