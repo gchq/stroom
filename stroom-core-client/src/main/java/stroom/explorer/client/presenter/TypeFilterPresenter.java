@@ -17,7 +17,6 @@
 package stroom.explorer.client.presenter;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -48,7 +47,14 @@ import java.util.Set;
 public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<DocumentType>>
         implements HasDataSelectionHandlers<TypeFilterPresenter> {
     private final Set<String> selected = new HashSet<>();
+    private List<DocumentType> visibleTypes;
     private final EventBus eventBus;
+
+    private final String SELECT_ALL_OR_NONE_TEXT = "All/none";
+    private final String SELECT_ALL_OR_NONE_ICON = "document/SelectAllOrNone.svg";
+
+    private DocumentType selectAllOrNoneDocumentType = new DocumentType(
+            1, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_ICON);
 
     @Inject
     public TypeFilterPresenter(final EventBus eventBus) {
@@ -64,12 +70,22 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
             }
         };
         checkedColumn.setFieldUpdater((index, object, value) -> {
-            if (selected.contains(object.getType())) {
-                selected.remove(object.getType());
+            if(object.equals(selectAllOrNoneDocumentType)){
+                // If it's ticked add everything
+                if(value.toBoolean()){
+                    showAll();
+                }
+                // Otherwise clear everything
+                else {
+                    hideAll();
+                }
             } else {
-                selected.add(object.getType());
+                if (selected.contains(object.getType())) {
+                    selected.remove(object.getType());
+                } else {
+                    selected.add(object.getType());
+                }
             }
-
             DataSelectionEvent.fire(TypeFilterPresenter.this, TypeFilterPresenter.this, false);
         });
         getView().addColumn(checkedColumn);
@@ -84,10 +100,16 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
         getView().addColumn(iconColumn);
 
         // Text.
-        final Column<DocumentType, String> textColumn = new Column<DocumentType, String>(new TextCell()) {
+        final Column<DocumentType, SafeHtml> textColumn = new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public String getValue(final DocumentType object) {
-                return object.getType();
+            public SafeHtml getValue(final DocumentType object) {
+                // We want to make the all/none entry bold, so we'll use SafeHtml.
+                if(object.getType().equalsIgnoreCase(SELECT_ALL_OR_NONE_TEXT)){
+                    return SafeHtmlUtils.fromTrustedString( "<strong>" + object.getType() + "</strong>");
+                }
+                else {
+                    return SafeHtmlUtils.fromTrustedString(object.getType());
+                }
             }
         };
         getView().addColumn(textColumn);
@@ -100,13 +122,32 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
     }
 
     public void setDocumentTypes(final DocumentTypes documentTypes) {
-        final List<DocumentType> visibleTypes = documentTypes.getVisibleTypes();
+        visibleTypes = documentTypes.getVisibleTypes();
 
-        selected.clear();
+        // We need to manually add the entry for 'All/none'.
+        visibleTypes.add(0, selectAllOrNoneDocumentType);
+
+        showAll();
+    }
+
+    private void showAll(){
         for (final DocumentType documentType : visibleTypes) {
             selected.add(documentType.getType());
         }
+        refreshView();
+    }
 
+    private void hideAll() {
+        selected.clear();
+        refreshView();
+    }
+
+    /**
+     * A browser event, i.e. a click, will change the state of only one tick box, the one that was clicked.
+     * If we're programmatically changing the state of other tickboxes, which we are with 'All/none', then
+     * we need to make sure we refresh the whole view so the ticks are removed from the other entries.
+     */
+    private void refreshView() {
         getView().setRowData(0, visibleTypes);
         getView().setRowCount(visibleTypes.size());
     }
