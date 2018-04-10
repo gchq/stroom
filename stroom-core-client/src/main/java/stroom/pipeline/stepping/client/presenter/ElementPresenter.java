@@ -32,14 +32,9 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.DocumentServiceWriteAction;
-import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.HasData;
-import stroom.entity.shared.StringCriteria;
-import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.SteppingFilterSettings;
-import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
@@ -118,49 +113,49 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     private void loadFuzzyEntityRef(final FutureImpl<Boolean> future) {
-        if (TextConverterDoc.DOCUMENT_TYPE.equals(fuzzyEntityRef.getType())) {
-            final DocumentServiceReadAction documentServiceReadAction = new DocumentServiceReadAction(fuzzyEntityRef);
-
+//        if (TextConverterDoc.DOCUMENT_TYPE.equals(fuzzyEntityRef.getType())) {
+        final DocumentServiceReadAction documentServiceReadAction = new DocumentServiceReadAction(fuzzyEntityRef);
+//
 //            final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
 //            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
 //            criteria.setSort(FindXSLTCriteria.FIELD_ID);
 //            final EntityServiceFindAction<FindTextConverterCriteria, TextConverterDoc> findAction = new EntityServiceFindAction<>(criteria);
-            dispatcher.exec(documentServiceReadAction)
-                    .onSuccess(result -> {
-                        if (result != null) {
-                            loadedDoc = fuzzyEntityRef;
-                            hasData = (HasData) result;
-                            dirtyCode = false;
-                            read();
-                            future.setResult(true);
-                        } else {
-                            // Try and load by entity ref if there is one.
-                            loadEntityRef(future);
-                        }
-                    })
-                    .onFailure(caught -> future.setResult(false));
-        } else if (XSLT.ENTITY_TYPE.equals(fuzzyEntityRef.getType())) {
-            final FindXSLTCriteria criteria = new FindXSLTCriteria();
-            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
-            criteria.setSort(FindXSLTCriteria.FIELD_ID);
-            final EntityServiceFindAction<FindXSLTCriteria, XSLT> findAction = new EntityServiceFindAction<>(criteria);
-            dispatcher.exec(findAction)
-                    .onSuccess(result -> {
-                        if (result != null && result.size() > 0) {
-                            loadedDoc = fuzzyEntityRef;
-                            hasData = result.get(0);
-                            dirtyCode = false;
-                            read();
-                            future.setResult(true);
-                        } else {
-                            // Try and load by entity ref if there is one.
-                            loadEntityRef(future);
-                        }
-                    })
-                    .onFailure(caught -> future.setResult(false));
-        } else {
-            Scheduler.get().scheduleDeferred(() -> future.setResult(true));
-        }
+        dispatcher.exec(documentServiceReadAction)
+                .onSuccess(result -> {
+                    if (result != null) {
+                        loadedDoc = fuzzyEntityRef;
+                        hasData = (HasData) result;
+                        dirtyCode = false;
+                        read();
+                        future.setResult(true);
+                    } else {
+                        // Try and load by entity ref if there is one.
+                        loadEntityRef(future);
+                    }
+                })
+                .onFailure(caught -> future.setResult(false));
+//        } else if (XsltDoc.DOCUMENT_TYPE.equals(fuzzyEntityRef.getType())) {
+//            final FindXSLTCriteria criteria = new FindXSLTCriteria();
+//            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
+//            criteria.setSort(FindXSLTCriteria.FIELD_ID);
+//            final EntityServiceFindAction<FindXSLTCriteria, XsltDoc> findAction = new EntityServiceFindAction<>(criteria);
+//            dispatcher.exec(findAction)
+//                    .onSuccess(result -> {
+//                        if (result != null && result.size() > 0) {
+//                            loadedDoc = fuzzyEntityRef;
+//                            hasData = result.get(0);
+//                            dirtyCode = false;
+//                            read();
+//                            future.setResult(true);
+//                        } else {
+//                            // Try and load by entity ref if there is one.
+//                            loadEntityRef(future);
+//                        }
+//                    })
+//                    .onFailure(caught -> future.setResult(false));
+//        } else {
+//            Scheduler.get().scheduleDeferred(() -> future.setResult(true));
+//        }
     }
 
     private void loadEntityRef(final FutureImpl<Boolean> future) {

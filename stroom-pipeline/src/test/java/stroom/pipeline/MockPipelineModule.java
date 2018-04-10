@@ -25,7 +25,7 @@ import stroom.entity.shared.Clearable;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
 
 import javax.xml.transform.URIResolver;
 
@@ -33,7 +33,7 @@ public class MockPipelineModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(PipelineService.class).to(MockPipelineService.class);
-        bind(XSLTService.class).to(MockXSLTService.class);
+        bind(XsltStore.class).to(XsltStoreImpl.class);
         bind(TextConverterStore.class).to(TextConverterStoreImpl.class);
         bind(URIResolver.class).to(CustomURIResolver.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
@@ -41,7 +41,7 @@ public class MockPipelineModule extends AbstractModule {
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(MockPipelineService.class);
-        clearableBinder.addBinding().to(MockXSLTService.class);
+//        clearableBinder.addBinding().to(XsltStoreImpl.class);
 //        clearableBinder.addBinding().to(TextConverterStoreImpl.class);
 
 //
@@ -57,22 +57,22 @@ public class MockPipelineModule extends AbstractModule {
 //        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
 //        explorerActionHandlerBinder.addBinding().to(PipelineServiceImpl.class);
 //        explorerActionHandlerBinder.addBinding().to(TextConverterServiceImpl.class);
-//        explorerActionHandlerBinder.addBinding().to(XSLTServiceImpl.class);
+//        explorerActionHandlerBinder.addBinding().to(XsltStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(MockPipelineService.class);
-        importExportActionHandlerBinder.addBinding().to(MockXSLTService.class);
+        importExportActionHandlerBinder.addBinding().to(XsltStoreImpl.class);
         importExportActionHandlerBinder.addBinding().to(TextConverterStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
         entityServiceByTypeBinder.addBinding(PipelineEntity.ENTITY_TYPE).to(MockPipelineService.class);
         entityServiceByTypeBinder.addBinding(TextConverterDoc.DOCUMENT_TYPE).to(TextConverterStoreImpl.class);
-        entityServiceByTypeBinder.addBinding(XSLT.ENTITY_TYPE).to(MockXSLTService.class);
+        entityServiceByTypeBinder.addBinding(XsltDoc.DOCUMENT_TYPE).to(XsltStoreImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(MockPipelineService.class);
 //        findServiceBinder.addBinding().to(TextConverterStoreImpl.class);
-        findServiceBinder.addBinding().to(MockXSLTService.class);
+//        findServiceBinder.addBinding().to(XsltStoreImpl.class);
     }
 
 //    @Provides

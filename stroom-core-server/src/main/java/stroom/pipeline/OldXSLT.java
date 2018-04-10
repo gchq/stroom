@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.shared;
+package stroom.pipeline;
 
 import stroom.entity.shared.Copyable;
 import stroom.entity.shared.DocumentEntity;
@@ -27,11 +27,10 @@ import javax.persistence.Entity;
 import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "XSLT")
-public class XSLT extends DocumentEntity implements Copyable<XSLT>, HasData {
+public class OldXSLT extends DocumentEntity implements Copyable<OldXSLT>, HasData {
     public static final String TABLE_NAME = SQLNameConstants.XSLT;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String DATA = SQLNameConstants.DATA;
@@ -75,7 +74,7 @@ public class XSLT extends DocumentEntity implements Copyable<XSLT>, HasData {
     }
 
     @Override
-    public void copyFrom(final XSLT other) {
+    public void copyFrom(final OldXSLT other) {
         this.description = other.description;
         this.data = other.data;
 

@@ -20,7 +20,7 @@ import org.junit.Assert;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.TextConverterStore;
-import stroom.pipeline.XSLTService;
+import stroom.pipeline.XsltStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
@@ -30,7 +30,7 @@ import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
@@ -54,7 +54,7 @@ public class F2XTestUtil {
     private final PipelineFactory pipelineFactory;
     private final FeedHolder feedHolder;
     private final TextConverterStore textConverterStore;
-    private final XSLTService xsltService;
+    private final XsltStore xsltStore;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final RecordCount recordCount;
 
@@ -62,13 +62,13 @@ public class F2XTestUtil {
     F2XTestUtil(final PipelineFactory pipelineFactory,
                 final FeedHolder feedHolder,
                 final TextConverterStore textConverterStore,
-                final XSLTService xsltService,
+                final XsltStore xsltStore,
                 final ErrorReceiverProxy errorReceiverProxy,
                 final RecordCount recordCount) {
         this.pipelineFactory = pipelineFactory;
         this.feedHolder = feedHolder;
         this.textConverterStore = textConverterStore;
-        this.xsltService = xsltService;
+        this.xsltStore = xsltStore;
         this.errorReceiverProxy = errorReceiverProxy;
         this.recordCount = recordCount;
     }
@@ -99,16 +99,16 @@ public class F2XTestUtil {
 
         // Persist the text converter.
         final DocRef textConverterRef = textConverterStore.createDocument("TEST_TRANSLATION");
-        final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
-        textConverter.setConverterType(textConverterType);
-        textConverter.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
-        textConverterStore.update(textConverter);
+        final TextConverterDoc textConverterDoc = textConverterStore.readDocument(textConverterRef);
+        textConverterDoc.setConverterType(textConverterType);
+        textConverterDoc.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
+        textConverterStore.update(textConverterDoc);
 
         // Persist the XSLT.
-        XSLT xslt = new XSLT();
-        xslt.setName("TEST_TRANSLATION");
-        xslt.setData(StroomPipelineTestFileUtil.getString(xsltLocation));
-        xslt = xsltService.save(xslt);
+        final DocRef xsltRef = xsltStore.createDocument("TEST_TRANSLATION");
+        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+        xsltDoc.setData(StroomPipelineTestFileUtil.getString(xsltLocation));
+        xsltStore.update(xsltDoc);
 
         // Setup the error receiver.
         final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
@@ -142,7 +142,7 @@ public class F2XTestUtil {
         // ElementType("XSLTFilter");
         // final PropertyType xsltPropertyType = new PropertyType(
         // xsltFilterElementType, "xslt", "XSLT", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
+        pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
 
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 

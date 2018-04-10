@@ -30,7 +30,7 @@ import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
@@ -77,7 +77,7 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     @Inject
     private Provider<RecordCount> recordCountProvider;
     @Inject
-    private XSLTService xsltService;
+    private XsltStore xsltStore;
     @Inject
     private TextConverterStore textConverterStore;
     @Inject
@@ -156,15 +156,16 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private PipelineEntity createTransformerPipeline() {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_PATH);
-        XSLT xslt = xsltService.create("Test XSLT");
-        xslt.setData(StreamUtil.streamToString(xsltInputStream));
-        xslt = xsltService.save(xslt);
+        final DocRef xsltRef = xsltStore.createDocument("Test XSLT");
+        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+        xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
+        xsltStore.update(xsltDoc);
 
         // Get the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(TRANSFORMER_PIPELINE);
         final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
         pipelineEntity.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
+                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
         return pipelineService.save(pipelineEntity);
     }
 

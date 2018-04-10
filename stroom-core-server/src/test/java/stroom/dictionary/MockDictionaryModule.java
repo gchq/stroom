@@ -34,7 +34,7 @@ public class MockDictionaryModule extends AbstractModule {
 //        importExportActionHandlerBinder.addBinding().to(DictionaryStoreImpl.class);
 //
 //        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-//        entityServiceByTypeBinder.addBinding(DictionaryDoc.ENTITY_TYPE).to(DictionaryStoreImpl.class);
+//        entityServiceByTypeBinder.addBinding(DictionaryDoc.DOCUMENT_TYPE).to(DictionaryStoreImpl.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(stroom.dictionary.DictionaryStoreImpl.class);

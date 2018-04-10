@@ -39,7 +39,7 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -176,7 +176,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                             value = replace(value, "pipeline", action.getPipeline().getName());
 
                             if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {
-                                fuzzyDocRef = new DocRef(XSLT.ENTITY_TYPE, null, value);
+                                fuzzyDocRef = new DocRef(XsltDoc.DOCUMENT_TYPE, null, value);
                             } else {
                                 fuzzyDocRef = new DocRef(TextConverterDoc.DOCUMENT_TYPE, null, value);
                             }

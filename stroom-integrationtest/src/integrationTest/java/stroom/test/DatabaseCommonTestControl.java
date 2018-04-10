@@ -39,7 +39,6 @@ import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.XSLT;
 import stroom.ruleset.shared.Policy;
 import stroom.security.AppPermission;
 import stroom.security.DocumentPermission;
@@ -62,7 +61,6 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.io.FileUtil;
-import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
 import java.time.Duration;
@@ -112,8 +110,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             User.TABLE_NAME,
             UserGroupUser.TABLE_NAME,
             Volume.TABLE_NAME,
-            VolumeState.TABLE_NAME,
-            XSLT.TABLE_NAME);
+            VolumeState.TABLE_NAME);
 
     private final VolumeService volumeService;
     private final ContentImportService contentImportService;

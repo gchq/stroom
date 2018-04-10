@@ -97,7 +97,7 @@ class DashboardStoreImpl implements DashboardStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(9, DashboardDoc.DOCUMENT_TYPE, DashboardDoc.DOCUMENT_TYPE);
+        return new DocumentType(7, DashboardDoc.DOCUMENT_TYPE, DashboardDoc.DOCUMENT_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////

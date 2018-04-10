@@ -77,7 +77,7 @@ class RemoteFeedServiceImpl implements RemoteFeedService {
 //                // Check that the user identified by the cn is allowed to update
 //                // the feed.
 //
-//                if (!securityContext.hasDocumentPermission(Feed.ENTITY_TYPE, feed.getUuid(), DocumentPermissionNames.UPDATE)) {
+//                if (!securityContext.hasDocumentPermission(Feed.DOCUMENT_TYPE, feed.getUuid(), DocumentPermissionNames.UPDATE)) {
 //                    return GetFeedStatusResponse.createCertificateNotAuthorisedResponse();
 //                }
 //            }

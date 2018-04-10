@@ -22,10 +22,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
 import stroom.node.NodeCache;
-import stroom.pipeline.XSLTService;
+import stroom.pipeline.XsltStore;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -86,7 +87,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private XSLTService xsltService;
+    private XsltStore xsltStore;
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject
@@ -320,10 +321,11 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     private void createStore(final Path data, final Path reference, final Path xslt) {
         try {
             // Add imported XSLT.
-            final XSLT xsltImport = xsltService.create("imported.xsl");
-            xsltImport.setDescription("Imported XSLT");
-            xsltImport.setData(StreamUtil.fileToString(IMPORTED_XSLT));
-            xsltService.save(xsltImport);
+            final DocRef xsltRef = xsltStore.createDocument("imported.xsl");
+            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+            xsltDoc.setDescription("Imported XSLT");
+            xsltDoc.setData(StreamUtil.fileToString(IMPORTED_XSLT));
+            xsltStore.update(xsltDoc);
 
             Feed hostNameToIP = null;
 

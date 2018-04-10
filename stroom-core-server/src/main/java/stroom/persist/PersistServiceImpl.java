@@ -128,7 +128,6 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.node.shared.Volume",
                 "stroom.node.shared.VolumeState",
                 "stroom.pipeline.shared.PipelineEntity",
-                "stroom.pipeline.shared.XSLT",
                 "stroom.ruleset.shared.Policy",
                 "stroom.security.AppPermission",
                 "stroom.security.DocumentPermission",

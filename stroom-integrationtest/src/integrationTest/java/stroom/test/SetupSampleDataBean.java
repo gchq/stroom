@@ -516,7 +516,7 @@ public final class SetupSampleDataBean {
     // private XSLT findXSLT(final String name) {
     // final FindXSLTCriteria findXSLTCriteria = new FindXSLTCriteria();
     // findXSLTCriteria.setName(name);
-    // final BaseResultList<XSLT> list = xsltService.find(findXSLTCriteria);
+    // final BaseResultList<XSLT> list = xsltStore.find(findXSLTCriteria);
     // if (list != null && list.size() > 0) {
     // return list.getFirst();
     // }

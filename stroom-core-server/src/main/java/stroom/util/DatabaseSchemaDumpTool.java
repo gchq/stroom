@@ -69,7 +69,7 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
         for (final String table : tables) {
             try (final ResultSet resultSet = databaseMetaData.getColumns(cat, schema, table, null)) {
                 while (resultSet.next()) {
-                    rtnList.add((table + " COL " + resultSet.getString("COLUMN_NAME") + "(" + resultSet.getString("ENTITY_TYPE")
+                    rtnList.add((table + " COL " + resultSet.getString("COLUMN_NAME") + "(" + resultSet.getString("DOCUMENT_TYPE")
                             + ")").toUpperCase());
                 }
             }

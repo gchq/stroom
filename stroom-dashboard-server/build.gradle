@@ -17,6 +17,7 @@
 dependencies {
     compile project(':stroom-dashboard-shared')
     compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
     compile project(':stroom-docstore-server')
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')

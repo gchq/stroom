@@ -30,7 +30,7 @@ import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
@@ -67,7 +67,7 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
     @Inject
     private TextConverterStore textConverterStore;
     @Inject
-    private XSLTService xsltService;
+    private XsltStore xsltStore;
     @Inject
     private PipelineService pipelineService;
     @Inject
@@ -98,10 +98,10 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
 
             // Setup the XSLT.
             final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_LOCATION);
-            XSLT xslt = new XSLT();
-            xslt.setName("Test");
-            xslt.setData(StreamUtil.streamToString(xsltInputStream));
-            xslt = xsltService.save(xslt);
+            final DocRef xsltRef = xsltStore.createDocument("Test");
+            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+            xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
+            xsltStore.update(xsltDoc);
 
             final Path testDir = getCurrentTestDir();
 
@@ -124,7 +124,7 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
             pipelineEntity.getPipelineData().addProperty(
                     PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
             pipelineEntity.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
+                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
             pipelineEntity = pipelineService.save(pipelineEntity);
 
             // Create the parser.

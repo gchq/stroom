@@ -292,7 +292,10 @@ class DictionaryStoreImpl implements DictionaryStore {
 
     @Override
     public List<DocRef> findByName(final String name) {
-        return store.list().stream().filter(docRef -> docRef.getName().equals(name)).collect(Collectors.toList());
+        if (name == null) {
+            return Collections.emptyList();
+        }
+        return store.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
     }
 
     @Override

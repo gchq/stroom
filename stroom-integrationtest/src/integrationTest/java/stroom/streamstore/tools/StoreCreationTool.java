@@ -31,14 +31,13 @@ import stroom.index.shared.IndexFields;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.TextConverterStore;
-import stroom.pipeline.XSLTService;
+import stroom.pipeline.XsltStore;
 import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
-import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -100,7 +99,7 @@ public final class StoreCreationTool {
     private final StreamStore streamStore;
     private final FeedService feedService;
     private final TextConverterStore textConverterStore;
-    private final XSLTService xsltService;
+    private final XsltStore xsltStore;
     private final PipelineService pipelineService;
     private final CommonTestScenarioCreator commonTestScenarioCreator;
     private final CommonTestControl commonTestControl;
@@ -112,7 +111,7 @@ public final class StoreCreationTool {
     public StoreCreationTool(final StreamStore streamStore,
                              final FeedService feedService,
                              final TextConverterStore textConverterStore,
-                             final XSLTService xsltService,
+                             final XsltStore xsltStore,
                              final PipelineService pipelineService,
                              final CommonTestScenarioCreator commonTestScenarioCreator,
                              final CommonTestControl commonTestControl,
@@ -122,7 +121,7 @@ public final class StoreCreationTool {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.textConverterStore = textConverterStore;
-        this.xsltService = xsltService;
+        this.xsltStore = xsltStore;
         this.pipelineService = pipelineService;
         this.commonTestScenarioCreator = commonTestScenarioCreator;
         this.commonTestControl = commonTestControl;
@@ -146,7 +145,7 @@ public final class StoreCreationTool {
                                  final TextConverterType textConverterType,
                                  final Path textConverterLocation,
                                  final Path xsltLocation,
-                                 final Path dataLocation) throws IOException {
+                                 final Path dataLocation) {
         commonTestControl.createRequiredXMLSchemas();
 
         final Feed referenceFeed = getRefFeed(feedName, textConverterType, textConverterLocation, xsltLocation);
@@ -237,7 +236,7 @@ public final class StoreCreationTool {
                     PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", DocRefUtil.create(textConverter)));
         }
         // Setup the xslt.
-        final XSLT xslt = getXSLT(feedName, xsltLocation);
+        final DocRef xslt = getXSLT(feedName, xsltLocation);
         pipeline.getPipelineData().addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
         pipeline.getPipelineData().addProperty(PipelineDataUtil.createProperty("storeAppender", "feed", referenceFeed));
         pipeline.getPipelineData()
@@ -279,17 +278,17 @@ public final class StoreCreationTool {
      * @return An event feed definition.
      * @throws IOException Thrown if files not found.
      */
-    public Feed addEventData(final String feedName,
-                             final TextConverterType translationTextConverterType,
-                             final Path translationTextConverterLocation,
-                             final Path translationXsltLocation,
-                             final TextConverterType contextTextConverterType,
-                             final Path contextTextConverterLocation,
-                             final Path contextXsltLocation,
-                             final Path flatteningXsltLocation,
-                             final Path dataLocation,
-                             final Path contextLocation,
-                             final Set<Feed> referenceFeeds) throws IOException {
+    private Feed addEventData(final String feedName,
+                              final TextConverterType translationTextConverterType,
+                              final Path translationTextConverterLocation,
+                              final Path translationXsltLocation,
+                              final TextConverterType contextTextConverterType,
+                              final Path contextTextConverterLocation,
+                              final Path contextXsltLocation,
+                              final Path flatteningXsltLocation,
+                              final Path dataLocation,
+                              final Path contextLocation,
+                              final Set<Feed> referenceFeeds) throws IOException {
         commonTestControl.createRequiredXMLSchemas();
 
         final Feed eventFeed = getEventFeed(feedName, translationTextConverterType, translationTextConverterLocation,
@@ -394,7 +393,7 @@ public final class StoreCreationTool {
                                               final Path contextTextConverterLocation, final Path contextXsltLocation) {
         final TextConverterDoc contextTextConverter = getTextConverter(feed.getName() + "_CONTEXT", textConverterType,
                 contextTextConverterLocation);
-        final XSLT contextXSLT = getXSLT(feed.getName() + "_CONTEXT", contextXsltLocation);
+        final DocRef contextXSLT = getXSLT(feed.getName() + "_CONTEXT", contextXsltLocation);
 
         // Setup the pipeline.
         final String data = StreamUtil.fileToString(contextDataPipeline);
@@ -427,8 +426,8 @@ public final class StoreCreationTool {
                 translationTextConverterLocation);
 
         // Setup the xslt.
-        final XSLT translationXSLT = getXSLT(feed.getName(), translationXsltLocation);
-        final XSLT flatteningXSLT = getXSLT(feed.getName() + "_FLATTENING", flatteningXsltLocation);
+        final DocRef translationXSLT = getXSLT(feed.getName(), translationXsltLocation);
+        final DocRef flatteningXSLT = getXSLT(feed.getName() + "_FLATTENING", flatteningXsltLocation);
 
         // Read the pipeline data.
         final PipelineData pipelineData = pipeline.getPipelineData();
@@ -485,7 +484,7 @@ public final class StoreCreationTool {
         final PipelineEntity pipeline = getPipeline(index.getName(), StreamUtil.fileToString(indexingPipeline));
 
         // Setup the xslt.
-        final XSLT xslt = getXSLT(index.getName(), xsltLocation);
+        final DocRef xslt = getXSLT(index.getName(), xsltLocation);
 
         // Read the pipeline data.
         final PipelineData pipelineData = pipeline.getPipelineData();
@@ -542,13 +541,11 @@ public final class StoreCreationTool {
         return textConverter;
     }
 
-    private XSLT getXSLT(final String name, final Path xsltLocation) {
+    private DocRef getXSLT(final String name, final Path xsltLocation) {
         // Try to find an existing one first.
-        final FindXSLTCriteria criteria = new FindXSLTCriteria();
-        criteria.getName().setString(name);
-        final BaseResultList<XSLT> list = xsltService.find(criteria);
+        final List<DocRef> list = xsltStore.findByName(name);
         if (list != null && list.size() > 0) {
-            return list.getFirst();
+            return list.get(0);
         }
 
         // Get the data to use.
@@ -559,15 +556,15 @@ public final class StoreCreationTool {
         }
 
         // Create the new XSLT entity.
-        XSLT xslt = null;
         if (data != null) {
-            xslt = xsltService.create(name);
-            xslt.setDescription("Description " + name);
-            xslt.setData(data);
-
-            xslt = xsltService.save(xslt);
+            final DocRef docRef = xsltStore.createDocument(name);
+            final XsltDoc document = xsltStore.readDocument(docRef);
+            document.setDescription("Description " + name);
+            document.setData(data);
+            xsltStore.update(document);
+            return docRef;
         }
-        return xslt;
+        return null;
     }
 
     private PipelineEntity getPipeline(final String name, final String data) {
@@ -645,7 +642,7 @@ public final class StoreCreationTool {
         final PipelineEntity pipeline = getPipeline(name, StreamUtil.fileToString(searchExtractionPipeline));
 
         // Setup the xslt.
-        final XSLT xslt = getXSLT(name, xsltLocation);
+        final DocRef xslt = getXSLT(name, xsltLocation);
         final PipelineData pipelineData = pipeline.getPipelineData();
 
         // Change some properties.

@@ -29,10 +29,10 @@ import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xsltfunctions.StroomXSLTFunctionLibrary;
-import stroom.pool.AbstractEntityPool;
+import stroom.pool.AbstractDocPool;
 import stroom.pool.PoolItem;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
@@ -48,7 +48,7 @@ import javax.xml.transform.stream.StreamSource;
 import java.util.List;
 
 @Singleton
-class XSLTPoolImpl extends AbstractEntityPool<XSLT, StoredXsltExecutable> implements XSLTPool {
+class XSLTPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XSLTPool {
     private static final Logger LOGGER = LoggerFactory.getLogger(XSLTPoolImpl.class);
 
     private final URIResolver uriResolver;
@@ -67,7 +67,7 @@ class XSLTPoolImpl extends AbstractEntityPool<XSLT, StoredXsltExecutable> implem
     }
 
     @Override
-    public PoolItem<StoredXsltExecutable> borrowConfiguredTemplate(final XSLT k, final ErrorReceiver errorReceiver, final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences, final boolean usePool) {
+    public PoolItem<StoredXsltExecutable> borrowConfiguredTemplate(final XsltDoc k, final ErrorReceiver errorReceiver, final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences, final boolean usePool) {
         // Get the item from the pool.
         final PoolItem<StoredXsltExecutable> poolItem = super.borrowObject(k, usePool);
 
@@ -91,7 +91,7 @@ class XSLTPoolImpl extends AbstractEntityPool<XSLT, StoredXsltExecutable> implem
     }
 
     @Override
-    protected StoredXsltExecutable createValue(final XSLT xslt) {
+    protected StoredXsltExecutable createValue(final XsltDoc xslt) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Creating xslt executable: " + xslt.toString());
         }

@@ -291,7 +291,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.append(" INNER JOIN FETCH e.feed");
 
         if (fetchSet != null) {
-//            if (fetchSet.contains(Feed.ENTITY_TYPE)) {
+//            if (fetchSet.contains(Feed.DOCUMENT_TYPE)) {
 //                sql.append(" INNER JOIN FETCH e.feed");
 //            }
             if (fetchSet.contains(StreamType.ENTITY_TYPE)) {
@@ -475,13 +475,13 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-//    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
+//    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
     public StreamTarget openStreamTarget(final Stream stream) {
         return openStreamTarget(stream, false);
     }
 
     @Override
-//    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
+//    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
     @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     public StreamTarget openStreamTarget(final Stream stream, final boolean append) {
         return entityManagerSupport.transactionResult(em -> {

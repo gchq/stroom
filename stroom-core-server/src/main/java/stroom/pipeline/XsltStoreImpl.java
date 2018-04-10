@@ -15,18 +15,18 @@
  *
  */
 
-package stroom.script;
+package stroom.pipeline;
 
 import stroom.docstore.Persistence;
+import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
-import stroom.entity.shared.DocRefs;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
-import stroom.script.shared.ScriptDoc;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
@@ -34,29 +34,29 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Singleton
-class ScriptStoreImpl implements ScriptStore {
-    private final Store<ScriptDoc> store;
+class XsltStoreImpl implements XsltStore {
+    private final Store<XsltDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
-    private final ScriptSerialiser serialiser;
+    private final Serialiser2<XsltDoc> serialiser;
 
     @Inject
-    ScriptStoreImpl(final Store<ScriptDoc> store, final SecurityContext securityContext, final Persistence persistence) {
+    XsltStoreImpl(final Store<XsltDoc> store, final SecurityContext securityContext, final Persistence persistence) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
 
-        serialiser = new ScriptSerialiser();
+        serialiser = new XsltSerialiser();
 
-        store.setType(ScriptDoc.DOCUMENT_TYPE, ScriptDoc.class);
+        store.setType(XsltDoc.DOCUMENT_TYPE, XsltDoc.class);
         store.setSerialiser(serialiser);
     }
 
@@ -98,7 +98,7 @@ class ScriptStoreImpl implements ScriptStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(99, ScriptDoc.DOCUMENT_TYPE, ScriptDoc.DOCUMENT_TYPE);
+        return new DocumentType(5, XsltDoc.DOCUMENT_TYPE, XsltDoc.DOCUMENT_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -110,12 +110,12 @@ class ScriptStoreImpl implements ScriptStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public ScriptDoc readDocument(final DocRef docRef) {
+    public XsltDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
 
     @Override
-    public ScriptDoc writeDocument(final ScriptDoc document) {
+    public XsltDoc writeDocument(final XsltDoc document) {
         return store.writeDocument(document);
     }
 
@@ -155,24 +155,24 @@ class ScriptStoreImpl implements ScriptStore {
 
     private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         Map<String, byte[]> result = dataMap;
-        if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
+        if (!dataMap.containsKey("meta")) {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
                 if (importState.ok(importMode)) {
-                    ScriptDoc document;
+                    XsltDoc document;
                     if (exists) {
                         document = read(uuid);
 
                     } else {
-                        final OldScript oldScript = new OldScript();
+                        final OldXSLT oldXslt = new OldXSLT();
                         final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldScript, dataMap);
+                        legacySerialiser.performImport(oldXslt, dataMap);
 
                         final long now = System.currentTimeMillis();
                         final String userId = securityContext.getUserId();
 
-                        document = new ScriptDoc();
+                        document = new XsltDoc();
                         document.setType(docRef.getType());
                         document.setUuid(uuid);
                         document.setName(docRef.getName());
@@ -182,17 +182,12 @@ class ScriptStoreImpl implements ScriptStore {
                         document.setCreateUser(userId);
                         document.setUpdateUser(userId);
 
-                        final DocRefs docRefs = serialiser.getDocRefsFromLegacyXML(oldScript.getDependenciesXML());
-                        if (docRefs != null) {
-                            final List<DocRef> dependencies = new ArrayList<>(docRefs.getDoc());
-                            dependencies.sort(DocRef::compareTo);
-                            document.setDependencies(dependencies);
-                        }
+                        document.setDescription(oldXslt.getDescription());
                     }
 
                     result = serialiser.write(document);
-                    if (dataMap.containsKey("resource.js")) {
-                        result.put("js", dataMap.remove("resource.js"));
+                    if (dataMap.containsKey("data.xsl")) {
+                        result.put("xsl", dataMap.remove("data.xsl"));
                     }
                 }
 
@@ -211,17 +206,25 @@ class ScriptStoreImpl implements ScriptStore {
 
     @Override
     public String getDocType() {
-        return ScriptDoc.DOCUMENT_TYPE;
+        return XsltDoc.DOCUMENT_TYPE;
     }
 
     @Override
-    public ScriptDoc read(final String uuid) {
+    public XsltDoc read(final String uuid) {
         return store.read(uuid);
     }
 
     @Override
-    public ScriptDoc update(final ScriptDoc document) {
+    public XsltDoc update(final XsltDoc document) {
         return store.update(document);
+    }
+
+    @Override
+    public List<DocRef> findByName(final String name) {
+        if (name == null) {
+            return Collections.emptyList();
+        }
+        return store.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
     }
 
     @Override

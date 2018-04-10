@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,20 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.dashboard.shared;
+package stroom.pipeline;
 
-import stroom.entity.shared.FindDocumentEntityCriteria;
+import stroom.document.DocumentStore;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.query.api.v2.DocRef;
 
-public class FindDashboardCriteria extends FindDocumentEntityCriteria {
-    private static final long serialVersionUID = -4421720204507720754L;
+import java.util.List;
 
-    public FindDashboardCriteria() {
-        // Default constructor necessary for GWT serialisation.
-    }
+public interface XsltStore extends DocumentStore<XsltDoc> {
+    XsltDoc read(String uuid);
 
-    public FindDashboardCriteria(final String name) {
-        super(name);
-    }
+    XsltDoc update(XsltDoc doc);
+
+    List<DocRef> findByName(String name);
+
+    List<DocRef> list();
 }

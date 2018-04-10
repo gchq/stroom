@@ -379,9 +379,9 @@ public class ImportExportHelper {
 //    private String toPath(final Folder folder, final String name) {
 //        if (folder != null) {
 //            if (name != null) {
-//                return entityPathResolver.getEntityPath(Folder.ENTITY_TYPE, null, folder) + "/" + name;
+//                return entityPathResolver.getEntityPath(Folder.DOCUMENT_TYPE, null, folder) + "/" + name;
 //            } else {
-//                return entityPathResolver.getEntityPath(Folder.ENTITY_TYPE, null, folder);
+//                return entityPathResolver.getEntityPath(Folder.DOCUMENT_TYPE, null, folder);
 //            }
 //        } else {
 //            return "/" + name;

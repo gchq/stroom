@@ -132,7 +132,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             enterLongMode(property);
         } else if ("String".equals(propertyType.getType())) {
             enterStringMode(property);
-//        } else if (StreamType.ENTITY_TYPE.equals(propertyType.getType())) {
+//        } else if (StreamType.DOCUMENT_TYPE.equals(propertyType.getType())) {
 //            enterStreamTypeMode(property);
         } else {
             enterEntityMode(property);
@@ -159,7 +159,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             property.setValue(new PipelinePropertyValue(value));
         } else if ("String".equals(propertyType.getType())) {
             property.setValue(new PipelinePropertyValue(textBox.getText()));
-//        } else if (StreamType.ENTITY_TYPE.equals(propertyType.getType())) {
+//        } else if (StreamType.DOCUMENT_TYPE.equals(propertyType.getType())) {
 //            property.setValue(new PipelinePropertyValue(streamTypesWidget.getSelectedItem()));
         } else {
             final DocRef namedEntity = entityDropDownPresenter.getSelectedEntityReference();
