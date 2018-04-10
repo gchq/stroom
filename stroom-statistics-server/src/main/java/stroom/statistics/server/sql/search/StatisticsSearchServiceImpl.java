@@ -15,6 +15,7 @@ import stroom.statistics.server.sql.SQLStatisticNames;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
+import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -38,7 +39,6 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") //called by DI
 @Component
-//@Scope(value = StroomScope.TASK)
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
@@ -57,7 +57,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
-//    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
@@ -70,11 +70,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @SuppressWarnings("unused") // Called by DI
     @Inject
     StatisticsSearchServiceImpl(@Named("statisticsDataSource") final DataSource statisticsDataSource,
-                                final StroomPropertyService propertyService) {
-//                                final TaskMonitor taskMonitor) {
+                                final StroomPropertyService propertyService,
+                                final TaskContext taskContext) {
         this.statisticsDataSource = statisticsDataSource;
         this.propertyService = propertyService;
-//        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -198,26 +198,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-    private ValueExtractor buildLongValueExtractor(final String columnName, final int fieldIndex) {
-        return (rs, arr, cache) ->
-                arr[fieldIndex] = getResultSetLong(rs, columnName);
-    }
-
-    private ValueExtractor buildTagFieldValueExtractor(final String fieldName, final int fieldIndex) {
-        return (rs, arr, cache) -> {
-            String value = cache.get(fieldName);
-            if (value == null) {
-                //populate our cache of
-                extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME))
-                        .forEach(cache::put);
-            }
-            value = cache.get(fieldName);
-            arr[fieldIndex] = value;
-        };
-    }
 
     /**
-     * Build a mapper function that will only extract the columns of interest from the resultSet row
+     * Build a mapper function that will only extract the columns of interest from the resultSet row.
+     * Assumes something external to the returned function will advance the resultSet
      */
     private Function<ResultSet, String[]> buildResultSetMapper(
             final FieldIndexMap fieldIndexMap,
@@ -226,83 +210,43 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         LAMBDA_LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
                 fieldIndexMap, statisticStoreEntity.getUuid()));
 
-        final List<String> allFields = new ArrayList<>();
-        allFields.add(StatisticStoreEntity.FIELD_NAME_DATE_TIME);
-        allFields.add(StatisticStoreEntity.FIELD_NAME_COUNT);
-        allFields.add(StatisticStoreEntity.FIELD_NAME_VALUE);
-        allFields.add(StatisticStoreEntity.FIELD_NAME_PRECISION_MS);
-        allFields.addAll(statisticStoreEntity.getFieldNames());
-
-        //construct a list of field extractors that can populate the appropriate bit of the data arr
+        // construct a list of field extractors that can populate the appropriate bit of the data arr
         // when given a resultSet row
-        List<ValueExtractor> valueExtractors = allFields.stream()
-                .map(fieldName -> {
-                    int idx = fieldIndexMap.get(fieldName);
-                    if (idx == -1) {
-                        LOGGER.debug("Field {} is not in fieldIndexMap", fieldName);
-                        return Optional.<ValueExtractor>empty();
-                    } else {
-                        ValueExtractor extractor;
-                        if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
-                            extractor = buildLongValueExtractor(SQLStatisticNames.TIME_MS, idx);
-                        } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_COUNT)) {
+        List<ValueExtractor> valueExtractors = fieldIndexMap.getMap().entrySet().stream()
+                .map(entry -> {
+                    final int idx = entry.getValue();
+                    final String fieldName = entry.getKey();
+                    final ValueExtractor extractor;
+                    if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
+                        extractor = buildLongValueExtractor(SQLStatisticNames.TIME_MS, idx);
+                    } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_COUNT)) {
+                        extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
+                    } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_PRECISION_MS)) {
+                        extractor = buildPrecisionMsExtractor(idx);
+                    } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_VALUE)) {
+                        final StatisticType statisticType = statisticStoreEntity.getStatisticType();
+                        if (statisticType.equals(StatisticType.COUNT)) {
                             extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
-                        } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_PRECISION_MS)) {
-                            extractor = (rs, arr, cache) -> {
-
-                                // the precision in the table represents the number of zeros
-                                // of millisecond precision, e.g.
-                                // 6=1,000,000ms
-                                final long precisionMs;
-                                try {
-                                    precisionMs = (long) Math.pow(10, rs.getInt(SQLStatisticNames.PRECISION));
-                                } catch (SQLException e) {
-                                    throw new RuntimeException("Error extracting precision field", e);
-                                }
-                                arr[idx] = Long.toString(precisionMs);
-                            };
-                        } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_VALUE)) {
-                            if (statisticStoreEntity.getStatisticType().equals(StatisticType.COUNT)) {
-                                extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
-                            } else {
-                                //value stat
-                                extractor = (rs, arr, cache) -> {
-
-                                    final double aggregatedValue;
-                                    final long count;
-                                    try {
-                                        aggregatedValue = rs.getDouble(SQLStatisticNames.VALUE);
-                                        count = rs.getLong(SQLStatisticNames.COUNT);
-                                    } catch (SQLException e) {
-                                        throw new RuntimeException("Error extracting count and value fields", e);
-                                    }
-
-                                    // the aggregateValue is sum of all values against that
-                                    // key/time. We therefore need to get the
-                                    // average using the count column
-                                    final double averagedValue = count != 0 ? (aggregatedValue / count) : 0;
-
-                                    arr[idx] = Double.toString(averagedValue);
-                                };
-                            }
-                        } else if (statisticStoreEntity.getFieldNames().contains(fieldName)) {
-                            // this is a tag field so need to extract the tags/values from the NAME col.
-                            // We only want to do this extraction once so we cache the values
-                            extractor = buildTagFieldValueExtractor(fieldName, idx);
+                        } else if (statisticType.equals(StatisticType.VALUE)){
+                            // value stat
+                            extractor = buildStatValueExtractor(idx);
                         } else {
-                            throw new RuntimeException(String.format("Unexpected fieldName %s", fieldName));
+                            throw new RuntimeException(String.format("Unexpected type %s", statisticType));
                         }
-                        LAMBDA_LOGGER.debug(() ->
-                                String.format("Adding extraction function for field %s, idx %s",
-                                        fieldName, idx));
-                        return Optional.of(extractor);
+                    } else if (statisticStoreEntity.getFieldNames().contains(fieldName)) {
+                        // this is a tag field so need to extract the tags/values from the NAME col.
+                        // We only want to do this extraction once so we cache the values
+                        extractor = buildTagFieldValueExtractor(fieldName, idx);
+                    } else {
+                        throw new RuntimeException(String.format("Unexpected fieldName %s", fieldName));
                     }
+                    LAMBDA_LOGGER.debug(() ->
+                            String.format("Adding extraction function for field %s, idx %s", fieldName, idx));
+                    return extractor;
                 })
-                .filter(Optional::isPresent)
-                .map(Optional::get)
                 .collect(Collectors.toList());
 
-        final int arrSize = fieldIndexMap.size();
+        final int arrSize = valueExtractors.size();
 
         //the mapping function that will be used on each row in the resultSet, that makes use of the ValueExtractors
         //created above
@@ -335,6 +279,64 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         };
     }
 
+    private ValueExtractor buildPrecisionMsExtractor(final int idx) {
+        final ValueExtractor extractor;
+        extractor = (rs, arr, cache) -> {
+            // the precision in the table represents the number of zeros
+            // of millisecond precision, e.g.
+            // 6=1,000,000ms
+            final long precisionMs;
+            try {
+                precisionMs = (long) Math.pow(10, rs.getInt(SQLStatisticNames.PRECISION));
+            } catch (SQLException e) {
+                throw new RuntimeException("Error extracting precision field", e);
+            }
+            arr[idx] = Long.toString(precisionMs);
+        };
+        return extractor;
+    }
+
+    private ValueExtractor buildStatValueExtractor(final int idx) {
+        final ValueExtractor extractor;
+        extractor = (rs, arr, cache) -> {
+
+            final double aggregatedValue;
+            final long count;
+            try {
+                aggregatedValue = rs.getDouble(SQLStatisticNames.VALUE);
+                count = rs.getLong(SQLStatisticNames.COUNT);
+            } catch (SQLException e) {
+                throw new RuntimeException("Error extracting count and value fields", e);
+            }
+
+            // the aggregateValue is sum of all values against that
+            // key/time. We therefore need to get the
+            // average using the count column
+            final double averagedValue = count != 0 ? (aggregatedValue / count) : 0;
+
+            arr[idx] = Double.toString(averagedValue);
+        };
+        return extractor;
+    }
+
+    private ValueExtractor buildLongValueExtractor(final String columnName, final int fieldIndex) {
+        return (rs, arr, cache) ->
+                arr[fieldIndex] = getResultSetLong(rs, columnName);
+    }
+
+    private ValueExtractor buildTagFieldValueExtractor(final String fieldName, final int fieldIndex) {
+        return (rs, arr, cache) -> {
+            String value = cache.get(fieldName);
+            if (value == null) {
+                //populate our cache of
+                extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME))
+                        .forEach(cache::put);
+            }
+            value = cache.get(fieldName);
+            arr[fieldIndex] = value;
+        };
+    }
+
     private String getResultSetLong(final ResultSet resultSet, final String column) {
         try {
             return Long.toString(resultSet.getLong(column));
@@ -352,7 +354,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     }
 
     private Flowable<String[]> getFlowableQueryResults(final SqlBuilder sql,
-                                                        final Function<ResultSet, String[]> resultSetMapper) {
+                                                       final Function<ResultSet, String[]> resultSetMapper) {
 
         //Not thread safe as each onNext will get the same ResultSet instance, however its position
         // will have mode on each time.
@@ -375,8 +377,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                     },
                                     (rs, emitter) -> {
                                         //advance the resultSet, if it is a row emit it, else finish the flow
-//                                        if (taskMonitor.isTerminated() || Thread.currentThread().isInterrupted()) {
-                                        if (Thread.currentThread().isInterrupted()) {
+                                        // TODO prob needs to change in 6.1
+                                        if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
                                         } else {
@@ -423,6 +425,36 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             }
             return statisticTags;
         }
+    }
+
+    /**
+     * TODO: This is a bit simplistic as a user could create a filter that said
+     * user=user1 AND user='*' which makes no sense. At the moment we would
+     * assume that the user tag is being rolled up so user=user1 would never be
+     * found in the data and thus would return no data.
+     */
+    private static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
+                                                                final StatisticStoreEntity statisticsDataSource) {
+        final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
+
+        final RollUpBitMask result;
+
+        if (rolledUpTagsFound.size() > 0) {
+            final List<Integer> rollUpTagPositionList = new ArrayList<>();
+
+            for (final String tag : rolledUpTagsFound) {
+                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
+                if (position == null) {
+                    throw new RuntimeException(String.format("No field position found for tag %s", tag));
+                }
+                rollUpTagPositionList.add(position);
+            }
+            result = RollUpBitMask.fromTagPositions(rollUpTagPositionList);
+
+        } else {
+            result = RollUpBitMask.ZERO_MASK;
+        }
+        return result;
     }
 
     @FunctionalInterface
@@ -512,33 +544,5 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             }
         }
     }
-    /**
-     * TODO: This is a bit simplistic as a user could create a filter that said
-     * user=user1 AND user='*' which makes no sense. At the moment we would
-     * assume that the user tag is being rolled up so user=user1 would never be
-     * found in the data and thus would return no data.
-     */
-    public static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
-                                                               final StatisticStoreEntity statisticsDataSource) {
-        final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
 
-        final RollUpBitMask result;
-
-        if (rolledUpTagsFound.size() > 0) {
-            final List<Integer> rollUpTagPositionList = new ArrayList<>();
-
-            for (final String tag : rolledUpTagsFound) {
-                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
-                if (position == null) {
-                    throw new RuntimeException(String.format("No field position found for tag %s", tag));
-                }
-                rollUpTagPositionList.add(position);
-            }
-            result = RollUpBitMask.fromTagPositions(rollUpTagPositionList);
-
-        } else {
-            result = RollUpBitMask.ZERO_MASK;
-        }
-        return result;
-    }
 }
