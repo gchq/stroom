@@ -198,26 +198,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-    private ValueExtractor buildLongValueExtractor(final String columnName, final int fieldIndex) {
-        return (rs, arr, cache) ->
-                arr[fieldIndex] = getResultSetLong(rs, columnName);
-    }
-
-    private ValueExtractor buildTagFieldValueExtractor(final String fieldName, final int fieldIndex) {
-        return (rs, arr, cache) -> {
-            String value = cache.get(fieldName);
-            if (value == null) {
-                //populate our cache of
-                extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME))
-                        .forEach(cache::put);
-            }
-            value = cache.get(fieldName);
-            arr[fieldIndex] = value;
-        };
-    }
 
     /**
-     * Build a mapper function that will only extract the columns of interest from the resultSet row
+     * Build a mapper function that will only extract the columns of interest from the resultSet row.
+     * Assumes something external to the returned function will advance the resultSet
      */
     private Function<ResultSet, String[]> buildResultSetMapper(
             final FieldIndexMap fieldIndexMap,
@@ -335,6 +319,24 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         return extractor;
     }
 
+    private ValueExtractor buildLongValueExtractor(final String columnName, final int fieldIndex) {
+        return (rs, arr, cache) ->
+                arr[fieldIndex] = getResultSetLong(rs, columnName);
+    }
+
+    private ValueExtractor buildTagFieldValueExtractor(final String fieldName, final int fieldIndex) {
+        return (rs, arr, cache) -> {
+            String value = cache.get(fieldName);
+            if (value == null) {
+                //populate our cache of
+                extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME))
+                        .forEach(cache::put);
+            }
+            value = cache.get(fieldName);
+            arr[fieldIndex] = value;
+        };
+    }
+
     private String getResultSetLong(final ResultSet resultSet, final String column) {
         try {
             return Long.toString(resultSet.getLong(column));
@@ -422,6 +424,36 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             }
             return statisticTags;
         }
+    }
+
+    /**
+     * TODO: This is a bit simplistic as a user could create a filter that said
+     * user=user1 AND user='*' which makes no sense. At the moment we would
+     * assume that the user tag is being rolled up so user=user1 would never be
+     * found in the data and thus would return no data.
+     */
+    private static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
+                                                                final StatisticStoreEntity statisticsDataSource) {
+        final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
+
+        final RollUpBitMask result;
+
+        if (rolledUpTagsFound.size() > 0) {
+            final List<Integer> rollUpTagPositionList = new ArrayList<>();
+
+            for (final String tag : rolledUpTagsFound) {
+                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
+                if (position == null) {
+                    throw new RuntimeException(String.format("No field position found for tag %s", tag));
+                }
+                rollUpTagPositionList.add(position);
+            }
+            result = RollUpBitMask.fromTagPositions(rollUpTagPositionList);
+
+        } else {
+            result = RollUpBitMask.ZERO_MASK;
+        }
+        return result;
     }
 
     @FunctionalInterface
@@ -512,33 +544,4 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-    /**
-     * TODO: This is a bit simplistic as a user could create a filter that said
-     * user=user1 AND user='*' which makes no sense. At the moment we would
-     * assume that the user tag is being rolled up so user=user1 would never be
-     * found in the data and thus would return no data.
-     */
-    public static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
-                                                               final StatisticStoreEntity statisticsDataSource) {
-        final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
-
-        final RollUpBitMask result;
-
-        if (rolledUpTagsFound.size() > 0) {
-            final List<Integer> rollUpTagPositionList = new ArrayList<>();
-
-            for (final String tag : rolledUpTagsFound) {
-                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
-                if (position == null) {
-                    throw new RuntimeException(String.format("No field position found for tag %s", tag));
-                }
-                rollUpTagPositionList.add(position);
-            }
-            result = RollUpBitMask.fromTagPositions(rollUpTagPositionList);
-
-        } else {
-            result = RollUpBitMask.ZERO_MASK;
-        }
-        return result;
-    }
 }
