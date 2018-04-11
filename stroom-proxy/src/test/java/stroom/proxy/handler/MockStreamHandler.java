@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MockStreamHandler implements StreamHandler {
+class MockStreamHandler implements StreamHandler {
     private List<String> entryNameList = new ArrayList<>();
     private List<byte[]> byteArrayList = new ArrayList<>();
     private ByteArrayOutputStream byteArrayOutputStream = null;

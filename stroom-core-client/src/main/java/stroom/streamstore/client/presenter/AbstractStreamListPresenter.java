@@ -343,8 +343,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                     TooltipUtil.addRowData(html, key, row.formatAttribute(key));
                 }
             }
-        } catch (final Exception ex) {
-            html.append(ex.getMessage());
+        } catch (final RuntimeException e) {
+            html.append(e.getMessage());
         }
 
         // if (securityContext.hasAppPermission(Volume.ENTITY_TYPE, DocumentPermissionNames.READ)) {

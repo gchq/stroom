@@ -18,7 +18,6 @@ package stroom.cache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.shared.BaseResultList;
@@ -28,7 +27,7 @@ import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheManager.CacheHolder;
 import stroom.util.cache.CacheUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -39,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Component
 public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomCacheManagerImpl.class);
 
@@ -51,7 +49,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     }
 
     @Override
-    public BaseResultList<CacheInfo> find(final FindCacheInfoCriteria criteria) throws RuntimeException {
+    public BaseResultList<CacheInfo> find(final FindCacheInfoCriteria criteria) {
         final PageRequest pageRequest = criteria.obtainPageRequest();
 
         List<CacheInfo> list = findCaches(criteria);
@@ -108,7 +106,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
                                 final long nanos = Long.valueOf(v);
                                 map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000, true));
 
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 // Ignore.
                             }
                         }
@@ -123,7 +121,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     }
 
     private void addEntries(final Map<String, String> map, String string) {
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
 
             string = string.replaceAll("^[^{]*\\{", "");
             string = string.replaceAll("}.*", "");
@@ -152,7 +150,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             LOGGER.debug("Evicting cache entries for " + k);
             try {
                 v.getCache().cleanUp();
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         });
@@ -167,7 +165,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             LOGGER.debug("Clearing cache entries for " + k);
             try {
                 CacheUtil.clear(v.getCache());
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         });

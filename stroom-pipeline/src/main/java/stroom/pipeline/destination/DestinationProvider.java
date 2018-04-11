@@ -16,7 +16,7 @@
 
 package stroom.pipeline.destination;
 
-import stroom.pipeline.server.factory.Target;
+import stroom.pipeline.factory.Target;
 
 import java.io.IOException;
 

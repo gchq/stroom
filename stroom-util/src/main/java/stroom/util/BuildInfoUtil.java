@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.date.DateUtil;
 
+import java.io.IOException;
 import java.util.Properties;
 
 public class BuildInfoUtil {
@@ -33,7 +34,7 @@ public class BuildInfoUtil {
         try {
             properties.load(
                     BuildInfoUtil.class.getClassLoader().getResourceAsStream("META-INF/stroom-util-build.properties"));
-        } catch (Exception e) {
+        } catch (final IOException e) {
             LOGGER.error("Unable to load stroom-util-build.properties!", e);
         }
         buildVersion = properties.getProperty("buildVersion");

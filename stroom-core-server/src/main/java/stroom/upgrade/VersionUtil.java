@@ -41,7 +41,7 @@ public class VersionUtil {
                 version.setPatch(0);
             }
             return version;
-        } catch (Exception ex) {
+        } catch (final RuntimeException e) {
             return null;
         }
     }

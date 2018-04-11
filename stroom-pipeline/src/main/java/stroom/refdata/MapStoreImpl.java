@@ -17,7 +17,7 @@
 package stroom.refdata;
 
 import stroom.entity.shared.Range;
-import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.xml.event.EventList;
@@ -109,7 +109,7 @@ public class MapStoreImpl implements MapStore {
                         }
                     }
                 }
-            } catch (final Throwable t) {
+            } catch (final RuntimeException e) {
                 // Ignore.
             }
         }

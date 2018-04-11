@@ -199,11 +199,11 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
     private void log(final int severity, final Supplier<String> message, final Throwable t) {
         try {
             logger.log(null, FQCN, severity, message.get(), null, t);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             try {
                 logger.log(null, FQCN, LocationAwareLogger.ERROR_INT, "ERROR LOGGING MESSAGE - " + e.getMessage(), null, e);
-            } catch (final Exception e2) {
-                // Ignore.
+            } catch (final RuntimeException ex) {
+                ex.printStackTrace();
             }
         }
     }

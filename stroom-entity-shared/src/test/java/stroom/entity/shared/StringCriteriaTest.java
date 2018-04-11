@@ -24,7 +24,7 @@ import java.util.List;
 
 public class StringCriteriaTest {
     @Test
-    public void testConvertStringList() throws Exception {
+    public void testConvertStringList() {
         List<String> strings = new ArrayList<>();
         strings.add("abcdef");
         strings.add("ABCDEF");

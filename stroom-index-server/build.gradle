@@ -23,6 +23,7 @@ dependencies {
     compile project(':stroom-security-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+    compile project(':stroom-explorer-api')
 
     compile libs.stroomQueryApi
     compile libs.stroomQueryCommon
@@ -30,16 +31,14 @@ dependencies {
     compile libs.eventLogging
     compile libs.guava
     compile libs.javax_inject
-    compile libs.lucene_analyzers_common
+        compile libs.lucene_analyzers_common
     compile libs.lucene_core
     compile libs.lucene_queryparser
     compile libs.slf4j_api
-    compile libs.spring_beans
-    compile libs.spring_context
-    compile libs.spring_tx
     compile libs.xml_apis
     compile libs.swagger_annotations
     compile libs.ws_rs_api
+    compile libs.guice4
 
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks

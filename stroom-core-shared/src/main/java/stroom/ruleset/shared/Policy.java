@@ -35,7 +35,6 @@ public class Policy extends NamedEntity {
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String DATA = SQLNameConstants.DATA;
     public static final String ENTITY_TYPE = "Policy";
-    public static final String MANAGE_POLICIES_PERMISSION = "Manage Policies";
     private static final long serialVersionUID = 4519634323788508083L;
     private String data;
 

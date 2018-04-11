@@ -19,6 +19,7 @@ package stroom.util;
 import stroom.util.io.StreamUtil;
 
 import javax.net.ssl.HttpsURLConnection;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -135,7 +136,7 @@ public final class DataFeedClient {
 
             System.out.println(
                     "Client Got Response " + response + " in " + (System.currentTimeMillis() - startTime) + "ms");
-            if (msg != null && msg.length() > 0) {
+            if (msg != null && !msg.isEmpty()) {
                 System.out.println(msg);
             }
 
@@ -176,10 +177,8 @@ public final class DataFeedClient {
 
             connection.disconnect();
 
-        } catch (final Exception ex) {
-            ex.printStackTrace();
+        } catch (final RuntimeException | IOException e) {
+            e.printStackTrace();
         }
-
     }
-
 }

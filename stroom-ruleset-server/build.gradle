@@ -9,8 +9,8 @@ dependencies {
 
     compile libs.stroomQueryApi
     compile libs.slf4j_api
-    compile libs.spring_context
     compile libs.javax_inject
+    compile libs.guice4
 
     compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_metrics_annotation

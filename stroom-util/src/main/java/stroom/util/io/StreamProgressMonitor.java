@@ -18,27 +18,27 @@ package stroom.util.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.task.TaskContext;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Monitor;
 
 import java.io.IOException;
 
 public class StreamProgressMonitor {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamProgressMonitor.class);
 
-    private final Monitor monitor;
+    private final TaskContext taskContext;
     private final String prefix;
     private final long INTERVAL_MS = 1000;
     private long totalBytes = 0;
     private long lastProgressTime = System.currentTimeMillis();
 
-    public StreamProgressMonitor(final Monitor monitor, final String prefix) {
-        this.monitor = monitor;
+    public StreamProgressMonitor(final TaskContext taskContext, final String prefix) {
+        this.taskContext = taskContext;
         this.prefix = prefix;
     }
 
     public StreamProgressMonitor(String prefix) {
-        this.monitor = null;
+        this.taskContext = null;
         this.prefix = prefix;
     }
 
@@ -53,10 +53,10 @@ public class StreamProgressMonitor {
         if (lastProgressTime + INTERVAL_MS < timeNow) {
             lastProgressTime = timeNow;
             String msg = prefix + " - " + ModelStringUtil.formatIECByteSizeString(totalBytes);
-            if (monitor != null) {
-                monitor.info(msg);
+            if (taskContext != null) {
+                taskContext.info(msg);
 
-                if (monitor.isTerminated()) {
+                if (taskContext.isTerminated()) {
                     throw new IOException("Progress Stopped");
                 }
             }

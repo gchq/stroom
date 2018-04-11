@@ -106,7 +106,7 @@ public class BasicQuerySettingsPresenter
             }
 
             valid = true;
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             AlertEvent.fireError(this, e.getMessage(), null);
         }
 

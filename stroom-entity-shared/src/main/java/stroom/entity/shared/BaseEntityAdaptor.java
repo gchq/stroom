@@ -19,11 +19,11 @@ package stroom.entity.shared;
 import stroom.query.api.v2.DocRef;
 
 public interface BaseEntityAdaptor {
-    DocRef marshal(BaseEntity entity) throws Exception;
+    DocRef marshal(BaseEntity entity);
 
-    BaseEntity unmarshal(DocRef docRef) throws Exception;
+    BaseEntity unmarshal(DocRef docRef);
 
-    DocRef externalise(DocRef entity) throws Exception;
+    DocRef externalise(DocRef entity);
 
-    DocRef internalise(DocRef entity) throws Exception;
+    DocRef internalise(DocRef entity);
 }

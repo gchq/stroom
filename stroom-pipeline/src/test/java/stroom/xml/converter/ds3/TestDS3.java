@@ -23,16 +23,17 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.entity.server.util.XMLUtil;
-import stroom.pipeline.server.DefaultLocationFactory;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.StreamLocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.server.filter.MergeFilter;
-import stroom.pipeline.server.filter.SchemaFilter;
+import stroom.entity.util.XMLUtil;
+import stroom.pipeline.DefaultLocationFactory;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.StreamLocationFactory;
+import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.filter.MergeFilter;
+import stroom.pipeline.filter.SchemaFilter;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
@@ -44,10 +45,12 @@ import stroom.util.test.StroomUnitTest;
 import stroom.xml.converter.SchemaFilterFactory;
 import stroom.xml.converter.ds3.ref.VarMap;
 
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -70,7 +73,7 @@ public class TestDS3 extends StroomUnitTest {
     private final SchemaFilterFactory schemaFilterFactory = new SchemaFilterFactory();
 
     @Test
-    public void testBuildConfig() throws Exception {
+    public void testBuildConfig() {
         final RootFactory rootFactory = new RootFactory();
 
         final ExpressionFactory headings = new RegexFactory(rootFactory, "headingsRegex", "^[^\n]+");
@@ -93,7 +96,7 @@ public class TestDS3 extends StroomUnitTest {
     // TODO : Add new test data to fully exercise DS3.
 
     @Test
-    public void testProcessAll() throws Exception {
+    public void testProcessAll() throws IOException, TransformerConfigurationException, SAXException {
         // Get the testing directory.
         final Path testDir = getTestDir();
         final List<Path> paths = new ArrayList<>();
@@ -128,19 +131,19 @@ public class TestDS3 extends StroomUnitTest {
         }
     }
 
-    private void negativeTest(final String stem, final String type) throws Exception {
+    private void negativeTest(final String stem, final String type) throws IOException, TransformerConfigurationException, SAXException {
         test(stem, "~" + type, true);
     }
 
-    private void positiveTest(final String stem) throws Exception {
+    private void positiveTest(final String stem) throws IOException, TransformerConfigurationException, SAXException {
         test(stem, "", false);
     }
 
-    private void positiveTest(final String stem, final String type) throws Exception {
+    private void positiveTest(final String stem, final String type) throws IOException, TransformerConfigurationException, SAXException {
         test(stem, "~" + type, false);
     }
 
-    private void test(final String stem, final String testType, final boolean expectedErrors) throws Exception {
+    private void test(final String stem, final String testType, final boolean expectedErrors) throws IOException, TransformerConfigurationException, SAXException {
         // Get the testing directory.
         final Path testDir = getTestDir();
 
@@ -219,7 +222,7 @@ public class TestDS3 extends StroomUnitTest {
 
                 reader.parse(new InputSource(Files.newBufferedReader(input)));
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             e.printStackTrace();
 
         } finally {
@@ -262,14 +265,13 @@ public class TestDS3 extends StroomUnitTest {
         return testDir;
     }
 
-    private XMLReader createReader(final Path config) throws Exception {
+    private XMLReader createReader(final Path config) throws IOException {
         final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(errorReceiver);
 
         final SchemaFilter schemaFilter = schemaFilterFactory.getSchemaFilter(DS3ParserFactory.NAMESPACE_URI,
                 errorReceiverProxy);
-        final DS3ParserFactory factory = new DS3ParserFactory();
-        factory.setSchemaFilter(schemaFilter);
+        final DS3ParserFactory factory = new DS3ParserFactory(schemaFilter);
 
         final LocationFactory locationFactory = new DefaultLocationFactory();
         factory.configure(Files.newBufferedReader(config),

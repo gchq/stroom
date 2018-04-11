@@ -30,7 +30,7 @@ public interface JobManager {
      * @return True if the job is enabled.
      * @throws RuntimeException Could be thrown.
      */
-    Boolean isJobEnabled(String jobName) throws RuntimeException;
+    Boolean isJobEnabled(String jobName);
 
     /**
      * Sets the enabled flag for a job with this name on all nodes in the
@@ -41,7 +41,7 @@ public interface JobManager {
      * @return True if successful.
      * @throws RuntimeException Could be thrown.
      */
-    Boolean setJobEnabled(String jobName, boolean enabled) throws RuntimeException;
+    Boolean setJobEnabled(String jobName, boolean enabled);
 
     /**
      * Sets all jobs on the given node to the supplied enabled state.
@@ -51,7 +51,7 @@ public interface JobManager {
      * @return True if successful.
      * @throws RuntimeException Could be thrown.
      */
-    Boolean setNodeEnabled(Node node, boolean enabled) throws RuntimeException;
+    Boolean setNodeEnabled(Node node, boolean enabled);
 
     /**
      * AKA start on load. The cluster maybe enabled but it will do nothing
@@ -60,7 +60,7 @@ public interface JobManager {
      * @return True if the cluster is enabled.
      * @throws RuntimeException Could be thrown.
      */
-    Boolean isClusterRunning() throws RuntimeException;
+    Boolean isClusterRunning();
 
     /**
      * Set all jobs to be enabled across the cluster.
@@ -68,7 +68,7 @@ public interface JobManager {
      * @return True if successful.
      * @throws RuntimeException Could be thrown.
      */
-    Boolean enableAllJobs() throws RuntimeException;
+    Boolean enableAllJobs();
 
     /**
      * Sets the command flag to start a job with this name on all nodes in the
@@ -78,5 +78,5 @@ public interface JobManager {
      * @return True if successful.
      * @throws RuntimeException Could be thrown.
      */
-    Boolean startJob(String jobName) throws RuntimeException;
+    Boolean startJob(String jobName);
 }

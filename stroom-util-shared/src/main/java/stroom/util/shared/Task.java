@@ -19,7 +19,7 @@ package stroom.util.shared;
 /**
  * Interface to all tasks.
  */
-public interface Task<R> extends HasTerminate {
+public interface Task<R> {
     TaskId getId();
 
     String getTaskName();
@@ -27,4 +27,6 @@ public interface Task<R> extends HasTerminate {
     String getUserToken();
 
     ThreadPool getThreadPool();
+
+    Task<?> getParentTask();
 }

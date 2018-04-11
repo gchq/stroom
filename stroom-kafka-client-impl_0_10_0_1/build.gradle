@@ -5,7 +5,6 @@ dependencies {
 
     compile group: 'org.apache.kafka', name:'kafka-clients', version:'0.10.0.1' //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions.
 
-    compile libs.guava
     compile libs.slf4j_api
 
     testCompile libs.junit

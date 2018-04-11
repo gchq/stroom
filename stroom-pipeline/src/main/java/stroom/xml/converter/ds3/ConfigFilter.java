@@ -19,8 +19,8 @@ package stroom.xml.converter.ds3;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.filter.AbstractXMLFilter;
-import stroom.util.task.TaskMonitor;
+import stroom.pipeline.filter.AbstractXMLFilter;
+import stroom.task.TaskContext;
 import stroom.xml.converter.ds3.GroupFactory.MatchOrder;
 import stroom.xml.converter.ds3.NodeFactory.NodeType;
 
@@ -219,7 +219,7 @@ public class ConfigFilter extends AbstractXMLFilter {
     private final Set<Integer> getOnlyMatch(final Attributes atts) throws SAXException {
         final String string = atts.getValue(XML_ATTRIBUTE_ONLY_MATCH);
 
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             // Turn the comma separated list into integers.
             final String[] arr = string.split(",");
             final Set<Integer> val = new HashSet<>(arr.length);

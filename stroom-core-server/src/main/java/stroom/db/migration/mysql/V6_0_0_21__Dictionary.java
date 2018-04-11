@@ -18,8 +18,8 @@ package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docstore.server.JsonSerialiser;
-import stroom.docstore.server.Serialiser;
+import stroom.docstore.JsonSerialiser;
+import stroom.docstore.Serialiser;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.DocRef;
 

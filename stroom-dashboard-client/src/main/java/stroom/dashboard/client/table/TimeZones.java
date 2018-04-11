@@ -35,7 +35,7 @@ public class TimeZones {
         timeZone = DateTimeFormat.getFormat("vvvv").format(new Date());
         try {
             timeZone = getIntlTimeZone();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
         }
 
         dispatcher.exec(new FetchTimeZonesAction()).onSuccess(result -> ids = result.getIds());

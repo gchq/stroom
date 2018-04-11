@@ -1,7 +1,6 @@
 package stroom.content;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.servicediscovery.ResourcePaths;
 
 import java.util.Map;
 

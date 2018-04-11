@@ -21,12 +21,13 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.security.SecurityHelper;
-import stroom.security.SecurityContext;
+import stroom.entity.shared.Clearable;
+import stroom.security.Security;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,8 +35,8 @@ import java.util.concurrent.TimeUnit;
  * Implementation class that stores reference data from reference data feeds.
  * </p>
  */
-@Component
-public final class MapStoreCache {
+@Singleton
+public final class MapStoreCache implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapStoreCache.class);
 
     private static final int MAX_CACHE_ENTRIES = 100;
@@ -43,17 +44,17 @@ public final class MapStoreCache {
     private final LoadingCache<MapStoreCacheKey, MapStore> cache;
     private final ReferenceDataLoader referenceDataLoader;
     private final MapStoreInternPool internPool;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     @SuppressWarnings("unchecked")
     MapStoreCache(final CacheManager cacheManager,
                   final ReferenceDataLoader referenceDataLoader,
                   final MapStoreInternPool internPool,
-                  final SecurityContext securityContext) {
+                  final Security security) {
         this.referenceDataLoader = referenceDataLoader;
         this.internPool = internPool;
-        this.securityContext = securityContext;
+        this.security = security;
 
         final CacheLoader<MapStoreCacheKey, MapStore> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
@@ -68,7 +69,7 @@ public final class MapStoreCache {
     }
 
     private MapStore create(final MapStoreCacheKey mapStoreCacheKey) {
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        return security.asProcessingUserResult(() -> {
             MapStore mapStore = null;
 
             try {
@@ -87,7 +88,7 @@ public final class MapStoreCache {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Created reference data map store: " + mapStoreCacheKey.toString());
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
 
@@ -98,6 +99,11 @@ public final class MapStoreCache {
             }
 
             return mapStore;
-        }
+        });
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

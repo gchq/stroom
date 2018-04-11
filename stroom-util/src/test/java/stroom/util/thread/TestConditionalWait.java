@@ -50,7 +50,10 @@ public class TestConditionalWait {
                     //removing the time taken to spin up this thread
                     long sleepMs = sleepDuration.toMillis() - (System.currentTimeMillis() - startTimeMs);
                     Thread.sleep(sleepMs);
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+
                     throw new RuntimeException("Thread interrupted", e);
                 }
                 atomicBoolean.set(true);

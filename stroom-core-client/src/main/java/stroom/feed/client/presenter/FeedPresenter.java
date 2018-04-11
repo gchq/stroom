@@ -27,10 +27,9 @@ import stroom.entity.client.presenter.TabContentProvider;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
-import stroom.streamstore.shared.Stream;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -60,12 +59,12 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
         addTab(SETTINGS);
         tabContentProvider.add(SETTINGS, settingsPresenterProvider);
 
-        if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
             addTab(DATA);
             tabContentProvider.add(DATA, streamPresenterProvider);
         }
 
-        if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(TASKS);
             tabContentProvider.add(TASKS, streamTaskPresenterProvider);
         }

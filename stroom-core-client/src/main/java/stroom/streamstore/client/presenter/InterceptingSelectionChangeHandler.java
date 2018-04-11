@@ -22,7 +22,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
 
-public class InterceptingSelectionChangeHandler implements HasSelectionChangedHandlers, SelectionChangeEvent.Handler {
+class InterceptingSelectionChangeHandler implements HasSelectionChangedHandlers, SelectionChangeEvent.Handler {
     private final HandlerManager handlerManager = new HandlerManager(this);
     private boolean ignoreNextEvent;
 

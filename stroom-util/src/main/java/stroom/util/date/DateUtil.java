@@ -176,7 +176,7 @@ public final class DateUtil {
             final ZonedDateTime dateTime = parse(NORMAL_STROOM_TIME_FORMATTER, date, ZoneOffset.UTC);
             return dateTime.toInstant().toEpochMilli();
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // If we were unable to parse the value as an ISO8601 date then try
             // and get it as a long.
             return Long.parseLong(date);

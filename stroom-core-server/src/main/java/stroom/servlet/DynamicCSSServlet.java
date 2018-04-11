@@ -16,8 +16,7 @@
 
 package stroom.servlet;
 
-import org.springframework.stereotype.Component;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
@@ -30,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 
-@Component
 public class DynamicCSSServlet extends HttpServlet {
     public static final String THEME_BACKGROUND_ATTACHMENT = "@THEME_BACKGROUND_ATTACHMENT@";
     public static final String THEME_BACKGROUND_COLOR = "@THEME_BACKGROUND_COLOR@";
@@ -54,7 +52,7 @@ public class DynamicCSSServlet extends HttpServlet {
     private String cssTemplate;
 
     @Inject
-    public DynamicCSSServlet(final StroomPropertyService stroomPropertyService) {
+    DynamicCSSServlet(final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 

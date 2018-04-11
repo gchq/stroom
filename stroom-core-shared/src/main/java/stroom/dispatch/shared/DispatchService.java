@@ -21,5 +21,5 @@ import stroom.entity.shared.Action;
 import stroom.util.shared.SharedObject;
 
 public interface DispatchService extends RemoteService {
-    <R extends SharedObject> R exec(Action<R> action) throws RuntimeException;
+    <R extends SharedObject> R exec(Action<R> action);
 }

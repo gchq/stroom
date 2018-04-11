@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestBatchingIterator {
 
     @Test
-    public void batchedStreamOf() throws Exception {
+    public void batchedStreamOf() {
 
         Stream<Integer> sourceStream = IntStream.rangeClosed(1, 10)
                 .boxed();
@@ -28,7 +28,7 @@ public class TestBatchingIterator {
     }
 
     @Test
-    public void batchedStreamOf_exact() throws Exception {
+    public void batchedStreamOf_exact() {
 
         Stream<Integer> sourceStream = IntStream.rangeClosed(1, 10)
                 .boxed();
@@ -42,7 +42,7 @@ public class TestBatchingIterator {
     }
 
     @Test
-    public void batchedStreamOf_empty() throws Exception {
+    public void batchedStreamOf_empty() {
 
         Stream<Integer> sourceStream = Stream.empty();
 

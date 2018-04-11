@@ -54,7 +54,7 @@ public abstract class AbstractSubmitCompleteHandler implements SubmitHandler, Su
                 } else {
                     onFailure(propertyMap.get("exception"));
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 onFailure(e.getMessage());
             }
         } else {

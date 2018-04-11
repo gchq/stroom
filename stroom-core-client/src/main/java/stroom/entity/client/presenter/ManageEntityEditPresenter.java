@@ -37,7 +37,9 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
     private E entity;
 
     @Inject
-    public ManageEntityEditPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher, final V view,
+    public ManageEntityEditPresenter(final EventBus eventBus,
+                                     final V view,
+                                     final ClientDispatchAsync dispatcher,
                                      final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
@@ -48,11 +50,7 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
         return securityContext;
     }
 
-//    protected boolean isCurrentUserUpdate() {
-//        return getSecurityContext().hasAppPermission(getEntityType(), DocumentPermissionNames.UPDATE);
-//    }
-
-    public void showEntity(final E entity, final PopupUiHandlers popupUiHandlers) {
+    void showEntity(final E entity, final PopupUiHandlers popupUiHandlers) {
         final String caption = getEntityDisplayType() + " - " + entity.getName();
 
         final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
@@ -73,7 +71,6 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
             }
         };
 
-        //final PopupType popupType = isCurrentUserUpdate() ? PopupType.OK_CANCEL_DIALOG : PopupType.CLOSE_DIALOG;
         final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
 
         if (entity.isPersistent()) {

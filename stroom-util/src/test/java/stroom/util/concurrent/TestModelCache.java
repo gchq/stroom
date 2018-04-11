@@ -88,6 +88,9 @@ public class TestModelCache {
                 Thread.sleep(sleepTime);
             } catch (final InterruptedException e) {
                 fail(String.format("Could not sleep for required time %s", e));
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
 
             return currentValue;
@@ -248,8 +251,11 @@ public class TestModelCache {
 
         try {
             exec.awaitTermination(3, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             fail(e.getLocalizedMessage());
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
         }
 
         final long matchingFirst = caller0.matchingValue(expectedValue);

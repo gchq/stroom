@@ -16,7 +16,7 @@
 
 package stroom.util;
 
-import stroom.task.server.StroomThreadGroup;
+import stroom.task.StroomThreadGroup;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -201,7 +202,7 @@ public class BenchmarkDataFeed {
 
             logDebug("Finished in " + result.time + " response was " + result.response);
 
-        } catch (final Throwable e) {
+        } catch (final IOException | RuntimeException e) {
             final DataFeedResult result = new DataFeedResult();
             result.time = System.currentTimeMillis() - startTime;
             result.response = -1;

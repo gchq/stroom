@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 public class TestCustomRollUpMask {
     @Test
-    public void testIsTagRolledUp() throws Exception {
+    public void testIsTagRolledUp() {
         final CustomRollUpMask mask = new CustomRollUpMask(Arrays.asList(3, 1, 0));
 
         Assert.assertTrue(mask.isTagRolledUp(3));
@@ -33,7 +33,7 @@ public class TestCustomRollUpMask {
     }
 
     @Test
-    public void testSetRollUpState() throws Exception {
+    public void testSetRollUpState() {
         final CustomRollUpMask mask = new CustomRollUpMask(Arrays.asList(3, 1, 0));
 
         Assert.assertFalse(mask.isTagRolledUp(2));

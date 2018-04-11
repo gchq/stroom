@@ -140,21 +140,21 @@ public class TestStatisticsDataSource {
     }
 
     @Test
-    public void testIsRollUpCombinationSupported_nullList() throws Exception {
+    public void testIsRollUpCombinationSupported_nullList() {
         final StatisticStoreEntity sds = buildStatisticsDataSource(true);
 
         Assert.assertTrue(sds.isRollUpCombinationSupported(null));
     }
 
     @Test
-    public void testIsRollUpCombinationSupported_emptyList() throws Exception {
+    public void testIsRollUpCombinationSupported_emptyList() {
         final StatisticStoreEntity sds = buildStatisticsDataSource(true);
 
         Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>()));
     }
 
     @Test
-    public void testIsRollUpCombinationSupported_rollUpTypeAll() throws Exception {
+    public void testIsRollUpCombinationSupported_rollUpTypeAll() {
         final StatisticStoreEntity sds = buildStatisticsDataSource(true);
 
         sds.setRollUpType(StatisticRollUpType.ALL);
@@ -163,7 +163,7 @@ public class TestStatisticsDataSource {
     }
 
     @Test
-    public void testIsRollUpCombinationSupported_rollUpTypeNone() throws Exception {
+    public void testIsRollUpCombinationSupported_rollUpTypeNone() {
         final StatisticStoreEntity sds = buildStatisticsDataSource(true);
 
         sds.setRollUpType(StatisticRollUpType.NONE);
@@ -172,7 +172,7 @@ public class TestStatisticsDataSource {
     }
 
     @Test
-    public void testIsRollUpCombinationSupported_rollUpTypeCustom() throws Exception {
+    public void testIsRollUpCombinationSupported_rollUpTypeCustom() {
         final StatisticStoreEntity sds = buildStatisticsDataSource(true);
 
         sds.setRollUpType(StatisticRollUpType.CUSTOM);

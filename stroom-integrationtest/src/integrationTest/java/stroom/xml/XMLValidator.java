@@ -16,38 +16,45 @@
 
 package stroom.xml;
 
-import org.apache.commons.lang.StringUtils;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.pipeline.server.PipelineService;
-import stroom.pipeline.server.PipelineTestUtil;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.server.factory.Pipeline;
-import stroom.pipeline.server.factory.PipelineFactory;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineTestUtil;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.factory.Pipeline;
+import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.spring.StroomScope;
+import stroom.guice.PipelineScopeRunnable;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
  * Helper class to validate XML based resources are valid.
  */
-@Component
-@Scope(StroomScope.TASK)
 public class XMLValidator {
     private static final String NO_RESOURCE_PROVIDED = "No resource provided";
-    @Resource
-    private PipelineFactory pipelineFactory;
-    @Resource
-    private PipelineService pipelineService;
-    @Resource
-    private ErrorReceiverProxy errorReceiver;
+
+    private final Provider<PipelineFactory> pipelineFactoryProvider;
+    private final PipelineService pipelineService;
+    private final Provider<ErrorReceiverProxy> errorReceiverProvider;
+    private final PipelineScopeRunnable pipelineScopeRunnable;
+
+    @Inject
+    XMLValidator(final Provider<PipelineFactory> pipelineFactoryProvider,
+                 final PipelineService pipelineService,
+                 final Provider<ErrorReceiverProxy> errorReceiverProvider,
+                 final PipelineScopeRunnable pipelineScopeRunnable) {
+        this.pipelineFactoryProvider = pipelineFactoryProvider;
+        this.pipelineService = pipelineService;
+        this.errorReceiverProvider = errorReceiverProvider;
+        this.pipelineScopeRunnable = pipelineScopeRunnable;
+    }
 
     /**
      * Pull back the error message regarding this XML based resource.
@@ -58,45 +65,47 @@ public class XMLValidator {
      * @return message
      */
     public String getInvalidXmlResourceMessage(final String resourceName, final boolean useSchema) {
-        // Only validate if something is provided
-        if (StringUtils.isNotBlank(resourceName)) {
-            try {
-                // Buffer the stream.
-                final InputStream inputStream = new BufferedInputStream(
-                        StroomPipelineTestFileUtil.getInputStream(resourceName));
+        return pipelineScopeRunnable.scopeResult(() -> {
+            // Only validate if something is provided
+            if (resourceName != null && !resourceName.isEmpty()) {
+                try {
+                    // Buffer the stream.
+                    final InputStream inputStream = new BufferedInputStream(
+                            StroomPipelineTestFileUtil.getInputStream(resourceName));
 
-                // Setup the error receiver.
-                errorReceiver.setErrorReceiver(new LoggingErrorReceiver());
+                    // Setup the error receiver.
+                    errorReceiverProvider.get().setErrorReceiver(new LoggingErrorReceiver());
 
-                // Create the pipeline.
-                PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
-                        StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
-                final PipelineData pipelineData = pipelineEntity.getPipelineData();
+                    // Create the pipeline.
+                    PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
+                            StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
+                    final PipelineData pipelineData = pipelineEntity.getPipelineData();
 
-                // final ElementType schemaFilterElementType = new ElementType(
-                // "SchemaFilter");
-                // final PropertyType schemaValidationPropertyType = new
-                // PropertyType(
-                // schemaFilterElementType, "schemaValidation", "Boolean",
-                // false);
-                pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaValidation", false));
-                // final PropertyType schemaGroupPropertyType = new
-                // PropertyType(
-                // schemaFilterElementType, "schemaGroup", "String", false);
-                pipelineData
-                        .addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "DATA_SPLITTER"));
-                pipelineEntity = pipelineService.save(pipelineEntity);
+                    // final ElementType schemaFilterElementType = new ElementType(
+                    // "SchemaFilter");
+                    // final PropertyType schemaValidationPropertyType = new
+                    // PropertyType(
+                    // schemaFilterElementType, "schemaValidation", "Boolean",
+                    // false);
+                    pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaValidation", false));
+                    // final PropertyType schemaGroupPropertyType = new
+                    // PropertyType(
+                    // schemaFilterElementType, "schemaGroup", "String", false);
+                    pipelineData
+                            .addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "DATA_SPLITTER"));
+                    pipelineEntity = pipelineService.save(pipelineEntity);
 
-                final Pipeline pipeline = pipelineFactory.create(pipelineData);
-                pipeline.process(inputStream);
+                    final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
+                    pipeline.process(inputStream);
 
-                return errorReceiver.toString();
+                    return errorReceiverProvider.get().toString();
 
-            } catch (final Exception ex) {
-                return ex.getMessage();
+                } catch (final RuntimeException e) {
+                    return e.getMessage();
+                }
             }
-        }
 
-        return NO_RESOURCE_PROVIDED;
+            return NO_RESOURCE_PROVIDED;
+        });
     }
 }

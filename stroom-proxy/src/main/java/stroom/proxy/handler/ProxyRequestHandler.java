@@ -2,9 +2,9 @@ package stroom.proxy.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.datafeed.server.MetaMapFilter;
-import stroom.datafeed.server.MetaMapFilterFactory;
-import stroom.datafeed.server.RequestHandler;
+import stroom.datafeed.MetaMapFilter;
+import stroom.datafeed.MetaMapFilterFactory;
+import stroom.datafeed.RequestHandler;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomStatusCode;
@@ -16,6 +16,7 @@ import stroom.util.thread.BufferFactory;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,11 +90,11 @@ public class ProxyRequestHandler implements RequestHandler {
                             streamHandler.handleFooter();
                         }
 
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         for (final StreamHandler streamHandler : handlers) {
                             try {
                                 streamHandler.handleError();
-                            } catch (final Exception ex) {
+                            } catch (final IOException | RuntimeException ex) {
                                 LOGGER.error(ex.getMessage(), ex);
                             }
                         }
@@ -130,7 +131,7 @@ public class ProxyRequestHandler implements RequestHandler {
                 logStream.log(RECEIVE_LOG, metaMap, "ERROR", request.getRequestURI(), returnCode, -1, duration);
             }
 
-        } catch (final Exception e) {
+        } catch (final IOException | RuntimeException e) {
             StroomStreamException.sendErrorResponse(response, e);
             returnCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 

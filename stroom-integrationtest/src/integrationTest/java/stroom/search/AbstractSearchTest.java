@@ -18,7 +18,7 @@ package stroom.search;
 
 import org.junit.Assert;
 import stroom.entity.shared.DocRefUtil;
-import stroom.index.server.IndexService;
+import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.query.api.v2.DocRef;
@@ -38,9 +38,9 @@ import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
-import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,9 +52,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
-
-    @Resource(name="luceneSearchResponseCreatorManager")
-    private SearchResponseCreatorManager searchResponseCreatorManager;
+    @Inject
+    private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
 
     protected SearchResponse search(SearchRequest searchRequest) {
         return search(searchRequest, searchResponseCreatorManager);
@@ -69,10 +68,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         try {
             while (!response.complete()) {
                 response = searchResponseCreator.create(searchRequest);
-
-                if (!response.complete()) {
-                    ThreadUtil.sleep(1000);
-                }
             }
         } finally {
             searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(searchRequest.getKey()));
@@ -88,12 +83,11 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final long sleepTimeMs,
             final int maxShardTasks,
             final int maxExtractionTasks,
             final IndexService indexService) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, sleepTimeMs, maxShardTasks,
+                extractValues, resultMapConsumer, maxShardTasks,
                 maxExtractionTasks, indexService, searchResponseCreatorManager);
     }
 
@@ -104,7 +98,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final long sleepTimeMs,
             final int maxShardTasks,
             final int maxExtractionTasks,
             final IndexService indexService,

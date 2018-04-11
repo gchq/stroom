@@ -35,7 +35,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.pipeline.shared.FetchDocRefsAction;
+import stroom.explorer.shared.FetchDocRefsAction;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;

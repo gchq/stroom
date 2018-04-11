@@ -19,7 +19,7 @@ package stroom.entity.shared;
 import java.util.Set;
 
 public interface HasLoadByName<E extends Entity> {
-    E loadByName(String name) throws RuntimeException;
+    E loadByName(String name);
 
-    E loadByName(String name, Set<String> fetchSet) throws RuntimeException;
+    E loadByName(String name, Set<String> fetchSet);
 }

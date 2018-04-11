@@ -20,31 +20,28 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
+import stroom.guice.StroomBeanStore;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 // TODO : Add test data
 @Ignore("Add test data")
 public class TestDataSplitter extends AbstractProcessIntegrationTest {
-    @Resource
+    @Inject
     private StroomBeanStore beanStore;
 
     /**
      * Tests a basic CSV file.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testBasicCSV() throws Exception {
+    public void testBasicCSV() {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/CSVWithHeading.ds",
                 new ByteArrayInputStream("h1,h2\ntoken1a,token1b\ntoken2a,token2b\n".getBytes()));
 
@@ -60,11 +57,9 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
 
     /**
      * Tests a sample network monitoring CSV file.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testNetworkMonitoringSample() throws Exception {
+    public void testNetworkMonitoringSample() {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/CSVWithHeading.ds",
                 StroomPipelineTestFileUtil.getInputStream("TestDataSplitter/NetworkMonitoringSample.in"));
 
@@ -74,11 +69,9 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
     /**
      * Tests a sample network monitoring CSV file and tries to transform it with
      * XSL.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testNetworkMonitoringSampleWithXSL() throws Exception {
+    public void testNetworkMonitoringSampleWithXSL() {
         runFullTest(new Feed("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
                 "TestDataSplitter/SimpleCSVSplitter.ds", "TestDataSplitter/NetworkMonitoring.xsl",
                 "TestDataSplitter/NetworkMonitoringSample.in", 0);
@@ -91,7 +84,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testDS3NetworkMonitoringSampleWithXSL() throws Exception {
+    public void testDS3NetworkMonitoringSampleWithXSL() {
         runFullTest(new Feed("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
                 "TestDataSplitter/CSVWithHeading.ds", "TestDataSplitter/DS3NetworkMonitoring.xsl",
                 "TestDataSplitter/NetworkMonitoringSample.in", 0);
@@ -99,11 +92,9 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
 
     /**
      * First stage ref data change.
-     *
-     * @throws Exception NA
      */
     @Test
-    public void testRefDataCSV() throws Exception {
+    public void testRefDataCSV() {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/SimpleCSVSplitter.ds",
                 StroomPipelineTestFileUtil.getInputStream("TestDataSplitter/SampleRefData-HostNameToIP.in"));
 
@@ -112,11 +103,9 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
 
     /**
      * Tests a sample ref data CSV file and tries to transform it with XSL.
-     *
-     * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testRefDataCSVWithXSL() throws Exception {
+    public void testRefDataCSVWithXSL() {
         final Feed refFeed = new Feed("HostNameToIP-REFERENCE");
         refFeed.setReference(true);
         runFullTest(refFeed, TextConverterType.DATA_SPLITTER, "TestDataSplitter/SimpleCSVSplitter.ds",
@@ -127,7 +116,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
                               final InputStream inputStream) {
         validate(textConverterType, textConverterLocation);
 
-        final F2XTestUtil f2xTestUtil = beanStore.getBean(F2XTestUtil.class);
+        final F2XTestUtil f2xTestUtil = beanStore.getInstance(F2XTestUtil.class);
         final String xml = f2xTestUtil.runF2XTest(textConverterType, textConverterLocation, inputStream);
         return xml;
     }
@@ -137,28 +126,18 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
                                final int expectedWarnings) {
         validate(textConverterType, textConverterLocation);
 
-        try {
-            TaskScopeContextHolder.addContext();
-            final F2XTestUtil f2xTestUtil = beanStore.getBean(F2XTestUtil.class);
-            final String xml = f2xTestUtil.runFullTest(feed, textConverterType, textConverterLocation, xsltLocation,
-                    dataLocation, expectedWarnings);
-            return xml;
-        } finally {
-            TaskScopeContextHolder.removeContext();
-        }
+        final F2XTestUtil f2xTestUtil = beanStore.getInstance(F2XTestUtil.class);
+        final String xml = f2xTestUtil.runFullTest(feed, textConverterType, textConverterLocation, xsltLocation,
+                dataLocation, expectedWarnings);
+        return xml;
     }
 
     private void validate(final TextConverterType textConverterType, final String textConverterLocation) {
-        try {
-            TaskScopeContextHolder.addContext();
-            final XMLValidator xmlValidator = beanStore.getBean(XMLValidator.class);
-            // Start by validating the resource.
-            if (textConverterType == TextConverterType.DATA_SPLITTER) {
-                final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
-                Assert.assertTrue(message, message.length() == 0);
-            }
-        } finally {
-            TaskScopeContextHolder.removeContext();
+        final XMLValidator xmlValidator = beanStore.getInstance(XMLValidator.class);
+        // Start by validating the resource.
+        if (textConverterType == TextConverterType.DATA_SPLITTER) {
+            final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
+            Assert.assertTrue(message, message.length() == 0);
         }
     }
 }
