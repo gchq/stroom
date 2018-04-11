@@ -29,6 +29,7 @@ import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;
 import stroom.security.shared.UserPermission;
+import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -80,10 +81,13 @@ public class DocumentPermissionsPresenter
             final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
+                    // It can take a while for the ChangeDocumentPermissionsAction to return, specifically when cascading all.
+                    // We want to disable the popup's controls while it's submitting.
+                    DisablePopupEvent.fire(DocumentPermissionsPresenter.this, DocumentPermissionsPresenter.this);
+
                     if (ok) {
                         ChangeDocumentPermissionsAction changeDocumentPermissionsAction = new ChangeDocumentPermissionsAction(
                                 documentPermissions.getDocument(), changeSet, getView().getCascade().getSelectedItem());
-
                         // We want to warn the user that cascading all permissions can be destructive.
                         if(getView().getCascade().getSelectedItem() == ChangeDocumentPermissionsAction.Cascade.ALL) {
                             ConfirmEvent.fire(DocumentPermissionsPresenter.this, CASCADE_ALL_WARNING_MESSAGE,
