@@ -119,7 +119,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     @Override
     public final DocRef createDocument(final String name, final String parentFolderUUID) {
         final String uuid = UUID.randomUUID().toString();
-        final Response response = docRefHttpClient.createDocument(serviceUser(), uuid, name, parentFolderUUID);
+        final Response response = docRefHttpClient.createDocument(serviceUser(), uuid, name);
 
         return readDocRefEntityResponse(response);
     }
@@ -132,15 +132,14 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
         final Response response = docRefHttpClient.copyDocument(
                 serviceUser(),
                 originalUuid,
-                copyUuid,
-                parentFolderUUID);
+                copyUuid);
 
         return readDocRefEntityResponse(response);
     }
 
     @Override
     public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
-        final Response response = docRefHttpClient.moveDocument(serviceUser(), uuid, parentFolderUUID);
+        final Response response = docRefHttpClient.moveDocument(serviceUser(), uuid);
 
         return readDocRefEntityResponse(response);
     }
