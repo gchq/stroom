@@ -46,12 +46,14 @@ public class CoreModule extends AbstractModule {
         install(new stroom.search.SearchModule());
         install(new stroom.search.shard.ShardModule());
         install(new stroom.security.SecurityModule());
+        install(new stroom.servicediscovery.ServiceDiscoveryModule());
         install(new stroom.servlet.ServletModule());
         install(new stroom.statistics.sql.SQLStatisticModule());
         install(new stroom.statistics.sql.datasource.DataSourceModule());
         install(new stroom.statistics.sql.entity.EntityModule());
         install(new stroom.statistics.sql.internal.InternalModule());
         install(new stroom.statistics.sql.rollup.SQLStatisticRollupModule());
+        install(new stroom.statistics.sql.search.SQLStatisticSearchModule());
         install(new stroom.statistics.stroomstats.entity.EntityModule());
         install(new stroom.statistics.stroomstats.internal.InternalModule());
         install(new stroom.statistics.stroomstats.rollup.StroomStatsRollupModule());

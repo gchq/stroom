@@ -847,6 +847,12 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
+                .name("stroom.statistics.sql.search.resultHandlerBatchSize")
+                .value("5000")
+                .description("The number of database rows to pass to the result handler")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
                 .name("stroom.statistics.sql.maxProcessingAge")
                 .value("")
                 .description("The maximum age (e.g. '90d') of statistics to process and retain, i.e. any statistics with an statistic event time older than the current time minus maxProcessingAge will be silently dropped.  Existing statistic data over this age will be purged during statistic aggregation. Leave blank to process/retain all data.")

@@ -35,10 +35,10 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTest;
-import stroom.search.SearchResultCreatorManager;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -46,6 +46,7 @@ import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -78,8 +79,8 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
     private DictionaryStore dictionaryStore;
     @Inject
     private TaskManager taskManager;
-    @Inject
-    private SearchResultCreatorManager searchResultCreatorManager;
+    @Named("luceneSearchResponseCreatorManager")
+    private SearchResponseCreatorManager searchResponseCreatorManager;
     @Inject
     private CommonTestControl commonTestControl;
 
@@ -172,7 +173,7 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
                 5,
                 5,
                 indexService,
-                searchResultCreatorManager);
+                searchResponseCreatorManager);
 
         LOGGER.info("Completed search");
     }
