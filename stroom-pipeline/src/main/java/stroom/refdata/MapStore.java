@@ -16,7 +16,7 @@
 
 package stroom.refdata;
 
-import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.xml.event.EventList;
 
 /**

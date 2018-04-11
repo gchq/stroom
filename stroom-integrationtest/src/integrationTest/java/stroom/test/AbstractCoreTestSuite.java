@@ -1,0 +1,73 @@
+package stroom.test;
+
+import org.junit.Ignore;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+
+@Ignore("Don't run this test suite automatically as the tests are already run on their own")
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+        stroom.dashboard.TestDashboardServiceImpl.class,
+        stroom.docstore.db.TestDBPersistence.class,
+        stroom.entity.TestEntityServiceImpl.class,
+        stroom.explorer.TestExplorerTree.class,
+        stroom.feed.TestFeedServiceCache.class,
+        stroom.feed.TestFeedServiceImpl.class,
+        stroom.importexport.TestImportExportDashboards.class,
+        stroom.importexport.TestImportExportSerializer.class,
+        stroom.importexport.TestImportExportServiceImpl.class,
+        stroom.importexport.TestImportExportServiceImpl2.class,
+        stroom.importexport.TestImportExportServiceImpl3.class,
+        stroom.index.TestIndexServiceImpl.class,
+        stroom.index.TestIndexShardServiceImpl.class,
+        stroom.index.TestIndexShardWriterImpl.class,
+        stroom.jobsystem.TestClusterLockService.class,
+        stroom.jobsystem.TestJobNodeService.class,
+        stroom.node.TestDefaultNodeFactory.class,
+        stroom.node.TestDefaultNodeService.class,
+        stroom.node.TestVolumeService.class,
+        stroom.pipeline.task.TestFullTranslationTask.class,
+        stroom.pipeline.task.TestFullTranslationTaskAndStepping.class,
+        stroom.pipeline.task.TestTranslationStepping.class,
+        stroom.policy.TestDataRetentionStreamFinder.class,
+        stroom.refdata.TestReferenceDataWithCache.class,
+        stroom.script.TestScriptServiceImpl.class,
+        stroom.search.TestBasicSearch.class,
+        stroom.search.TestBasicSearch_EndToEnd.class,
+        stroom.search.TestDictionaryStoreImpl.class,
+        stroom.search.TestEventSearch.class,
+        stroom.search.TestInteractiveSearch.class,
+        stroom.search.TestQueryServiceImpl.class,
+        stroom.search.TestTagCloudSearch.class,
+        stroom.security.TestAppPermissionServiceImpl.class,
+        stroom.security.TestDocumentPermissionsServiceImpl.class,
+        stroom.security.TestUserServiceImpl.class,
+        stroom.statistics.common.TestStatisticsDataSourceImportExportSerializer.class,
+        stroom.statistics.sql.TestSQLStatisticAggregationManager.class,
+        stroom.statistics.sql.TestSQLStatisticFlushTaskHandler.class,
+        stroom.stats.TestStroomStatsStoreImportExportSerializer.class,
+        stroom.streamstore.TestFileSystemZipProcessor.class,
+        stroom.streamstore.TestStreamAttributeMapServiceImpl.class,
+        stroom.streamstore.TestStreamAttributeValueFlushImpl.class,
+        stroom.streamstore.TestStreamTypeServiceImpl.class,
+        stroom.streamstore.fs.TestFileSystemStreamMaintenanceService.class,
+        stroom.streamstore.fs.TestFileSystemStreamStore.class,
+        stroom.streamstore.upload.TestStreamUploadDownloadTaskHandler.class,
+        stroom.streamtask.TestDataRetentionExecutor.class,
+        stroom.streamtask.TestDataRetentionTransactionHelper.class,
+        stroom.streamtask.TestFileSystemCleanTask.class,
+        stroom.streamtask.TestProxyAggregationTask.class,
+        stroom.streamtask.TestStreamArchiveTask.class,
+        stroom.streamtask.TestStreamProcessorFilterService.class,
+        stroom.streamtask.TestStreamRetentionExecutor.class,
+        stroom.streamtask.TestStreamTaskCreator.class,
+        stroom.streamtask.TestStreamTaskCreatorTransactionHelper.class,
+        stroom.streamtask.TestStreamTaskService.class,
+        stroom.streamtask.TestStreamTaskServiceBatchLocking.class,
+        stroom.streamtask.TestTranslationStreamTaskServiceImportExport.class,
+        stroom.task.TestTaskManagerImpl.class,
+        stroom.test.TestAbstractCoreIntegrationTest.class,
+        stroom.xmlschema.TestXMLSchemaServiceImpl.class
+})
+public class AbstractCoreTestSuite {
+}

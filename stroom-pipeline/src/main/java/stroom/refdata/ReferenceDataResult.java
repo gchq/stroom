@@ -18,7 +18,7 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.xml.event.EventList;

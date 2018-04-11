@@ -19,6 +19,7 @@ package stroom.util.test;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -60,11 +61,14 @@ public class TestState {
                     // Let tests update the database
 //                    StroomProperties.setOverrideProperty("stroom.jpaHbm2DdlAuto", "update", "test");
 //                    StroomProperties.setOverrideProperty("stroom.connectionTesterClassName",
-//                            "stroom.entity.server.util.StroomConnectionTesterOkOnException", "test");
+//                            "stroom.entity.util.StroomConnectionTesterOkOnException", "test");
                 }
-            } catch (final Throwable t) {
-                t.printStackTrace(System.err);
-                throw new RuntimeException(t.getMessage(), t);
+            } catch (final IOException e) {
+                e.printStackTrace(System.err);
+                throw new RuntimeException(e.getMessage(), e);
+            } catch (final RuntimeException e) {
+                e.printStackTrace(System.err);
+                throw e;
             }
         }
 
@@ -75,9 +79,9 @@ public class TestState {
                     FileUtil.forgetTempDir();
                     StroomProperties.removeOverrides();
                 }
-            } catch (final Throwable t) {
-                t.printStackTrace(System.err);
-                throw new RuntimeException(t.getMessage(), t);
+            } catch (final RuntimeException e) {
+                e.printStackTrace(System.err);
+                throw e;
             } finally {
                 testDir = null;
             }

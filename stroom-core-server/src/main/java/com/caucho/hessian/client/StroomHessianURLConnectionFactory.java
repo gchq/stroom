@@ -16,12 +16,6 @@
 
 package com.caucho.hessian.client;
 
-import com.caucho.hessian.client.HessianConnection;
-import com.caucho.hessian.client.HessianConnectionFactory;
-import com.caucho.hessian.client.HessianProxyFactory;
-import com.caucho.hessian.client.HessianURLConnection;
-import com.caucho.hessian.client.HessianURLConnectionFactory;
-
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.net.URL;
@@ -71,7 +65,7 @@ public class StroomHessianURLConnectionFactory implements HessianConnectionFacto
         if (readTimeout > 0) {
             try {
                 conn.setReadTimeout((int) readTimeout);
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
             }
         }
 

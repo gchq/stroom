@@ -18,21 +18,21 @@ package stroom.pipeline.destination;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.node.server.StroomPropertyService;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomShutdown;
-import stroom.util.task.TaskMonitor;
+import stroom.jobsystem.JobTrackedSchedule;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.TerminatedException;
+import stroom.properties.StroomPropertyService;
+import stroom.task.TaskContext;
+import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
+@Singleton
 public class RollingDestinations {
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingDestinations.class);
 
@@ -48,9 +48,9 @@ public class RollingDestinations {
         this.stroomPropertyService = stroomPropertyService;
     }
 
-    public RollingDestination borrow(final TaskMonitor taskMonitor, final Object key,
+    public RollingDestination borrow(final TaskContext taskContext, final Object key,
                                      final RollingDestinationFactory destinationFactory) throws IOException {
-        if (taskMonitor != null && taskMonitor.isTerminated()) {
+        if (taskContext != null && taskContext.isTerminated()) {
             throw new TerminatedException();
         }
 
@@ -166,7 +166,7 @@ public class RollingDestinations {
                 try {
                     try {
                         rolled = destination.tryFlushAndRoll(force, currentTime);
-                    } catch (final Exception e) {
+                    } catch (final IOException | RuntimeException e) {
                         rolled = true;
                         LOGGER.error(e.getMessage(), e);
                     }
@@ -185,7 +185,7 @@ public class RollingDestinations {
                 try {
                     try {
                         rolled = destination.tryFlushAndRoll(force, currentTime);
-                    } catch (final Exception e) {
+                    } catch (final IOException | RuntimeException e) {
                         rolled = true;
                         LOGGER.error(e.getMessage(), e);
                     }
@@ -209,10 +209,8 @@ public class RollingDestinations {
                 if (property != null) {
                     maxActiveDestinations = Integer.parseInt(property);
                 }
-            } catch (final Exception ex) {
-                LOGGER.error(
-                        "getMaxActiveDestinations() - Integer.parseInt stroom.pipeline.appender.maxActiveDestinations",
-                        ex);
+            } catch (final RuntimeException e) {
+                LOGGER.error("getMaxActiveDestinations() - Integer.parseInt stroom.pipeline.appender.maxActiveDestinations", e);
             }
         }
         return maxActiveDestinations;

@@ -20,18 +20,30 @@ package stroom.search;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
-import stroom.index.server.IndexService;
+import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.*;
-
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Format;
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.Row;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.util.config.StroomProperties;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,9 +55,9 @@ import java.util.UUID;
 
 public class TestEventSearch extends AbstractSearchTest {
     private static boolean doneSetup;
-    @Resource
+    @Inject
     private CommonIndexingTest commonIndexingTest;
-    @Resource
+    @Inject
     private IndexService indexService;
 
     @Override
@@ -73,7 +85,7 @@ public class TestEventSearch extends AbstractSearchTest {
 
     private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount, final List<String> componentIds,
                       final boolean extractValues) {
-        // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
+        // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
         StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 

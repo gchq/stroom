@@ -16,12 +16,11 @@
 
 package stroom.refdata;
 
-import java.util.NavigableSet;
-
-import org.springframework.stereotype.Component;
-
 import stroom.pool.InternPool;
 
-@Component
-public class EffectiveStreamInternPool extends InternPool<NavigableSet<EffectiveStream>> {
+import javax.inject.Singleton;
+import java.util.NavigableSet;
+
+@Singleton
+class EffectiveStreamInternPool extends InternPool<NavigableSet<EffectiveStream>> {
 }

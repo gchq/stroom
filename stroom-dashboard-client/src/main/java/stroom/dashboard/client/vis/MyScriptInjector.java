@@ -47,7 +47,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * <p>
  * <pre>
  * ScriptInjector.fromUrl("http://example.com/foo.js").setCallback(new Callback<Void, Exception>() {
- * 	public void onFailure(Exception reason) {
+ * 	public void onFailure(RuntimeException e) {
  * 		Window.alert("Script load failed.");
  *    }
  *

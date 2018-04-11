@@ -92,7 +92,7 @@ public class TestStroomZipRepository {
 
         try {
             Files.setLastModifiedTime(lockFile3, FileTime.fromMillis(System.currentTimeMillis() - (48 * 60 * 60 * 1000)));
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             Assert.fail("Unable to set LastModified");
         }
         stroomZipRepository.clean();

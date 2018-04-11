@@ -32,7 +32,7 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
     private String jdbcDriverUsername;
     private String jdbcDriverPassword;
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         new DatabaseSchemaDumpTool().doMain(args);
     }
 
@@ -44,10 +44,9 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
                     jdbcDriverPassword)) {
                 final List<String> tableColumns = buildTableColumns(connection);
                 tableColumns.forEach(System.out::println);
-                connection.close();
             }
-        } catch (final Exception ex) {
-            ex.printStackTrace();
+        } catch (final ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
         }
     }
 

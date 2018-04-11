@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#217** : Add an 'all/none' checkbox to the Explorer Tree's quick filter. 
 
+* Issue **#708** : Removed parent folder UUID from ExplorerActionHandler.
+
+* Application security code is now implemented using lambda expressions rather than AOP. This simplifies debugging and makes the code easier to understand.
+
+* Changed the task system to allow task threads to be interrupted from the task UI.
+
+* Made changes to improve search performance by making various parts of search wait for interruptible conditions.
+
+* Migrated code from Spring to Guice for managing dependency injection.
+
+* Issue **#405** : Fixed quick filter on permissions dialog, for users and for groups. It will now match anywhere in the user or group name, not just at the start.
+
 * Issue **#588** : Fixed display of horizontal scrollbar on explorer tree in export, create, copy and move dialogs.
 
 * Issue **#691** : Volumes now reload on edit so that the entities are no longer stale the second time they are edited.
@@ -30,8 +42,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#634** : Remove excessive thread sleeping in index shard searching. Sleeps were causing a significant percentage of inactivity and increasing memory use as data backed up. Add more logging and logging of durations of chunks of code. Add an integration test for testing index searching for large data volumes.
 
-## [v6.0-alpha.18]
-
 * Issue **#698** : Migration of Processing Filters now protects against folders that have since been deleted
 
 * Issue **#634** : Remove excessive thread sleeping in index shard searching. Sleeps were causing a significant percentage of inactivity and increasing memory use as data backed up. Add more logging and logging of durations of chunks of code. Add an integration test for testing index searching for large data volumes.
@@ -46,17 +56,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#681** : Added dry run to check processor filters will convert to find stream criteria. Throws error to UI if fails.
 
-## [v6.0-alpha.17]
-
 * Issue **#676** : Fixed use of custom stream type values in expression based processing filters.
-
-## [v6.0-alpha.16]
 
 * Issue **#673** : Fixed issue with Stream processing filters that specify Create Time
 
 * Issue **#675** : Fixed issue with datafeed requests authenticating incorrectly
-
-## [v6.0-alpha.15]
 
 * Issue **#666** : Fixed the duplicate dictionary issue in processing filter migrations, made querying more efficient too
 * Database migration fixes and tools
@@ -65,19 +69,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#669** : Elastic Index Filter now uses stroomServiceUser to retrieve the index config from the Query Elastic service.
 
-## [v6.0-alpha.14]
-
 * Minor fix to migrations
 
-## [v6.0-alpha.13]
-
 * Add logging to migrations
 
-## [v6.0-alpha.12]
-
 * Add logging to migrations
-
-## [v6.0-alpha.11]
 
 * Issue **#651** : Removed the redundant concept of Pipeline Types, it's half implementation prevented certain picker dialogs from working.
 
@@ -95,8 +91,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#376** : Welcome tab details fixed since move to gradle
 
-## [v6.0-alpha.10]
-
 * Issue **#523** : Changed permission behaviours for copy and move to support `None`, `Source`, `Destination` and `Combined` behaviours. Creating new items now allows for `None` and `Destination` permission behaviours. Also imported items now receive permissions from the destination folder. Event logging now indicates the permission behaviour used during copy, move and create operations.
 
 * Issue **#480** : Change the downloaded search request API JSON to have a fetch type of ALL.
@@ -110,8 +104,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#568** : Fixed filtering streams by pipeline in the pipeline screen.
 
 * Issue **#565** : Fixed authorisation issue on dashboards.
-
-## [v6.0-alpha.9]
 
 * Issue **#592** : Mount stroom at /stroom.
 
@@ -141,15 +133,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#599** : DocumentServiceWriteAction was being used in the wrong places where EntityServiceSaveAction should have been used instead to save entities that aren't document entities.
 
-## [v6.0-alpha.8]
-
 * Issue **#593** : Fixed node save RPC call.
 
 * Issue **#591** : Made the query info popup more configurable with a title, validation regex etc. The popup will now only be displayed when enabled and when a manual user action takes place, e.g. clicking a search button or running a parameterised execution with one or more queries.
 
 * Added 'prompt' option to force the identity provider to ask for a login.
-
-## [v6.0-alpha.7]
 
 * Issue **#549** : Change to not try to connect to kafka when kafka is not configured and improve failure handling
 
@@ -208,8 +196,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#590** : Improved data browser performance by using a local cache to remember feeds, stream types, processors, pipelines etc while decorating streams.
 
 * Issue **#150** : Added a property to optionally require specification of search purpose.
-
-## [v6.0-alpha.4]
 
 * New authentication flow based around OpenId
 
@@ -862,46 +848,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-<<<<<<< HEAD
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.18...6.0
-[v6.0-alpha.18]: https://github.com/gchq/stroom/compare/v6.0-alpha.17...v6.0-alpha.18
-[v6.0-alpha.17]: https://github.com/gchq/stroom/compare/v6.0-alpha.16...v6.0-alpha.17
-[v6.0-alpha.16]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...v6.0-alpha.16
-[v6.0-alpha.15]: https://github.com/gchq/stroom/compare/v6.0-alpha.14...v6.0-alpha.15
-[v6.0-alpha.14]: https://github.com/gchq/stroom/compare/v6.0-alpha.13...v6.0-alpha.14
-[v6.0-alpha.13]: https://github.com/gchq/stroom/compare/v6.0-alpha.12...v6.0-alpha.13
-[v6.0-alpha.12]: https://github.com/gchq/stroom/compare/v6.0-alpha.11...v6.0-alpha.12
-[v6.0-alpha.11]: https://github.com/gchq/stroom/compare/v6.0-alpha.10...v6.0-alpha.11
-[v6.0-alpha.10]: https://github.com/gchq/stroom/compare/v6.0-alpha.9...v6.0-alpha.10
-[v6.0-alpha.9]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...v6.0-alpha.9
-[v6.0-alpha.8]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...v6.0-alpha.8
-[v6.0-alpha.7]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...v6.0-alpha.7
-[v6.0-alpha.4]: https://github.com/gchq/stroom/commits/v6.0-alpha.4
-=======
-* Issue **#202** : Initial release of the new data retention policy functionality.
-
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.2.3...HEAD
-[v5.2.3]: https://github.com/gchq/stroom/compare/v5.2.2...v5.2.3
-[v5.2.2]: https://github.com/gchq/stroom/compare/v5.2.1...v5.2.2
-[v5.2.1]: https://github.com/gchq/stroom/compare/v5.2.0...v5.2.1
-[v5.2.0]: https://github.com/gchq/stroom/compare/v5.1.0...v5.2.0
-[v5.1.0]: https://github.com/gchq/stroom/compare/v5.1-beta.16...v5.1.0
-[v5.1-beta.16]: https://github.com/gchq/stroom/compare/v5.1-beta.15...v5.1-beta.16
-[v5.1-beta.15]: https://github.com/gchq/stroom/compare/v5.1-beta.14...v5.1-beta.15
-[v5.1-beta.14]: https://github.com/gchq/stroom/compare/v5.1-beta.13...v5.1-beta.14
-[v5.1-beta.13]: https://github.com/gchq/stroom/compare/v5.1-beta.12...v5.1-beta.13
-[v5.1-beta.12]: https://github.com/gchq/stroom/compare/v5.1-beta.11...v5.1-beta.12
-[v5.1-beta.11]: https://github.com/gchq/stroom/compare/v5.1-beta.10...v5.1-beta.11
-[v5.1-beta.10]: https://github.com/gchq/stroom/compare/v5.1-beta.9...v5.1-beta.10
-[v5.1-beta.9]: https://github.com/gchq/stroom/compare/v5.1-beta.8...v5.1-beta.9
-[v5.1-beta.8]: https://github.com/gchq/stroom/compare/v5.1-beta.7...v5.1-beta.8
-[v5.1-beta.7]: https://github.com/gchq/stroom/compare/v5.1-beta.6...v5.1-beta.7
-[v5.1-beta.6]: https://github.com/gchq/stroom/compare/v5.1-beta.5...v5.1-beta.6
-[v5.1-beta.5]: https://github.com/gchq/stroom/compare/v5.1-beta.4...v5.1-beta.5
-[v5.1-beta.4]: https://github.com/gchq/stroom/compare/v5.1-beta.3...v5.1-beta.4
-[v5.1-beta.3]: https://github.com/gchq/stroom/compare/v5.1-beta.2...v5.1-beta.3
-[v5.1-beta.2]: https://github.com/gchq/stroom/compare/v5.1-beta.1...v5.1-beta.2
-[v5.1-beta.1]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...v5.1-beta.1
-[v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
-[v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
->>>>>>> 5.2
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.0...HEAD
+[v6.0.0]: https://github.com/gchq/stroom/compare/v5.2.0...v6.0.0

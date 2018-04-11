@@ -1,4 +1,5 @@
 dependencies {
+    compile project(':stroom-entity-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-util-shared')
@@ -14,8 +15,8 @@ dependencies {
     compile libs.ws_rs_api
     compile libs.guava
     compile libs.slf4j_api
-    compile libs.spring_context
     compile libs.xml_apis
+    compile libs.guice4
 
     compile libs.javax_inject
 }

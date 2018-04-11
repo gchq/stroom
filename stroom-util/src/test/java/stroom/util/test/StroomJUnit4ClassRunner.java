@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.task.ExternalShutdownController;
+import stroom.task.ExternalShutdownController;
 
 import java.nio.file.Path;
 
@@ -61,7 +61,7 @@ public class StroomJUnit4ClassRunner extends BlockJUnit4ClassRunner {
             super.run(notifier);
             printTemp();
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -74,7 +74,7 @@ public class StroomJUnit4ClassRunner extends BlockJUnit4ClassRunner {
             } else {
                 System.out.println("TEMP DIR = NULL");
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
         }
     }
 
@@ -89,7 +89,7 @@ public class StroomJUnit4ClassRunner extends BlockJUnit4ClassRunner {
             } finally {
                 runChildAfter(this, method, notifier, logExecutionTime);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
 

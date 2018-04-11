@@ -78,7 +78,7 @@ public class ClientProperties implements SharedObject {
         if (value != null) {
             try {
                 return value;
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
             }
         }
 
@@ -90,7 +90,7 @@ public class ClientProperties implements SharedObject {
         if (value != null) {
             try {
                 return Boolean.valueOf(value);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
             }
         }
 
@@ -102,7 +102,7 @@ public class ClientProperties implements SharedObject {
         if (value != null) {
             try {
                 return Long.valueOf(value);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
             }
         }
 

@@ -28,7 +28,7 @@ public class TestAbstractCommandLineTool extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAbstractCommandLineTool.class);
 
     @Test
-    public void testSimple() throws Exception {
+    public void testSimple() {
         final TestProgram testProgram = new TestProgram();
         testProgram.doMain(new String[]{"prop1=11"});
         testProgram.traceArguments(System.out);

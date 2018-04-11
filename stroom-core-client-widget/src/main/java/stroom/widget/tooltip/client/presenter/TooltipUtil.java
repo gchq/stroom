@@ -16,6 +16,7 @@
 
 package stroom.widget.tooltip.client.presenter;
 
+
 public final class TooltipUtil {
     private TooltipUtil() {
         // Utility class.
@@ -50,7 +51,7 @@ public final class TooltipUtil {
     }
 
     public static void addRowData(final StringBuilder buffer, final String value) {
-        if (value != null && value.length() > 0) {
+        if (value != null && !value.isEmpty()) {
             buffer.append(value);
             buffer.append("<br/>");
         }

@@ -16,26 +16,21 @@
 
 package stroom.test;
 
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.Clearable;
-import stroom.util.spring.StroomSpringProfiles;
+import stroom.guice.StroomBeanStore;
+
+import javax.inject.Inject;
+import java.util.Set;
 
 /**
  * Version of the test control used with the mocks.
  */
-@Profile(StroomSpringProfiles.TEST)
-@Component
-public class MockCommonTestControl implements CommonTestControl, ApplicationContextAware {
-    private ApplicationContext applicationContext;
+public class MockCommonTestControl implements CommonTestControl {
+    private final StroomBeanStore beanStore;
 
-    @Override
-    public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
-
+    @Inject
+    MockCommonTestControl(final StroomBeanStore beanStore) {
+        this.beanStore = beanStore;
     }
 
     @Override
@@ -44,9 +39,8 @@ public class MockCommonTestControl implements CommonTestControl, ApplicationCont
 
     @Override
     public void teardown() {
-        for (final Clearable clearable : applicationContext.getBeansOfType(Clearable.class, false, false).values()) {
-            clearable.clear();
-        }
+        final Set<Clearable> set = beanStore.getInstancesOfType(Clearable.class);
+        set.forEach(Clearable::clear);
     }
 
     @Override

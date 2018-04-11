@@ -7,7 +7,6 @@ import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -53,7 +52,7 @@ public class ProxyRepositoryManager {
     private static Path getPath(final String repoDir) {
         Path path;
 
-        if (repoDir != null && repoDir.length() > 0) {
+        if (repoDir != null && !repoDir.isEmpty()) {
             path = Paths.get(repoDir);
         } else {
             path = FileUtil.getTempDir().resolve("stroom-proxy");
@@ -64,7 +63,7 @@ public class ProxyRepositoryManager {
     }
 
     private static String getFormat(final String repositoryFormat) {
-        if (repositoryFormat != null && repositoryFormat.length() > 0) {
+        if (repositoryFormat != null && !repositoryFormat.isEmpty()) {
             return repositoryFormat;
         }
 
@@ -72,7 +71,7 @@ public class ProxyRepositoryManager {
     }
 
     private static Scheduler createScheduler(final String simpleCron) {
-        if (simpleCron != null && simpleCron.length() > 0) {
+        if (simpleCron != null && !simpleCron.isEmpty()) {
             return SimpleCron.compile(simpleCron).createScheduler();
         }
 
@@ -99,18 +98,24 @@ public class ProxyRepositoryManager {
         // Rolling?
         if (scheduler != null) {
             CompletableFuture.runAsync(() -> {
-                        while (!finish) {
-                            // Sleep for a second
-                            ThreadUtil.sleep(1000);
+                try {
+                    while (!finish) {
+                        // Sleep for a second
+                        Thread.sleep(1000);
 
-                            try {
-                                doRunWork();
-                            } catch (final Throwable th) {
-                                LOGGER.error("run() Exception", th);
-                            }
+                        try {
+                            doRunWork();
+                        } catch (final RuntimeException e) {
+                            LOGGER.error("run() Exception", e);
                         }
                     }
-            );
+                } catch (final InterruptedException e) {
+                    LOGGER.error(e.getMessage(), e);
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+                }
+            });
         }
     }
 
@@ -136,7 +141,7 @@ public class ProxyRepositoryManager {
                                 try {
                                     // Is this directory name an ISO 8601 compliant date?
                                     millis = DateUtil.parseNormalDateTimeString(baseName);
-                                } catch (final Exception e) {
+                                } catch (final RuntimeException e) {
                                     LOGGER.warn("Failed to parse directory that looked like it should be rolled repository: " + file);
                                 }
 
@@ -163,7 +168,7 @@ public class ProxyRepositoryManager {
                             }
                         }
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
             });
@@ -172,7 +177,7 @@ public class ProxyRepositoryManager {
         }
     }
 
-    public StroomZipRepository getActiveRepository() {
+    StroomZipRepository getActiveRepository() {
         if (activeRepository.get() == null) {
             synchronized (ProxyRepositoryManager.class) {
                 if (activeRepository.get() == null) {

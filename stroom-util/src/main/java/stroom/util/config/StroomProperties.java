@@ -17,16 +17,15 @@
 package stroom.util.config;
 
 import com.google.common.base.CaseFormat;
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.Resource;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomResourceLoaderUtil;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -62,64 +61,50 @@ public class StroomProperties {
         if (!doneInit) {
             doneInit = true;
 
-            final DefaultResourceLoader resourceLoader = new DefaultResourceLoader(
-                    StroomProperties.class.getClassLoader());
-
-//            // Started up as a WAR file?
-//            final String warName = ServletContextUtil
-//                    .getWARName(UpgradeDispatcherSingleton.instance().getServletConfig());
-//            if (warName != null) {
-//                loadResource(resourceLoader, "classpath:/" + warName + ".properties", Source.WAR);
-//            }
-
             // Get properties for the current user if there are any.
-            loadResource(resourceLoader, "file:" + System.getProperty("user.home") + "/" + USER_CONF_PATH, Source.USER_CONF);
+            final Path file = Paths.get(System.getProperty("user.home") + "/" + USER_CONF_PATH);
+            if (Files.isRegularFile(file)) {
+                loadResource(file, Source.USER_CONF);
+            }
             ensureStroomTempEstablished();
         }
     }
 
-    private static void loadResource(final DefaultResourceLoader resourceLoader, final String resourceName, final Source source) {
+    private static void loadResource(final Path file, final Source source) {
         try {
-            final Resource resource = StroomResourceLoaderUtil.getResource(resourceLoader, resourceName);
+            final InputStream inputStream = Files.newInputStream(file);
+            final Properties properties = new Properties();
+            properties.load(inputStream);
+            CloseableUtil.close(inputStream);
 
-            if (resource != null && resource.exists()) {
-                final InputStream is = resource.getInputStream();
-                final Properties properties = new Properties();
-                properties.load(is);
-                CloseableUtil.close(is);
-
-                for (final Map.Entry<Object, Object> entry : properties.entrySet()) {
-                    final String key = (String) entry.getKey();
-                    final String value = (String) entry.getValue();
-                    if (value != null) {
-                        setProperty(key, value, source);
-                    }
+            for (final Map.Entry<Object, Object> entry : properties.entrySet()) {
+                final String key = (String) entry.getKey();
+                final String value = (String) entry.getValue();
+                if (value != null) {
+                    setProperty(key, value, source);
                 }
+            }
 
-                String path = "";
-                try {
-                    final Path file = Paths.get(resource.getURI());
-                    final Path dir = file.getParent();
-                    path = FileUtil.getCanonicalPath(dir);
-                } catch (final Exception e) {
-                    // Ignore.
-                }
+            String path = "";
+            try {
+                final Path dir = file.getParent();
+                path = FileUtil.getCanonicalPath(dir);
+            } catch (final RuntimeException e) {
+                // Ignore.
+            }
 
-                LOGGER.info("Using properties '{}' from '{}'", resourceName, path);
+            LOGGER.info("Using properties from '{}'", path);
 
 //                // Is this this web app property file?
 //                if (Source.WAR.equals(source)) {
 //                    try {
 //                        final Path resourceFile = resource.getFile();
 //                        propertiesDir = resourceFile.getParentFile();
-//                    } catch (final Exception ex) {
+//                    } catch (final RuntimeException e) {
 //                        LOGGER.warn("Unable to locate properties dir ... maybe running in maven?");
 //                    }
 //                }
-            } else {
-                LOGGER.info("Properties not found at '{}'", resourceName);
-            }
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }
@@ -169,7 +154,7 @@ public class StroomProperties {
         int value = defaultValue;
 
         final String string = getProperty(key);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             try {
                 value = Integer.parseInt(string);
             } catch (final NumberFormatException e) {
@@ -185,7 +170,7 @@ public class StroomProperties {
         long value = defaultValue;
 
         final String string = getProperty(key);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             try {
                 value = Long.parseLong(string);
             } catch (final NumberFormatException e) {
@@ -201,7 +186,7 @@ public class StroomProperties {
         boolean value = defaultValue;
 
         final String string = getProperty(propertyName);
-        if (string != null && string.length() > 0) {
+        if (string != null && !string.isEmpty()) {
             value = Boolean.valueOf(string);
         }
 
@@ -421,18 +406,14 @@ public class StroomProperties {
         // Environment variable names are transformations of property names.
         // E.g. stroom.temp => STROOM_TEMP.
         // E.g. stroom.jdbcDriverUsername => STROOM_JDBC_DRIVER_USERNAME
-        String environmentVariableName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, propertyName.replace('.', '_'));
-        String environmentVariable = System.getenv(environmentVariableName);
+        final String environmentVariableName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, propertyName.replace('.', '_'));
+        final String environmentVariable = System.getenv(environmentVariableName);
 
         if (trace) {
             LOGGER.info(String.format("Get Env %s -> %s: %s", propertyName, environmentVariableName, environmentVariable));
         }
 
-        if (StringUtils.isNotBlank(environmentVariable)) {
-            return environmentVariable;
-        }
-
-        return null;
+        return Strings.emptyToNull(environmentVariable);
     }
 
     private static void logEstablished(final String key, final String value, final String source) {
@@ -461,7 +442,7 @@ public class StroomProperties {
 
     public enum Source {
         DEFAULT(0, "Java property defaults"),
-        SPRING(1, "Spring context"),
+        GUICE(1, "Guice context"),
         DB(2, "Database"),
         WAR(3, "WAR property file"),
         USER_CONF(4, USER_CONF_PATH),

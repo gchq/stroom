@@ -17,13 +17,13 @@
 
 package stroom.proxy.repo;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
@@ -74,7 +74,7 @@ public class ProxyRepositoryCreator {
                         } else if (fileName.endsWith(ZIP_EXTENSION)) {
                             loadZip(file, mandateEffectiveDate, effectiveMs);
                         }
-                    } catch (final Exception e) {
+                    } catch (final RuntimeException e) {
                         throw new RuntimeException(e.getMessage(), e);
                     }
                     return super.visitFile(file, attrs);
@@ -98,7 +98,7 @@ public class ProxyRepositoryCreator {
                 int i = 0;
                 i++;
                 String newName = Integer.toString(i);
-                newName = StringUtils.leftPad(newName, 3, '0');
+                newName = Strings.padStart(newName, 3, '0');
 
                 // Add meta data.
                 OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName());
@@ -132,7 +132,7 @@ public class ProxyRepositoryCreator {
                 for (String baseName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
                     i++;
                     String newName = Integer.toString(i);
-                    newName = StringUtils.leftPad(newName, 3, '0');
+                    newName = Strings.padStart(newName, 3, '0');
 
                     // Add meta data.
                     InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);

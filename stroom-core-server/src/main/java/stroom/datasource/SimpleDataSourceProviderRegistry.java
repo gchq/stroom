@@ -16,13 +16,12 @@
 
 package stroom.datasource;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.ExternalDocRefConstants;
-import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
@@ -55,7 +54,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
         final String elasticPath = stroomPropertyService
                 .getProperty(ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX);
 
-        if (!Strings.isNullOrEmpty(basePath)) {
+        if (basePath != null && !basePath.isEmpty()) {
             //TODO the path strings are defined in ResourcePaths but this is not accessible from here
             //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
             urlMap = new HashMap<>();
@@ -76,7 +75,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
                             .sorted()
                             .collect(Collectors.joining("\n"))
             );
-            LOGGER.info("Stroom-stats is not available when servcie discovery is disabled");
+            LOGGER.info("Stroom-stats is not available when service discovery is disabled");
         } else {
             LOGGER.error("Property value for {} is null or empty, local service lookup will not function",
                     PROP_KEY_BASE_PATH);

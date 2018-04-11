@@ -16,7 +16,7 @@
 
 package stroom.xml.converter.ds3;
 
-import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.xml.converter.ds3.ref.VarFactoryMap;
 import stroom.xml.converter.ds3.ref.VarMap;
 

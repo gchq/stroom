@@ -19,7 +19,7 @@ package stroom.entity.testshared;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.entity.server.util.PeriodUtil;
+import stroom.entity.util.PeriodUtil;
 import stroom.entity.shared.Period;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;

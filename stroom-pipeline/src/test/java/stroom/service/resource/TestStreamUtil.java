@@ -19,7 +19,7 @@ package stroom.service.resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.resource.server.BOMRemovalInputStream;
+import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -27,7 +27,6 @@ import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 
 @RunWith(StroomJUnit4ClassRunner.class)
@@ -39,31 +38,31 @@ public class TestStreamUtil extends StroomUnitTest {
     }
 
     @Test
-    public void readANSI() {
+    public void readANSI() throws IOException {
         test("TestStreamUtil/ansi.nxml", "US-ASCII");
     }
 
     @Test
-    public void readDOS() {
+    public void readDOS() throws IOException {
         test("TestStreamUtil/dos.nxml", "US-ASCII");
     }
 
     @Test
-    public void readUTF8() {
+    public void readUTF8() throws IOException {
         test("TestStreamUtil/utf-8.nxml", "UTF-8");
     }
 
     @Test
-    public void readUTF16() {
+    public void readUTF16() throws IOException {
         test("TestStreamUtil/utf-16le.nxml", "UTF-16LE");
     }
 
     @Test
-    public void readUTF16BE() {
+    public void readUTF16BE() throws IOException {
         test("TestStreamUtil/utf-16be.nxml", "UTF-16BE");
     }
 
-    private void test(final String resourceName, final String charsetName) {
+    private void test(final String resourceName, final String charsetName) throws IOException {
         // Test using byte buffer.
         InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(resourceName);
         BOMRemovalInputStream bomRemovalIS = new BOMRemovalInputStream(inputStream, charsetName);
@@ -93,18 +92,18 @@ public class TestStreamUtil extends StroomUnitTest {
             string = new String(buffer, 0, len, charsetName);
             Assert.assertEquals("Strings don't match", REF_STRING, string);
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e);
         } finally {
             try {
                 bomRemovalIS.close();
             } catch (final IOException e) {
-                throw new UncheckedIOException(e);
+                // Ignore.
             } finally {
                 try {
                     inputStream.close();
                 } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
+                    // Ignore.
                 }
             }
         }

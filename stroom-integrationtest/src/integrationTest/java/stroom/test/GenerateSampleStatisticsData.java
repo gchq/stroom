@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;
 
+import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -55,7 +56,7 @@ public class GenerateSampleStatisticsData {
 
     private static final List<String> USERS = Arrays.asList(USER1, USER2);
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) throws IOException {
         System.out.println("Writing value data...");
 
         try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsTestData_Values.xml"))) {

@@ -36,13 +36,11 @@ jar {
         attributes(
                 "Implementation-Title": "Stroom",
                 "Implementation-Version": versions.stroom,
-                "Main-Class" : "stroom.startup.App"
+                "Main-Class": "stroom.startup.App"
         )
     }
     archiveName jarName
 }
-
-import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
 
 shadowJar {
     // Allows us to build fat jars with lots of files
@@ -51,10 +49,6 @@ shadowJar {
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
 
-    // A transformer to merge spring's generated config files, e.g. spring.handlers and spring.schemas
-    transform(ServiceFileTransformer) {
-        include 'META-INF/spring.*'
-    }
     archiveName fatJarName
 }
 
@@ -74,7 +68,8 @@ dependencies {
     permitUnusedDeclared project(':stroom-entity-shared') //not clear why it thinks this is unused
     compile project(':stroom-index-shared')
     permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
-//    compile project(':stroom-util')
+    compile project(':stroom-util')
+    compile project(':stroom-docstore-server')
     compile project(':stroom-pipeline')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-statistics-server')
@@ -91,17 +86,12 @@ dependencies {
     compile libs.javax_inject
     compile libs.jcommander
     compile libs.jetty_servlet
-    compile libs.spring_core
-    compile libs.spring_beans
-    compile libs.spring_context
-    permitUnusedDeclared libs.spring_aspects
-    compile libs.spring_aspects
 
-    compile (libs.dropwizard_assets) {
-        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    compile(libs.dropwizard_assets) {
+        exclude(group: "org.glassfish.web", module: "javax.el")
     }
-    compile (libs.dropwizard_core) {
-        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    compile(libs.dropwizard_core) {
+        exclude(group: "org.glassfish.web", module: "javax.el")
     }
     compile libs.dropwizard_jersey
     compile libs.dropwizard_jetty
@@ -146,7 +136,7 @@ processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
 
 def dockerBuildDir = "${projectDir}/docker/build"
 
-clean{
+clean {
     delete dockerBuildDir
 }
 
@@ -186,15 +176,14 @@ task copyFilesForDockerBuild() {
 
 swagger {
     apiSource {
-        springmvc = false //makes it search for jersey annotations
         outputFormats = 'json,yaml'
         locations = [
-                'stroom.statistics.server.sql.search.SqlStatisticsQueryResource',
-                'stroom.index.server.StroomIndexQueryResource',
-                'stroom.security.server.AuthorisationResource' ]
+                'stroom.statistics.sql.search.SqlStatisticsQueryResource',
+                'stroom.index.StroomIndexQueryResource',
+                'stroom.security.AuthorisationResource']
         schemes = [
                 'http',
-                'https' ]
+                'https']
         host = 'localhost:8080'
         basePath = '/api'
         info {
@@ -226,19 +215,19 @@ tasks.build.dependsOn shadowJar
 
 //commented out in case we decide to use this plugin
 //honker {
-    //// Your project license
-    //license 'Apache 2'
+//// Your project license
+//license 'Apache 2'
 
-    //// Your project information, used to generate NOTICE files
-    //projectName 'Stroom'
-    //projectTimespan '2016-2017'
-    //projectOrganization 'GCHQ'
+//// Your project information, used to generate NOTICE files
+//projectName 'Stroom'
+//projectTimespan '2016-2017'
+//projectOrganization 'GCHQ'
 
-    //// For dependencies that contains no licensing information (pom, manifest etc..)
-    //// you can define your licensing strategy, for example:
-    ////licenseOverride { candidate ->
-        ////if( candidate.group == 'something' && candidate.module == 'whatever' ) {
-            ////candidate.license = 'BSD 3-Clause'
-        ////}
-    ////}
+//// For dependencies that contains no licensing information (pom, manifest etc..)
+//// you can define your licensing strategy, for example:
+////licenseOverride { candidate ->
+////if( candidate.group == 'something' && candidate.module == 'whatever' ) {
+////candidate.license = 'BSD 3-Clause'
+////}
+////}
 //}

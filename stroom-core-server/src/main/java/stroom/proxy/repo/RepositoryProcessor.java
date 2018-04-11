@@ -19,12 +19,11 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
+import stroom.task.TaskContext;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
-import stroom.util.io.FileUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Monitor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,7 +62,7 @@ public final class RepositoryProcessor {
     /**
      * Flag set to stop things
      */
-    private final Monitor monitor;
+    private final TaskContext taskContext;
 
 
     /**
@@ -71,10 +70,10 @@ public final class RepositoryProcessor {
      */
     private int maxFileScan = DEFAULT_MAX_FILE_SCAN;
 
-    public RepositoryProcessor(final ProxyFileProcessor feedFileProcessor, final Executor executor, final Monitor monitor) {
+    public RepositoryProcessor(final ProxyFileProcessor feedFileProcessor, final Executor executor, final TaskContext taskContext) {
         this.feedFileProcessor = feedFileProcessor;
         this.executor = executor;
-        this.monitor = monitor;
+        this.taskContext = taskContext;
     }
 
 //    public abstract void processFeedFiles(StroomZipRepository stroomZipRepository, String feed, List<Path> fileList);
@@ -125,7 +124,7 @@ public final class RepositoryProcessor {
             processFeeds(stroomZipRepository, feedPathMap);
 
             LOGGER.debug("Completed");
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -136,7 +135,7 @@ public final class RepositoryProcessor {
         final Set<CompletableFuture> futures = new HashSet<>();
 
         final Iterator<Entry<String, List<Path>>> iter = feedPathMap.getMap().entrySet().iterator();
-        while (iter.hasNext() && !monitor.isTerminated()) {
+        while (iter.hasNext() && !taskContext.isTerminated()) {
             final Entry<String, List<Path>> entry = iter.next();
             final String feedName = entry.getKey();
             final List<Path> fileList = entry.getValue();
@@ -152,8 +151,8 @@ public final class RepositoryProcessor {
                     ")";
 
             final Runnable runnable = () -> {
-                if (!monitor.isTerminated()) {
-                    monitor.info(msg);
+                if (!taskContext.isTerminated()) {
+                    taskContext.info(msg);
                     feedFileProcessor.processFeedFiles(stroomZipRepository, feedName, fileList);
                 } else {
                     LOGGER.info("Quit Feed Aggregation {}", feedName);
@@ -211,7 +210,7 @@ public final class RepositoryProcessor {
 
     private void processPath(final Path path, final StroomZipRepository stroomZipRepository, final Map<String, List<Path>> feedPaths, final Set<CompletableFuture> futures) {
         final Runnable runnable = () -> {
-            if (!monitor.isTerminated()) {
+            if (!taskContext.isTerminated()) {
                 LOGGER.debug("Processing file: {}", path);
                 final String feed = getFeed(stroomZipRepository, path);
                 if (feed == null || feed.length() == 0) {
@@ -242,7 +241,7 @@ public final class RepositoryProcessor {
                                 if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
                                     zipFiles.add(file);
                                 }
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 LOGGER.error(e.getMessage(), e);
                             }
 
@@ -257,7 +256,7 @@ public final class RepositoryProcessor {
                     LOGGER.error(e.getMessage(), e);
                 }
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 

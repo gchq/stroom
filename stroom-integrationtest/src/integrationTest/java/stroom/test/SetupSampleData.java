@@ -16,70 +16,42 @@
 
 package stroom.test;
 
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.logging.spring.EventLoggingConfiguration;
-import stroom.dashboard.spring.DashboardConfiguration;
-import stroom.dictionary.spring.DictionaryConfiguration;
-import stroom.explorer.server.ExplorerConfiguration;
-import stroom.index.spring.IndexConfiguration;
-import stroom.pipeline.spring.PipelineConfiguration;
-import stroom.ruleset.spring.RuleSetConfiguration;
-import stroom.script.spring.ScriptConfiguration;
-import stroom.search.spring.SearchConfiguration;
-import stroom.security.spring.SecurityConfiguration;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ScopeTestConfiguration;
-import stroom.spring.ServerConfiguration;
-import stroom.statistics.spring.StatisticsConfiguration;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import stroom.persist.PersistService;
+import stroom.task.TaskManager;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.task.TaskScopeContextHolder;
-import stroom.visualisation.spring.VisualisationConfiguration;
+
+import java.io.IOException;
 
 /**
  * Script to create some base data for testing.
  */
 public final class SetupSampleData {
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) throws IOException {
         FileUtil.useDevTempDir();
         System.setProperty("stroom.connectionTesterClassName",
-                "stroom.entity.server.util.StroomConnectionTesterOkOnException");
+                "stroom.entity.util.StroomConnectionTesterOkOnException");
 
-        TaskScopeContextHolder.addContext();
-        try {
-            @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
-            appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,
-                    SecurityConfiguration.MOCK_SECURITY);
-            appContext.register(
-                    ScopeConfiguration.class,
-                    PersistenceConfiguration.class,
-                    SetupSampleDataComponentScanConfiguration.class,
-                    ServerConfiguration.class,
-                    ExplorerConfiguration.class,
-                    RuleSetConfiguration.class,
-                    SecurityConfiguration.class,
-                    ScopeTestConfiguration.class,
-                    DictionaryConfiguration.class,
-                    PipelineConfiguration.class,
-                    EventLoggingConfiguration.class,
-                    IndexConfiguration.class,
-                    SearchConfiguration.class,
-                    ScriptConfiguration.class,
-                    VisualisationConfiguration.class,
-                    DashboardConfiguration.class,
-                    StatisticsConfiguration.class
-            );
-            appContext.refresh();
-            final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
+        final Injector injector = Guice.createInjector(new CoreTestModule());
 
-            commonTestControl.setup();
+        // Start persistance
+        injector.getInstance(PersistService.class).start();
 
-            final SetupSampleDataBean setupSampleDataBean = appContext.getBean(SetupSampleDataBean.class);
-            setupSampleDataBean.run(true);
+        // Start task manager
+        injector.getInstance(TaskManager.class).startup();
 
-        } finally {
-            TaskScopeContextHolder.removeContext();
-        }
+        final CommonTestControl commonTestControl = injector.getInstance(CommonTestControl.class);
+
+        commonTestControl.setup();
+
+        final SetupSampleDataBean setupSampleDataBean = injector.getInstance(SetupSampleDataBean.class);
+        setupSampleDataBean.run(true);
+
+        // Stop task manager
+        injector.getInstance(TaskManager.class).shutdown();
+
+        // Stop persistance
+        injector.getInstance(PersistService.class).stop();
     }
 }

@@ -32,12 +32,12 @@ import java.nio.file.Path;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestDelayedCreateOutputStream extends StroomUnitTest {
     @Test
-    public void testEmptyStreamNeverGetsCreated() throws Exception {
+    public void testEmptyStreamNeverGetsCreated() throws IOException {
         doTest(false);
     }
 
     @Test
-    public void testStreamGetsCreated() throws Exception {
+    public void testStreamGetsCreated() throws IOException {
         doTest(true);
     }
 

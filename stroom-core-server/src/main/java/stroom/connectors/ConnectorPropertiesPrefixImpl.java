@@ -1,6 +1,6 @@
 package stroom.connectors;
 
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 
 import java.util.Properties;
 

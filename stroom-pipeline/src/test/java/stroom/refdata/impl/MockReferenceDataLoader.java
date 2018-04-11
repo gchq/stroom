@@ -18,19 +18,16 @@ package stroom.refdata.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 import org.xml.sax.SAXException;
 import stroom.refdata.MapStore;
 import stroom.refdata.MapStoreBuilder;
 import stroom.refdata.MapStoreBuilderImpl;
 import stroom.refdata.MapStoreCacheKey;
 import stroom.refdata.ReferenceDataLoader;
-import stroom.util.spring.StroomSpringProfiles;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
 
-@Profile(StroomSpringProfiles.TEST)
 public class MockReferenceDataLoader implements ReferenceDataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(MockReferenceDataLoader.class);
 

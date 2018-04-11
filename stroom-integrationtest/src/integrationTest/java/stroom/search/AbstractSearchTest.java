@@ -18,7 +18,7 @@ package stroom.search;
 
 import org.junit.Assert;
 import stroom.entity.shared.DocRefUtil;
-import stroom.index.server.IndexService;
+import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.query.api.v2.DocRef;
@@ -34,12 +34,13 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchResponseCreator;
-import stroom.search.server.SearchResultCreatorManager;
+import stroom.query.common.v2.SearchResponseCreatorCache;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
-import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,30 +52,25 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
-
-    @Resource
-    private SearchResultCreatorManager searchResultCreatorManager;
+    @Inject
+    private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
 
     protected SearchResponse search(SearchRequest searchRequest) {
-        return search(searchRequest, searchResultCreatorManager);
+        return search(searchRequest, searchResponseCreatorManager);
     }
 
     protected static SearchResponse search(final SearchRequest searchRequest,
-                                           final SearchResultCreatorManager searchResultCreatorManager) {
-        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(
-                new SearchResultCreatorManager.Key(searchRequest));
+                                           final SearchResponseCreatorManager searchResponseCreatorManager) {
+        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(
+                new SearchResponseCreatorCache.Key(searchRequest));
 
         SearchResponse response = searchResponseCreator.create(searchRequest);
         try {
             while (!response.complete()) {
                 response = searchResponseCreator.create(searchRequest);
-
-                if (!response.complete()) {
-                    ThreadUtil.sleep(1000);
-                }
             }
         } finally {
-            searchResultCreatorManager.remove(new SearchResultCreatorManager.Key(searchRequest.getKey()));
+            searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(searchRequest.getKey()));
         }
 
         return response;
@@ -87,13 +83,12 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final long sleepTimeMs,
             final int maxShardTasks,
             final int maxExtractionTasks,
             final IndexService indexService) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, sleepTimeMs, maxShardTasks,
-                maxExtractionTasks, indexService, searchResultCreatorManager);
+                extractValues, resultMapConsumer, maxShardTasks,
+                maxExtractionTasks, indexService, searchResponseCreatorManager);
     }
 
     public static void testInteractive(
@@ -103,11 +98,10 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final long sleepTimeMs,
             final int maxShardTasks,
             final int maxExtractionTasks,
             final IndexService indexService,
-            final SearchResultCreatorManager searchResultCreatorManager) {
+            final SearchResponseCreatorManager searchResponseCreatorManager) {
 
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty(
@@ -136,7 +130,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = new Query(dataSourceRef, expressionIn.build());
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
-        final SearchResponse searchResponse = AbstractSearchTest.search(searchRequest, searchResultCreatorManager);
+        final SearchResponse searchResponse = AbstractSearchTest.search(searchRequest, searchResponseCreatorManager);
 
         final Map<String, List<Row>> rows = new HashMap<>();
         if (searchResponse != null && searchResponse.getResults() != null) {

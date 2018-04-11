@@ -21,25 +21,26 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.security.SecurityHelper;
-import stroom.security.SecurityContext;
-import stroom.streamstore.server.EffectiveMetaDataCriteria;
-import stroom.streamstore.server.StreamStore;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.security.Security;
+import stroom.streamstore.EffectiveMetaDataCriteria;
+import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
-@Component
-public class EffectiveStreamCache {
+@Singleton
+public class EffectiveStreamCache implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
 
     private static final int MAX_CACHE_ENTRIES = 1000;
@@ -47,26 +48,26 @@ public class EffectiveStreamCache {
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
     private final StreamStore streamStore;
     private final EffectiveStreamInternPool internPool;
-    private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     EffectiveStreamCache(final CacheManager cacheManager,
                          final StreamStore streamStore,
                          final EffectiveStreamInternPool internPool,
-                         final SecurityContext securityContext) {
-        this(cacheManager, streamStore, internPool, securityContext, 10, TimeUnit.MINUTES);
+                         final Security security) {
+        this(cacheManager, streamStore, internPool, security, 10, TimeUnit.MINUTES);
     }
 
     @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
                          final StreamStore streamStore,
                          final EffectiveStreamInternPool internPool,
-                         final SecurityContext securityContext,
+                         final Security security,
                          final long duration,
                          final TimeUnit unit) {
         this.streamStore = streamStore;
         this.internPool = internPool;
-        this.securityContext = securityContext;
+        this.security = security;
 
         final CacheLoader<EffectiveStreamKey, NavigableSet> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
@@ -89,7 +90,7 @@ public class EffectiveStreamCache {
     }
 
     protected NavigableSet<EffectiveStream> create(final EffectiveStreamKey key) {
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        return security.asProcessingUserResult(() -> {
             NavigableSet<EffectiveStream> effectiveStreamSet = Collections.emptyNavigableSet();
 
             try {
@@ -141,15 +142,20 @@ public class EffectiveStreamCache {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Created effective stream set: " + key.toString());
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
 
             return effectiveStreamSet;
-        }
+        });
     }
 
     long size() {
         return cache.size();
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
     }
 }

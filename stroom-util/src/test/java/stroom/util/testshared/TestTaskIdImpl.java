@@ -33,8 +33,8 @@ public class TestTaskIdImpl {
         final TaskIdImpl gc1 = new TaskIdImpl("GC1", c1);
         final TaskIdImpl gc2 = new TaskIdImpl("GC2", c2);
 
-        Assert.assertTrue(gc1.hasAncestor(new TaskIdImpl("P1", null)));
-        Assert.assertFalse(gc2.hasAncestor(new TaskIdImpl("P1", null)));
+        Assert.assertTrue(gc1.isOrHasAncestor(new TaskIdImpl("P1", null)));
+        Assert.assertFalse(gc2.isOrHasAncestor(new TaskIdImpl("P1", null)));
     }
 
 }

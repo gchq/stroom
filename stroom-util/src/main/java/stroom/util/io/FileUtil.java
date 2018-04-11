@@ -187,7 +187,7 @@ public final class FileUtil {
             stream.forEach(file -> {
                 try {
                     count.incrementAndGet();
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.debug(e.getMessage(), e);
                 }
             });

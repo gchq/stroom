@@ -40,7 +40,7 @@ public abstract class AbstractHolder<T extends Holder> implements HasChangeHandl
             for (final ChangeHandler<T> handler : handlers) {
                 try {
                     handler.onChange(event);
-                } catch (final Throwable e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error("Unable to handle onChange!", e);
                 }
             }

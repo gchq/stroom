@@ -19,7 +19,7 @@ package stroom.db.migration.mysql;
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.ObjectMarshaller;
+import stroom.entity.ObjectMarshaller;
 import stroom.query.api.v2.DocRef;
 
 import java.sql.Connection;

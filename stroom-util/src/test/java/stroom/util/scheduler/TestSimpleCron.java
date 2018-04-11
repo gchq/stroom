@@ -143,8 +143,8 @@ public class TestSimpleCron {
 
             Assert.assertEquals(end, DateUtil.createNormalDateTimeString(cron.getNextTime(time)));
 
-        } catch (Exception pex) {
-            Assert.fail(pex.getMessage());
+        } catch (final RuntimeException e) {
+            Assert.fail(e.getMessage());
         }
         return end;
     }
@@ -158,8 +158,8 @@ public class TestSimpleCron {
 
             Assert.assertEquals(end, DateUtil.createNormalDateTimeString(cron.getLastTime(time)));
 
-        } catch (Exception pex) {
-            Assert.fail(pex.getMessage());
+        } catch (final RuntimeException e) {
+            Assert.fail(e.getMessage());
         }
         return end;
     }

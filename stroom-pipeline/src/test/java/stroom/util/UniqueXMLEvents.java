@@ -20,12 +20,12 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.entity.server.util.XMLUtil;
-import stroom.pipeline.server.DefaultLocationFactory;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.entity.util.XMLUtil;
+import stroom.pipeline.DefaultLocationFactory;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
 

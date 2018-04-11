@@ -16,12 +16,11 @@
 
 package stroom.servlet;
 
-import org.springframework.stereotype.Component;
-
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-@Component
+@Singleton
 public class HttpServletRequestHolderImpl implements HttpServletRequestHolder {
     private final ThreadLocal<HttpServletRequest> threadLocal = new InheritableThreadLocal<>();
 

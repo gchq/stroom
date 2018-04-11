@@ -34,7 +34,12 @@ public class TestCondition {
         final Thread waker = new Thread() {
             @Override
             public void run() {
-                ThreadUtil.sleep(500);
+                try {
+                    Thread.sleep(500);
+                } catch (final InterruptedException e) {
+                    System.out.println("interrupted thread");
+                }
+
                 System.out.println("wake");
                 lock.lock();
                 try {
@@ -60,6 +65,8 @@ public class TestCondition {
             System.out.println("awake");
             sleepTime.set(System.currentTimeMillis() - time);
         } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
         }
 
         Assert.assertTrue(sleepTime.get() < 2000);

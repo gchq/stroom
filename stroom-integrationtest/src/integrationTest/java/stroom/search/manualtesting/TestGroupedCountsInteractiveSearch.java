@@ -22,23 +22,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 import stroom.dashboard.expression.v1.Count;
-import stroom.dashboard.spring.DashboardConfiguration;
-import stroom.dictionary.server.DictionaryStore;
-import stroom.dictionary.spring.DictionaryConfiguration;
+import stroom.dictionary.DictionaryStore;
 import stroom.entity.shared.DocRefUtil;
-import stroom.explorer.server.ExplorerConfiguration;
-import stroom.index.server.IndexService;
-import stroom.index.spring.IndexConfiguration;
-import stroom.logging.spring.EventLoggingConfiguration;
+import stroom.index.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
@@ -46,29 +36,16 @@ import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
-import stroom.ruleset.spring.RuleSetConfiguration;
-import stroom.script.spring.ScriptConfiguration;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTest;
-import stroom.search.server.SearchResultCreatorManager;
-import stroom.search.spring.SearchConfiguration;
-import stroom.security.spring.SecurityConfiguration;
-import stroom.spring.MetaDataStatisticConfiguration;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ScopeTestConfiguration;
-import stroom.spring.ServerComponentScanTestConfiguration;
-import stroom.spring.ServerConfiguration;
-import stroom.statistics.spring.StatisticsConfiguration;
-import stroom.task.server.TaskManager;
+import stroom.search.LuceneSearchResponseCreatorManager;
+import stroom.task.TaskManager;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.test.IntegrationTest;
-import stroom.visualisation.spring.VisualisationConfiguration;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -82,57 +59,31 @@ import java.util.stream.IntStream;
 
 // This spring/junit configuration is copied from AbstractCoreIntegrationTest and StroomIntegrationTest
 // and it is so we can manually run tests using state from a previous run.
-@ActiveProfiles(value = {
-        StroomSpringProfiles.PROD,
-        StroomSpringProfiles.IT,
-        SecurityConfiguration.MOCK_SECURITY})
-@ContextConfiguration(classes = {
-        DashboardConfiguration.class,
-        EventLoggingConfiguration.class,
-        IndexConfiguration.class,
-        MetaDataStatisticConfiguration.class,
-        PersistenceConfiguration.class,
-        DictionaryConfiguration.class,
-        PipelineConfiguration.class,
-        RuleSetConfiguration.class,
-        ScopeConfiguration.class,
-        ScopeTestConfiguration.class,
-        ScriptConfiguration.class,
-        SearchConfiguration.class,
-        SecurityConfiguration.class,
-        ExplorerConfiguration.class,
-        ServerComponentScanTestConfiguration.class,
-        ServerConfiguration.class,
-        StatisticsConfiguration.class,
-        VisualisationConfiguration.class})
-@RunWith(NoTeardownStroomSpringJUnit4ClassRunner.class)
-@Category(IntegrationTest.class)
-public class TestGroupedCountsInteractiveSearch {
+public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestGroupedCountsInteractiveSearch.class);
 
-    public static final String DATA_FILE_NAME_PREFIX = "NetworkMonitoringBulkData_";
-    public static final String DATA_FILE_NAME_SUFFIX = ".in";
-    public static final String DATA_FILE_NAME_FORMAT = DATA_FILE_NAME_PREFIX + "%03d" + DATA_FILE_NAME_SUFFIX;
+    private static final String DATA_FILE_NAME_PREFIX = "NetworkMonitoringBulkData_";
+    private static final String DATA_FILE_NAME_SUFFIX = ".in";
+    private static final String DATA_FILE_NAME_FORMAT = DATA_FILE_NAME_PREFIX + "%03d" + DATA_FILE_NAME_SUFFIX;
 
     private static final int STREAM_ROW_COUNT = 100_000;
     private static final int STREAM_COUNT = 100;
     private static final int MAX_DOCS_PER_SHARD = 10_000;
 
-    @Resource
+    @Inject
     private CommonIndexingTest commonIndexingTest;
-    @Resource
+    @Inject
     private IndexService indexService;
-    @Resource
+    @Inject
     private DictionaryStore dictionaryStore;
-    @Resource
+    @Inject
     private TaskManager taskManager;
-    @Resource
-    private SearchResultCreatorManager searchResultCreatorManager;
-    @Resource
+    @Inject
+    private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
+    @Inject
     private CommonTestControl commonTestControl;
 
     Path testDir = FileUtil.getTempDir();
-
 
     @Before
     public void beforeTest() throws IOException {
@@ -218,11 +169,10 @@ public class TestGroupedCountsInteractiveSearch {
                 this::createTableSettings,
                 extractValues,
                 resultMapConsumer,
-                1_000,
                 5,
                 5,
                 indexService,
-                searchResultCreatorManager);
+                searchResponseCreatorManager);
 
         LOGGER.info("Completed search");
     }

@@ -25,9 +25,9 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
-import stroom.feed.server.MockFeedService;
+import stroom.feed.MockFeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.MockPipelineService;
+import stroom.pipeline.MockPipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.impl.MockReferenceDataLoader;
@@ -88,7 +88,7 @@ public class TestReferenceData extends StroomUnitTest {
             checkData(referenceData, pipelineReferences, "SID_TO_PF_2");
             checkData(referenceData, pipelineReferences, "SID_TO_PF_3");
             checkData(referenceData, pipelineReferences, "SID_TO_PF_4");
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }

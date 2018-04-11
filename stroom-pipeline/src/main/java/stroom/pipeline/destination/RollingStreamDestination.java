@@ -17,9 +17,9 @@
 package stroom.pipeline.destination;
 
 import stroom.feed.MetaMap;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
+import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 
 import java.io.IOException;

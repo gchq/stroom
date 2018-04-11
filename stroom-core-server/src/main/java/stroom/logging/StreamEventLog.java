@@ -34,12 +34,11 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.Insecure;
+import stroom.security.Security;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
@@ -49,80 +48,87 @@ import javax.inject.Inject;
 import java.util.Date;
 import java.util.List;
 
-@Component
-@Insecure
 public class StreamEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamEventLog.class);
 
     private final StroomEventLoggingService eventLoggingService;
+    private final Security security;
 
     @Inject
-    StreamEventLog(final StroomEventLoggingService eventLoggingService) {
+    StreamEventLog(final StroomEventLoggingService eventLoggingService,
+                   final Security security) {
         this.eventLoggingService = eventLoggingService;
+        this.security = security;
     }
 
     public void importStream(final Date receivedDate, final String feedName, final String path, final Throwable th) {
-        try {
-            final Event event = eventLoggingService.createAction("Data Upload", "Data uploaded to \"" + feedName + "\"");
+        security.insecure(() -> {
+            try {
+                final Event event = eventLoggingService.createAction("Data Upload", "Data uploaded to \"" + feedName + "\"");
 
-            final event.logging.Object object = new event.logging.Object();
-            object.setType("Stream");
-            object.getData().add(EventLoggingUtil.createData("Path", path));
-            object.getData().add(EventLoggingUtil.createData("Feed", feedName));
+                final event.logging.Object object = new event.logging.Object();
+                object.setType("Stream");
+                object.getData().add(EventLoggingUtil.createData("Path", path));
+                object.getData().add(EventLoggingUtil.createData("Feed", feedName));
 
-            final MultiObject multiObject = new MultiObject();
-            multiObject.getObjects().add(object);
+                final MultiObject multiObject = new MultiObject();
+                multiObject.getObjects().add(object);
 
-            final Import imp = new Import();
-            imp.setSource(multiObject);
-            imp.setOutcome(EventLoggingUtil.createOutcome(th));
+                final Import imp = new Import();
+                imp.setSource(multiObject);
+                imp.setOutcome(EventLoggingUtil.createOutcome(th));
 
-            event.getEventDetail().setImport(imp);
+                event.getEventDetail().setImport(imp);
 
-            eventLoggingService.log(event);
-        } catch (final Exception e) {
-            LOGGER.error("Unable to import stream!", e);
-        }
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to import stream!", e);
+            }
+        });
     }
 
     public void viewStream(final Stream stream, final Feed feed, final StreamType streamType, final Throwable th) {
-        try {
-            if (stream != null) {
-                final Event event = eventLoggingService.createAction("View", "Viewing Stream");
-                final ObjectOutcome objectOutcome = new ObjectOutcome();
-                event.getEventDetail().setView(objectOutcome);
-                objectOutcome.getObjects().add(createStreamObject(stream, feed, streamType));
-                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
-                eventLoggingService.log(event);
+        security.insecure(() -> {
+            try {
+                if (stream != null) {
+                    final Event event = eventLoggingService.createAction("View", "Viewing Stream");
+                    final ObjectOutcome objectOutcome = new ObjectOutcome();
+                    event.getEventDetail().setView(objectOutcome);
+                    objectOutcome.getObjects().add(createStreamObject(stream, feed, streamType));
+                    objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
+                    eventLoggingService.log(event);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to view stream!", e);
             }
-        } catch (final Exception e) {
-            LOGGER.error("Unable to view stream!", e);
-        }
+        });
     }
 
     public void exportStream(final FindStreamCriteria findStreamCriteria, final Throwable th) {
-        try {
-            if (findStreamCriteria != null) {
-                final Event event = eventLoggingService.createAction("ExportData", "Exporting Data");
+        security.insecure(() -> {
+            try {
+                if (findStreamCriteria != null) {
+                    final Event event = eventLoggingService.createAction("ExportData", "Exporting Data");
 
-                final Criteria criteria = new Criteria();
-                criteria.setType("Data");
-                criteria.setQuery(createQuery(findStreamCriteria));
+                    final Criteria criteria = new Criteria();
+                    criteria.setType("Data");
+                    criteria.setQuery(createQuery(findStreamCriteria));
 
-                final MultiObject multiObject = new MultiObject();
-                multiObject.getObjects().add(criteria);
+                    final MultiObject multiObject = new MultiObject();
+                    multiObject.getObjects().add(criteria);
 
-                final Export exp = new Export();
-                exp.setSource(multiObject);
-                exp.setOutcome(EventLoggingUtil.createOutcome(th));
+                    final Export exp = new Export();
+                    exp.setSource(multiObject);
+                    exp.setOutcome(EventLoggingUtil.createOutcome(th));
 
-                event.getEventDetail().setExport(exp);
+                    event.getEventDetail().setExport(exp);
 
-                eventLoggingService.log(event);
+                    eventLoggingService.log(event);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to export stream!", e);
             }
-        } catch (final Exception e) {
-            LOGGER.error("Unable to export stream!", e);
-        }
+        });
     }
 
     private Query createQuery(final FindStreamCriteria findStreamCriteria) {
