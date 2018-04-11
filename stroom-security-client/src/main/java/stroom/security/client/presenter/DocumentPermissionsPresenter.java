@@ -20,6 +20,7 @@ package stroom.security.client.presenter;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
@@ -47,6 +48,8 @@ public class DocumentPermissionsPresenter
     private final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider;
     private final ChangeSet<UserPermission> changeSet = new ChangeSet<>();
 
+    private final String CASCADE_ALL_WARNING_MESSAGE = "Cascading all permissions might overwrite existing permissions. Is that ok?";
+
     @Inject
     public DocumentPermissionsPresenter(final EventBus eventBus, final DocumentPermissionsView view, final LinkTabsPresenter tabPresenter,
                                         final ClientDispatchAsync dispatcher, final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider, final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider) {
@@ -60,7 +63,7 @@ public class DocumentPermissionsPresenter
     }
 
     public void show(final ExplorerNode explorerNode) {
-        getView().setCascasdeVisible(DocumentTypes.isFolder(explorerNode.getType()));
+        getView().setCascadeVisible(DocumentTypes.isFolder(explorerNode.getType()));
         final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
         final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerNode);
 
@@ -78,10 +81,26 @@ public class DocumentPermissionsPresenter
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
-                        dispatcher.exec(new ChangeDocumentPermissionsAction(documentPermissions.getDocument(), changeSet, getView().getCascade().getSelectedItem()))
-                                .onSuccess(res -> hide(autoClose, ok));
+                        ChangeDocumentPermissionsAction changeDocumentPermissionsAction = new ChangeDocumentPermissionsAction(
+                                documentPermissions.getDocument(), changeSet, getView().getCascade().getSelectedItem());
+
+                        // We want to warn the user that cascading all permissions can be destructive.
+                        if(getView().getCascade().getSelectedItem() == ChangeDocumentPermissionsAction.Cascade.ALL) {
+                            ConfirmEvent.fire(DocumentPermissionsPresenter.this, CASCADE_ALL_WARNING_MESSAGE,
+                                    result -> {
+                                        if (result) {
+                                            dispatcher.exec(changeDocumentPermissionsAction)
+                                                    .onSuccess(res -> hide(autoClose, true));
+                                        }
+                                    });
+                        }
+                        else {
+                            dispatcher.exec(changeDocumentPermissionsAction)
+                                    .onSuccess(res -> hide(autoClose, true));
+                        }
+
                     } else {
-                        hide(autoClose, ok);
+                        hide(autoClose, false);
                     }
                 }
 
@@ -101,6 +120,14 @@ public class DocumentPermissionsPresenter
         });
     }
 
+    public interface DocumentPermissionsView extends View {
+        void setTabsView(View view);
+
+        ItemListBox<ChangeDocumentPermissionsAction.Cascade> getCascade();
+
+        void setCascadeVisible(boolean visible);
+    }
+
     private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {
         if (DocumentTypes.isFolder(entity.getType())) {
             return folderPermissionsListPresenterProvider.get();
@@ -111,13 +138,5 @@ public class DocumentPermissionsPresenter
 
     private void hide(boolean autoClose, boolean ok) {
         HidePopupEvent.fire(this, this, autoClose, ok);
-    }
-
-    public interface DocumentPermissionsView extends View {
-        void setTabsView(View view);
-
-        ItemListBox<ChangeDocumentPermissionsAction.Cascade> getCascade();
-
-        void setCascasdeVisible(boolean visible);
     }
 }
