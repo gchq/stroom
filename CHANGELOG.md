@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#400** : Shows a warning when cascading folder permissions.
+
+* Issue **#405** : Fixed quick filter on permissions dialog, for users and for groups. It will now match anywhere in the user or group name, not just at the start.
+
 * Issue **#708** : Removed parent folder UUID from ExplorerActionHandler.
 
 * Application security code is now implemented using lambda expressions rather than AOP. This simplifies debugging and makes the code easier to understand.
