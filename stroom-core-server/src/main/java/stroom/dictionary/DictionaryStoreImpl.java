@@ -72,16 +72,15 @@ class DictionaryStoreImpl implements DictionaryStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name, final String parentFolderUUID) {
-        return store.createDocument(name, parentFolderUUID);
+    public DocRef createDocument(final String name) {
+        return store.createDocument(name);
     }
 
     @Override
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid,
-                               final String parentFolderUUID) {
-        final DocRef docRef = store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid, parentFolderUUID);
+                               final Map<String, String> otherCopiesByOriginalUuid) {
+        final DocRef docRef = store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid);
 
         final DictionaryDoc doc = read(docRef.getUuid());
 
@@ -104,8 +103,8 @@ class DictionaryStoreImpl implements DictionaryStore {
     }
 
     @Override
-    public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
-        return store.moveDocument(uuid, parentFolderUUID);
+    public DocRef moveDocument(final String uuid) {
+        return store.moveDocument(uuid);
     }
 
     @Override

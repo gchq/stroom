@@ -36,12 +36,12 @@ import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
+import stroom.persist.EntityManagerSupport;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.SecurityContext;
-import stroom.persist.EntityManagerSupport;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
@@ -83,12 +83,10 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     @Override
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid,
-                               final String parentFolderUUID) {
+                               final Map<String, String> otherCopiesByOriginalUuid) {
         final DocRef copiedDocRef = super.copyDocument(originalUuid,
                 copyUuid,
-                otherCopiesByOriginalUuid,
-                parentFolderUUID);
+                otherCopiesByOriginalUuid);
 
         return makeCopyUuidReplacements(copiedDocRef,
                 otherCopiesByOriginalUuid,

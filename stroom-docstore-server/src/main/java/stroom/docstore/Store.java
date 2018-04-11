@@ -49,7 +49,6 @@ import java.util.stream.Collectors;
 public class Store<D extends Doc> implements DocumentActionHandler<D> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Store.class);
 
-    private static final String FOLDER = "Folder";
     private static final Charset CHARSET = Charset.forName("UTF-8");
     private static final String KEY = "dat";
 
@@ -79,7 +78,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    public final DocRef createDocument(final String name, final String parentFolderUUID) {
+    public final DocRef createDocument(final String name) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
@@ -90,14 +89,13 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         document.setCreateUser(userId);
         document.setUpdateUser(userId);
 
-        final D created = create(parentFolderUUID, document);
+        final D created = create(document);
         return createDocRef(created);
     }
 
     public final DocRef copyDocument(final String originalUuid,
                                      final String copyUuid,
-                                     final Map<String, String> otherCopiesByOriginalUuid,
-                                     final String parentFolderUUID) {
+                                     final Map<String, String> otherCopiesByOriginalUuid) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
@@ -111,21 +109,15 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         document.setCreateUser(userId);
         document.setUpdateUser(userId);
 
-        final D created = create(parentFolderUUID, document);
+        final D created = create(document);
         return createDocRef(created);
     }
 
-    public final DocRef moveDocument(final String uuid, final String parentFolderUUID) {
+    public final DocRef moveDocument(final String uuid) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
         final D document = read(uuid);
-
-        // If we are moving folder then make sure we are allowed to create items in the target folder.
-        final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(type);
-        if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, permissionName)) {
-            throw new PermissionException(securityContext.getUserId(), "You are not authorised to create items in this folder");
-        }
 
         document.setUpdateTime(now);
         document.setUpdateUser(userId);
@@ -306,15 +298,9 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         return new DocRef(type, document.getUuid(), document.getName());
     }
 
-    private D create(final String parentFolderUUID, final D document) {
+    private D create(final D document) {
         final DocRef docRef = createDocRef(document);
         try {
-            // Check that the user has permission to create this item.
-            final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(type);
-            if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, permissionName)) {
-                throw new PermissionException(securityContext.getUserId(), "You are not authorised to create documents of type '" + type + "' in this folder");
-            }
-
             try (final RWLock lock = persistence.getLockFactory().lock(document.getUuid())) {
                 serialiser.write(persistence.getOutputStream(docRef, false), document);
             }

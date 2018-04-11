@@ -17,10 +17,12 @@
 
 package stroom.explorer;
 
+import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
@@ -340,7 +342,10 @@ class ExplorerServiceImpl implements ExplorerService {
 
         // Create the document.
         try {
-            result = handler.createDocument(name, getUUID(folderRef));
+            // Check that the user is allowed to create an item of this type in the destination folder.
+            checkCreatePermission(getUUID(folderRef), type);
+            // Create an item of the specified type in the destination folder.
+            result = handler.createDocument(name);
             explorerEventLog.create(type, name, result.getUuid(), folderRef, permissionInheritance, null);
         } catch (final RuntimeException e) {
             explorerEventLog.create(type, name, null, folderRef, permissionInheritance, e);
@@ -443,10 +448,12 @@ class ExplorerServiceImpl implements ExplorerService {
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceDocRef.getType());
 
         try {
+            // Check that the user is allowed to create an item of this type in the destination folder.
+            checkCreatePermission(getUUID(destinationFolderRef), sourceDocRef.getType());
+            // Copy the item to the destination folder.
             final DocRef destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(),
                     destinationUuid,
-                    copiesByOriginalUuid,
-                    getUUID(destinationFolderRef));
+                    copiesByOriginalUuid);
             explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, null);
             resultDocRefs.add(destinationDocRef);
 
@@ -523,7 +530,10 @@ class ExplorerServiceImpl implements ExplorerService {
             DocRef result = null;
 
             try {
-                result = handler.moveDocument(docRef.getUuid(), getUUID(folderRef));
+                // Check that the user is allowed to create an item of this type in the destination folder.
+                checkCreatePermission(getUUID(folderRef), docRef.getType());
+                // Move the item.
+                result = handler.moveDocument(docRef.getUuid());
                 explorerEventLog.move(docRef, folderRef, permissionInheritance, null);
                 resultDocRefs.add(result);
 
@@ -626,5 +636,18 @@ class ExplorerServiceImpl implements ExplorerService {
         return Optional.ofNullable(docRef)
                 .map(DocRef::getUuid)
                 .orElse(null);
+    }
+
+    private void checkCreatePermission(final String folderUUID, final String type) {
+        // Only allow administrators to create documents with no folder.
+        if (folderUUID == null) {
+            if (!securityContext.isAdmin()) {
+                throw new PermissionException(securityContext.getUserId(), "Only administrators can create root level entries");
+            }
+        } else {
+            if (!securityContext.hasDocumentPermission(ExplorerConstants.FOLDER, folderUUID, DocumentPermissionNames.getDocumentCreatePermission(type))) {
+                throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + type + ") in folder " + folderUUID);
+            }
+        }
     }
 }

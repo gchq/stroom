@@ -32,11 +32,10 @@ public interface ExplorerActionHandler extends HasDocumentType {
     /**
      * Called to create a new item in this document store.
      *
-     * @param name             The name of the document to be created.
-     * @param parentFolderUUID The parent folder that the item wil be created in. This is used to check create permissions.
+     * @param name The name of the document to be created.
      * @return A doc ref for the newly created document.
      */
-    DocRef createDocument(String name, String parentFolderUUID);
+    DocRef createDocument(String name);
 
     /**
      * Copy an existing document identified by uuid, to the specified location.
@@ -45,34 +44,30 @@ public interface ExplorerActionHandler extends HasDocumentType {
      * @param copyUuid                  The uuid of the intended copy
      * @param otherCopiesByOriginalUUid For bulk copy operations, this contains all other copies being made.
      *                                  This allows the sub service to repoint dependencies on this copy to other copies being made.
-     * @param parentFolderUUID          The uuid of the parent folder that you want to create the copy in.
      * @return A doc ref for the new document copy.
      */
     DocRef copyDocument(String originalUuid,
                         String copyUuid,
-                        Map<String, String> otherCopiesByOriginalUUid,
-                        String parentFolderUUID);
+                        Map<String, String> otherCopiesByOriginalUUid);
 
     /**
      * Default form of the copy function, allow clients to let a UUID be made for them.
      * Assumes singular copy, no bulk repointing will happen
      *
-     * @param uuid             The uuid of the document you want to copy.
-     * @param parentFolderUUID The uuid of the parent folder that you want to create the copy in.
+     * @param uuid The uuid of the document you want to copy.
      * @return
      */
-    default DocRef copyDocument(String uuid, String parentFolderUUID) {
-        return copyDocument(uuid, UUID.randomUUID().toString(), Collections.emptyMap(), parentFolderUUID);
+    default DocRef copyDocument(String uuid) {
+        return copyDocument(uuid, UUID.randomUUID().toString(), Collections.emptyMap());
     }
 
     /**
      * Move an existing document identified by uuid, to the specified location.
      *
-     * @param uuid             The uuid of the document you want to move.
-     * @param parentFolderUUID The uuid of the parent folder that you want to move the document to.
+     * @param uuid The uuid of the document you want to move.
      * @return A doc ref for the moved document.
      */
-    DocRef moveDocument(String uuid, String parentFolderUUID);
+    DocRef moveDocument(String uuid);
 
     /**
      * Change the name of an existing document identified by uuid, to the specified name.

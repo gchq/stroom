@@ -100,14 +100,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     @Override
     public E create(final String name) {
-        return create(name, null);
-    }
-
-    private E create(final String name, final String parentFolderUUID) {
         E entity;
-
-        // Check create permissions of the parent folder.
-        checkCreatePermission(parentFolderUUID);
 
         // Create a new entity instance.
         try {
@@ -308,13 +301,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     private E copy(final E document,
-                   final String copyUuid,
-                   final String parentFolderUUID) {
+                   final String copyUuid) {
         // Ensure we are working with effectively a 'new document'
         entityManager.detach(document);
-
-        // Check create permissions of the parent folder.
-        checkCreatePermission(parentFolderUUID);
 
         // This is going to be a copy so clear the persistence so save will create a new DB entry.
         document.clearPersistence();
@@ -324,10 +313,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entityServiceHelper.save(document, queryAppender);
     }
 
-    private E move(final E document, final String parentFolderUUID) {
-        // Check create permissions of the parent folder.
-        checkCreatePermission(parentFolderUUID);
-
+    private E move(final E document) {
         return entityServiceHelper.save(document, queryAppender);
     }
 
@@ -461,28 +447,27 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    public final DocRef createDocument(final String name, final String parentFolderUUID) {
-        return DocRefUtil.create(create(name, parentFolderUUID));
+    public final DocRef createDocument(final String name) {
+        return DocRefUtil.create(create(name));
     }
 
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid,
-                               final String parentFolderUUID) {
+                               final Map<String, String> otherCopiesByOriginalUuid) {
         final E entity = loadByUuid(originalUuid);
         if (entity == null) {
             throw new EntityServiceException("Entity not found");
         }
-        final E copy = copy(entity, copyUuid, parentFolderUUID);
+        final E copy = copy(entity, copyUuid);
         return DocRefUtil.create(copy);
     }
 
-    public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
+    public DocRef moveDocument(final String uuid) {
         final E entity = loadByUuid(uuid);
         if (entity == null) {
             throw new EntityServiceException("Entity not found");
         }
-        return DocRefUtil.create(move(entity, parentFolderUUID));
+        return DocRefUtil.create(move(entity));
     }
 
     public DocRef renameDocument(final String uuid, final String name) {
@@ -547,19 +532,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @SuppressWarnings("unchecked")
     protected QueryAppender<E, ?> createQueryAppender(final StroomEntityManager entityManager) {
         return new QueryAppender<>(entityManager);
-    }
-
-    private void checkCreatePermission(final String folderUUID) {
-        // Only allow administrators to create documents with no folder.
-        if (folderUUID == null) {
-            if (!securityContext.isAdmin()) {
-                throw new PermissionException(securityContext.getUserId(), "Only administrators can create root level entries");
-            }
-        } else {
-            if (!securityContext.hasDocumentPermission(FOLDER, folderUUID, DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
-                throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + getEntityType() + ") in folder " + folderUUID);
-            }
-        }
     }
 
     protected void checkUpdatePermission(final E entity) {

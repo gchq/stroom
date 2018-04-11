@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 class FolderExplorerActionHandler implements ExplorerActionHandler {
-    public static final String FOLDER = ExplorerConstants.FOLDER;
+    private static final String FOLDER = ExplorerConstants.FOLDER;
     private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     private final SecurityContext securityContext;
     private final ExplorerTreeDao explorerTreeDao;
@@ -27,10 +27,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public DocRef createDocument(final String name, final String parentFolderUUID) {
-        if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
-        }
+    public DocRef createDocument(final String name) {
         NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
         return new DocRef(FOLDER, UUID.randomUUID().toString(), name);
     }
@@ -38,8 +35,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     @Override
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid,
-                               final String parentFolderUUID) {
+                               final Map<String, String> otherCopiesByOriginalUuid) {
         final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(originalUuid);
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to copy");
@@ -48,14 +44,11 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         if (!securityContext.hasDocumentPermission(FOLDER, originalUuid, DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
-        if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
-        }
         return new DocRef(FOLDER, copyUuid, explorerTreeNode.getName());
     }
 
     @Override
-    public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
+    public DocRef moveDocument(final String uuid) {
         final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(uuid);
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to move");
@@ -63,9 +56,6 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
 
         if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
-        }
-        if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
         }
         return explorerTreeNode.getDocRef();
     }

@@ -19,7 +19,6 @@ package stroom.visualisation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.ObjectMarshaller;
 import stroom.entity.QueryAppender;
@@ -28,9 +27,9 @@ import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
+import stroom.persist.EntityManagerSupport;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
-import stroom.persist.EntityManagerSupport;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 
@@ -69,12 +68,10 @@ public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualis
     @Override
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid,
-                               final String parentFolderUUID) {
+                               final Map<String, String> otherCopiesByOriginalUuid) {
         final DocRef copiedDocRef = super.copyDocument(originalUuid,
                 copyUuid,
-                otherCopiesByOriginalUuid,
-                parentFolderUUID);
+                otherCopiesByOriginalUuid);
 
         return makeCopyUuidReplacements(copiedDocRef,
                 otherCopiesByOriginalUuid,
@@ -114,7 +111,7 @@ public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualis
     private static class VisualisationQueryAppender extends QueryAppender<Visualisation, FindVisualisationCriteria> {
         private final ObjectMarshaller<DocRef> docRefMarshaller;
 
-        public VisualisationQueryAppender(final StroomEntityManager entityManager) {
+        VisualisationQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
             docRefMarshaller = new ObjectMarshaller<>(DocRef.class);
         }
