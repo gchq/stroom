@@ -16,6 +16,7 @@
 
 package stroom.search;
 
+import stroom.entity.shared.Clearable;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorCacheFactory;
@@ -27,7 +28,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 @SuppressWarnings("unused") // used by DI
-public class LuceneSearchResponseCreatorManager implements SearchResponseCreatorManager {
+public class LuceneSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
 
     private final SearchResponseCreatorCache cache;
 
@@ -55,5 +56,10 @@ public class LuceneSearchResponseCreatorManager implements SearchResponseCreator
     @StroomFrequencySchedule("10s")
     public void evictExpiredElements() {
         cache.evictExpiredElements();
+    }
+
+    @Override
+    public void clear() {
+        cache.clear();
     }
 }

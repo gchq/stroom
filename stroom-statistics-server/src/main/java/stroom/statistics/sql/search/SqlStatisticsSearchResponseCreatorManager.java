@@ -18,6 +18,7 @@ package stroom.statistics.sql.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.Clearable;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorCacheFactory;
@@ -29,7 +30,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 @SuppressWarnings("unused") // used by DI
-public class SqlStatisticsSearchResponseCreatorManager implements SearchResponseCreatorManager {
+public class SqlStatisticsSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsSearchResponseCreatorManager.class);
 
@@ -67,5 +68,10 @@ public class SqlStatisticsSearchResponseCreatorManager implements SearchResponse
     @StroomFrequencySchedule("10s")
     public void evictExpiredElements() {
         cache.evictExpiredElements();
+    }
+
+    @Override
+    public void clear() {
+        cache.clear();
     }
 }
