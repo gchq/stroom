@@ -29,7 +29,6 @@ import javax.inject.Singleton;
 
 @Singleton
 @SuppressWarnings("unused") // used by DI
-@Singleton
 public class SqlStatisticsSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsSearchResponseCreatorManager.class);

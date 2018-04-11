@@ -27,7 +27,6 @@ import javax.inject.Singleton;
 
 @Singleton
 @SuppressWarnings("unused") // used by DI
-@Singleton
 public class LuceneSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
 
     private final SearchResponseCreatorCache cache;
