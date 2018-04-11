@@ -21,14 +21,13 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
-import stroom.query.common.v2.SearchResponseCreatorCacheFactory;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.query.common.v2.StoreFactory;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
-import javax.inject.Named;
+import javax.inject.Singleton;
 
+@Singleton
 @SuppressWarnings("unused") // used by DI
 public class SqlStatisticsSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
 
@@ -38,8 +37,8 @@ public class SqlStatisticsSearchResponseCreatorManager implements SearchResponse
 
     @Inject
     public SqlStatisticsSearchResponseCreatorManager(
-            @Named("sqlStatisticsInMemorySearchResponseCreatorCacheFactory") final SearchResponseCreatorCacheFactory cacheFactory,
-            @Named("sqlStatisticStoreFactory") final StoreFactory storeFactory) {
+            final SqlStatisticsInMemorySearchResponseCreatorCacheFactory cacheFactory,
+            final SqlStatisticStoreFactory storeFactory) {
 
         // Create a cache using the supplied cacheFactory, providing it the storeFactory for it
         // to use when creating new cache entries

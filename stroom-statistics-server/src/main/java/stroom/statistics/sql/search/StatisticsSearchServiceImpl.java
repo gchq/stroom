@@ -244,6 +244,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 })
                 .collect(Collectors.toList());
 
+        return buildResultSetMapperFromExtractors(valueExtractors);
+    }
+
+    private Function<ResultSet, String[]> buildResultSetMapperFromExtractors(final List<ValueExtractor> valueExtractors) {
         final int arrSize = valueExtractors.size();
 
         //the mapping function that will be used on each row in the resultSet, that makes use of the ValueExtractors

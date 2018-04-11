@@ -23,7 +23,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,8 +43,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     @Inject
     public StatisticsQueryServiceImpl(final StatisticsDataSourceProvider statisticsDataSourceProvider,
                                       final StatisticStoreCache statisticStoreCache,
-                                      @Named("sqlStatisticsSearchResponseCreatorManager")
-                                          final SearchResponseCreatorManager searchResponseCreatorManager) {
+                                      final SqlStatisticsSearchResponseCreatorManager searchResponseCreatorManager) {
         this.statisticsDataSourceProvider = statisticsDataSourceProvider;
         this.statisticStoreCache = statisticStoreCache;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
