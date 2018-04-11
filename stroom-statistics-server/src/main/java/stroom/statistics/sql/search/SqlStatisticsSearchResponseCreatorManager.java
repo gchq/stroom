@@ -27,6 +27,7 @@ import stroom.util.lifecycle.StroomFrequencySchedule;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+@Singleton
 @SuppressWarnings("unused") // used by DI
 @Singleton
 public class SqlStatisticsSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {

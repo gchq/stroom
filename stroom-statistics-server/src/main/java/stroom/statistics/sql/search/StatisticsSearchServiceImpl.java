@@ -244,6 +244,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 })
                 .collect(Collectors.toList());
 
+        return buildResultSetMapperFromExtractors(valueExtractors);
+    }
+
+    private Function<ResultSet, String[]> buildResultSetMapperFromExtractors(final List<ValueExtractor> valueExtractors) {
         final int arrSize = valueExtractors.size();
 
         //the mapping function that will be used on each row in the resultSet, that makes use of the ValueExtractors
@@ -376,7 +380,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                     (rs, emitter) -> {
                                         //advance the resultSet, if it is a row emit it, else finish the flow
                                         // TODO prob needs to change in 6.1
-                                        if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
+                                        if (Thread.currentThread().isInterrupted()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onError");
                                             emitter.onError(new RuntimeException("Search task was interrupted"));
                                         } else {
