@@ -52,10 +52,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
-
     @Inject
-    @Named("luceneSearchResponseCreatorManager")
-    private SearchResponseCreatorManager searchResponseCreatorManager;
+    private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
 
     protected SearchResponse search(SearchRequest searchRequest) {
         return search(searchRequest, searchResponseCreatorManager);

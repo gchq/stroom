@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unused") //Used by DI
 public class LuceneInMemorySearchResponseCreatorCacheFactory extends AbstractInMemorySearchResponseCreatorCacheFactory {
-
     private static final long DEFAULT_MAX_ACTIVE_QUERIES = 10000;
     private static final Duration DEFAULT_EXPIRE_AFTER_ACCESS_DURATION = Duration.ofMinutes(10);
 
@@ -33,14 +32,14 @@ public class LuceneInMemorySearchResponseCreatorCacheFactory extends AbstractInM
     @Override
     protected void addAdditionalBuildOptions(
             final CacheBuilder<SearchResponseCreatorCache.Key, SearchResponseCreator> cacheBuilder) {
-       cacheBuilder
+        cacheBuilder
                 .maximumSize(maxActiveQueries)
                 .expireAfterAccess(expireAfterAccessDuration.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override
     protected void registerCache(final CacheBuilder<SearchResponseCreatorCache.Key, SearchResponseCreator> cacheBuilder,
-                       final Cache<SearchResponseCreatorCache.Key, SearchResponseCreator> cache) {
+                                 final Cache<SearchResponseCreatorCache.Key, SearchResponseCreator> cache) {
         cacheManager.registerCache("Lucene Search Result Creators", cacheBuilder, cache);
     }
 }

@@ -49,7 +49,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class LuceneSearchStoreFactory implements StoreFactory {
-    public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;

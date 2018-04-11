@@ -32,6 +32,7 @@ import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.IndexDataSourceFieldUtil;
+import stroom.search.LuceneSearchResponseCreatorManager;
 import stroom.security.Security;
 import stroom.util.HasHealthCheck;
 
@@ -54,8 +55,7 @@ public class StroomIndexQueryResource implements HasHealthCheck {
     private final Security security;
 
     @Inject
-    public StroomIndexQueryResource(@Named("luceneSearchResponseCreatorManager")
-                                        final SearchResponseCreatorManager searchResponseCreatorManager,
+    public StroomIndexQueryResource(final LuceneSearchResponseCreatorManager searchResponseCreatorManager,
                                     final IndexService indexService,
                                     final Security security) {
         this.searchResponseCreatorManager = searchResponseCreatorManager;

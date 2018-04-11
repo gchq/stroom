@@ -19,26 +19,24 @@ package stroom.search;
 import stroom.entity.shared.Clearable;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
-import stroom.query.common.v2.SearchResponseCreatorCacheFactory;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.query.common.v2.StoreFactory;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
-import javax.inject.Named;
+import javax.inject.Singleton;
 
 @SuppressWarnings("unused") // used by DI
+@Singleton
 public class LuceneSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
 
     private final SearchResponseCreatorCache cache;
 
     @Inject
     public LuceneSearchResponseCreatorManager(
-            @Named("luceneInMemorySearchResponseCreatorCacheFactory") final SearchResponseCreatorCacheFactory cacheFactory,
-            @Named("luceneSearchStoreFactory") final StoreFactory storeFactory) {
+            final LuceneInMemorySearchResponseCreatorCacheFactory cacheFactory,
+            final LuceneSearchStoreFactory storeFactory) {
 
-        SearchResponseCreatorCache cache = cacheFactory.create(storeFactory);
-        this.cache = cache;
+        this.cache = cacheFactory.create(storeFactory);
     }
 
     @Override
