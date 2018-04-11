@@ -17,7 +17,9 @@
 package stroom.statistics.sql.search;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import stroom.entity.shared.Clearable;
 import stroom.query.common.v2.SearchResponseCreatorCacheFactory;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.StoreFactory;
@@ -42,5 +44,8 @@ public class SQLStatisticSearchModule extends AbstractModule {
 
         bind(StatisticsQueryService.class).to(StatisticsQueryServiceImpl.class);
         bind(StatisticsSearchService.class).to(StatisticsSearchServiceImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(SqlStatisticsSearchResponseCreatorManager.class);
     }
 }
