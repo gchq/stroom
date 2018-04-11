@@ -86,7 +86,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
     /**
-     * We don't want to collect more than 1 million doc's data into the queue by
+     * We don't want to collect more than 10k doc's data into the queue by
      * default. When the queue is full the index shard data tasks will pause
      * until the docs are drained from the queue.
      */
