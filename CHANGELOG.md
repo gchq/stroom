@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#217** : Add an 'all/none' checkbox to the Explorer Tree's quick filter. 
 
+* Issue **#400** : Shows a warning when cascading folder permissions.
+
+* Issue **#405** : Fixed quick filter on permissions dialog, for users and for groups. It will now match anywhere in the user or group name, not just at the start.
+
 * Issue **#708** : Removed parent folder UUID from ExplorerActionHandler.
 
 * Application security code is now implemented using lambda expressions rather than AOP. This simplifies debugging and makes the code easier to understand.
@@ -17,6 +21,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Made changes to improve search performance by making various parts of search wait for interruptible conditions.
 
 * Migrated code from Spring to Guice for managing dependency injection.
+
+* Issue **#229** : When a user 'OKs' a folder permission change it can take a while to return. This disables the ok/cancel buttons while Stroom is processing the permission change.  
+
+## [v6.0-alpha.19]
 
 * Issue **#405** : Fixed quick filter on permissions dialog, for users and for groups. It will now match anywhere in the user or group name, not just at the start.
 
