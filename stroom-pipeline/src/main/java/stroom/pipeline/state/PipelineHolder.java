@@ -16,13 +16,10 @@
 
 package stroom.pipeline.state;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.util.spring.StroomScope;
+import stroom.guice.PipelineScoped;
 
-@Component
-@Scope(value = StroomScope.TASK)
+@PipelineScoped
 public class PipelineHolder {
     private PipelineEntity pipelineEntity;
 

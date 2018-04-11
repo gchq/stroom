@@ -113,7 +113,7 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
                 CloseEvent.fire(VolumeEditPresenter.this);
             });
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             AlertEvent.fireError(this, e.getMessage(), null);
         }
     }

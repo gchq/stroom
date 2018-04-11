@@ -8,6 +8,8 @@ dependencies {
     compile libs.commons_io
     permitUnusedDeclared libs.commons_io
     compile libs.commons_lang
+    permitUnusedDeclared libs.commons_lang
+    compile libs.commons_codec
     compile libs.guava
     compile libs.jackson_annotations
     compile libs.jackson_core
@@ -15,12 +17,6 @@ dependencies {
     compile libs.javax_servlet_api
     compile libs.javax_inject
     compile libs.slf4j_api
-    compile libs.spring_aop
-    compile libs.spring_beans
-    compile libs.spring_context
-    compile libs.spring_core
-    compile libs.spring_test
-    permitUnusedDeclared libs.spring_test
 
     testCompile libs.junit
     testCompile libs.assertj_core

@@ -20,8 +20,6 @@
 
     <logger name="stroom.statistics" level="debug" />
 
-    <logger name="org.springframework" level="info" />
-
     <logger name="org.flywaydb" level="info" />
 
     <logger name="org.hibernate.tool.hbm2ddl.SchemaUpdate" additivity="false">

@@ -16,22 +16,28 @@
 
 package stroom.pool;
 
-import stroom.entity.server.DocumentPermissionCache;
+import stroom.entity.DocumentPermissionCache;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.PermissionException;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheManager;
 
 public abstract class AbstractEntityPool<K extends DocumentEntity, V> extends AbstractPoolCache<VersionedEntityDecorator<K>, V> implements Pool<K, V> {
     private final DocumentPermissionCache documentPermissionCache;
+    private final Security security;
     private final SecurityContext securityContext;
 
-    public AbstractEntityPool(final CacheManager cacheManager, final String name, final DocumentPermissionCache documentPermissionCache, final SecurityContext securityContext) {
+    public AbstractEntityPool(final CacheManager cacheManager,
+                              final String name,
+                              final DocumentPermissionCache documentPermissionCache,
+                              final Security security,
+                              final SecurityContext securityContext) {
         super(cacheManager, name);
         this.documentPermissionCache = documentPermissionCache;
+        this.security = security;
         this.securityContext = securityContext;
     }
 
@@ -53,10 +59,10 @@ public abstract class AbstractEntityPool<K extends DocumentEntity, V> extends Ab
     @Override
     @SuppressWarnings("unchecked")
     protected V internalCreateValue(final Object key) {
-        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+        return security.asProcessingUserResult(() -> {
             final VersionedEntityDecorator<K> versionedEntityDecorator = (VersionedEntityDecorator<K>) key;
             return createValue(versionedEntityDecorator.getEntity());
-        }
+        });
     }
 
     protected abstract V createValue(final K key);

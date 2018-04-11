@@ -16,7 +16,7 @@
 
 package stroom.util;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import org.apache.commons.lang.mutable.MutableInt;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.feed.MetaMap;
@@ -101,7 +101,7 @@ public class StreamRestoreTool extends DatabaseTool {
     private boolean inspect = false;
     private boolean sortKey = false;
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         new StreamRestoreTool().doMain(args);
     }
 
@@ -113,17 +113,12 @@ public class StreamRestoreTool extends DatabaseTool {
         try {
             System.out.print(question + " : ");
             return inputReader.readLine();
-        } catch (final Exception ex) {
-            handleException(ex);
+        } catch (final IOException e) {
+            e.printStackTrace();
+            writeLine(e.getMessage());
+            System.exit(1);
             return null;
         }
-    }
-
-    @SuppressWarnings("DM_EXIT")
-    private void handleException(final Exception ex) {
-        ex.printStackTrace();
-        writeLine(ex.getMessage());
-        System.exit(1);
     }
 
     private Map<String, Long> getPathStreamTypeMap() throws SQLException {
@@ -288,8 +283,10 @@ public class StreamRestoreTool extends DatabaseTool {
                 }
             }
 
-        } catch (final IOException | SQLException ioEx) {
-            handleException(ioEx);
+        } catch (final IOException | SQLException e) {
+            e.printStackTrace();
+            writeLine(e.getMessage());
+            System.exit(1);
         }
     }
 
@@ -449,7 +446,7 @@ public class StreamRestoreTool extends DatabaseTool {
                         stream.setStreamType(
                                 StreamType.createStub(getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH))));
 
-                        final String logInfo = StringUtils.leftPad(String.valueOf(stream.getId()), 10) + " "
+                        final String logInfo = Strings.padStart(String.valueOf(stream.getId()), 10, ' ') + " "
                                 + DateUtil.createNormalDateTimeString(stream.getCreateMs());
 
                         writeLine("Restore " + logInfo + " for file " + line);
@@ -491,8 +488,8 @@ public class StreamRestoreTool extends DatabaseTool {
                                     statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
                                     statement2.executeUpdate();
                                 }
-                            } catch (final Exception ex) {
-                                writeLine("Failed " + logInfo + " " + ex.getMessage());
+                            } catch (final RuntimeException e) {
+                                writeLine("Failed " + logInfo + " " + e.getMessage());
                             }
                         }
                         count++;
@@ -512,8 +509,8 @@ public class StreamRestoreTool extends DatabaseTool {
         sort(list);
 
         for (final KeyCount keyCount : list) {
-            writeLine(StringUtils.rightPad(keyCount.getKey().toString(), KEY_PAD)
-                    + StringUtils.leftPad(ModelStringUtil.formatCsv(keyCount.getCount()), COUNT_PAD));
+            writeLine(Strings.padEnd(keyCount.getKey().toString(), KEY_PAD, ' ')
+                    + Strings.padStart(ModelStringUtil.formatCsv(keyCount.getCount()), COUNT_PAD, ' '));
         }
         writeLine("========================");
         return list;
@@ -544,8 +541,8 @@ public class StreamRestoreTool extends DatabaseTool {
 
         @Override
         public String toString() {
-            return StringUtils.rightPad(getKey().toString(), KEY_PAD)
-                    + StringUtils.leftPad(ModelStringUtil.formatCsv(getCount()), COUNT_PAD);
+            return Strings.padEnd(getKey().toString(), KEY_PAD, ' ')
+                    + Strings.padStart(ModelStringUtil.formatCsv(getCount()), COUNT_PAD, ' ');
         }
     }
 

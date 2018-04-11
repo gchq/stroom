@@ -16,21 +16,21 @@
 
 package stroom.refdata;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.entity.server.DocumentPermissionCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.entity.DocumentPermissionCache;
 import stroom.feed.shared.Feed;
+import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
-import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
+import stroom.streamstore.fs.serializable.StreamSourceInputStream;
+import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 import stroom.xml.event.EventList;
 
 import javax.inject.Inject;
@@ -40,8 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class ReferenceData {
     // Actually 11.5 days but this is fine for the purposes of reference data.
     private static final long APPROX_TEN_DAYS = 1000000000;

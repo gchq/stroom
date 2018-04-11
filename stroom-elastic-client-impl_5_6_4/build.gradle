@@ -3,7 +3,6 @@ apply plugin: 'com.github.johnrengelman.shadow'
 dependencies {
     compile project(':stroom-connectors')
 
-    compile libs.guava
     compile libs.slf4j_api
     compile libs.jackson_databind
 

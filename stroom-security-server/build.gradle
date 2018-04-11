@@ -22,27 +22,23 @@ dependencies {
     compile project(':stroom-security-shared')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+    compile project(':stroom-explorer-api')
 
     compile libs.stroomAuthApi
     compile libs.stroomQueryApi
     compile libs.eventLogging
-    compile libs.aspectjrt
     compile libs.commons_lang
     compile libs.guava
     compile libs.hibernate_jpa_api
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.javax_servlet_api
-    compile libs.javax_validation
     compile libs.slf4j_api
-    compile libs.spring_beans
-    compile libs.spring_context
-    compile libs.spring_core
-    compile libs.spring_tx
     compile libs.jose4j
     compile libs.ws_rs_api
     compile libs.swagger_annotations
     compile libs.ws_rs_api
+    compile libs.guice4
 
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

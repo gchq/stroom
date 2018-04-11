@@ -23,6 +23,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,7 +49,7 @@ public class TestConfigure extends StroomUnitTest {
     }
 
     @Test
-    public void test_Main() throws Exception {
+    public void test_Main() throws IOException {
         final Path testFile = getCurrentTestDir().resolve("TestConfigure_server.xml");
         final Path sourceFile = Paths.get("./src/test/resources/stroom/util/config/server.xml");
         Files.deleteIfExists(testFile);

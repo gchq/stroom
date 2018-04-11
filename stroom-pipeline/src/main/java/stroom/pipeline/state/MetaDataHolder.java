@@ -17,18 +17,16 @@
 
 package stroom.pipeline.state;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
-import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
+import stroom.streamstore.fs.serializable.StreamSourceInputStream;
+import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.StreamProcessorService;
+import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
-import stroom.util.spring.StroomScope;
+import stroom.guice.PipelineScoped;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -37,8 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
-@Scope(value = StroomScope.TASK)
+@PipelineScoped
 public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Holder {
     private static final int MINIMUM_BYTE_COUNT = 10;
     private static final String FEED = "Feed";
@@ -57,7 +54,8 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
     private long lastMetaStreamNo;
 
     @Inject
-    MetaDataHolder(final StreamHolder streamHolder, final StreamProcessorService streamProcessorService) {
+    MetaDataHolder(final StreamHolder streamHolder,
+                   final StreamProcessorService streamProcessorService) {
         this.streamHolder = streamHolder;
         this.streamProcessorService = streamProcessorService;
     }

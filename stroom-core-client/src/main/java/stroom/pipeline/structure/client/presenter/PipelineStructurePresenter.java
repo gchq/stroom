@@ -261,7 +261,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 // Diff base and combined to create fresh pipeline data.
                 final PipelineData pipelineData = pipelineModel.diff();
                 pipeline.setPipelineData(pipelineData);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
         }
@@ -608,7 +608,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                         elementType, id);
                                 pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
                                 setDirty(true);
-                            } catch (final Exception e) {
+                            } catch (final RuntimeException e) {
                                 AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                             }
                         }
@@ -637,7 +637,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     pipelineModel.addExistingElement(selectedElement, element);
                     pipelineTreePresenter.getSelectionModel().setSelected(element, true);
                     setDirty(true);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                 }
             }

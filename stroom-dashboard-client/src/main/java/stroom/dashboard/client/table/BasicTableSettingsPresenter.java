@@ -168,7 +168,7 @@ public class BasicTableSettingsPresenter
         for (final String part : parts) {
             try {
                 list.add(Integer.parseInt(part.trim()));
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
             }
         }
 

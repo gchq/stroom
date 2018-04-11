@@ -18,29 +18,38 @@ package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.security.Security;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = LifecycleTask.class)
-@Scope(value = StroomScope.TASK)
-public class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, VoidResult> {
+class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleTaskHandler.class);
+
+    private final Security security;
+
+    @Inject
+    LifecycleTaskHandler(final Security security) {
+        this.security = security;
+    }
 
     @Override
     public VoidResult exec(final LifecycleTask task) {
-        try {
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-            LOGGER.debug("exec() - >>> {}", task.getTaskName());
-            task.getExecutable().exec(task);
-            LOGGER.debug("exec() - <<< {} took {}", task.getTaskName(), logExecutionTime);
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
-        }
+        return security.secureResult(() -> {
+            try {
+                final LogExecutionTime logExecutionTime = new LogExecutionTime();
+                LOGGER.debug("exec() - >>> {}", task.getTaskName());
+                task.getExecutable().exec(task);
+                LOGGER.debug("exec() - <<< {} took {}", task.getTaskName(), logExecutionTime);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
 
-        return new VoidResult();
+            return new VoidResult();
+        });
     }
 }

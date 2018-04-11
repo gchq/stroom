@@ -114,7 +114,7 @@ public class ProxySecurityFilter implements Filter {
 
                     chain.doFilter(request, response);
 
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                     response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
                 }
@@ -132,7 +132,7 @@ public class ProxySecurityFilter implements Filter {
     private String getJWS(final HttpServletRequest request) {
         final String bearerString = request.getHeader(AUTHORIZATION_HEADER);
         String jws = null;
-        if (bearerString != null && bearerString.length() > 0) {
+        if (bearerString != null && !bearerString.isEmpty()) {
             if (bearerString.startsWith(BEARER)) {
                 // This chops out 'Bearer' so we get just the token.
                 jws = bearerString.substring(BEARER.length());

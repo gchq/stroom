@@ -41,7 +41,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import java.util.List;
 
 public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolumesPresenter.ManageVolumesProxy> {
-    public static final String LIST = "LIST";
     private final VolumeStatusListPresenter volumeStatusListPresenter;
     private final Provider<VolumeEditPresenter> editProvider;
     private final ClientDispatchAsync dispatcher;

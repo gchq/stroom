@@ -21,32 +21,22 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
-import stroom.util.test.IntegrationTest;
-import stroom.util.test.StroomSpringJUnit4ClassRunner;
 import stroom.util.test.StroomTest;
 import stroom.util.test.TestState;
 import stroom.util.test.TestState.State;
 
-import javax.annotation.Resource;
-import java.io.IOException;
+import javax.inject.Inject;
 import java.nio.file.Path;
 
 /**
  * This class should be common to all component and integration tests.
- * <p>
- * It is safer if all test classes destroy the Spring context after running
- * tests in the class to avoid knock on effects in other tests.
  */
-@RunWith(StroomSpringJUnit4ClassRunner.class)
-@Category(IntegrationTest.class)
 public abstract class StroomIntegrationTest implements StroomTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomIntegrationTest.class);
 
@@ -60,20 +50,20 @@ public abstract class StroomIntegrationTest implements StroomTest {
         }
     };
 
-    @Resource
+    @Inject
     private CommonTestControl commonTestControl;
 
-    @Resource
+    @Inject
     private ContentImportService contentImportService;
 
     @BeforeClass
-    public static void beforeClass() throws IOException {
+    public static void beforeClass() {
         final State state = TestState.getState();
         state.reset();
     }
 
     @AfterClass
-    public static void afterClass() throws IOException {
+    public static void afterClass() {
     }
 
     protected void onBefore() {
@@ -86,7 +76,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * Initialise required database entities.
      */
     @Before
-    public final void before() {
+    public void before() {
         final State state = TestState.getState();
         state.incrementTestCount();
 
@@ -111,7 +101,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * Remove all entities from the database.
      */
     @After
-    public final void after() {
+    public void after() {
         onAfter();
     }
 
@@ -155,22 +145,11 @@ public abstract class StroomIntegrationTest implements StroomTest {
         }
     }
 
-    public void importSchemas() {
-        importSchemas(false);
-    }
-
-    public void importSchemas(final boolean force) {
+    void importSchemas(final boolean force) {
         if (force || !XML_SCHEMAS_DOWNLOADED) {
             contentImportService.importXmlSchemas();
             XML_SCHEMAS_DOWNLOADED = true;
         }
-    }
-
-    /**
-     * Remove all entities from the database.
-     */
-    private void teardown() {
-        teardown(false);
     }
 
     /**
@@ -184,7 +163,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
         }
     }
 
-    public static int getTestCount() {
+    private static int getTestCount() {
         final State state = TestState.getState();
         return state.getClassTestCount();
     }
@@ -193,8 +172,4 @@ public abstract class StroomIntegrationTest implements StroomTest {
     public Path getCurrentTestDir() {
         return FileUtil.getTempDir();
     }
-
-//    public Path getCurrentTestDir() {
-//        return FileUtil.getTempDir();
-//    }
 }

@@ -21,7 +21,7 @@ import org.junit.Test;
 
 public class TestEventStoreTimeIntervalEnum {
     @Test
-    public void testFromColumnInterval() throws Exception {
+    public void testFromColumnInterval() {
         for (final EventStoreTimeIntervalEnum intervalEnum : EventStoreTimeIntervalEnum.values()) {
             Assert.assertEquals(intervalEnum,
                     EventStoreTimeIntervalEnum.fromColumnInterval(intervalEnum.columnInterval()));
@@ -29,14 +29,14 @@ public class TestEventStoreTimeIntervalEnum {
     }
 
     @Test
-    public void testFromShortName() throws Exception {
+    public void testFromShortName() {
         for (final EventStoreTimeIntervalEnum intervalEnum : EventStoreTimeIntervalEnum.values()) {
             Assert.assertEquals(intervalEnum, EventStoreTimeIntervalEnum.fromShortName(intervalEnum.shortName()));
         }
     }
 
     @Test
-    public void testRoundTimeToColumnInterval() throws Exception {
+    public void testRoundTimeToColumnInterval() {
         for (final EventStoreTimeIntervalEnum interval : EventStoreTimeIntervalEnum.values()) {
             final long timeMs = (interval.columnInterval() * 2) + 1;
             final long expectedTimeMs = (interval.columnInterval() * 2);
@@ -48,7 +48,7 @@ public class TestEventStoreTimeIntervalEnum {
     }
 
     @Test
-    public void testRoundTimeToRowKeyInterval() throws Exception {
+    public void testRoundTimeToRowKeyInterval() {
         for (final EventStoreTimeIntervalEnum interval : EventStoreTimeIntervalEnum.values()) {
             final long timeMs = (interval.rowKeyInterval() * 2) + 1;
             final long expectedTimeMs = (interval.rowKeyInterval() * 2);

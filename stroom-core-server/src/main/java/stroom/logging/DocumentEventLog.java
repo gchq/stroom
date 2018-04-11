@@ -19,7 +19,6 @@ package stroom.logging;
 
 import event.logging.Query;
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 
 public interface DocumentEventLog {

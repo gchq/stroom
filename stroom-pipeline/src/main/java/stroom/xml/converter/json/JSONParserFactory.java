@@ -16,14 +16,9 @@
 
 package stroom.xml.converter.json;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.XMLReader;
-import stroom.util.spring.StroomScope;
 import stroom.xml.converter.ParserFactory;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class JSONParserFactory implements ParserFactory {
     private boolean addRootObject = true;
 

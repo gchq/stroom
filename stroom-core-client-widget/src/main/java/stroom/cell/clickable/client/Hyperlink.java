@@ -48,7 +48,7 @@ public class Hyperlink {
                             .href(href)
                             .target(target)
                             .build();
-                } catch (Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.warning("Could not parse open type value of " + openTypeStr);
                 }
             }

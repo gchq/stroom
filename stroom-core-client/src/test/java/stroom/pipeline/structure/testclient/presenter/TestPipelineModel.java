@@ -56,12 +56,12 @@ public class TestPipelineModel {
             .build();
 
     @Test
-    public void testBasic() throws Exception {
+    public void testBasic() {
         test(null, null, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
     @Test
-    public void testSimple() throws Exception {
+    public void testSimple() {
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
         pipelineData.addElement(ELEM_TYPE, "test2");
@@ -71,7 +71,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testComplex() throws Exception {
+    public void testComplex() {
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
         pipelineData.addElement(ELEM_TYPE, "test2");
@@ -86,7 +86,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testComplexWithProperties() throws Exception {
+    public void testComplexWithProperties() {
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
         pipelineData.addElement(ELEM_TYPE, "test2");
@@ -105,7 +105,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testComplexWithPropRemove() throws Exception {
+    public void testComplexWithPropRemove() {
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
         pipelineData.addElement(ELEM_TYPE, "test2");
@@ -125,7 +125,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testUnknownElement() throws Exception {
+    public void testUnknownElement() {
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test");
         pipelineData.addLink("unknown", "test");
@@ -134,7 +134,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritanceAdditive() throws Exception {
+    public void testInheritanceAdditive() {
         final List<PipelineData> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
@@ -151,7 +151,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritanceRemove() throws Exception {
+    public void testInheritanceRemove() {
         final List<PipelineData> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
@@ -169,7 +169,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritancePropertiesSame() throws Exception {
+    public void testInheritancePropertiesSame() {
         final List<PipelineData> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
@@ -186,7 +186,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritancePropertiesDiff() throws Exception {
+    public void testInheritancePropertiesDiff() {
         final List<PipelineData> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
@@ -203,7 +203,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritancePropertiesRemove() throws Exception {
+    public void testInheritancePropertiesRemove() {
         final List<PipelineData> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
@@ -220,7 +220,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritanceRefsSame() throws Exception {
+    public void testInheritanceRefsSame() {
         final PipelineEntity pipelineEntity = new PipelineEntity();
         pipelineEntity.setId(1);
         final Feed feed = new Feed();
@@ -244,7 +244,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritanceRefsDiff() throws Exception {
+    public void testInheritanceRefsDiff() {
         final PipelineEntity pipelineEntity = new PipelineEntity();
         pipelineEntity.setId(1);
         final Feed feed = new Feed();
@@ -268,7 +268,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritanceRefsRemove() throws Exception {
+    public void testInheritanceRefsRemove() {
         final PipelineEntity pipelineEntity = new PipelineEntity();
         pipelineEntity.setId(1);
         final Feed feed = new Feed();

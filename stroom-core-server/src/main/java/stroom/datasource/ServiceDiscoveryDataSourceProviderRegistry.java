@@ -24,18 +24,15 @@ import stroom.servlet.HttpServletRequestHolder;
 
 import java.util.Optional;
 
-//@Component
-//@Scope(StroomScope.PROTOTYPE)
 public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourceProviderRegistry {
-
     private final SecurityContext securityContext;
     private final ServiceDiscoverer serviceDiscoverer;
     private HttpServletRequestHolder httpServletRequestHolder;
 
     //    @Inject
-    public ServiceDiscoveryDataSourceProviderRegistry(final SecurityContext securityContext,
-                                                      final ServiceDiscoverer serviceDiscoverer,
-                                                      final HttpServletRequestHolder httpServletRequestHolder) {
+    ServiceDiscoveryDataSourceProviderRegistry(final SecurityContext securityContext,
+                                               final ServiceDiscoverer serviceDiscoverer,
+                                               final HttpServletRequestHolder httpServletRequestHolder) {
         this.securityContext = securityContext;
         this.serviceDiscoverer = serviceDiscoverer;
         this.httpServletRequestHolder = httpServletRequestHolder;

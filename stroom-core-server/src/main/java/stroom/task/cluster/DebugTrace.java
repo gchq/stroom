@@ -36,7 +36,7 @@ public class DebugTrace {
         final String key = task.getTaskName() + "-" + style + "-" + success;
         final int concurrentCount = debugMap.get(key).incrementAndGet();
         if (concurrentCount > 1) {
-            LOGGER.debug("debugTraceIn() - {} {} {} {}", new Object[]{concurrentCount, task, style, success});
+            LOGGER.debug("debugTraceIn() - {} {} {} {}", concurrentCount, task, style, success);
         }
     }
 

@@ -16,13 +16,19 @@
 
 package stroom.util.cert;
 
-import org.springframework.util.Base64Utils;
+import org.apache.commons.codec.binary.Base64;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.Key;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.HashMap;
 
 /**
@@ -32,7 +38,7 @@ import java.util.HashMap;
  * keystore=/home/user01/keys/server.keystore keypass=changeit alias=smrs
  */
 public class ExportKey {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, UnrecoverableKeyException {
         HashMap<String, String> argsMap = new HashMap<>();
         for (int i = 0; i < args.length; i++) {
             String[] split = args[i].split("=");
@@ -60,11 +66,11 @@ public class ExportKey {
         }
 
         System.out.println("-----BEGIN PRIVATE KEY-----");
-        System.out.println(Base64Utils.encodeToString(key.getEncoded()));
+        System.out.println(new String(Base64.encodeBase64(key.getEncoded())));
         System.out.println("-----END PRIVATE KEY-----");
 
         System.out.println("-----BEGIN CERTIFICATE-----");
-        System.out.println(Base64Utils.encodeToString(ks.getCertificate(alias).getEncoded()));
+        System.out.println(new String(Base64.encodeBase64(ks.getCertificate(alias).getEncoded())));
         System.out.println("-----END CERTIFICATE-----");
     }
 }

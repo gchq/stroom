@@ -16,15 +16,16 @@
 
 package stroom.xml.util;
 
-import stroom.entity.server.util.XMLUtil;
-import stroom.streamstore.server.fs.BlockGZIPInputStream;
+import stroom.entity.util.XMLUtil;
+import stroom.streamstore.fs.BlockGZIPInputStream;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class BGZIPOutputXML {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         String fileName = args[1];
         InputStream inputStream = new BlockGZIPInputStream(Files.newInputStream(Paths.get(fileName)));
         XMLUtil.prettyPrintXML(inputStream, System.out);

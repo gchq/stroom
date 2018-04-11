@@ -2,10 +2,7 @@ package stroom.connectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.node.server.StroomPropertyService;
-import stroom.util.spring.StroomScope;
+import stroom.properties.StroomPropertyService;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -28,8 +25,6 @@ import java.util.ServiceLoader;
  * It effectively wraps the {@link ServiceLoader} load function. Using a property in stroom.conf
  * to locate and load external JAR files with separate class loaders.
  */
-@Component
-@Scope(StroomScope.SINGLETON)
 public class ExternalLibService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExternalLibService.class);
@@ -87,7 +82,7 @@ public class ExternalLibService {
 
         } catch (final MalformedURLException e) {
             LOGGER.error("Could not load in an External Service JAR {}", path.toString(), e);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 

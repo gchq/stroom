@@ -82,7 +82,7 @@ public class BackupConfig {
                                                     FileUtil.getCanonicalPath(sourcePath) + "/\t" + FileUtil.getCanonicalPath(targetPath) + "/");
                                         }
                                     }
-                                } catch (final Exception e) {
+                                } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
                                 }
                             });

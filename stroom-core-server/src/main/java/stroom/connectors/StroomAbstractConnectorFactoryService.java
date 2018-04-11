@@ -1,6 +1,8 @@
 package stroom.connectors;
 
-import stroom.node.server.StroomPropertyService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.properties.StroomPropertyService;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -156,7 +158,7 @@ public abstract class StroomAbstractConnectorFactoryService<
                                     connectorVersion,
                                     factoryClass.getName()));
                 }
-            } catch (Exception e) {
+            } catch (final RuntimeException e) {
                 String factoryClassName = factoryClass.getName();
                 LAMBDA_LOGGER.error(() ->
                         LambdaLogger.buildMessage("Unable to initialise connector [{}] [{}] due to [{}], (enable DEBUG for full stack)",

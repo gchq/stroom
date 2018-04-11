@@ -16,7 +16,6 @@
 
 package stroom.servlet;
 
-import org.springframework.stereotype.Component;
 import stroom.util.web.DebugServletUtil;
 
 import javax.servlet.ServletException;
@@ -25,7 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@Component
 public class DebugServlet extends HttpServlet {
     private static final long serialVersionUID = 5785836851738107760L;
 

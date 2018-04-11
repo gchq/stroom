@@ -96,7 +96,7 @@ public class ContentTabPanePresenter extends CurveTabLayoutPresenter<ContentTabP
                         }
                     }
 
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     // Ignore.
                 }
                 ignoreHistory = false;
@@ -166,7 +166,7 @@ public class ContentTabPanePresenter extends CurveTabLayoutPresenter<ContentTabP
                 final String key = String.valueOf(currentHistoryId);
                 History.newItem(key);
 
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 // Ignore.
             }
             ignoreHistory = false;

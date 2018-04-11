@@ -17,11 +17,12 @@
 package stroom.util;
 
 import javax.net.ssl.HttpsURLConnection;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class URLTest {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         try {
             URL url = new URL(args[0]);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -35,8 +36,8 @@ public class URLTest {
 
             System.out.println("Opened " + args[0]);
 
-        } catch (Throwable th) {
-            th.printStackTrace();
+        } catch (final IOException e) {
+            e.printStackTrace();
         }
     }
 }

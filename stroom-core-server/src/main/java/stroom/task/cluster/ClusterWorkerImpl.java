@@ -19,28 +19,23 @@ package stroom.task.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-import stroom.cluster.server.ClusterCallService;
-import stroom.node.server.NodeCache;
+import stroom.cluster.ClusterCallService;
+import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.task.server.TaskCallbackAdaptor;
-import stroom.task.server.TaskManager;
+import stroom.task.TaskCallbackAdaptor;
+import stroom.task.TaskManager;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.TaskId;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Component(value = ClusterWorkerImpl.BEAN_NAME)
-@Lazy
 public class ClusterWorkerImpl implements ClusterWorker {
     public static final String BEAN_NAME = "clusterWorker";
     static final String EXEC_ASYNC_METHOD = "execAsync";
     static final Class<?>[] EXEC_ASYNC_METHOD_ARGS = {ClusterTask.class, Node.class, TaskId.class, CollectorId.class};
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterWorkerImpl.class);
-    private static final Long DEBUG_RESPONSE_DELAY = null;
     private static final String EXEC_ASYNC = "execAsync";
     private static final String SEND_RESULT = "sendResult";
 
@@ -49,7 +44,8 @@ public class ClusterWorkerImpl implements ClusterWorker {
     private final ClusterCallService clusterCallService;
 
     @Inject
-    public ClusterWorkerImpl(final TaskManager taskManager, final NodeCache nodeCache,
+    public ClusterWorkerImpl(final TaskManager taskManager,
+                             final NodeCache nodeCache,
                              @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
         this.taskManager = taskManager;
         this.nodeCache = nodeCache;
@@ -100,7 +96,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
                     sendResult(task, sourceNode, targetNode, sourceTaskId, collectorId, null, t, false);
                 }
             });
-        } catch (final Throwable e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
         } finally {
@@ -133,32 +129,31 @@ public class ClusterWorkerImpl implements ClusterWorker {
         DebugTrace.debugTraceIn(task, SEND_RESULT, true);
         try {
             LOGGER.debug("{}() - {}", SEND_RESULT, task);
-            ThreadUtil.sleep(DEBUG_RESPONSE_DELAY);
-
             while (!done && tryCount <= 10) {
                 try {
                     // Trace attempt to send result.
-                    LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})",
-                            new Object[]{
-                                    task.getTaskName(),
-                                    sourceNode.getName(),
-                                    tryCount
-                            });
+                    LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})", task.getTaskName(), sourceNode.getName(), tryCount);
                     // Send result.
                     ok = clusterCallService.call(targetNode, sourceNode, ClusterDispatchAsyncImpl.BEAN_NAME,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD_ARGS, new Object[]{task, targetNode,
                                     sourceTaskId, collectorId, result, t, Boolean.valueOf(success)});
                     done = true;
-                } catch (final Exception ex) {
-                    lastException = ex;
-                    LOGGER.warn(ex.getMessage());
-                    LOGGER.debug(ex.getMessage(), ex);
-                    ThreadUtil.sleepUpTo(1000L * tryCount);
+                } catch (final RuntimeException e) {
+                    lastException = e;
+                    LOGGER.warn(e.getMessage());
+                    LOGGER.debug(e.getMessage(), e);
+                    sleepUpTo(1000L * tryCount);
                     tryCount++;
                 }
             }
-        } catch (final Throwable e) {
+        } catch (final InterruptedException e) {
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
+
+        } catch (final RuntimeException e) {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
         } finally {
@@ -197,6 +192,15 @@ public class ClusterWorkerImpl implements ClusterWorker {
             // to return a result knows that the result did not make it to the
             // requesting node.
             throw new RuntimeException("Unable to return result to requesting node or requesting node rejected result");
+        }
+    }
+
+    private void sleepUpTo(final long millis) throws InterruptedException {
+        if (millis > 0) {
+            int realSleep = (int) Math.floor(Math.random() * (millis + 1));
+            if (realSleep > 0) {
+                Thread.sleep(realSleep);
+            }
         }
     }
 }

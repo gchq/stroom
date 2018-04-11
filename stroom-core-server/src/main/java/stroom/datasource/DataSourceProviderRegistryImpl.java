@@ -2,21 +2,18 @@ package stroom.datasource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.servlet.HttpServletRequestHolder;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
+import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Optional;
 
-@Component
-@Scope(StroomScope.SINGLETON)
+@Singleton
 @SuppressWarnings("unused")
 public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistry {
 
@@ -24,25 +21,20 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
 
     public static final String PROP_KEY_SERVICE_DISCOVERY_ENABLED = "stroom.serviceDiscovery.enabled";
 
-    private final SecurityContext securityContext;
-    private final StroomPropertyService stroomPropertyService;
     private final DataSourceProviderRegistry delegateDataSourceProviderRegistry;
 
     @SuppressWarnings("unused")
     @Inject
-    public DataSourceProviderRegistryImpl(final SecurityContext securityContext,
+    DataSourceProviderRegistryImpl(final SecurityContext securityContext,
                                           final StroomPropertyService stroomPropertyService,
                                           final StroomBeanStore stroomBeanStore,
                                           final HttpServletRequestHolder httpServletRequestHolder) {
-        this.securityContext = securityContext;
-        this.stroomPropertyService = stroomPropertyService;
-
         boolean isServiceDiscoveryEnabled = stroomPropertyService.getBooleanProperty(
                 PROP_KEY_SERVICE_DISCOVERY_ENABLED,
                 false);
 
         if (isServiceDiscoveryEnabled) {
-            ServiceDiscoverer serviceDiscoverer = stroomBeanStore.getBean(ServiceDiscoverer.class);
+            ServiceDiscoverer serviceDiscoverer = stroomBeanStore.getInstance(ServiceDiscoverer.class);
             LOGGER.debug("Using service discovery for service lookup");
             delegateDataSourceProviderRegistry = new ServiceDiscoveryDataSourceProviderRegistry(
                     securityContext,

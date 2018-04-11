@@ -33,7 +33,7 @@ public abstract class BaseEntityBig extends BaseEntity {
     private static final long serialVersionUID = -2776331251851326084L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = ID, columnDefinition = BIG_KEY_DEF)
     @XmlTransient
     public long getId() {

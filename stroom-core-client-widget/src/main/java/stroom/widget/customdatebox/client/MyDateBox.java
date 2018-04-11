@@ -131,7 +131,7 @@ public class MyDateBox extends Composite implements DateBoxView {
             if (millis != null) {
                 return new Date(millis);
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             // Ignore if we couldn't parse.
         }
 

@@ -8,7 +8,7 @@ public interface HasHealthCheck {
     default HealthCheck getHealthCheck() {
         return new HealthCheck() {
             @Override
-            protected Result check() throws Exception {
+            protected Result check() {
                 return getHealth();
             }
         };

@@ -18,13 +18,11 @@ package stroom.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
-import stroom.util.spring.StroomScope;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.StreamTarget;
+import stroom.guice.PipelineScoped;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,27 +30,33 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
-@Scope(StroomScope.TASK)
+@PipelineScoped
 public class StreamCloser implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamCloser.class);
     private final List<Closeable> list = new ArrayList<>();
 
-    @Resource
-    private StreamStore streamStore;
+    private final StreamStore streamStore;
 
     // For stream target's we can delete them on closing if they are no-longer
     // required
     private boolean delete = false;
 
+    @Inject
+    public StreamCloser(final StreamStore streamStore) {
+        this.streamStore = streamStore;
+    }
+
     public StreamCloser() {
+        this.streamStore = null;
     }
 
     public StreamCloser(final Closeable... closeables) {
+        this.streamStore = null;
         add(closeables);
     }
 
     public StreamCloser(final Closeable closeable) {
+        this.streamStore = null;
         add(closeable);
     }
 
@@ -92,7 +96,7 @@ public class StreamCloser implements Closeable {
                             if (ioException == null) {
                                 ioException = e;
                             }
-                        } catch (final Throwable e) {
+                        } catch (final RuntimeException e) {
                             LOGGER.error("Unable to flush stream!", e);
 
                             if (ioException == null) {
@@ -103,7 +107,7 @@ public class StreamCloser implements Closeable {
                         // Make sure writers get flushed.
                         try {
                             ((Writer) closeable).flush();
-                        } catch (final Throwable e) {
+                        } catch (final RuntimeException e) {
                             LOGGER.error("Unable to flush stream!", e);
 
                             if (ioException == null) {
@@ -135,7 +139,7 @@ public class StreamCloser implements Closeable {
                 if (ioException == null) {
                     ioException = e;
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to close stream!", e);
 
                 if (ioException == null) {

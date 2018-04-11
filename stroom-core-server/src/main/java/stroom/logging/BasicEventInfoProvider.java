@@ -22,22 +22,20 @@ import event.logging.Object;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
 import stroom.entity.shared.NamedEntity;
-import stroom.feed.server.FeedService;
+import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamstore.server.StreamTypeService;
+import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Component
-public class BasicEventInfoProvider implements EventInfoProvider {
+class BasicEventInfoProvider implements EventInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicEventInfoProvider.class);
 
     private final StreamTypeService streamTypeService;
@@ -71,15 +69,15 @@ public class BasicEventInfoProvider implements EventInfoProvider {
                 try {
                     final Feed feed = (Feed) entity;
                     description = feed.getDescription();
-                } catch (final Exception ex) {
-                    LOGGER.error("Unable to get feed description!", ex);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Unable to get feed description!", e);
                 }
             } else if (entity instanceof PipelineEntity) {
                 try {
                     final PipelineEntity pipelineEntity = (PipelineEntity) entity;
                     description = pipelineEntity.getDescription();
-                } catch (final Exception ex) {
-                    LOGGER.error("Unable to get pipeline description!", ex);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Unable to get pipeline description!", e);
                 }
             }
 
@@ -106,8 +104,8 @@ public class BasicEventInfoProvider implements EventInfoProvider {
                             String.valueOf(feed.getRetentionDayAge())));
                     object.getData()
                             .add(EventLoggingUtil.createData("Reference", Boolean.toString(feed.isReference())));
-                } catch (final Exception ex) {
-                    LOGGER.error("Unable to add unknown but useful data!", ex);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Unable to add unknown but useful data!", e);
                 }
             } else if (entity instanceof Stream) {
                 try {
@@ -120,8 +118,8 @@ public class BasicEventInfoProvider implements EventInfoProvider {
                         object.getData().add(EventLoggingUtil.createData("StreamType",
                                 streamTypeService.load(stream.getStreamType()).getDisplayValue()));
                     }
-                } catch (final Exception ex) {
-                    LOGGER.error("Unable to configure stream!", ex);
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Unable to configure stream!", e);
                 }
             }
 

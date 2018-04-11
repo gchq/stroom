@@ -9,12 +9,12 @@ import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.node.server.StroomPropertyService;
-import stroom.util.spring.StroomShutdown;
+import stroom.properties.StroomPropertyService;
+import stroom.util.lifecycle.StroomShutdown;
 
-import javax.inject.Singleton;
+import javax.inject.Inject;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -23,8 +23,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-@Component
-@Singleton
 public class ServiceDiscoveryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
@@ -47,8 +45,8 @@ public class ServiceDiscoveryManager {
     private final Deque<Closeable> closeables = new LinkedList<>();
 
     @SuppressWarnings("unused")
-    public ServiceDiscoveryManager(final StroomPropertyService stroomPropertyService) {
-
+    @Inject
+    ServiceDiscoveryManager(final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
         this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
 
@@ -93,7 +91,8 @@ public class ServiceDiscoveryManager {
         curatorFramework.start();
         try {
             curatorFramework.blockUntilConnected();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
             throw new RuntimeException("Thread interrupted waiting for connection to zookeeper");
         }
@@ -128,7 +127,7 @@ public class ServiceDiscoveryManager {
                 LOGGER.info("Successfully started ServiceDiscovery on path " + basePath);
             }
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(String.format("Error starting ServiceDiscovery with base path %s", basePath), e);
         }
     }
@@ -150,7 +149,7 @@ public class ServiceDiscoveryManager {
             if (closeable != null) {
                 try {
                     closeable.close();
-                } catch (Exception e) {
+                } catch (final IOException e) {
                     LOGGER.error("Error while closing {}", closeable.getClass().getCanonicalName(), e);
                 }
             }

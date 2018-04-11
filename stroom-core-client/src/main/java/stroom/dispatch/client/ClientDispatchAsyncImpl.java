@@ -130,18 +130,16 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
             private void handleSuccess(final R result) {
                 try {
                     future.setResult(result);
-
-                } catch (final Throwable throwable) {
-                    AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, null);
+                } catch (final RuntimeException e) {
+                    AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, e, null);
                 }
             }
 
             private void handleFailure(final Throwable throwable) {
                 try {
                     future.setThrowable(throwable);
-
-                } catch (final Throwable throwable2) {
-                    AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable2, null);
+                } catch (final RuntimeException e) {
+                    AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, e, null);
                 }
             }
         }));

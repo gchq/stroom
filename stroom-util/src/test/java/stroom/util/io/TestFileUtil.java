@@ -24,14 +24,13 @@ import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestFileUtil extends StroomUnitTest {
     @Test
-    public void testMkdirs() throws IOException {
+    public void testMkdirs() throws InterruptedException {
         final String tempDir = FileUtil.getCanonicalPath(getCurrentTestDir());
         final String rootDir = tempDir + "/TestFileUtil_" + System.currentTimeMillis();
 
@@ -49,8 +48,8 @@ public class TestFileUtil extends StroomUnitTest {
                     final String dir = dirArray[count % dirArray.length];
                     System.out.println(dir);
                     FileUtil.mkdirs(Paths.get(dir));
-                } catch (final Exception ex) {
-                    ex.printStackTrace();
+                } catch (final RuntimeException e) {
+                    e.printStackTrace();
                     exception.set(true);
                 }
             });
@@ -79,7 +78,8 @@ public class TestFileUtil extends StroomUnitTest {
         try {
             FileUtil.mkdirs(Paths.get("/dev/null"));
             Assert.fail("Not expecting that this directory can be created");
-        } catch (final Exception ex) {
+        } catch (final RuntimeException e) {
+            // Ignore.
         }
     }
 }

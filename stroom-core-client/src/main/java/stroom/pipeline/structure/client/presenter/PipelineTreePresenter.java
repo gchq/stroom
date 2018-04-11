@@ -79,7 +79,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
                 pipelineModel.removeElement(child);
                 pipelineModel.addExistingElement(parent, child);
                 setDirty(true);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 AlertEvent.fireError(PipelineTreePresenter.this, e.getMessage(), null);
             }
         }
