@@ -104,7 +104,7 @@ public class ExpressionModel {
                     dest.addOperator(childDest.build());
                 } else if (child instanceof Term) {
                     final Term term = (Term) child;
-                    dest.addOperator(new ExpressionTerm.Builder()
+                    dest.addTerm(new ExpressionTerm.Builder()
                             .enabled(term.getEnabled())
                             .field(term.getField())
                             .condition(term.getCondition())
