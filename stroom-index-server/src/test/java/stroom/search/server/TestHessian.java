@@ -28,6 +28,9 @@ import stroom.query.common.v2.Key;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
+import stroom.search.AsyncSearchTask;
+import stroom.search.ClusterSearchTask;
+import stroom.search.NodeResult;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -79,7 +82,20 @@ public class TestHessian {
         final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap = new HashMap<>();
         coprocessorMap.put(coprocessorKey, coprocessorSettings);
 
-        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask("test",
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
+                null,
+                "test",
+                "test",
+                query,
+                node,
+                500,
+                coprocessorMap,
+                "locale",
+                1000);
+
+        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
+                asyncSearchTask,
+                "test",
                 "test",
                 query,
                 Arrays.asList(1L, 2L, 3L),
