@@ -221,7 +221,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .forEach(dict ->
-                            or.addOperator(new ExpressionTerm.Builder()
+                            or.addTerm(new ExpressionTerm.Builder()
                                     .field(StreamDataSource.FEED)
                                     .condition(ExpressionTerm.Condition.IN_DICTIONARY)
                                     .dictionary(dict)
@@ -237,7 +237,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .forEach(dict ->
-                            or.addOperator(new ExpressionTerm.Builder()
+                            or.addTerm(new ExpressionTerm.Builder()
                             .field(StreamDataSource.FEED)
                             .condition(ExpressionTerm.Condition.IN_DICTIONARY)
                             .dictionary(dict)

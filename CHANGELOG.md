@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#217** : Add an 'all/none' checkbox to the Explorer Tree's quick filter. 
+* Issue **#719** : Fix creation of headless Jar.
+
+* Issue **#720** : Fix for Hessian serialisation of table coprocessor settings.
+
+* Issue **#217** : Add an 'all/none' checkbox to the Explorer Tree's quick filter.
 
 * Issue **#400** : Shows a warning when cascading folder permissions.
 
@@ -22,9 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Migrated code from Spring to Guice for managing dependency injection.
 
-* Issue **#229** : When a user 'OKs' a folder permission change it can take a while to return. This disables the ok/cancel buttons while Stroom is processing the permission change.  
-
-## [v6.0-alpha.19]
+* Issue **#229** : When a user 'OKs' a folder permission change it can take a while to return. This disables the ok/cancel buttons while Stroom is processing the permission change.
 
 * Issue **#405** : Fixed quick filter on permissions dialog, for users and for groups. It will now match anywhere in the user or group name, not just at the start.
 

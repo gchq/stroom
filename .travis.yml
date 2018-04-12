@@ -46,6 +46,7 @@ deploy:
       - stroom-app/build/libs/stroom-app-all.jar
       - stroom-app/src/main/resources/ui/swagger/swagger.json
       - stroom-app/src/main/resources/ui/swagger/swagger.yaml
+      - stroom-headless/build/libs/stroom-headless-all.jar
     skip_cleanup: true
     on:
       tags: true
