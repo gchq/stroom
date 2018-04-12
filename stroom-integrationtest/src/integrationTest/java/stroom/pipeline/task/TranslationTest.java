@@ -68,6 +68,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService;
 import stroom.test.StroomCoreServerTestFileUtil;
+import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
@@ -82,8 +83,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -93,8 +92,6 @@ import java.util.List;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
-
-    private static final int OLD_YEAR = 2006;
 
     @Inject
     private NodeCache nodeCache;
@@ -270,19 +267,19 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         } else {
             // Add the associated data to the stream store.
-            StreamType streamType = null;
+            StreamType streamType;
+            long millis;
             if (feed.isReference()) {
                 streamType = StreamType.RAW_REFERENCE;
+
+                // We need to ensure the reference data is older then the earliest
+                // event we are going to see. In the case of these component tests
+                // we have some events from 2007.
+                millis = DateUtil.parseNormalDateTimeString("2006-01-01T00:00:00.000Z");
             } else {
                 streamType = StreamType.RAW_EVENTS;
+                millis = DateUtil.parseNormalDateTimeString("2006-04-01T00:00:00.000Z");
             }
-
-            // We need to ensure the reference data is older then the earliest
-            // event we are going to see. In the case of these component tests
-            // we have some events from 2007.
-            ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
-            dateTime = dateTime.withYear(OLD_YEAR);
-            long millis = dateTime.toInstant().toEpochMilli();
 
             // Create the stream.
             final Stream stream = Stream.createStreamForTesting(streamType, feed, millis,
