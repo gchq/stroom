@@ -25,7 +25,6 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -90,8 +89,8 @@ public class TestTagCloudSearch extends AbstractSearchTest {
                 .format(Format.Type.NUMBER)
                 .build();
 
-        final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultTextPipeline();
-        final TableSettings tableSettings = new TableSettings(null, Arrays.asList(fldText, fldCount), true, DocRefUtil.create(resultPipeline), null, null);
+        final DocRef resultPipeline = commonIndexingTest.getSearchResultTextPipeline();
+        final TableSettings tableSettings = new TableSettings(null, Arrays.asList(fldText, fldCount), true, resultPipeline, null, null);
 
         final ExpressionOperator.Builder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
         final Query query = new Query(dataSourceRef, expression.build());
@@ -144,7 +143,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
     }
 
     private ExpressionOperator.Builder buildExpression(final String user, final String from,
-                                              final String to) {
+                                                       final String to) {
         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
         operator.addTerm("UserId", Condition.CONTAINS, user);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);

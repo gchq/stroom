@@ -39,7 +39,7 @@ import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Volume;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
@@ -319,11 +319,11 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
         //if (securityContext.hasAppPermission(StreamProcessor.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         if (row.getStream().getStreamProcessor() != null) {
-            TooltipUtil.addRowData(html, "Stream Processor Id", row.getStream().getStreamProcessor().getId());
-            if (row.getStream().getStreamProcessor().getPipeline() != null) {
+            TooltipUtil.addRowData(html, "Stream Processor Uuid", row.getStream().getStreamProcessor().getId());
+            if (row.getStream().getStreamProcessor().getPipelineUuid() != null) {
                 //if (securityContext.hasAppPermission(PipelineEntity.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-                StreamTooltipPresenterUtil.addRowNameString(html, "Stream Processor Pipeline",
-                        row.getStream().getStreamProcessor().getPipeline());
+                TooltipUtil.addRowData(html, "Stream Processor Pipeline",
+                        row.getStream().getStreamProcessor().getPipelineName());
                 //}
             }
         }
@@ -412,8 +412,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             @Override
             public String getValue(final StreamAttributeMap row) {
                 if (row.getStream().getStreamProcessor() != null) {
-                    if (row.getStream().getStreamProcessor().getPipeline() != null) {
-                        return row.getStream().getStreamProcessor().getPipeline().getDisplayValue();
+                    if (row.getStream().getStreamProcessor().getPipelineName() != null) {
+                        return row.getStream().getStreamProcessor().getPipelineName();
                     } else {
                         return "Not visible";
                     }
@@ -474,7 +474,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         fetchSet.add(StreamProcessor.ENTITY_TYPE);
         // }
         // if (securityContext.hasAppPermission(PipelineEntity.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        fetchSet.add(PipelineEntity.ENTITY_TYPE);
+        fetchSet.add(PipelineDoc.DOCUMENT_TYPE);
         // }
 
         // For info ? load up the files

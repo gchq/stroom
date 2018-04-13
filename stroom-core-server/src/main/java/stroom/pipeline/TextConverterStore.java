@@ -24,9 +24,5 @@ import stroom.query.api.v2.DocRef;
 import java.util.List;
 
 public interface TextConverterStore extends DocumentStore<TextConverterDoc> {
-    TextConverterDoc read(String uuid);
-
-    TextConverterDoc update(TextConverterDoc doc);
-
     List<DocRef> list();
 }

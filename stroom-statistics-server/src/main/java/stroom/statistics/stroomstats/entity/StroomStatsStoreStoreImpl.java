@@ -161,7 +161,7 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
                 if (importState.ok(importMode)) {
                     StroomStatsStoreDoc document;
                     if (exists) {
-                        document = read(uuid);
+                        document = readDocument(docRef);
 
                     } else {
                         final OldStroomStatsStoreEntity oldStroomStatsStore = new OldStroomStatsStoreEntity();
@@ -208,21 +208,6 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String getDocType() {
-        return StroomStatsStoreDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
-    public StroomStatsStoreDoc read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public StroomStatsStoreDoc update(final StroomStatsStoreDoc document) {
-        return store.update(document);
-    }
 
     @Override
     public List<DocRef> list() {

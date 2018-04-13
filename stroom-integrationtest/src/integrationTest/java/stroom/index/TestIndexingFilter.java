@@ -30,17 +30,19 @@ import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.task.StreamMetaDataProvider;
+import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
@@ -67,7 +69,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     @Inject
     private IndexService indexService;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private PipelineDataCache pipelineDataCache;
     @Inject
@@ -191,15 +193,19 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
             // Create the pipeline.
             final String data = StroomPipelineTestFileUtil.getString(PIPELINE);
-            PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
-            pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
-            pipelineEntity = pipelineService.save(pipelineEntity);
+            final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
+            pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
             feedHolderProvider.get().setFeed(new Feed());
+
+//            // Setup the meta data holder.
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
 
             // Set the input.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(resourceName);

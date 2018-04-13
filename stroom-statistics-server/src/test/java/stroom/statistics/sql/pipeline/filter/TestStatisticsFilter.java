@@ -100,7 +100,7 @@ public class TestStatisticsFilter implements Statistics {
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setPrecision(1000L);
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
@@ -177,7 +177,7 @@ public class TestStatisticsFilter implements Statistics {
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setPrecision(precision);
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
@@ -229,7 +229,7 @@ public class TestStatisticsFilter implements Statistics {
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
@@ -257,7 +257,7 @@ public class TestStatisticsFilter implements Statistics {
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
@@ -289,7 +289,7 @@ public class TestStatisticsFilter implements Statistics {
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
@@ -318,7 +318,7 @@ public class TestStatisticsFilter implements Statistics {
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setEnabled(false);
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
@@ -346,7 +346,7 @@ public class TestStatisticsFilter implements Statistics {
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
@@ -374,7 +374,7 @@ public class TestStatisticsFilter implements Statistics {
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
@@ -406,7 +406,7 @@ public class TestStatisticsFilter implements Statistics {
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 

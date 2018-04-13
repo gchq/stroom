@@ -38,14 +38,13 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.ruleset.shared.Policy;
 import stroom.security.AppPermission;
 import stroom.security.DocumentPermission;
 import stroom.security.Permission;
 import stroom.security.User;
 import stroom.security.UserGroupUser;
-import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.streamstore.StreamAttributeKeyService;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
@@ -92,7 +91,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             JobNode.TABLE_NAME,
             Node.TABLE_NAME,
             Permission.TABLE_NAME,
-            PipelineEntity.TABLE_NAME,
             Policy.TABLE_NAME,
             QueryEntity.TABLE_NAME,
             Rack.TABLE_NAME,

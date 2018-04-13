@@ -162,7 +162,7 @@ class TextConverterStoreImpl implements TextConverterStore {
                 if (importState.ok(importMode)) {
                     TextConverterDoc document;
                     if (exists) {
-                        document = read(uuid);
+                        document = readDocument(docRef);
 
                     } else {
                         final OldTextConverter oldTextConverter = new OldTextConverter();
@@ -207,21 +207,6 @@ class TextConverterStoreImpl implements TextConverterStore {
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String getDocType() {
-        return TextConverterDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
-    public TextConverterDoc read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public TextConverterDoc update(final TextConverterDoc document) {
-        return store.update(document);
-    }
 
     @Override
     public List<DocRef> list() {

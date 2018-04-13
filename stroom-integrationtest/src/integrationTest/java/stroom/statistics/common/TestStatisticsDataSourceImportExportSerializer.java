@@ -72,7 +72,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         statisticsDataSource.setConfig(new StatisticsDataSourceData());
         statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag1"));
         statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag2"));
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
         Assert.assertEquals(1, statisticStoreStore.list().size());
 
@@ -117,14 +117,13 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag1"));
         statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag2"));
 
-        statisticStoreStore.update(statisticsDataSource);
+        statisticStoreStore.writeDocument(statisticsDataSource);
 
-        final StatisticStoreDoc statisticsDataSource2 = statisticStoreStore.readDocument(statisticStoreStore.list().get(0));
+        final DocRef statisticStoreRef = statisticStoreStore.list().get(0);
+        final StatisticStoreDoc statisticsDataSource2 = statisticStoreStore.readDocument(statisticStoreRef);
         Assert.assertNotNull(statisticsDataSource2);
 
-        final String uuid = statisticsDataSource2.getUuid();
-
-        final StatisticStoreDoc statisticsDataSource3 = statisticStoreStore.read(uuid);
+        final StatisticStoreDoc statisticsDataSource3 = statisticStoreStore.readDocument(statisticStoreRef);
 
         // Assert.assertNotNull(((StatisticsDataSource)
         // statisticsDataSource3).getStatisticDataSourceData());

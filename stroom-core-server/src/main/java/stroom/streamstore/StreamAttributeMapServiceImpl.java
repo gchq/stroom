@@ -29,9 +29,10 @@ import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Volume;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.policy.DataRetentionService;
+import stroom.query.api.v2.DocRef;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.security.Security;
@@ -69,7 +70,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
     private final FeedService feedService;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final StreamTypeService streamTypeService;
     private final StreamProcessorService streamProcessorService;
     private final StreamStore streamStore;
@@ -82,7 +83,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
 
     @Inject
     StreamAttributeMapServiceImpl(@Named("cachedFeedService") final FeedService feedService,
-                                  @Named("cachedPipelineService") final PipelineService pipelineService,
+                                  @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                   @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                                   @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
                                   final StreamStore streamStore,
@@ -93,7 +94,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                                   final StreamMaintenanceService streamMaintenanceService,
                                   final Security security) {
         this.feedService = feedService;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.streamTypeService = streamTypeService;
         this.streamProcessorService = streamProcessorService;
         this.streamStore = streamStore;
@@ -163,12 +164,13 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
 
         // Get a list of valid stream ids.
-        final Map<EntityRef, Optional<Object>> localCache = new HashMap<>();
+        final Map<EntityRef, Optional<Object>> entityCache = new HashMap<>();
+        final Map<DocRef, Optional<Object>> uuidCache = new HashMap<>();
         final StringBuilder streamIds = new StringBuilder();
         for (final Stream stream : streamList) {
             try {
                 // Resolve Relations
-                resolveRelations(criteria, stream, localCache);
+                resolveRelations(criteria, stream, entityCache, uuidCache);
 
                 final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);
                 streamMDList.add(streamAttributeMap);
@@ -236,15 +238,15 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         streamMap.values().parallelStream().forEach(ruleDecorator::addMatchingRetentionRuleInfo);
     }
 
-    private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream, final Map<EntityRef, Optional<Object>> localCache) throws PermissionException {
+    private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream, final Map<EntityRef, Optional<Object>> entityCache, final Map<DocRef, Optional<Object>> uuidCache) throws PermissionException {
         if (stream.getFeed() != null && criteria.getFetchSet().contains(Feed.ENTITY_TYPE)) {
             final EntityRef ref = new EntityRef(Feed.ENTITY_TYPE, stream.getFeed().getId());
-            localCache.computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id))).ifPresent(obj -> stream.setFeed((Feed) obj));
+            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id))).ifPresent(obj -> stream.setFeed((Feed) obj));
         }
 
         if (stream.getStreamType() != null && criteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {
             final EntityRef ref = new EntityRef(StreamType.ENTITY_TYPE, stream.getStreamType().getId());
-            localCache.computeIfAbsent(ref, key -> safeOptional(() -> streamTypeService.loadById(key.id))).ifPresent(obj -> stream.setStreamType((StreamType) obj));
+            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> streamTypeService.loadById(key.id))).ifPresent(obj -> stream.setStreamType((StreamType) obj));
         }
 
         if (stream.getStreamProcessor() != null && criteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE)) {
@@ -253,17 +255,21 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
             // they do not have visibility of the processor that created the
             // stream.
             final EntityRef ref = new EntityRef(StreamProcessor.ENTITY_TYPE, stream.getStreamProcessor().getId());
-            final Optional<Object> optional = localCache.computeIfAbsent(ref, key -> {
+            final Optional<Object> optional = entityCache.computeIfAbsent(ref, key -> {
                 final Optional<Object> optionalStreamProcessor = safeOptional(() -> streamProcessorService.loadByIdInsecure(key.id));
-                if (criteria.getFetchSet().contains(PipelineEntity.ENTITY_TYPE)) {
+                if (criteria.getFetchSet().contains(PipelineDoc.DOCUMENT_TYPE)) {
                     optionalStreamProcessor.ifPresent(proc -> {
                         final StreamProcessor streamProcessor = (StreamProcessor) proc;
-                        if (streamProcessor.getPipeline() != null) {
+                        final String pipelineUuid = streamProcessor.getPipelineUuid();
+                        if (pipelineUuid != null) {
+                            final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid);
+
                             // We will try and load the pipeline but will ignore permission
                             // failures as we don't mind users seeing streams even if they do
                             // not have visibility of the pipeline that created the stream.
-                            final EntityRef pipelineRef = new EntityRef(PipelineEntity.ENTITY_TYPE, streamProcessor.getPipeline().getId());
-                            localCache.computeIfAbsent(pipelineRef, innerKey -> safeOptional(() -> pipelineService.loadById(innerKey.id))).ifPresent(obj -> streamProcessor.setPipeline((PipelineEntity) obj));
+                            uuidCache.computeIfAbsent(pipelineRef, innerKey -> safeOptional(() ->
+                                    pipelineStore.readDocument(innerKey))).ifPresent(obj ->
+                                    streamProcessor.setPipelineName(((PipelineDoc) obj).getName()));
                         }
                     });
                 }
@@ -300,14 +306,15 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         findStreamVolumeCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
         final BaseResultList<StreamVolume> volumeList = streamMaintenanceService.find(findStreamVolumeCriteria);
 
-        final Map<EntityRef, Optional<Object>> localCache = new HashMap<>();
+        final Map<EntityRef, Optional<Object>> entityCache = new HashMap<>();
+        final Map<DocRef, Optional<Object>> uuidCache = new HashMap<>();
         for (final StreamVolume streamVolume : volumeList) {
             StreamAttributeMap streamAttributeMap = streamMap.get(streamVolume.getStream());
             if (streamAttributeMap == null) {
                 try {
                     final Stream stream = streamVolume.getStream();
                     // Resolve Relations
-                    resolveRelations(criteria, stream, localCache);
+                    resolveRelations(criteria, stream, entityCache, uuidCache);
 
                     streamAttributeMap = new StreamAttributeMap(stream);
                     streamMDList.add(streamAttributeMap);

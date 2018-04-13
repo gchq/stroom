@@ -17,10 +17,8 @@
 
 package stroom.streamtask;
 
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
+import stroom.security.shared.PermissionNames;
 import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.task.AbstractTaskHandler;
@@ -31,24 +29,19 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = CreateProcessorAction.class)
 class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorAction, StreamProcessorFilter> {
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final PipelineService pipelineService;
     private final Security security;
 
     @Inject
     CreateProcessorHandler(final StreamProcessorFilterService streamProcessorFilterService,
-                           final PipelineService pipelineService,
                            final Security security) {
         this.streamProcessorFilterService = streamProcessorFilterService;
-        this.pipelineService = pipelineService;
         this.security = security;
     }
 
     @Override
     public StreamProcessorFilter exec(final CreateProcessorAction action) {
-        return security.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
-            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
-            return streamProcessorFilterService.createNewFilter(pipelineEntity, action.getQueryData(),
-                    action.isEnabled(), action.getPriority());
-        });
+        return security.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () ->
+                streamProcessorFilterService.createNewFilter(action.getPipeline(), action.getQueryData(),
+                        action.isEnabled(), action.getPriority()));
     }
 }

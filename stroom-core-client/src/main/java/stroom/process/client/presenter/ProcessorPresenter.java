@@ -24,14 +24,9 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamtask.shared.CreateProcessorAction;
-import stroom.streamtask.shared.StreamProcessorFilterRow;
-import stroom.streamtask.shared.StreamProcessorRow;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -39,7 +34,10 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamtask.shared.StreamProcessorFilterRow;
+import stroom.streamtask.shared.StreamProcessorRow;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.SharedObject;
 import stroom.widget.button.client.ButtonView;
@@ -50,14 +48,15 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
-        implements HasDocumentRead<BaseEntity> {
-    private final ProcessorListPresenter processorListPresenter;
+public class ProcessorPresenter<E> extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
+        implements HasDocumentRead<E> {
+    private final ProcessorListPresenter<E> processorListPresenter;
     private final ExpressionPresenter filterPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final ClientDispatchAsync dispatcher;
 
-    private PipelineEntity pipelineEntity;
+    private DocRef docRef;
+    private PipelineDoc pipelineDoc;
     private SharedObject selectedProcessor;
     private ButtonView addButton;
     private ButtonView editButton;
@@ -68,7 +67,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     @Inject
     public ProcessorPresenter(final EventBus eventBus,
                               final ProcessorView view,
-                              final ProcessorListPresenter processorListPresenter,
+                              final ProcessorListPresenter<E> processorListPresenter,
                               final ExpressionPresenter filterPresenter,
                               final ExpressionTreePresenter expressionPresenter,
                               final ClientDispatchAsync dispatcher) {
@@ -86,17 +85,18 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     @Override
-    public void read(final DocRef docRef, final BaseEntity entity) {
+    public void read(final DocRef docRef, final E entity) {
+        this.docRef = docRef;
         processorListPresenter.read(docRef, entity);
-        if (entity instanceof PipelineEntity) {
-            this.pipelineEntity = (PipelineEntity) entity;
+        if (entity instanceof PipelineDoc) {
+            this.pipelineDoc = (PipelineDoc) entity;
         }
     }
 
     public void setAllowUpdate(final boolean allowUpdate) {
         this.allowUpdate = allowUpdate;
 
-        if (this.pipelineEntity != null && allowUpdate) {
+        if (this.pipelineDoc != null && allowUpdate) {
             createButtons();
         }
 
@@ -200,13 +200,13 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     private void addProcessor() {
-        if (pipelineEntity != null) {
+        if (pipelineDoc != null) {
             addOrEditProcessor(null);
         }
     }
 
     private void editProcessor() {
-        if (pipelineEntity != null && selectedProcessor != null) {
+        if (pipelineDoc != null && selectedProcessor != null) {
             if (selectedProcessor instanceof StreamProcessorFilterRow) {
                 final StreamProcessorFilterRow streamProcessorFilterRow = (StreamProcessorFilterRow) selectedProcessor;
                 final StreamProcessorFilter filter = streamProcessorFilterRow.getEntity();
@@ -344,7 +344,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            dispatcher.exec(new CreateProcessorAction(DocRefUtil.create(pipelineEntity), queryData, false, 10)).onSuccess(result -> {
+            dispatcher.exec(new CreateProcessorAction(docRef, queryData, false, 10)).onSuccess(result -> {
                 refresh(result);
                 HidePopupEvent.fire(ProcessorPresenter.this, filterPresenter);
             });

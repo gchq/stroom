@@ -23,12 +23,12 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
 public class PipelineSettingsPresenter
-        extends DocumentSettingsPresenter<PipelineSettingsView, PipelineEntity>
+        extends DocumentSettingsPresenter<PipelineSettingsView, PipelineDoc>
         implements PipelineSettingsUiHandlers {
     @Inject
     public PipelineSettingsPresenter(final EventBus eventBus, final PipelineSettingsView view,
@@ -39,18 +39,18 @@ public class PipelineSettingsPresenter
 
     @Override
     public String getType() {
-        return PipelineEntity.ENTITY_TYPE;
+        return PipelineDoc.DOCUMENT_TYPE;
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final PipelineEntity pipelineEntity) {
-        getView().setDescription(pipelineEntity.getDescription());
+    protected void onRead(final DocRef docRef, final PipelineDoc pipelineDoc) {
+        getView().setDescription(pipelineDoc.getDescription());
     }
 
     @Override
-    protected void onWrite(final PipelineEntity pipelineEntity) {
-        if (!getView().getDescription().trim().equals(pipelineEntity.getDescription())) {
-            pipelineEntity.setDescription(getView().getDescription().trim());
+    protected void onWrite(final PipelineDoc pipelineDoc) {
+        if (!getView().getDescription().trim().equals(pipelineDoc.getDescription())) {
+            pipelineDoc.setDescription(getView().getDescription().trim());
             setDirty(true);
         }
     }

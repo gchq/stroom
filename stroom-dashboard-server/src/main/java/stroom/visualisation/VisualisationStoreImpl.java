@@ -160,7 +160,7 @@ class VisualisationStoreImpl implements VisualisationStore {
                 if (importState.ok(importMode)) {
                     VisualisationDoc document;
                     if (exists) {
-                        document = read(uuid);
+                        document = readDocument(docRef);
 
                     } else {
                         final OldVisualisation oldVisualisation = new OldVisualisation();
@@ -207,21 +207,6 @@ class VisualisationStoreImpl implements VisualisationStore {
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String getDocType() {
-        return VisualisationDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
-    public VisualisationDoc read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public VisualisationDoc update(final VisualisationDoc document) {
-        return store.update(document);
-    }
 
     @Override
     public List<DocRef> list() {

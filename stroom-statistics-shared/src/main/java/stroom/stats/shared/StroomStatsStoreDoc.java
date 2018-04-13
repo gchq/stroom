@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -206,4 +207,24 @@ public class StroomStatsStoreDoc extends Doc {
 //                ", stroomStatsStoreDataObject=" + stroomStatsStoreDataObject +
 //                '}';
 //    }
+
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        final StroomStatsStoreDoc that = (StroomStatsStoreDoc) o;
+        return Objects.equals(description, that.description) &&
+                statisticType == that.statisticType &&
+                statisticRollUpType == that.statisticRollUpType &&
+                precision == that.precision &&
+                Objects.equals(enabled, that.enabled) &&
+                Objects.equals(config, that.config);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), description, statisticType, statisticRollUpType, precision, enabled, config);
+    }
 }

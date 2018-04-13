@@ -325,7 +325,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
             xsltDoc.setDescription("Imported XSLT");
             xsltDoc.setData(StreamUtil.fileToString(IMPORTED_XSLT));
-            xsltStore.update(xsltDoc);
+            xsltStore.writeDocument(xsltDoc);
 
             Feed hostNameToIP = null;
 

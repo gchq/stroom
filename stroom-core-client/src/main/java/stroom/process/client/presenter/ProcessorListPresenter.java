@@ -42,20 +42,19 @@ import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.ResultList;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamtask.shared.FetchProcessorAction;
-import stroom.streamtask.shared.StreamProcessorFilterRow;
-import stroom.streamtask.shared.StreamProcessorRow;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.streamstore.client.presenter.StreamTooltipPresenterUtil;
+import stroom.streamtask.shared.FetchProcessorAction;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamtask.shared.StreamProcessorFilterRow;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
+import stroom.streamtask.shared.StreamProcessorRow;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
@@ -70,8 +69,8 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<SharedObject>>
-        implements Refreshable, HasDocumentRead<BaseEntity> {
+public class ProcessorListPresenter<E> extends MyPresenterWidget<DataGridView<SharedObject>>
+        implements Refreshable, HasDocumentRead<E> {
     private final ActionDataProvider<SharedObject> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorAction action;
@@ -103,7 +102,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         streamProcessorFilterSaveQueue = new SaveQueue<>(dispatcher);
     }
 
-    public void setAllowUpdate(final boolean allowUpdate) {
+    void setAllowUpdate(final boolean allowUpdate) {
         this.allowUpdate = allowUpdate;
 
         if (expanderColumn == null) {
@@ -166,7 +165,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                     StreamTooltipPresenterUtil.addRowDateString(html, "Created On", processor.getCreateTime());
                     TooltipUtil.addRowData(html, "Updated By", processor.getUpdateUser());
                     StreamTooltipPresenterUtil.addRowDateString(html, "Updated On", processor.getUpdateTime());
-                    TooltipUtil.addRowData(html, "Pipeline", toNameString(processor.getPipeline()));
+                    TooltipUtil.addRowData(html, "Pipeline", processor.getPipelineUuid());
 
                 } else if (row instanceof StreamProcessorFilterRow) {
                     final StreamProcessorFilterRow streamProcessorFilterRow = (StreamProcessorFilterRow) row;
@@ -245,16 +244,16 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                     final StreamProcessorFilterRow streamProcessorFilterRow = (StreamProcessorFilterRow) row;
                     final StreamProcessor streamProcessor = streamProcessorFilterRow.getEntity().getStreamProcessor();
                     if (streamProcessor != null) {
-                        final PipelineEntity pipelineEntity = streamProcessor.getPipeline();
-                        if (pipelineEntity != null) {
-                            name = pipelineEntity.getName();
+                        final String pipelineUuid = streamProcessor.getPipelineUuid();
+                        if (pipelineUuid != null) {
+                            name = pipelineUuid;
                         }
                     }
                 } else if (row instanceof StreamProcessorRow) {
                     final StreamProcessorRow streamProcessorRow = (StreamProcessorRow) row;
-                    final PipelineEntity pipelineEntity = streamProcessorRow.getEntity().getPipeline();
-                    if (pipelineEntity != null) {
-                        name = pipelineEntity.getName();
+                    final String pipelineUuid = streamProcessorRow.getEntity().getPipelineUuid();
+                    if (pipelineUuid != null) {
+                        name = pipelineUuid;
                     }
                 }
 
@@ -443,7 +442,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                                 });
                     } else if (row instanceof StreamProcessorRow) {
                         final StreamProcessorRow streamProcessorRow = (StreamProcessorRow) row;
-                        final PipelineEntity pipelineEntity = streamProcessorRow.getEntity().getPipeline();
+                        final String pipelineUuid = streamProcessorRow.getEntity().getPipelineUuid();
                         streamProcessorSaveQueue.save(new EntitySaveTask<StreamProcessor>(streamProcessorRow) {
                             @Override
                             protected void setValue(final StreamProcessor entity) {
@@ -452,7 +451,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
 
                             @Override
                             protected void setEntity(final StreamProcessor entity) {
-                                entity.setPipeline(pipelineEntity);
+                                entity.setPipelineUuid(pipelineUuid);
                                 super.setEntity(entity);
                             }
                         });
@@ -485,21 +484,21 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         }
     }
 
-    private void setPipeline(final PipelineEntity pipelineEntity) {
-        action.setPipelineId(pipelineEntity.getId());
+    private void setPipeline(final DocRef pipelineRef) {
+        action.setPipeline(pipelineRef);
         doDataDisplay();
 
     }
 
     private void setNullCriteria() {
-        action.setPipelineId(null);
+        action.setPipeline(null);
         doDataDisplay();
     }
 
     @Override
-    public void read(final DocRef docRef, final BaseEntity entity) {
-        if (entity instanceof PipelineEntity) {
-            setPipeline((PipelineEntity) entity);
+    public void read(final DocRef docRef, final E entity) {
+        if (entity instanceof PipelineDoc) {
+            setPipeline(docRef);
         } else {
             setNullCriteria();
         }

@@ -28,9 +28,5 @@ import java.util.List;
 public interface XmlSchemaStore extends DocumentStore<XmlSchemaDoc> {
     BaseResultList<XmlSchemaDoc> find(FindXMLSchemaCriteria criteria);
 
-    XmlSchemaDoc read(String uuid);
-
-    XmlSchemaDoc update(XmlSchemaDoc doc);
-
     List<DocRef> list();
 }

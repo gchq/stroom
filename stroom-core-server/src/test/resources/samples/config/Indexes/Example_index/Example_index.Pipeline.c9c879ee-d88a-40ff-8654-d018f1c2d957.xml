@@ -1,13 +1,29 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <description/>
-   <name>Example index</name>
-   <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
-      &lt;doc&gt;
-      &lt;type&gt;Pipeline&lt;/type&gt;
-      &lt;uuid&gt;fcef1b20-083e-436c-ab95-47a6ce453435&lt;/uuid&gt;
-      &lt;name&gt;Indexing&lt;/name&gt;
-      &lt;/doc&gt;
-   </parentPipelineXML>
-   <uuid>c9c879ee-d88a-40ff-8654-d018f1c2d957</uuid>
+   <properties>
+      <add>
+         <property>
+            <element>xsltFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>87f17469-6a90-4003-9ca3-cd79e653c215</uuid>
+                  <name>Example index</name>
+               </entity>
+            </value>
+         </property>
+         <property>
+            <element>indexingFilter</element>
+            <name>index</name>
+            <value>
+               <entity>
+                  <type>Index</type>
+                  <uuid>57a35b9a-083c-4a93-a813-fc3ddfe1ff44</uuid>
+                  <name>Example index</name>
+               </entity>
+            </value>
+         </property>
+      </add>
+   </properties>
 </pipeline>

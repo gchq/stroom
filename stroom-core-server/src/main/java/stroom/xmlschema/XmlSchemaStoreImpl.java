@@ -168,7 +168,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
                 if (importState.ok(importMode)) {
                     XmlSchemaDoc document;
                     if (exists) {
-                        document = read(uuid);
+                        document = readDocument(docRef);
 
                     } else {
                         final OldXMLSchema oldXmlSchema = new OldXMLSchema();
@@ -231,21 +231,6 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
             }
         });
         return BaseResultList.createCriterialBasedList(result, criteria);
-    }
-
-    @Override
-    public String getDocType() {
-        return XmlSchemaDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
-    public XmlSchemaDoc read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public XmlSchemaDoc update(final XmlSchemaDoc document) {
-        return store.update(document);
     }
 
     @Override

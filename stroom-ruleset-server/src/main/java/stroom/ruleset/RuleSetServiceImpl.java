@@ -134,19 +134,4 @@ public class RuleSetServiceImpl implements RuleSetService {
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String getDocType() {
-        return RuleSet.DOCUMENT_TYPE;
-    }
-
-    @Override
-    public RuleSet read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public RuleSet update(final RuleSet dataReceiptPolicy) {
-        return store.update(dataReceiptPolicy);
-    }
 }

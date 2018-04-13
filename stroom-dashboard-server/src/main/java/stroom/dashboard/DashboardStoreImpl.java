@@ -161,7 +161,7 @@ class DashboardStoreImpl implements DashboardStore {
                 if (importState.ok(importMode)) {
                     DashboardDoc document;
                     if (exists) {
-                        document = read(uuid);
+                        document = readDocument(docRef);
 
                     } else {
                         final OldDashboard oldDashboard = new OldDashboard();
@@ -200,21 +200,6 @@ class DashboardStoreImpl implements DashboardStore {
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String getDocType() {
-        return DashboardDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
-    public DashboardDoc read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public DashboardDoc update(final DashboardDoc document) {
-        return store.update(document);
-    }
 
     @Override
     public List<DocRef> list() {

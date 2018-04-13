@@ -27,7 +27,7 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
@@ -35,6 +35,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
@@ -72,9 +73,7 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
     @Inject
     private XsltStore xsltStore;
     @Inject
-    private PipelineService pipelineService;
-    @Inject
-    private PipelineMarshaller pipelineMarshaller;
+    private PipelineStore pipelineStore;
     @Inject
     private PipelineDataCache pipelineDataCache;
     @Inject
@@ -98,14 +97,14 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
             final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
             textConverter.setConverterType(TextConverterType.DATA_SPLITTER);
             textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
-            textConverterStore.update(textConverter);
+            textConverterStore.writeDocument(textConverter);
 
             // Setup the XSLT.
             final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_LOCATION);
             final DocRef xsltRef = xsltStore.createDocument("Test");
             final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
             xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
-            xsltStore.update(xsltDoc);
+            xsltStore.writeDocument(xsltDoc);
 
             final Path testDir = getCurrentTestDir();
 
@@ -120,17 +119,21 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
             errorReceiver.setErrorReceiver(recordErrorReceiver);
 
             // Create the parser.
-            PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, StroomPipelineTestFileUtil.getString(PIPELINE));
-            pipelineEntity.getPipelineData().addProperty(
+            final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, StroomPipelineTestFileUtil.getString(PIPELINE));
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            pipelineDoc.getPipelineData().addProperty(
                     PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
-            pipelineEntity.getPipelineData()
+            pipelineDoc.getPipelineData()
                     .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
-            pipelineEntity = pipelineService.save(pipelineEntity);
+            pipelineStore.writeDocument(pipelineDoc);
 
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
             feedHolder.setFeed(new Feed());
+
+//            // Setup the meta data holder.
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
 
             // Set the input.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(INPUT);

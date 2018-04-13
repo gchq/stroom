@@ -24,9 +24,5 @@ import stroom.visualisation.shared.VisualisationDoc;
 import java.util.List;
 
 public interface VisualisationStore extends DocumentStore<VisualisationDoc> {
-    VisualisationDoc read(String uuid);
-
-    VisualisationDoc update(VisualisationDoc doc);
-
     List<DocRef> list();
 }

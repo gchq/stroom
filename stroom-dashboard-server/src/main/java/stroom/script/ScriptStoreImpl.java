@@ -162,7 +162,7 @@ class ScriptStoreImpl implements ScriptStore {
                 if (importState.ok(importMode)) {
                     ScriptDoc document;
                     if (exists) {
-                        document = read(uuid);
+                        document = readDocument(docRef);
 
                     } else {
                         final OldScript oldScript = new OldScript();
@@ -208,21 +208,6 @@ class ScriptStoreImpl implements ScriptStore {
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String getDocType() {
-        return ScriptDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
-    public ScriptDoc read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public ScriptDoc update(final ScriptDoc document) {
-        return store.update(document);
-    }
 
     @Override
     public List<DocRef> list() {

@@ -24,9 +24,5 @@ import stroom.stats.shared.StroomStatsStoreDoc;
 import java.util.List;
 
 public interface StroomStatsStoreStore extends DocumentStore<StroomStatsStoreDoc> {
-    StroomStatsStoreDoc read(String uuid);
-
-    StroomStatsStoreDoc update(StroomStatsStoreDoc doc);
-
     List<DocRef> list();
 }

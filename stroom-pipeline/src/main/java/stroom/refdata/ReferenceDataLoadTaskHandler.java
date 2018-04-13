@@ -24,7 +24,7 @@ import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.EncodingSelection;
 import stroom.pipeline.LocationFactoryProxy;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -32,11 +32,13 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
@@ -44,6 +46,7 @@ import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
@@ -64,12 +67,14 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
 
     private final StreamStore streamStore;
+    private final StreamProcessorService streamProcessorService;
     private final PipelineFactory pipelineFactory;
     private final MapStoreHolder mapStoreHolder;
     private final FeedService feedService;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
+    private final MetaDataHolder metaDataHolder;
     private final StreamHolder streamHolder;
     private final LocationFactoryProxy locationFactory;
     private final StreamCloser streamCloser;
@@ -82,12 +87,14 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
     @Inject
     ReferenceDataLoadTaskHandler(final StreamStore streamStore,
+                                 final StreamProcessorService streamProcessorService,
                                  final PipelineFactory pipelineFactory,
                                  final MapStoreHolder mapStoreHolder,
                                  @Named("cachedFeedService") final FeedService feedService,
-                                 @Named("cachedPipelineService") final PipelineService pipelineService,
+                                 @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                  final PipelineHolder pipelineHolder,
                                  final FeedHolder feedHolder,
+                                 final MetaDataHolder metaDataHolder,
                                  final StreamHolder streamHolder,
                                  final LocationFactoryProxy locationFactory,
                                  final StreamCloser streamCloser,
@@ -96,12 +103,14 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final PipelineDataCache pipelineDataCache,
                                  final Security security) {
         this.streamStore = streamStore;
+        this.streamProcessorService = streamProcessorService;
         this.pipelineFactory = pipelineFactory;
         this.mapStoreHolder = mapStoreHolder;
         this.feedService = feedService;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
+        this.metaDataHolder = metaDataHolder;
         this.locationFactory = locationFactory;
         this.streamHolder = streamHolder;
         this.streamCloser = streamCloser;
@@ -139,13 +148,15 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         final Feed feed = feedService.load(stream.getFeed());
                         feedHolder.setFeed(feed);
 
+                        // Setup the meta data holder.
+                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+
                         // Set the pipeline so it can be used by a filter if needed.
-                        final PipelineEntity pipelineEntity = pipelineService
-                                .loadByUuid(mapStorePoolKey.getPipeline().getUuid());
-                        pipelineHolder.setPipeline(pipelineEntity);
+                        final PipelineDoc pipelineDoc = pipelineStore.readDocument(mapStorePoolKey.getPipeline());
+                        pipelineHolder.setPipeline(mapStorePoolKey.getPipeline());
 
                         // Create the parser.
-                        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                        final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
                         populateMaps(pipeline, stream, streamSource, feed, stream.getStreamType(), mapStoreBuilder);

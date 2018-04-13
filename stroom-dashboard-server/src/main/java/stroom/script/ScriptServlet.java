@@ -17,6 +17,7 @@
 
 package stroom.script;
 
+import stroom.query.api.v2.DocRef;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.Security;
 
@@ -78,7 +79,7 @@ public class ScriptServlet extends HttpServlet {
     }
 
     private ScriptDoc getScript(final String uuid) {
-        return scriptStore.read(uuid);
+        return scriptStore.readDocument(new DocRef(ScriptDoc.DOCUMENT_TYPE, uuid));
     }
 
     private Map<String, String> createQueryParamMap(final String query) {

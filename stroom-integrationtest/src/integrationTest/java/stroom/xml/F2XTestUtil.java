@@ -27,16 +27,19 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineDataMerger;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.writer.TestAppender;
 import stroom.query.api.v2.DocRef;
+import stroom.streamtask.StreamProcessorService;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
@@ -97,27 +100,30 @@ public class F2XTestUtil {
         // Setup the feed.
         feedHolder.setFeed(feed);
 
+//        // Setup the meta data holder.
+//        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+
         // Persist the text converter.
         final DocRef textConverterRef = textConverterStore.createDocument("TEST_TRANSLATION");
         final TextConverterDoc textConverterDoc = textConverterStore.readDocument(textConverterRef);
         textConverterDoc.setConverterType(textConverterType);
         textConverterDoc.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
-        textConverterStore.update(textConverterDoc);
+        textConverterStore.writeDocument(textConverterDoc);
 
         // Persist the XSLT.
         final DocRef xsltRef = xsltStore.createDocument("TEST_TRANSLATION");
         final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
         xsltDoc.setData(StroomPipelineTestFileUtil.getString(xsltLocation));
-        xsltStore.update(xsltDoc);
+        xsltStore.writeDocument(xsltDoc);
 
         // Setup the error receiver.
         final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
         errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
 
         // Create the pipeline.
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createBasicPipeline(
+        final PipelineDoc pipelineDoc = PipelineTestUtil.createBasicPipeline(
                 StroomPipelineTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.data.xml"));
-        final PipelineData pipelineData = pipelineEntity.getPipelineData();
+        final PipelineData pipelineData = pipelineDoc.getPipelineData();
 
         // final ElementType parserElementType = new ElementType("Parser");
         // final PropertyType textConverterPropertyType = new PropertyType(
@@ -176,16 +182,16 @@ public class F2XTestUtil {
         TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
         textConverter.setConverterType(textConverterType);
         textConverter.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
-        textConverterStore.update(textConverter);
+        textConverterStore.writeDocument(textConverter);
 
         // Setup the error receiver.
         final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
         errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
 
         // Create the pipeline.
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createBasicPipeline(
+        final PipelineDoc pipelineDoc = PipelineTestUtil.createBasicPipeline(
                 StroomPipelineTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.data.xml"));
-        final PipelineData pipelineData = pipelineEntity.getPipelineData();
+        final PipelineData pipelineData = pipelineDoc.getPipelineData();
 
         // final ElementType parserElementType = new ElementType("Parser");
         // final PropertyType textConverterPropertyType = new PropertyType(

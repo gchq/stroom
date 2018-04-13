@@ -26,7 +26,7 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
@@ -65,7 +65,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     @Inject
     private TextConverterStore textConverterStore;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private PipelineDataCache pipelineDataCache;
     @Inject
@@ -84,27 +84,29 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         final String stem = dir + name + "_" + type;
         final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml", name, TextConverterType.DATA_SPLITTER);
         final DocRef filteredXSLT = createXSLT(stem + ".xsl", name);
-        final PipelineEntity pipelineEntity = createPipeline(stem + "_Pipeline.xml", textConverterRef, filteredXSLT);
-        test(pipelineEntity, dir, name, type, stem + ".out", null);
+        final DocRef pipelineRef = createPipeline(stem + "_Pipeline.xml", textConverterRef, filteredXSLT);
+        test(pipelineRef, dir, name, type, stem + ".out", null);
     }
 
-    private PipelineEntity createPipeline(final String pipelineFile,
-                                          final DocRef textConverterRef,
-                                          final DocRef xsltRef) {
+    private DocRef createPipeline(final String pipelineFile,
+                                  final DocRef textConverterRef,
+                                  final DocRef xsltRef) {
         // Load the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(pipelineFile);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
+        final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
         if (textConverterRef != null) {
-            pipelineEntity.getPipelineData().addProperty(
+            pipelineDoc.getPipelineData().addProperty(
                     PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
         }
         if (xsltRef != null) {
-            pipelineEntity.getPipelineData()
+            pipelineDoc.getPipelineData()
                     .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
         }
 
-        return pipelineService.save(pipelineEntity);
+        pipelineStore.writeDocument(pipelineDoc);
+        return pipelineRef;
     }
 
     private DocRef createTextConverter(final String textConverterFile, final String name,
@@ -115,7 +117,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
         textConverter.setConverterType(textConverterType);
         textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
-        textConverterStore.update(textConverter);
+        textConverterStore.writeDocument(textConverter);
         return textConverterRef;
     }
 
@@ -125,13 +127,13 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         final DocRef xsltRef = xsltStore.createDocument(name);
         final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
         xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
-        xsltStore.update(xsltDoc);
+        xsltStore.writeDocument(xsltDoc);
         return xsltRef;
     }
 
     // TODO This method is 80% the same in a whole bunch of test classes -
     // refactor some of the repetition out.
-    void test(final PipelineEntity pipelineEntity,
+    void test(final DocRef pipelineRef,
               final String dir,
               final String name,
               final String type,
@@ -144,7 +146,8 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
                 errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
 
                 // Create the parser.
-                final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                 final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
                 // Get the input streams.

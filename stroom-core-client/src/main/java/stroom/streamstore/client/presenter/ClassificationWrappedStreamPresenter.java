@@ -22,17 +22,16 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.IdSet;
 import stroom.query.api.v2.DocRef;
 
-public class ClassificationWrappedStreamPresenter extends ClassificationWrapperPresenter
-        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<BaseEntity> {
-    private final StreamPresenter streamPresenter;
+public class ClassificationWrappedStreamPresenter<E> extends ClassificationWrapperPresenter
+        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<E> {
+    private final StreamPresenter<E> streamPresenter;
 
     @Inject
     public ClassificationWrappedStreamPresenter(final EventBus eventBus, final ClassificationWrapperView view,
-                                                final StreamPresenter streamPresenter) {
+                                                final StreamPresenter<E> streamPresenter) {
         super(eventBus, view);
         this.streamPresenter = streamPresenter;
         streamPresenter.setClassificationUiHandlers(this);
@@ -41,7 +40,7 @@ public class ClassificationWrappedStreamPresenter extends ClassificationWrapperP
     }
 
     @Override
-    public void read(final DocRef docRef, final BaseEntity entity) {
+    public void read(final DocRef docRef, final E entity) {
         streamPresenter.read(docRef, entity);
     }
 

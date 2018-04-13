@@ -161,7 +161,7 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
                 if (importState.ok(importMode)) {
                     StatisticStoreDoc document;
                     if (exists) {
-                        document = read(uuid);
+                        document = readDocument(docRef);
 
                     } else {
                         final OldStatisticStoreEntity oldStatisticStore = new OldStatisticStoreEntity();
@@ -208,21 +208,6 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String getDocType() {
-        return StatisticStoreDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
-    public StatisticStoreDoc read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public StatisticStoreDoc update(final StatisticStoreDoc document) {
-        return store.update(document);
-    }
 
     @Override
     public List<DocRef> list() {

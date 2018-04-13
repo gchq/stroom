@@ -37,9 +37,8 @@ import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.shared.FindPipelineEntityCriteria;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -101,7 +100,7 @@ public final class SetupSampleDataBean {
     private final CommonTestControl commonTestControl;
     private final ImportExportSerializer importExportSerializer;
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final VolumeService volumeService;
     private final IndexService indexService;
     private final StatisticStoreStore statisticStoreStore;
@@ -114,7 +113,7 @@ public final class SetupSampleDataBean {
                         final CommonTestControl commonTestControl,
                         final ImportExportSerializer importExportSerializer,
                         final StreamProcessorFilterService streamProcessorFilterService,
-                        final PipelineService pipelineService,
+                        final PipelineStore pipelineStore,
                         final VolumeService volumeService,
                         final IndexService indexService,
                         final StatisticStoreStore statisticStoreStore,
@@ -125,7 +124,7 @@ public final class SetupSampleDataBean {
         this.commonTestControl = commonTestControl;
         this.importExportSerializer = importExportSerializer;
         this.streamProcessorFilterService = streamProcessorFilterService;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.volumeService = volumeService;
         this.indexService = indexService;
         this.statisticStoreStore = statisticStoreStore;
@@ -183,15 +182,14 @@ public final class SetupSampleDataBean {
             indexService.save(index);
 
             // Find the pipeline for this index.
-            final BaseResultList<PipelineEntity> pipelines = pipelineService
-                    .find(new FindPipelineEntityCriteria(index.getName()));
+            final List<DocRef> pipelines = pipelineStore.findByName(index.getName());
 
             if (pipelines == null || pipelines.size() == 0) {
                 LOGGER.warn("No pipeline found for index [{}]", index.getName());
             } else if (pipelines.size() > 1) {
                 LOGGER.warn("More than 1 pipeline found for index [{}]", index.getName());
             } else {
-                final PipelineEntity pipeline = pipelines.getFirst();
+                final DocRef pipeline = pipelines.get(0);
 
                 // Create a processor for this index.
                 final QueryData criteria = new QueryData.Builder()
@@ -234,15 +232,14 @@ public final class SetupSampleDataBean {
         // Create stream processors for all feeds.
         for (final Feed feed : feeds) {
             // Find the pipeline for this feed.
-            final BaseResultList<PipelineEntity> pipelines = pipelineService
-                    .find(new FindPipelineEntityCriteria(feed.getName()));
+            final List<DocRef> pipelines = pipelineStore.findByName(feed.getName());
 
             if (pipelines == null || pipelines.size() == 0) {
                 LOGGER.warn("No pipeline found for feed '" + feed.getName() + "'");
             } else if (pipelines.size() > 1) {
                 LOGGER.warn("More than 1 pipeline found for feed '" + feed.getName() + "'");
             } else {
-                final PipelineEntity pipeline = pipelines.getFirst();
+                final DocRef pipeline = pipelines.get(0);
 
                 // Create a processor for this feed.
                 final QueryData criteria = new QueryData.Builder()
@@ -327,7 +324,7 @@ public final class SetupSampleDataBean {
             LOGGER.info("Feed count = " + commonTestControl.countEntity(Feed.class));
             LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
             LOGGER.info("Dashboard count = " + commonTestControl.countEntity(DashboardDoc.class));
-            LOGGER.info("Pipeline count = " + commonTestControl.countEntity(PipelineEntity.class));
+            LOGGER.info("Pipeline count = " + commonTestControl.countEntity(PipelineDoc.class));
             LOGGER.info("Index count = " + commonTestControl.countEntity(Index.class));
             LOGGER.info("StatisticDataSource count = " + commonTestControl.countEntity(StatisticStore.class));
 
@@ -507,7 +504,7 @@ public final class SetupSampleDataBean {
     // final FindPipelineCriteria findTranslationCriteria = new
     // FindPipelineCriteria();
     // findTranslationCriteria.setName(name);
-    // final BaseResultList<Pipeline> list = pipelineService
+    // final BaseResultList<Pipeline> list = pipelineStore
     // .find(findTranslationCriteria);
     // if (list != null && list.size() > 0) {
     // return list.getFirst();

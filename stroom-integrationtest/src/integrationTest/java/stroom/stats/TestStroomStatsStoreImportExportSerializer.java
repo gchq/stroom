@@ -69,7 +69,7 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
         entity.setConfig(new StroomStatsStoreEntityData());
         entity.getConfig().addStatisticField(new StatisticField("tag1"));
         entity.getConfig().addStatisticField(new StatisticField("tag2"));
-        stroomStatsStoreStore.update(entity);
+        stroomStatsStoreStore.writeDocument(entity);
 
         Assert.assertEquals(1, stroomStatsStoreStore.list().size());
 

@@ -23,7 +23,7 @@ import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
@@ -86,7 +86,7 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     /**
      * Find with a key
      */
-    private EntityIdSet<PipelineEntity> pipelineIdSet = null;
+    private CriteriaSet<DocRef> pipelineSet = null;
 
     private CriteriaSet<StreamStatus> statusSet;
 
@@ -127,7 +127,7 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         if (streamTypeIdSet != null && streamTypeIdSet.isConstrained()) {
             return true;
         }
-        if (pipelineIdSet != null && pipelineIdSet.isConstrained()) {
+        if (pipelineSet != null && pipelineSet.isConstrained()) {
             return true;
         }
         if (statusSet != null && statusSet.isConstrained()) {
@@ -179,15 +179,15 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         return nodeIdSet;
     }
 
-    public EntityIdSet<PipelineEntity> getPipelineIdSet() {
-        return pipelineIdSet;
+    public CriteriaSet<DocRef> getPipelineSet() {
+        return pipelineSet;
     }
 
-    public EntityIdSet<PipelineEntity> obtainPipelineIdSet() {
-        if (pipelineIdSet == null) {
-            pipelineIdSet = new EntityIdSet<>();
+    public CriteriaSet<DocRef> obtainPipelineSet() {
+        if (pipelineSet == null) {
+            pipelineSet = new CriteriaSet<>();
         }
-        return pipelineIdSet;
+        return pipelineSet;
     }
 
     public EntityIdSet<Feed> getFeedIdSet() {
@@ -328,10 +328,11 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         if (feedIdSet != null ? feedIdSet.equals(that.feedIdSet) : that.feedIdSet == null) return false;
         if (streamTypeIdSet != null ? !streamTypeIdSet.equals(that.streamTypeIdSet) : that.streamTypeIdSet != null)
             return false;
-        if (pipelineIdSet != null ? pipelineIdSet.equals(that.pipelineIdSet) : that.pipelineIdSet == null) return false;
+        if (pipelineSet != null ? pipelineSet.equals(that.pipelineSet) : that.pipelineSet == null) return false;
         if (statusSet != null ? statusSet.equals(that.statusSet) : that.statusSet == null) return false;
         if (createPeriod != null ? createPeriod.equals(that.createPeriod) : that.createPeriod == null) return false;
-        if (effectivePeriod != null ? effectivePeriod.equals(that.effectivePeriod) : that.effectivePeriod == null) return false;
+        if (effectivePeriod != null ? effectivePeriod.equals(that.effectivePeriod) : that.effectivePeriod == null)
+            return false;
 
         return true;
 
@@ -348,7 +349,7 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         result = 31 * result + (createMs != null ? createMs.hashCode() : 0);
         result = 31 * result + (feedIdSet != null ? feedIdSet.hashCode() : 0);
         result = 31 * result + (streamTypeIdSet != null ? streamTypeIdSet.hashCode() : 0);
-        result = 31 * result + (pipelineIdSet != null ? pipelineIdSet.hashCode() : 0);
+        result = 31 * result + (pipelineSet != null ? pipelineSet.hashCode() : 0);
         result = 31 * result + (statusSet != null ? statusSet.hashCode() : 0);
         result = 31 * result + (createPeriod != null ? createPeriod.hashCode() : 0);
         result = 31 * result + (effectivePeriod != null ? effectivePeriod.hashCode() : 0);

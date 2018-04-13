@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
@@ -30,7 +31,7 @@ import stroom.pipeline.DefaultErrorWriter;
 import stroom.pipeline.EncodingSelection;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.LocationFactoryProxy;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
@@ -43,15 +44,17 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.factory.Processor;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
+import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.OldFindStreamCriteria;
@@ -67,6 +70,7 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.InclusiveRanges;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
+import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
@@ -99,14 +103,16 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private final PipelineFactory pipelineFactory;
     private final StreamStore streamStore;
     private final FeedService feedService;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final TaskContext taskContext;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
+    private final MetaDataHolder metaDataHolder;
     private final StreamHolder streamHolder;
     private final SearchIdHolder searchIdHolder;
     private final LocationFactoryProxy locationFactory;
     private final StreamProcessorHolder streamProcessorHolder;
+    private final StreamProcessorService streamProcessorService;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final ErrorWriterProxy errorWriterProxy;
     private final MetaData metaData;
@@ -121,20 +127,21 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private StreamProcessorFilter streamProcessorFilter;
     private StreamTask streamTask;
     private StreamSource streamSource;
-    private ProcessInfoOutputStreamProvider processInfoOutputStreamProvider;
 
     @Inject
     PipelineStreamProcessor(final PipelineFactory pipelineFactory,
                             final StreamStore streamStore,
                             @Named("cachedFeedService") final FeedService feedService,
-                            @Named("cachedPipelineService") final PipelineService pipelineService,
+                            @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                             final TaskContext taskContext,
                             final PipelineHolder pipelineHolder,
                             final FeedHolder feedHolder,
+                            final MetaDataHolder metaDataHolder,
                             final StreamHolder streamHolder,
                             final SearchIdHolder searchIdHolder,
                             final LocationFactoryProxy locationFactory,
                             final StreamProcessorHolder streamProcessorHolder,
+                            final StreamProcessorService streamProcessorService,
                             final ErrorReceiverProxy errorReceiverProxy,
                             final ErrorWriterProxy errorWriterProxy,
                             final MetaData metaData,
@@ -147,14 +154,16 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = streamStore;
         this.feedService = feedService;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.taskContext = taskContext;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
+        this.metaDataHolder = metaDataHolder;
         this.streamHolder = streamHolder;
         this.searchIdHolder = searchIdHolder;
         this.locationFactory = locationFactory;
         this.streamProcessorHolder = streamProcessorHolder;
+        this.streamProcessorService = streamProcessorService;
         this.errorReceiverProxy = errorReceiverProxy;
         this.errorWriterProxy = errorWriterProxy;
         this.metaData = metaData;
@@ -179,7 +188,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
 
             // Setup the error writer.
-            processInfoOutputStreamProvider = new ProcessInfoOutputStreamProvider(streamStore, streamCloser, metaData,
+            final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider = new ProcessInfoOutputStreamProvider(streamStore, streamCloser, metaData,
                     streamSource.getStream(), streamProcessor, streamTask);
             final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
             errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
@@ -197,7 +206,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         // afterwards.
         final long startTime = System.currentTimeMillis();
         Feed feed = null;
-        PipelineEntity pipelineEntity = null;
+        PipelineDoc pipelineDoc = null;
 
         try {
             final Stream stream = streamSource.getStream();
@@ -212,14 +221,17 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             feed = feedService.load(stream.getFeed());
             feedHolder.setFeed(feed);
 
+            // Setup the meta data holder.
+            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+
             // Set the pipeline so it can be used by a filter if needed.
-            pipelineEntity = pipelineService.load(streamProcessor.getPipeline());
-            pipelineHolder.setPipeline(pipelineEntity);
+            pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
+            pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
 
             // Create some processing info.
             final StringBuilder infoSb = new StringBuilder();
             infoSb.append(" pipeline=");
-            infoSb.append(pipelineEntity.getName());
+            infoSb.append(pipelineDoc.getName());
             infoSb.append(", feed=");
             infoSb.append(feed.getName());
             infoSb.append(", streamId=");
@@ -242,10 +254,9 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
             // Hold the source and feed so the pipeline filters can get them.
             streamProcessorHolder.setStreamProcessor(streamProcessor, streamTask);
-            feedHolder.setFeed(feed);
 
             // Process the streams.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
             processNestedStreams(pipeline, stream, streamSource, feed, stream.getStreamType());
 
@@ -269,7 +280,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             checkSuperseded(startTime);
 
             // Record some statistics about processing.
-            recordStats(feed, pipelineEntity);
+            recordStats(feed, pipelineDoc);
 
             // Update the meta data for all output streams to use.
             updateMetaData(streamSource);
@@ -339,14 +350,14 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         }
     }
 
-    private void recordStats(final Feed feed, final PipelineEntity pipelineEntity) {
+    private void recordStats(final Feed feed, final PipelineDoc pipelineDoc) {
         try {
             InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
                     INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR,
                     System.currentTimeMillis(),
                     ImmutableMap.of(
                             "Feed", feed.getName(),
-                            "Pipeline", pipelineEntity.getName(),
+                            "Pipeline", pipelineDoc.getName(),
                             "Node", nodeCache.getDefaultNode().getName()));
 
             internalStatisticsReceiver.putEvent(event);

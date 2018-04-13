@@ -162,7 +162,7 @@ class XsltStoreImpl implements XsltStore {
                 if (importState.ok(importMode)) {
                     XsltDoc document;
                     if (exists) {
-                        document = read(uuid);
+                        document = readDocument(docRef);
 
                     } else {
                         final OldXSLT oldXslt = new OldXSLT();
@@ -205,30 +205,10 @@ class XsltStoreImpl implements XsltStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public String getDocType() {
-        return XsltDoc.DOCUMENT_TYPE;
-    }
-
-    @Override
-    public XsltDoc read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public XsltDoc update(final XsltDoc document) {
-        return store.update(document);
-    }
-
-    @Override
     public List<DocRef> findByName(final String name) {
         if (name == null) {
             return Collections.emptyList();
         }
         return store.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
     }
 }

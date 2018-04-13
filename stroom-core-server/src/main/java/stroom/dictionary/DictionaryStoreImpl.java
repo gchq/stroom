@@ -84,7 +84,7 @@ class DictionaryStoreImpl implements DictionaryStore {
                                final Map<String, String> otherCopiesByOriginalUuid) {
         final DocRef docRef = store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid);
 
-        final DictionaryDoc doc = read(docRef.getUuid());
+        final DictionaryDoc doc = readDocument(docRef);
 
         if (null != doc.getImports()) {
             final List<DocRef> replacedDocRefImports = doc.getImports().stream()
@@ -239,7 +239,7 @@ class DictionaryStoreImpl implements DictionaryStore {
                     final boolean exists = persistence.exists(docRef);
                     DictionaryDoc document;
                     if (exists) {
-                        document = read(docRef.getUuid());
+                        document = readDocument(docRef);
 
                     } else {
                         final long now = System.currentTimeMillis();
@@ -274,21 +274,6 @@ class DictionaryStoreImpl implements DictionaryStore {
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String getDocType() {
-        return DictionaryDoc.ENTITY_TYPE;
-    }
-
-    @Override
-    public DictionaryDoc read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public DictionaryDoc update(final DictionaryDoc document) {
-        return store.update(document);
-    }
 
     @Override
     public List<DocRef> findByName(final String name) {

@@ -24,9 +24,5 @@ import stroom.query.api.v2.DocRef;
 import java.util.List;
 
 public interface DashboardStore extends DocumentStore<DashboardDoc> {
-    DashboardDoc read(String uuid);
-
-    DashboardDoc update(DashboardDoc doc);
-
     List<DocRef> list();
 }

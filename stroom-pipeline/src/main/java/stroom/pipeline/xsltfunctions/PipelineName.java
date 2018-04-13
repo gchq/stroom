@@ -20,8 +20,9 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.PipelineHolder;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -39,9 +40,9 @@ class PipelineName extends StroomExtensionFunctionCall {
         String result = null;
 
         try {
-            final PipelineEntity pipelineEntity = pipelineHolder.getPipeline();
-            if (pipelineEntity != null) {
-                result = pipelineEntity.getName();
+            final DocRef pipelineRef = pipelineHolder.getPipeline();
+            if (pipelineRef != null) {
+                result = pipelineRef.getName();
             }
         } catch (final RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);

@@ -20,6 +20,7 @@ import stroom.dispatch.shared.TreeAction;
 import stroom.entity.shared.Action;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.ResultList;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.SharedObject;
 
 import java.util.HashSet;
@@ -29,28 +30,28 @@ public class FetchProcessorAction extends Action<ResultList<SharedObject>>
         implements TreeAction<SharedObject>, HasIsConstrained {
     private static final long serialVersionUID = -1773544031158236156L;
 
-    private Long pipelineId;
+    private DocRef pipelineRef;
     private Set<SharedObject> expandedRows;
 
     public FetchProcessorAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchProcessorAction(final long pipelineId) {
-        this.pipelineId = pipelineId;
+    public FetchProcessorAction(final DocRef pipelineRef) {
+        this.pipelineRef = pipelineRef;
     }
 
     @Override
     public boolean isConstrained() {
-        return pipelineId != null;
+        return pipelineRef != null;
     }
 
-    public Long getPipelineId() {
-        return pipelineId;
+    public DocRef getPipeline() {
+        return pipelineRef;
     }
 
-    public void setPipelineId(final Long pipelineId) {
-        this.pipelineId = pipelineId;
+    public void setPipeline(final DocRef pipelineRef) {
+        this.pipelineRef = pipelineRef;
     }
 
     @Override

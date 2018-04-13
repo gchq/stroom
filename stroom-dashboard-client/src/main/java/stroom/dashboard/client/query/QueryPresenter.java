@@ -53,7 +53,7 @@ import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.CreateProcessorEvent;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -368,7 +368,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
-        chooser.setIncludedTypes(PipelineEntity.ENTITY_TYPE);
+        chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.USE);
         chooser.addDataSelectionHandler(event -> {
             final DocRef pipeline = chooser.getSelectedEntityReference();

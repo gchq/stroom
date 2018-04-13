@@ -165,7 +165,7 @@ public class StreamEventLog {
 //        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet",
 //                findStreamCriteria.getStreamProcessorIdSet());
 //        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findStreamCriteria.getFeeds());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", findStreamCriteria.getPipelineIdSet());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", findStreamCriteria.getPipelineSet());
 //        CriteriaLoggingUtil.appendEntityIdSet(items, "streamTypeIdSet", findStreamCriteria.getStreamTypeIdSet());
 //        CriteriaLoggingUtil.appendEntityIdSet(items, "streamIdSet", findStreamCriteria.getStreamIdSet());
 //        CriteriaLoggingUtil.appendCriteriaSet(items, "statusSet", findStreamCriteria.getStatusSet());

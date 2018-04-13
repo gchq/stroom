@@ -20,6 +20,7 @@ package stroom.ruleset;
 import stroom.datafeed.MetaMapFilter;
 import stroom.datafeed.MetaMapFilterFactory;
 import stroom.dictionary.DictionaryStore;
+import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 
@@ -35,7 +36,7 @@ public class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
     }
 
     @Override
-    public MetaMapFilter create(final String uuid) {
-        return new MetaMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, uuid));
+    public MetaMapFilter create(final DocRef policyRef) {
+        return new MetaMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, policyRef));
     }
 }

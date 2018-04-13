@@ -21,22 +21,23 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.SummaryDataRow;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
 
-public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.StreamTaskView>
-        implements HasDocumentRead<BaseEntity> {
+public class StreamTaskPresenter<E> extends MyPresenterWidget<StreamTaskPresenter.StreamTaskView>
+        implements HasDocumentRead<E> {
     public static final String STREAM_TASK_LIST = "STREAM_TASK_LIST";
     public static final String STREAM_TASK_SUMMARY = "STREAM_TASK_SUMMARY";
-    private final StreamTaskSummaryPresenter streamTaskSummaryPresenter;
-    private final StreamTaskListPresenter streamTaskListPresenter;
+    private final StreamTaskSummaryPresenter<E> streamTaskSummaryPresenter;
+    private final StreamTaskListPresenter<E> streamTaskListPresenter;
+
     @Inject
     public StreamTaskPresenter(final EventBus eventBus, final StreamTaskView view,
-                               final StreamTaskSummaryPresenter streamTaskSummaryPresenter,
-                               final StreamTaskListPresenter streamTaskListPresenter) {
+                               final StreamTaskSummaryPresenter<E> streamTaskSummaryPresenter,
+                               final StreamTaskListPresenter<E> streamTaskListPresenter) {
         super(eventBus, view);
         this.streamTaskSummaryPresenter = streamTaskSummaryPresenter;
         this.streamTaskListPresenter = streamTaskListPresenter;
@@ -59,9 +60,12 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
                 final FindStreamTaskCriteria findStreamTaskCriteria = streamTaskListPresenter.getDataProvider()
                         .getCriteria();
 
-                findStreamTaskCriteria.obtainPipelineIdSet().clear();
-                findStreamTaskCriteria.obtainPipelineIdSet()
-                        .add(row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_PIPELINE));
+                final String pipelineUuid = row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_PIPELINE);
+
+                findStreamTaskCriteria.obtainPipelineSet().clear();
+                if (pipelineUuid != null) {
+                    findStreamTaskCriteria.obtainPipelineSet().add(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid));
+                }
 
                 findStreamTaskCriteria.obtainFeedIdSet().clear();
                 findStreamTaskCriteria.obtainFeedIdSet().add(row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_FEED));
@@ -77,7 +81,7 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
     }
 
     @Override
-    public void read(final DocRef docRef, final BaseEntity entity) {
+    public void read(final DocRef docRef, final E entity) {
         streamTaskSummaryPresenter.read(docRef, entity);
         streamTaskListPresenter.read(docRef, entity);
     }

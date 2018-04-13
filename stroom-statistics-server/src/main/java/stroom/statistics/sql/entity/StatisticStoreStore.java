@@ -29,9 +29,5 @@ public interface StatisticStoreStore extends DocumentStore<StatisticStoreDoc> {
     public static final String FIELD_NAME_COUNT = "Statistic Count";
     public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
 
-    StatisticStoreDoc read(String uuid);
-
-    StatisticStoreDoc update(StatisticStoreDoc doc);
-
     List<DocRef> list();
 }

@@ -22,7 +22,7 @@ import org.junit.Test;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -115,7 +115,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getFetchSet().add(Feed.ENTITY_TYPE);
         criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-        criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+        criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
         Assert.assertEquals(0, streamTaskService.find(criteria).size());
     }

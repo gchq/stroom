@@ -24,11 +24,5 @@ import stroom.query.api.v2.DocRef;
 import java.util.List;
 
 public interface XsltStore extends DocumentStore<XsltDoc> {
-    XsltDoc read(String uuid);
-
-    XsltDoc update(XsltDoc doc);
-
     List<DocRef> findByName(String name);
-
-    List<DocRef> list();
 }

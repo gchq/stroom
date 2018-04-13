@@ -315,7 +315,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         }
     }
 
-    public D read(final String uuid) {
+    private D read(final String uuid) {
         // Check that the user has permission to read this item.
         if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document");
@@ -338,7 +338,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         }
     }
 
-    public D update(final D document) {
+    private D update(final D document) {
         final DocRef docRef = createDocRef(document);
 
         // Check that the user has permission to update this item.

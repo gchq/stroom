@@ -31,6 +31,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -215,5 +216,24 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         } else {
             return Collections.emptySet();
         }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        final StatisticStoreDoc that = (StatisticStoreDoc) o;
+        return Objects.equals(description, that.description) &&
+                statisticType == that.statisticType &&
+                rollUpType == that.rollUpType &&
+                Objects.equals(precision, that.precision) &&
+                Objects.equals(enabled, that.enabled) &&
+                Objects.equals(config, that.config);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), description, statisticType, rollUpType, precision, enabled, config);
     }
 }

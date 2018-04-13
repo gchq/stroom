@@ -173,7 +173,7 @@ public class IndexShardServiceImpl
                                            final FindIndexShardCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
-            sql.appendDocRefSetQuery(alias + ".index", criteria.getIndexSet());
+            sql.appendDocRefSetQuery(alias + ".index.uuid", criteria.getIndexSet());
             sql.appendEntityIdSetQuery(alias, criteria.getIndexShardSet());
             sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
             sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());

@@ -27,6 +27,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "functionName", "scriptRef"})
@@ -77,5 +78,22 @@ public class VisualisationDoc extends Doc {
 
     public void setSettings(final String settings) {
         this.settings = settings;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        final VisualisationDoc that = (VisualisationDoc) o;
+        return Objects.equals(description, that.description) &&
+                Objects.equals(functionName, that.functionName) &&
+                Objects.equals(scriptRef, that.scriptRef) &&
+                Objects.equals(settings, that.settings);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), description, functionName, scriptRef, settings);
     }
 }

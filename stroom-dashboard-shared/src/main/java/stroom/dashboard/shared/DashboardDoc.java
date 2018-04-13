@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
@@ -49,5 +50,19 @@ public class DashboardDoc extends Doc {
 
     public void setDashboardConfig(final DashboardConfig dashboardConfig) {
         this.dashboardConfig = dashboardConfig;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        final DashboardDoc that = (DashboardDoc) o;
+        return Objects.equals(dashboardConfig, that.dashboardConfig);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), dashboardConfig);
     }
 }

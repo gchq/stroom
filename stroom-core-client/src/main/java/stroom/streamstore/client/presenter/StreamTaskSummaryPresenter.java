@@ -27,11 +27,10 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -44,8 +43,8 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<SummaryDataRow>>
-        implements HasDocumentRead<BaseEntity> {
+public class StreamTaskSummaryPresenter<E> extends MyPresenterWidget<DataGridView<SummaryDataRow>>
+        implements HasDocumentRead<E> {
     private EntityServiceFindSummaryActionDataProvider<FindStreamTaskCriteria> dataProvider;
 
     @Inject
@@ -152,9 +151,9 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
         dataProvider.setCriteria(criteria);
     }
 
-    private void setCriteria(final PipelineEntity pipelineEntity) {
+    private void setCriteria(final DocRef pipelineRef) {
         final FindStreamTaskCriteria criteria = initCriteria();
-        criteria.obtainPipelineIdSet().add(pipelineEntity);
+        criteria.obtainPipelineSet().add(pipelineRef);
         dataProvider.setCriteria(criteria);
     }
 
@@ -163,11 +162,11 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
     }
 
     @Override
-    public void read(final DocRef docRef, final BaseEntity entity) {
+    public void read(final DocRef docRef, final E entity) {
         if (entity instanceof Feed) {
             setCriteria((Feed) entity);
-        } else if (entity instanceof PipelineEntity) {
-            setCriteria((PipelineEntity) entity);
+        } else if (entity instanceof PipelineDoc) {
+            setCriteria(docRef);
         } else {
             setNullCriteria();
         }

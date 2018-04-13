@@ -26,7 +26,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.XsltStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -34,7 +34,7 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
@@ -67,7 +67,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Inject
     private MockIndexShardWriterCache indexShardWriterCache;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private Provider<StreamHolder> streamHolderProvider;
     @Inject
@@ -88,7 +88,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             final DocRef xsltRef = xsltStore.createDocument("Indexing XSLT");
             final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
             xsltDoc.setData(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
-            xsltStore.update(xsltDoc);
+            xsltStore.writeDocument(xsltDoc);
 
             final IndexFields indexFields = IndexFields.createStreamIndexFields();
             // indexFields.add(IndexField.createIdField(IndexConstants.STREAM_ID));
@@ -114,14 +114,14 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             streamHolderProvider.get().setStream(stream);
 
             // Create the pipeline.
-            PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
-                    StroomPipelineTestFileUtil.getString(PIPELINE));
-            pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
-            pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
-            pipelineEntity = pipelineService.save(pipelineEntity);
+            final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, StroomPipelineTestFileUtil.getString(PIPELINE));
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
+            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
+            pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
             final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_INPUT);

@@ -19,8 +19,9 @@ package stroom.search;
 import org.junit.Assert;
 import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.task.PipelineStreamProcessor;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.CommonTranslationTest;
@@ -126,11 +127,11 @@ public class CommonIndexingTest {
         return 1;
     }
 
-    public PipelineEntity getSearchResultPipeline() {
+    public DocRef getSearchResultPipeline() {
         return storeCreationTool.getSearchResultPipeline("Search result", SEARCH_RESULT_XSLT);
     }
 
-    public PipelineEntity getSearchResultTextPipeline() {
+    public DocRef getSearchResultTextPipeline() {
         return storeCreationTool.getSearchResultPipeline("Search result text", SEARCH_RESULT_TEXT_XSLT);
     }
 }

@@ -28,6 +28,7 @@ import stroom.feed.StroomStreamException;
 import stroom.feed.shared.Feed;
 import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.query.api.v2.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
@@ -80,7 +81,7 @@ class DataFeedRequestHandler implements RequestHandler {
         if (metaMapFilter == null) {
             final String receiptPolicyUuid = stroomPropertyService.getProperty("stroom.feed.receiptPolicyUuid");
             if (receiptPolicyUuid != null && !receiptPolicyUuid.isEmpty()) {
-                this.metaMapFilter = metaMapFilterFactory.create(receiptPolicyUuid);
+                this.metaMapFilter = metaMapFilterFactory.create(new DocRef("RuleSet", receiptPolicyUuid));
             }
         }
 
