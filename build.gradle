@@ -174,6 +174,7 @@ ext.libs = [
     jsinterop_annotations: "com.google.jsinterop:jsinterop-annotations:1.0.1",
     jul_to_slf4j: "org.slf4j:jul-to-slf4j:$versions.slf4j",
     junit: "junit:junit:4.12",
+    lmdbjava: "org.lmdbjava:lmdbjava:0.6.0",
     log4j_over_slf4j: "org.slf4j:log4j-over-slf4j:$versions.slf4j",
     logback_classic: "ch.qos.logback:logback-classic:$versions.logback",
     logback_core: "ch.qos.logback:logback-core:$versions.logback",
