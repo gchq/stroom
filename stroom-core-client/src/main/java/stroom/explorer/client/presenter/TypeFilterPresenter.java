@@ -17,7 +17,6 @@
 package stroom.explorer.client.presenter;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -41,56 +40,31 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.util.client.ImageUtil;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<DocumentType>>
         implements HasDataSelectionHandlers<TypeFilterPresenter> {
-    private final Set<String> selected = new HashSet<>();
     private final EventBus eventBus;
+
+    private final Set<String> selected = new HashSet<>();
+    private List<DocumentType> visibleTypes;
+
+    private final String SELECT_ALL_OR_NONE_TEXT = "All/none";
+    private final String SELECT_ALL_OR_NONE_ICON = "document/SelectAllOrNone.svg";
+    private final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
+            1, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_ICON);
 
     @Inject
     public TypeFilterPresenter(final EventBus eventBus) {
         super(eventBus, new CellTableViewImpl<>(false, (Resources) GWT.create(BasicResources.class)));
         this.eventBus = eventBus;
 
-        // Checked.
-        final Column<DocumentType, TickBoxState> checkedColumn = new Column<DocumentType, TickBoxState>(
-                TickBoxCell.create(false, true)) {
-            @Override
-            public TickBoxState getValue(final DocumentType object) {
-                return TickBoxState.fromBoolean(selected.contains(object.getType()));
-            }
-        };
-        checkedColumn.setFieldUpdater((index, object, value) -> {
-            if (selected.contains(object.getType())) {
-                selected.remove(object.getType());
-            } else {
-                selected.add(object.getType());
-            }
-
-            DataSelectionEvent.fire(TypeFilterPresenter.this, TypeFilterPresenter.this, false);
-        });
-        getView().addColumn(checkedColumn);
-
-        // Icon.
-        final Column<DocumentType, SafeHtml> iconColumn = new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final DocumentType object) {
-                return SafeHtmlUtils.fromTrustedString("<img style=\"width:16px;height:16px;padding:2px\" src=\"" + ImageUtil.getImageURL() + object.getIconUrl() + "\"/>");
-            }
-        };
-        getView().addColumn(iconColumn);
-
-        // Text.
-        final Column<DocumentType, String> textColumn = new Column<DocumentType, String>(new TextCell()) {
-            @Override
-            public String getValue(final DocumentType object) {
-                return object.getType();
-            }
-        };
-        getView().addColumn(textColumn);
+        getView().addColumn(getTickBoxColumn());
+        getView().addColumn(getIconColumn());
+        getView().addColumn(getTextColumn());
 
         final Style style = getView().asWidget().getElement().getStyle();
         style.setPaddingLeft(1, Unit.PX);
@@ -100,15 +74,9 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
     }
 
     public void setDocumentTypes(final DocumentTypes documentTypes) {
-        final List<DocumentType> visibleTypes = documentTypes.getVisibleTypes();
-
-        selected.clear();
-        for (final DocumentType documentType : visibleTypes) {
-            selected.add(documentType.getType());
-        }
-
-        getView().setRowData(0, visibleTypes);
-        getView().setRowCount(visibleTypes.size());
+        visibleTypes = documentTypes.getVisibleTypes();
+        showAll();
+        refreshView();
     }
 
     public Set<String> getIncludedTypes() {
@@ -118,5 +86,96 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<TypeFilterPresenter> handler) {
         return eventBus.addHandlerToSource(DataSelectionEvent.getType(), this, handler);
+    }
+
+    private void showAll(){
+        for (final DocumentType documentType : visibleTypes) {
+            selected.add(documentType.getType());
+        }
+    }
+
+    private void hideAll() {
+        selected.clear();
+    }
+
+    private void refreshView() {
+        // We want to add in the 'All/none' DocumentType, at the top.
+        List<DocumentType> selectableTypes = new ArrayList<>(visibleTypes);
+        selectableTypes.add(0, SELECT_ALL_OR_NONE_DOCUMENT_TYPE);
+
+        // To refresh the view we need to set the row data again.
+        getView().setRowData(0, selectableTypes);
+        getView().setRowCount(selectableTypes.size());
+    }
+
+    private Column<DocumentType, TickBoxState> getTickBoxColumn(){
+        final Column<DocumentType, TickBoxState> checkedColumn = new Column<DocumentType, TickBoxState>(
+                TickBoxCell.create(false, true)) {
+            @Override
+            public TickBoxState getValue(final DocumentType object) {
+                // If we're checking the TickBoxState of 'All/none' then we need some logic for half-ticks.
+                if(object.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
+                    if (selected.size()  == 0){
+                        return TickBoxState.UNTICK;
+                    }
+                    else if (selected.size()  < visibleTypes.size()) {
+                        return TickBoxState.HALF_TICK;
+                    }
+                    else {
+                        return TickBoxState.TICK;
+                    }
+                }
+                else {
+                    return TickBoxState.fromBoolean(selected.contains(object.getType()));
+                }
+            }
+        };
+        checkedColumn.setFieldUpdater((index, object, value) -> {
+            if(object.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)){
+                if(value.toBoolean()){
+                    showAll();
+                }
+                else {
+                    hideAll();
+                }
+            } else {
+                if (selected.contains(object.getType())) {
+                    selected.remove(object.getType());
+                } else {
+                    selected.add(object.getType());
+                }
+            }
+            // We need to refresh the view here otherwise a selection change wouldn't mean a change
+            // to the TickBoxState of the 'All/none' TickBox.
+            refreshView();
+            DataSelectionEvent.fire(TypeFilterPresenter.this, TypeFilterPresenter.this, false);
+        });
+
+        return checkedColumn;
+    }
+
+    private Column<DocumentType, SafeHtml> getIconColumn() {
+        return new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
+            @Override
+            public SafeHtml getValue(final DocumentType object) {
+                return SafeHtmlUtils.fromTrustedString("<img style=\"width:16px;height:16px;padding:2px\" src=\""
+                        + ImageUtil.getImageURL() + object.getIconUrl() + "\"/>");
+            }
+        };
+    }
+
+    private Column<DocumentType, SafeHtml> getTextColumn() {
+        return new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
+            @Override
+            public SafeHtml getValue(final DocumentType object) {
+                // We want to make the 'All/none' entry bold, so we'll use some SafeHtml.
+                if(object.getType().equalsIgnoreCase(SELECT_ALL_OR_NONE_TEXT)){
+                    return SafeHtmlUtils.fromTrustedString( "<strong>" + object.getType() + "</strong>");
+                }
+                else {
+                    return SafeHtmlUtils.fromTrustedString(object.getType());
+                }
+            }
+        };
     }
 }

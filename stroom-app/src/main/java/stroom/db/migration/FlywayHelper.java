@@ -62,10 +62,24 @@ public class FlywayHelper {
     else if("info".equals(action)){
       printInfo(flyway.info().all());
     }
-    else{
-      LOGGER.error("Unsupported flyway action");
+    else if("clean".equals(action)){
+      flyway.clean();
     }
-
+    else if("validate".equals(action)){
+      flyway.validate();
+    }
+    else if("undo".equals(action)){
+      throw new UnsupportedOperationException("'Undo' is only supported in Flyway Pro.");
+    }
+    else if("baseline".equals(action)){
+      flyway.baseline();
+    }
+    else if("repair".equals(action)){
+      flyway.repair();
+    }
+    else{
+      LOGGER.error("Unsupported flyway action: '{}'", action);
+    }
   }
 
   private void printInfo(MigrationInfo[] migrationInfo){

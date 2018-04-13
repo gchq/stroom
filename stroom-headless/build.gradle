@@ -1,3 +1,5 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
@@ -15,4 +17,19 @@ dependencies {
     compile libs.xml_apis
     compile libs.javax_inject
     compile libs.guice4
+
+    compile libs.javax_el
+    permitUnusedDeclared libs.javax_el
+    compile libs.javax_el_api
+    permitUnusedDeclared libs.javax_el_api
 }
+
+def fatJarName = "stroom-headless-all.jar"
+
+shadowJar {
+    // Allows us to build fat jars with lots of files
+    zip64 true
+    archiveName fatJarName
+}
+
+tasks.build.dependsOn shadowJar

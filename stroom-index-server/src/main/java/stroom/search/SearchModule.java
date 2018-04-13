@@ -26,7 +26,7 @@ public class SearchModule extends AbstractModule {
     @Override
     protected void configure() {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(SearchResultCreatorManager.class);
+        clearableBinder.addBinding().to(LuceneSearchResponseCreatorManager.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.search.AsyncSearchTaskHandler.class);

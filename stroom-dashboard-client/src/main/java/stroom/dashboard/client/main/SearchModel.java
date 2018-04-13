@@ -215,7 +215,7 @@ public class SearchModel {
                     final ExpressionTerm term = (ExpressionTerm) child;
                     final String value = term.getValue();
                     final String replaced = KVMapUtil.replaceParameters(value, paramMap);
-                    builder.addOperator(new ExpressionTerm.Builder()
+                    builder.addTerm(new ExpressionTerm.Builder()
                             .enabled(term.getEnabled())
                             .field(term.getField())
                             .condition(term.getCondition())

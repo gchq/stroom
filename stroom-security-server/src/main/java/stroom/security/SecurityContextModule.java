@@ -19,6 +19,8 @@ package stroom.security;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import javax.inject.Singleton;
+
 public class SecurityContextModule extends AbstractModule {
     @Override
     protected void configure() {
@@ -26,6 +28,7 @@ public class SecurityContextModule extends AbstractModule {
     }
 
     @Provides
+    @Singleton
     public Security security(final SecurityContext securityContext) {
         return new Security(securityContext);
     }

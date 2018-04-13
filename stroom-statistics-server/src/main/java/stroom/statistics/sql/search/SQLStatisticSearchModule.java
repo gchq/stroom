@@ -17,11 +17,17 @@
 package stroom.statistics.sql.search;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.Clearable;
 import stroom.statistics.sql.StatisticsQueryService;
 
 public class SQLStatisticSearchModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StatisticsQueryService.class).to(StatisticsQueryServiceImpl.class);
+        bind(StatisticsSearchService.class).to(StatisticsSearchServiceImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(SqlStatisticsSearchResponseCreatorManager.class);
     }
 }

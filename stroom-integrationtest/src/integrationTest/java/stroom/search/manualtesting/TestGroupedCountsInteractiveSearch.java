@@ -37,7 +37,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTest;
-import stroom.search.SearchResultCreatorManager;
+import stroom.search.LuceneSearchResponseCreatorManager;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -78,7 +78,7 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
     @Inject
     private TaskManager taskManager;
     @Inject
-    private SearchResultCreatorManager searchResultCreatorManager;
+    private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
     @Inject
     private CommonTestControl commonTestControl;
 
@@ -171,7 +171,7 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
                 5,
                 5,
                 indexService,
-                searchResultCreatorManager);
+                searchResponseCreatorManager);
 
         LOGGER.info("Completed search");
     }

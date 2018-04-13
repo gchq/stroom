@@ -35,14 +35,11 @@ import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap;
 import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.Store;
+import stroom.query.common.v2.StoreFactory;
 import stroom.query.common.v2.StoreSize;
 import stroom.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
 import stroom.security.UserTokenUtil;
-import stroom.task.TaskContext;
-import stroom.task.TaskManager;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.ClusterResultCollectorCache;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -51,8 +48,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class LuceneSearchStoreFactory {
-    public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
+public class LuceneSearchStoreFactory implements StoreFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
