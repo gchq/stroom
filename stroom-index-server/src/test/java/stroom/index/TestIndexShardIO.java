@@ -250,7 +250,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 //        }
 //
 //
-//        CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+//        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 //
 //        final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1, writer1.getWriter());
 //        final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();

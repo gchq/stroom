@@ -352,8 +352,8 @@ public class SearchRequestMapper {
 //        }
 //
 //        final TableSettings tableSettings = new TableSettings();
-//        tableSettings.setFields(fields.toArray(new stroom.query.api.v2.Field[fields.size()]));
-//        tableSettings.setMaxResults(limits.toArray(new Integer[limits.size()]));
+//        tableSettings.setFields(fields.toArray(new stroom.query.api.v2.Field[0]));
+//        tableSettings.setMaxResults(limits.toArray(new Integer[0]));
 //        tableSettings.setShowDetail(true);
 //
 //        return tableSettings;

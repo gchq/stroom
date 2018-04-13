@@ -10,7 +10,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.query.common.v2.StoreSize;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
@@ -69,20 +69,20 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
         Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
 
-        final StatisticStoreEntity statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
+        final StatisticStoreDoc statisticStoreDoc = statisticStoreCache.getStatisticsDataSource(docRef);
 
-        Preconditions.checkNotNull(statisticStoreEntity, "Statistic configuration could not be found for uuid "
+        Preconditions.checkNotNull(statisticStoreDoc, "Statistic configuration could not be found for uuid "
                 + docRef.getUuid());
 
-        final Store store = buildStore(searchRequest, statisticStoreEntity);
+        final Store store = buildStore(searchRequest, statisticStoreDoc);
         return store;
     }
 
     private Store buildStore(final SearchRequest searchRequest,
-                             final StatisticStoreEntity statisticStoreEntity) {
+                             final StatisticStoreDoc statisticStoreDoc) {
 
         Preconditions.checkNotNull(searchRequest);
-        Preconditions.checkNotNull(statisticStoreEntity);
+        Preconditions.checkNotNull(statisticStoreDoc);
 
         final StoreSize storeSize = new StoreSize(getStoreSizes());
         final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
@@ -91,7 +91,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         //wrap the resultHandler in a new store, initiating the search in the process
         final SqlStatisticsStore store = new SqlStatisticsStore(
                 searchRequest,
-                statisticStoreEntity,
+                statisticStoreDoc,
                 statisticsSearchService,
                 defaultMaxResultsSizes,
                 storeSize,

@@ -24,7 +24,7 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreSize;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.task.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -57,7 +57,7 @@ public class SqlStatisticsStore implements Store {
     private final Disposable searchDisposable;
 
     SqlStatisticsStore(final SearchRequest searchRequest,
-                       final StatisticStoreEntity statisticStoreEntity,
+                       final StatisticStoreDoc statisticStoreDoc,
                        final StatisticsSearchService statisticsSearchService,
                        final List<Integer> defaultMaxResultsSizes,
                        final StoreSize storeSize,
@@ -82,14 +82,14 @@ public class SqlStatisticsStore implements Store {
                 coprocessorSettingsMap, fieldIndexMap, paramMap);
 
         // convert the search into something stats understands
-        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, statisticStoreEntity);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, statisticStoreDoc);
 
         resultHandler = new SearchResultHandler(
                 completionState, coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
 
         //get the flowable for the search results
         final Flowable<String[]> searchResultsFlowable = statisticsSearchService.search(
-                statisticStoreEntity, criteria, fieldIndexMap);
+                statisticStoreDoc, criteria, fieldIndexMap);
 
         this.searchDisposable = startAsyncSearch(searchResultsFlowable, coprocessorMap, executor);
 

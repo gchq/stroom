@@ -223,8 +223,6 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                 list.add(indexField);
             }
         }
-        IndexField[] array = new IndexField[list.size()];
-        array = list.toArray(array);
-        return array;
+        return list.toArray(new IndexField[0]);
     }
 }

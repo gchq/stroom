@@ -151,9 +151,7 @@ public class PathCreator {
             lastChar = c;
         }
 
-        String[] varsArr = new String[vars.size()];
-        varsArr = vars.toArray(varsArr);
-        return varsArr;
+        return vars.toArray(new String[0]);
     }
 
     private static String replace(final String path,

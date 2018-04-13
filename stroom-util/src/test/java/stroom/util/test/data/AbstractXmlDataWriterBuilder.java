@@ -34,8 +34,7 @@ public abstract class AbstractXmlDataWriterBuilder {
         final String recordFormatStr = buildRecordFormatString(fields);
 
         return record -> {
-            String[] valuesArr = new String[record.getValues().size()];
-            record.getValues().toArray(valuesArr);
+            final String[] valuesArr = record.getValues().toArray(new String[0]);
             return String.format(recordFormatStr, (Object[]) valuesArr);
         };
     }

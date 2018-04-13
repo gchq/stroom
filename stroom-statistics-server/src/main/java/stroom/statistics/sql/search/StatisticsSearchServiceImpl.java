@@ -215,13 +215,13 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                     final int idx = entry.getValue();
                     final String fieldName = entry.getKey();
                     final ValueExtractor extractor;
-                    if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
+                    if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_DATE_TIME)) {
                         extractor = buildLongValueExtractor(SQLStatisticNames.TIME_MS, idx);
-                    } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_COUNT)) {
+                    } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_COUNT)) {
                         extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
-                    } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_PRECISION_MS)) {
+                    } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_PRECISION_MS)) {
                         extractor = buildPrecisionMsExtractor(idx);
-                    } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_VALUE)) {
+                    } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_VALUE)) {
                         final StatisticType statisticType = statisticStoreEntity.getStatisticType();
                         if (statisticType.equals(StatisticType.COUNT)) {
                             extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
@@ -436,7 +436,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
      * found in the data and thus would return no data.
      */
     private static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
-                                                                final StatisticStoreEntity statisticsDataSource) {
+                                                                final StatisticStoreDoc statisticsDataSource) {
         final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
 
         final RollUpBitMask result;
