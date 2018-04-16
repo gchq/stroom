@@ -13,8 +13,10 @@
     </ui:style>
 
     <g:DockLayoutPanel ui:field="layout" width="100%" height="100%">
+        <g:north size="25">
+            <g:Button ui:field="inheritPermissionsButton" text="Copy parent's" />
+        </g:north>
         <g:south size="25">
-
             <g:Grid ui:field="cascadeGrid" styleName="stroom-control-grid {style.cascade}">
                 <g:row>
                     <g:cell>Cascade:</g:cell>

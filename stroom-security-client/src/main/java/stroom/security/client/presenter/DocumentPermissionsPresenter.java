@@ -17,6 +17,7 @@
 
 package stroom.security.client.presenter;
 
+import com.google.gwt.user.client.ui.Button;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -27,6 +28,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.item.client.ItemListBox;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
+import stroom.security.shared.CopyPermissionsFromParentAction;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;
 import stroom.security.shared.UserPermission;
 import stroom.widget.popup.client.event.DisablePopupEvent;
@@ -67,11 +69,18 @@ public class DocumentPermissionsPresenter
         getView().setCascadeVisible(DocumentTypes.isFolder(explorerNode.getType()));
         final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
         final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerNode);
-
         final TabData groups = tabPresenter.addTab("Groups", groupsPresenter);
         final TabData users = tabPresenter.addTab("Users", usersPresenter);
 
         tabPresenter.changeSelectedTab(groups);
+
+        getView().getInheritPermissionsButton().addClickHandler(event -> {
+            dispatcher.exec(new CopyPermissionsFromParentAction())
+                    .onSuccess(documentPermissions -> {
+                        usersPresenter.setDocumentPermissions(documentPermissions, false, changeSet);
+                        groupsPresenter.setDocumentPermissions(documentPermissions, true, changeSet);
+                    });
+        });
 
         final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(explorerNode.getDocRef());
         dispatcher.exec(fetchAllDocumentPermissionsAction).onSuccess(documentPermissions -> {
@@ -130,6 +139,8 @@ public class DocumentPermissionsPresenter
         ItemListBox<ChangeDocumentPermissionsAction.Cascade> getCascade();
 
         void setCascadeVisible(boolean visible);
+
+        Button getInheritPermissionsButton();
     }
 
     private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {

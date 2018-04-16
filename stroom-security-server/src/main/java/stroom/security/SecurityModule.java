@@ -51,7 +51,7 @@ public class SecurityModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.security.DeleteUserHandler.class);
         taskHandlerBinder.addBinding().to(stroom.security.FetchAllDocumentPermissionsHandler.class);
         taskHandlerBinder.addBinding().to(stroom.security.FetchUserAndPermissionsHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.FetchUserAppPermissionsHandler.class);
+        taskHandlerBinder.addBinding().to(stroom.security.CopyPermissionsFromParentHandler.class);
         taskHandlerBinder.addBinding().to(stroom.security.FetchUserRefHandler.class);
         taskHandlerBinder.addBinding().to(stroom.security.LogoutHandler.class);
 

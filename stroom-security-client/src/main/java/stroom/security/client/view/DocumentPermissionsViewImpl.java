@@ -18,6 +18,7 @@ package stroom.security.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Widget;
@@ -38,6 +39,8 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     ResizeSimplePanel tabs;
     @UiField
     Grid cascadeGrid;
+    @UiField
+    Button inheritPermissionsButton;
     @UiField
     ItemListBox<ChangeDocumentPermissionsAction.Cascade> cascade;
 
@@ -60,6 +63,11 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     @Override
     public ItemListBox<ChangeDocumentPermissionsAction.Cascade> getCascade() {
         return cascade;
+    }
+
+    @Override
+    public Button getInheritPermissionsButton() {
+        return inheritPermissionsButton;
     }
 
     @Override
