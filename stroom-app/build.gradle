@@ -40,6 +40,8 @@ jar {
         )
     }
     archiveName jarName
+
+    exclude '**/gwt-unitCache'
 }
 
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
@@ -56,6 +58,8 @@ shadowJar {
         include 'META-INF/spring.*'
     }
     archiveName fatJarName
+
+    exclude '**/gwt-unitCache'
 }
 
 dependencies {

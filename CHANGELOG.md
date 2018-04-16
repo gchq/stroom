@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v6.0-alpha.20]
+## [v6.0-alpha.21]
 
-* Issue **#719** : Fix creation of headless Jar.
+* Issue **#719** : Fix creation of headless Jar. Exclude gwt-unitCache folder from build JARs.
+
+## [v6.0-alpha.20]
 
 * Issue **#720** : Fix for Hessian serialisation of table coprocessor settings.
 
@@ -870,7 +872,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.20...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.21...6.0
+[v6.0-alpha.21]: https://github.com/gchq/stroom/compare/v6.0-alpha.20...v6.0-alpha.21
 [v6.0-alpha.20]: https://github.com/gchq/stroom/compare/v6.0-alpha.19...v6.0-alpha.20
 [v6.0-alpha.19]: https://github.com/gchq/stroom/compare/v6.0-alpha.18...v6.0-alpha.19
 [v6.0-alpha.18]: https://github.com/gchq/stroom/compare/v6.0-alpha.17...v6.0-alpha.18
