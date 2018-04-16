@@ -69,8 +69,8 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class ProcessorListPresenter<E> extends MyPresenterWidget<DataGridView<SharedObject>>
-        implements Refreshable, HasDocumentRead<E> {
+public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<SharedObject>>
+        implements Refreshable, HasDocumentRead<SharedObject> {
     private final ActionDataProvider<SharedObject> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorAction action;
@@ -496,7 +496,7 @@ public class ProcessorListPresenter<E> extends MyPresenterWidget<DataGridView<Sh
     }
 
     @Override
-    public void read(final DocRef docRef, final E entity) {
+    public void read(final DocRef docRef, final SharedObject entity) {
         if (entity instanceof PipelineDoc) {
             setPipeline(docRef);
         } else {

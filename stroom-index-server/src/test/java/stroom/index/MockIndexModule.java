@@ -32,6 +32,7 @@ public class MockIndexModule extends AbstractModule {
         bind(IndexShardWriterCache.class).to(MockIndexShardWriterCache.class);
         bind(IndexConfigCache.class).to(IndexConfigCacheImpl.class);
         bind(IndexService.class).to(MockIndexService.class);
+        bind(IndexVolumeService.class).to(MockIndexVolumeService.class);
         bind(IndexShardService.class).to(MockIndexShardService.class);
         bind(Indexer.class).to(MockIndexer.class);
 //

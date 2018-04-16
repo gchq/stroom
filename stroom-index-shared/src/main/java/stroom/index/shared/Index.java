@@ -21,29 +21,20 @@ import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.node.shared.Volume;
 import stroom.util.shared.HasDisplayValue;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.Lob;
-import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "IDX")
 public class Index extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.INDEX;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String TABLE_NAME_INDEX_VOLUME = TABLE_NAME + SEP + SQLNameConstants.VOLUME;
     public static final String MAX_DOCUMENT = SQLNameConstants.MAX + SEP + SQLNameConstants.DOCUMENT;
     public static final String MAX_SHARD = SQLNameConstants.MAX + SEP + SQLNameConstants.SHARD;
     public static final String PARTITION_SIZE = SQLNameConstants.PARTITION + SEP + SQLNameConstants.SIZE;
@@ -59,7 +50,7 @@ public class Index extends DocumentEntity {
 
     private static final long serialVersionUID = 2648729644398564919L;
 
-    private Set<Volume> volumes = new HashSet<>();
+    //    private Set<Volume> volumes = new HashSet<>();
     private int maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
     private int shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
     private Byte pPartitionBy = DEFAULT_PARTITION_BY.primitiveValue;
@@ -79,15 +70,15 @@ public class Index extends DocumentEntity {
         this.description = description;
     }
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = TABLE_NAME_INDEX_VOLUME, joinColumns = @JoinColumn(name = Index.FOREIGN_KEY), inverseJoinColumns = @JoinColumn(name = Volume.FOREIGN_KEY))
-    public Set<Volume> getVolumes() {
-        return volumes;
-    }
-
-    public void setVolumes(final Set<Volume> volumes) {
-        this.volumes = volumes;
-    }
+//    @ManyToMany(fetch = FetchType.EAGER)
+//    @JoinTable(name = TABLE_NAME_INDEX_VOLUME, joinColumns = @JoinColumn(name = Index.FOREIGN_KEY), inverseJoinColumns = @JoinColumn(name = Volume.FOREIGN_KEY))
+//    public Set<Volume> getVolumes() {
+//        return volumes;
+//    }
+//
+//    public void setVolumes(final Set<Volume> volumes) {
+//        this.volumes = volumes;
+//    }
 
     @Column(name = MAX_DOCUMENT, nullable = false)
     public int getMaxDocsPerShard() {

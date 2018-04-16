@@ -18,11 +18,13 @@
 package stroom.test;
 
 import org.junit.Assert;
-import stroom.feed.StroomHeaderArguments;
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.FeedService;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.index.IndexService;
+import stroom.index.IndexVolumeService;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
@@ -51,7 +53,8 @@ import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Help class to create some basic scenarios for testing.
@@ -63,6 +66,7 @@ public class CommonTestScenarioCreator {
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final IndexService indexService;
     private final VolumeService volumeService;
+    private final IndexVolumeService indexVolumeService;
     private final NodeCache nodeCache;
 
     @Inject
@@ -72,6 +76,7 @@ public class CommonTestScenarioCreator {
                               final StreamProcessorFilterService streamProcessorFilterService,
                               final IndexService indexService,
                               final VolumeService volumeService,
+                              final IndexVolumeService indexVolumeService,
                               final NodeCache nodeCache) {
         this.feedService = feedService;
         this.streamStore = streamStore;
@@ -79,6 +84,7 @@ public class CommonTestScenarioCreator {
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.indexService = indexService;
         this.volumeService = volumeService;
+        this.indexVolumeService = indexVolumeService;
         this.nodeCache = nodeCache;
     }
 
@@ -155,15 +161,15 @@ public class CommonTestScenarioCreator {
         Index index = indexService.create(name);
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setIndexFieldsObject(indexFields);
+        index = indexService.save(index);
+        Assert.assertNotNull(index);
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
         findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);
         findVolumeCriteria.getNodeIdSet().add(nodeCache.getDefaultNode());
-        final List<Volume> volumes = volumeService.find(findVolumeCriteria);
-        index.getVolumes().addAll(volumes);
+        final Set<Volume> volumes = new HashSet<>(volumeService.find(findVolumeCriteria));
+        indexVolumeService.setVolumesForIndex(DocRefUtil.create(index), volumes);
 
-        index = indexService.save(index);
-        Assert.assertNotNull(index);
         return index;
     }
 

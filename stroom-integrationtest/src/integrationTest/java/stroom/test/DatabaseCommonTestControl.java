@@ -85,7 +85,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             "explorerTreePath",
             Feed.TABLE_NAME,
             Index.TABLE_NAME,
-            Index.TABLE_NAME_INDEX_VOLUME, //link table between IDX and VOL so no entity of its own
+            "IDX_VOL", //link table between IDX and VOL so no entity of its own
             IndexShard.TABLE_NAME,
             Job.TABLE_NAME,
             JobNode.TABLE_NAME,

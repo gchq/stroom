@@ -48,9 +48,9 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class ProcessorPresenter<E> extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
-        implements HasDocumentRead<E> {
-    private final ProcessorListPresenter<E> processorListPresenter;
+public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
+        implements HasDocumentRead<SharedObject> {
+    private final ProcessorListPresenter processorListPresenter;
     private final ExpressionPresenter filterPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -67,7 +67,7 @@ public class ProcessorPresenter<E> extends MyPresenterWidget<ProcessorPresenter.
     @Inject
     public ProcessorPresenter(final EventBus eventBus,
                               final ProcessorView view,
-                              final ProcessorListPresenter<E> processorListPresenter,
+                              final ProcessorListPresenter processorListPresenter,
                               final ExpressionPresenter filterPresenter,
                               final ExpressionTreePresenter expressionPresenter,
                               final ClientDispatchAsync dispatcher) {
@@ -85,7 +85,7 @@ public class ProcessorPresenter<E> extends MyPresenterWidget<ProcessorPresenter.
     }
 
     @Override
-    public void read(final DocRef docRef, final E entity) {
+    public void read(final DocRef docRef, final SharedObject entity) {
         this.docRef = docRef;
         processorListPresenter.read(docRef, entity);
         if (entity instanceof PipelineDoc) {

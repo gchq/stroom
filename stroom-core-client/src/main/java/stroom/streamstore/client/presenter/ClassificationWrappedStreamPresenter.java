@@ -24,14 +24,15 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.IdSet;
 import stroom.query.api.v2.DocRef;
+import stroom.util.shared.SharedObject;
 
-public class ClassificationWrappedStreamPresenter<E> extends ClassificationWrapperPresenter
-        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<E> {
-    private final StreamPresenter<E> streamPresenter;
+public class ClassificationWrappedStreamPresenter extends ClassificationWrapperPresenter
+        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<SharedObject> {
+    private final StreamPresenter streamPresenter;
 
     @Inject
     public ClassificationWrappedStreamPresenter(final EventBus eventBus, final ClassificationWrapperView view,
-                                                final StreamPresenter<E> streamPresenter) {
+                                                final StreamPresenter streamPresenter) {
         super(eventBus, view);
         this.streamPresenter = streamPresenter;
         streamPresenter.setClassificationUiHandlers(this);
@@ -40,7 +41,7 @@ public class ClassificationWrappedStreamPresenter<E> extends ClassificationWrapp
     }
 
     @Override
-    public void read(final DocRef docRef, final E entity) {
+    public void read(final DocRef docRef, final SharedObject entity) {
         streamPresenter.read(docRef, entity);
     }
 

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
 import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.util.ConnectionUtil;
 import stroom.feed.FeedService;
@@ -31,6 +32,7 @@ import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.IndexService;
+import stroom.index.IndexVolumeService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.node.VolumeService;
@@ -104,6 +106,7 @@ public final class SetupSampleDataBean {
     private final DashboardStore dashboardStore;
     private final VolumeService volumeService;
     private final IndexService indexService;
+    private final IndexVolumeService indexVolumeService;
     private final StatisticStoreStore statisticStoreStore;
     private final StroomStatsStoreStore stroomStatsStoreStore;
 
@@ -118,6 +121,7 @@ public final class SetupSampleDataBean {
                         final DashboardStore dashboardStore,
                         final VolumeService volumeService,
                         final IndexService indexService,
+                        final IndexVolumeService indexVolumeService,
                         final StatisticStoreStore statisticStoreStore,
                         final StroomStatsStoreStore stroomStatsStoreStore) {
         this.feedService = feedService;
@@ -130,6 +134,7 @@ public final class SetupSampleDataBean {
         this.dashboardStore = dashboardStore;
         this.volumeService = volumeService;
         this.indexService = indexService;
+        this.indexVolumeService = indexVolumeService;
         this.statisticStoreStore = statisticStoreStore;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
     }
@@ -181,8 +186,7 @@ public final class SetupSampleDataBean {
         final Set<Volume> volumeSet = new HashSet<>(volumeList);
 
         for (final Index index : indexList) {
-            index.setVolumes(volumeSet);
-            indexService.save(index);
+            indexVolumeService.setVolumesForIndex(DocRefUtil.create(index), volumeSet);
 
             // Find the pipeline for this index.
             final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> index.getName().equals(docRef.getName())).collect(Collectors.toList());

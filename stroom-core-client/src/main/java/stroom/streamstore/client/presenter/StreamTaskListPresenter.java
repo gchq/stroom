@@ -40,6 +40,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
+import stroom.util.shared.SharedObject;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -49,7 +50,7 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import java.util.ArrayList;
 
-public class StreamTaskListPresenter<E> extends MyPresenterWidget<DataGridView<StreamTask>> implements HasDocumentRead<E> {
+public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<StreamTask>> implements HasDocumentRead<SharedObject> {
     private final EntityServiceFindActionDataProvider<FindStreamTaskCriteria, StreamTask> dataProvider;
 
     @Inject
@@ -227,7 +228,7 @@ public class StreamTaskListPresenter<E> extends MyPresenterWidget<DataGridView<S
     }
 
     @Override
-    public void read(final DocRef docRef, final E entity) {
+    public void read(final DocRef docRef, final SharedObject entity) {
         if (entity instanceof Feed) {
             setFeedCriteria((Feed) entity);
         } else if (entity instanceof PipelineDoc) {

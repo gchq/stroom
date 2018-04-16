@@ -26,18 +26,19 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
+import stroom.util.shared.SharedObject;
 
-public class StreamTaskPresenter<E> extends MyPresenterWidget<StreamTaskPresenter.StreamTaskView>
-        implements HasDocumentRead<E> {
+public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.StreamTaskView>
+        implements HasDocumentRead<SharedObject> {
     public static final String STREAM_TASK_LIST = "STREAM_TASK_LIST";
     public static final String STREAM_TASK_SUMMARY = "STREAM_TASK_SUMMARY";
-    private final StreamTaskSummaryPresenter<E> streamTaskSummaryPresenter;
-    private final StreamTaskListPresenter<E> streamTaskListPresenter;
+    private final StreamTaskSummaryPresenter streamTaskSummaryPresenter;
+    private final StreamTaskListPresenter streamTaskListPresenter;
 
     @Inject
     public StreamTaskPresenter(final EventBus eventBus, final StreamTaskView view,
-                               final StreamTaskSummaryPresenter<E> streamTaskSummaryPresenter,
-                               final StreamTaskListPresenter<E> streamTaskListPresenter) {
+                               final StreamTaskSummaryPresenter streamTaskSummaryPresenter,
+                               final StreamTaskListPresenter streamTaskListPresenter) {
         super(eventBus, view);
         this.streamTaskSummaryPresenter = streamTaskSummaryPresenter;
         this.streamTaskListPresenter = streamTaskListPresenter;
@@ -81,7 +82,7 @@ public class StreamTaskPresenter<E> extends MyPresenterWidget<StreamTaskPresente
     }
 
     @Override
-    public void read(final DocRef docRef, final E entity) {
+    public void read(final DocRef docRef, final SharedObject entity) {
         streamTaskSummaryPresenter.read(docRef, entity);
         streamTaskListPresenter.read(docRef, entity);
     }

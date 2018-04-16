@@ -35,6 +35,7 @@ public class IndexModule extends AbstractModule {
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
         bind(IndexConfigCache.class).to(IndexConfigCacheImpl.class);
         bind(IndexService.class).to(IndexServiceImpl.class);
+        bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
 
@@ -45,6 +46,7 @@ public class IndexModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.index.CloseIndexShardActionHandler.class);
         taskHandlerBinder.addBinding().to(stroom.index.DeleteIndexShardActionHandler.class);
         taskHandlerBinder.addBinding().to(stroom.index.FlushIndexShardActionHandler.class);
+        taskHandlerBinder.addBinding().to(stroom.index.FetchIndexVolumesActionHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(IndexConfigCacheEntityEventHandler.class);

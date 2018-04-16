@@ -65,6 +65,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.SharedObject;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -78,8 +79,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class StreamPresenter<E> extends MyPresenterWidget<StreamPresenter.StreamView>
-        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<E>, BeginSteppingHandler {
+public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamView>
+        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<SharedObject>, BeginSteppingHandler {
     public static final String DATA = "DATA";
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
     public static final String STREAM_LIST = "STREAM_LIST";
@@ -418,7 +419,7 @@ public class StreamPresenter<E> extends MyPresenterWidget<StreamPresenter.Stream
     }
 
     @Override
-    public void read(final DocRef docRef, final E entity) {
+    public void read(final DocRef docRef, final SharedObject entity) {
         if (entity instanceof Feed) {
             setFeedCriteria((Feed) entity);
         } else if (entity instanceof PipelineDoc) {

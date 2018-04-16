@@ -24,6 +24,7 @@ import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
@@ -36,8 +37,8 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -53,28 +54,32 @@ public class IndexShardServiceImpl
 
     private final Security security;
     private final VolumeService volumeService;
+    private final IndexVolumeService indexVolumeService;
     private final SecurityContext securityContext;
 
     @Inject
     IndexShardServiceImpl(final StroomEntityManager entityManager,
                           final Security security,
                           final VolumeService volumeService,
+                          final IndexVolumeService indexVolumeService,
                           final SecurityContext securityContext) {
         super(entityManager, security);
         this.security = security;
         this.volumeService = volumeService;
+        this.indexVolumeService = indexVolumeService;
         this.securityContext = securityContext;
     }
 
     @Override
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
         final Index index = indexShardKey.getIndex();
-        if (index.getVolumes() == null || index.getVolumes().size() == 0) {
+        final Set<Volume> allowedVolumes = indexVolumeService.getVolumesForIndex(DocRefUtil.create(index));
+        if (allowedVolumes == null || allowedVolumes.size() == 0) {
             LOGGER.debug(VOLUME_ERROR);
             throw new IndexException(VOLUME_ERROR);
         }
 
-        final Set<Volume> volumes = volumeService.getIndexVolumeSet(ownerNode, index.getVolumes());
+        final Set<Volume> volumes = volumeService.getIndexVolumeSet(ownerNode, allowedVolumes);
 
         // The first set should be a set of cache volumes unless no caches have
         // been defined or they are full.

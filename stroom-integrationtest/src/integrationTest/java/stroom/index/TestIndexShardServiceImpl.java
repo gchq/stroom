@@ -37,6 +37,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
+import java.util.Collections;
 
 public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
@@ -47,6 +48,8 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     private NodeCache nodeCache;
     @Inject
     private VolumeService volumeService;
+    @Inject
+    private IndexVolumeService indexVolumeService;
 
     @Override
     protected void onBefore() {
@@ -60,14 +63,12 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void test() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        Index index1 = indexService.create("Test Index 1");
-        index1.getVolumes().add(volume);
-        index1 = indexService.save(index1);
+        final Index index1 = indexService.create("Test Index 1");
+        indexVolumeService.setVolumesForIndex(DocRefUtil.create(index1), Collections.singleton(volume));
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 
-        Index index2 = indexService.create("Test Index 2");
-        index2.getVolumes().add(volume);
-        index2 = indexService.save(index2);
+        final Index index2 = indexService.create("Test Index 2");
+        indexVolumeService.setVolumesForIndex(DocRefUtil.create(index2), Collections.singleton(volume));
         final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
 
         final Node node = nodeCache.getDefaultNode();
@@ -106,7 +107,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
         Index index = indexService.create("Test Index 1");
-        index.getVolumes().add(volume);
+        indexVolumeService.setVolumesForIndex(DocRefUtil.create(index), Collections.singleton(volume));
         index.setPartitionBy(PartitionBy.MONTH);
         index.setPartitionSize(1);
         index = indexService.save(index);

@@ -36,6 +36,7 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.SharedObject;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -43,8 +44,8 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class StreamTaskSummaryPresenter<E> extends MyPresenterWidget<DataGridView<SummaryDataRow>>
-        implements HasDocumentRead<E> {
+public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<SummaryDataRow>>
+        implements HasDocumentRead<SharedObject> {
     private EntityServiceFindSummaryActionDataProvider<FindStreamTaskCriteria> dataProvider;
 
     @Inject
@@ -162,7 +163,7 @@ public class StreamTaskSummaryPresenter<E> extends MyPresenterWidget<DataGridVie
     }
 
     @Override
-    public void read(final DocRef docRef, final E entity) {
+    public void read(final DocRef docRef, final SharedObject entity) {
         if (entity instanceof Feed) {
             setCriteria((Feed) entity);
         } else if (entity instanceof PipelineDoc) {
