@@ -19,7 +19,7 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.DashboardStore;
 import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.NamedEntity;
@@ -38,7 +38,6 @@ import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.pipeline.PipelineStore;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -72,6 +71,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 /**
  * Script to create some base data for testing.
@@ -101,6 +101,7 @@ public final class SetupSampleDataBean {
     private final ImportExportSerializer importExportSerializer;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final PipelineStore pipelineStore;
+    private final DashboardStore dashboardStore;
     private final VolumeService volumeService;
     private final IndexService indexService;
     private final StatisticStoreStore statisticStoreStore;
@@ -114,6 +115,7 @@ public final class SetupSampleDataBean {
                         final ImportExportSerializer importExportSerializer,
                         final StreamProcessorFilterService streamProcessorFilterService,
                         final PipelineStore pipelineStore,
+                        final DashboardStore dashboardStore,
                         final VolumeService volumeService,
                         final IndexService indexService,
                         final StatisticStoreStore statisticStoreStore,
@@ -125,6 +127,7 @@ public final class SetupSampleDataBean {
         this.importExportSerializer = importExportSerializer;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.pipelineStore = pipelineStore;
+        this.dashboardStore = dashboardStore;
         this.volumeService = volumeService;
         this.indexService = indexService;
         this.statisticStoreStore = statisticStoreStore;
@@ -182,7 +185,7 @@ public final class SetupSampleDataBean {
             indexService.save(index);
 
             // Find the pipeline for this index.
-            final List<DocRef> pipelines = pipelineStore.findByName(index.getName());
+            final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> index.getName().equals(docRef.getName())).collect(Collectors.toList());
 
             if (pipelines == null || pipelines.size() == 0) {
                 LOGGER.warn("No pipeline found for index [{}]", index.getName());
@@ -232,8 +235,7 @@ public final class SetupSampleDataBean {
         // Create stream processors for all feeds.
         for (final Feed feed : feeds) {
             // Find the pipeline for this feed.
-            final List<DocRef> pipelines = pipelineStore.findByName(feed.getName());
-
+            final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> feed.getName().equals(docRef.getName())).collect(Collectors.toList());
             if (pipelines == null || pipelines.size() == 0) {
                 LOGGER.warn("No pipeline found for feed '" + feed.getName() + "'");
             } else if (pipelines.size() > 1) {
@@ -323,8 +325,8 @@ public final class SetupSampleDataBean {
             LOGGER.info("Volume count = " + commonTestControl.countEntity(Volume.class));
             LOGGER.info("Feed count = " + commonTestControl.countEntity(Feed.class));
             LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
-            LOGGER.info("Dashboard count = " + commonTestControl.countEntity(DashboardDoc.class));
-            LOGGER.info("Pipeline count = " + commonTestControl.countEntity(PipelineDoc.class));
+            LOGGER.info("Dashboard count = " + dashboardStore.list().size());
+            LOGGER.info("Pipeline count = " + pipelineStore.list().size());
             LOGGER.info("Index count = " + commonTestControl.countEntity(Index.class));
             LOGGER.info("StatisticDataSource count = " + commonTestControl.countEntity(StatisticStore.class));
 

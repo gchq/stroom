@@ -25,4 +25,6 @@ import java.util.List;
 
 public interface XsltStore extends DocumentStore<XsltDoc> {
     List<DocRef> findByName(String name);
+
+    List<DocRef> list();
 }

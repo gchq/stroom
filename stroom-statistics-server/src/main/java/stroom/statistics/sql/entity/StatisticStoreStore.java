@@ -24,10 +24,5 @@ import stroom.statistics.shared.StatisticStoreDoc;
 import java.util.List;
 
 public interface StatisticStoreStore extends DocumentStore<StatisticStoreDoc> {
-    public static final String FIELD_NAME_DATE_TIME = "Date Time";
-    public static final String FIELD_NAME_VALUE = "Statistic Value";
-    public static final String FIELD_NAME_COUNT = "Statistic Count";
-    public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
-
     List<DocRef> list();
 }

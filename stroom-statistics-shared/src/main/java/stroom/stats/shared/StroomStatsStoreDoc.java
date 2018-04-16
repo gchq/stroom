@@ -114,61 +114,6 @@ public class StroomStatsStoreDoc extends Doc {
         this.config = statisticDataSourceDataObject;
     }
 
-    //    @Transient
-//    public boolean isValidField(final String fieldName) {
-//        if (stroomStatsStoreDataObject == null) {
-//            return false;
-//        } else if (stroomStatsStoreDataObject.getStatisticFields() == null) {
-//            return false;
-//        } else if (stroomStatsStoreDataObject.getStatisticFields().size() == 0) {
-//            return false;
-//        } else {
-//            return stroomStatsStoreDataObject.getStatisticFields().contains(new StatisticField(fieldName));
-//        }
-//    }
-//
-//    @Transient
-//    public boolean isRollUpCombinationSupported(final Set<String> rolledUpFieldNames) {
-//        if (rolledUpFieldNames == null || rolledUpFieldNames.isEmpty()) {
-//            return true;
-//        }
-//
-//        if (!rolledUpFieldNames.isEmpty() && getRollUpType().equals(StatisticRollUpType.NONE)) {
-//            return false;
-//        }
-//
-//        if (getRollUpType().equals(StatisticRollUpType.ALL)) {
-//            return true;
-//        }
-//
-//        // rolledUpFieldNames not empty if we get here
-//
-//        if (stroomStatsStoreDataObject == null) {
-//            throw new RuntimeException(
-//                    "isRollUpCombinationSupported called with non-empty list but data source has no statistic fields or custom roll up masks");
-//        }
-//
-//        return stroomStatsStoreDataObject.isRollUpCombinationSupported(rolledUpFieldNames);
-//    }
-//
-//    @Transient
-//    public Integer getPositionInFieldList(final String fieldName) {
-//        return stroomStatsStoreDataObject.getFieldPositionInList(fieldName);
-//    }
-//
-//    @Transient
-//    public List<String> getFieldNames() {
-//        if (stroomStatsStoreDataObject != null) {
-//            final List<String> fieldNames = new ArrayList<>();
-//            for (final StatisticField statisticField : stroomStatsStoreDataObject.getStatisticFields()) {
-//                fieldNames.add(statisticField.getFieldName());
-//            }
-//            return fieldNames;
-//        } else {
-//            return Collections.emptyList();
-//        }
-//    }
-//
     @XmlTransient
     @JsonIgnore
     public int getStatisticFieldCount() {
@@ -194,20 +139,6 @@ public class StroomStatsStoreDoc extends Doc {
             return Collections.emptySet();
         }
     }
-
-//    @Override
-//    public String toString() {
-//        return "StroomStatsStoreEntity{" +
-//                "description='" + description + '\'' +
-//                ", StatisticType=" + getStatisticType() +
-//                ", RollUpType=" + getRollUpType() +
-//                ", precision='" + precision + '\'' +
-//                ", enabled=" + enabled +
-//                ", data='" + data + '\'' +
-//                ", stroomStatsStoreDataObject=" + stroomStatsStoreDataObject +
-//                '}';
-//    }
-
 
     @Override
     public boolean equals(final Object o) {

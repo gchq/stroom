@@ -20,6 +20,7 @@ package stroom.docstore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -39,8 +40,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Store<D extends Doc> implements DocumentActionHandler<D> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Store.class);
@@ -51,6 +54,10 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
     private Serialiser2<D> serialiser;
     private String type;
     private Class<D> clazz;
+
+    private final AtomicBoolean dirty = new AtomicBoolean();
+//    private volatile List<DocRef> cached = Collections.emptyList();
+//    private volatile long lastUpdate;
 
     @Inject
     public Store(final Persistence persistence, final SecurityContext securityContext) {
@@ -140,7 +147,10 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to delete this item");
         }
 
-        persistence.getLockFactory().lock(uuid, () -> persistence.delete(new DocRef(type, uuid)));
+        persistence.getLockFactory().lock(uuid, () -> {
+            persistence.delete(new DocRef(type, uuid));
+            dirty.set(true);
+        });
     }
 
     public DocRefInfo info(final String uuid) {
@@ -225,6 +235,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                 persistence.getLockFactory().lock(uuid, () -> {
                     try {
                         persistence.write(docRef, exists, dataMap);
+                        dirty.set(true);
                     } catch (final IOException e) {
                         throw new UncheckedIOException(e);
                     }
@@ -292,6 +303,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
             persistence.getLockFactory().lock(document.getUuid(), () -> {
                 try {
                     persistence.write(docRef, false, data);
+                    dirty.set(true);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -377,6 +389,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                     }
 
                     persistence.write(docRef, true, newData);
+                    dirty.set(true);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -389,6 +402,49 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
     }
 
     public List<DocRef> list() {
-        return persistence.list(type);
+        return createDocRefList();
+
+//        final long now = System.currentTimeMillis();
+//        if (lastUpdate + 60000 < now) {
+//            dirty.set(true);
+//        }
+//
+//        if (dirty.get()) {
+//            synchronized(this) {
+//                if (dirty.compareAndSet(true, false)) {
+//                    lastUpdate = now;
+//                    cached = createList();
+//                }
+//            }
+//        }
+//        return cached;
+    }
+
+    public List<DocRef> findByName(final String name) {
+        if (name == null) {
+            return Collections.emptyList();
+        }
+        return list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
+    }
+
+    private List<DocRef> createDocRefList() {
+        final Stream<Optional<DocRef>> refs = persistence.list(type)
+                .parallelStream()
+                .map(docRef -> {
+                    try {
+                        final D doc = read(docRef.getUuid());
+                        if (doc != null) {
+                            return Optional.of(DocRefUtil.create(doc));
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+
+                    return Optional.empty();
+                });
+        return refs.filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted()
+                .collect(Collectors.toList());
     }
 }

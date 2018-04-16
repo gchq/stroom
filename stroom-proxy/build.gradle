@@ -8,6 +8,7 @@ dependencies {
     compile project(':stroom-security-api')
     compile project(':stroom-docstore-server')
 
+    compile libs.stroomQueryApi
     compile libs.slf4j_api
     compile libs.guava
     compile libs.jackson_annotations

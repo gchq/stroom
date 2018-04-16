@@ -209,6 +209,11 @@ class TextConverterStoreImpl implements TextConverterStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public List<DocRef> findByName(final String name) {
+        return store.findByName(name);
+    }
+
+    @Override
     public List<DocRef> list() {
         return store.list();
     }

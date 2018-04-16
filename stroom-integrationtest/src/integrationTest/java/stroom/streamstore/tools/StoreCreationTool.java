@@ -82,17 +82,17 @@ import java.util.stream.Collectors;
 public final class StoreCreationTool {
     private static final int OLD_YEAR = 2006;
     private static final Path eventDataPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Event_Data.Pipeline.7740cfc4-3443-4001-bf0b-6adc77d5a3cf.data.xml");
+            .getFile("samples/config/Standard_Pipelines/Event_Data.Pipeline.7740cfc4-3443-4001-bf0b-6adc77d5a3cf.xml");
     private static final Path referenceDataPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Reference_Data.Pipeline.b15e0cc8-3f82-446d-b106-04f43c38e19c.data.xml");
+            .getFile("samples/config/Standard_Pipelines/Reference_Data.Pipeline.b15e0cc8-3f82-446d-b106-04f43c38e19c.xml");
     private static final Path referenceLoaderPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Reference_Loader.Pipeline.da1c7351-086f-493b-866a-b42dbe990700.data.xml");
+            .getFile("samples/config/Standard_Pipelines/Reference_Loader.Pipeline.da1c7351-086f-493b-866a-b42dbe990700.xml");
     private static final Path contextDataPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Context_Data.Pipeline.fc281170-360d-4773-ad79-5378c5dcf52e.data.xml");
+            .getFile("samples/config/Standard_Pipelines/Context_Data.Pipeline.fc281170-360d-4773-ad79-5378c5dcf52e.xml");
     private static final Path indexingPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Indexing.Pipeline.fcef1b20-083e-436c-ab95-47a6ce453435.data.xml");
+            .getFile("samples/config/Standard_Pipelines/Indexing.Pipeline.fcef1b20-083e-436c-ab95-47a6ce453435.xml");
     private static final Path searchExtractionPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Search_Extraction.Pipeline.3d9d60e9-61c2-4c88-a57b-7bc584dd970e.data.xml");
+            .getFile("samples/config/Standard_Pipelines/Search_Extraction.Pipeline.3d9d60e9-61c2-4c88-a57b-7bc584dd970e.xml");
     private static long effectiveMsOffset = 0;
 
     private final StreamStore streamStore;
@@ -553,9 +553,9 @@ public final class StoreCreationTool {
 
     private DocRef getXSLT(final String name, final Path xsltLocation) {
         // Try to find an existing one first.
-        final List<DocRef> list = xsltStore.findByName(name);
-        if (list != null && list.size() > 0) {
-            return list.get(0);
+        final List<DocRef> refs = xsltStore.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
+        if (refs != null && refs.size() > 0) {
+            return refs.get(0);
         }
 
         // Get the data to use.
@@ -578,10 +578,10 @@ public final class StoreCreationTool {
     }
 
     private DocRef getPipeline(final String name, final String data) {
-        // Try and find an existing pipeline first.
-        final List<DocRef> list = pipelineStore.findByName(name);
-        if (list != null && list.size() > 0) {
-            return list.get(0);
+        // Try to find an existing one first.
+        final List<DocRef> refs = pipelineStore.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
+        if (refs != null && refs.size() > 0) {
+            return refs.get(0);
         }
 
         return PipelineTestUtil.createTestPipeline(pipelineStore, name, "Description " + name,

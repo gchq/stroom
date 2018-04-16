@@ -98,8 +98,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         // eventFeedChild.getReferenceFeed().add(referenceFeed);
         feedService.save(eventFeedChild);
 
-//        final int startFolderSize = commonTestControl.countEntity(Folder.class);
-        final int startTranslationSize = commonTestControl.countEntity(PipelineDoc.class);
+        final int startTranslationSize = pipelineStore.list().size();
         final int startFeedSize = commonTestControl.countEntity(Feed.class);
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
@@ -116,12 +115,10 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         // Delete it and check
         pipelineStore.deleteDocument(tran2.getUuid());
-        Assert.assertEquals(startTranslationSize - 1, commonTestControl.countEntity(PipelineDoc.class));
+        Assert.assertEquals(startTranslationSize - 1, pipelineStore.list().size());
 
         feedService.delete(eventFeed);
         Assert.assertEquals(startFeedSize - 1, commonTestControl.countEntity(Feed.class));
-
-//        Assert.assertEquals(4, commonTestControl.countEntity(Folder.class));
 
         // Import
         final List<ImportState> confirmations = importExportService
@@ -133,9 +130,8 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         importExportService.performImportWithConfirmation(resourceStore.getTempFile(file), confirmations);
 
-//        Assert.assertEquals(startFolderSize, commonTestControl.countEntity(Folder.class));
         Assert.assertEquals(startFeedSize, commonTestControl.countEntity(Feed.class));
-        Assert.assertEquals(startTranslationSize, commonTestControl.countEntity(PipelineDoc.class));
+        Assert.assertEquals(startTranslationSize, pipelineStore.list().size());
 
         final ResourceKey fileChild = resourceStore.createTempFile("ExportChild.zip");
         final DocRefs criteriaChild = new DocRefs();

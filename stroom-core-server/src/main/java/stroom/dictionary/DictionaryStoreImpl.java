@@ -58,7 +58,9 @@ class DictionaryStoreImpl implements DictionaryStore {
     private final Serialiser2<DictionaryDoc> serialiser;
 
     @Inject
-    DictionaryStoreImpl(final Store<DictionaryDoc> store, final SecurityContext securityContext, final Persistence persistence) {
+    DictionaryStoreImpl(final Store<DictionaryDoc> store,
+                        final SecurityContext securityContext,
+                        final Persistence persistence) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
@@ -277,10 +279,7 @@ class DictionaryStoreImpl implements DictionaryStore {
 
     @Override
     public List<DocRef> findByName(final String name) {
-        if (name == null) {
-            return Collections.emptyList();
-        }
-        return store.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
+        return store.findByName(name);
     }
 
     @Override

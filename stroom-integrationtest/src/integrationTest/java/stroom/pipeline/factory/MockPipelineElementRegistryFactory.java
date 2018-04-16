@@ -29,12 +29,12 @@ import stroom.pipeline.parser.JSONParser;
 import stroom.pipeline.parser.XMLFragmentParser;
 import stroom.pipeline.parser.XMLParser;
 import stroom.pipeline.source.SourceElement;
+import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.writer.FileAppender;
 import stroom.pipeline.writer.JSONWriter;
 import stroom.pipeline.writer.StreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
-import stroom.pipeline.state.PipelineContext;
 
 import java.util.ArrayList;
 import java.util.List;

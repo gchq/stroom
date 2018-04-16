@@ -150,7 +150,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final DocRef dictionaryRef = explorerService.create(DictionaryDoc.ENTITY_TYPE, "Test Dictionary", folder1, null);
         DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryRef);
         dictionaryStore.writeDocument(dictionary);
-//        Assert.assertEquals(1, commonTestControl.countEntity(DictionaryDoc.class));
+        Assert.assertEquals(1, dictionaryStore.list().size());
 
         // Create query.
         final QueryComponentSettings queryComponentSettings = new QueryComponentSettings();
@@ -202,9 +202,8 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         dashboard = dashboardStore.writeDocument(dashboard);
         Assert.assertEquals(1, dashboardStore.list().size());
 
-//        int startFolderSize = commonTestControl.countEntity(Folder.class);
-        int startVisualisationSize = commonTestControl.countEntity(VisualisationDoc.class);
-        final int startPipelineSize = commonTestControl.countEntity(PipelineDoc.class);
+        int startVisualisationSize = visualisationStore.list().size();
+        final int startPipelineSize = pipelineStore.list().size();
         final int startIndexSize = commonTestControl.countEntity(Index.class);
         final int startDictionarySize = dictionaryStore.list().size();
         final int startDashboardSize = dashboardStore.list().size();
@@ -241,9 +240,8 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         importExportService.performImportWithConfirmation(resourceStore.getTempFile(file), confirmations);
 
-//        Assert.assertEquals(startFolderSize, commonTestControl.countEntity(Folder.class));
-        Assert.assertEquals(startVisualisationSize, commonTestControl.countEntity(VisualisationDoc.class));
-        Assert.assertEquals(startPipelineSize, commonTestControl.countEntity(PipelineDoc.class));
+        Assert.assertEquals(startVisualisationSize, visualisationStore.list().size());
+        Assert.assertEquals(startPipelineSize, pipelineStore.list().size());
         Assert.assertEquals(startIndexSize, commonTestControl.countEntity(Index.class));
         Assert.assertEquals(startDictionarySize, dictionaryStore.list().size());
         Assert.assertEquals(startDashboardSize, dashboardStore.list().size());
@@ -288,12 +286,11 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private void deleteAllAndCheck() {
         clean(true);
 
-//        Assert.assertEquals(0, commonTestControl.countEntity(Folder.class));
-        Assert.assertEquals(0, commonTestControl.countEntity(VisualisationDoc.class));
-        Assert.assertEquals(0, commonTestControl.countEntity(PipelineDoc.class));
+        Assert.assertEquals(0, visualisationStore.list().size());
+        Assert.assertEquals(0, pipelineStore.list().size());
         Assert.assertEquals(0, commonTestControl.countEntity(Index.class));
         Assert.assertEquals(0, dictionaryStore.list().size());
-        Assert.assertEquals(0, commonTestControl.countEntity(DashboardDoc.class));
+        Assert.assertEquals(0, dashboardStore.list().size());
     }
 
     private ExpressionOperator.Builder createExpression(final DictionaryDoc dictionary) {

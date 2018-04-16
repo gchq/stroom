@@ -72,7 +72,10 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
         return security.secureResult(permission(), () -> {
             final SqlBuilder sql = new SqlBuilder();
             sql.append("SELECT D.* FROM (");
-            sql.append("SELECT SP.");
+            sql.append("SELECT 0");
+//            sql.append(StreamProcessor.PIPELINE_UUID);
+//            sql.append(" PIPE_UUID,");
+            sql.append(", SP.");
             sql.append(StreamProcessor.PIPELINE_UUID);
             sql.append(" PIPE_UUID, F.");
             sql.append(Feed.ID);
@@ -121,7 +124,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
             sql.appendDocRefSetQuery("SP." + StreamProcessor.PIPELINE_UUID, criteria.getPipelineSet());
             sql.appendEntityIdSetQuery("F." + BaseEntity.ID, criteria.getFeedIdSet());
 
-            sql.append(" GROUP BY PIPE_ID, FEED_ID, PRIORITY_1, STAT_ID1");
+            sql.append(" GROUP BY PIPE_UUID, FEED_ID, PRIORITY_1, STAT_ID1");
             sql.append(") D");
 
             sql.appendOrderBy(getSqlFieldMap().getSqlFieldMap(), criteria, null);
@@ -194,9 +197,6 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
                 }
                 if (fetchSet.contains(StreamProcessor.ENTITY_TYPE) || fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
                     sql.append(" JOIN FETCH spf.streamProcessor AS sp");
-                }
-                if (fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
-                    sql.append(" JOIN FETCH sp.pipeline AS p");
                 }
                 if (fetchSet.contains(Stream.ENTITY_TYPE)) {
                     sql.append(" JOIN FETCH " + alias + ".stream AS s");

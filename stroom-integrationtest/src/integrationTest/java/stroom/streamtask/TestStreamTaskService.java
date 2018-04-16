@@ -115,7 +115,6 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getFetchSet().add(Feed.ENTITY_TYPE);
         criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-        criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
         Assert.assertEquals(0, streamTaskService.find(criteria).size());
     }

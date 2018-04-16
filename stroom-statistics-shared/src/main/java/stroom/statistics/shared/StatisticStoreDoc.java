@@ -40,33 +40,16 @@ import java.util.Set;
 @XmlType(name = "StroomStatsStoreDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
 public class StatisticStoreDoc extends Doc implements StatisticStore {
     public static final String DOCUMENT_TYPE = "StatisticStore";
-    public static final String ENTITY_TYPE_FOR_DISPLAY = "Statistic Store";
+
     // IndexFields names
     public static final String FIELD_NAME_DATE_TIME = "Date Time";
     public static final String FIELD_NAME_VALUE = "Statistic Value";
     public static final String FIELD_NAME_COUNT = "Statistic Count";
     public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
 
-
-//    private static final Map<StatisticType, List<String>> STATIC_FIELDS_MAP = new HashMap<>();
-
     private static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
 
     private static final long serialVersionUID = -649286188919707915L;
-
-//    static {
-//        STATIC_FIELDS_MAP.put(StatisticType.COUNT, Arrays.asList(
-//                FIELD_NAME_DATE_TIME,
-//                FIELD_NAME_COUNT,
-//                FIELD_NAME_PRECISION_MS
-//        ));
-//        STATIC_FIELDS_MAP.put(StatisticType.VALUE, Arrays.asList(
-//                FIELD_NAME_DATE_TIME,
-//                FIELD_NAME_VALUE,
-//                FIELD_NAME_COUNT,
-//                FIELD_NAME_PRECISION_MS
-//        ));
-//    }
 
     private String description;
     private StatisticType statisticType;
@@ -187,13 +170,6 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
             return Collections.emptyList();
         }
     }
-
-//    @JsonIgnore
-//    public List<String> getAllFieldNames() {
-//        List<String> allFieldNames = new ArrayList<>(STATIC_FIELDS_MAP.get(getStatisticType()));
-//        allFieldNames.addAll(getFieldNames());
-//        return allFieldNames;
-//    }
 
     @JsonIgnore
     public int getStatisticFieldCount() {

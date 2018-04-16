@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Singleton
 class XsltStoreImpl implements XsltStore {
@@ -49,7 +48,9 @@ class XsltStoreImpl implements XsltStore {
     private final Serialiser2<XsltDoc> serialiser;
 
     @Inject
-    XsltStoreImpl(final Store<XsltDoc> store, final SecurityContext securityContext, final Persistence persistence) {
+    XsltStoreImpl(final Store<XsltDoc> store,
+                  final SecurityContext securityContext,
+                  final Persistence persistence) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
@@ -206,9 +207,11 @@ class XsltStoreImpl implements XsltStore {
 
     @Override
     public List<DocRef> findByName(final String name) {
-        if (name == null) {
-            return Collections.emptyList();
-        }
-        return store.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
+        return store.findByName(name);
+    }
+
+    @Override
+    public List<DocRef> list() {
+        return store.list();
     }
 }
