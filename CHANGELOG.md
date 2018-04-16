@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v6.0-alpha.20]
 
-* Issue **#719** : Fix creation of headless Jar.
+* Issue **#719** : Fix creation of headless Jar. Exclude gwt-unitCache folder from build JARs.
 
 * Issue **#720** : Fix for Hessian serialisation of table coprocessor settings.
 
