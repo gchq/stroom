@@ -42,7 +42,9 @@ import net.sf.saxon.tree.util.FastStringBuffer;
 import net.sf.saxon.value.Whitespace;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * A NamePool holds a collection of expanded names, each containing a namespace
@@ -1084,10 +1086,36 @@ public class NPEventListNamePool implements Serializable {
                 + " prefixes, " + urisUsed + " URIs");
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final NPEventListNamePool that = (NPEventListNamePool) o;
+        return prefixesUsed == that.prefixesUsed &&
+                urisUsed == that.urisUsed &&
+                Arrays.equals(hashslots, that.hashslots) &&
+                Arrays.equals(prefixes, that.prefixes) &&
+                Arrays.equals(uris, that.uris) &&
+                //have to use deepEquals for a multidimensional array
+                Arrays.deepEquals(prefixCodesForUri, that.prefixCodesForUri) &&
+                Objects.equals(clientData, that.clientData);
+    }
+
+    @Override
+    public int hashCode() {
+
+        int result = Objects.hash(prefixesUsed, urisUsed, clientData);
+        result = 31 * result + Arrays.hashCode(hashslots);
+        result = 31 * result + Arrays.hashCode(prefixes);
+        result = 31 * result + Arrays.hashCode(uris);
+        result = 31 * result + Arrays.hashCode(prefixCodesForUri);
+        return result;
+    }
+
     /**
      * Internal structure of a NameEntry, the entry on the hash chain of names.
      */
-    private static class NameEntry implements Serializable {
+    public static class NameEntry implements Serializable {
         private static final long serialVersionUID = 8411087666788132364L;
 
         String localName;
@@ -1120,6 +1148,21 @@ public class NPEventListNamePool implements Serializable {
             return n;
         }
 
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final NameEntry nameEntry = (NameEntry) o;
+            return uriCode == nameEntry.uriCode &&
+                    Objects.equals(localName, nameEntry.localName) &&
+                    Objects.equals(nextEntry, nameEntry.nextEntry);
+        }
+
+        @Override
+        public int hashCode() {
+
+            return Objects.hash(localName, uriCode, nextEntry);
+        }
     }
 
     /**
