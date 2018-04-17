@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Changed the import export API to use byte arrays to hold values rather than strings. *POSSIBLE BREAKING CHANGE*
 
-* Issue **#719** : Fix creation of headless Jar.
+* Issue **#719** : Fix creation of headless Jar. Exclude gwt-unitCache folder from build JARs.
 
 * Issue **#720** : Fix for Hessian serialisation of table coprocessor settings.
 
