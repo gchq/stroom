@@ -23,6 +23,7 @@ dependencies {
     compile libs.commons_lang
     compile libs.saxon_he
     compile libs.jackson_core
+    compile libs.kryo
     compile libs.xml_apis
     compile libs.stax_api
     compile libs.javax_inject
