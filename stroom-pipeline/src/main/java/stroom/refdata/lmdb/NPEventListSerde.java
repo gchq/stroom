@@ -50,13 +50,13 @@ public class NPEventListSerde {
             kryo.register(NPEventListNamePool.NameEntry.class);
             kryo.register(NPEventListNamePool.NameEntry[].class);
             kryo.register(NPEventListNamePool.class);
+            kryo.register(String[].class);
             kryo.register(byte[].class);
             kryo.register(char[].class);
             kryo.register(int.class);
             kryo.register(int[].class);
             kryo.register(short[].class);
             kryo.register(short[][].class);
-            kryo.register(String[].class);
 
             ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy()).setFallbackInstantiatorStrategy(
                     new StdInstantiatorStrategy());

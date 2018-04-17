@@ -2,12 +2,16 @@ package stroom.refdata.lmdb;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
 import stroom.xml.event.np.NPEventList;
 
 public class TestNPEventListSerde {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestNPEventListSerde.class);
 
     @Test
     public void serializeDeserialize() {
@@ -17,6 +21,8 @@ public class TestNPEventListSerde {
         NPEventListSerde serde = NPEventListSerde.instance();
 
         byte[] bytes = serde.serialize(npEventListInput);
+
+        LOGGER.info("bytes.length {}", bytes.length);
 
         NPEventList npEventListOuput = serde.deserialize(bytes);
 
