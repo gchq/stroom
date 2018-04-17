@@ -24,7 +24,7 @@ import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.pipeline.factory.Element;
 import stroom.task.TaskHandler;
 
@@ -34,7 +34,7 @@ public class IndexModule extends AbstractModule {
         bind(IndexShardManager.class).to(IndexShardManagerImpl.class);
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
         bind(IndexConfigCache.class).to(IndexConfigCacheImpl.class);
-        bind(IndexService.class).to(IndexServiceImpl.class);
+        bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
@@ -55,16 +55,16 @@ public class IndexModule extends AbstractModule {
         elementBinder.addBinding().to(stroom.index.IndexingFilter.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.index.IndexServiceImpl.class);
+        explorerActionHandlerBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.index.IndexServiceImpl.class);
+        importExportActionHandlerBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(Index.ENTITY_TYPE).to(stroom.index.IndexServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(IndexDoc.DOCUMENT_TYPE).to(stroom.index.IndexStoreImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(stroom.index.IndexServiceImpl.class);
+//        findServiceBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
         findServiceBinder.addBinding().to(stroom.index.IndexShardServiceImpl.class);
     }
 }

@@ -22,13 +22,13 @@ import org.junit.Test;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
-import stroom.index.IndexService;
 import stroom.index.IndexShardService;
 import stroom.index.IndexShardUtil;
-import stroom.index.shared.FindIndexCriteria;
+import stroom.index.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -39,7 +39,7 @@ import java.util.List;
 
 public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Inject
-    private IndexService indexService;
+    private IndexStore indexStore;
     @Inject
     private IndexShardService indexShardService;
     @Inject
@@ -53,7 +53,8 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
 
     @Test
     public void testFindIndexedFields() {
-        final Index index = indexService.find(new FindIndexCriteria()).getFirst();
+        final DocRef indexRef = indexStore.list().get(0);
+        final IndexDoc index = indexStore.readDocument(indexRef);
 
         // Create a map of index fields keyed by name.
         final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap(IndexDataSourceFieldUtil.getDataSourceFields(index));
@@ -89,11 +90,11 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final String field = "Command";
         final ExpressionOperator.Builder expression = new ExpressionOperator.Builder()
                 .addOperator(new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(field, Condition.CONTAINS, "service")
-                    .addTerm(field, Condition.CONTAINS, "cwhp")
-                    .addTerm(field, Condition.CONTAINS, "authorize")
-                    .addTerm(field, Condition.CONTAINS, "deviceGroup")
-                    .build())
+                        .addTerm(field, Condition.CONTAINS, "service")
+                        .addTerm(field, Condition.CONTAINS, "cwhp")
+                        .addTerm(field, Condition.CONTAINS, "authorize")
+                        .addTerm(field, Condition.CONTAINS, "deviceGroup")
+                        .build())
                 .addTerm("UserId", Condition.CONTAINS, "user5");
         test(expression, 1, 5);
     }
@@ -132,10 +133,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         test(expression, 1, 2);
     }
 
-    private void test(final ExpressionOperator.Builder expression, final long expectedStreams, final long expectedEvents)
-            {
-        final Index index = indexService.find(new FindIndexCriteria()).getFirst();
-
+    private void test(final ExpressionOperator.Builder expression, final long expectedStreams, final long expectedEvents) {
         final List<IndexShard> list = indexShardService.find(new FindIndexShardCriteria());
         for (final IndexShard indexShard : list) {
             System.out.println("Using index " + IndexShardUtil.getIndexPath(indexShard));

@@ -19,15 +19,16 @@ package stroom.index.shared;
 import stroom.util.shared.HasDisplayValue;
 
 public enum IndexFieldType implements HasDisplayValue {
-    FIELD("Text", 1, false), NUMERIC_FIELD("Number", 2, true), DATE_FIELD("Date", 3, false), ID("Id", 4, true);
+    FIELD("Text", false),
+    NUMERIC_FIELD("Number", true),
+    DATE_FIELD("Date", false),
+    ID("Id", true);
 
     private final String displayValue;
-    private final byte primitiveValue;
     private final boolean numeric;
 
-    IndexFieldType(final String displayValue, final int primitiveValue, final boolean numeric) {
+    IndexFieldType(final String displayValue, final boolean numeric) {
         this.displayValue = displayValue;
-        this.primitiveValue = (byte) primitiveValue;
         this.numeric = numeric;
     }
 

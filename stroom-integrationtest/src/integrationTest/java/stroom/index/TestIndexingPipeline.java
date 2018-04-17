@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import stroom.guice.PipelineScopeRunnable;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
@@ -48,6 +48,7 @@ import stroom.util.io.StreamUtil;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
@@ -59,7 +60,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Inject
     private XsltStore xsltStore;
     @Inject
-    private IndexService indexService;
+    private IndexStore indexStore;
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
@@ -90,7 +91,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             xsltDoc.setData(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
             xsltStore.writeDocument(xsltDoc);
 
-            final IndexFields indexFields = IndexFields.createStreamIndexFields();
+            final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
             // indexFields.add(IndexField.createIdField(IndexConstants.STREAM_ID));
             // indexFields.add(IndexField.createIdField(IndexConstants.EVENT_ID));
             indexFields.add(IndexField.createDateField("EventTime"));
@@ -102,9 +103,10 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             indexFields.add(IndexField.createField("ProcessCommand"));
 
             // Setup the target index
-            Index index = indexService.create("Test index");
-            index.setIndexFieldsObject(indexFields);
-            index = indexService.save(index);
+            final DocRef indexRef = indexStore.createDocument("Test index");
+            IndexDoc index = indexStore.readDocument(indexRef);
+            index.setIndexFields(indexFields);
+            index = indexStore.writeDocument(index);
 
             errorReceiverProvider.get().setErrorReceiver(new FatalErrorReceiver());
 
@@ -117,7 +119,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, StroomPipelineTestFileUtil.getString(PIPELINE));
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
-            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
+            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

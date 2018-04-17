@@ -32,14 +32,16 @@ import stroom.index.FieldFactory;
 import stroom.index.IndexShardKeyUtil;
 import stroom.index.IndexShardService;
 import stroom.index.IndexShardWriterCache;
+import stroom.index.IndexStore;
 import stroom.index.Indexer;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.query.api.v2.DocRef;
 import stroom.search.shard.IndexShardSearcher;
 import stroom.search.shard.IndexShardSearcherImpl;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -58,10 +60,12 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
     private IndexShardService indexShardService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
+    @Inject
+    private IndexStore indexStore;
 
     @Test
     public void testSimple() throws IOException {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         final IndexField idField = IndexField.createField("IdTreeNode", AnalyzerType.ALPHA_NUMERIC, false, true, true, false);
         final IndexField testField = IndexField.createField("test", AnalyzerType.ALPHA_NUMERIC, false, true, true,
                 false);
@@ -73,8 +77,8 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
         final int indexTestSize = 10;
 
         final String indexName = "TEST";
-        final Index index = commonTestScenarioCreator.createIndex(indexName, indexFields);
-
+        final DocRef indexRef = commonTestScenarioCreator.createIndex(indexName, indexFields);
+        final IndexDoc index = indexStore.readDocument(indexRef);
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
 
         // Do some work.
@@ -94,7 +98,7 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
         indexShardWriterCache.flushAll();
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexSet().add(DocRefUtil.create(index));
+        criteria.getIndexSet().add(indexRef);
         final List<IndexShard> shards = indexShardService.find(criteria);
 
         // Open readers and add reader searcher to the multi searcher.

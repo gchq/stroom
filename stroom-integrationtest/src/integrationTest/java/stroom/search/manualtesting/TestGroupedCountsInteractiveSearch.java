@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.Count;
 import stroom.dictionary.DictionaryStore;
-import stroom.index.IndexService;
+import stroom.index.IndexStore;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -72,7 +72,7 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
     @Inject
     private CommonIndexingTest commonIndexingTest;
     @Inject
-    private IndexService indexService;
+    private IndexStore indexStore;
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject
@@ -170,7 +170,7 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
                 resultMapConsumer,
                 5,
                 5,
-                indexService,
+                indexStore,
                 searchResponseCreatorManager);
 
         LOGGER.info("Completed search");

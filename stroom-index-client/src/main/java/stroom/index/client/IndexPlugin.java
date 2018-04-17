@@ -22,13 +22,15 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.index.client.presenter.IndexPresenter;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
+import stroom.query.api.v2.DocRef;
 
-public class IndexPlugin extends EntityPlugin<Index> {
+public class IndexPlugin extends DocumentPlugin<IndexDoc> {
     private final Provider<IndexPresenter> editorProvider;
 
     @Inject
@@ -48,6 +50,11 @@ public class IndexPlugin extends EntityPlugin<Index> {
 
     @Override
     public String getType() {
-        return Index.ENTITY_TYPE;
+        return IndexDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final IndexDoc document) {
+        return DocRefUtil.create(document);
     }
 }

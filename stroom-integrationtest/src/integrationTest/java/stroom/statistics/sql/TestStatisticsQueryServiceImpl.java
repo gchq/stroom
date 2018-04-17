@@ -105,7 +105,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
             TAG1, 3,
             TAG2, 5);
 
-//    private static final DocRef DOC_REF = new DocRef(StatisticStoreDoc.ENTITY_TYPE, UUID.randomUUID().toString(), STAT_NAME);
+//    private static final DocRef DOC_REF = new DocRef(StatisticStoreDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), STAT_NAME);
 
 
     @Inject

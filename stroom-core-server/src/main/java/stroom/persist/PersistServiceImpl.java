@@ -117,7 +117,6 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.explorer.ExplorerTreeNode",
                 "stroom.explorer.ExplorerTreePath",
                 "stroom.feed.shared.Feed",
-                "stroom.index.shared.Index",
                 "stroom.index.shared.IndexShard",
                 "stroom.jobsystem.shared.ClusterLock",
                 "stroom.jobsystem.shared.Job",

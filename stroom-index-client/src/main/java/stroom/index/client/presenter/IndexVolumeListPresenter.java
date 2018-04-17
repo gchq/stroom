@@ -30,7 +30,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.index.shared.FetchIndexVolumesAction;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.SaveIndexVolumesAction;
 import stroom.node.client.presenter.VolumeListPresenter;
 import stroom.node.client.presenter.VolumeStatusListPresenter;
@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.Set;
 
 public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasDocumentRead<Index>, HasWrite<Index>, HasDirtyHandlers {
+        implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers {
     private final VolumeListPresenter volumeListPresenter;
     private final VolumeStatusListPresenter volumeStatusListPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -165,7 +165,7 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     @Override
-    public void read(final DocRef docRef, final Index index) {
+    public void read(final DocRef docRef, final IndexDoc index) {
         this.docRef = docRef;
         volumes = new ArrayList<>();
         if (index != null) {
@@ -182,7 +182,7 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     @Override
-    public void write(final Index index) {
+    public void write(final IndexDoc index) {
         final Set<Volume> set = new HashSet<>(volumes);
         dispatcher.exec(new SaveIndexVolumesAction(docRef, set));
     }

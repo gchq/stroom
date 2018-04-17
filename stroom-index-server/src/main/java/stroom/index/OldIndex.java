@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.index.shared;
+package stroom.index;
 
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.index.shared.IndexFields;
 import stroom.util.shared.HasDisplayValue;
 
 import javax.persistence.Column;
@@ -32,7 +33,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 @Entity
 @Table(name = "IDX")
-public class Index extends DocumentEntity {
+public class OldIndex extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.INDEX;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String MAX_DOCUMENT = SQLNameConstants.MAX + SEP + SQLNameConstants.DOCUMENT;

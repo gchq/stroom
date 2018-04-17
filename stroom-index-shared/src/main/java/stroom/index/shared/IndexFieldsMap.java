@@ -17,6 +17,7 @@
 package stroom.index.shared;
 
 import java.util.HashMap;
+import java.util.List;
 
 public class IndexFieldsMap extends HashMap<String, IndexField> {
     private static final long serialVersionUID = -7687167987530520359L;
@@ -24,9 +25,9 @@ public class IndexFieldsMap extends HashMap<String, IndexField> {
     public IndexFieldsMap() {
     }
 
-    public IndexFieldsMap(final IndexFields indexFields) {
+    public IndexFieldsMap(final List<IndexField> indexFields) {
         if (indexFields != null) {
-            for (final IndexField indexField : indexFields.getIndexFields()) {
+            for (final IndexField indexField : indexFields) {
                 put(indexField);
             }
         }

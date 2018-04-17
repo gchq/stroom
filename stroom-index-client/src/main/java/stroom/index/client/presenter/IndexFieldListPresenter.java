@@ -25,7 +25,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
@@ -34,27 +33,28 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
 import stroom.query.api.v2.DocRef;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<IndexField>>
-        implements HasDocumentRead<Index>, HasWrite<Index>, HasDirtyHandlers {
+        implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers {
     private final IndexFieldEditPresenter indexFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
     private final ButtonView upButton;
     private final ButtonView downButton;
-    private IndexFields indexFields;
+    private List<IndexField> indexFields;
 
     @SuppressWarnings("unchecked")
     @Inject
@@ -115,8 +115,8 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void enableButtons() {
-        if (indexFields != null && indexFields.getIndexFields() != null) {
-            final List<IndexField> fieldList = indexFields.getIndexFields();
+        if (indexFields != null) {
+            final List<IndexField> fieldList = indexFields;
             final IndexField selectedElement = getView().getSelectionModel().getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
@@ -220,7 +220,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
 
     private void onAdd() {
         final IndexField indexField = new IndexField();
-        final Set<String> otherNames = indexFields.getFieldNames();
+        final Set<String> otherNames = getFieldNames();
 
         indexFieldEditPresenter.read(indexField, otherNames);
         indexFieldEditPresenter.show("New Field", new PopupUiHandlers() {
@@ -248,7 +248,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     private void onEdit() {
         final IndexField indexField = getView().getSelectionModel().getSelected();
         if (indexField != null) {
-            final Set<String> otherNames = indexFields.getFieldNames();
+            final Set<String> otherNames = getFieldNames();
             otherNames.remove(indexField.getFieldName());
 
             indexFieldEditPresenter.read(indexField, otherNames);
@@ -282,15 +282,12 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
                 message = "Are you sure you want to delete the selected fields?";
             }
 
-            ConfirmEvent.fire(this, message, new ConfirmCallback() {
-                @Override
-                public void onResult(final boolean result) {
-                    if (result) {
-                        indexFields.getIndexFields().removeAll(list);
-                        getView().getSelectionModel().clear();
-                        refresh();
-                        DirtyEvent.fire(IndexFieldListPresenter.this, true);
-                    }
+            ConfirmEvent.fire(this, message, result -> {
+                if (result) {
+                    indexFields.removeAll(list);
+                    getView().getSelectionModel().clear();
+                    refresh();
+                    DirtyEvent.fire(IndexFieldListPresenter.this, true);
                 }
             });
         }
@@ -298,7 +295,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
 
     private void moveSelectedFieldUp() {
         final IndexField selected = getView().getSelectionModel().getSelected();
-        final List<IndexField> fieldList = indexFields.getIndexFields();
+        final List<IndexField> fieldList = indexFields;
         if (selected != null) {
             final int index = fieldList.indexOf(selected);
             if (index > 0) {
@@ -314,7 +311,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
 
     private void moveSelectedFieldDown() {
         final IndexField selected = getView().getSelectionModel().getSelected();
-        final List<IndexField> fieldList = indexFields.getIndexFields();
+        final List<IndexField> fieldList = indexFields;
         if (selected != null) {
             final int index = fieldList.indexOf(selected);
             if (index >= 0 && index < fieldList.size() - 1) {
@@ -328,30 +325,51 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         }
     }
 
-    public void refresh() {
+    private void refresh() {
         if (indexFields == null) {
-            indexFields = new IndexFields(new ArrayList<>());
+            indexFields = new ArrayList<>();
         }
 
-        getView().setRowData(0, indexFields.getIndexFields());
-        getView().setRowCount(indexFields.getIndexFields().size());
+        getView().setRowData(0, indexFields);
+        getView().setRowCount(indexFields.size());
     }
 
     @Override
-    public void read(final DocRef docRef, final Index index) {
+    public void read(final DocRef docRef, final IndexDoc index) {
         if (index != null) {
-            indexFields = index.getIndexFieldsObject();
+            indexFields = index.getIndexFields();
+            if (indexFields == null) {
+                indexFields = new ArrayList<>();
+            }
+
             refresh();
         }
     }
 
     @Override
-    public void write(final Index entity) {
-        entity.setIndexFieldsObject(indexFields);
+    public void write(final IndexDoc entity) {
+        entity.setIndexFields(indexFields);
     }
 
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+    private Set<String> getFieldNames() {
+        if (indexFields != null) {
+            return indexFields.stream()
+                    .map(IndexField::getFieldName)
+                    .collect(Collectors.toSet());
+        }
+        return Collections.emptySet();
+    }
+
+//    public Set<String> getFieldNames() {
+//        final Set<String> set = new HashSet<>();
+//        for (final IndexField field : indexFields) {
+//            set.add(field.getFieldName());
+//        }
+//        return set;
+//    }
 }

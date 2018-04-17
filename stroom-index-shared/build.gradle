@@ -1,9 +1,11 @@
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
+    compile project(':stroom-docstore-shared')
     compile project(':stroom-util-shared')
 
     compile libs.stroomQueryApi
     compile libs.hibernate_jpa_api
     compile libs.hibernate_core
+    compile libs.jackson_annotations
 }

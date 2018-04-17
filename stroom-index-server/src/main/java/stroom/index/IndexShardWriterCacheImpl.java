@@ -17,9 +17,8 @@
 package stroom.index;
 
 import org.apache.lucene.store.LockObtainFailedException;
-import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
@@ -27,6 +26,7 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.properties.StroomPropertyService;
+import stroom.query.api.v2.DocRef;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
 import stroom.task.ThreadPoolImpl;
@@ -140,18 +140,21 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         // Get all index shards that are owned by this node.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
-        criteria.getFetchSet().add(Index.ENTITY_TYPE);
+        criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getIndexSet().add(DocRefUtil.create(indexShardKey.getIndex()));
+        criteria.getIndexSet().add(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
         criteria.getPartition().setString(indexShardKey.getPartition());
         final List<IndexShard> list = indexShardService.find(criteria);
         for (final IndexShard indexShard : list) {
             // Look for non deleted, non full, non corrupt index shards.
-            if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())
-                    && indexShard.getDocumentCount() < indexShard.getIndex().getMaxDocsPerShard()) {
-                final IndexShardWriter indexShardWriter = openWriter(indexShardKey, indexShard);
-                if (indexShardWriter != null) {
-                    return indexShardWriter;
+            if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
+                // Get the index fields.
+                final IndexConfig indexConfig = indexConfigCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+                if (indexConfig != null && indexShard.getDocumentCount() < indexConfig.getIndex().getMaxDocsPerShard()) {
+                    final IndexShardWriter indexShardWriter = openWriter(indexShardKey, indexShard);
+                    if (indexShardWriter != null) {
+                        return indexShardWriter;
+                    }
                 }
             }
         }
@@ -170,11 +173,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private IndexShardWriter openWriter(final IndexShardKey indexShardKey, final IndexShard indexShard) {
         final long indexShardId = indexShard.getId();
 
-        // Load the index.
-        final Index index = indexShard.getIndex();
-
         // Get the index fields.
-        final IndexConfig indexConfig = indexConfigCache.get(DocRefUtil.create(index));
+        final IndexConfig indexConfig = indexConfigCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
 
         // Create the writer.
         final int ramBufferSizeMB = getRamBufferSize();

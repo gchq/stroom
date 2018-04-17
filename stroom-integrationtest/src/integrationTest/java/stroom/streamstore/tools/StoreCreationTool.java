@@ -22,9 +22,8 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
-import stroom.index.IndexService;
-import stroom.index.shared.FindIndexCriteria;
-import stroom.index.shared.Index;
+import stroom.index.IndexStore;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
@@ -104,7 +103,7 @@ public final class StoreCreationTool {
     private final CommonTestControl commonTestControl;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final IndexService indexService;
+    private final IndexStore indexStore;
 
     @Inject
     public StoreCreationTool(final StreamStore streamStore,
@@ -116,7 +115,7 @@ public final class StoreCreationTool {
                              final CommonTestControl commonTestControl,
                              final StreamProcessorService streamProcessorService,
                              final StreamProcessorFilterService streamProcessorFilterService,
-                             final IndexService indexService) {
+                             final IndexStore indexStore) {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.textConverterStore = textConverterStore;
@@ -126,7 +125,7 @@ public final class StoreCreationTool {
         this.commonTestControl = commonTestControl;
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
-        this.indexService = indexService;
+        this.indexStore = indexStore;
     }
 
     /**
@@ -138,7 +137,6 @@ public final class StoreCreationTool {
      * @param xsltLocation          The XSLT location
      * @param dataLocation          The reference data location.
      * @return A reference feed definition.
-     * @throws IOException Thrown if files not found.
      */
     public Feed addReferenceData(final String feedName,
                                  final TextConverterType textConverterType,
@@ -486,13 +484,13 @@ public final class StoreCreationTool {
         return pipelineRef;
     }
 
-    private DocRef getIndexingPipeline(final Index index, final Path xsltLocation) {
-        final DocRef pipelineRef = getPipeline(index.getName(), StreamUtil.fileToString(indexingPipeline));
+    private DocRef getIndexingPipeline(final DocRef indexRef, final Path xsltLocation) {
+        final DocRef pipelineRef = getPipeline(indexRef.getName(), StreamUtil.fileToString(indexingPipeline));
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
 
         // Setup the xslt.
-        final DocRef xslt = getXSLT(index.getName(), xsltLocation);
+        final DocRef xslt = getXSLT(indexRef.getName(), xsltLocation);
 
         // Read the pipeline data.
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
@@ -508,7 +506,7 @@ public final class StoreCreationTool {
         // final ElementType elementType = new ElementType("IndexingFilter");
         // final PropertyType propertyType = new PropertyType(elementType,
         // "index", "Index", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
+        pipelineData.addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
 
         // // Write the pipeline data.
         // final ByteArrayOutputStream outputStream = new
@@ -588,21 +586,20 @@ public final class StoreCreationTool {
                 data);
     }
 
-    public Index addIndex(final String name, final Path translationXsltLocation, final OptionalInt maxDocsPerShard) {
-        final FindIndexCriteria criteria = new FindIndexCriteria();
-        criteria.getName().setString(name);
-        final BaseResultList<Index> list = indexService.find(criteria);
-        if (list != null && list.size() > 0) {
-            return list.getFirst();
+    public DocRef addIndex(final String name, final Path translationXsltLocation, final OptionalInt maxDocsPerShard) {
+        // Try to find an existing one first.
+        final List<DocRef> refs = indexStore.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
+        if (refs != null && refs.size() > 0) {
+            return refs.get(0);
         }
 
-        final Index index = commonTestScenarioCreator.createIndex(
+        final DocRef indexRef = commonTestScenarioCreator.createIndex(
                 name,
                 createIndexFields(),
-                maxDocsPerShard.orElse(Index.DEFAULT_MAX_DOCS_PER_SHARD));
+                maxDocsPerShard.orElse(IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD));
 
         // Create the indexing pipeline.
-        final DocRef pipelineRef = getIndexingPipeline(index, translationXsltLocation);
+        final DocRef pipelineRef = getIndexingPipeline(indexRef, translationXsltLocation);
 
         StreamProcessor streamProcessor = streamProcessorService.find(new FindStreamProcessorCriteria(pipelineRef))
                 .getFirst();
@@ -623,11 +620,11 @@ public final class StoreCreationTool {
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
         }
 
-        return index;
+        return indexRef;
     }
 
-    private IndexFields createIndexFields() {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+    private List<IndexField> createIndexFields() {
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("Feed"));
         indexFields.add(IndexField.createField("Feed (Keyword)", AnalyzerType.KEYWORD));
         indexFields.add(IndexField.createField("Action"));

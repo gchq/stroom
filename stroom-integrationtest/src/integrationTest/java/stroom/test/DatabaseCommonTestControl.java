@@ -26,7 +26,7 @@ import stroom.feed.shared.Feed;
 import stroom.guice.StroomBeanStore;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
@@ -38,7 +38,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.ruleset.shared.Policy;
 import stroom.security.AppPermission;
 import stroom.security.DocumentPermission;
@@ -84,7 +83,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             "explorerTreeNode",
             "explorerTreePath",
             Feed.TABLE_NAME,
-            Index.TABLE_NAME,
             "IDX_VOL", //link table between IDX and VOL so no entity of its own
             IndexShard.TABLE_NAME,
             Job.TABLE_NAME,

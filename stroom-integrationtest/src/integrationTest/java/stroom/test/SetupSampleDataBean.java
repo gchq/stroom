@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
 import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.util.ConnectionUtil;
 import stroom.feed.FeedService;
@@ -31,10 +30,9 @@ import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.index.IndexService;
+import stroom.index.IndexStore;
 import stroom.index.IndexVolumeService;
-import stroom.index.shared.FindIndexCriteria;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
@@ -105,7 +103,7 @@ public final class SetupSampleDataBean {
     private final PipelineStore pipelineStore;
     private final DashboardStore dashboardStore;
     private final VolumeService volumeService;
-    private final IndexService indexService;
+    private final IndexStore indexStore;
     private final IndexVolumeService indexVolumeService;
     private final StatisticStoreStore statisticStoreStore;
     private final StroomStatsStoreStore stroomStatsStoreStore;
@@ -120,7 +118,7 @@ public final class SetupSampleDataBean {
                         final PipelineStore pipelineStore,
                         final DashboardStore dashboardStore,
                         final VolumeService volumeService,
-                        final IndexService indexService,
+                        final IndexStore indexStore,
                         final IndexVolumeService indexVolumeService,
                         final StatisticStoreStore statisticStoreStore,
                         final StroomStatsStoreStore stroomStatsStoreStore) {
@@ -133,7 +131,7 @@ public final class SetupSampleDataBean {
         this.pipelineStore = pipelineStore;
         this.dashboardStore = dashboardStore;
         this.volumeService = volumeService;
-        this.indexService = indexService;
+        this.indexStore = indexStore;
         this.indexVolumeService = indexVolumeService;
         this.statisticStoreStore = statisticStoreStore;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
@@ -181,20 +179,20 @@ public final class SetupSampleDataBean {
 
         // Add volumes to all indexes.
         final BaseResultList<Volume> volumeList = volumeService.find(new FindVolumeCriteria());
-        final BaseResultList<Index> indexList = indexService.find(new FindIndexCriteria());
-        logEntities(indexList, "indexes");
+        final List<DocRef> indexList = indexStore.list();
+        logDocRefs(indexList, "indexes");
         final Set<Volume> volumeSet = new HashSet<>(volumeList);
 
-        for (final Index index : indexList) {
-            indexVolumeService.setVolumesForIndex(DocRefUtil.create(index), volumeSet);
+        for (final DocRef indexRef : indexList) {
+            indexVolumeService.setVolumesForIndex(indexRef, volumeSet);
 
             // Find the pipeline for this index.
-            final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> index.getName().equals(docRef.getName())).collect(Collectors.toList());
+            final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> indexRef.getName().equals(docRef.getName())).collect(Collectors.toList());
 
             if (pipelines == null || pipelines.size() == 0) {
-                LOGGER.warn("No pipeline found for index [{}]", index.getName());
+                LOGGER.warn("No pipeline found for index [{}]", indexRef.getName());
             } else if (pipelines.size() > 1) {
-                LOGGER.warn("More than 1 pipeline found for index [{}]", index.getName());
+                LOGGER.warn("More than 1 pipeline found for index [{}]", indexRef.getName());
             } else {
                 final DocRef pipeline = pipelines.get(0);
 
@@ -286,10 +284,6 @@ public final class SetupSampleDataBean {
         }
     }
 
-    private static void logEntities(BaseResultList<? extends NamedEntity> entities, String entityTypes) {
-        logEntities(entities.getValues(), entityTypes);
-    }
-
     private static void logEntities(List<? extends NamedEntity> entities, String entityTypes) {
         LOGGER.info("Listing loaded {}:", entityTypes);
         entities.stream()
@@ -331,8 +325,8 @@ public final class SetupSampleDataBean {
             LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
             LOGGER.info("Dashboard count = " + dashboardStore.list().size());
             LOGGER.info("Pipeline count = " + pipelineStore.list().size());
-            LOGGER.info("Index count = " + commonTestControl.countEntity(Index.class));
-            LOGGER.info("StatisticDataSource count = " + commonTestControl.countEntity(StatisticStore.class));
+            LOGGER.info("Index count = " + indexStore.list().size());
+            LOGGER.info("StatisticDataSource count = " + statisticStoreStore.list().size());
 
         } else {
             LOGGER.info("Directory {} doesn't exist so skipping", configDir);
@@ -537,7 +531,7 @@ public final class SetupSampleDataBean {
     // index.setFolder(folder);
     // index.setName(indexName);
     //
-    // index = indexService.save(index);
+    // index = indexStore.save(index);
     //
     // return index;
     // }

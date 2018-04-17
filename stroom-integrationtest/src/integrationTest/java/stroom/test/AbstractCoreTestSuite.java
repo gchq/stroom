@@ -20,7 +20,7 @@ import stroom.xmlschema.TestXMLSchemaStoreImpl;
         stroom.importexport.TestImportExportServiceImpl.class,
         stroom.importexport.TestImportExportServiceImpl2.class,
         stroom.importexport.TestImportExportServiceImpl3.class,
-        stroom.index.TestIndexServiceImpl.class,
+        stroom.index.TestIndexStoreImpl.class,
         stroom.index.TestIndexShardServiceImpl.class,
         stroom.index.TestIndexShardWriterImpl.class,
         stroom.jobsystem.TestClusterLockService.class,

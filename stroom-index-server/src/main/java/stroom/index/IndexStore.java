@@ -17,10 +17,12 @@
 
 package stroom.index;
 
-import stroom.entity.DocumentEntityService;
-import stroom.entity.FindService;
-import stroom.index.shared.FindIndexCriteria;
-import stroom.index.shared.Index;
+import stroom.document.DocumentStore;
+import stroom.index.shared.IndexDoc;
+import stroom.query.api.v2.DocRef;
 
-public interface IndexService extends DocumentEntityService<Index>, FindService<Index, FindIndexCriteria> {
+import java.util.List;
+
+public interface IndexStore extends DocumentStore<IndexDoc> {
+    List<DocRef> list();
 }

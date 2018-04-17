@@ -21,11 +21,13 @@ import stroom.entity.MockEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
+import stroom.query.api.v2.DocRef;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Singleton;
@@ -40,7 +42,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
         final IndexShard indexShard = new IndexShard();
         indexShard.setVolume(
                 Volume.create(ownerNode, FileUtil.getCanonicalPath(FileUtil.getTempDir()), VolumeType.PUBLIC));
-        indexShard.setIndex(indexShardKey.getIndex());
+        indexShard.setIndexUuid(indexShardKey.getIndexUuid());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
         indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
@@ -63,7 +65,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
 
             } else if (!criteria.getNodeIdSet().isMatch(indexShard.getNode())) {
                 include = false;
-            } else if (!criteria.getIndexSet().isMatch(DocRefUtil.create(indexShard.getIndex()))) {
+            } else if (!criteria.getIndexSet().isMatch(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShard.getIndexUuid()))) {
                 include = false;
 
             } else if (!criteria.getIndexShardStatusSet().isMatch(indexShard.getStatus())) {

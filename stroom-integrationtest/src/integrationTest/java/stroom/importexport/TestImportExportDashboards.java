@@ -30,7 +30,6 @@ import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.shared.Doc;
 import stroom.document.DocumentStore;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;
@@ -38,9 +37,8 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.FeedService;
 import stroom.importexport.shared.ImportState;
-import stroom.index.IndexService;
-import stroom.index.shared.FindIndexCriteria;
-import stroom.index.shared.Index;
+import stroom.index.IndexStore;
+import stroom.index.shared.IndexDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
@@ -70,13 +68,11 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineStore pipelineStore;
     @Inject
-    private FeedService feedService;
-    @Inject
     private VisualisationStore visualisationStore;
     @Inject
     private ScriptStore scriptStore;
     @Inject
-    private IndexService indexService;
+    private IndexStore indexStore;
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject
@@ -142,19 +138,19 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         pipelineStore.writeDocument(pipelineDoc);
         Assert.assertEquals(1, pipelineStore.list().size());
 
-        final DocRef indexRef = explorerService.create(Index.ENTITY_TYPE, "Test Index", folder1, null);
-        Index index = indexService.readDocument(indexRef);
-        index = indexService.save(index);
-        Assert.assertEquals(1, commonTestControl.countEntity(Index.class));
+        final DocRef indexRef = explorerService.create(IndexDoc.DOCUMENT_TYPE, "Test Index", folder1, null);
+        final IndexDoc index = indexStore.readDocument(indexRef);
+        indexStore.writeDocument(index);
+        Assert.assertEquals(1, indexStore.list().size());
 
         final DocRef dictionaryRef = explorerService.create(DictionaryDoc.ENTITY_TYPE, "Test Dictionary", folder1, null);
-        DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryRef);
+        final DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryRef);
         dictionaryStore.writeDocument(dictionary);
         Assert.assertEquals(1, dictionaryStore.list().size());
 
         // Create query.
         final QueryComponentSettings queryComponentSettings = new QueryComponentSettings();
-        queryComponentSettings.setDataSource(DocRefUtil.create(index));
+        queryComponentSettings.setDataSource(indexRef);
         queryComponentSettings.setExpression(createExpression(dictionary).build());
 
         final ComponentConfig query = new ComponentConfig();
@@ -204,7 +200,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         int startVisualisationSize = visualisationStore.list().size();
         final int startPipelineSize = pipelineStore.list().size();
-        final int startIndexSize = commonTestControl.countEntity(Index.class);
+        final int startIndexSize = indexStore.list().size();
         final int startDictionarySize = dictionaryStore.list().size();
         final int startDashboardSize = dashboardStore.list().size();
 
@@ -242,14 +238,14 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals(startVisualisationSize, visualisationStore.list().size());
         Assert.assertEquals(startPipelineSize, pipelineStore.list().size());
-        Assert.assertEquals(startIndexSize, commonTestControl.countEntity(Index.class));
+        Assert.assertEquals(startIndexSize, indexStore.list().size());
         Assert.assertEquals(startDictionarySize, dictionaryStore.list().size());
         Assert.assertEquals(startDashboardSize, dashboardStore.list().size());
 
         // Load the dashboard.
         final VisualisationDoc loadedVisualisation = first(visualisationStore);
         final DocRef loadedPipeline = pipelineStore.list().get(0);
-        final Index loadedIndex = indexService.find(new FindIndexCriteria()).getFirst();
+        final DocRef loadedIndex = indexStore.list().get(0);
         final DictionaryDoc loadedDictionary = first(dictionaryStore);
         final DashboardDoc loadedDashboard = first(dashboardStore);
         final List<ComponentConfig> loadedComponents = loadedDashboard.getDashboardConfig().getComponents();
@@ -261,7 +257,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final VisComponentSettings loadedVisSettings = (VisComponentSettings) loadedVis.getSettings();
 
         // Verify all entity references have been restored.
-        Assert.assertEquals(DocRefUtil.create(loadedIndex), loadedQueryData.getDataSource());
+        Assert.assertEquals(loadedIndex, loadedQueryData.getDataSource());
         Assert.assertEquals(stroom.docstore.shared.DocRefUtil.create(loadedDictionary),
                 ((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDictionary());
         Assert.assertEquals(loadedPipeline, loadedTableSettings.getExtractionPipeline());
@@ -288,7 +284,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals(0, visualisationStore.list().size());
         Assert.assertEquals(0, pipelineStore.list().size());
-        Assert.assertEquals(0, commonTestControl.countEntity(Index.class));
+        Assert.assertEquals(0, indexStore.list().size());
         Assert.assertEquals(0, dictionaryStore.list().size());
         Assert.assertEquals(0, dashboardStore.list().size());
     }

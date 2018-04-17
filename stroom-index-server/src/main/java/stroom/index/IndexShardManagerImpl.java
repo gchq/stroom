@@ -17,12 +17,13 @@
 package stroom.index;
 
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
+import stroom.query.api.v2.DocRef;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.GenericServerTask;
@@ -66,6 +67,7 @@ import java.util.concurrent.locks.Lock;
 public class IndexShardManagerImpl implements IndexShardManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardManagerImpl.class);
 
+    private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final Provider<IndexShardWriterCache> indexShardWriterCacheProvider;
     private final NodeCache nodeCache;
@@ -79,12 +81,14 @@ public class IndexShardManagerImpl implements IndexShardManager {
     private final Map<IndexShardStatus, Set<IndexShardStatus>> allowedStateTransitions = new HashMap<>();
 
     @Inject
-    IndexShardManagerImpl(final IndexShardService indexShardService,
+    IndexShardManagerImpl(final IndexStore indexStore,
+                          final IndexShardService indexShardService,
                           final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
                           final NodeCache nodeCache,
                           final TaskManager taskManager,
                           final TaskContext taskContext,
                           final Security security) {
+        this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
         this.nodeCache = nodeCache;
@@ -112,7 +116,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
 
                     final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
                     criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
-                    criteria.getFetchSet().add(Index.ENTITY_TYPE);
+                    criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
                     criteria.getFetchSet().add(Node.ENTITY_TYPE);
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final List<IndexShard> shards = indexShardService.find(criteria);
@@ -263,7 +267,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
         security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
             criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
-            criteria.getFetchSet().add(Index.ENTITY_TYPE);
+            criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
             criteria.getFetchSet().add(Node.ENTITY_TYPE);
             final List<IndexShard> shards = indexShardService.find(criteria);
             for (final IndexShard shard : shards) {
@@ -275,16 +279,22 @@ public class IndexShardManagerImpl implements IndexShardManager {
     private void checkRetention(final IndexShard shard) {
         try {
             // Delete this shard if it is older than the retention age.
-            final Index index = shard.getIndex();
-            final Integer retentionDayAge = index.getRetentionDayAge();
-            final Long partitionToTime = shard.getPartitionToTime();
-            if (retentionDayAge != null && partitionToTime != null && !IndexShardStatus.DELETED.equals(shard.getStatus())) {
-                // See if this index shard is older than the index retention
-                // period.
-                final long retentionTime = ZonedDateTime.now(ZoneOffset.UTC).minusDays(retentionDayAge).toInstant().toEpochMilli();
+            final IndexDoc index = indexStore.readDocument(new DocRef(IndexDoc.DOCUMENT_TYPE, shard.getIndexUuid()));
+            if (index == null) {
+                // If there is no associated index then delete the shard.
+                setStatus(shard.getId(), IndexShardStatus.DELETED);
 
-                if (partitionToTime < retentionTime) {
-                    setStatus(shard.getId(), IndexShardStatus.DELETED);
+            } else {
+                final Integer retentionDayAge = index.getRetentionDayAge();
+                final Long partitionToTime = shard.getPartitionToTime();
+                if (retentionDayAge != null && partitionToTime != null && !IndexShardStatus.DELETED.equals(shard.getStatus())) {
+                    // See if this index shard is older than the index retention
+                    // period.
+                    final long retentionTime = ZonedDateTime.now(ZoneOffset.UTC).minusDays(retentionDayAge).toInstant().toEpochMilli();
+
+                    if (partitionToTime < retentionTime) {
+                        setStatus(shard.getId(), IndexShardStatus.DELETED);
+                    }
                 }
             }
         } catch (final RuntimeException e) {
