@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Moved Index entities over to the new multi part document store.
+
 * Moved Pipeline entities over to the new multi part document store.
 
 * Moved both Statistic Store entity types over to the new multi part document store.
