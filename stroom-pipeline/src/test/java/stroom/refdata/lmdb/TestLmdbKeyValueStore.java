@@ -1,4 +1,4 @@
-package stroom.lmdb;
+package stroom.refdata.lmdb;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -250,42 +250,42 @@ public class TestLmdbKeyValueStore {
         The following is the output on a VM with 4GB RAM (~2.5Gb available) and backed by
         an NVMe SSD. 3700 kv pairs (3.7Gb of data) is loaded into LMDB. Xmx is set to 256M.
 
-        11:27:22.011 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Loading data
-        11:27:22.015 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Batch size: 1000
-        11:27:22.016 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Putting start: 1, count 1000
-        11:27:22.582 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 500
-        11:27:22.970 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 1000
-        11:27:22.970 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committing
-        11:27:24.404 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committed
-        11:27:24.405 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Batch size: 1000
-        11:27:24.405 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Putting start: 1001, count 1000
-        11:27:24.784 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 1500
-        11:27:25.138 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 2000
-        11:27:25.138 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committing
-        11:27:26.557 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committed
-        11:27:26.558 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Batch size: 1000
-        11:27:26.558 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Putting start: 2001, count 1000
-        11:27:26.939 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 2500
-        11:27:27.275 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 3000
-        11:27:27.275 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committing
-        11:27:28.471 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committed
-        11:27:28.471 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Batch size: 700
-        11:27:28.471 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Putting start: 3001, count 700
-        11:27:28.798 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 3500
-        11:27:28.931 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committing
-        11:27:29.803 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committed
-        11:27:29.815 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Loaded data in PT7.789S
-        11:27:29.815 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Reading all data
-        11:27:30.291 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 500
-        11:27:30.744 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 1000
-        11:27:31.208 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 1500
-        11:27:31.638 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 2000
-        11:27:32.055 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 2500
-        11:27:32.343 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 3000
-        11:27:32.345 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 3500
-        11:27:32.345 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read data in PT2.524S
-        11:27:32.345 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Reading hot keys many times
-        11:27:32.349 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 10 hot keys for 370 iterations in PT0.003S
+        11:27:22.011 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Loading data
+        11:27:22.015 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Batch size: 1000
+        11:27:22.016 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Putting start: 1, count 1000
+        11:27:22.582 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Put 500
+        11:27:22.970 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Put 1000
+        11:27:22.970 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Committing
+        11:27:24.404 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Committed
+        11:27:24.405 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Batch size: 1000
+        11:27:24.405 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Putting start: 1001, count 1000
+        11:27:24.784 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Put 1500
+        11:27:25.138 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Put 2000
+        11:27:25.138 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Committing
+        11:27:26.557 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Committed
+        11:27:26.558 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Batch size: 1000
+        11:27:26.558 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Putting start: 2001, count 1000
+        11:27:26.939 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Put 2500
+        11:27:27.275 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Put 3000
+        11:27:27.275 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Committing
+        11:27:28.471 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Committed
+        11:27:28.471 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Batch size: 700
+        11:27:28.471 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Putting start: 3001, count 700
+        11:27:28.798 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Put 3500
+        11:27:28.931 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Committing
+        11:27:29.803 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Committed
+        11:27:29.815 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Loaded data in PT7.789S
+        11:27:29.815 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Reading all data
+        11:27:30.291 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Read 500
+        11:27:30.744 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Read 1000
+        11:27:31.208 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Read 1500
+        11:27:31.638 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Read 2000
+        11:27:32.055 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Read 2500
+        11:27:32.343 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Read 3000
+        11:27:32.345 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Read 3500
+        11:27:32.345 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Read data in PT2.524S
+        11:27:32.345 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Reading hot keys many times
+        11:27:32.349 [main] INFO  stroom.refdata.lmdb.TestLmdbKeyValueStore - Read 10 hot keys for 370 iterations in PT0.003S
          */
     }
 

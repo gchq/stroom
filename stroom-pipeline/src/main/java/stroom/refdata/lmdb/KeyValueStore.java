@@ -1,4 +1,4 @@
-package stroom.lmdb;
+package stroom.refdata.lmdb;
 
 import java.util.List;
 import java.util.Map;

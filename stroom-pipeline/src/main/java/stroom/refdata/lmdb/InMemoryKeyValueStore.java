@@ -1,4 +1,4 @@
-package stroom.lmdb;
+package stroom.refdata.lmdb;
 
 import com.google.common.base.Preconditions;
 
