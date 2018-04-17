@@ -4,7 +4,6 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRef;
-import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.CopyPermissionsFromParentAction;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
@@ -14,7 +13,7 @@ import stroom.task.TaskHandlerBean;
 import javax.inject.Inject;
 import java.util.Optional;
 
-@TaskHandlerBean(task = ChangeDocumentPermissionsAction.class)
+@TaskHandlerBean(task = CopyPermissionsFromParentAction.class)
 public class CopyPermissionsFromParentHandler
         extends AbstractTaskHandler<CopyPermissionsFromParentAction, DocumentPermissions> {
 

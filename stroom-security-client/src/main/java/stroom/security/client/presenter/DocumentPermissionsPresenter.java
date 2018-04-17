@@ -75,7 +75,7 @@ public class DocumentPermissionsPresenter
         tabPresenter.changeSelectedTab(groups);
 
         getView().getInheritPermissionsButton().addClickHandler(event -> {
-            dispatcher.exec(new CopyPermissionsFromParentAction())
+            dispatcher.exec(new CopyPermissionsFromParentAction(explorerNode.getDocRef()))
                     .onSuccess(documentPermissions -> {
                         usersPresenter.setDocumentPermissions(documentPermissions, false, changeSet);
                         groupsPresenter.setDocumentPermissions(documentPermissions, true, changeSet);
