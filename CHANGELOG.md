@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.2.4] - 2018-04-18
+
+* Issue **#735** : Change the format-date xslt function to parse dates in a case insensitive way.
+
 ## [v5.2.3] - 2018-03-27
 
 * Issue **#703** : Removed logging of InterruptedException stack trace on SQL stat queries, improved concurrency code.
