@@ -193,6 +193,7 @@ class FormatDate extends StroomExtensionFunctionCall {
         final ZoneId zoneId = getTimeZone(context, timeZone);
         final ZonedDateTime referenceDateTime = getBaseTime().atZone(zoneId);
         final DateTimeFormatter parseFormatter = new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
                 .appendPattern(pattern)
                 .parseDefaulting(ChronoField.YEAR_OF_ERA, referenceDateTime.get(ChronoField.YEAR_OF_ERA))
                 .parseDefaulting(ChronoField.MONTH_OF_YEAR, referenceDateTime.get(ChronoField.MONTH_OF_YEAR))
