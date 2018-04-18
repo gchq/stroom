@@ -13,6 +13,7 @@ public class TestNPEventListSerde {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestNPEventListSerde.class);
 
+
     @Test
     public void serializeDeserialize() {
 
@@ -22,7 +23,7 @@ public class TestNPEventListSerde {
 
         byte[] bytes = serde.serialize(npEventListInput);
 
-        LOGGER.info("bytes.length {}", bytes.length);
+        LOGGER.info("bytes.length Kryo {}", bytes.length);
 
         NPEventList npEventListOuput = serde.deserialize(bytes);
 
@@ -30,12 +31,15 @@ public class TestNPEventListSerde {
         Assertions.assertThat(npEventListInput.hashCode()).isEqualTo(npEventListOuput.hashCode());
     }
 
-    public static NPEventList createEventList() {
+    private static NPEventList createEventList() {
         final EventListBuilder builder = EventListBuilderFactory.createBuilder();
         for (int i = 0; i < 100; i++) {
             try {
                 builder.startDocument();
+                builder.startPrefixMapping("t", "testuri");
                 builder.startElement("testuri", "test", "test", null);
+                String str = "testChars" + i;
+                builder.characters(str.toCharArray(), 0, str.length());
                 builder.endElement("testuri", "test", "test");
                 builder.endDocument();
             } catch (final SAXException e) {
@@ -47,4 +51,5 @@ public class TestNPEventListSerde {
 
         return eventList;
     }
+
 }
