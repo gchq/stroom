@@ -29,6 +29,8 @@ dependencies {
     compile libs.javax_inject
     compile libs.ws_rs_api
     compile libs.guice4
+    compile libs.fast_infoset
+    compile libs.lmdbjava
 
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
