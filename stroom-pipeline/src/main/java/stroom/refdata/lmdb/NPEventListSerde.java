@@ -85,7 +85,10 @@ public class NPEventListSerde {
      */
     public byte[] serialize(NPEventList npEventList) {
         return pool.run(kryo -> {
+//            Deflater deflater = new Deflater(9);
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//            DeflaterOutputStream deflatedStream = new DeflaterOutputStream(stream, deflater);
+//            Output output = new Output(deflatedStream);
             Output output = new Output(stream);
             kryo.writeClassAndObject(output, npEventList);
             output.close();
@@ -102,6 +105,9 @@ public class NPEventListSerde {
      */
     public NPEventList deserialize(byte[] bytes) {
         return pool.run(kryo -> {
+//            Inflater inflater = new Inflater();
+//            InflaterInputStream inflaterInputStream = new InflaterInputStream(new ByteArrayInputStream(bytes), inflater);
+//            Input input = new Input(inflaterInputStream);
             Input input = new Input(bytes);
             return (NPEventList) kryo.readClassAndObject(input);
         });
