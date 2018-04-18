@@ -7,7 +7,6 @@ import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.repo.StroomZipEntry;
-import stroom.util.thread.ThreadUtil;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -23,7 +22,7 @@ import java.util.zip.ZipOutputStream;
 /**
  * Handler class that forwards the request to a URL.
  */
-public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
+class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
     private static Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandler.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
@@ -142,8 +141,15 @@ public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
         bytesSent += length;
         zipOutputStream.write(buffer, off, length);
         if (forwardDelayMs != null) {
-            LOGGER.debug("handleEntryData() - adding delay {}", forwardDelayMs);
-            ThreadUtil.sleep(forwardDelayMs);
+            try {
+                LOGGER.debug("handleEntryData() - adding delay {}", forwardDelayMs);
+                Thread.sleep(forwardDelayMs);
+            } catch (final InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

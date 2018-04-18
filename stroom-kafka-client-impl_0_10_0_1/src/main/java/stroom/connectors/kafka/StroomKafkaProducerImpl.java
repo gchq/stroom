@@ -1,6 +1,5 @@
 package stroom.connectors.kafka;
 
-import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -41,7 +40,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                 : null;
 
         if (this.properties != null) {
-            if (Strings.isNullOrEmpty(bootstrapServers)) {
+            if (bootstrapServers == null || bootstrapServers.isEmpty()) {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Kafka: %s is required.",
                         StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG);
@@ -75,7 +74,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
             //Even if kafka is down the producer will still create successfully. Any calls to send will however
             //block until it comes up or throw an exception on timeout
             this.producer = new KafkaProducer<>(props);
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(String.format("Error initialising kafka producer for %s, due to %s",
                     bootstrapServers, e.getMessage()), e);
         } finally {
@@ -103,9 +102,10 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
         futures.forEach(future -> {
             try {
                 metaDataList.add(future.get());
-            } catch (InterruptedException e) {
-                LOGGER.warn("Thread {} interrupted", Thread.currentThread().getName());
+            } catch (final InterruptedException e) {
+                // Continue to interrupt this thread.
                 Thread.currentThread().interrupt();
+                LOGGER.warn("Thread {} interrupted", Thread.currentThread().getName());
             } catch (ExecutionException e) {
                 //this is sync so throw rather than using the callback
                 throw new RuntimeException(
@@ -179,7 +179,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
         try {
             LOGGER.info("Closing down Kafka Producer");
             producer.close();
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Error closing kafka producer", e);
         }
     }

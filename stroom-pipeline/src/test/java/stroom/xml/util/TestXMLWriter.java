@@ -22,14 +22,16 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.entity.server.util.XMLUtil;
+import stroom.entity.util.XMLUtil;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedInputStream;
@@ -66,7 +68,7 @@ public class TestXMLWriter extends StroomUnitTest {
         boolean error = false;
         try {
             XMLUtil.prettyPrintXML(new ByteArrayInputStream("Test".getBytes()), new ByteArrayOutputStream());
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             error = true;
         }
         Assert.assertTrue(error);
@@ -116,10 +118,10 @@ public class TestXMLWriter extends StroomUnitTest {
 
                 bw.close();
 
-            } catch (final Throwable t) {
-                Assert.fail(t.getMessage());
+            } catch (final IOException | SAXException | ParserConfigurationException | RuntimeException e) {
+                Assert.fail(e.getMessage());
             }
-        } catch (final Throwable t) {
+        } catch (final IOException | RuntimeException e) {
             // Ignore...
         }
     }

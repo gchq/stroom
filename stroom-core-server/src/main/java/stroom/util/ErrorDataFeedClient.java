@@ -23,6 +23,7 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -138,12 +139,12 @@ public final class ErrorDataFeedClient {
 
             System.out.println(
                     "Client Got Response " + response + " in " + (System.currentTimeMillis() - startTime) + "ms");
-            if (msg != null && msg.length() > 0) {
+            if (msg != null && !msg.isEmpty()) {
                 System.out.println(msg);
             }
 
-        } catch (final Exception ex) {
-            ex.printStackTrace();
+        } catch (final IOException | RuntimeException e) {
+            e.printStackTrace();
         }
     }
 }

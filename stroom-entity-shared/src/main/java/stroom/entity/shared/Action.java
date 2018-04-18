@@ -28,20 +28,9 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
     private static final long serialVersionUID = 4730274660149532350L;
 
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(4);
-    boolean terminate;
     private TaskId id;
     private String applicationInstanceId;
     private String userToken;
-
-    @Override
-    public void terminate() {
-        terminate = true;
-    }
-
-    @Override
-    public boolean isTerminated() {
-        return terminate;
-    }
 
     public String getApplicationInstanceId() {
         return applicationInstanceId;
@@ -70,6 +59,11 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
     }
 
     @Override
+    public Task<?> getParentTask() {
+        return null;
+    }
+
+    @Override
     public String toString() {
         return getTaskName();
     }
@@ -88,11 +82,7 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
         }
 
         final Action<?> task = (Action<?>) o;
-        if (id != null && task.id != null) {
-            return id.equals(task.id);
-        }
-
-        return false;
+        return id != null && task.id != null && id.equals(task.id);
     }
 
     @Override

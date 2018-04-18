@@ -18,9 +18,7 @@
 
     <logger name="stroom" level="info" />
 
-    <logger name="stroom.statistics" level="debug" />
-
-    <logger name="org.springframework" level="info" />
+    <logger name="stroom.statistics" level="info" />
 
     <logger name="org.flywaydb" level="info" />
 

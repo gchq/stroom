@@ -12,7 +12,7 @@ dependencies {
     compile libs.gin
     compile libs.guice3
     compile libs.javax_inject
-    compile libs.gwtp_mvp_client
+        compile libs.gwtp_mvp_client
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

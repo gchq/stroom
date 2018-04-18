@@ -4,15 +4,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
+import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
-import stroom.util.shared.Monitor;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +56,7 @@ public final class ProxyRepositoryReader {
     private final RepositoryProcessor repositoryProcessor;
 
     @Inject
-    ProxyRepositoryReader(final Monitor monitor,
+    ProxyRepositoryReader(final TaskContext taskContext,
                           final ProxyRepositoryManager proxyRepositoryManager,
                           final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
                           final StreamHandlerFactory handlerFactory) {
@@ -66,11 +67,11 @@ public final class ProxyRepositoryReader {
 
         this.executorService = Executors.newFixedThreadPool(proxyRepositoryReaderConfig.getForwardThreadCount());
         final ProxyFileProcessor feedFileProcessor = new ProxyFileProcessorImpl(proxyRepositoryReaderConfig, handlerFactory, finish);
-        repositoryProcessor = new RepositoryProcessor(feedFileProcessor, executorService, monitor);
+        repositoryProcessor = new RepositoryProcessor(feedFileProcessor, executorService, taskContext);
     }
 
     private static Scheduler createScheduler(final String simpleCron) {
-        if (simpleCron != null && simpleCron.length() > 0) {
+        if (simpleCron != null && !simpleCron.isEmpty()) {
             return SimpleCron.compile(simpleCron).createScheduler();
         }
 
@@ -104,7 +105,13 @@ public final class ProxyRepositoryReader {
                     waiting = false;
                 } catch (final TimeoutException e) {
                     // Ignore.
-                } catch (final Exception e) {
+                } catch (final InterruptedException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    waiting = false;
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+                } catch (final ExecutionException | RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                     waiting = false;
                 }
@@ -123,6 +130,9 @@ public final class ProxyRepositoryReader {
                     condition.await(1, TimeUnit.SECONDS);
                 } catch (final InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
                 }
 
                 if (!finish.get()) {
@@ -138,8 +148,8 @@ public final class ProxyRepositoryReader {
 
                     try {
                         doRunWork();
-                    } catch (final Throwable ex) {
-                        LOGGER.error("run() - Unhandled exception coming out of doRunWork()", ex);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error("run() - Unhandled exception coming out of doRunWork()", e);
                     }
                 }
             }

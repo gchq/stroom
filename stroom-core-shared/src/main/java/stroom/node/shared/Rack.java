@@ -46,4 +46,10 @@ public class Rack extends NamedEntity {
     public final String getType() {
         return ENTITY_TYPE;
     }
+
+    public Rack copy() {
+        final Rack rack = new Rack();
+        rack.setName(getName());
+        return rack;
+    }
 }

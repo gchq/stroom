@@ -16,13 +16,10 @@
 
 package stroom.pipeline.state;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
-import stroom.util.spring.StroomScope;
+import stroom.guice.PipelineScoped;
 
-@Component
-@Scope(value = StroomScope.TASK)
+@PipelineScoped
 public class FeedHolder implements Holder {
     private Feed feed;
 

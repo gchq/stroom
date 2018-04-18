@@ -188,7 +188,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
             if (mode != null) {
                 try {
                     editor.setMode(mode);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     throw new RuntimeException("Unable to set mode '" + mode.getName() + "' perhaps the javascript for this mode is missing");
                 }
             }
@@ -207,7 +207,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
             if (theme != null) {
                 try {
                     editor.setTheme(theme);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     throw new RuntimeException("Unable to set theme '" + theme.getName() + "' perhaps the javascript for this theme is missing");
                 }
             }

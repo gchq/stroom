@@ -9,6 +9,5 @@
       &lt;name&gt;Indexing&lt;/name&gt;
       &lt;/doc&gt;
    </parentPipelineXML>
-   <pipelineType>Indexing</pipelineType>
    <uuid>c9c879ee-d88a-40ff-8654-d018f1c2d957</uuid>
 </pipeline>

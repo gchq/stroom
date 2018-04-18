@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  */
 class LogLevelInspector extends HealthCheck {
     @Override
-    protected Result check() throws Exception {
+    protected Result check() {
         LoggerContext loggerContext = ((LoggerContext) LoggerFactory.getILoggerFactory());
 
         if (loggerContext != null) {

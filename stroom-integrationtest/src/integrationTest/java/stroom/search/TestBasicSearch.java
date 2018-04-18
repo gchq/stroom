@@ -28,11 +28,11 @@ import org.apache.lucene.search.TermQuery;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
-import stroom.index.server.FieldFactory;
-import stroom.index.server.IndexShardKeyUtil;
-import stroom.index.server.IndexShardService;
-import stroom.index.server.IndexShardWriterCache;
-import stroom.index.server.Indexer;
+import stroom.index.FieldFactory;
+import stroom.index.IndexShardKeyUtil;
+import stroom.index.IndexShardService;
+import stroom.index.IndexShardWriterCache;
+import stroom.index.Indexer;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -40,24 +40,23 @@ import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.search.server.MaxHitCollector;
-import stroom.search.server.shard.IndexShardSearcher;
-import stroom.search.server.shard.IndexShardSearcherImpl;
+import stroom.search.shard.IndexShardSearcher;
+import stroom.search.shard.IndexShardSearcherImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 
 public class TestBasicSearch extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private Indexer indexer;
-    @Resource
+    @Inject
     private IndexShardWriterCache indexShardWriterCache;
-    @Resource
+    @Inject
     private IndexShardService indexShardService;
-    @Resource
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 
     @Test

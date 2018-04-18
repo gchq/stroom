@@ -37,7 +37,7 @@ public class StreamProcessor extends AuditedEntity {
     public static final String ENABLED = SQLNameConstants.ENABLED;
     public static final String ENTITY_TYPE = "StreamProcessor";
     public static final String PIPELINE_STREAM_PROCESSOR_TASK_TYPE = "pipelineStreamProcessor";
-    public static final String MANAGE_PROCESSORS_PERMISSION = "Manage Processors";
+
     //    public static final String VIEW_PROCESSORS_PERMISSION = "View Processors";
     private static final long serialVersionUID = -958099873937223257L;
     // Only One type for the moment

@@ -17,38 +17,50 @@
 package stroom.refdata;
 
 import stroom.query.api.v2.DocRef;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
+import stroom.util.date.DateUtil;
 
-public class EffectiveStreamKey {
+import java.util.Objects;
+
+class EffectiveStreamKey {
     private final DocRef feed;
     private final String streamType;
-    private final long effectiveMs;
-
+    private final long fromMs;
+    private final long toMs;
     private final int hashCode;
 
-    public EffectiveStreamKey(final DocRef feed, final String streamType, final long effectiveMs) {
+    EffectiveStreamKey(final DocRef feed, final String streamType, final long fromMs, final long toMs) {
         this.feed = feed;
         this.streamType = streamType;
-        this.effectiveMs = effectiveMs;
-
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(feed);
-        builder.append(streamType);
-        builder.append(effectiveMs);
-        hashCode = builder.toHashCode();
+        this.fromMs = fromMs;
+        this.toMs = toMs;
+        hashCode = Objects.hash(feed, streamType, fromMs, toMs);
     }
 
-    public DocRef getFeed() {
+    DocRef getFeed() {
         return feed;
     }
 
-    public String getStreamType() {
+    String getStreamType() {
         return streamType;
     }
 
-    public long getEffectiveMs() {
-        return effectiveMs;
+    long getFromMs() {
+        return fromMs;
+    }
+
+    long getToMs() {
+        return toMs;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final EffectiveStreamKey that = (EffectiveStreamKey) o;
+        return fromMs == that.fromMs &&
+                toMs == that.toMs &&
+                Objects.equals(feed, that.feed) &&
+                Objects.equals(streamType, that.streamType);
     }
 
     @Override
@@ -56,25 +68,24 @@ public class EffectiveStreamKey {
         return hashCode;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
+    public void append(final StringBuilder sb) {
+        if (feed != null) {
+            sb.append("feed = ");
+            sb.append(feed.getName());
+            sb.append(", ");
         }
-        if (o == null || !(o instanceof EffectiveStreamKey)) {
-            return false;
-        }
-
-        final EffectiveStreamKey effectiveStreamKey = (EffectiveStreamKey) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(feed, effectiveStreamKey.feed);
-        builder.append(streamType, effectiveStreamKey.streamType);
-        builder.append(effectiveMs, effectiveStreamKey.effectiveMs);
-        return builder.isEquals();
+        sb.append("streamType = ");
+        sb.append(streamType);
+        sb.append(", effectiveTimeWindow >= ");
+        sb.append(DateUtil.createNormalDateTimeString(fromMs));
+        sb.append(" < ");
+        sb.append(DateUtil.createNormalDateTimeString(toMs));
     }
 
     @Override
     public String toString() {
-        return "feed=" + feed + ", streamType=" + streamType + ",effectiveMs=" + effectiveMs;
+        final StringBuilder sb = new StringBuilder();
+        append(sb);
+        return sb.toString();
     }
 }

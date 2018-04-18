@@ -341,7 +341,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         entityDropDownPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         try {
             entityDropDownPresenter.setSelectedEntityReference(currentEntity);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             AlertEvent.fireError(this, e.getMessage(), null);
         }
 

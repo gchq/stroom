@@ -3,8 +3,7 @@ package stroom.statistics.internal;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.node.server.StroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
@@ -17,7 +16,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@Component
 public class InternalStatisticDocRefCache {
 
     static final String PROP_KEY_FORMAT = "stroom.internalstatistics.%s.docRefs";

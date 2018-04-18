@@ -17,19 +17,16 @@
 package stroom.task.cluster;
 
 import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.Monitor;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
-import stroom.util.task.HasMonitor;
-import stroom.util.task.MonitorImpl;
-import stroom.util.task.TaskIdFactory;
+import stroom.task.TaskIdFactory;
 
 import java.io.Serializable;
 
-public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Serializable, HasMonitor {
+public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Serializable {
     private static final long serialVersionUID = 4730274660149532350L;
 
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
@@ -38,24 +35,15 @@ public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Se
     private String taskName;
 
     private transient TaskId id;
-    private transient MonitorImpl monitor;
-
-//    public ClusterTask(final Task<?> parentTask, final String userToken, final String taskName) {
-//        if (parentTask != null) {
-//            this.userToken = parentTask.getUserToken();
-//        } else {
-//            this.userToken = null;
-//        }
-//        if (userToken != null) {
-//            this.userToken = userToken;
-//        }
-//
-//        this.taskName = taskName;
-//    }
 
     public ClusterTask(final String userToken, final String taskName) {
         this.userToken = userToken;
         this.taskName = taskName;
+    }
+
+    @Override
+    public Task<?> getParentTask() {
+        return null;
     }
 
     @Override
@@ -73,7 +61,6 @@ public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Se
      */
     public void assignId(final TaskId sourceTaskId) {
         this.id = TaskIdFactory.create(sourceTaskId);
-        this.monitor = new MonitorImpl();
     }
 
     @Override
@@ -110,26 +97,6 @@ public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Se
 
     public void setTaskName(final String taskName) {
         this.taskName = taskName;
-    }
-
-    @Override
-    public Monitor getMonitor() {
-        if (monitor == null) {
-            throw new UnsupportedOperationException(
-                    "You cannot get the monitor for a cluster task before it is executed on the worker node");
-        }
-
-        return monitor;
-    }
-
-    @Override
-    public boolean isTerminated() {
-        return getMonitor().isTerminated();
-    }
-
-    @Override
-    public void terminate() {
-        getMonitor().terminate();
     }
 
     @Override

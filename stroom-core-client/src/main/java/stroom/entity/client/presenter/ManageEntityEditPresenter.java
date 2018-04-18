@@ -22,8 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.DocumentServiceReadAction;
+import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.NamedEntity;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -32,15 +31,15 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-import java.util.Set;
-
 public abstract class ManageEntityEditPresenter<V extends View, E extends NamedEntity> extends MyPresenterWidget<V> {
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
     private E entity;
 
     @Inject
-    public ManageEntityEditPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher, final V view,
+    public ManageEntityEditPresenter(final EventBus eventBus,
+                                     final V view,
+                                     final ClientDispatchAsync dispatcher,
                                      final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
@@ -51,11 +50,7 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
         return securityContext;
     }
 
-//    protected boolean isCurrentUserUpdate() {
-//        return getSecurityContext().hasAppPermission(getEntityType(), DocumentPermissionNames.UPDATE);
-//    }
-
-    public void showEntity(final E entity, final PopupUiHandlers popupUiHandlers) {
+    void showEntity(final E entity, final PopupUiHandlers popupUiHandlers) {
         final String caption = getEntityDisplayType() + " - " + entity.getName();
 
         final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
@@ -76,12 +71,11 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
             }
         };
 
-        //final PopupType popupType = isCurrentUserUpdate() ? PopupType.OK_CANCEL_DIALOG : PopupType.CLOSE_DIALOG;
         final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
 
         if (entity.isPersistent()) {
             // Reload it so we always have the latest version
-            final DocumentServiceReadAction<E> action = new DocumentServiceReadAction<>(DocRefUtil.create(entity));
+            final EntityServiceLoadAction<E> action = new EntityServiceLoadAction<>(entity);
             dispatcher.exec(action).onSuccess(result -> {
                 setEntity(result);
                 read();
@@ -103,13 +97,7 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
 
     protected abstract PopupSize getPopupSize();
 
-    protected abstract String getEntityType();
-
     protected abstract String getEntityDisplayType();
-
-    protected final Set<String> getEntityFetchSet() {
-        return null;
-    }
 
     protected void hide() {
         HidePopupEvent.fire(ManageEntityEditPresenter.this, ManageEntityEditPresenter.this);

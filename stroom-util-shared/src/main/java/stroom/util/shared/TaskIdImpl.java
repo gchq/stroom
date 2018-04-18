@@ -43,11 +43,6 @@ public class TaskIdImpl implements TaskId {
     }
 
     @Override
-    public boolean hasAncestor(final TaskId id) {
-        return recursiveEquals(id, parentId);
-    }
-
-    @Override
     public boolean isOrHasAncestor(final TaskId id) {
         return recursiveEquals(id, this);
     }

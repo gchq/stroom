@@ -17,19 +17,19 @@
 
 package stroom.xml.converter;
 
-import stroom.cache.server.MockSchemaPool;
-import stroom.cache.server.SchemaLoaderImpl;
-import stroom.cache.server.SchemaPool;
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.filter.SchemaFilter;
+import stroom.cache.MockSchemaPool;
+import stroom.cache.SchemaLoaderImpl;
+import stroom.cache.SchemaPool;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.state.PipelineContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.xml.converter.ds3.DS3ParserFactory;
-import stroom.xmlschema.server.MockXMLSchemaService;
-import stroom.xmlschema.server.XMLSchemaCache;
-import stroom.xmlschema.server.XMLSchemaService;
+import stroom.xmlschema.MockXMLSchemaService;
+import stroom.xmlschema.XMLSchemaCache;
+import stroom.xmlschema.XMLSchemaService;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 

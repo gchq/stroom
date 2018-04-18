@@ -26,5 +26,5 @@ public interface DispatchServiceAsync {
      *
      * @see net.customware.gwt.dispatch.server.Dispatch
      */
-    <R extends SharedObject> void exec(Action<R> action, AsyncCallback<R> callback) throws RuntimeException;
+    <R extends SharedObject> void exec(Action<R> action, AsyncCallback<R> callback);
 }

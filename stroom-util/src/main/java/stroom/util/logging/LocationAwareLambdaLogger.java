@@ -77,14 +77,14 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
     }
 
     @Override
-    public <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork, final String workDescription) {
+    public <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier) {
         if (logger.isTraceEnabled()) {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             log(LocationAwareLogger.TRACE_INT,
                     () -> LambdaLogger.buildMessage(
                             "Completed [{}] in {}",
-                            workDescription,
+                            workDescriptionSupplier.get(),
                             Duration.between(startTime, Instant.now())),
                     null);
             return result;
@@ -94,14 +94,14 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
     }
 
     @Override
-    public <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork, final String workDescription) {
+    public <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier) {
         if (logger.isDebugEnabled()) {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             log(LocationAwareLogger.DEBUG_INT,
                     () -> LambdaLogger.buildMessage(
                             "Completed [{}] in {}",
-                            workDescription,
+                            workDescriptionSupplier.get(),
                             Duration.between(startTime, Instant.now())),
                     null);
             return result;
@@ -111,14 +111,14 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
     }
 
     @Override
-    public <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork, final String workDescription) {
+    public <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier) {
         if (logger.isInfoEnabled()) {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             log(LocationAwareLogger.INFO_INT,
                     () -> LambdaLogger.buildMessage(
                             "Completed [{}] in {}",
-                            workDescription,
+                            workDescriptionSupplier.get(),
                             Duration.between(startTime, Instant.now())),
                     null);
             return result;
@@ -127,14 +127,83 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
         }
     }
 
+    @Override
+    public void logDurationIfTraceEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier) {
+        if (logger.isTraceEnabled()) {
+            final Instant startTime = Instant.now();
+            timedWork.run();
+            log(LocationAwareLogger.TRACE_INT,
+                    () -> LambdaLogger.buildMessage(
+                            "Completed [{}] in {}",
+                            workDescriptionSupplier.get(),
+                            Duration.between(startTime, Instant.now())),
+                    null);
+        } else {
+            timedWork.run();
+        }
+    }
+
+    @Override
+    public void logDurationIfDebugEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier) {
+        if (logger.isDebugEnabled()) {
+            final Instant startTime = Instant.now();
+            timedWork.run();
+            log(LocationAwareLogger.DEBUG_INT,
+                    () -> LambdaLogger.buildMessage(
+                            "Completed [{}] in {}",
+                            workDescriptionSupplier.get(),
+                            Duration.between(startTime, Instant.now())),
+                    null);
+        } else {
+            timedWork.run();
+        }
+    }
+
+    @Override
+    public void logDurationIfInfoEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier) {
+        if (logger.isInfoEnabled()) {
+            final Instant startTime = Instant.now();
+            timedWork.run();
+            log(LocationAwareLogger.INFO_INT,
+                    () -> LambdaLogger.buildMessage(
+                            "Completed [{}] in {}",
+                            workDescriptionSupplier.get(),
+                            Duration.between(startTime, Instant.now())),
+                    null);
+        } else {
+            timedWork.run();
+        }
+    }
+
+    @Override
+    public void doIfTraceEnabled(final Runnable work) {
+        if (logger.isTraceEnabled()) {
+            work.run();
+        }
+    }
+
+    @Override
+    public void doIfDebugEnabled(final Runnable work) {
+        if (logger.isDebugEnabled()) {
+            work.run();
+        }
+    }
+
+    @Override
+    public void doIfInfoEnabled(final Runnable work) {
+        if (logger.isInfoEnabled()) {
+            work.run();
+        }
+    }
+
     private void log(final int severity, final Supplier<String> message, final Throwable t) {
         try {
             logger.log(null, FQCN, severity, message.get(), null, t);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             try {
                 logger.log(null, FQCN, LocationAwareLogger.ERROR_INT, "ERROR LOGGING MESSAGE - " + e.getMessage(), null, e);
-            } catch (final Exception e2) {
-                // Ignore.
+            } catch (final RuntimeException ex) {
+                ex.printStackTrace();
             }
         }
     }

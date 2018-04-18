@@ -26,6 +26,7 @@ import stroom.util.io.StreamProgressMonitor;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -161,7 +162,7 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         if (hostName == null) {
             try {
                 hostName = InetAddress.getLocalHost().getHostName();
-            } catch (final Exception ex) {
+            } catch (final UnknownHostException e) {
                 hostName = "Unknown";
             }
         }

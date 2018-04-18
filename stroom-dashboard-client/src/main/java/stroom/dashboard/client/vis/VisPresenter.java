@@ -308,7 +308,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
             }
 
             updateStatusMessage();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             GWT.log(e.getMessage(), e);
         }
     }
@@ -334,7 +334,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         if (visDashboardSettings != null && visDashboardSettings.getJSON() != null) {
             try {
                 settingsObject = JSONUtil.getObject(JSONUtil.parse(visDashboardSettings.getJSON()));
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 getView().showMessage("Unable to parse settings");
             }
         }
@@ -362,7 +362,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                                     possibleSettings = JSONUtil.getObject(JSONUtil.parse(result.getSettings()));
                                 }
                             }
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             failure(function, "Unable to parse settings for visualisaton: "
                                     + visSettings.getVisualisation());
                         }
@@ -421,7 +421,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                         currentError = null;
                     }
 
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     currentError = e.getMessage();
                 }
             } else if (LoadStatus.FAILURE.equals(function.getStatus())) {
@@ -429,7 +429,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 try {
                     // getView().clear();
                     currentError = null;
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     // Ignore.
                 }
             }

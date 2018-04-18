@@ -16,50 +16,40 @@
 
 package stroom.test;
 
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import stroom.logging.spring.EventLoggingConfiguration;
-import stroom.dashboard.spring.DashboardConfiguration;
-import stroom.dictionary.spring.DictionaryConfiguration;
-import stroom.explorer.server.ExplorerConfiguration;
-import stroom.index.spring.IndexConfiguration;
-import stroom.pipeline.spring.PipelineConfiguration;
-import stroom.ruleset.spring.RuleSetConfiguration;
-import stroom.script.spring.ScriptConfiguration;
-import stroom.search.spring.SearchConfiguration;
-import stroom.security.spring.SecurityConfiguration;
-import stroom.spring.MetaDataStatisticConfiguration;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ScopeTestConfiguration;
-import stroom.spring.ServerComponentScanTestConfiguration;
-import stroom.spring.ServerConfiguration;
-import stroom.statistics.spring.StatisticsConfiguration;
-import stroom.util.spring.StroomSpringProfiles;
-import stroom.visualisation.spring.VisualisationConfiguration;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.Before;
+import stroom.persist.PersistService;
+import stroom.task.TaskManager;
 
-@ActiveProfiles(value = {
-        StroomSpringProfiles.PROD,
-        StroomSpringProfiles.IT,
-        SecurityConfiguration.MOCK_SECURITY})
-@ContextConfiguration(classes = {
-        DashboardConfiguration.class,
-        EventLoggingConfiguration.class,
-        IndexConfiguration.class,
-        MetaDataStatisticConfiguration.class,
-        PersistenceConfiguration.class,
-        DictionaryConfiguration.class,
-        PipelineConfiguration.class,
-        RuleSetConfiguration.class,
-        ScopeConfiguration.class,
-        ScopeTestConfiguration.class,
-        ScriptConfiguration.class,
-        SearchConfiguration.class,
-        SecurityConfiguration.class,
-        ExplorerConfiguration.class,
-        ServerComponentScanTestConfiguration.class,
-        ServerConfiguration.class,
-        StatisticsConfiguration.class,
-        VisualisationConfiguration.class})
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
+    private static final Injector injector;
+
+    static {
+        injector = Guice.createInjector(new CoreTestModule());
+
+        // Start persistance
+        injector.getInstance(PersistService.class).start();
+
+        // Start task manager
+        injector.getInstance(TaskManager.class).startup();
+    }
+
+    @Before
+    public void before() {
+//        final Injector childInjector = injector.createChildInjector();
+//        childInjector.injectMembers(this);
+
+        injector.injectMembers(this);
+        super.before();
+    }
+//
+//    @After
+//    public void after() {
+//        // Stop task manager
+//        injector.getInstance(TaskManager.class).shutdown();
+//
+//        // Stop persistance
+//        injector.getInstance(PersistService.class).stop();
+//    }
 }

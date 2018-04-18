@@ -17,42 +17,45 @@
 
 package stroom.entity.cluster;
 
-import org.springframework.context.annotation.Scope;
-import stroom.entity.server.FindCloseService;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.entity.FindCloseService;
+import stroom.guice.StroomBeanStore;
+import stroom.security.Security;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindCloseServiceClusterTask.class)
-@Scope(value = StroomScope.TASK)
-public class FindCloseServiceClusterHandler extends AbstractTaskHandler<FindCloseServiceClusterTask<?>, VoidResult> {
+class FindCloseServiceClusterHandler extends AbstractTaskHandler<FindCloseServiceClusterTask<?>, VoidResult> {
     private final StroomBeanStore stroomBeanStore;
+    private final Security security;
 
     @Inject
-    FindCloseServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
+    FindCloseServiceClusterHandler(final StroomBeanStore stroomBeanStore,
+                                   final Security security) {
         this.stroomBeanStore = stroomBeanStore;
+        this.security = security;
     }
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
     public VoidResult exec(final FindCloseServiceClusterTask<?> task) {
-        if (task == null) {
-            throw new RuntimeException("No task supplied");
-        }
-        if (task.getBeanClass() == null) {
-            throw new RuntimeException("No task bean class supplied");
-        }
+        return security.secureResult(() -> {
+            if (task == null) {
+                throw new RuntimeException("No task supplied");
+            }
+            if (task.getBeanClass() == null) {
+                throw new RuntimeException("No task bean class supplied");
+            }
 
-        final Object obj = stroomBeanStore.getBean(task.getBeanClass());
-        if (obj == null) {
-            throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
-        }
+            final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
+            if (obj == null) {
+                throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
+            }
 
-        ((FindCloseService) obj).findClose(task.getCriteria());
-        return new VoidResult();
+            ((FindCloseService) obj).findClose(task.getCriteria());
+            return new VoidResult();
+        });
     }
 }

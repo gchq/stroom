@@ -17,32 +17,32 @@
 package stroom.test;
 
 import org.junit.Assert;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
-import stroom.node.server.NodeCache;
+import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.tools.StoreCreationTool;
-import stroom.streamtask.server.StreamProcessorTask;
-import stroom.streamtask.server.StreamProcessorTaskExecutor;
-import stroom.streamtask.server.StreamTaskCreator;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.tools.StoreCreationTool;
+import stroom.streamtask.StreamProcessorTask;
+import stroom.streamtask.StreamProcessorTaskExecutor;
+import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
-import stroom.task.server.TaskManager;
-import stroom.task.server.TaskMonitorImpl;
-import stroom.util.spring.StroomSpringProfiles;
+import stroom.task.SimpleTaskContext;
+import stroom.task.TaskManager;
+import stroom.util.io.FileUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Component
-@Profile(StroomSpringProfiles.IT)
 public class CommonTranslationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTest.class);
     public static final String FEED_NAME = "TEST_FEED";
     private static final String DIR = "CommonTranslationTest/";
     public static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
@@ -71,21 +71,29 @@ public class CommonTranslationTest {
     private static final Path EMPLOYEE_REFERENCE_CSV = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "EmployeeReference.in");
 
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private StreamTaskCreator streamTaskCreator;
-    @Resource
-    private StoreCreationTool storeCreationTool;
-    @Resource
-    private TaskManager taskManager;
-    @Resource
-    private StreamStore streamStore;
+    private final NodeCache nodeCache;
+    private final StreamTaskCreator streamTaskCreator;
+    private final StoreCreationTool storeCreationTool;
+    private final TaskManager taskManager;
+    private final StreamStore streamStore;
 
-    public List<StreamProcessorTaskExecutor> processAll() throws Exception {
+    @Inject
+    CommonTranslationTest(final NodeCache nodeCache,
+                          final StreamTaskCreator streamTaskCreator,
+                          final StoreCreationTool storeCreationTool,
+                          final TaskManager taskManager,
+                          final StreamStore streamStore) {
+        this.nodeCache = nodeCache;
+        this.streamTaskCreator = streamTaskCreator;
+        this.storeCreationTool = storeCreationTool;
+        this.taskManager = taskManager;
+        this.streamStore = streamStore;
+    }
+
+    public List<StreamProcessorTaskExecutor> processAll() {
         // Force creation of stream tasks.
         if (streamTaskCreator instanceof StreamTaskCreator) {
-            streamTaskCreator.createTasks(new TaskMonitorImpl());
+            streamTaskCreator.createTasks(new SimpleTaskContext());
         }
 
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
@@ -103,10 +111,22 @@ public class CommonTranslationTest {
     }
 
     public void setup() throws IOException {
-        setup(FEED_NAME, VALID_RESOURCE_NAME);
+        setup(FEED_NAME, Collections.singletonList(VALID_RESOURCE_NAME));
+    }
+
+    public void setup(final Path dataLocation) throws IOException {
+        setup(FEED_NAME, Collections.singletonList(dataLocation));
+    }
+
+    public void setup(final List<Path> dataLocations) throws IOException {
+        setup(FEED_NAME, dataLocations);
     }
 
     public void setup(final String feedName, final Path dataLocation) throws IOException {
+        setup(feedName, Collections.singletonList(dataLocation));
+    }
+
+    public void setup(final String feedName, final List<Path> dataLocations) throws IOException {
         // commonTestControl.setup();
 
         // Setup the feed definitions.
@@ -123,8 +143,16 @@ public class CommonTranslationTest {
         referenceFeeds.add(hostNameToLocation);
         referenceFeeds.add(idToUser);
 
-        storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
-                XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
+        dataLocations.forEach(dataLocation -> {
+            try {
+                LOGGER.info("Adding data from file {}", FileUtil.getCanonicalPath(dataLocation));
+                storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
+                        XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
+            } catch (IOException e) {
+                throw new RuntimeException(String.format("Error adding event data for file %s",
+                        FileUtil.getCanonicalPath(dataLocation)), e);
+            }
+        });
 
         Assert.assertEquals(0, streamStore.getLockCount());
     }

@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -87,7 +88,7 @@ public class VisPanel extends SimplePanel implements VisPane {
                             // Inject the next script in the list.
                             injectScriptDirectly(scripts, function);
 
-                        } catch (final Exception e) {
+                        } catch (final RuntimeException e) {
                             failure(function, "Failed to inject script '" + script.getName() + "' - " + e.getMessage());
                         }
                     } else {
@@ -139,7 +140,7 @@ public class VisPanel extends SimplePanel implements VisPane {
                                         failure(function, "Failed to inject script '" + script.getName() + "' - Status "
                                                 + response.getStatusCode());
                                     }
-                                } catch (final Exception e) {
+                                } catch (final RuntimeException e) {
                                     failure(function,
                                             "Failed to inject script '" + script.getName() + "' - " + e.getMessage());
                                 } finally {
@@ -165,7 +166,7 @@ public class VisPanel extends SimplePanel implements VisPane {
                         final RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.GET, url);
                         requestBuilder.setCallback(requestCallback);
                         requestBuilder.send();
-                    } catch (final Throwable e) {
+                    } catch (final RequestException | RuntimeException e) {
                         failure(function, "Failed to inject script '" + script.getName() + "' - " + e.getMessage());
                     }
 
@@ -205,14 +206,14 @@ public class VisPanel extends SimplePanel implements VisPane {
                         }
 
                         @Override
-                        public void onFailure(final Exception reason) {
+                        public void onFailure(final Exception e) {
                             // Remember that we have loaded or at least
                             // attempted to load this script so we don't try and
                             // fetch it again.
                             loadedScripts.add(script.getId());
                             // Show failure message.
                             failure(function,
-                                    "Failed to inject script '" + script.getName() + "' - " + reason.getMessage());
+                                    "Failed to inject script '" + script.getName() + "' - " + e.getMessage());
                         }
                     };
 

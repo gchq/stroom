@@ -40,8 +40,10 @@ public class ConditionalWait {
                 //TODO need to adjust the sleep time on each iteration to ensure we don't go over the
                 //requested timeout
                 Thread.sleep(sleepTimeMs);
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
+                // Continue to interrupt this thread.
                 Thread.currentThread().interrupt();
+
                 return Outcome.INTERRUPTED;
             }
         }

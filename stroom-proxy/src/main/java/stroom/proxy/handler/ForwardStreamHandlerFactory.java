@@ -1,9 +1,8 @@
 package stroom.proxy.handler;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Arrays;
@@ -22,8 +21,8 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory {
 
     @Inject
     ForwardStreamHandlerFactory(final LogStream logStream,
-                                @Nullable final ForwardStreamConfig forwardStreamConfig,
-                                @Nullable final ProxyRepositoryConfig proxyRepositoryConfig) {
+                                final ForwardStreamConfig forwardStreamConfig,
+                                final ProxyRepositoryConfig proxyRepositoryConfig) {
         this.logStream = logStream;
         this.forwardStreamConfig = forwardStreamConfig;
         this.proxyRepositoryConfig = proxyRepositoryConfig;
@@ -37,7 +36,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory {
 
     @Override
     public List<StreamHandler> addReceiveHandlers(final List<StreamHandler> handlers) {
-        if (proxyRepositoryConfig == null || StringUtils.isBlank(proxyRepositoryConfig.getRepoDir())) {
+        if (proxyRepositoryConfig == null || Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir())) {
             add(handlers);
         }
         return handlers;
@@ -45,7 +44,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory {
 
     @Override
     public List<StreamHandler> addSendHandlers(final List<StreamHandler> handlers) {
-        if (proxyRepositoryConfig != null && StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir())) {
+        if (proxyRepositoryConfig != null && !Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir())) {
             add(handlers);
         }
         return handlers;

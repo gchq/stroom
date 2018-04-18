@@ -16,21 +16,16 @@
 
 package stroom.task.cluster;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.cluster.server.ClusterNodeManager;
-import stroom.cluster.server.ClusterState;
-import stroom.node.server.NodeCache;
+import stroom.cluster.ClusterNodeManager;
+import stroom.cluster.ClusterState;
+import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-@Scope(value = StroomScope.TASK)
-@Component
 public class TargetNodeSetFactory {
     private final NodeCache nodeCache;
     private final ClusterNodeManager clusterNodeManager;

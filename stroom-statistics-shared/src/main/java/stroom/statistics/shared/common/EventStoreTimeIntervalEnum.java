@@ -76,7 +76,7 @@ public enum EventStoreTimeIntervalEnum implements HasDisplayValue {
     public static EventStoreTimeIntervalEnum fromColumnInterval(final long columnInterval) {
         try {
             return fromColumnIntervalMap.get(columnInterval);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new IllegalArgumentException(
                     "The provided columnInterval [" + columnInterval + "] is not a valid event store interval", e);
         }
@@ -85,7 +85,7 @@ public enum EventStoreTimeIntervalEnum implements HasDisplayValue {
     public static EventStoreTimeIntervalEnum fromShortName(final String shortName) {
         try {
             return fromShortnameMap.get(shortName);
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new IllegalArgumentException(
                     "The provided shortName [" + shortName + "] is not a valid name for an event store", e);
         }

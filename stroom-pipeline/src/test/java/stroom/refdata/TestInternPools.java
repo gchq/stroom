@@ -18,9 +18,8 @@ package stroom.refdata;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.pipeline.server.filter.EventListInternPool;
+import stroom.pipeline.filter.EventListInternPool;
 import stroom.util.test.StroomUnitTest;
-import stroom.util.thread.ThreadUtil;
 import stroom.xml.event.EventList;
 
 public class TestInternPools extends StroomUnitTest {
@@ -32,7 +31,7 @@ public class TestInternPools extends StroomUnitTest {
     }
 
     @Test
-    public void testMapStoreInternPool() {
+    public void testMapStoreInternPool() throws InterruptedException {
         final MapStoreInternPool internPool = new MapStoreInternPool();
 
         MapStore mapStore1 = MapStoreTestUtil.createMapStore();
@@ -54,12 +53,12 @@ public class TestInternPools extends StroomUnitTest {
         mapStore4 = null;
 
         System.gc();
-        ThreadUtil.sleep(100);
+        Thread.sleep(100);
         System.out.println("size=" + internPool.size());
     }
 
     @Test
-    public void testMultiRef() {
+    public void testMultiRef() throws InterruptedException {
         EventList eventList = MapStoreTestUtil.createEventList();
         MapStore mapStore = MapStoreTestUtil.createMapStore(eventList);
 
@@ -73,7 +72,7 @@ public class TestInternPools extends StroomUnitTest {
         eventList = null;
 
         System.gc();
-        ThreadUtil.sleep(100);
+        Thread.sleep(100);
         System.out.println("mapStoreInternPool=" + mapStoreInternPool.size());
         System.out.println("eventListInternPool=" + eventListInternPool.size());
     }

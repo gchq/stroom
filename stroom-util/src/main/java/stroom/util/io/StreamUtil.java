@@ -383,8 +383,8 @@ public final class StreamUtil {
             if (outputStream != null) {
                 outputStream.close();
             }
-        } catch (final Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -393,8 +393,8 @@ public final class StreamUtil {
             if (inputStream != null) {
                 inputStream.close();
             }
-        } catch (final Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

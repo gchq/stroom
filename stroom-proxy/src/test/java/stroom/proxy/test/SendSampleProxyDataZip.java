@@ -1,5 +1,6 @@
 package stroom.proxy.test;
 
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -43,7 +44,7 @@ public class SendSampleProxyDataZip {
                 connection.disconnect();
 
                 System.out.println("Client Got Response " + response);
-                if (msg != null && msg.length() > 0) {
+                if (msg != null && !msg.isEmpty()) {
                     System.out.println(msg);
                 }
             }

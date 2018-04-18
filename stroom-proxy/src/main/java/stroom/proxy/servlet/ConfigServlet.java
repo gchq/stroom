@@ -18,7 +18,7 @@ public class ConfigServlet extends HttpServlet {
         try {
             final byte[] bytes = Files.readAllBytes(Paths.get(path));
             data = new String(bytes, Charset.forName("UTF-8"));
-        } catch (final Exception e) {
+        } catch (final IOException e) {
             data = "Unable to read config";
         }
         this.data = data;

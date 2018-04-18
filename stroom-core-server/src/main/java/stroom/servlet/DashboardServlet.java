@@ -16,21 +16,15 @@
 
 package stroom.servlet;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.node.server.StroomPropertyService;
-import stroom.util.spring.StroomScope;
+import stroom.properties.StroomPropertyService;
 
 import javax.inject.Inject;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class DashboardServlet extends AppServlet {
     @Inject
-    public DashboardServlet(final StroomPropertyService stroomPropertyService) {
+    DashboardServlet(final StroomPropertyService stroomPropertyService) {
         super(stroomPropertyService);
     }
-
 
     String getScript() {
         return "dashboard/dashboard.nocache.js";

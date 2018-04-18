@@ -19,7 +19,7 @@ package stroom.entity.shared;
 import java.util.Set;
 
 public interface HasLoadByUuid<E extends Entity> {
-    E loadByUuid(String uuid) throws RuntimeException;
+    E loadByUuid(String uuid);
 
-    E loadByUuid(String uuid, Set<String> fetchSet) throws RuntimeException;
+    E loadByUuid(String uuid, Set<String> fetchSet);
 }

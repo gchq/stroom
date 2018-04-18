@@ -16,29 +16,26 @@
 
 package stroom.headless;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.dictionary.spring.DictionaryConfiguration;
-import stroom.entity.server.util.XMLUtil;
-import stroom.explorer.server.ExplorerConfiguration;
-import stroom.importexport.server.ImportExportService;
-import stroom.node.server.NodeCache;
-import stroom.node.server.VolumeService;
+import org.xml.sax.SAXException;
+import stroom.entity.util.XMLUtil;
+import stroom.guice.PipelineScopeRunnable;
+import stroom.importexport.ImportExportService;
+import stroom.node.NodeCache;
+import stroom.node.VolumeService;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
-import stroom.pipeline.server.filter.SafeXMLFilter;
-import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.persist.PersistService;
+import stroom.pipeline.filter.SafeXMLFilter;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ServerConfiguration;
-import stroom.task.server.GenericServerTask;
-import stroom.task.server.TaskManager;
+import stroom.task.ExternalShutdownController;
+import stroom.task.TaskManager;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.config.StroomProperties;
 import stroom.util.config.StroomProperties.Source;
@@ -46,10 +43,8 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.task.ExternalShutdownController;
-import stroom.util.task.TaskScopeRunnable;
 
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedOutputStream;
@@ -70,8 +65,6 @@ import java.util.stream.Stream;
 public class Headless extends AbstractCommandLineTool {
     private static final Logger LOGGER = LoggerFactory.getLogger(Headless.class);
 
-    private ApplicationContext appContext = null;
-
     private String input;
     private String output;
     private String config;
@@ -82,7 +75,7 @@ public class Headless extends AbstractCommandLineTool {
     private Path configFile;
     private Path tmpDir;
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         new Headless().doMain(args);
     }
 
@@ -167,12 +160,7 @@ public class Headless extends AbstractCommandLineTool {
 
             StroomProperties.setOverrideProperty("stroom.lifecycle.enabled", "false", Source.TEST);
 
-            new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
-                @Override
-                protected void exec() {
-                    process();
-                }
-            }.run();
+            process();
         } finally {
             StroomProperties.removeOverrides();
 
@@ -186,8 +174,30 @@ public class Headless extends AbstractCommandLineTool {
         // Initialise some variables.
         init();
 
+        final Injector injector = createInjector();
+        // Start persistance.
+        injector.getInstance(PersistService.class).start();
+        try {
+            final PipelineScopeRunnable pipelineScopeRunnable = injector.getInstance(PipelineScopeRunnable.class);
+            pipelineScopeRunnable.scopeRunnable(() -> {
+                process(injector);
+            });
+        } finally {
+            // Stop persistance.
+            injector.getInstance(PersistService.class).stop();
+        }
+
+        LOGGER.info("Processing completed in "
+                + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
+    }
+
+    private void process(final Injector injector) {
+        // Because we use HSQLDB for headless we need to insert stream types this way for now.
+        final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper = injector.getInstance(StreamTypeServiceTransactionHelper.class);
+        streamTypeServiceTransactionHelper.doInserts();
+
         // Read the configuration.
-        readConfig();
+        readConfig(injector);
 
         OutputStreamWriter outputStreamWriter = null;
         try {
@@ -210,12 +220,12 @@ public class Headless extends AbstractCommandLineTool {
             // Output the start root element.
             headlessFilter.beginOutput();
 
-            processRepository(headlessFilter);
+            processRepository(injector, headlessFilter);
 
             // Output the end root element.
             headlessFilter.endOutput();
 
-        } catch (final Throwable e) {
+        } catch (final IOException | TransformerConfigurationException | SAXException | RuntimeException e) {
             LOGGER.error("Unable to process headless", e);
         } finally {
             try {
@@ -228,14 +238,11 @@ public class Headless extends AbstractCommandLineTool {
                 LOGGER.error("Unable to flush and close outputStreamWriter", e);
             }
         }
-
-        LOGGER.info("Processing completed in "
-                + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
     }
 
-    private void processRepository(final HeadlessFilter headlessFilter) {
+    private void processRepository(final Injector injector, final HeadlessFilter headlessFilter) {
         try {
-            final TaskManager taskManager = getAppContext().getBean(TaskManager.class);
+            final TaskManager taskManager = injector.getInstance(TaskManager.class);
 
             // Loop over all of the data files in the repository.
             final StroomZipRepository repo = new StroomZipRepository(FileUtil.getCanonicalPath(inputDir));
@@ -263,54 +270,32 @@ public class Headless extends AbstractCommandLineTool {
 
                         // Close the zip file.
                         stroomZipFile.close();
-                    } catch (final Exception e) {
+                    } catch (final IOException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                 });
             }
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to process repository!", e);
         }
     }
 
-    private void readConfig() {
+    private void readConfig(final Injector injector) {
         LOGGER.info("Reading configuration from: " + FileUtil.getCanonicalPath(configFile));
 
-        final ImportExportService importExportService = getAppContext().getBean(ImportExportService.class);
+        final ImportExportService importExportService = injector.getInstance(ImportExportService.class);
         importExportService.performImportWithoutConfirmation(configFile);
 
-        final NodeCache nodeCache = getAppContext().getBean(NodeCache.class);
-        final VolumeService volumeService = getAppContext().getBean(VolumeService.class);
+        final NodeCache nodeCache = injector.getInstance(NodeCache.class);
+        final VolumeService volumeService = injector.getInstance(VolumeService.class);
         volumeService
                 .save(Volume.create(nodeCache.getDefaultNode(), FileUtil.getCanonicalPath(tmpDir) + "/cvol", VolumeType.PUBLIC));
     }
 
-    private ApplicationContext getAppContext() {
-        if (appContext == null) {
-            appContext = buildAppContext();
-        }
-        return appContext;
-    }
+    private Injector createInjector() {
+        final Injector injector = Guice.createInjector(new HeadlessModule());
+        injector.injectMembers(this);
 
-    private ApplicationContext buildAppContext() {
-        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
-        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-//                DashboardConfiguration.class,
-//                EventLoggingConfiguration.class,
-//                IndexConfiguration.class,
-//                MetaDataStatisticConfiguration.class,
-                PersistenceConfiguration.class,
-                DictionaryConfiguration.class,
-                PipelineConfiguration.class,
-                ScopeConfiguration.class,
-//                ScriptConfiguration.class,
-//                SearchConfiguration.class,
-//                SecurityConfiguration.class,
-                ExplorerConfiguration.class,
-                ServerConfiguration.class,
-//                StatisticsConfiguration.class,
-//                VisualisationConfiguration.class,
-                HeadlessConfiguration.class);
-        return context;
+        return injector;
     }
 }

@@ -57,8 +57,8 @@ public final class SAXParserFactoryFactory {
             sb.append(IMP_USED);
             sb.append(factory.getClass().getName());
             LOGGER.info(sb.toString());
-        } catch (final Exception ex) {
-            LOGGER.error("Unable to configure SAXParserFactory!", ex);
+        } catch (final RuntimeException e) {
+            LOGGER.error("Unable to configure SAXParserFactory!", e);
         }
     }
 

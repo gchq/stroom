@@ -80,7 +80,7 @@ public class StroomStatsStoreFieldEditPresenter
             AlertEvent.fireWarn(this, "Another field with this name already exists", null);
             return false;
         }
-        if (fieldNamePattern != null && fieldNamePattern.length() > 0) {
+        if (fieldNamePattern != null && !fieldNamePattern.isEmpty()) {
             if (name == null || !name.matches(fieldNamePattern)) {
                 AlertEvent.fireWarn(this,
                         "Invalid name \"" + name + "\" (valid name pattern: " + fieldNamePattern + ")", null);

@@ -25,11 +25,9 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
-import stroom.feed.server.MockFeedService;
+import stroom.feed.MockFeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.MockPipelineService;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.MockPipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.impl.MockReferenceDataLoader;
@@ -90,7 +88,7 @@ public class TestReferenceData extends StroomUnitTest {
             checkData(referenceData, pipelineReferences, "SID_TO_PF_2");
             checkData(referenceData, pipelineReferences, "SID_TO_PF_3");
             checkData(referenceData, pipelineReferences, "SID_TO_PF_4");
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -120,25 +118,18 @@ public class TestReferenceData extends StroomUnitTest {
 
     private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences,
                            final String mapName) {
-        final ErrorReceiver errorReceiver = new FatalErrorReceiver();
+        final ReferenceDataResult result = new ReferenceDataResult();
+        data.getValue(pipelineReferences, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.111Z"), mapName, "user1", result);
 
-        Assert.assertEquals("B1111", getStringFromEvents(data.getValue(pipelineReferences, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.111Z"), mapName, "user1")));
-        Assert.assertEquals("B1111", getStringFromEvents(data.getValue(pipelineReferences, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2015-01-01T09:47:00.000Z"), mapName, "user1")));
-        Assert.assertEquals("A1111", getStringFromEvents(data.getValue(pipelineReferences, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2009-10-01T09:47:00.000Z"), mapName, "user1")));
-        Assert.assertEquals("A1111", getStringFromEvents(data.getValue(pipelineReferences, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"), mapName, "user1")));
-        Assert.assertEquals("1111", getStringFromEvents(data.getValue(pipelineReferences, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z"), mapName, "user1")));
+        Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1"));
+        Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1"));
+        Assert.assertEquals("A1111", lookup(data, pipelineReferences, "2009-10-01T09:47:00.000Z", mapName, "user1"));
+        Assert.assertEquals("A1111", lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1"));
+        Assert.assertEquals("1111", lookup(data, pipelineReferences, "2008-01-01T09:47:00.000Z", mapName, "user1"));
 
-        Assert.assertNull(getStringFromEvents(data.getValue(pipelineReferences, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2006-01-01T09:47:00.000Z"), mapName, "user1")));
-        Assert.assertNull(getStringFromEvents(data.getValue(pipelineReferences, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"), mapName, "user1_X")));
-        Assert.assertNull(getStringFromEvents(data.getValue(pipelineReferences, errorReceiver,
-                DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"), "SID_TO_PF_X", "user1")));
+        Assert.assertNull(lookup(data, pipelineReferences, "2006-01-01T09:47:00.000Z", mapName, "user1"));
+        Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1_X"));
+        Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", "SID_TO_PF_X", "user1"));
     }
 
     @Test
@@ -152,8 +143,6 @@ public class TestReferenceData extends StroomUnitTest {
 
         pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipelineEntity),
                 DocRefUtil.create(feed1), StreamType.REFERENCE.getName()));
-
-        final ErrorReceiver errorReceiver = new FatalErrorReceiver();
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
@@ -172,13 +161,10 @@ public class TestReferenceData extends StroomUnitTest {
             mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
             referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
 
-            Assert.assertEquals("091111", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
-                    0, "CARD_NUMBER_TO_PF_NUMBER", "011111")));
-            Assert.assertEquals("user1", getStringFromEvents(
-                    referenceData.getValue(pipelineReferences, errorReceiver, 0, "NUMBER_TO_SID", "091111")));
+            Assert.assertEquals("091111", lookup(referenceData, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER", "011111"));
+            Assert.assertEquals("user1", lookup(referenceData, pipelineReferences, 0, "NUMBER_TO_SID", "091111"));
 
-            Assert.assertEquals("user1", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
-                    0, "CARD_NUMBER_TO_PF_NUMBER/NUMBER_TO_SID", "011111")));
+            Assert.assertEquals("user1", lookup(referenceData, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER/NUMBER_TO_SID", "011111"));
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -195,8 +181,6 @@ public class TestReferenceData extends StroomUnitTest {
 
         pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipelineEntity),
                 DocRefUtil.create(feed1), StreamType.REFERENCE.getName()));
-
-        final ErrorReceiver errorReceiver = new FatalErrorReceiver();
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
@@ -215,18 +199,12 @@ public class TestReferenceData extends StroomUnitTest {
             mapStoreBuilder.setEvents("IP_TO_LOC", new Range<>(500L, 2000L), getEventsFromString("there"), false);
             referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
 
-            Assert.assertEquals("here", getStringFromEvents(
-                    referenceData.getValue(pipelineReferences, errorReceiver, 0, "IP_TO_LOC", "10")));
-            Assert.assertEquals("here", getStringFromEvents(
-                    referenceData.getValue(pipelineReferences, errorReceiver, 0, "IP_TO_LOC", "30")));
-            Assert.assertEquals("there", getStringFromEvents(
-                    referenceData.getValue(pipelineReferences, errorReceiver, 0, "IP_TO_LOC", "500")));
-            Assert.assertEquals("there", getStringFromEvents(
-                    referenceData.getValue(pipelineReferences, errorReceiver, 0, "IP_TO_LOC", "1000")));
-            Assert.assertEquals("there", getStringFromEvents(
-                    referenceData.getValue(pipelineReferences, errorReceiver, 0, "IP_TO_LOC", "2000")));
-            Assert.assertEquals(null, getStringFromEvents(
-                    referenceData.getValue(pipelineReferences, errorReceiver, 0, "IP_TO_LOC", "2001")));
+            Assert.assertEquals("here", lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "10"));
+            Assert.assertEquals("here", lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "30"));
+            Assert.assertEquals("there", lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "500"));
+            Assert.assertEquals("there", lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "1000"));
+            Assert.assertEquals("there", lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "2000"));
+            Assert.assertEquals(null, lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "2001"));
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -246,9 +224,23 @@ public class TestReferenceData extends StroomUnitTest {
         return eventList;
     }
 
-    private String getStringFromEvents(final EventList eventList) {
-        if (eventList != null) {
-            return eventList.toString();
+    private String lookup(final ReferenceData data,
+                          final List<PipelineReference> pipelineReferences,
+                          final String time,
+                          final String mapName,
+                          final String key) {
+        return lookup(data, pipelineReferences, DateUtil.parseNormalDateTimeString(time), mapName, key);
+    }
+
+    private String lookup(final ReferenceData data,
+                          final List<PipelineReference> pipelineReferences,
+                          final long time,
+                          final String mapName,
+                          final String key) {
+        final ReferenceDataResult result = new ReferenceDataResult();
+        data.getValue(pipelineReferences, time, mapName, key, result);
+        if (result.getEventList() != null) {
+            return result.getEventList().toString();
         }
 
         return null;

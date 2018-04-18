@@ -44,5 +44,5 @@ cat ${templateFile} | sed "s/IP_ADDRESS/${ip}/g" | sed "s#HOME_DIR#${HOME}#g" > 
 if [[ "x${backupFile}" != "x" ]]; then
     echo
     echo -e "Run the following to see the changes made to your stroom.conf"
-    echo -e "${GREEN}diff ${backupFile} ${confFile}${NC}"
+    echo -e "${GREEN}vimdiff ${backupFile} ${confFile}${NC}"
 fi

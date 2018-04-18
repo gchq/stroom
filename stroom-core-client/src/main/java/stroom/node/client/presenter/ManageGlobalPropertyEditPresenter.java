@@ -40,14 +40,9 @@ public final class ManageGlobalPropertyEditPresenter
                                              final ClientDispatchAsync dispatcher,
                                              final ClientSecurityContext securityContext,
                                              final ClientPropertyCache clientPropertyCache) {
-        super(eventBus, dispatcher, view, securityContext);
+        super(eventBus, view, dispatcher, securityContext);
         this.dispatcher = dispatcher;
         this.clientPropertyCache = clientPropertyCache;
-    }
-
-    @Override
-    protected String getEntityType() {
-        return GlobalProperty.ENTITY_TYPE;
     }
 
     @Override
@@ -77,7 +72,7 @@ public final class ManageGlobalPropertyEditPresenter
             getEntity().setValue(null);
         }
 
-        // Save the device.
+        // Save.
         dispatcher.exec(new EntityServiceSaveAction<>(getEntity())).onSuccess(result -> {
             setEntity(result);
             if (hideOnSave) {

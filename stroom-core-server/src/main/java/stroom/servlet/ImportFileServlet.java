@@ -23,8 +23,8 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import stroom.logging.StreamEventLog;
+import stroom.resource.ResourceStore;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.PropertyMap;
@@ -47,18 +47,18 @@ import java.util.Map;
 /**
  * Generic Import Service
  */
-@Component
 public final class ImportFileServlet extends HttpServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportFileServlet.class);
 
     private static final long serialVersionUID = 487567988479000995L;
 
-    private final SessionResourceStore sessionResourceStore;
+    private final ResourceStore resourceStore;
     private final StreamEventLog streamEventLog;
 
     @Inject
-    ImportFileServlet(final SessionResourceStore sessionResourceStore, final StreamEventLog streamEventLog) {
-        this.sessionResourceStore = sessionResourceStore;
+    ImportFileServlet(final ResourceStore resourceStore,
+                      final StreamEventLog streamEventLog) {
+        this.resourceStore = resourceStore;
         this.streamEventLog = streamEventLog;
     }
 
@@ -81,8 +81,8 @@ public final class ImportFileServlet extends HttpServlet {
             final FileItem fileItem = items.get("fileUpload");
             final InputStream inputStream = fileItem.getInputStream();
 
-            final ResourceKey uuid = sessionResourceStore.createTempFile(fileItem.getName());
-            final Path file = sessionResourceStore.getTempFile(uuid);
+            final ResourceKey uuid = resourceStore.createTempFile(fileItem.getName());
+            final Path file = resourceStore.getTempFile(uuid);
             streamEventLog.importStream(new Date(), "Import", FileUtil.getCanonicalPath(file), null);
 
             StreamUtil.streamToStream(inputStream, Files.newOutputStream(file));
@@ -91,10 +91,10 @@ public final class ImportFileServlet extends HttpServlet {
             uuid.write(propertyMap);
             fileItem.delete();
 
-        } catch (final Throwable t) {
-            streamEventLog.importStream(new Date(), "Import", null, t);
-            LOGGER.error(t.getMessage(), t);
-            propertyMap.put("exception", t.getMessage());
+        } catch (final RuntimeException e) {
+            streamEventLog.importStream(new Date(), "Import", null, e);
+            LOGGER.error(e.getMessage(), e);
+            propertyMap.put("exception", e.getMessage());
         }
 
         response.getWriter().write(propertyMap.toArgLine());

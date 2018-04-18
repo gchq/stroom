@@ -16,10 +16,10 @@
 
 package stroom.pipeline.destination;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.server.writer.PathCreator;
+import stroom.pipeline.writer.PathCreator;
 import stroom.util.io.FileUtil;
 
 import java.io.BufferedOutputStream;
@@ -113,8 +113,8 @@ public class RollingFileDestination extends RollingDestination {
                 try {
                     Files.move(source, dest);
                     success = true;
-                } catch (final Throwable t) {
-                    exceptionConsumer.accept(wrapRollException(file, destFile, t));
+                } catch (final IOException | RuntimeException e) {
+                    exceptionConsumer.accept(wrapRollException(file, destFile, e));
                 }
             }
         }
@@ -124,7 +124,7 @@ public class RollingFileDestination extends RollingDestination {
                 int attempt = 1;
                 while (!success && attempt <= MAX_FAILED_RENAME_ATTEMPTS) {
                     // Try to rename the file to something else.
-                    final String suffix = StringUtils.leftPad(String.valueOf(attempt), 3, '0');
+                    final String suffix = Strings.padStart(String.valueOf(attempt), 3, '0');
                     final Path failedFile = dir.resolve(file.getFileName().toString() + "." + suffix);
                     dest = failedFile;
 
@@ -135,8 +135,8 @@ public class RollingFileDestination extends RollingDestination {
                         try {
                             Files.move(source, dest);
                             success = true;
-                        } catch (final Throwable t) {
-                            LOGGER.debug(t.getMessage(), t);
+                        } catch (final IOException | RuntimeException e) {
+                            LOGGER.debug(e.getMessage(), e);
                         }
                     }
                     attempt++;
@@ -154,8 +154,8 @@ public class RollingFileDestination extends RollingDestination {
                         LOGGER.error("Failed to delete file '{}'", getFullPath(file));
                     }
                 }
-            } catch (final Throwable t) {
-                LOGGER.debug(t.getMessage(), t);
+            } catch (final IOException | RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
             }
         }
     }

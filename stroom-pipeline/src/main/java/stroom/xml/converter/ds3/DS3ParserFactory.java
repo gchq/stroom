@@ -16,28 +16,23 @@
 
 package stroom.xml.converter.ds3;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.filter.SchemaFilter;
-import stroom.util.spring.StroomScope;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.filter.SchemaFilter;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.ds3.ref.VarMap;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.Reader;
 
-@Component
-@Scope(StroomScope.PROTOTYPE)
 public class DS3ParserFactory implements ParserFactory {
     public static final String SCHEMA_NAME = "data-splitter-v3.0";
     public static final String NAMESPACE_URI = "data-splitter:3";
@@ -53,14 +48,19 @@ public class DS3ParserFactory implements ParserFactory {
         PARSER_FACTORY.setValidating(false);
     }
 
-    private RootFactory factory;
-    private SchemaFilter schemaFilter;
+    private final SchemaFilter schemaFilter;
+    private final RootFactory factory;
+
+    @Inject
+    DS3ParserFactory(final SchemaFilter schemaFilter) {
+        this.schemaFilter = schemaFilter;
+        this.factory = new RootFactory();
+    }
 
     public void configure(final Reader inputStream, final ErrorHandler errorHandler) {
         try {
             final long time = System.currentTimeMillis();
 
-            factory = new RootFactory();
             final ConfigFilter filter = new ConfigFilter(factory);
 
             final FindXMLSchemaCriteria schemaConstraint = new FindXMLSchemaCriteria();
@@ -100,10 +100,5 @@ public class DS3ParserFactory implements ParserFactory {
     @Override
     public XMLReader getParser() {
         return new DS3Parser(factory.newInstance(new VarMap()), RootFactory.MIN_BUFFER_SIZE, factory.getBufferSize());
-    }
-
-    @Resource
-    public void setSchemaFilter(final SchemaFilter schemaFilter) {
-        this.schemaFilter = schemaFilter;
     }
 }

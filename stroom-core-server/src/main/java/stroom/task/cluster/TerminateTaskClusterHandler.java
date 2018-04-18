@@ -18,38 +18,44 @@ package stroom.task.cluster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
-import stroom.task.server.TaskManager;
+import stroom.security.Security;
+import stroom.task.AbstractTaskHandler;
+import stroom.task.TaskHandlerBean;
+import stroom.task.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = TerminateTaskClusterTask.class)
-@Scope(value = StroomScope.TASK)
-public class TerminateTaskClusterHandler
-        extends AbstractTaskHandler<TerminateTaskClusterTask, BaseResultList<TaskProgress>> {
+class TerminateTaskClusterHandler extends AbstractTaskHandler<TerminateTaskClusterTask, BaseResultList<TaskProgress>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskClusterHandler.class);
 
-    @Resource
-    private TaskManager taskManager;
+    private final TaskManager taskManager;
+    private final Security security;
+
+    @Inject
+    TerminateTaskClusterHandler(final TaskManager taskManager,
+                                final Security security) {
+        this.taskManager = taskManager;
+        this.security = security;
+    }
 
     @Override
     public BaseResultList<TaskProgress> exec(final TerminateTaskClusterTask task) {
-        BaseResultList<TaskProgress> taskedKilled = null;
+        return security.secureResult(() -> {
+            BaseResultList<TaskProgress> taskedKilled = null;
 
-        final FindTaskCriteria criteria = task.getCriteria();
-        if (criteria != null) {
-            LOGGER.debug("exec() - {}", criteria.toString());
+            final FindTaskCriteria criteria = task.getCriteria();
+            if (criteria != null) {
+                LOGGER.debug("exec() - {}", criteria.toString());
 
-            // Terminate tasks on this node
-            taskedKilled = taskManager.terminate(criteria, task.isKill());
-        }
+                // Terminate tasks on this node
+                taskedKilled = taskManager.terminate(criteria, task.isKill());
+            }
 
-        return taskedKilled;
+            return taskedKilled;
+        });
     }
 }

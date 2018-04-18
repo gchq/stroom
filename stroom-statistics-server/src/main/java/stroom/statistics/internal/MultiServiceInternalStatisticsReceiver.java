@@ -63,7 +63,7 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
             //An exception with one service will be logged and swallowed
             serviceToEventsMapMap.forEach(this::putEvents);
 
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Error sending internal stats", e);
         }
     }
@@ -80,7 +80,7 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
             }
 
             service.putEvents(eventsMap);
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             final String baseMsg = "Error sending internal statistics to {}";
             final String serviceClassName = service.getClass().getSimpleName();
             final Throwable cause = e.getCause();

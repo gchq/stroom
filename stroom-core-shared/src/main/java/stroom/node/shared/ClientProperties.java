@@ -54,9 +54,9 @@ public class ClientProperties implements SharedObject {
     public static final String URL_LIST = "stroom.url.list";
     public static final String URL_BASE = "stroom.url.";
 
-    public static final String EXTERNAL_DOC_REF_TYPES = "stroom.doc-ref.types";
-    public static final String URL_DOC_REF_UI_BASE = "stroom.url.doc-ref.ui.";
-    public static final String URL_DOC_REF_SERVICE_BASE = "stroom.url.doc-ref.service.";
+    public static final String EXTERNAL_DOC_REF_TYPES = "stroom.docref.types";
+    public static final String URL_DOC_REF_UI_BASE = "stroom.docref.url.ui.";
+    public static final String URL_DOC_REF_SERVICE_BASE = "stroom.docref.url.service.";
 
     private static final long serialVersionUID = 8717922468620533698L;
     private HashMap<String, String> map;
@@ -78,7 +78,7 @@ public class ClientProperties implements SharedObject {
         if (value != null) {
             try {
                 return value;
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
             }
         }
 
@@ -90,7 +90,7 @@ public class ClientProperties implements SharedObject {
         if (value != null) {
             try {
                 return Boolean.valueOf(value);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
             }
         }
 
@@ -102,7 +102,7 @@ public class ClientProperties implements SharedObject {
         if (value != null) {
             try {
                 return Long.valueOf(value);
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
             }
         }
 

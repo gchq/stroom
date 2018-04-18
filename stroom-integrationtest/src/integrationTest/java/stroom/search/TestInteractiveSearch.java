@@ -19,10 +19,10 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.shared.DocRefUtil;
-import stroom.index.server.IndexService;
+import stroom.index.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.pipeline.shared.PipelineEntity;
@@ -33,44 +33,31 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
-import stroom.search.server.EventRef;
-import stroom.search.server.EventRefs;
-import stroom.search.server.EventSearchTask;
 import stroom.security.UserTokenUtil;
-import stroom.task.server.TaskCallback;
-import stroom.task.server.TaskManager;
+import stroom.task.TaskCallback;
+import stroom.task.TaskManager;
 import stroom.util.config.StroomProperties;
 
-import javax.annotation.Resource;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class TestInteractiveSearch extends AbstractSearchTest {
-    @Resource
+    @Inject
     private CommonIndexingTest commonIndexingTest;
-    @Resource
+    @Inject
     private IndexService indexService;
-    @Resource
+    @Inject
     private DictionaryStore dictionaryStore;
-    @Resource
+    @Inject
     private TaskManager taskManager;
 
     @Override
@@ -104,7 +91,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     public void positiveCaseInsensitiveTestWithoutExtraction() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
-        final List<String> componentIds = Arrays.asList("table-1");
+        final List<String> componentIds = Collections.singletonList("table-1");
         test(expression, 5, componentIds, false);
     }
 
@@ -259,11 +246,11 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                    .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                        .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
-                        .build())
-                    .build());
+                        .addOperator(new ExpressionOperator.Builder(Op.OR)
+                                .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                                .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
+                                .build())
+                        .build());
         test(expression, 23);
     }
 
@@ -275,11 +262,11 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                    .addOperator(new ExpressionOperator.Builder(Op.AND)
-                        .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                        .addTerm("UserId", Condition.EQUALS, "user4")
-                        .build())
-                    .build());
+                        .addOperator(new ExpressionOperator.Builder(Op.AND)
+                                .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                                .addTerm("UserId", Condition.EQUALS, "user4")
+                                .build())
+                        .build());
         test(expression, 24);
     }
 
@@ -291,14 +278,14 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                    .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addOperator(new ExpressionOperator.Builder(Op.AND)
-                            .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                            .addTerm("UserId", Condition.EQUALS, "user4")
-                            .build())
-                        .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
-                        .build())
-                    .build());
+                        .addOperator(new ExpressionOperator.Builder(Op.OR)
+                                .addOperator(new ExpressionOperator.Builder(Op.AND)
+                                        .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                                        .addTerm("UserId", Condition.EQUALS, "user4")
+                                        .build())
+                                .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
+                                .build())
+                        .build());
         test(expression, 23);
     }
 
@@ -307,7 +294,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest1() {
-        final DocRef docRef = dictionaryStore.createDocument("users", null);
+        final DocRef docRef = dictionaryStore.createDocument("users");
         final DictionaryDoc dic = dictionaryStore.read(docRef.getUuid());
         dic.setData("user1\nuser2\nuser5");
         dictionaryStore.update(dic);
@@ -325,12 +312,12 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest2() {
-        final DocRef docRef1 = dictionaryStore.createDocument("users", null);
+        final DocRef docRef1 = dictionaryStore.createDocument("users");
         DictionaryDoc dic1 = dictionaryStore.read(docRef1.getUuid());
         dic1.setData("user1\nuser2\nuser5");
         dictionaryStore.update(dic1);
 
-        final DocRef docRef2 = dictionaryStore.createDocument("command", null);
+        final DocRef docRef2 = dictionaryStore.createDocument("command");
         DictionaryDoc dic2 = dictionaryStore.read(docRef2.getUuid());
         dic2.setData("msg");
         dictionaryStore.update(dic2);
@@ -350,12 +337,12 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest3() {
-        final DocRef docRef1 = dictionaryStore.createDocument("users", null);
+        final DocRef docRef1 = dictionaryStore.createDocument("users");
         DictionaryDoc dic1 = dictionaryStore.read(docRef1.getUuid());
         dic1.setData("user1\nuser2\nuser5");
         dictionaryStore.update(dic1);
 
-        final DocRef docRef2 = dictionaryStore.createDocument("command", null);
+        final DocRef docRef2 = dictionaryStore.createDocument("command");
         DictionaryDoc dic2 = dictionaryStore.read(docRef2.getUuid());
         dic2.setData("msg foo bar");
         dictionaryStore.update(dic2);
@@ -381,7 +368,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     }
 
     private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
-        final List<String> componentIds = Arrays.asList("table-1");
+        final List<String> componentIds = Collections.singletonList("table-1");
         test(expressionIn, expectResultCount, componentIds, true);
     }
 
@@ -391,84 +378,55 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         testEvents(expressionIn, expectResultCount);
     }
 
-    private void testInteractive(final ExpressionOperator.Builder expressionIn, final int expectResultCount,
-                                 final List<String> componentIds, final boolean extractValues) {
-        // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
-        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
-        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
+    private void testInteractive(final ExpressionOperator.Builder expressionIn,
+                                 final int expectResultCount,
+                                 final List<String> componentIds,
+                                 final boolean extractValues) {
 
-        final Index index = indexService.find(new FindIndexCriteria()).getFirst();
-        Assert.assertNotNull("Index is null", index);
-        final DocRef dataSourceRef = DocRefUtil.create(index);
+        // code to test the results when they come back
+        Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
+            for (final List<Row> values : resultMap.values()) {
+                if (expectResultCount == 0) {
+                    Assert.assertEquals(0, values.size());
 
-        final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
-
-        for (final String componentId : componentIds) {
-            final TableSettings tableSettings = createTableSettings(index, extractValues);
-
-            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
-            resultRequests.add(tableResultRequest);
-        }
-
-        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query(dataSourceRef, expressionIn.build());
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
-        final SearchResponse searchResponse = search(searchRequest);
-
-        final Map<String, List<Row>> rows = new HashMap<>();
-        if (searchResponse != null && searchResponse.getResults() != null) {
-            for (final Result result : searchResponse.getResults()) {
-                final String componentId = result.getComponentId();
-                final TableResult tableResult = (TableResult) result;
-
-                if (tableResult.getResultRange() != null && tableResult.getRows() != null) {
-                    final stroom.query.api.v2.OffsetRange range = tableResult.getResultRange();
-
-                    for (long i = range.getOffset(); i < range.getLength(); i++) {
-                        final List<Row> values = rows.computeIfAbsent(componentId, k -> new ArrayList<>());
-                        values.add(tableResult.getRows().get((int) i));
+                } else {
+                    // Make sure we got what we expected.
+                    Row firstResult = null;
+                    if (values != null && values.size() > 0) {
+                        firstResult = values.get(0);
                     }
-                }
-            }
-        }
+                    Assert.assertNotNull("No results found", firstResult);
 
-        if (expectResultCount == 0) {
-            Assert.assertEquals(0, rows.size());
-        } else {
-            Assert.assertEquals(componentIds.size(), rows.size());
-        }
-
-        for (final List<Row> values : rows.values()) {
-            if (expectResultCount == 0) {
-                Assert.assertEquals(0, values.size());
-
-            } else {
-                // Make sure we got what we expected.
-                Row firstResult = null;
-                if (values != null && values.size() > 0) {
-                    firstResult = values.get(0);
-                }
-                Assert.assertNotNull("No results found", firstResult);
-
-                if (extractValues) {
-                    final String time = firstResult.getValues().get(1);
-                    Assert.assertNotNull("Incorrect heading", time);
-                    Assert.assertEquals("Incorrect number of hits found", expectResultCount, values.size());
-                    boolean found = false;
-                    for (final Row hit : values) {
-                        final String str = hit.getValues().get(1);
-                        if ("2007-03-18T14:34:41.000Z".equals(str)) {
-                            found = true;
+                    if (extractValues) {
+                        final String time = firstResult.getValues().get(1);
+                        Assert.assertNotNull("Incorrect heading", time);
+                        Assert.assertEquals("Incorrect number of hits found", expectResultCount, values.size());
+                        boolean found = false;
+                        for (final Row hit : values) {
+                            final String str = hit.getValues().get(1);
+                            if ("2007-03-18T14:34:41.000Z".equals(str)) {
+                                found = true;
+                            }
                         }
+                        Assert.assertTrue("Unable to find expected hit", found);
                     }
-                    Assert.assertTrue("Unable to find expected hit", found);
                 }
             }
-        }
+        };
+
+        testInteractive(expressionIn,
+                expectResultCount,
+                componentIds,
+                this::createTableSettings,
+                extractValues,
+                resultMapConsumer,
+                1,
+                1,
+                indexService);
     }
 
     private void testEvents(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
-        // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
+        // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
         StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
@@ -499,6 +457,8 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         try {
             complete.await();
         } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e.getMessage(), e);
         }
 
@@ -512,7 +472,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         Assert.assertEquals(expectResultCount, count);
     }
 
-    private TableSettings createTableSettings(final Index index, final boolean extractValues) {
+    private TableSettings createTableSettings(final boolean extractValues) {
         final Field idField = new Field.Builder()
                 .name("IdTreeNode")
                 .expression(ParamUtil.makeParam("StreamId"))
@@ -525,7 +485,13 @@ public class TestInteractiveSearch extends AbstractSearchTest {
                 .build();
 
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultPipeline();
-        return new TableSettings(null, Arrays.asList(idField, timeField), extractValues, DocRefUtil.create(resultPipeline), null, null);
+        return new TableSettings(
+                null,
+                Arrays.asList(idField, timeField),
+                extractValues,
+                DocRefUtil.create(resultPipeline),
+                null,
+                null);
     }
 
     private ExpressionOperator.Builder buildExpression(final String userField, final String userTerm, final String from,

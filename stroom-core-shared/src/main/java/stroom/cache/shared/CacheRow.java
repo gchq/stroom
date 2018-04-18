@@ -19,7 +19,6 @@ package stroom.cache.shared;
 import stroom.util.shared.SharedObject;
 
 public class CacheRow implements SharedObject {
-    public static final String MANAGE_CACHE_PERMISSION = "Manage Cache";
     private static final long serialVersionUID = -7367500560554774611L;
     private String cacheName;
 

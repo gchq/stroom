@@ -16,13 +16,10 @@
 
 package stroom.refdata;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.state.Holder;
-import stroom.util.spring.StroomScope;
+import stroom.guice.PipelineScoped;
 
-@Component
-@Scope(value = StroomScope.TASK)
+@PipelineScoped
 public class MapStoreHolder implements Holder {
     private MapStoreBuilder mapStoreBuilder;
 

@@ -155,19 +155,13 @@ public abstract class XmlAdapter<ValueType, BoundType> {
      * Convert a value type to a bound type.
      *
      * @param v The value to be converted. Can be null.
-     * @throws Exception if there's an error during the conversion. The caller is
-     *                   responsible for reporting the error to the user through
-     *                   {@link javax.xml.bind.ValidationEventHandler}.
      */
-    public abstract BoundType unmarshal(ValueType v) throws Exception;
+    public abstract BoundType unmarshal(ValueType v);
 
     /**
      * Convert a bound type to a value type.
      *
      * @param v The value to be convereted. Can be null.
-     * @throws Exception if there's an error during the conversion. The caller is
-     *                   responsible for reporting the error to the user through
-     *                   {@link javax.xml.bind.ValidationEventHandler}.
      */
-    public abstract ValueType marshal(BoundType v) throws Exception;
+    public abstract ValueType marshal(BoundType v);
 }

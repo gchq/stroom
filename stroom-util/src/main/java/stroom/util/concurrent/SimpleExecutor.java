@@ -18,7 +18,6 @@ package stroom.util.concurrent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.thread.ThreadUtil;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,8 +53,8 @@ public class SimpleExecutor {
         this.executorService = Executors.newFixedThreadPool(threadCount);
     }
 
-    public static final void defaultShortSleep() {
-        ThreadUtil.sleep(THREAD_SLEEP_MS);
+    private void defaultShortSleep() throws InterruptedException {
+        Thread.sleep(THREAD_SLEEP_MS);
     }
 
     /**
@@ -63,16 +62,13 @@ public class SimpleExecutor {
      */
     public void execute(final Runnable runnable) {
         try {
-            executorService.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        runnable.run();
-                    } catch (final Throwable th) {
-                        LOGGER.error("run() - Uncaught exception from execution", th);
-                    } finally {
-                        executorCompleteCount.incrementAndGet();
-                    }
+            executorService.execute(() -> {
+                try {
+                    runnable.run();
+                } catch (final RuntimeException e) {
+                    LOGGER.error("run() - Uncaught exception from execution", e);
+                } finally {
+                    executorCompleteCount.incrementAndGet();
                 }
             });
 
@@ -89,7 +85,7 @@ public class SimpleExecutor {
     /**
      * Wait for a submitted jobs to complete (without shutting down).
      */
-    public void waitForComplete() {
+    public void waitForComplete() throws InterruptedException {
         long lastTime = System.currentTimeMillis();
         while (!executorService.isTerminated() && executorCompleteCount.get() < executorSubmitCount.get()) {
             defaultShortSleep();
@@ -107,7 +103,7 @@ public class SimpleExecutor {
     /**
      * Wait for the thread pool to stop.
      */
-    public void waitForTerminated() {
+    private void waitForTerminated() throws InterruptedException {
         long lastTime = System.currentTimeMillis();
         while (!executorService.isTerminated()) {
             defaultShortSleep();
@@ -128,7 +124,7 @@ public class SimpleExecutor {
      *
      * @param now don't wait for pending jobs to start
      */
-    public void stop(boolean now) {
+    public void stop(boolean now) throws InterruptedException {
         if (now) {
             executorService.shutdownNow();
         } else {
@@ -145,11 +141,11 @@ public class SimpleExecutor {
         return executorService.isTerminated();
     }
 
-    public int getExecutorCompleteCount() {
+    int getExecutorCompleteCount() {
         return executorCompleteCount.get();
     }
 
-    public int getExecutorSubmitCount() {
+    int getExecutorSubmitCount() {
         return executorSubmitCount.get();
     }
 

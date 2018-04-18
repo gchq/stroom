@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -105,7 +106,7 @@ public class EntityReferenceReplacer {
 
                         newData = newData.replace(ref, sb.toString());
                     }
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
             }
@@ -168,7 +169,7 @@ public class EntityReferenceReplacer {
                         }
                     }
                 }
-            } catch (final Exception e) {
+            } catch (final SQLException | RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         }
