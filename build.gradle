@@ -6,7 +6,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'gchq:urlDependencyPlugin:v0.2.0'
+        //classpath 'gchq:urlDependencyPlugin:v0.2.0'
         classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.2.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
     }
@@ -26,7 +26,7 @@ task wrapper(type: Wrapper) {
     gradleVersion = '4.1'
 }
 
-apply plugin: 'gchq.urldependencies'
+//apply plugin: 'gchq.urldependencies'
 apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
@@ -63,7 +63,7 @@ ext.versions = [
 //    stroomProxyRepo: 'v5.1-beta.8',
     eventLogging       :  'v3.1.2_schema-v3.1.2',
     hadoopCommonShaded :  'v2.6.4-4',
-    hadoopHdfsShaded   :  'v2.6.4',
+    hadoopHdfsShaded   :  'v2.6.4-3',
     stroomAuth         :  'v0.1-alpha.3',
     stroomExpression   :  'v1.1.0',
     stroomQuery        :  'v3.0-beta.5', //same version for both stroom-query-api and stroom-query-common
@@ -91,7 +91,7 @@ ext.versions = [
 //lib names for urlDependenciesPlugin
 ext.urlLibs = [
     //hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
-    hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
+    //hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
     zzDUMMYzz: "makes sorting easier"
 ]
 
@@ -100,6 +100,7 @@ ext.libs = [
     //------Stroom-libs---------------
     eventLogging       : "event-logging:event-logging:$versions.eventLogging",
     hadoopCommonShaded : "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
+    hadoopHdfsShaded   : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
     stroomQueryApi     : "stroom:stroom-query-api:$versions.stroomQuery",
     stroomQueryAudit   : "stroom:stroom-query-audit:$versions.stroomQuery",
     stroomQueryCommon  : "stroom:stroom-query-common:$versions.stroomQuery",
@@ -380,7 +381,7 @@ subprojects {
     }
 
     //ensure we download our libs before compiling java
-    tasks.compileJava.dependsOn downloadUrlDependencies
+    //tasks.compileJava.dependsOn downloadUrlDependencies
 
     // These lines pull the integration test task into our build process.
     tasks.check.dependsOn integrationTest
@@ -560,15 +561,15 @@ task setupSampleData() {
     dependsOn ':stroom-integrationtest:setupSampleData'
 }
 
-urlDependencies {
-    libs "libs"
+//urlDependencies {
+    //libs "libs"
 
-    compile(urlLibs.hadoopHdfsShaded,
-            "https://github.com/gchq/hadoop-hdfs-shaded/releases/download/$versions.hadoopHdfsShaded/${urlLibs.hadoopHdfsShaded}.jar")
+    ////compile(urlLibs.hadoopHdfsShaded,
+            ////"https://github.com/gchq/hadoop-hdfs-shaded/releases/download/$versions.hadoopHdfsShaded/${urlLibs.hadoopHdfsShaded}.jar")
 
-    //compile(urlLibs.hadoopCommonShaded,
-            //"https://github.com/gchq/hadoop-common-shaded/releases/download/$versions.hadoopCommonShaded/${urlLibs.hadoopCommonShaded}.jar")
-}
+    ////compile(urlLibs.hadoopCommonShaded,
+            ////"https://github.com/gchq/hadoop-common-shaded/releases/download/$versions.hadoopCommonShaded/${urlLibs.hadoopCommonShaded}.jar")
+//}
 
 gradle.buildFinished {
     //if any of the tests failed dump the junit xml to the console
