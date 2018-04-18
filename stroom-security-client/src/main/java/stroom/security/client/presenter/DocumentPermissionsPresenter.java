@@ -78,7 +78,7 @@ public class DocumentPermissionsPresenter
 
         tabPresenter.changeSelectedTab(groups);
 
-        getView().getCopyParentPermissionsButton().addClickHandler(event -> {
+        getView().getCopyPermissionsFromParentButton().addClickHandler(event -> {
             dispatcher.exec(new CopyPermissionsFromParentAction(explorerNode.getDocRef()))
                     .onSuccess(documentPermissions -> {
                         // We want to wipe existing permissions, which means updating the removeSet on the changeSet.
@@ -109,7 +109,7 @@ public class DocumentPermissionsPresenter
 
         // If we're looking at the root node then we can't copy from the parent because there isn't one.
         if(DocumentTypes.isSystem(explorerNode.getType())) {
-            getView().getCopyParentPermissionsButton().setEnabled(false);
+            getView().getCopyPermissionsFromParentButton().setEnabled(false);
         }
 
         final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(explorerNode.getDocRef());
@@ -170,7 +170,7 @@ public class DocumentPermissionsPresenter
 
         void setCascadeVisible(boolean visible);
 
-        Button getCopyParentPermissionsButton();
+        Button getCopyPermissionsFromParentButton();
     }
 
     private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {

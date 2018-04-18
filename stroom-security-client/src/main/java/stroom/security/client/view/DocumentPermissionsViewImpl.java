@@ -36,13 +36,13 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     @UiField
     DockLayoutPanel layout;
     @UiField
-    DockLayoutPanel layoutInner;
+    DockLayoutPanel innerLayout;
     @UiField
     ResizeSimplePanel tabs;
     @UiField
     Grid cascadeGrid;
     @UiField
-    Button copyParentPermissionsButton;
+    Button copyPermissionsFromParentButton;
     @UiField
     ItemListBox<ChangeDocumentPermissionsAction.Cascade> cascade;
 
@@ -68,13 +68,13 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     }
 
     @Override
-    public Button getCopyParentPermissionsButton() {
-        return copyParentPermissionsButton;
+    public Button getCopyPermissionsFromParentButton() {
+        return copyPermissionsFromParentButton;
     }
 
     @Override
     public void setCascadeVisible(boolean visible) {
-        layoutInner.setWidgetHidden(cascadeGrid, !visible);
+        innerLayout.setWidgetHidden(cascadeGrid, !visible);
     }
 
     public interface Binder extends UiBinder<Widget, DocumentPermissionsViewImpl> {

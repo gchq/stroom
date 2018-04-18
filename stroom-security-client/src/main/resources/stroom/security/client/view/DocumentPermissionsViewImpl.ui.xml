@@ -11,7 +11,7 @@
         margin-top: 5px;
         }
 
-        .copyParentPermissionsButton {
+        .copyPermissionsFromParentButton {
             width: 259px;
         }
     </ui:style>
@@ -22,7 +22,7 @@
         </g:center>
 
         <g:south size="55">
-            <g:DockLayoutPanel ui:field="layoutInner" width="100%" height="100%">
+            <g:DockLayoutPanel ui:field="innerLayout" width="100%" height="100%">
                 <g:north size="25">
                     <g:Grid ui:field="cascadeGrid" styleName="stroom-control-grid {style.cascade}">
                         <g:row>
@@ -34,7 +34,7 @@
                     </g:Grid>
                 </g:north>
                 <g:south size="25" >
-                    <g:Button width="100" styleName="gwt-Button {style.copyParentPermissionsButton}" ui:field="copyParentPermissionsButton" text="Copy permissions from parent" />
+                    <g:Button width="100" styleName="gwt-Button {style.copyPermissionsFromParentButton}" ui:field="copyPermissionsFromParentButton" text="Copy permissions from parent" />
                 </g:south>
             </g:DockLayoutPanel>
         </g:south>
