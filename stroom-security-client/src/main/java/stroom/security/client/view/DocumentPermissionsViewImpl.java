@@ -36,6 +36,8 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     @UiField
     DockLayoutPanel layout;
     @UiField
+    DockLayoutPanel layoutInner;
+    @UiField
     ResizeSimplePanel tabs;
     @UiField
     Grid cascadeGrid;
@@ -72,7 +74,7 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
 
     @Override
     public void setCascadeVisible(boolean visible) {
-        layout.setWidgetHidden(cascadeGrid, !visible);
+        layoutInner.setWidgetHidden(cascadeGrid, !visible);
     }
 
     public interface Binder extends UiBinder<Widget, DocumentPermissionsViewImpl> {
