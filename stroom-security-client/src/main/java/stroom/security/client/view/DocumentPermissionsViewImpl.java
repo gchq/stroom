@@ -42,7 +42,7 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     @UiField
     Grid cascadeGrid;
     @UiField
-    Button inheritPermissionsButton;
+    Button copyParentPermissionsButton;
     @UiField
     ItemListBox<ChangeDocumentPermissionsAction.Cascade> cascade;
 
@@ -68,8 +68,8 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     }
 
     @Override
-    public Button getInheritPermissionsButton() {
-        return inheritPermissionsButton;
+    public Button getCopyParentPermissionsButton() {
+        return copyParentPermissionsButton;
     }
 
     @Override

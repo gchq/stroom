@@ -11,7 +11,7 @@
         margin-top: 5px;
         }
 
-        .inheritPermissionsButton {
+        .copyParentPermissionsButton {
             width: 259px;
         }
     </ui:style>
@@ -34,7 +34,7 @@
                     </g:Grid>
                 </g:north>
                 <g:south size="25" >
-                    <g:Button width="100" styleName="gwt-Button {style.inheritPermissionsButton}" ui:field="inheritPermissionsButton" text="Copy permissions from parent" />
+                    <g:Button width="100" styleName="gwt-Button {style.copyParentPermissionsButton}" ui:field="copyParentPermissionsButton" text="Copy permissions from parent" />
                 </g:south>
             </g:DockLayoutPanel>
         </g:south>
