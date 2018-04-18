@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,10 +54,6 @@ public class TestLmdbKeyValueStore {
     @Rule
     public final TemporaryFolder tmpDir = new TemporaryFolder();
 
-    @Test
-    public void test() {
-        LOGGER.error("My Error", new RuntimeException());
-    }
 
     @Test
     public void testStringString_db() throws IOException {
@@ -70,7 +67,16 @@ public class TestLmdbKeyValueStore {
                 .setMaxDbs(1)
                 .open(path.toFile());
 
+        LOGGER.info("Max key size: {}", env.getMaxKeySize());
+
         final Dbi<ByteBuffer> db = env.openDbi(DB_NAME, DbiFlags.MDB_CREATE);
+
+        LOGGER.info("DB names: {}",
+                env.getDbiNames()
+                        .stream()
+                        .map(bytes -> new String(bytes, Charset.defaultCharset()))
+                        .collect(Collectors.joining(",")));
+
 
         final ByteBuffer key = ByteBuffer.allocateDirect(env.getMaxKeySize());
         final ByteBuffer value = ByteBuffer.allocateDirect(700);
