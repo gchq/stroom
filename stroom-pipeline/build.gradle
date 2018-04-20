@@ -5,7 +5,6 @@ dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
-    //permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     compile project(':stroom-explorer-api')
@@ -13,24 +12,23 @@ dependencies {
     compile project(':stroom-connectors')
     permitUnusedDeclared project(':stroom-connectors')
 
-    compile urlDependencies.get(urlLibs.hadoopCommonShaded)
-    compile urlDependencies.get(urlLibs.hadoopHdfsShaded)
-
-    compile libs.stroomQueryApi
-    compile libs.jersey_client
-    compile libs.slf4j_api
-    compile libs.guava
     compile libs.commons_lang
-    compile libs.saxon_he
-    compile libs.jackson_core
-    compile libs.kryo
-    compile libs.xml_apis
-    compile libs.stax_api
-    compile libs.javax_inject
-    compile libs.ws_rs_api
-    compile libs.guice4
     compile libs.fast_infoset
+    compile libs.guava
+    compile libs.guice4
+    compile libs.hadoopCommonShaded
+    compile libs.hadoopHdfsShaded
+    compile libs.jackson_core
+    compile libs.javax_inject
+    compile libs.jersey_client
+    compile libs.kryo
     compile libs.lmdbjava
+    compile libs.saxon_he
+    compile libs.slf4j_api
+    compile libs.stax_api
+    compile libs.stroomQueryApi
+    compile libs.ws_rs_api
+    compile libs.xml_apis
 
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

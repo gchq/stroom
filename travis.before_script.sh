@@ -25,15 +25,6 @@ else
     # Increase the size of the heap
     export JAVA_OPTS=-Xmx1024m
 
-    #Currently needed for the hadoop-command and hadoop-hdfs shaded libs
-    echo "Clone build and publish our urlDependencies plugin"
-    mkdir -p ../git_work
-    pushd ../git_work
-    git clone https://github.com/gchq/urlDependencies-plugin.git
-    pushd urlDependencies-plugin
-    ./gradlew clean build publishToMavenLocal
-    popd
-
     echo "Clone our stroom-resources repo"
     git clone https://github.com/gchq/stroom-resources.git
     pushd stroom-resources/bin
