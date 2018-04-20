@@ -10,13 +10,12 @@ dependencies {
     compile project(':stroom-security-server')
     permitUnusedDeclared project(':stroom-security-server')
 
+    compile libs.guava
+    compile libs.guice4
+    compile libs.javax_inject
+    compile libs.slf4j_api
     compile libs.stroomQueryApi
     compile libs.stroomQueryAudit
     compile libs.ws_rs_api
-    compile libs.guava
-    compile libs.slf4j_api
     compile libs.xml_apis
-    compile libs.guice4
-
-    compile libs.javax_inject
 }
