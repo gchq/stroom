@@ -41,6 +41,25 @@ abstract class StroomExtensionFunctionCall {
 
     abstract Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException;
 
+    /**
+     * Here to aid testing
+     */
+    //TODO needs uncommenting when it has been tested
+//    String call(String functionName, XPathContext context, String... arguments) throws XPathException {
+//        final Sequence[] sequenceArgs = Arrays.stream(arguments)
+//                .map(ObjectValue::new)
+//                .toArray(Sequence[]::new);
+//
+//        final Sequence result = call(functionName, context, sequenceArgs);
+//
+//        final Item item = result.iterate().next();
+//        if (item != null) {
+//            return item.getStringValue();
+//        } else {
+//            return null;
+//        }
+//    }
+
     String getSafeString(final String functionName, final XPathContext context, final Sequence[] arguments, final int index) throws XPathException {
         String string = null;
         final Sequence sequence = arguments[index];

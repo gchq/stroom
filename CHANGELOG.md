@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#735** : Change the format-date xslt function to parse dates in a case insensitive way.
+
 ## [v6.0-alpha.21]
 
 * Issue **#719** : Fix creation of headless Jar. Exclude gwt-unitCache folder from build JARs.
