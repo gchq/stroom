@@ -6,7 +6,6 @@ buildscript {
         jcenter()
     }
     dependencies {
-        //classpath 'gchq:urlDependencyPlugin:v0.2.0'
         classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.2.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
     }
@@ -26,7 +25,6 @@ task wrapper(type: Wrapper) {
     gradleVersion = '4.1'
 }
 
-//apply plugin: 'gchq.urldependencies'
 apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
@@ -86,13 +84,6 @@ ext.versions = [
     swagger            :  '1.5.16',
     unirest            :  '1.4.9',
     zzDUMMYzz          :  'makes sorting easier'
-]
-
-//lib names for urlDependenciesPlugin
-ext.urlLibs = [
-    //hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
-    //hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
-    zzDUMMYzz: "makes sorting easier"
 ]
 
 //dependency strings for use in sub projects
@@ -381,9 +372,6 @@ subprojects {
         delete "out"
     }
 
-    //ensure we download our libs before compiling java
-    //tasks.compileJava.dependsOn downloadUrlDependencies
-
     // These lines pull the integration test task into our build process.
     tasks.check.dependsOn integrationTest
     tasks.integrationTest.mustRunAfter test
@@ -561,16 +549,6 @@ task setupSampleData() {
     dependsOn downloadStroomContent
     dependsOn ':stroom-integrationtest:setupSampleData'
 }
-
-//urlDependencies {
-    //libs "libs"
-
-    ////compile(urlLibs.hadoopHdfsShaded,
-            ////"https://github.com/gchq/hadoop-hdfs-shaded/releases/download/$versions.hadoopHdfsShaded/${urlLibs.hadoopHdfsShaded}.jar")
-
-    ////compile(urlLibs.hadoopCommonShaded,
-            ////"https://github.com/gchq/hadoop-common-shaded/releases/download/$versions.hadoopCommonShaded/${urlLibs.hadoopCommonShaded}.jar")
-//}
 
 gradle.buildFinished {
     //if any of the tests failed dump the junit xml to the console
