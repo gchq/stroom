@@ -16,6 +16,7 @@
 
 package stroom.pipeline.filter;
 
+import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.entity.shared.Range;
@@ -33,6 +34,7 @@ import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
 
 import javax.inject.Inject;
+import java.io.ByteArrayOutputStream;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
@@ -54,6 +56,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private final EventListBuilder handler = EventListBuilderFactory.createBuilder();
+    private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
+    private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     private final CharBuffer contentBuffer = new CharBuffer(20);
 
     private String map;
@@ -95,7 +99,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
             inValue = true;
         } else if (inValue) {
-            handler.startElement(uri, localName, qName, atts);
+            saxDocumentSerializer.startElement(uri, localName, qName, atts);
         }
 
         super.startElement(uri, localName, qName, atts);
@@ -121,7 +125,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         }
 
         if (inValue) {
-            handler.endElement(uri, localName, qName);
+            saxDocumentSerializer.endElement(uri, localName, qName);
         } else {
             if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
                 map = contentBuffer.toString();
@@ -150,6 +154,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
                 EventList eventList = handler.getEventList();
                 handler.reset();
+
+                byte[] bEventList = byteArrayOutputStream.toByteArray();
+                byteArrayOutputStream.reset();
+
+                // TODO add bEventList to the OffHEapStore, getting a OffHeapStore.Key returned
+                //
 
                 // Intern the event list so we only have one identical copy in
                 // memory.
@@ -216,8 +226,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         if (inValue) {
-            handler.characters(ch, start, length);
+            saxDocumentSerializer.characters(ch, start, length);
         } else {
+            // outside the value element so capture the chars so we can get keys, map names, etc.
             contentBuffer.append(ch, start, length);
         }
 
