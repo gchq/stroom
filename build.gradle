@@ -125,7 +125,7 @@ ext.libs = [
     dropwizard_testing              :  "io.dropwizard:dropwizard-testing:$versions.dropwizard",
     dropwizard_configuration        :  "io.dropwizard:dropwizard-configuration:$versions.dropwizard",
     fast_classpath_scanner          :  "io.github.lukehutch:fast-classpath-scanner:2.9.4",
-    fast_infoset: "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
+    fast_infoset                    :  "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
     flyway_core                     :  "org.flywaydb:flyway-core:4.0.3",
     gin                             :  "com.google.gwt.inject:gin:2.1.2",
     guava                           :  "com.google.guava:guava:$versions.guava", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
@@ -169,6 +169,7 @@ ext.libs = [
     jsinterop_annotations           :  "com.google.jsinterop:jsinterop-annotations:1.0.1",
     jul_to_slf4j                    :  "org.slf4j:jul-to-slf4j:$versions.slf4j",
     junit                           :  "junit:junit:4.12",
+    kryo                            :  "com.esotericsoftware:kryo-shaded:4.0.0",
     log4j_over_slf4j                :  "org.slf4j:log4j-over-slf4j:$versions.slf4j",
     logback_classic                 :  "ch.qos.logback:logback-classic:$versions.logback",
     logback_core                    :  "ch.qos.logback:logback-core:$versions.logback",
