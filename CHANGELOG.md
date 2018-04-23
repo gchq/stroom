@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-alpha.22]
+
+* Issue **#719** : Fix creation of headless Jar to ensure logback is now included.
+
 * Issue **#735** : Change the format-date xslt function to parse dates in a case insensitive way.
 
 ## [v6.0-alpha.21]
@@ -874,7 +878,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.21...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.22...6.0
+[v6.0-alpha.22]: https://github.com/gchq/stroom/compare/v6.0-alpha.21...v6.0-alpha.22
 [v6.0-alpha.21]: https://github.com/gchq/stroom/compare/v6.0-alpha.20...v6.0-alpha.21
 [v6.0-alpha.20]: https://github.com/gchq/stroom/compare/v6.0-alpha.19...v6.0-alpha.20
 [v6.0-alpha.19]: https://github.com/gchq/stroom/compare/v6.0-alpha.18...v6.0-alpha.19

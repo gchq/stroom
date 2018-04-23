@@ -20,6 +20,8 @@ dependencies {
     permitUnusedDeclared libs.javax_el
     compile libs.javax_el_api
     permitUnusedDeclared libs.javax_el_api
+    compile libs.logback_classic
+    permitUnusedDeclared libs.logback_classic
 }
 
 def fatJarName = "stroom-headless-all.jar"
