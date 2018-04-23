@@ -36,12 +36,12 @@ public final class TypeConverter {
 
         try {
             return new BigDecimal(obj.toString()).doubleValue();
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
         }
 
         try {
             return Double.valueOf(DateUtil.parseNormalDateTimeString(obj.toString()));
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
         }
 
         return null;

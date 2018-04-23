@@ -158,6 +158,8 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createCommonSubMenuItems(item++, "floor"));
         children.add(createFunction(item++, "greaterThan($,$)", "greaterThan("));
         children.add(createFunction(item++, "greaterThanOrEqualTo($,$)", "greaterThanOrEqualTo("));
+        children.add(createFunction(item++, "indexOf($,string)", "indexOf("));
+        children.add(createFunction(item++, "lastIndexOf($,string)", "lastIndexOf("));
         children.add(createFunction(item++, "lessThan($,$)", "lessThan("));
         children.add(createFunction(item++, "lessThanOrEqualTo($,$)", "lessThanOrEqualTo("));
         children.add(createFunction(item++, "lowerCase($)", "lowerCase("));
@@ -167,7 +169,9 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "replace($,regex,replacement)", "replace("));
         children.add(createCommonSubMenuItems(item++, "round"));
         children.add(createFunction(item++, "stringLength($)", "stringLength("));
-        children.add(createFunction(item++, "substring($,startPos,EndPos)", "substring("));
+        children.add(createFunction(item++, "substring($,startPos,endPos)", "substring("));
+        children.add(createFunction(item++, "substringAfter($,string)", "substringAfter("));
+        children.add(createFunction(item++, "substringBefore($,string)", "substringBefore("));
         children.add(createFunction(item++, "sum($)", "sum("));
         children.add(createFunction(item++, "upperCase($)", "upperCase("));
         children.add(createUriSubMenuItems(item++, "uri"));

@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#741** : Added a count unique dashboard table expression function.
+* Issue **#68** : Made `substring` dashboard table function capable of using computed values for `start` and `end` index positions. Also added companion string functions `substringAfter`, `substringBefore`, indexOf` and `lastIndexOf`.
+
+* Issue **#741** : Added a `countUnique` dashboard table expression function.
 
 ## [v5.2.4] - 2018-04-18
 

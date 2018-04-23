@@ -20,99 +20,144 @@ import java.io.Serializable;
 import java.text.ParseException;
 
 public class Substring extends AbstractFunction implements Serializable {
-	private static class Gen extends AbstractSingleChildGenerator {
-		private static final long serialVersionUID = 8153777070911899616L;
-		
-		private Double startPos;
-		private Double endPos;
+    private static final long serialVersionUID = -305845496003936297L;
 
-		public Gen(final Generator childGenerator, final Double startPos, final Double endPos) {
-			super(childGenerator);
-			this.startPos = startPos;
-			this.endPos = endPos;
-		}
+    public static final String NAME = "substring";
 
-		@Override
-		public void set(final String[] values) {
-			childGenerator.set(values);
-		}
+    private Function startFunction;
+    private Function endFunction;
 
-		@Override
-		public Object eval() {
-			final Object val = childGenerator.eval();
-			if (val != null) {
-				int len = endPos.intValue();
-				if (endPos >= TypeConverter.getString(val).length()){
-					len = TypeConverter.getString(val).length();
-				}
-				return TypeConverter.getString(val).substring(startPos.intValue(), len);
-			}
+    private Generator gen;
+    private Function function = null;
+    private boolean hasAggregate;
 
-			return null;
-		}
-	}
+    public Substring(final String name) {
+        super(name, 3, 3);
+    }
 
-	private static final long serialVersionUID = -305845496003936297L;
-	public static final String NAME = "substring";
+    @Override
+    public void setParams(final Object[] params) throws ParseException {
+        super.setParams(params);
 
-	private Generator gen;
-	private Function function = null;
-	private boolean hasAggregate;
-	
-	private Double startPos;
-	private Double endPos;
+        startFunction = parsePosParam(params[1], "second");
+        endFunction = parsePosParam(params[2], "third");
 
-	public Substring(final String name) {
-		super(name, 3, 3);
-	}
+        final Object param = params[0];
+        if (param instanceof Function) {
+            function = (Function) param;
+            hasAggregate = function.hasAggregate();
 
-	@Override
-	public void setParams(final Object[] params) throws ParseException {
-		super.setParams(params);
+        } else {
+            final String value = param.toString();
+            function = new StaticValueFunction(value);
+            hasAggregate = false;
 
-		if (!(params[1] instanceof Double)) {
-			throw new ParseException("Number expected as second argument of '" + name + "' function", 0);
-		}
-		startPos = (Double)params[1];
-		if (startPos < 0) {
-			startPos = 0D;
-		}
-		if (!(params[2] instanceof Double)) {
-			throw new ParseException("Number expected as third argument of '" + name + "' function", 0);
-		}
-		endPos = (Double)params[2];
+            // Optimise replacement of static input in case user does something stupid.
+            if (startFunction instanceof StaticValueFunction && endFunction instanceof StaticValueFunction) {
+                final Double startPos = TypeConverter.getDouble(startFunction.createGenerator().eval());
+                final Double endPos = TypeConverter.getDouble(endFunction.createGenerator().eval());
 
-		final Object param = params[0];
-		if (param instanceof Function) {
-			function = (Function) param;
-			hasAggregate = function.hasAggregate();
-		} else {
-			/*
-			 * Optimise replacement of static input in case user does something
-			 * stupid.
-			 */
-			int len = endPos.intValue();
-			if (endPos >= param.toString().length()){
-				len = param.toString().length();
-			}
-			final String newValue = param.toString().substring(startPos.intValue(),len);
-			gen = new StaticValueFunction(newValue).createGenerator();
-			hasAggregate = false;
-		}
-	}
+                if (startPos == null || endPos == null) {
+                    gen = new StaticValueFunction("").createGenerator();
+                } else {
+                    int start = startPos.intValue();
+                    int end = endPos.intValue();
 
-	@Override
-	public Generator createGenerator() {
-		if (gen != null) {
-			return gen;
-		}
+                    if (start < 0) {
+                        start = 0;
+                    }
 
-		final Generator childGenerator = function.createGenerator();
-		return new Gen(childGenerator, startPos, endPos);
-	}
+                    if (end < 0 || end < start || start >= value.length()) {
+                        gen = new StaticValueFunction("").createGenerator();
+                    } else if (end >= value.length()) {
+                        gen = new StaticValueFunction(value.substring(start)).createGenerator();
+                    } else {
+                        gen = new StaticValueFunction(value.substring(start, end)).createGenerator();
+                    }
+                }
+            }
+        }
+    }
 
-	@Override
-	public boolean hasAggregate() {
-		return hasAggregate;
-	}
+    private Function parsePosParam(final Object param, final String paramPos) throws ParseException {
+        Function function;
+        if (param instanceof Function) {
+            function = (Function) param;
+            if (function.hasAggregate()) {
+                throw new ParseException("Non aggregate function expected as " + paramPos + " argument of '" + name + "' function", 0);
+            }
+        } else {
+            Double pos = TypeConverter.getDouble(param);
+            if (pos == null) {
+                throw new ParseException("Number expected as " + paramPos + " argument of '" + name + "' function", 0);
+            }
+            function = new StaticValueFunction(pos);
+        }
+        return function;
+    }
+
+    @Override
+    public Generator createGenerator() {
+        if (gen != null) {
+            return gen;
+        }
+
+        final Generator childGenerator = function.createGenerator();
+        return new Gen(childGenerator, startFunction.createGenerator(), endFunction.createGenerator());
+    }
+
+    @Override
+    public boolean hasAggregate() {
+        return hasAggregate;
+    }
+
+    private static class Gen extends AbstractSingleChildGenerator {
+        private static final long serialVersionUID = 8153777070911899616L;
+
+        private Generator startPosGenerator;
+        private Generator endPosGenerator;
+
+        public Gen(final Generator childGenerator, final Generator startPosGenerator, final Generator endPosGenerator) {
+            super(childGenerator);
+            this.startPosGenerator = startPosGenerator;
+            this.endPosGenerator = endPosGenerator;
+        }
+
+        @Override
+        public void set(final String[] values) {
+            childGenerator.set(values);
+            startPosGenerator.set(values);
+            endPosGenerator.set(values);
+        }
+
+        @Override
+        public Object eval() {
+            final String value = TypeConverter.getString(childGenerator.eval());
+            if (value != null) {
+                Double startPos = TypeConverter.getDouble(startPosGenerator.eval());
+                Double endPos = TypeConverter.getDouble(endPosGenerator.eval());
+                if (startPos == null || endPos == null) {
+                    return "";
+                }
+
+                int start = startPos.intValue();
+                int end = endPos.intValue();
+
+                if (start < 0) {
+                    start = 0;
+                }
+
+                if (end < 0 || end < start || start >= value.length()) {
+                    return "";
+                }
+
+                if (end >= value.length()) {
+                    return value.substring(start);
+                }
+                return value.substring(start, end);
+            }
+
+            return null;
+        }
+    }
 }

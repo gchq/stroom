@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 public class ExtractAuthorityFromUri extends ExtractionFunction {
     public static class ExtractorImpl implements Extractor {
@@ -32,7 +33,7 @@ public class ExtractAuthorityFromUri extends ExtractionFunction {
             try {
                 final URI uri = new URI(value);
                 return uri.getAuthority();
-            } catch (final Exception e) {
+            } catch (final URISyntaxException | RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
             }
             return null;

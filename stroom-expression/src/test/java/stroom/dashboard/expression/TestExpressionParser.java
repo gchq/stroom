@@ -366,6 +366,216 @@ public class TestExpressionParser extends StroomUnitTest {
     }
 
     @Test
+    public void testSubstring4() throws ParseException {
+        final Expression exp = createExpression("substring(${val}, 1+1, 99-1)");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("his"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("s", out);
+    }
+
+    @Test
+    public void testSubstring5() throws ParseException {
+        final Expression exp = createExpression("substring(${val}, 2+5, 99-1)");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("his"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("", out);
+    }
+
+    @Test
+    public void testSubstringBefore1() throws ParseException {
+        final Expression exp = createExpression("substringBefore(${val}, '-')");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("aa", out);
+    }
+
+
+    @Test
+    public void testSubstringBefore2() throws ParseException {
+        final Expression exp = createExpression("substringBefore(${val}, 'a')");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("", out);
+    }
+
+    @Test
+    public void testSubstringBefore3() throws ParseException {
+        final Expression exp = createExpression("substringBefore(${val}, 'b')");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("aa-", out);
+    }
+
+    @Test
+    public void testSubstringBefore4() throws ParseException {
+        final Expression exp = createExpression("substringBefore(${val}, 'q')");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("", out);
+    }
+
+    @Test
+    public void testSubstringAfter1() throws ParseException {
+        final Expression exp = createExpression("substringAfter(${val}, '-')");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("bb", out);
+    }
+
+    @Test
+    public void testSubstringAfter2() throws ParseException {
+        final Expression exp = createExpression("substringAfter(${val}, 'a')");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("a-bb", out);
+    }
+
+    @Test
+    public void testSubstringAfter3() throws ParseException {
+        final Expression exp = createExpression("substringAfter(${val}, 'b')");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("b", out);
+    }
+
+    @Test
+    public void testSubstringAfter4() throws ParseException {
+        final Expression exp = createExpression("substringAfter(${val}, 'q')");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("", out);
+    }
+
+    @Test
+    public void testIndexOf() throws ParseException {
+        final Expression exp = createExpression("indexOf(${val}, '-')");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals(2, out);
+    }
+
+    @Test
+    public void testIndexOf1() throws ParseException {
+        final Expression exp = createExpression("substring(${val}, indexOf(${val}, '-'), stringLength(${val}))");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("-bb", out);
+    }
+
+    @Test
+    public void testIndexOf2() throws ParseException {
+        final Expression exp = createExpression("substring(${val}, indexOf(${val}, 'a'), stringLength(${val}))");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("aa-bb", out);
+    }
+
+    @Test
+    public void testIndexOf3() throws ParseException {
+        final Expression exp = createExpression("substring(${val}, indexOf(${val}, 'b'), stringLength(${val}))");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("bb", out);
+    }
+
+    @Test
+    public void testIndexOf4() throws ParseException {
+        final Expression exp = createExpression("substring(${val}, indexOf(${val}, 'q'), stringLength(${val}))");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("", out);
+    }
+
+    @Test
+    public void testLastIndexOf1() throws ParseException {
+        final Expression exp = createExpression("substring(${val}, lastIndexOf(${val}, '-'), stringLength(${val}))");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("-bb", out);
+    }
+
+    @Test
+    public void testLastIndexOf2() throws ParseException {
+        final Expression exp = createExpression("substring(${val}, lastIndexOf(${val}, 'a'), stringLength(${val}))");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("a-bb", out);
+    }
+
+    @Test
+    public void testLastIndexOf3() throws ParseException {
+        final Expression exp = createExpression("substring(${val}, lastIndexOf(${val}, 'b'), stringLength(${val}))");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("b", out);
+    }
+
+    @Test
+    public void testLastIndexOf4() throws ParseException {
+        final Expression exp = createExpression("substring(${val}, lastIndexOf(${val}, 'q'), stringLength(${val}))");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal("aa-bb"));
+
+        final Object out = generator.eval();
+        Assert.assertEquals("", out);
+    }
+
+    @Test
     public void testDecode1() throws ParseException {
         final Expression exp = createExpression("decode(${val}, 'hullo', 'hello', 'goodbye')");
         final Generator generator = exp.createGenerator();

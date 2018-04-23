@@ -21,37 +21,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class CountUnique extends AbstractFunction {
-    private static class Gen extends AbstractSingleChildGenerator {
-        private static final long serialVersionUID = -6770724151493320673L;
-
-        private final Set<Object> uniqueValues = new HashSet<>();
-
-        public Gen(final Generator childGenerator) {
-            super(childGenerator);
-        }
-
-        @Override
-        public void set(final String[] values) {
-            childGenerator.set(values);
-            final Object value = childGenerator.eval();
-            if (value != null) {
-                uniqueValues.add(value);
-            }
-        }
-
-        @Override
-        public Object eval() {
-            return (double) uniqueValues.size();
-        }
-
-        @Override
-        public void merge(final Generator generator) {
-            final Gen gen = (Gen) generator;
-            uniqueValues.addAll(gen.uniqueValues);
-            super.merge(generator);
-        }
-    }
-
     public static final String NAME = "countUnique";
 
     private Generator gen;
@@ -100,5 +69,36 @@ public class CountUnique extends AbstractFunction {
     @Override
     public boolean hasAggregate() {
         return isAggregate();
+    }
+
+    private static class Gen extends AbstractSingleChildGenerator {
+        private static final long serialVersionUID = -6770724151493320673L;
+
+        private final Set<Object> uniqueValues = new HashSet<>();
+
+        public Gen(final Generator childGenerator) {
+            super(childGenerator);
+        }
+
+        @Override
+        public void set(final String[] values) {
+            childGenerator.set(values);
+            final Object value = childGenerator.eval();
+            if (value != null) {
+                uniqueValues.add(value);
+            }
+        }
+
+        @Override
+        public Object eval() {
+            return (double) uniqueValues.size();
+        }
+
+        @Override
+        public void merge(final Generator generator) {
+            final Gen gen = (Gen) generator;
+            uniqueValues.addAll(gen.uniqueValues);
+            super.merge(generator);
+        }
     }
 }
