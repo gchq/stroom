@@ -7,12 +7,10 @@ dependencies {
     compile project(':stroom-security-api')
     compile project(':stroom-util-shared')
 
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
     compile libs.stroomQueryApi
     compile libs.stroomQueryAudit
-
-    compile libs.guice4
-
-    compile libs.javax_inject
     compile libs.ws_rs_api
-    compile libs.jackson_annotations
 }

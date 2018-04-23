@@ -1,9 +1,9 @@
 package stroom.elastic;
 
+import org.eclipse.jetty.http.HttpStatus;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.apache.http.HttpStatus;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.properties.StroomPropertyService;
@@ -43,7 +43,7 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, Clearable {
             try {
                 final Response response = docRefHttpClient.get(serviceUser(), k.getUuid());
 
-                if (response.getStatus() != HttpStatus.SC_OK) {
+                if (response.getStatus() != HttpStatus.OK_200) {
                     final String msg = String.format("Invalid status returned by Elastic Explorer Service: %d - %s ",
                             response.getStatus(),
                             response.readEntity(String.class));

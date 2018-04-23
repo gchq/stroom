@@ -1,10 +1,10 @@
 package stroom.pipeline.xsltfunctions;
 
+import org.eclipse.jetty.http.HttpStatus;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-import org.mortbay.jetty.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -47,7 +47,7 @@ class FetchJson extends StroomExtensionFunctionCall {
                 final HttpURLConnection yc = (HttpURLConnection) ann.openConnection();
 
                 switch (yc.getResponseCode()) {
-                    case HttpStatus.ORDINAL_200_OK: {
+                    case HttpStatus.OK_200: {
                         try (BufferedReader in = new BufferedReader(new InputStreamReader(
                                 yc.getInputStream()))) {
                             final String json = in.lines().reduce("", String::concat);
@@ -57,7 +57,7 @@ class FetchJson extends StroomExtensionFunctionCall {
                         }
                         break;
                     }
-                    case HttpStatus.ORDINAL_404_Not_Found:
+                    case HttpStatus.NOT_FOUND_404:
                         // this is an expected failure condition
                         break;
                     default:
