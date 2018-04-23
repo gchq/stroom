@@ -18,6 +18,7 @@ dependencies {
     compile libs.guice4
     compile libs.hadoopCommonShaded
     compile libs.hadoopHdfsShaded
+    compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
     compile libs.jackson_core
     compile libs.javax_inject
     compile libs.jersey_client

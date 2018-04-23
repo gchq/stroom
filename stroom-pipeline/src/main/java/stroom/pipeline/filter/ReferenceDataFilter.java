@@ -55,7 +55,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final EventListInternPool internPool;
     private final ErrorReceiverProxy errorReceiverProxy;
 
-    private final EventListBuilder handler = EventListBuilderFactory.createBuilder();
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
     private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     private final CharBuffer contentBuffer = new CharBuffer(20);
@@ -152,13 +151,11 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 }
 
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
-                EventList eventList = handler.getEventList();
-                handler.reset();
-
+                //serialize the event list using fastInfoset
                 byte[] bEventList = byteArrayOutputStream.toByteArray();
                 byteArrayOutputStream.reset();
 
-                // TODO add bEventList to the OffHEapStore, getting a OffHeapStore.Key returned
+                // TODO add bEventList to the OffHEapStore, getting a KeyedInternPool.Key returned
                 //
 
                 // Intern the event list so we only have one identical copy in
