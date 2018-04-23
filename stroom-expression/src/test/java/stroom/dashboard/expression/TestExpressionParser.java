@@ -589,6 +589,60 @@ public class TestExpressionParser extends StroomUnitTest {
     }
 
     @Test
+    public void testCount() throws ParseException {
+        final Expression exp = createExpression("count()");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal(122D));
+        generator.set(getVal(133D));
+
+        Object out = generator.eval();
+        Assert.assertEquals(2D, out);
+
+        generator.set(getVal(11D));
+        generator.set(getVal(122D));
+
+        out = generator.eval();
+        Assert.assertEquals(4D, out);
+    }
+
+    @Test
+    public void testCountUnique() throws ParseException {
+        final Expression exp = createExpression("countUnique(${val})");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal(122D));
+        generator.set(getVal(133D));
+
+        Object out = generator.eval();
+        Assert.assertEquals(2D, out);
+
+        generator.set(getVal(11D));
+        generator.set(getVal(122D));
+
+        out = generator.eval();
+        Assert.assertEquals(3D, out);
+    }
+
+    @Test
+    public void testCountUniqueStaticValue() throws ParseException {
+        final Expression exp = createExpression("countUnique('test')");
+        final Generator generator = exp.createGenerator();
+
+        generator.set(getVal(122D));
+        generator.set(getVal(133D));
+
+        Object out = generator.eval();
+        Assert.assertEquals(1D, out);
+
+        generator.set(getVal(11D));
+        generator.set(getVal(122D));
+
+        out = generator.eval();
+        Assert.assertEquals(1D, out);
+    }
+
+    @Test
     public void testAdd1() throws ParseException {
         final Expression exp = createExpression("3+4");
         final Generator generator = exp.createGenerator();

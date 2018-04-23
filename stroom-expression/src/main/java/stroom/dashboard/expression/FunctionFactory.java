@@ -75,6 +75,7 @@ public class FunctionFactory {
 
 		add(Count.class, Count.NAME);
 		add(CountGroups.class, CountGroups.NAME);
+        add(CountUnique.class, CountUnique.NAME);
 
         add(Power.class, Power.NAME, Power.ALIAS);
         add(Divide.class, Divide.NAME, Divide.ALIAS);

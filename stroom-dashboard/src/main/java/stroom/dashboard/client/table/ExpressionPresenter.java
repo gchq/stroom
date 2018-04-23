@@ -179,6 +179,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         int item = 0;
         children.add(createFunction(item++, "average($)", "average("));
         children.add(createFunction(item++, "count()", "count()"));
+        children.add(createFunction(item++, "countUnique($)", "countUnique("));
         children.add(createFunction(item++, "countGroups()", "countGroups()"));
         children.add(createFunction(item++, "max($)", "max("));
         children.add(createFunction(item++, "min($)", "min("));
