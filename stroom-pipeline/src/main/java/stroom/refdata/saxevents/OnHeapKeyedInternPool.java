@@ -1,12 +1,8 @@
 package stroom.refdata.saxevents;
 
-import stroom.pool.WeakPool;
-
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.Map;
+import java.util.Optional;
 import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 class OnHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolValue>
         implements KeyedInternPool<V> {
@@ -27,8 +23,18 @@ class OnHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVal
     }
 
     @Override
-    public V get(final Key key) {
-        return null;
+    public Optional<V> get(final Key key) {
+        return Optional.empty();
+    }
+
+    @Override
+    public void clear() {
+
+    }
+
+    @Override
+    public long size() {
+        return 0;
     }
 
     @Override

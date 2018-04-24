@@ -30,8 +30,6 @@ import stroom.refdata.MapStoreHolder;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 import stroom.xml.event.EventList;
-import stroom.xml.event.EventListBuilder;
-import stroom.xml.event.EventListBuilderFactory;
 
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
@@ -160,6 +158,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
                 // Intern the event list so we only have one identical copy in
                 // memory.
+                EventList eventList = null;  //TODO this was put here to make it compile mid-refactor
                 if (internPool != null) {
                     eventList = internPool.intern(eventList);
                 }
