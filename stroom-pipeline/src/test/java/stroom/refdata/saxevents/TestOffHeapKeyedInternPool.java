@@ -1,15 +1,10 @@
 package stroom.refdata.saxevents;
 
-import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
-import org.lmdbjava.Dbi;
-import org.lmdbjava.DbiFlags;
-import org.lmdbjava.Env;
-import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +12,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.stream.IntStream;
 
 public class TestOffHeapKeyedInternPool {
 
@@ -45,29 +39,26 @@ public class TestOffHeapKeyedInternPool {
 
         LOGGER.info("Using temp dir {}", tmpDir.getRoot().toPath().toAbsolutePath().toString());
 
-        KeyedInternPool<StringValue> pool = buildPool();
+        OffHeapKeyedInternPool<StringValue> pool = buildPool();
 
-        OffHeapKeyedInternPool<StringValue> offHeapPool = (OffHeapKeyedInternPool<StringValue>) pool;
+        pool.forcedPut(new Key(3,1), StringValue.of("3-1"));
+        pool.forcedPut(new Key(3,0), StringValue.of("3-0"));
+        pool.forcedPut(new Key(3,3), StringValue.of("3-3"));
+        pool.forcedPut(new Key(3,2), StringValue.of("3-2"));
+        pool.forcedPut(new Key(1,1), StringValue.of("1-1"));
+        pool.forcedPut(new Key(1,0), StringValue.of("1-0"));
+        pool.forcedPut(new Key(1,3), StringValue.of("1-3"));
+        pool.forcedPut(new Key(1,2), StringValue.of("1-2"));
+        pool.forcedPut(new Key(2,3), StringValue.of("2-3"));
+        pool.forcedPut(new Key(2,1), StringValue.of("2-1"));
+        pool.forcedPut(new Key(2,0), StringValue.of("2-0"));
+        pool.forcedPut(new Key(2,2), StringValue.of("2-2"));
 
+        pool.dumpContents();
 
-        offHeapPool.forcedPut(new KeyedInternPool.Key(3,1), StringValue.of("3-1"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(3,0), StringValue.of("3-0"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(3,3), StringValue.of("3-3"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(3,2), StringValue.of("3-2"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(1,1), StringValue.of("1-1"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(1,0), StringValue.of("1-0"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(1,3), StringValue.of("1-3"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(1,2), StringValue.of("1-2"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(2,3), StringValue.of("2-3"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(2,1), StringValue.of("2-1"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(2,0), StringValue.of("2-0"));
-        offHeapPool.forcedPut(new KeyedInternPool.Key(2,2), StringValue.of("2-2"));
-
-        offHeapPool.dumpContents();
-
-        offHeapPool.dumpContentsInRange(
-                new KeyedInternPool.Key(1, 0),
-                new KeyedInternPool.Key(2, 2));
+        pool.dumpContentsInRange(
+                new Key(1, 0),
+                new Key(2, 2));
 
     }
 
@@ -76,24 +67,22 @@ public class TestOffHeapKeyedInternPool {
 
         LOGGER.info("Using temp dir {}", tmpDir.getRoot().toPath().toAbsolutePath().toString());
 
-        KeyedInternPool<StringValue> pool = buildPool();
+        OffHeapKeyedInternPool<StringValue> pool = buildPool();
 
         //Put unique values into the the pool, out of order
-        KeyedInternPool.Key val4Key1 = pool.put(StringValue.of("Value 0004"));
-        KeyedInternPool.Key val3Key1 = pool.put(StringValue.of("Value 003"));
-        KeyedInternPool.Key val2key1 = pool.put(StringValue.of("Value 02"));
-        KeyedInternPool.Key val5Key1 = pool.put(StringValue.of("Value 00005"));
-        KeyedInternPool.Key val1key1 = pool.put(StringValue.of("Value 1"));
-        KeyedInternPool.Key val6Key1 = pool.put(StringValue.of("Value 000006"));
+        Key val4Key1 = pool.put(StringValue.of("Value 0004"));
+        Key val3Key1 = pool.put(StringValue.of("Value 003"));
+        Key val2key1 = pool.put(StringValue.of("Value 02"));
+        Key val5Key1 = pool.put(StringValue.of("Value 00005"));
+        Key val1key1 = pool.put(StringValue.of("Value 1"));
+        Key val6Key1 = pool.put(StringValue.of("Value 000006"));
 
         ((OffHeapKeyedInternPool<StringValue>) pool).dumpContents();
 //        Assertions.assertThat(pool.size()).isEqualTo(3);
 
         // call put twice more for value 2
-        KeyedInternPool.Key val2Key2 = pool.put(StringValue.of("Value 02"));
-        KeyedInternPool.Key val2Key3 = pool.put(StringValue.of("Value 02"));
-
-
+        Key val2Key2 = pool.put(StringValue.of("Value 02"));
+        Key val2Key3 = pool.put(StringValue.of("Value 02"));
 
         SoftAssertions softAssertions = new SoftAssertions();
 
@@ -109,8 +98,44 @@ public class TestOffHeapKeyedInternPool {
         softAssertions.assertAll();
     }
 
+    @Test
+    public void intern() throws IOException {
 
-    private KeyedInternPool<StringValue> buildPool() throws IOException {
+        LOGGER.info("Using temp dir {}", tmpDir.getRoot().toPath().toAbsolutePath().toString());
+
+        OffHeapKeyedInternPool<StringValue> pool = buildPool();
+
+        //Put unique values into the the pool, out of order
+        ValueSupplier<StringValue> val4Supplier1 = pool.intern(StringValue.of("Value 0004"));
+        ValueSupplier<StringValue> val3Supplier1 = pool.intern(StringValue.of("Value 003"));
+        ValueSupplier<StringValue> val2Supplier1 = pool.intern(StringValue.of("Value 02"));
+        ValueSupplier<StringValue> val5Supplier1 = pool.intern(StringValue.of("Value 00005"));
+        ValueSupplier<StringValue> val1Supplier1 = pool.intern(StringValue.of("Value 1"));
+        ValueSupplier<StringValue> val6Supplier1 = pool.intern(StringValue.of("Value 000006"));
+
+        ((OffHeapKeyedInternPool<StringValue>) pool).dumpContents();
+//        Assertions.assertThat(pool.size()).isEqualTo(3);
+
+        // call put twice more for value 2
+        ValueSupplier<StringValue> val2Supplier2 = pool.intern(StringValue.of("Value 02"));
+        ValueSupplier<StringValue> val2Supplier3 = pool.intern(StringValue.of("Value 02"));
+
+        SoftAssertions softAssertions = new SoftAssertions();
+
+        //the size should still be 3 as the last two we already in there
+        softAssertions.assertThat(pool.size()).isEqualTo(6);
+        softAssertions.assertThat(val1Supplier1).isNotEqualTo(val2Supplier1);
+        softAssertions.assertThat(val1Supplier1).isNotEqualTo(val3Supplier1);
+        softAssertions.assertThat(val2Supplier1).isNotEqualTo(val3Supplier1);
+
+        softAssertions.assertThat(val2Supplier1).isEqualTo(val2Supplier2);
+        softAssertions.assertThat(val2Supplier1).isEqualTo(val2Supplier3);
+
+        softAssertions.assertAll();
+    }
+
+
+    private OffHeapKeyedInternPool<StringValue> buildPool() throws IOException {
         String methodName = testname.getMethodName();
         Path dbDir = tmpDir.newFolder(methodName).toPath();
 
@@ -131,53 +156,7 @@ public class TestOffHeapKeyedInternPool {
     public void close() {
     }
 
-    @Test
-    public void testDbSize() throws IOException {
 
-        Env<ByteBuffer> env = Env.<ByteBuffer>create()
-                .setMapSize(10 * MEGA_BYTES)
-                .setMaxDbs(1)
-                .open(tmpDir.newFolder(testname.getMethodName()));
-
-        Dbi<ByteBuffer> db = env.openDbi(testname.getMethodName(), DbiFlags.MDB_CREATE);
-
-        try (final Txn<ByteBuffer> txn = env.txnWrite()) {
-
-            db.put(txn, bb(1), bb(11));
-            db.put(txn, bb(2), bb(12));
-            db.put(txn, bb(3), bb(13));
-            db.put(txn, bb(4), bb(14));
-            Assertions.assertThat(db.stat(txn).entries).isEqualTo(4);
-            txn.commit();
-        }
-
-        try (final Txn<ByteBuffer> txn = env.txnRead()) {
-            Assertions.assertThat(db.stat(txn).entries).isEqualTo(4);
-        }
-    }
-
-
-    @Test
-    public void testByteBufferUtils_lowValues() {
-
-//        KeyedInternPool.Key key = new KeyedInternPool.Key(123, 0);
-
-//        ByteBuffer byteBuffer = key.toDirectByteBuffer();
-//
-//        ByteBuffer byteBuffer = ByteBuffer.allocateDirect()
-
-        IntStream.rangeClosed(-10, 10)
-                .forEach(i -> {
-                    ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES);
-                    byteBuffer.putInt(i);
-                    LOGGER.info("{} - {}", i, KeyedInternPool.Key.byteArrayToHex(byteBuffer.array()));
-                });
-        ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES);
-        byteBuffer.putInt(Integer.MAX_VALUE);
-        LOGGER.info("{} - {}", Integer.MAX_VALUE, KeyedInternPool.Key.byteArrayToHex(byteBuffer.array()));
-
-
-    }
     static ByteBuffer bb(final int value) {
         final ByteBuffer bb = ByteBuffer.allocateDirect(Integer.BYTES);
         bb.putInt(value).flip();
@@ -186,7 +165,6 @@ public class TestOffHeapKeyedInternPool {
 
     private static class StringValue extends KeyedInternPool.AbstractKeyedInternPoolValue {
 
-        public static int fixedHash = 0;
         private final String value;
 
         StringValue(final String value) {
@@ -204,7 +182,6 @@ public class TestOffHeapKeyedInternPool {
 
         @Override
         public int hashCode() {
-//            return fixedHash++;
             return value.hashCode();
         }
 

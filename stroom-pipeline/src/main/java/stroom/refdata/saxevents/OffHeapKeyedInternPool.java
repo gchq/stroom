@@ -95,7 +95,18 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
     }
 
     @Override
-    synchronized public Key put(final V value) {
+    public ValueSupplier<V> intern(final V value) {
+        // TODO we may want to call get here with the default key to optimistically get
+        // the value outside of a write txn and synchronized block, however if we get a value
+        // we will have to do an equality check on the value. If that fails we would then need
+        // to enter the write txn/synchronised block and iterate over the values for that hashcode.
+        // The benefits will depend on the degree of reuse of the values. Low reuse means we don't bother,
+        // but high re-use (e.g. if the TTL is long) means we will benefit from an additional get.
+        Key key = put(value);
+        return makeValueSupplier(key);
+    }
+
+    synchronized Key put(final V value) {
         LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("put called for value {}", value.toString()));
         Preconditions.checkNotNull(value);
 
@@ -112,9 +123,10 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
             dumpContentsInRange(txn, keyRange);
 
             // Use atomics so they can be mutated and then used in lambdas
-            AtomicBoolean isValueInMap = new AtomicBoolean(false);
-            AtomicInteger valuesCount = new AtomicInteger(0);
+            final AtomicBoolean isValueInMap = new AtomicBoolean(false);
+            final AtomicInteger valuesCount = new AtomicInteger(0);
             CursorIterator.KeyVal<ByteBuffer> lastKeyValue = null;
+
             try (CursorIterator<ByteBuffer> cursorIterator = db.iterate(txn, keyRange)) {
                 for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
                     valuesCount.incrementAndGet();
@@ -202,8 +214,7 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
         return putValue(txn, key, valueBuffer);
     }
 
-    @Override
-    public Optional<V> get(final Key key) {
+    Optional<V> get(final Key key) {
         return LmdbUtils.getInReadTxn(env, txn -> {
             ByteBuffer keyBuffer = key.toDirectByteBuffer();
             ByteBuffer valueBuffer = db.get(txn, keyBuffer);
@@ -243,16 +254,6 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
     }
 
     @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        return super.equals(obj);
-    }
-
-    @Override
     public String toString() {
         return "OffHeapKeyedInternPool{" +
                 "dbDir=" + dbDir +
@@ -260,8 +261,6 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
                 ", maxSize=" + maxSize +
                 '}';
     }
-
-
 
     void dumpContents() {
         StringBuilder stringBuilder = new StringBuilder();
@@ -352,5 +351,9 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
         Key.putContent(byteBuffer, key.getValueHashCode(), key.getUniqueId());
         byteBuffer.flip();
         return byteBuffer;
+    }
+
+    private ValueSupplier<V> makeValueSupplier(final Key key) {
+        return new ValueSupplier<>(this, key, () -> get(key));
     }
 }

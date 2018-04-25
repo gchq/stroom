@@ -14,6 +14,10 @@ class OnHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVal
     private final WeakHashMap<Key, WeakReference<V>> map = new WeakHashMap<>();
 
     @Override
+    public ValueSupplier<V> intern(final V value) {
+        return null;
+    }
+
     synchronized public Key put(final V value) {
 //        Key key = new Key(value.hashCode(), UNIQUE_ID);
 //
@@ -22,7 +26,6 @@ class OnHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVal
         return null;
     }
 
-    @Override
     public Optional<V> get(final Key key) {
         return Optional.empty();
     }
