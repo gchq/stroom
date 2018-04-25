@@ -4,6 +4,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+// TODO maybe rename to ValueProxy as we don't really want to supply a value
+// as that means copying the data out of the bytebuffer. If we have supply and consume methods
+// then we can handle different cases.
 public class ValueSupplier<V> {
 
     // held for the purpose of testing equality of a ValueSupplier

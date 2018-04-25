@@ -47,7 +47,12 @@ class Lookup extends AbstractLookup {
         final NPEventList eventList = (NPEventList) result.getEventList();
         if (eventList != null) {
             sequenceMaker.open();
+
+            // TODO need to change the ReferenceDataResult to hold the value proxy
+            // then here we can pass our consume method (changed to accept a ByteBuffer (or maybe InputStream))
+            // to the OffHeapPool to consume inside a txn
             sequenceMaker.consume(eventList);
+
             sequenceMaker.close();
 
             if (trace) {

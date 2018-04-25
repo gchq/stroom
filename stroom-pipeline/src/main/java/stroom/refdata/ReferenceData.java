@@ -16,11 +16,8 @@
 
 package stroom.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.entity.DocumentPermissionCache;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
@@ -97,6 +94,10 @@ public class ReferenceData {
 
             // Look up the KV then use that to recurse
             doGetValue(pipelineReferences, time, startMap, key, result);
+
+            //TODO why are we doing a toString on the eventList and using that as the
+            //key to look up in the MapStore?
+
             final EventList nextKey = result.getEventList();
             if (nextKey == null) {
                 // map broken ... no link found
@@ -257,6 +258,9 @@ public class ReferenceData {
                         final EventList eventList = mapStore.getEvents(mapName, keyName);
                         if (eventList != null) {
                             result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
+
+
+                            // TODO change this to set the ValueSupplier
                             result.setEventList(eventList);
 
                         } else {
