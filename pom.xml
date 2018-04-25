@@ -69,6 +69,7 @@
     <hessian.version>4.0.38</hessian.version>
     <lucene.version>4.6.1</lucene.version>
     <event-logging.version>3.0.0</event-logging.version>
+    <stroom-expression.version>v1.2.0-beta.1</stroom-expression.version>
 
     <!-- ***************************** -->
     <!-- LATEST CHECK 2015/02/27 START -->
@@ -507,6 +508,13 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- Stroom -->
+      <dependency>
+        <groupId>stroom</groupId>
+        <artifactId>stroom-expression</artifactId>
+        <version>${stroom-expression.version}</version>
+      </dependency>
+
       <!-- AOP Alliance -->
       <dependency>
         <groupId>aopalliance</groupId>
@@ -983,7 +991,6 @@
     <module>stroom-core-server</module>
     <module>stroom-core-client-widget</module>
     <module>stroom-pipeline</module>
-    <module>stroom-expression</module>
     <module>stroom-query-common</module>
     <module>stroom-security</module>
     <module>stroom-index</module>

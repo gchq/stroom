@@ -16,7 +16,7 @@
 
 package stroom.dashboard.server.format;
 
-import stroom.dashboard.expression.TypeConverter;
+import stroom.dashboard.expression.v1.TypeConverter;
 import stroom.query.shared.FormatSettings;
 import stroom.query.shared.NumberFormatSettings;
 

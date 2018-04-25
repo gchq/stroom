@@ -51,11 +51,6 @@
     </dependency>
     <dependency>
       <groupId>stroom</groupId>
-      <artifactId>stroom-expression</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>stroom</groupId>
       <artifactId>stroom-pipeline</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -68,6 +63,10 @@
       <groupId>stroom</groupId>
       <artifactId>stroom-core-shared</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>stroom</groupId>
+      <artifactId>stroom-expression</artifactId>
     </dependency>
 
     <dependency>

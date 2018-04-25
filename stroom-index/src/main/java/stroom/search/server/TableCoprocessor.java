@@ -16,7 +16,8 @@
 
 package stroom.search.server;
 
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Var;
 import stroom.mapreduce.BlockingPairQueue;
 import stroom.mapreduce.PairQueue;
 import stroom.mapreduce.UnsafePairQueue;
@@ -31,7 +32,6 @@ import stroom.query.TablePayload;
 import stroom.query.shared.Field;
 import stroom.query.shared.TableSettings;
 import stroom.util.shared.HasTerminate;
-import stroom.util.task.TaskMonitor;
 
 import java.util.List;
 import java.util.Map;
@@ -40,7 +40,6 @@ public class TableCoprocessor implements Coprocessor<TableCoprocessorSettings> {
     private final PairQueue<String, Item> queue;
     private final ItemMapper mapper;
 
-    private final CompiledFields compiledFields;
     private final CompiledDepths compiledDepths;
 
     public TableCoprocessor(final TableCoprocessorSettings settings,
@@ -49,14 +48,14 @@ public class TableCoprocessor implements Coprocessor<TableCoprocessorSettings> {
 
         final List<Field> fields = tableSettings.getFields();
         compiledDepths = new CompiledDepths(fields, tableSettings.showDetail());
-        compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
+        final CompiledFields compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
 
         queue = new BlockingPairQueue<>(monitor);
         mapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(), compiledDepths.getMaxGroupDepth());
     }
 
     @Override
-    public void receive(final String[] values) {
+    public void receive(final Var[] values) {
         mapper.collect(null, values);
     }
 

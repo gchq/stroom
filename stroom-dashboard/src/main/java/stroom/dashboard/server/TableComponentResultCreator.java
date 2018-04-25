@@ -16,7 +16,7 @@
 
 package stroom.dashboard.server;
 
-import stroom.dashboard.expression.Generator;
+import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.server.format.FieldFormatter;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TableResult;

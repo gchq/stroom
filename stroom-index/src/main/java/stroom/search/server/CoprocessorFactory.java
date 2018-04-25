@@ -17,11 +17,10 @@
 package stroom.search.server;
 
 import org.springframework.stereotype.Component;
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.query.TableCoprocessorSettings;
 import stroom.query.shared.CoprocessorSettings;
 import stroom.util.shared.HasTerminate;
-import stroom.util.task.TaskMonitor;
 
 import java.util.Map;
 

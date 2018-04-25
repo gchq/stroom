@@ -24,9 +24,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import stroom.dashboard.expression.Generator;
-import stroom.dashboard.expression.ObjectCompareUtil;
-import stroom.dashboard.expression.TypeConverter;
+import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.TypeConverter;
 import stroom.dashboard.server.ComponentResultCreator;
 import stroom.dashboard.server.MyDoubleSerialiser;
 import stroom.dashboard.server.vis.CompiledStructure.Direction;
@@ -57,34 +56,40 @@ import java.util.List;
 import java.util.Map;
 
 public class VisComponentResultCreator implements ComponentResultCreator {
-    private static class ObjectComparator implements Comparator<Object> {
-        @Override
-        public int compare(final Object o1, final Object o2) {
-            return ObjectCompareUtil.compare(o1, o2);
+    public static int objectCompare(final Object o1, final Object o2) {
+        if (o1 != null && o2 != null) {
+            if (o1 instanceof Double && o2 instanceof Double) {
+                return ((Double) o1).compareTo((Double) o2);
+            }
+            return o1.toString().compareToIgnoreCase(o2.toString());
         }
+        if (o1 == null) {
+            return -1;
+        }
+        return 1;
     }
 
-    private static class StoreComparator extends ObjectComparator {
+    private static class StoreComparator implements Comparator<Object> {
         private final CompiledStructure.Direction direction;
 
-        public StoreComparator(final CompiledStructure.Direction direction) {
+        StoreComparator(final CompiledStructure.Direction direction) {
             this.direction = direction;
         }
 
         @Override
         public int compare(final Object o1, final Object o2) {
             if (CompiledStructure.Direction.ASCENDING.equals(direction)) {
-                return super.compare(((Store) o1).getKey(), (((Store) o2).getKey()));
+                return objectCompare(((Store) o1).getKey(), (((Store) o2).getKey()));
             } else {
-                return super.compare(((Store) o2).getKey(), (((Store) o1).getKey()));
+                return objectCompare(((Store) o2).getKey(), (((Store) o1).getKey()));
             }
         }
     }
 
-    private static class ValuesComparator extends ObjectComparator {
+    private static class ValuesComparator implements Comparator<Object> {
         private final List<Sort> sorts;
 
-        public ValuesComparator(final List<Sort> sorts) {
+        ValuesComparator(final List<Sort> sorts) {
             this.sorts = sorts;
         }
 
@@ -97,9 +102,9 @@ public class VisComponentResultCreator implements ComponentResultCreator {
 
                 int result = 0;
                 if (Direction.ASCENDING.equals(sort.getDirection())) {
-                    result = super.compare(v1, v2);
+                    result = objectCompare(v1, v2);
                 } else {
-                    result = super.compare(v2, v1);
+                    result = objectCompare(v2, v1);
                 }
 
                 if (result != 0) {
@@ -217,7 +222,7 @@ public class VisComponentResultCreator implements ComponentResultCreator {
     private String error;
 
     public static VisComponentResultCreator create(final VisualisationService visualisationService,
-            final ComponentResultRequest componentResultRequest) {
+                                                   final ComponentResultRequest componentResultRequest) {
         Structure structure = null;
         try {
             final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
@@ -552,7 +557,7 @@ public class VisComponentResultCreator implements ComponentResultCreator {
     }
 
     private void addValue(final Item item, final int index, final Type type, final Double[] min, final Double[] max,
-            final Double[] sum, final Object[] arr, final int i) {
+                          final Double[] sum, final Object[] arr, final int i) {
         if (index >= 0 && item.getValues().length > index) {
             final Object o = item.getValues()[index];
             if (o != null) {

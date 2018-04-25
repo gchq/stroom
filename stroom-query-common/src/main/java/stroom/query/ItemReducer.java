@@ -16,7 +16,7 @@
 
 package stroom.query;
 
-import stroom.dashboard.expression.Generator;
+import stroom.dashboard.expression.v1.Generator;
 import stroom.mapreduce.OutputCollector;
 import stroom.mapreduce.Reducer;
 

@@ -51,11 +51,6 @@
     </dependency>
     <dependency>
       <groupId>stroom</groupId>
-      <artifactId>stroom-expression</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>stroom</groupId>
       <artifactId>stroom-core-client-widget</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -63,6 +58,10 @@
       <groupId>stroom</groupId>
       <artifactId>stroom-core-client</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>stroom</groupId>
+      <artifactId>stroom-expression</artifactId>
     </dependency>
     
     <dependency>

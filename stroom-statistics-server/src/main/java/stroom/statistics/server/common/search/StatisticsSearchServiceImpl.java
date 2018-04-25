@@ -7,7 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Var;
+import stroom.dashboard.expression.v1.VarDouble;
+import stroom.dashboard.expression.v1.VarLong;
+import stroom.dashboard.expression.v1.VarNull;
+import stroom.dashboard.expression.v1.VarString;
 import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.node.server.StroomPropertyService;
@@ -83,16 +88,16 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     }
 
     @Override
-    public Flowable<String[]> search(final StatisticStoreEntity statisticStoreEntity,
-                                     final FindEventCriteria criteria,
-                                     final FieldIndexMap fieldIndexMap) {
+    public Flowable<Var[]> search(final StatisticStoreEntity statisticStoreEntity,
+                                  final FindEventCriteria criteria,
+                                  final FieldIndexMap fieldIndexMap) {
 
         List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndexMap);
         SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndexMap);
 
         // build a mapper function to convert a resultSet row into a String[] based on the fields
         // required by all coprocessors
-        Function<ResultSet, String[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
+        Function<ResultSet, Var[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
 
         // the query will not be executed until somebody subscribes to the flowable
         return getFlowableQueryResults(sql, resultSetMapper);
@@ -111,7 +116,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         .add(KEY_TABLE_ALIAS + "." + SQLStatisticNames.NAME));
 
         //now map the fields in use to a distinct list of columns
-        final List<String> selectCols = fieldToColumnsMap.entrySet().stream()
+        return fieldToColumnsMap.entrySet().stream()
                 .flatMap(entry ->
                         entry.getValue().stream()
                                 .map(colName ->
@@ -121,8 +126,6 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                 .map(Optional::get))
                 .distinct()
                 .collect(Collectors.toList());
-
-        return selectCols;
     }
 
     /**
@@ -210,7 +213,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private ValueExtractor buildTagFieldValueExtractor(final String fieldName, final int fieldIndex) {
         return (rs, arr, cache) -> {
-            String value = cache.get(fieldName);
+            Var value = cache.get(fieldName);
             if (value == null) {
                 //populate our cache of
                 extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME))
@@ -224,7 +227,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     /**
      * Build a mapper function that will only extract the columns of interest from the resultSet row
      */
-    private Function<ResultSet, String[]> buildResultSetMapper(
+    private Function<ResultSet, Var[]> buildResultSetMapper(
             final FieldIndexMap fieldIndexMap,
             final StatisticStoreEntity statisticStoreEntity) {
 
@@ -265,12 +268,12 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                 } catch (SQLException e) {
                                     throw new RuntimeException("Error extracting precision field", e);
                                 }
-                                arr[idx] = Long.toString(precisionMs);
+                                arr[idx] = new VarLong(precisionMs);
                             };
                         } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_PRECISION)) {
                             extractor = (rs, arr, cache) -> {
                                 //can't do precision for sql stats
-                                arr[idx] = "-";
+                                arr[idx] = new VarString("-");
                             };
                         } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_VALUE)) {
                             if (statisticStoreEntity.getStatisticType().equals(StatisticType.COUNT)) {
@@ -292,8 +295,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                     // key/time. We therefore need to get the
                                     // average using the count column
                                     final double averagedValue = count != 0 ? (aggregatedValue / count) : 0;
-
-                                    arr[idx] = Double.toString(averagedValue);
+                                    arr[idx] = new VarDouble(averagedValue);
                                 };
                             }
                         } else if (statisticStoreEntity.getFieldNames().contains(fieldName)) {
@@ -327,9 +329,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 throw new RuntimeException("Error testing closed state of resultSet", e);
             }
             //the data array we are populating
-            final String[] data = new String[arrSize];
+            final Var[] data = new Var[arrSize];
             //state to hold while mapping this row, used to save parsing the NAME col multiple times
-            final Map<String, String> fieldValueCache = new HashMap<>();
+            final Map<String, Var> fieldValueCache = new HashMap<>();
 
             //run each of our field value extractors against the resultSet to fill up the data arr
             valueExtractors.forEach(valueExtractor ->
@@ -346,28 +348,28 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         };
     }
 
-    private String getResultSetLong(final ResultSet resultSet, final String column) {
+    private Var getResultSetLong(final ResultSet resultSet, final String column) {
         try {
-            return Long.toString(resultSet.getLong(column));
+            return new VarLong(resultSet.getLong(column));
         } catch (SQLException e) {
             throw new RuntimeException(String.format("Error extracting field %s", column), e);
         }
     }
 
-    private String getResultSetString(final ResultSet resultSet, final String column) {
+    private Var getResultSetString(final ResultSet resultSet, final String column) {
         try {
-            return resultSet.getString(column);
+            return new VarString(resultSet.getString(column));
         } catch (SQLException e) {
             throw new RuntimeException(String.format("Error extracting field %s", column), e);
         }
     }
 
-    private Flowable<String[]> getFlowableQueryResults(final SqlBuilder sql,
-                                                        final Function<ResultSet, String[]> resultSetMapper) {
+    private Flowable<Var[]> getFlowableQueryResults(final SqlBuilder sql,
+                                                    final Function<ResultSet, Var[]> resultSetMapper) {
 
         //Not thread safe as each onNext will get the same ResultSet instance, however its position
         // will have mode on each time.
-        Flowable<String[]> resultSetFlowable = Flowable
+        Flowable<Var[]> resultSetFlowable = Flowable
                 .using(
                         () -> new PreparedStatementResourceHolder(statisticsDataSource, sql, propertyService),
                         factory -> {
@@ -392,7 +394,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                         } else {
                                             if (rs.next()) {
                                                 LOGGER.trace("calling onNext");
-                                                String[] values = resultSetMapper.apply(rs);
+                                                Var[] values = resultSetMapper.apply(rs);
                                                 emitter.onNext(values);
                                             } else {
                                                 LOGGER.debug("End of resultSet, calling onComplete");
@@ -411,8 +413,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
      *                    form 'StatName' or 'StatName¬Tag1¬Tag1Val1¬Tag2¬Tag2Val1'
      * @return A map of tag=>value, or an empty map if there are none
      */
-    private Map<String, String> extractTagsMapFromColumn(final String columnValue) {
-        final String[] tokens = columnValue.split(SQLStatisticConstants.NAME_SEPARATOR);
+    private Map<String, Var> extractTagsMapFromColumn(final Var columnValue) {
+        final String[] tokens = columnValue.toString().split(SQLStatisticConstants.NAME_SEPARATOR);
 
         if (tokens.length == 1) {
             // no separators so there are no tags
@@ -421,15 +423,16 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             throw new RuntimeException(
                     String.format("Expecting an odd number of tokens, columnValue: %s", columnValue));
         } else {
-            final Map<String, String> statisticTags = new HashMap<>();
+            final Map<String, Var> statisticTags = new HashMap<>();
             // stat name will be at pos 0 so start at 1
             for (int i = 1; i < tokens.length; i++) {
                 final String tag = tokens[i++];
                 String value = tokens[i];
                 if (value.equals(SQLStatisticConstants.NULL_VALUE_STRING)) {
-                    value = null;
+                    statisticTags.put(tag, VarNull.INSTANCE);
+                } else {
+                    statisticTags.put(tag, new VarString(value));
                 }
-                statisticTags.put(tag, value);
             }
             return statisticTags;
         }
@@ -448,8 +451,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
          *                        processing a row
          */
         void extract(final ResultSet resultSet,
-                     final String[] data,
-                     final Map<String, String> fieldValueCache);
+                     final Var[] data,
+                     final Map<String, Var> fieldValueCache);
     }
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

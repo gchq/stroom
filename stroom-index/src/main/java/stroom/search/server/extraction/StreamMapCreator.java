@@ -16,6 +16,7 @@
 
 package stroom.search.server.extraction;
 
+import stroom.dashboard.expression.v1.Var;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.query.shared.IndexConstants;
 import stroom.query.shared.IndexField;
@@ -75,7 +76,7 @@ public class StreamMapCreator {
         return index;
     }
 
-    void addEvent(final Map<Long, List<Event>> storedDataMap, final String[] storedData) {
+    void addEvent(final Map<Long, List<Event>> storedDataMap, final Var[] storedData) {
         securityContext.elevatePermissions();
         try {
             final Long longStreamId = getLong(storedData, streamIdIndex);
@@ -123,11 +124,11 @@ public class StreamMapCreator {
         });
     }
 
-    private Long getLong(final String[] storedData, final int index) {
+    private Long getLong(final Var[] storedData, final int index) {
         try {
             if (index >= 0 && storedData.length > index) {
-                final String value = storedData[index];
-                return Long.parseLong(value);
+                final Var value = storedData[index];
+                return value.toLong();
             }
         } catch (final Exception e) {
             // Ignore

@@ -50,5 +50,9 @@
       <artifactId>stroom-entities</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>stroom</groupId>
+      <artifactId>stroom-expression</artifactId>
+    </dependency>
   </dependencies>
 </project>

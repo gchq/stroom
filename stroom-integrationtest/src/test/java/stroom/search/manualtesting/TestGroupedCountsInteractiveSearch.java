@@ -30,7 +30,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import stroom.CommonIndexingTest;
 import stroom.CommonTestControl;
-import stroom.dashboard.expression.Count;
+import stroom.dashboard.expression.v1.Count;
 import stroom.dashboard.server.QueryMarshaller;
 import stroom.dashboard.server.SearchDataSourceProviderRegistry;
 import stroom.dashboard.server.SearchResultCreator;

@@ -16,24 +16,25 @@
 
 package stroom.search.server.extraction;
 
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
-import stroom.dashboard.expression.FieldIndexMap;
-import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Var;
+import stroom.dashboard.expression.v1.VarString;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
+import stroom.util.spring.StroomScope;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS }, icon = ElementIcons.SEARCH)
+        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SEARCH)
 public class SearchResultOutputFilter extends AbstractXMLFilter {
     private static final String RECORD = "record";
     private static final String DATA = "data";
@@ -42,7 +43,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
 
     private FieldIndexMap fieldIndexes;
     private ResultReceiver resultReceiver;
-    private String[] values;
+    private Var[] values;
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -57,12 +58,12 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
                 if (name.length() > 0 && value.length() > 0) {
                     final int fieldIndex = fieldIndexes.get(name);
                     if (fieldIndex >= 0) {
-                        values[fieldIndex] = value;
+                        values[fieldIndex] = new VarString(value);
                     }
                 }
             }
         } else if (RECORD.equals(localName)) {
-            values = new String[fieldIndexes.size()];
+            values = new Var[fieldIndexes.size()];
         }
 
         super.startElement(uri, localName, qName, atts);

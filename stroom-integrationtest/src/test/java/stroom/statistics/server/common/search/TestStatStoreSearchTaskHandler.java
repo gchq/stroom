@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
-import stroom.dashboard.expression.Generator;
+import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.shared.ParamUtil;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.entity.server.util.StroomDatabaseInfo;

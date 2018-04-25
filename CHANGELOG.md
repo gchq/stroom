@@ -6,9 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#68** : Made `substring` dashboard table function capable of using computed values for `start` and `end` index positions. Also added companion string functions `substringAfter`, `substringBefore`, indexOf` and `lastIndexOf`.
+## [v5.3.0-beta.1] - 2018-04-25
 
-* Issue **#741** : Added a `countUnique` dashboard table expression function.
+* Move to stroom-expression v1.2.0-beta.1
+
+    Added `not()` function.
+    Added value functions `true()`, `false()`, `null()` and `err()`.
+    Added `match` boolean function.
+    Added `variance` and `stDev` functions.
+    Added `hash` function.
+    Added `formatDate` function.
+    Added `parseDate` function.
+    Made `substring` and `decode` functions capable of accepting functional parameters.
+    Added `substringBefore`, `substringAfter`, `indexOf` and `lastIndexOf` functions.
+    Added `countUnique` function.
 
 ## [v5.2.4] - 2018-04-18
 
@@ -771,7 +782,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.2.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.3.0-beta.1...HEAD
+[v5.3.0-beta.1]: https://github.com/gchq/stroom/compare/v5.2.3...v5.3.0-beta.1
 [v5.2.3]: https://github.com/gchq/stroom/compare/v5.2.2...v5.2.3
 [v5.2.2]: https://github.com/gchq/stroom/compare/v5.2.1...v5.2.2
 [v5.2.1]: https://github.com/gchq/stroom/compare/v5.2.0...v5.2.1

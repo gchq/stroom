@@ -16,7 +16,7 @@
 
 package stroom.query;
 
-import stroom.dashboard.expression.Expression;
+import stroom.dashboard.expression.v1.Expression;
 import stroom.query.shared.Field;
 
 public class CompiledField {

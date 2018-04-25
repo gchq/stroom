@@ -16,7 +16,7 @@
 
 package stroom.dashboard.server.download;
 
-import stroom.dashboard.expression.Generator;
+import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.server.SampleGenerator;
 import stroom.query.Item;
 import stroom.query.Items;

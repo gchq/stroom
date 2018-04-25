@@ -22,7 +22,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Var;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.shared.DocRef;
 import stroom.index.shared.Index;
@@ -121,7 +122,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     private ClusterSearchTask task;
 
-    private LinkedBlockingQueue<String[]> storedData;
+    private LinkedBlockingQueue<Var[]> storedData;
 
     @Inject
     ClusterSearchTaskHandler(final IndexService indexService,
@@ -493,7 +494,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 // Check if search is finished before polling for stored data.
                 final boolean searchComplete = indexShardSearchTaskProducer.isComplete();
                 // Poll for the next stored data result.
-                final String[] values = storedData.poll(1, TimeUnit.SECONDS);
+                final Var[] values = storedData.poll(1, TimeUnit.SECONDS);
 
                 if (values != null) {
                     // Send the data to all coprocessors.

@@ -16,7 +16,8 @@
 
 package stroom.statistics.server.common.search;
 
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Var;
 import stroom.mapreduce.BlockingPairQueue;
 import stroom.mapreduce.PairQueue;
 import stroom.mapreduce.UnsafePairQueue;
@@ -60,7 +61,7 @@ public class StatStoreTableCoprocessor {
         mapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(), compiledDepths.getMaxGroupDepth());
     }
 
-    public void receive(final String[] values) {
+    public void receive(final Var[] values) {
         mapper.collect(null, values);
     }
 

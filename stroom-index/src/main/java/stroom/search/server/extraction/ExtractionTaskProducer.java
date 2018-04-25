@@ -18,7 +18,8 @@ package stroom.search.server.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Var;
 import stroom.entity.shared.DocRef;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.search.server.ClusterSearchTask;
@@ -66,7 +67,7 @@ public class ExtractionTaskProducer extends TaskProducer {
     public ExtractionTaskProducer(final TaskExecutor taskExecutor,
                                   final ClusterSearchTask clusterSearchTask,
                                   final StreamMapCreator streamMapCreator,
-                                  final LinkedBlockingQueue<String[]> storedData,
+                                  final LinkedBlockingQueue<Var[]> storedData,
                                   final FieldIndexMap extractionFieldIndexMap,
                                   final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap,
                                   final ErrorReceiver errorReceiver,
@@ -92,7 +93,7 @@ public class ExtractionTaskProducer extends TaskProducer {
                         final boolean searchFinished = searchTaskProducer.isComplete();
 
                         // Poll for the next set of values.
-                        final String[] values = storedData.poll(1, TimeUnit.SECONDS);
+                        final Var[] values = storedData.poll(1, TimeUnit.SECONDS);
 
                         if (values != null) {
                             // If we have some values then map them.

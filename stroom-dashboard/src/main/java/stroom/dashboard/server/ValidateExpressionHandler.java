@@ -17,11 +17,11 @@
 package stroom.dashboard.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.expression.Expression;
-import stroom.dashboard.expression.ExpressionParser;
-import stroom.dashboard.expression.FieldIndexMap;
-import stroom.dashboard.expression.FunctionFactory;
-import stroom.dashboard.expression.ParamFactory;
+import stroom.dashboard.expression.v1.Expression;
+import stroom.dashboard.expression.v1.ExpressionParser;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.FunctionFactory;
+import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.dashboard.shared.ValidateExpressionAction;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.task.server.AbstractTaskHandler;

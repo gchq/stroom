@@ -18,6 +18,8 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.dashboard.expression.v1.Var;
+import stroom.dashboard.expression.v1.VarString;
 import stroom.dashboard.server.TableComponentResultCreator;
 import stroom.dashboard.server.format.FieldFormatter;
 import stroom.dashboard.server.format.FormatterFactory;
@@ -74,15 +76,14 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final String text = "Text " + i;
-            final String[] values = new String[1];
-            values[0] = text;
+            final Var[] values = new Var[1];
+            values[0] = new VarString("Text " + i);
 
             itemMapper.collect(null, values);
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new int[] { 50 });
+                tableSettings.showDetail(), new int[]{50});
         payloadHandler.addQueue(queue, new MonitorImpl());
         final ResultStore resultStore = payloadHandler.getResultStore();
 
@@ -121,15 +122,14 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final String text = "Text " + (int) (Math.random() * 100);
-            final String[] values = new String[1];
-            values[0] = text;
+            final Var[] values = new Var[1];
+            values[0] = new VarString("Text " + (int) (Math.random() * 100));
 
             itemMapper.collect(null, values);
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new int[] { 50 });
+                tableSettings.showDetail(), new int[]{50});
         payloadHandler.addQueue(queue, new MonitorImpl());
         final ResultStore resultStore = payloadHandler.getResultStore();
 
@@ -164,15 +164,14 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final String text = String.valueOf((int) (Math.random() * 100));
-            final String[] values = new String[1];
-            values[0] = text;
+            final Var[] values = new Var[1];
+            values[0] = new VarString(String.valueOf((int) (Math.random() * 100)));
 
             itemMapper.collect(null, values);
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new int[] { 50 });
+                tableSettings.showDetail(), new int[]{50});
         payloadHandler.addQueue(queue, new MonitorImpl());
         final ResultStore resultStore = payloadHandler.getResultStore();
 
@@ -211,15 +210,14 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final String text = "Text " + (int) (Math.random() * 100);
-            final String[] values = new String[2];
-            values[1] = text;
+            final Var[] values = new Var[2];
+            values[1] = new VarString("Text " + (int) (Math.random() * 100));
 
             itemMapper.collect(null, values);
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new int[] { 50 });
+                tableSettings.showDetail(), new int[]{50});
         payloadHandler.addQueue(queue, new MonitorImpl());
         final ResultStore resultStore = payloadHandler.getResultStore();
 
@@ -259,15 +257,14 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final String text = "Text " + (int) (Math.random() * 100);
-            final String[] values = new String[2];
-            values[1] = text;
+            final Var[] values = new Var[2];
+            values[1] = new VarString("Text " + (int) (Math.random() * 100));
 
             itemMapper.collect(null, values);
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new int[] { 50 });
+                tableSettings.showDetail(), new int[]{50});
         payloadHandler.addQueue(queue, new MonitorImpl());
         final ResultStore resultStore = payloadHandler.getResultStore();
 
@@ -307,15 +304,14 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final String text = "Text " + (int) (Math.random() * 100);
-            final String[] values = new String[2];
-            values[1] = text;
+            final Var[] values = new Var[2];
+            values[1] = new VarString("Text " + (int) (Math.random() * 100));
 
             itemMapper.collect(null, values);
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new int[] { 50 });
+                tableSettings.showDetail(), new int[]{50});
         payloadHandler.addQueue(queue, new MonitorImpl());
         final ResultStore resultStore = payloadHandler.getResultStore();
 
@@ -324,9 +320,9 @@ public class TestTablePayloadHandler extends StroomUnitTest {
         checkResults(resultStore, tableResultRequest, 1);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private void checkResults(final ResultStore resultStore, final TableResultRequest tableResultRequest,
-            final int sortCol) {
+                              final int sortCol) {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
