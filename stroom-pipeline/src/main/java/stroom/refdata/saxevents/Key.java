@@ -2,15 +2,22 @@ package stroom.refdata.saxevents;
 
 import com.google.common.base.Preconditions;
 
-import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class Key {
+/**
+ * A surrogate key for a value that implements hashCode(). It is recomended that the
+ * hashcode of the value is held on the instance rather than computing it on the fly
+ * each time to save processing.
+ */
+class Key {
 
-    public static final int SIZE_IN_BYTES = Integer.BYTES + Integer.BYTES;
-    public static final int DEFAULT_UNIQUE_ID = 0;
+    private static final int SIZE_IN_BYTES = Integer.BYTES + Integer.BYTES;
+    private static final int DEFAULT_UNIQUE_ID = 0;
+
+    // The hashcode of the value that this key points to
     private final int valueHashCode;
+    // An ID to provide uniqueness in the event of a hash-clash
     private final int uniqueId;
 
     Key(final int valueHashCode) {
@@ -48,14 +55,15 @@ public class Key {
 //            return byteBuffer.array();
 //        }
 
-    ByteBuffer toDirectByteBuffer() {
-        // TODO should this be allocatedirect for lmdb?
-        // TODO should we do this in an lmdb txn
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(Integer.BYTES + Integer.BYTES);
-//                    .order(ByteOrder.nativeOrder());
-        putContent(byteBuffer, valueHashCode, uniqueId);
-        return byteBuffer;
-    }
+//    ByteBuffer toDirectByteBuffer() {
+//        // TODO should this be allocatedirect for lmdb?
+//        // TODO should we do this in an lmdb txn
+////        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(Integer.BYTES + Integer.BYTES);
+//        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect();
+////                    .order(ByteOrder.nativeOrder());
+//        putContent(byteBuffer, valueHashCode, uniqueId);
+//        return byteBuffer;
+//    }
 
     public static ByteBuffer putContent(final ByteBuffer byteBuffer, final int valueHashCode, final int uniqueId) {
         return byteBuffer
@@ -109,31 +117,6 @@ public class Key {
     private String getBytesString() {
         ByteBuffer byteBuffer = ByteBuffer.allocate(SIZE_IN_BYTES);
         putContent(byteBuffer, valueHashCode, uniqueId);
-        return byteArrayToHex(byteBuffer.array());
-    }
-
-    /**
-     * Converts a byte array into a hex representation with a space between each
-     * byte e.g 00 00 01 00 05 59 B3
-     *
-     * @param arr The byte array to convert
-     * @return The byte array as a string of hex values separated by a spaces
-     */
-    public static String byteArrayToHex(final byte[] arr) {
-        final StringBuilder sb = new StringBuilder();
-        if (arr != null) {
-            for (final byte b : arr) {
-                sb.append(byteToHex(b));
-                sb.append(" ");
-            }
-        }
-        return sb.toString().replaceAll(" $", "");
-    }
-
-    public static String byteToHex(final byte b) {
-        final byte[] oneByteArr = new byte[1];
-        oneByteArr[0] = b;
-        return DatatypeConverter.printHexBinary(oneByteArr);
-
+        return LmdbUtils.byteArrayToHex(byteBuffer.array());
     }
 }

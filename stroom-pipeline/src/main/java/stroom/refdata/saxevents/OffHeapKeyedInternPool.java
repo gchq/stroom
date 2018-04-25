@@ -11,6 +11,7 @@ import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.pool.InternPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -50,6 +51,10 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
     private final Dbi<ByteBuffer> db;
     private final Function<ByteBuffer, V> valueMapper;
 
+    // An intern pool to ensure we only have one instance of a ValueSupplier for the same
+    // valueHashCode, uniqueId & OffHeapKeyedInternPool instance
+    private final InternPool<ValueSupplier<V>> valueSupplierInternPool = new InternPool<>();
+
     OffHeapKeyedInternPool(final Path dbDir,
                            final String dbName,
                            final long maxSize,
@@ -80,7 +85,7 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
      * @param value
      */
     synchronized public void forcedPut(final Key key, final V value) {
-        LmdbUtils.doInWriteTxn(env, txn -> {
+        LmdbUtils.doWithWriteTxn(env, txn -> {
             final ByteBuffer keyBuffer = buildKeyBuffer(key);
             final byte[] bValue = value.toBytes();
             final int valueHashCode = value.hashCode();
@@ -90,7 +95,7 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
                     .flip();
             boolean didPutSucceed = db.put(txn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Putting entry with key {}, result: {}", key, didPutSucceed));
-            dumpBuffer(valueBuffer, "valueBuffer");
+            LmdbUtils.dumpBuffer(valueBuffer, "valueBuffer");
         });
     }
 
@@ -103,7 +108,15 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
         // The benefits will depend on the degree of reuse of the values. Low reuse means we don't bother,
         // but high re-use (e.g. if the TTL is long) means we will benefit from an additional get.
         Key key = put(value);
-        return makeValueSupplier(key);
+        ValueSupplier<V> valueSupplier = makeValueSupplier(key);
+
+        //ensure we only have one instance of this logical valueSupplier
+        //TODO using this intern pool incurs synchronisation, may be cheaper to accept
+        // multiple instances for the same logical valueSupplier
+        valueSupplier = valueSupplierInternPool.intern(valueSupplier);
+
+        return valueSupplier;
+
     }
 
     synchronized Key put(final V value) {
@@ -132,13 +145,13 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
                     valuesCount.incrementAndGet();
                     LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Found entry {} with key {}",
                             valuesCount.get(),
-                            byteBufferToHex(keyVal.key())));
+                            LmdbUtils.byteBufferToHex(keyVal.key())));
 
                     ByteBuffer valueFromDbBuf = keyVal.val();
 
                     LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Our value {}, db value {}",
-                            byteBufferToHex(valueBuffer),
-                            byteBufferToHex(valueFromDbBuf)));
+                            LmdbUtils.byteBufferToHex(valueBuffer),
+                            LmdbUtils.byteBufferToHex(valueFromDbBuf)));
 
                     int res = ByteBufferUtils.compareTo(
                             valueBuffer, valueBuffer.position(), valueBuffer.remaining(),
@@ -179,7 +192,7 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
                 ByteBuffer keyBuffer = buildKeyBuffer(key);
                 boolean didPutSucceed = db.put(txn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
                 LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Putting entry with key {}, result: {}", key, didPutSucceed));
-                dumpBuffer(valueBuffer, "valueBuffer");
+                LmdbUtils.dumpBuffer(valueBuffer, "valueBuffer");
                 txn.commit();
             }
         }
@@ -215,8 +228,8 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
     }
 
     Optional<V> get(final Key key) {
-        return LmdbUtils.getInReadTxn(env, txn -> {
-            ByteBuffer keyBuffer = key.toDirectByteBuffer();
+        return LmdbUtils.getWithReadTxn(env, txn -> {
+            ByteBuffer keyBuffer = buildKeyBuffer(key);
             ByteBuffer valueBuffer = db.get(txn, keyBuffer);
             return Optional.ofNullable(valueBuffer)
                     .map(valueMapper);
@@ -225,12 +238,12 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
 
     @Override
     public void clear() {
-        LmdbUtils.doInWriteTxn(env, db::drop);
+        LmdbUtils.doWithWriteTxn(env, db::drop);
     }
 
     @Override
     public long size() {
-        return LmdbUtils.getInReadTxn(env, txn ->
+        return LmdbUtils.getWithReadTxn(env, txn ->
             db.stat(txn).entries
         );
     }
@@ -262,6 +275,9 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
                 '}';
     }
 
+    /**
+     * Only intended for use in tests as the DB could be massive and thus produce a LOT of logging
+     */
     void dumpContents() {
         StringBuilder stringBuilder = new StringBuilder();
         try (final Txn<ByteBuffer> txn = env.txnRead()) {
@@ -276,6 +292,9 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
         LAMBDA_LOGGER.info(() -> LambdaLogger.buildMessage("Dumping contents: {}", stringBuilder.toString()));
     }
 
+    /**
+     * Only intended for use in tests as the DB could be massive and thus produce a LOT of logging
+     */
     void dumpContentsInRange(final Key startKey, final Key endKey) {
         try (final Txn<ByteBuffer> txn = env.txnRead()) {
             ByteBuffer startKeyBuf = buildKeyBuffer(startKey);
@@ -285,6 +304,9 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
         }
     }
 
+    /**
+     * Only intended for use in tests as the DB could be massive and thus produce a LOT of logging
+     */
     void dumpContentsInRange(Txn<ByteBuffer> txn, final KeyRange<ByteBuffer> keyRange) {
 
 
@@ -298,31 +320,9 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
         }
         String contents = stringBuilder.toString();
         LAMBDA_LOGGER.info(() -> LambdaLogger.buildMessage("Dumping contents in range: startKey {}, endKey {}{}",
-                byteBufferToHex(keyRange.getStart()),
-                byteBufferToHex(keyRange.getStop()),
+                LmdbUtils.byteBufferToHex(keyRange.getStart()),
+                LmdbUtils.byteBufferToHex(keyRange.getStop()),
                 contents));
-    }
-
-    static void dumpBuffer(final ByteBuffer byteBuffer, final String description) {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        for (int i = byteBuffer.position(); i < byteBuffer.limit(); i++) {
-            byte b = byteBuffer.get(i);
-            stringBuilder.append(Key.byteToHex(b));
-            stringBuilder.append(" ");
-        }
-        LOGGER.info("{} byteBuffer: {}", description, stringBuilder.toString());
-    }
-
-    static String byteBufferToHex(final ByteBuffer byteBuffer) {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        for (int i = byteBuffer.position(); i < byteBuffer.limit(); i++) {
-            byte b = byteBuffer.get(i);
-            stringBuilder.append(Key.byteToHex(b));
-            stringBuilder.append(" ");
-        }
-        return stringBuilder.toString();
     }
 
     private ByteBuffer buildStartKeyBuffer(final V value) {

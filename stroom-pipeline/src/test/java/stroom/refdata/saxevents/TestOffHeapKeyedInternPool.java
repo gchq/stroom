@@ -1,5 +1,7 @@
 package stroom.refdata.saxevents;
 
+import org.apache.hadoop.hbase.util.Bytes;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,6 +14,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class TestOffHeapKeyedInternPool {
 
@@ -105,34 +108,65 @@ public class TestOffHeapKeyedInternPool {
 
         OffHeapKeyedInternPool<StringValue> pool = buildPool();
 
+        String value2str = "Value 02";
+        StringValue value2instance1 = StringValue.of(value2str);
+        StringValue value2instance2 = StringValue.of(value2str);
+        StringValue value2instance3 = StringValue.of(value2str);
+
         //Put unique values into the the pool, out of order
         ValueSupplier<StringValue> val4Supplier1 = pool.intern(StringValue.of("Value 0004"));
         ValueSupplier<StringValue> val3Supplier1 = pool.intern(StringValue.of("Value 003"));
-        ValueSupplier<StringValue> val2Supplier1 = pool.intern(StringValue.of("Value 02"));
+        ValueSupplier<StringValue> val2Supplier1 = pool.intern(value2instance1);
         ValueSupplier<StringValue> val5Supplier1 = pool.intern(StringValue.of("Value 00005"));
         ValueSupplier<StringValue> val1Supplier1 = pool.intern(StringValue.of("Value 1"));
         ValueSupplier<StringValue> val6Supplier1 = pool.intern(StringValue.of("Value 000006"));
 
-        ((OffHeapKeyedInternPool<StringValue>) pool).dumpContents();
+        StringValue suppliedValue2Instance1 = val2Supplier1.supply().get();
+
+        pool.dumpContents();
 //        Assertions.assertThat(pool.size()).isEqualTo(3);
 
-        // call put twice more for value 2
-        ValueSupplier<StringValue> val2Supplier2 = pool.intern(StringValue.of("Value 02"));
-        ValueSupplier<StringValue> val2Supplier3 = pool.intern(StringValue.of("Value 02"));
+        // call put twice more for two new StringValue instances that are logically the same
+        // as value2instance1
+        ValueSupplier<StringValue> val2Supplier2 = pool.intern(value2instance2);
+        ValueSupplier<StringValue> val2Supplier3 = pool.intern(value2instance3);
+
+        StringValue suppliedValue2Instance2 = val2Supplier2.supply().get();
+        StringValue suppliedValue2Instance3 = val2Supplier3.supply().get();
 
         SoftAssertions softAssertions = new SoftAssertions();
+        softAssertions.assertThat(value2instance1).isNotSameAs(value2instance2);
+        softAssertions.assertThat(value2instance1).isNotSameAs(value2instance3);
+        softAssertions.assertThat(value2instance2).isNotSameAs(value2instance3);
 
-        //the size should still be 3 as the last two we already in there
+        //the size should still be 6 as the last two were already in there
         softAssertions.assertThat(pool.size()).isEqualTo(6);
         softAssertions.assertThat(val1Supplier1).isNotEqualTo(val2Supplier1);
         softAssertions.assertThat(val1Supplier1).isNotEqualTo(val3Supplier1);
         softAssertions.assertThat(val2Supplier1).isNotEqualTo(val3Supplier1);
 
+
         softAssertions.assertThat(val2Supplier1).isEqualTo(val2Supplier2);
         softAssertions.assertThat(val2Supplier1).isEqualTo(val2Supplier3);
 
+        // these suppliers should be the same instances as the ones obtained in the first
+        // set of interns
+        softAssertions.assertThat(val2Supplier1).isSameAs(val2Supplier2);
+        softAssertions.assertThat(val2Supplier1).isSameAs(val2Supplier3);
+
+        // The instance we interned should be logically the same as the one we got back
+        // from the pool
+        Assertions.assertThat(value2instance1).isEqualTo(suppliedValue2Instance1);
+        softAssertions.assertThat(value2instance1).isEqualTo(suppliedValue2Instance1);
+
+        //All three value instances obtained from the pool should be the same instance
+        softAssertions.assertThat(suppliedValue2Instance1).isEqualTo(suppliedValue2Instance2);
+        softAssertions.assertThat(suppliedValue2Instance1).isEqualTo(suppliedValue2Instance3);
+        softAssertions.assertThat(suppliedValue2Instance2).isEqualTo(suppliedValue2Instance3);
+
         softAssertions.assertAll();
     }
+
 
 
     private OffHeapKeyedInternPool<StringValue> buildPool() throws IOException {
@@ -156,6 +190,19 @@ public class TestOffHeapKeyedInternPool {
     public void close() {
     }
 
+    @Test
+    public void testStringValueSerDeser() {
+        String value2str = "Value 02";
+        StringValue value2instance1 = StringValue.of(value2str);
+        StringValue value2instance2 = StringValue.of(value2str);
+        Assertions.assertThat(value2instance1).isEqualTo(value2instance2);
+
+        byte[] bytes = Bytes.copy(value2instance1.toBytes());
+        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+
+        Assertions.assertThat(value2instance1).isEqualTo(StringValue.fromByteBuffer(byteBuffer));
+    }
+
 
     static ByteBuffer bb(final int value) {
         final ByteBuffer bb = ByteBuffer.allocateDirect(Integer.BYTES);
@@ -176,13 +223,16 @@ public class TestOffHeapKeyedInternPool {
         }
 
         @Override
-        public boolean equals(final Object obj) {
-            return value.equals(obj);
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final StringValue that = (StringValue) o;
+            return Objects.equals(value, that.value);
         }
 
         @Override
         public int hashCode() {
-            return value.hashCode();
+            return Objects.hash(value);
         }
 
         @Override
