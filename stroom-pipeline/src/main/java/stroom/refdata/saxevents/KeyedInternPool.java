@@ -1,5 +1,7 @@
 package stroom.refdata.saxevents;
 
+import com.google.common.base.Preconditions;
+
 import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -51,6 +53,8 @@ public interface KeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPo
         private final int uniqueId;
 
         Key(final int valueHashCode, final int uniqueId) {
+            // Due to the way keys are sorted, negative unique ids are not supported
+            Preconditions.checkArgument(uniqueId >= 0);
             this.valueHashCode = valueHashCode;
             this.uniqueId = uniqueId;
         }

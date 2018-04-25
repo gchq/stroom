@@ -1,7 +1,6 @@
 package stroom.refdata.saxevents;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
 import org.lmdbjava.CursorIterator;
 import org.lmdbjava.Dbi;
@@ -9,7 +8,6 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
-import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,27 +73,45 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
         db = env.openDbi(dbName, DbiFlags.MDB_CREATE);
     }
 
+    /**
+     * Used for testing
+     *
+     * @param key
+     * @param value
+     */
+    synchronized public void forcedPut(final Key key, final V value) {
+        LmdbUtils.doInWriteTxn(env, txn -> {
+            final ByteBuffer keyBuffer = buildKeyBuffer(key);
+            final byte[] bValue = value.toBytes();
+            final int valueHashCode = value.hashCode();
+            final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(bValue.length);
+            valueBuffer
+                    .put(bValue)
+                    .flip();
+            boolean didPutSucceed = db.put(txn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Putting entry with key {}, result: {}", key, didPutSucceed));
+            dumpBuffer(valueBuffer, "valueBuffer");
+        });
+    }
+
     @Override
     synchronized public Key put(final V value) {
         LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("put called for value {}", value.toString()));
         Preconditions.checkNotNull(value);
 
         final byte[] bValue = value.toBytes();
-        final int valueHashCode = value.hashCode();
-        final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(bValue.length);
-        valueBuffer
-                .put(bValue)
-                .flip();
+        final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(bValue.length)
+                .put(bValue);
+        valueBuffer.flip();
 
         Key key;
         try (final Txn<ByteBuffer> txn = env.txnWrite()) {
 
-            ByteBuffer startKey = buildStartKeyBuffer(value);
-            ByteBuffer endKey = buildEndKeyBuffer(value);
-            final KeyRange<ByteBuffer> keyRange = KeyRange.open(startKey, endKey);
+            final KeyRange<ByteBuffer> keyRange = buildAllIdsForSingleHashValueKeyRange(value);
 
             dumpContentsInRange(txn, keyRange);
 
+            // Use atomics so they can be mutated and then used in lambdas
             AtomicBoolean isValueInMap = new AtomicBoolean(false);
             AtomicInteger valuesCount = new AtomicInteger(0);
             CursorIterator.KeyVal<ByteBuffer> lastKeyValue = null;
@@ -151,11 +167,17 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
                 ByteBuffer keyBuffer = buildKeyBuffer(key);
                 boolean didPutSucceed = db.put(txn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
                 LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Putting entry with key {}, result: {}", key, didPutSucceed));
-                dumpBuffer(valueBuffer);
+                dumpBuffer(valueBuffer, "valueBuffer");
                 txn.commit();
             }
         }
         return key;
+    }
+
+    private KeyRange<ByteBuffer> buildAllIdsForSingleHashValueKeyRange(final V value) {
+        ByteBuffer startKey = buildStartKeyBuffer(value);
+        ByteBuffer endKey = buildEndKeyBuffer(value);
+        return KeyRange.open(startKey, endKey);
     }
 
 //    private Optional<Key> doOptimisticPut(final Txn<ByteBuffer> txn,
@@ -182,37 +204,29 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
 
     @Override
     public Optional<V> get(final Key key) {
-        try (final Txn<ByteBuffer> txn = env.txnRead()) {
+        return LmdbUtils.getInReadTxn(env, txn -> {
             ByteBuffer keyBuffer = key.toDirectByteBuffer();
             ByteBuffer valueBuffer = db.get(txn, keyBuffer);
             return Optional.ofNullable(valueBuffer)
                     .map(valueMapper);
-        }
+        });
     }
 
     @Override
     public void clear() {
-        try (Txn<ByteBuffer> txn = env.txnWrite()) {
-            db.drop(txn);
-        }
+        LmdbUtils.doInWriteTxn(env, db::drop);
     }
 
     @Override
     public long size() {
-        return env.stat().entries;
+        return LmdbUtils.getInReadTxn(env, txn ->
+            db.stat(txn).entries
+        );
     }
 
     @Override
     public Map<String, String> getInfo() {
-        Stat stat = env.stat();
-        return ImmutableMap.<String, String>builder()
-                .put("pageSize", Integer.toString(stat.pageSize))
-                .put("branchPages", Long.toString(stat.branchPages))
-                .put("depth", Integer.toString(stat.depth))
-                .put("entries", Long.toString(stat.entries))
-                .put("leafPages", Long.toString(stat.leafPages))
-                .put("overFlowPages", Long.toString(stat.overflowPages))
-                .build();
+        return LmdbUtils.getDbInfo(env, db);
     }
 
     @Override
@@ -248,16 +262,27 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
     }
 
 
-    void dumpContents() {
-        try (final Txn<ByteBuffer> txn = env.txnRead()) {
 
+    void dumpContents() {
+        StringBuilder stringBuilder = new StringBuilder();
+        try (final Txn<ByteBuffer> txn = env.txnRead()) {
             try (CursorIterator<ByteBuffer> cursorIterator = db.iterate(txn)) {
                 for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
                     Key key = Key.fromBytes(keyVal.key());
                     V value = valueMapper.apply(keyVal.val());
-                    LOGGER.info("key: {}, value: {}", key, value);
+                    stringBuilder.append(LambdaLogger.buildMessage("\n   key: {}, value: {}", key, value));
                 }
             }
+        }
+        LAMBDA_LOGGER.info(() -> LambdaLogger.buildMessage("Dumping contents: {}", stringBuilder.toString()));
+    }
+
+    void dumpContentsInRange(final Key startKey, final Key endKey) {
+        try (final Txn<ByteBuffer> txn = env.txnRead()) {
+            ByteBuffer startKeyBuf = buildKeyBuffer(startKey);
+            ByteBuffer endKeyBuf = buildKeyBuffer(endKey);
+            final KeyRange<ByteBuffer> keyRange = KeyRange.closed(startKeyBuf, endKeyBuf);
+            dumpContentsInRange(txn, keyRange);
         }
     }
 
@@ -269,7 +294,7 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
             for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
                 Key key = Key.fromBytes(keyVal.key());
                 V value = valueMapper.apply(keyVal.val());
-                stringBuilder.append(LambdaLogger.buildMessage("\n  key: {}, value: {}", key, value));
+                stringBuilder.append(LambdaLogger.buildMessage("\n   key: {}, value: {}", key, value));
             }
         }
         String contents = stringBuilder.toString();
@@ -279,7 +304,7 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
                 contents));
     }
 
-    static void dumpBuffer(final ByteBuffer byteBuffer) {
+    static void dumpBuffer(final ByteBuffer byteBuffer, final String description) {
         StringBuilder stringBuilder = new StringBuilder();
 
         for (int i = byteBuffer.position(); i < byteBuffer.limit(); i++) {
@@ -287,7 +312,7 @@ class OffHeapKeyedInternPool<V extends KeyedInternPool.AbstractKeyedInternPoolVa
             stringBuilder.append(Key.byteToHex(b));
             stringBuilder.append(" ");
         }
-        LOGGER.info("byteBuffer: {}", stringBuilder.toString());
+        LOGGER.info("{} byteBuffer: {}", description, stringBuilder.toString());
     }
 
     static String byteBufferToHex(final ByteBuffer byteBuffer) {
