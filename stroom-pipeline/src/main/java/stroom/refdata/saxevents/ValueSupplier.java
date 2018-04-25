@@ -26,6 +26,11 @@ public class ValueSupplier<V> {
         return supplier.get();
     }
 
+    // TODO add a 'void useValue(Consumer<ByteBuffer> consumer)' method so the caller can supply
+    // a lamdba to run inside the txn and avoid a copy of the retrieved object.
+    // Plus add a method in the pool to call the consumer's get method having got the value using
+    // the key
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
