@@ -14,14 +14,26 @@ class Key {
 
     private static final int SIZE_IN_BYTES = Integer.BYTES + Integer.BYTES;
     private static final int DEFAULT_UNIQUE_ID = 0;
+    private static final int MIN_UNIQUE_ID = DEFAULT_UNIQUE_ID;
+    private static final int MAX_UNIQUE_ID = Integer.MAX_VALUE;
 
     // The hashcode of the value that this key points to
     private final int valueHashCode;
     // An ID to provide uniqueness in the event of a hash-clash
     private final int uniqueId;
 
-    Key(final int valueHashCode) {
-        this(valueHashCode, DEFAULT_UNIQUE_ID);
+    /**
+     * @return A key with the lowest possible uniqueId for valueHashCode
+     */
+    static Key lowestKey(final int valueHashCode) {
+        return new Key(valueHashCode, MIN_UNIQUE_ID);
+    }
+
+    /**
+     * @return A key with the highest possible uniqueId for valueHashCode
+     */
+    static Key highestKey(final int valueHashCode) {
+        return new Key(valueHashCode, MAX_UNIQUE_ID);
     }
 
     Key(final int valueHashCode, final int uniqueId) {
@@ -47,43 +59,16 @@ class Key {
         return uniqueId;
     }
 
-//        byte[] toBytes() {
-//            // TODO should this be allocatedirect for lmdb?
-//            // TODO should we do this in an lmdb txn
-//            final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + Long.BYTES);
-//            putContent(byteBuffer);
-//            return byteBuffer.array();
-//        }
-
-//    ByteBuffer toDirectByteBuffer() {
-//        // TODO should this be allocatedirect for lmdb?
-//        // TODO should we do this in an lmdb txn
-////        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(Integer.BYTES + Integer.BYTES);
-//        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect();
-////                    .order(ByteOrder.nativeOrder());
-//        putContent(byteBuffer, valueHashCode, uniqueId);
-//        return byteBuffer;
-//    }
-
-    public static ByteBuffer putContent(final ByteBuffer byteBuffer, final int valueHashCode, final int uniqueId) {
+    /**
+     * Put the key's content in the passed byteBuffer
+     */
+    ByteBuffer putContent(final ByteBuffer byteBuffer) {
         return byteBuffer
                 .putInt(valueHashCode)
                 .putInt(uniqueId);
-//                    .put(Bytes.toBytes(valueHashCode))
-//                    .put(Bytes.toBytes(uniqueId));
     }
 
-//        static Key fromBytes(final byte[] bytes) {
-//            // TODO should this be allocatedirect for lmdb?
-//            // TODO should we do this in an lmdb txn
-//            final ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-//            return fromBytes(byteBuffer);
-//        }
-
-    static Key fromBytes(final ByteBuffer byteBuffer) {
-        // TODO should this be allocatedirect for lmdb?
-        // TODO should we do this in an lmdb txn
-//            byteBuffer.order(ByteOrder.nativeOrder());
+    static Key fromByteBuffer(final ByteBuffer byteBuffer) {
         int hashCode = byteBuffer.getInt();
         int uniqueId = byteBuffer.getInt();
         byteBuffer.flip();
@@ -116,7 +101,7 @@ class Key {
 
     private String getBytesString() {
         ByteBuffer byteBuffer = ByteBuffer.allocate(SIZE_IN_BYTES);
-        putContent(byteBuffer, valueHashCode, uniqueId);
+        putContent(byteBuffer);
         return LmdbUtils.byteArrayToHex(byteBuffer.array());
     }
 }

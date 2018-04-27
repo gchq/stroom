@@ -42,6 +42,17 @@ public class LmdbUtils {
     }
 
     /**
+     * Do work inside a read txn then commit
+     */
+    public static void doWithReadTxn(final Env<ByteBuffer> env, Consumer<Txn<ByteBuffer>> work) {
+        try (final Txn<ByteBuffer> txn = env.txnRead()) {
+            work.accept(txn);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Error performing work in read transaction", e);
+        }
+    }
+
+    /**
      * Do work inside a write txn then commit, return a result of the work
      */
     public static <T> T getWithWriteTxn(final Env<ByteBuffer> env, Function<Txn<ByteBuffer>, T> work) {

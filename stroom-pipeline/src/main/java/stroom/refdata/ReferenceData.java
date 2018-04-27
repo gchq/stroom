@@ -260,7 +260,7 @@ public class ReferenceData {
                             result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
 
 
-                            // TODO change this to set the ValueSupplier
+                            // TODO change this to set the ValueProxy
                             result.setEventList(eventList);
 
                         } else {

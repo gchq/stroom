@@ -90,11 +90,7 @@ public class FastInfosetConsumer {
 
         ByteBufferInputStream inputStream = new ByteBufferInputStream(byteBuffer);
         saxDocumentParser.parse(inputStream);
-        saxDocumentParser.r
-
-
-
-
+        saxDocumentParser.reset();
     }
 
     private static class NullLocation implements Location {

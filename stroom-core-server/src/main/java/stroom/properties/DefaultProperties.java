@@ -16,6 +16,7 @@
 package stroom.properties;
 
 import stroom.node.shared.GlobalProperty;
+import stroom.util.ByteSizeUnit;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +32,20 @@ public class DefaultProperties {
         list.add(new GlobalProperty.Builder()
                 .name("stroom.temp")
                 .description("Temp folder to write stuff to. Should only be set per node in application property file")
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.offHeapData.parentDir")
+                .value("${stroom.temp}/offHeapData")
+                .description("Parent directory for all offHeap node specific memory persistence")
+                .editable(false)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.offHeapData.internPool.maxDbSize")
+                .value(Long.toString(ByteSizeUnit.GIBIBYTE.longBytes(10)))
+                .description("The maximum size in bytes for each off heap intern pool database")
+                .editable(false)
                 .build());
 
         // Stroom Proxy Repository and Aggregation
@@ -70,6 +85,7 @@ public class DefaultProperties {
                 .description("This stops the aggregation after a certain size / nested streams")
                 .editable(true)
                 .build());
+
 
         // STREAM STORE
         list.add(new GlobalProperty.Builder()

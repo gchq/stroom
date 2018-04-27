@@ -27,6 +27,9 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.refdata.MapStoreHolder;
+import stroom.refdata.saxevents.AbstractOffHeapInternPoolValue;
+import stroom.refdata.saxevents.FastInfosetValue;
+import stroom.refdata.saxevents.StringValue;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 import stroom.xml.event.EventList;
@@ -60,10 +63,17 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private String map;
     private String key;
     private boolean inValue;
+    private boolean haveSeenXmlInValueElement = false;
     private Long rangeFrom;
     private Long rangeTo;
     private boolean warnOnDuplicateKeys = false;
     private boolean overrideExistingValues = true;
+
+    private enum ValueElementType {
+        XML, STRING
+    }
+
+    private ValueElementType valueElementType = null;
 
     @Inject
     public ReferenceDataFilter(final MapStoreHolder mapStoreHolder,
@@ -96,6 +106,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
             inValue = true;
         } else if (inValue) {
+            if (!haveSeenXmlInValueElement) {
+                // This is the first startElement inside the value element so we are dealing with XML refdata
+                haveSeenXmlInValueElement = true;
+                saxDocumentSerializer.reset();
+            }
+
             saxDocumentSerializer.startElement(uri, localName, qName, atts);
         }
 
@@ -149,11 +165,22 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 }
 
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
-                //serialize the event list using fastInfoset
-                byte[] bEventList = byteArrayOutputStream.toByteArray();
-                byteArrayOutputStream.reset();
 
-                // TODO add bEventList to the OffHEapStore, getting a KeyedInternPool.Key returned
+                final AbstractOffHeapInternPoolValue value;
+                if (haveSeenXmlInValueElement) {
+                    //serialize the event list using fastInfoset
+                    byte[] fastInfosetBytes = byteArrayOutputStream.toByteArray();
+                    value = new FastInfosetValue(fastInfosetBytes);
+                    byteArrayOutputStream.reset();
+                } else {
+                    // simple string value so use content buffer
+                    value = StringValue.of(contentBuffer.toString());
+                }
+
+
+
+
+                // TODO add bEventList to the OffHEapStore, getting a OffHeapInternPool.Key returned
                 //
 
                 // Intern the event list so we only have one identical copy in
@@ -221,7 +248,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
-        if (inValue) {
+        if (inValue && haveSeenXmlInValueElement) {
             saxDocumentSerializer.characters(ch, start, length);
         } else {
             // outside the value element so capture the chars so we can get keys, map names, etc.

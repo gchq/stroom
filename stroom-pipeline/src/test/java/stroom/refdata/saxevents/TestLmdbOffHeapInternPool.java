@@ -12,13 +12,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Objects;
 
-public class TestOffHeapKeyedInternPool {
+public class TestLmdbOffHeapInternPool {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestOffHeapKeyedInternPool.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestLmdbOffHeapInternPool.class);
 
     public static final long KILO_BYTES = 1024;
     public static final long MEGA_BYTES = 1024 * KILO_BYTES;
@@ -42,7 +40,7 @@ public class TestOffHeapKeyedInternPool {
 
         LOGGER.info("Using temp dir {}", tmpDir.getRoot().toPath().toAbsolutePath().toString());
 
-        OffHeapKeyedInternPool<StringValue> pool = buildPool();
+        LmdbOffHeapInternPool<StringValue> pool = buildPool();
 
         pool.forcedPut(new Key(3,1), StringValue.of("3-1"));
         pool.forcedPut(new Key(3,0), StringValue.of("3-0"));
@@ -70,7 +68,7 @@ public class TestOffHeapKeyedInternPool {
 
         LOGGER.info("Using temp dir {}", tmpDir.getRoot().toPath().toAbsolutePath().toString());
 
-        OffHeapKeyedInternPool<StringValue> pool = buildPool();
+        LmdbOffHeapInternPool<StringValue> pool = buildPool();
 
         //Put unique values into the the pool, out of order
         Key val4Key1 = pool.put(StringValue.of("Value 0004"));
@@ -80,7 +78,7 @@ public class TestOffHeapKeyedInternPool {
         Key val1key1 = pool.put(StringValue.of("Value 1"));
         Key val6Key1 = pool.put(StringValue.of("Value 000006"));
 
-        ((OffHeapKeyedInternPool<StringValue>) pool).dumpContents();
+        ((LmdbOffHeapInternPool<StringValue>) pool).dumpContents();
 //        Assertions.assertThat(pool.size()).isEqualTo(3);
 
         // call put twice more for value 2
@@ -106,7 +104,7 @@ public class TestOffHeapKeyedInternPool {
 
         LOGGER.info("Using temp dir {}", tmpDir.getRoot().toPath().toAbsolutePath().toString());
 
-        OffHeapKeyedInternPool<StringValue> pool = buildPool();
+        LmdbOffHeapInternPool<StringValue> pool = buildPool();
 
         String value2str = "Value 02";
         StringValue value2instance1 = StringValue.of(value2str);
@@ -114,12 +112,12 @@ public class TestOffHeapKeyedInternPool {
         StringValue value2instance3 = StringValue.of(value2str);
 
         //Put unique values into the the pool, out of order
-        ValueSupplier<StringValue> val4Supplier1 = pool.intern(StringValue.of("Value 0004"));
-        ValueSupplier<StringValue> val3Supplier1 = pool.intern(StringValue.of("Value 003"));
-        ValueSupplier<StringValue> val2Supplier1 = pool.intern(value2instance1);
-        ValueSupplier<StringValue> val5Supplier1 = pool.intern(StringValue.of("Value 00005"));
-        ValueSupplier<StringValue> val1Supplier1 = pool.intern(StringValue.of("Value 1"));
-        ValueSupplier<StringValue> val6Supplier1 = pool.intern(StringValue.of("Value 000006"));
+        ValueProxy<StringValue> val4Supplier1 = pool.intern(StringValue.of("Value 0004"));
+        ValueProxy<StringValue> val3Supplier1 = pool.intern(StringValue.of("Value 003"));
+        ValueProxy<StringValue> val2Supplier1 = pool.intern(value2instance1);
+        ValueProxy<StringValue> val5Supplier1 = pool.intern(StringValue.of("Value 00005"));
+        ValueProxy<StringValue> val1Supplier1 = pool.intern(StringValue.of("Value 1"));
+        ValueProxy<StringValue> val6Supplier1 = pool.intern(StringValue.of("Value 000006"));
 
         StringValue suppliedValue2Instance1 = val2Supplier1.supply().get();
 
@@ -128,8 +126,8 @@ public class TestOffHeapKeyedInternPool {
 
         // call put twice more for two new StringValue instances that are logically the same
         // as value2instance1
-        ValueSupplier<StringValue> val2Supplier2 = pool.intern(value2instance2);
-        ValueSupplier<StringValue> val2Supplier3 = pool.intern(value2instance3);
+        ValueProxy<StringValue> val2Supplier2 = pool.intern(value2instance2);
+        ValueProxy<StringValue> val2Supplier3 = pool.intern(value2instance3);
 
         StringValue suppliedValue2Instance2 = val2Supplier2.supply().get();
         StringValue suppliedValue2Instance3 = val2Supplier3.supply().get();
@@ -169,13 +167,12 @@ public class TestOffHeapKeyedInternPool {
 
 
 
-    private OffHeapKeyedInternPool<StringValue> buildPool() throws IOException {
+    private LmdbOffHeapInternPool<StringValue> buildPool() throws IOException {
         String methodName = testname.getMethodName();
         Path dbDir = tmpDir.newFolder(methodName).toPath();
 
-        OffHeapKeyedInternPool<StringValue> pool = new OffHeapKeyedInternPool<>(
+        LmdbOffHeapInternPool<StringValue> pool = new LmdbOffHeapInternPool<>(
                 dbDir,
-                methodName,
                 MAX_DB_SIZE,
                 StringValue::fromByteBuffer);
 
@@ -197,7 +194,7 @@ public class TestOffHeapKeyedInternPool {
         StringValue value2instance2 = StringValue.of(value2str);
         Assertions.assertThat(value2instance1).isEqualTo(value2instance2);
 
-        byte[] bytes = Bytes.copy(value2instance1.toBytes());
+        byte[] bytes = Bytes.copy(value2instance1.getValueBytes());
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
 
         Assertions.assertThat(value2instance1).isEqualTo(StringValue.fromByteBuffer(byteBuffer));
@@ -210,45 +207,4 @@ public class TestOffHeapKeyedInternPool {
         return bb;
     }
 
-    private static class StringValue extends KeyedInternPool.AbstractKeyedInternPoolValue {
-
-        private final String value;
-
-        StringValue(final String value) {
-            this.value = value;
-        }
-
-        static StringValue of(String value) {
-            return new StringValue(value);
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            final StringValue that = (StringValue) o;
-            return Objects.equals(value, that.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(value);
-        }
-
-        @Override
-        public byte[] toBytes() {
-            return value.getBytes(StandardCharsets.UTF_8);
-        }
-
-        static StringValue fromByteBuffer(final ByteBuffer byteBuffer) {
-            return new StringValue(StandardCharsets.UTF_8.decode(byteBuffer).toString());
-        }
-
-        @Override
-        public String toString() {
-            return "StringValue{" +
-                    "value='" + value + '\'' +
-                    '}';
-        }
-    }
 }
