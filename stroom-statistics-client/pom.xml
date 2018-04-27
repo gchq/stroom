@@ -38,7 +38,7 @@
   <parent>
     <groupId>stroom</groupId>
     <artifactId>stroom</artifactId>
-    <version>5.1.0</version>
+    <version>v5.1-saxon-9.8.0-11-alpha.1</version>
   </parent>
 
   <artifactId>stroom-statistics-client</artifactId>

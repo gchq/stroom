@@ -61,7 +61,7 @@ public class EventListConsumer {
     public void consume(final NPEventList eventList) throws XPathException {
         final NPEventListNamePool namePool = eventList.namePool;
 
-        int eventTypeIndex = 0;
+        int eventTypeIndex;
         int nameCodeIndex = 0;
 
         int attsIndex = 0;
@@ -69,8 +69,8 @@ public class EventListConsumer {
 
         int lastPos = 0;
 
-        int nameCode = 0;
-        NPAttributes atts = null;
+        int nameCode;
+        NPAttributes atts;
 
         for (eventTypeIndex = 0; eventTypeIndex < eventList.eventTypeArr.length; eventTypeIndex++) {
             {
@@ -103,34 +103,25 @@ public class EventListConsumer {
 
     private void startElement(final NPEventListNamePool namePool, final int nameCode) throws XPathException {
         final int code = mapCode(namePool, nameCode);
-        receiver.startElement(new CodedName(code, pool), Untyped.getInstance(), NULL_LOCATION, ReceiverOptions.NAMESPACE_OK);
+        receiver.startElement(new CodedName(code, EMPTY, pool), Untyped.getInstance(), NULL_LOCATION, ReceiverOptions.NAMESPACE_OK);
     }
 
     private void attributes(final NPEventListNamePool namePool, final NPAttributes atts) throws XPathException {
-        int code = 0;
         for (int a = 0; a < atts.length; a++) {
-            code = atts.nameCode[a];
-            code = mapCode(namePool, code);
-            receiver.attribute(new CodedName(code, pool), BuiltInAtomicType.UNTYPED_ATOMIC, atts.value[a], NULL_LOCATION,
+            final int code = mapCode(namePool, atts.nameCode[a]);
+            receiver.attribute(new CodedName(code, EMPTY, pool), BuiltInAtomicType.UNTYPED_ATOMIC, atts.value[a], NULL_LOCATION,
                     ReceiverOptions.NAMESPACE_OK);
         }
     }
 
     private int mapCode(final NPEventListNamePool namePool, final int nameCode) {
-        Integer code = codeMap.get(nameCode);
-        if (code == null) {
+        return codeMap.computeIfAbsent(nameCode, k -> {
             final String uri = namePool.getURI(nameCode);
             final String localName = namePool.getLocalName(nameCode);
-            final String prefix = pool.suggestPrefixForURI(uri);
-            if (prefix == null) {
-                code = pool.allocate(EMPTY, uri, localName);
-            } else {
-                code = pool.allocate(prefix, uri, localName);
-            }
+            final int code = pool.allocateFingerprint(uri, localName);
             codeMap.put(nameCode, code);
-        }
-
-        return code;
+            return code;
+        });
     }
 
     private static class NullLocation implements Location {

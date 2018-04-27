@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.1-saxon-9.8.0-11-alpha.1] - 2018-04-27
+
+* EXPERIMENTAL USE OF SAXON 9.8.0-11
+
 ## [v5.1.0] - 2018-02-07
 
 * Issue **#523** : Changed permission behaviours for copy and move to support `None`, `Source`, `Destination` and `Combined` behaviours. Creating new items now allows for `None` and `Destination` permission behaviours. Also imported items now receive permissions from the destination folder. Event logging now indicates the permission behaviour used during copy, move and create operations.
