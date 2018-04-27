@@ -39,7 +39,7 @@
   <artifactId>stroom</artifactId>
   <name>stroom</name>
   <description>STROOM</description>
-  <version>5.1.0</version>
+  <version>v5.1-permission-caching-alpha.1</version>
   <packaging>pom</packaging>
 
   <properties>
