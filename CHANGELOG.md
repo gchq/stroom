@@ -6,9 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v5.1-permission-caching-alpha.1] - 2018-04-27
+## [v5.1-no-permission-check-alpha.1] - 2018-04-27
 
-* EXPERIMENTAL PERMISSION CACHING IN REFERENCE DATA LOOKUP
+* EXPERIMENTAL REFERENCE DATA LOOKUP WITHOUT PERMISSION CHECKING.
 
 ## [v5.1.0] - 2018-02-07
 

@@ -20,14 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.DocumentPermissionCache;
 import stroom.entity.shared.DocRef;
-import stroom.feed.shared.Feed;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
@@ -59,17 +56,14 @@ public class ReferenceData {
     private final FeedHolder feedHolder;
     private final StreamHolder streamHolder;
     private final ContextDataLoader contextDataLoader;
-    private final DocumentPermissionCache documentPermissionCache;
-    private final Map<PipelineReference, Boolean> localDocumentPermissionCache = new HashMap<>();
 
     @Inject
-    ReferenceData(final EffectiveStreamCache effectiveStreamCache, final MapStoreCache mapStoreCache, final FeedHolder feedHolder, final StreamHolder streamHolder, final ContextDataLoader contextDataLoader, final DocumentPermissionCache documentPermissionCache) {
+    ReferenceData(final EffectiveStreamCache effectiveStreamCache, final MapStoreCache mapStoreCache, final FeedHolder feedHolder, final StreamHolder streamHolder, final ContextDataLoader contextDataLoader) {
         this.effectiveStreamCache = effectiveStreamCache;
         this.mapStoreCache = mapStoreCache;
         this.feedHolder = feedHolder;
         this.streamHolder = streamHolder;
         this.contextDataLoader = contextDataLoader;
-        this.documentPermissionCache = documentPermissionCache;
     }
 
     /**
@@ -208,39 +202,28 @@ public class ReferenceData {
         assert pipelineReference.getFeed() != null && pipelineReference.getFeed().getUuid() != null && pipelineReference.getFeed().getUuid().length() > 0
                 && pipelineReference.getStreamType() != null && pipelineReference.getStreamType().length() > 0;
 
-        // Check that the current user has permission to read the stream.
-        final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
-                documentPermissionCache == null ||
-                        documentPermissionCache.hasDocumentPermission(
-                                Feed.ENTITY_TYPE,
-                                pipelineReference.getFeed().getUuid(),
-                                DocumentPermissionNames.USE));
+        // Create a key to find a set of effective times in the pool.
+        final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
+                pipelineReference.getStreamType(), baseTime);
+        // Try and fetch a tree set of effective streams for this key.
+        final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
 
-
-        if (hasPermission) {
-            // Create a key to find a set of effective times in the pool.
-            final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
-                    pipelineReference.getStreamType(), baseTime);
-            // Try and fetch a tree set of effective streams for this key.
-            final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
-
-            if (streamSet != null && streamSet.size() > 0) {
-                // Try and find the stream before the requested time that is less
-                // than or equal to it.
-                final EffectiveStream effectiveStream = streamSet.floor(new EffectiveStream(0, time));
-                // If we have an effective time then use it.
-                if (effectiveStream != null) {
-                    // Now try and get reference data for the feed at this time.
-                    final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(pipelineReference.getPipeline(),
-                            effectiveStream.getStreamId());
-                    // Get the map store associated with this effective feed.
-                    final MapStore mapStore = getMapStore(mapStorePoolKey);
-                    if (mapStore != null) {
-                        if (mapStore.getErrorReceiver() != null) {
-                            mapStore.getErrorReceiver().replay(errorReceiver);
-                        }
-                        return mapStore.getEvents(mapName, keyName);
+        if (streamSet != null && streamSet.size() > 0) {
+            // Try and find the stream before the requested time that is less
+            // than or equal to it.
+            final EffectiveStream effectiveStream = streamSet.floor(new EffectiveStream(0, time));
+            // If we have an effective time then use it.
+            if (effectiveStream != null) {
+                // Now try and get reference data for the feed at this time.
+                final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(pipelineReference.getPipeline(),
+                        effectiveStream.getStreamId());
+                // Get the map store associated with this effective feed.
+                final MapStore mapStore = getMapStore(mapStorePoolKey);
+                if (mapStore != null) {
+                    if (mapStore.getErrorReceiver() != null) {
+                        mapStore.getErrorReceiver().replay(errorReceiver);
                     }
+                    return mapStore.getEvents(mapName, keyName);
                 }
             }
         }
@@ -283,10 +266,12 @@ public class ReferenceData {
     private static class CachedMapStore {
         private final long streamNo;
         private final MapStore mapStore;
+        private final int hashCode;
 
         CachedMapStore(final long streamNo, final MapStore mapStore) {
             this.streamNo = streamNo;
             this.mapStore = mapStore;
+            hashCode = Long.hashCode(streamNo);
         }
 
         public long getStreamNo() {
@@ -298,19 +283,16 @@ public class ReferenceData {
         }
 
         @Override
-        public int hashCode() {
-            return (int) streamNo;
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final CachedMapStore that = (CachedMapStore) o;
+            return streamNo == that.streamNo;
         }
 
         @Override
-        public boolean equals(final Object obj) {
-            if (obj == null || !(obj instanceof CachedMapStore)) {
-                return false;
-            }
-
-            final CachedMapStore cachedMapStore = (CachedMapStore) obj;
-
-            return cachedMapStore.streamNo == streamNo;
+        public int hashCode() {
+            return hashCode;
         }
     }
 }
