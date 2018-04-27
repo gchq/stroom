@@ -78,7 +78,7 @@ public class TestReferenceData extends StroomUnitTest {
             final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
 
             final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
-            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null, null);
+            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null);
 
             // Add multiple reference data items to prove that looping over maps
             // works.
@@ -163,7 +163,7 @@ public class TestReferenceData extends StroomUnitTest {
                 }
             };
             final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, new MockReferenceDataLoader(), null, null);
-            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null, null);
+            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null);
 
             final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
             mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
@@ -206,7 +206,7 @@ public class TestReferenceData extends StroomUnitTest {
                 }
             };
             final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, new MockReferenceDataLoader(), null, null);
-            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null, null);
+            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null);
 
             final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
             mapStoreBuilder.setEvents("IP_TO_LOC", new Range<>(2L, 30L), getEventsFromString("here"), false);
