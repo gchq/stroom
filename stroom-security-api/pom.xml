@@ -38,7 +38,7 @@
   <parent>
     <groupId>stroom</groupId>
     <artifactId>stroom</artifactId>
-    <version>v5.1-permission-caching-alpha.1</version>
+    <version>v5.1-no-permission-check-alpha.1</version>
   </parent>
 
   <artifactId>stroom-security-api</artifactId>
