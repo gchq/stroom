@@ -24,6 +24,7 @@ import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
