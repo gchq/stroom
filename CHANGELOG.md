@@ -8,8 +8,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * EXPERIMENTAL PERMISSION CACHING IN REFERENCE DATA LOOKUP
 
-* EXPERIMENTAL REFERENCE DATA LOOKUP WITHOUT PERMISSION CHECKING.
-
 ## [v5.3.0-beta.2] - 2018-04-30
 
 * Move to stroom-expression v1.2.0-beta.3
