@@ -58,6 +58,7 @@ public class ReferenceData {
     private final StreamHolder streamHolder;
     private final ContextDataLoader contextDataLoader;
     private final DocumentPermissionCache documentPermissionCache;
+    private final Map<PipelineReference, Boolean> localDocumentPermissionCache = new HashMap<>();
 
     @Inject
     ReferenceData(final EffectiveStreamCache effectiveStreamCache,
@@ -229,7 +230,15 @@ public class ReferenceData {
                 && pipelineReference.getStreamType() != null && pipelineReference.getStreamType().length() > 0;
 
         // Check that the current user has permission to read the stream.
-        if (documentPermissionCache == null || documentPermissionCache.hasDocumentPermission(Feed.ENTITY_TYPE, pipelineReference.getFeed().getUuid(), DocumentPermissionNames.USE)) {
+        final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
+                documentPermissionCache == null ||
+                        documentPermissionCache.hasDocumentPermission(
+                                Feed.ENTITY_TYPE,
+                                pipelineReference.getFeed().getUuid(),
+                                DocumentPermissionNames.USE));
+
+
+        if (hasPermission) {
             // Create a key to find a set of effective times in the pool.
             final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
                     pipelineReference.getStreamType(), fromMs, toMs);
