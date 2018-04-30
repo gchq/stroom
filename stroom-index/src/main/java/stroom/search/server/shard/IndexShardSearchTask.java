@@ -18,7 +18,7 @@ package stroom.search.server.shard;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
-import stroom.dashboard.expression.v1.Var;
+import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -88,7 +88,7 @@ public class IndexShardSearchTask {
     }
 
     public interface ResultReceiver {
-        void receive(long shardId, Var[] values);
+        void receive(long shardId, Val[] values);
     }
 
     public interface IndexShardQueryFactory {

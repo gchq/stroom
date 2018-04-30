@@ -16,6 +16,8 @@
 
 package stroom.dashboard.server.format;
 
+import stroom.dashboard.expression.v1.Val;
+
 public interface Formatter {
-    String format(Object value);
+    String format(Val value);
 }

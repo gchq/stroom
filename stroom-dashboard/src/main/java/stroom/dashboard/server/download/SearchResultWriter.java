@@ -17,6 +17,7 @@
 package stroom.dashboard.server.download;
 
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.server.SampleGenerator;
 import stroom.query.Item;
 import stroom.query.Items;
@@ -38,7 +39,7 @@ public class SearchResultWriter {
 
         void writeHeading(Field field, String heading) throws IOException;
 
-        void writeValue(Field field, Object value) throws IOException;
+        void writeValue(Field field, Val value) throws IOException;
     }
 
     private final ResultStore resultStore;
@@ -46,7 +47,7 @@ public class SearchResultWriter {
     private final SampleGenerator sampleGenerator;
 
     public SearchResultWriter(final ResultStore resultStore, final List<Field> fields,
-            final SampleGenerator sampleGenerator) {
+                              final SampleGenerator sampleGenerator) {
         this.resultStore = resultStore;
         this.fields = fields;
         this.sampleGenerator = sampleGenerator;
@@ -68,8 +69,7 @@ public class SearchResultWriter {
 
     private void writeHeadings(final List<Field> fields, final Target target) throws IOException {
         target.startLine();
-        for (int i = 0; i < fields.size(); i++) {
-            final Field field = fields.get(i);
+        for (final Field field : fields) {
             if (field.isVisible()) {
                 target.writeHeading(field, field.getName());
             }
@@ -77,8 +77,10 @@ public class SearchResultWriter {
         target.endLine();
     }
 
-    private void writeContent(final ResultStore resultStore, final List<Field> fields,
-            final SampleGenerator sampleGenerator, final Target target) throws IOException {
+    private void writeContent(final ResultStore resultStore,
+                              final List<Field> fields,
+                              final SampleGenerator sampleGenerator,
+                              final Target target) throws IOException {
         final Items<Item> items = resultStore.getChildMap().get(null);
         if (items != null) {
             for (final Item item : items) {
@@ -87,20 +89,15 @@ public class SearchResultWriter {
                     for (int i = 0; i < fields.size(); i++) {
                         final Field field = fields.get(i);
                         if (field.isVisible()) {
-                            Object val = null;
+                            Val val = null;
 
-                            if (item.getValues().length > i) {
-                                final Object o = item.getValues()[i];
-                                val = o;
-
-                                if (o != null) {
+                            if (item.getGenerators().length > i) {
+                                final Generator generator = item.getGenerators()[i];
+                                if (generator != null) {
                                     // Convert all values into fully resolved
                                     // objects evaluating functions where
                                     // necessary.
-                                    if (o instanceof Generator) {
-                                        final Generator generator = (Generator) o;
-                                        val = generator.eval();
-                                    }
+                                    val = generator.eval();
                                 }
                             }
 

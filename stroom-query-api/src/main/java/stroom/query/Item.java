@@ -16,25 +16,30 @@
 
 package stroom.query;
 
+import stroom.dashboard.expression.v1.Generator;
+
 import java.io.Serializable;
 
 public class Item implements Serializable {
     private static final long serialVersionUID = 4371018450667741005L;
 
-    String parentKey;
-    String groupKey;
-    Object[] values;
-    int depth;
+    final String parentKey;
+    final String groupKey;
+    final Generator[] generators;
+    final int depth;
 
-    public Item(final String parentKey, final String groupKey, final Object[] values, final int depth) {
+    public Item(final String parentKey,
+                final String groupKey,
+                final Generator[] generators,
+                final int depth) {
         this.parentKey = parentKey;
         this.groupKey = groupKey;
-        this.values = values;
+        this.generators = generators;
         this.depth = depth;
     }
 
-    public Object[] getValues() {
-        return values;
+    public Generator[] getGenerators() {
+        return generators;
     }
 
     @Override
@@ -61,8 +66,8 @@ public class Item implements Serializable {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        for (final Object value : values) {
-            sb.append(value);
+        for (final Generator value : generators) {
+            sb.append(value.eval().toString());
             sb.append("\t");
         }
         if (sb.length() > 0) {

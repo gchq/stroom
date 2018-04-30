@@ -23,6 +23,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.StaticValueFunction;
+import stroom.dashboard.expression.v1.ValInteger;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.server.vis.CompiledStructure;
 import stroom.dashboard.server.vis.CompiledStructure.FieldRef;
 import stroom.dashboard.server.vis.StructureBuilder;
@@ -57,7 +61,7 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
         final CompiledStructure.Field yField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 1), null);
 
         final CompiledStructure.Values values = new CompiledStructure.Values(
-                new CompiledStructure.Field[] { xField, yField }, null);
+                new CompiledStructure.Field[]{xField, yField}, null);
 
         final VisComponentResultCreator resultCreator = new VisComponentResultCreator(null);
         final Store store = resultCreator.create(items, values);
@@ -76,7 +80,7 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
         final CompiledStructure.Field seriesField = new CompiledStructure.Field(new FieldRef(Type.TEXT, 2), null);
 
         final CompiledStructure.Values values = new CompiledStructure.Values(
-                new CompiledStructure.Field[] { xField, yField }, null);
+                new CompiledStructure.Field[]{xField, yField}, null);
         final CompiledStructure.Nest nest = new CompiledStructure.Nest(seriesField, null, null, values);
 
         final VisComponentResultCreator resultCreator = new VisComponentResultCreator(null);
@@ -96,7 +100,7 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
         final CompiledStructure.Field seriesField = new CompiledStructure.Field(new FieldRef(Type.TEXT, 2), null);
 
         final CompiledStructure.Values values = new CompiledStructure.Values(
-                new CompiledStructure.Field[] { xField, yField }, null);
+                new CompiledStructure.Field[]{xField, yField}, null);
         final CompiledStructure.Nest nestLevel2 = new CompiledStructure.Nest(xField, null, null, values);
         final CompiledStructure.Nest nest = new CompiledStructure.Nest(seriesField, null, nestLevel2, null);
 
@@ -138,7 +142,7 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
 
         final String dashboardSettingsJSON = StreamUtil.fileToString(new File(dir, "dashboardSettings.json"));
 
-        final List<Field> fields = new ArrayList<Field>(3);
+        final List<Field> fields = new ArrayList<>(3);
         fields.add(createField("xField", Format.Type.NUMBER));
         fields.add(createField("yField", Format.Type.NUMBER));
         fields.add(createField("seriesField", Format.Type.TEXT));
@@ -162,7 +166,7 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
     }
 
     private void compareFiles(final File dir, final String data, final String expectedFileName,
-            final String actualFileName) {
+                              final String actualFileName) {
         final File expectedFile = new File(dir, expectedFileName);
         if (!expectedFile.isFile()) {
             StreamUtil.stringToFile(data, expectedFile);
@@ -179,7 +183,7 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
     }
 
     private Items<Item> createData() {
-        final Items<Item> items = new ItemsArrayList<Item>();
+        final Items<Item> items = new ItemsArrayList<>();
         int seriesCount = 0;
         for (int i = 100; i < 120; i++) {
             for (int j = 20; j < 30; j++) {
@@ -198,11 +202,11 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
         return items;
     }
 
-    private Object[] createValues(final int x, final int y, final String series) {
-        final Object[] values = new Object[3];
-        values[0] = x;
-        values[1] = y;
-        values[2] = series;
+    private Generator[] createValues(final int x, final int y, final String series) {
+        final Generator[] values = new Generator[3];
+        values[0] = new StaticValueFunction(ValInteger.create(x)).createGenerator();
+        values[1] = new StaticValueFunction(ValInteger.create(y)).createGenerator();
+        values[2] = new StaticValueFunction(ValString.create(series)).createGenerator();
         return values;
     }
 

@@ -26,9 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.expression.v1.Var;
-import stroom.dashboard.expression.v1.VarNull;
-import stroom.dashboard.expression.v1.VarString;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValNull;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
@@ -171,7 +171,7 @@ public class IndexShardSearchTaskHandler {
         final String[] fieldNames = task.getFieldNames();
         try {
             final Document document = searcher.doc(docId);
-            Var[] values = null;
+            Val[] values = null;
 
             for (int i = 0; i < fieldNames.length; i++) {
                 final String storedField = fieldNames[i];
@@ -184,9 +184,9 @@ public class IndexShardSearchTaskHandler {
                         final String trimmed = value.trim();
                         if (trimmed.length() > 0) {
                             if (values == null) {
-                                values = new Var[fieldNames.length];
+                                values = new Val[fieldNames.length];
                             }
-                            values[i] = new VarString(trimmed);
+                            values[i] = ValString.create(trimmed);
                         }
                     }
                 }

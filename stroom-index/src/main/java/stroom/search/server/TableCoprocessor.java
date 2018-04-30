@@ -17,7 +17,7 @@
 package stroom.search.server;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Var;
+import stroom.dashboard.expression.v1.Val;
 import stroom.mapreduce.BlockingPairQueue;
 import stroom.mapreduce.PairQueue;
 import stroom.mapreduce.UnsafePairQueue;
@@ -55,7 +55,7 @@ public class TableCoprocessor implements Coprocessor<TableCoprocessorSettings> {
     }
 
     @Override
-    public void receive(final Var[] values) {
+    public void receive(final Val[] values) {
         mapper.collect(null, values);
     }
 

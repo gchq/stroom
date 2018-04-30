@@ -69,8 +69,8 @@ public class CompiledSorter implements Serializable, Comparator<Item> {
     public int compare(final Item o1, final Item o2) {
         for (final CompiledSort compiledSort : compiledSorts) {
             final int fieldPos = compiledSort.getFieldIndex();
-            final Comparable v1 = (Comparable) o1.values[fieldPos];
-            final Comparable v2 = (Comparable) o2.values[fieldPos];
+            final Comparable v1 = o1.generators[fieldPos];
+            final Comparable v2 = o2.generators[fieldPos];
 
             int res = 0;
             if (v1 != null && v2 != null) {

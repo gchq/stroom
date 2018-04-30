@@ -70,11 +70,11 @@ import stroom.query.shared.QueryKey;
 import stroom.query.shared.Search;
 import stroom.query.shared.TableSettings;
 import stroom.security.client.ClientSecurityContext;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
 import stroom.widget.button.client.ButtonView;
-import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -125,7 +125,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
                           final MenuListPresenter menuListPresenter,
-                          final ExpressionPresenter expressionPresenter,
+                          final Provider<ExpressionPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
                           final Provider<FieldAddPresenter> fieldAddPresenterProvider,
@@ -152,7 +152,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         downloadButton = dataGrid.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
-        fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenter, formatPresenter,
+        fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenterProvider, formatPresenter,
                 filterPresenter);
         dataGrid.setHeadingListener(fieldsManager);
 

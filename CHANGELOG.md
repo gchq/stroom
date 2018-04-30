@@ -6,11 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.3.0-beta.2] - 2018-04-30
+
+* Move to stroom-expression v1.2.0-beta.3
+
+    Added cast functions `toBoolean`, `toDouble`, `toInteger`, `toLong` and `toString`.
+    Added `include` and `exclude` functions.
+
 ## [v5.3.0-beta.1] - 2018-04-25
 
 * Move to stroom-expression v1.2.0-beta.1
 
-    Added `not()` function.
+    Added `if` and `not` functions.
     Added value functions `true()`, `false()`, `null()` and `err()`.
     Added `match` boolean function.
     Added `variance` and `stDev` functions.

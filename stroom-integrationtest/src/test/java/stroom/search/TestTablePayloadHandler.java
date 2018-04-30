@@ -18,8 +18,8 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.dashboard.expression.v1.Var;
-import stroom.dashboard.expression.v1.VarString;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.server.TableComponentResultCreator;
 import stroom.dashboard.server.format.FieldFormatter;
 import stroom.dashboard.server.format.FormatterFactory;
@@ -76,8 +76,8 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final Var[] values = new Var[1];
-            values[0] = new VarString("Text " + i);
+            final Val[] values = new Val[1];
+            values[0] = ValString.create("Text " + i);
 
             itemMapper.collect(null, values);
         }
@@ -122,8 +122,8 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final Var[] values = new Var[1];
-            values[0] = new VarString("Text " + (int) (Math.random() * 100));
+            final Val[] values = new Val[1];
+            values[0] = ValString.create("Text " + (int) (Math.random() * 100));
 
             itemMapper.collect(null, values);
         }
@@ -164,8 +164,8 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final Var[] values = new Var[1];
-            values[0] = new VarString(String.valueOf((int) (Math.random() * 100)));
+            final Val[] values = new Val[1];
+            values[0] = ValString.create(String.valueOf((int) (Math.random() * 100)));
 
             itemMapper.collect(null, values);
         }
@@ -210,8 +210,8 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final Var[] values = new Var[2];
-            values[1] = new VarString("Text " + (int) (Math.random() * 100));
+            final Val[] values = new Val[2];
+            values[1] = ValString.create("Text " + (int) (Math.random() * 100));
 
             itemMapper.collect(null, values);
         }
@@ -257,8 +257,8 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final Var[] values = new Var[2];
-            values[1] = new VarString("Text " + (int) (Math.random() * 100));
+            final Val[] values = new Val[2];
+            values[1] = ValString.create("Text " + (int) (Math.random() * 100));
 
             itemMapper.collect(null, values);
         }
@@ -304,8 +304,8 @@ public class TestTablePayloadHandler extends StroomUnitTest {
                 compiledDepths.getMaxGroupDepth());
 
         for (int i = 0; i < 3000; i++) {
-            final Var[] values = new Var[2];
-            values[1] = new VarString("Text " + (int) (Math.random() * 100));
+            final Val[] values = new Val[2];
+            values[1] = ValString.create("Text " + (int) (Math.random() * 100));
 
             itemMapper.collect(null, values);
         }

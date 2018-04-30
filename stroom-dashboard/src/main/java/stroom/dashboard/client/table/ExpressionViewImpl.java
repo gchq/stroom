@@ -24,6 +24,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -44,7 +45,7 @@ public class ExpressionViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers>
     private static Resources resources;
 
     @UiField
-    TextBox expression;
+    TextArea expression;
     @UiField
     ImageButton addFunction;
 
@@ -78,13 +79,6 @@ public class ExpressionViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers>
     public void onAddFunctionClick(final ClickEvent event) {
         if (getUiHandlers() != null) {
             getUiHandlers().onAddFunction(event);
-        }
-    }
-
-    @UiHandler("expression")
-    void onKeyDown(final KeyDownEvent event) {
-        if (event.getNativeKeyCode() == '\r') {
-            getUiHandlers().onHideRequest(false, true);
         }
     }
 

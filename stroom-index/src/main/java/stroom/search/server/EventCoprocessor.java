@@ -17,7 +17,7 @@
 package stroom.search.server;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Var;
+import stroom.dashboard.expression.v1.Val;
 import stroom.query.Payload;
 import stroom.query.shared.IndexConstants;
 
@@ -47,7 +47,7 @@ public class EventCoprocessor implements Coprocessor<EventCoprocessorSettings> {
     }
 
     @Override
-    public void receive(final Var[] values) {
+    public void receive(final Val[] values) {
         final Long longStreamId = getLong(values, fieldIndexes[0]);
         final Long longEventId = getLong(values, fieldIndexes[1]);
 
@@ -88,10 +88,10 @@ public class EventCoprocessor implements Coprocessor<EventCoprocessorSettings> {
         return null;
     }
 
-    private Long getLong(final Var[] storedData, final int index) {
+    private Long getLong(final Val[] storedData, final int index) {
         try {
             if (index >= 0 && storedData.length > index) {
-                final Var value = storedData[index];
+                final Val value = storedData[index];
                 return value.toLong();
             }
         } catch (final Exception e) {

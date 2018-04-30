@@ -9,17 +9,18 @@
   
   .textbox {
   	width: 100%;
+    height: 100%;
   	padding-left: 20px;
   }
   </ui:style>
-  <g:Grid styleName="stroom-control-grid" width="100%">
+  <g:Grid styleName="stroom-control-grid" width="100%" height="100%">
     <g:row>
       <g:cell>Expression:</g:cell>
       <g:customCell>
-        <g:FlowPanel width="100%">
+        <g:FlowPanel width="100%" height="100%">
           <v:ImageButton ui:field="addFunction" title="Add Function"
             addStyleNames="{style.button}" />
-          <g:TextBox ui:field="expression" addStyleNames="{style.textbox}" />
+          <g:TextArea ui:field="expression" addStyleNames="{style.textbox}" />
         </g:FlowPanel>
       </g:customCell>
     </g:row>

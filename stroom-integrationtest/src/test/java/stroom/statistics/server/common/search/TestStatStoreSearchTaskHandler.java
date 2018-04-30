@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.shared.ParamUtil;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.entity.server.util.StroomDatabaseInfo;
@@ -288,7 +289,7 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
 
             AtomicInteger counter = new AtomicInteger(0);
             items.forEach(item -> {
-                Assert.assertEquals(fieldCount, item.getValues().length);
+                Assert.assertEquals(fieldCount, item.getGenerators().length);
 
 //                expectedValuesMap.forEach((tagField, expectedValues) -> {
 //
@@ -299,15 +300,15 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
                 expectedValuesMap.keySet().forEach(tagField -> {
                     int idx = fields.indexOf(tagField);
                     if (idx != -1) {
-                        Object val = item.getValues()[idx];
-                        Object evaluatedVal = ((Generator) val).eval();
-                        String strVal = evaluatedVal == null ? null : evaluatedVal.toString();
+                        final Generator generator = item.getGenerators()[idx];
+                        final Val evaluatedVal = generator.eval();
+                        final String strVal = evaluatedVal == null ? null : evaluatedVal.toString();
                         actualValuesMap.computeIfAbsent(tagField, k -> new HashSet<>()).add(strVal);
                     }
                 });
 
-                String valuesStr = Arrays.stream(item.getValues())
-                        .map(obj -> ((Generator) obj).eval())
+                String valuesStr = Arrays.stream(item.getGenerators())
+                        .map(Generator::eval)
                         .map(evaluatedObj -> evaluatedObj == null ? "" : evaluatedObj.toString())
                         .collect(Collectors.joining(","));
 

@@ -17,6 +17,7 @@
 package stroom.dashboard.server;
 
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.server.format.FieldFormatter;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TableResult;
@@ -45,7 +46,7 @@ public class TableComponentResultCreator implements ComponentResultCreator {
     @Override
     public SharedObject create(final ResultStore resultStore, final ComponentResultRequest componentResultRequest) {
         final TableResultRequest resultRequest = (TableResultRequest) componentResultRequest;
-        final List<Row> resultList = new ArrayList<Row>();
+        final List<Row> resultList = new ArrayList<>();
         int offset = 0;
         int length = 0;
         int totalResults = 0;
@@ -65,7 +66,7 @@ public class TableComponentResultCreator implements ComponentResultCreator {
 
         final TableResult tableResult = new TableResult();
         tableResult.setRows(resultList);
-        tableResult.setResultRange(new OffsetRange<Integer>(offset, resultList.size()));
+        tableResult.setResultRange(new OffsetRange<>(offset, resultList.size()));
         tableResult.setTotalResults(totalResults);
         tableResult.setError(error);
 
@@ -83,21 +84,16 @@ public class TableComponentResultCreator implements ComponentResultCreator {
                 if (pos >= offset && resultList.size() < length) {
                     // Convert all values into fully resolved objects evaluating
                     // functions where necessary.
-                    final SharedObject[] values = new SharedObject[item.getValues().length];
+                    final SharedObject[] values = new SharedObject[item.getGenerators().length];
                     for (int i = 0; i < fields.size(); i++) {
                         final Field field = fields.get(i);
 
-                        if (item.getValues().length > i) {
-                            final Object o = item.getValues()[i];
-                            if (o != null) {
+                        if (item.getGenerators().length > i) {
+                            final Generator generator = item.getGenerators()[i];
+                            if (generator != null) {
                                 // Convert all values into fully resolved
                                 // objects evaluating functions where necessary.
-                                Object val = o;
-                                if (o instanceof Generator) {
-                                    final Generator generator = (Generator) o;
-                                    val = generator.eval();
-                                }
-
+                                final Val val = generator.eval();
                                 if (val != null) {
                                     final String formatted = fieldFormatter.format(field, val);
                                     values[i] = SharedString.wrap(formatted);

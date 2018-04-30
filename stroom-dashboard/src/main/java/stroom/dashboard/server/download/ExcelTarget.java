@@ -23,6 +23,7 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import stroom.dashboard.expression.v1.Val;
 import stroom.query.shared.DateTimeFormatSettings;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format.Type;
@@ -53,7 +54,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
     }
 
     @Override
-    public void start() throws IOException {
+    public void start() {
         // Create a workbook with 100 rows in memory. Exceeding rows will be
         // flushed to disk.
         wb = new SXSSFWorkbook(100);
@@ -74,18 +75,18 @@ public class ExcelTarget implements SearchResultWriter.Target {
     }
 
     @Override
-    public void startLine() throws IOException {
+    public void startLine() {
         row = sh.createRow(rowNum++);
         colNum = 0;
     }
 
     @Override
-    public void endLine() throws IOException {
+    public void endLine() {
         // Do nothing.
     }
 
     @Override
-    public void writeHeading(final Field field, final String heading) throws IOException {
+    public void writeHeading(final Field field, final String heading) {
         // Create a style for headings.
         final Font headingFont = wb.createFont();
         headingFont.setBold(true);
@@ -99,7 +100,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
     }
 
     @Override
-    public void writeValue(final Field field, final Object value) throws IOException {
+    public void writeValue(final Field field, final Val value) {
         if (value == null) {
             colNum++;
         } else {
@@ -108,10 +109,10 @@ public class ExcelTarget implements SearchResultWriter.Target {
         }
     }
 
-    private void setCellValue(final SXSSFWorkbook wb, final Cell cell, final Field field, final Object value) {
+    private void setCellValue(final SXSSFWorkbook wb, final Cell cell, final Field field, final Val value) {
         if (value != null) {
             if (field == null) {
-                general(wb, cell, value);
+                general(cell, value);
 
             } else {
                 Type type = Type.GENERAL;
@@ -122,44 +123,43 @@ public class ExcelTarget implements SearchResultWriter.Target {
                 }
 
                 switch (type) {
-                case TEXT:
-                    cell.setCellValue(getText(value));
-                    cell.setCellType(Cell.CELL_TYPE_STRING);
-                    break;
-                case NUMBER:
-                    number(wb, cell, value, settings);
-                    break;
-                case DATE_TIME:
-                    dateTime(wb, cell, value, settings);
-                    break;
-                default:
-                    general(wb, cell, value);
-                    break;
+                    case TEXT:
+                        cell.setCellValue(getText(value));
+                        cell.setCellType(Cell.CELL_TYPE_STRING);
+                        break;
+                    case NUMBER:
+                        number(wb, cell, value, settings);
+                        break;
+                    case DATE_TIME:
+                        dateTime(wb, cell, value, settings);
+                        break;
+                    default:
+                        general(cell, value);
+                        break;
                 }
             }
         }
     }
 
-    private void general(final SXSSFWorkbook wb, final Cell cell, final Object value) {
-        if (value instanceof Double) {
-            final Double dbl = (Double) value;
-            cell.setCellValue(dbl.doubleValue());
+    private void general(final Cell cell, final Val value) {
+        final Double dbl = value.toDouble();
+        if (dbl != null) {
+            cell.setCellValue(dbl);
         } else {
             cell.setCellValue(getText(value));
         }
     }
 
-    private void dateTime(final SXSSFWorkbook wb, final Cell cell, final Object value, final FormatSettings settings) {
-        if (value instanceof Double) {
-            final long ms = ((Double) value).longValue();
-
-            final Date date = new Date(ms);
+    private void dateTime(final SXSSFWorkbook wb, final Cell cell, final Val value, final FormatSettings settings) {
+        final Long millis = value.toLong();
+        if (millis != null) {
+            final Date date = new Date(millis);
             cell.setCellValue(date);
             cell.setCellType(Cell.CELL_TYPE_NUMERIC);
 
             String pattern = "dd/mm/yyyy hh:mm:ss";
 
-            if (settings != null && settings instanceof DateTimeFormatSettings) {
+            if (settings instanceof DateTimeFormatSettings) {
                 final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) settings;
                 if (dateTimeFormatSettings.getPattern() != null
                         && dateTimeFormatSettings.getPattern().trim().length() > 0) {
@@ -179,14 +179,13 @@ public class ExcelTarget implements SearchResultWriter.Target {
         }
     }
 
-    private void number(final SXSSFWorkbook wb, final Cell cell, final Object value, final FormatSettings settings) {
-        if (value instanceof Double) {
-            final double dbl = ((Double) value).doubleValue();
-
+    private void number(final SXSSFWorkbook wb, final Cell cell, final Val value, final FormatSettings settings) {
+        final Double dbl = value.toDouble();
+        if (dbl != null) {
             cell.setCellValue(dbl);
             cell.setCellType(Cell.CELL_TYPE_NUMERIC);
 
-            if (settings != null && settings instanceof NumberFormatSettings) {
+            if (settings instanceof NumberFormatSettings) {
                 final NumberFormatSettings numberFormatSettings = (NumberFormatSettings) settings;
                 final StringBuilder sb = new StringBuilder();
 
@@ -214,7 +213,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
         }
     }
 
-    private String getText(final Object value) {
+    private String getText(final Val value) {
         String text = value.toString();
         if (text.length() > EXCEL_MAX_CELL_CHARACTERS) {
             text = text.substring(0, TRUNCATED_LENGTH) + TRUNCATION_MARKER;

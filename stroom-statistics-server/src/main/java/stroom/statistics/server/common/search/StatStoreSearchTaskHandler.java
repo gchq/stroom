@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Var;
+import stroom.dashboard.expression.v1.Val;
 import stroom.mapreduce.BlockingPairQueue;
 import stroom.mapreduce.PairQueue;
 import stroom.mapreduce.UnsafePairQueue;
@@ -200,7 +200,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
         resultCollector.handle(payloadMap);
     }
 
-    private Consumer<Var[]> buildDataArrayConsumer(
+    private Consumer<Val[]> buildDataArrayConsumer(
             final StatStoreSearchTask task,
             final Map<Integer, Payload> payloadMap,
             final FieldIndexMap fieldIndexMap,
@@ -226,7 +226,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                 compiledDepths.getMaxGroupDepth());
 
         //create a consumer of the data array that will ultimately be returned from the database query
-        return (Var[] data) -> {
+        return (Val[] data) -> {
             mapper.collect(null, data);
 
             // partition and reduce based on table settings.

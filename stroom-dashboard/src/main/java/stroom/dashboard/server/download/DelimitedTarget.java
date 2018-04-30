@@ -16,6 +16,7 @@
 
 package stroom.dashboard.server.download;
 
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.server.format.FieldFormatter;
 import stroom.query.shared.Field;
 
@@ -32,8 +33,7 @@ public class DelimitedTarget implements SearchResultWriter.Target {
 
     private DelimitedWriter delimitedWriter;
 
-    public DelimitedTarget(final FieldFormatter fieldFormatter, final OutputStream outputStream, final String delimiter)
-            throws IOException {
+    public DelimitedTarget(final FieldFormatter fieldFormatter, final OutputStream outputStream, final String delimiter) {
         this.fieldFormatter = fieldFormatter;
         this.outputStream = outputStream;
         this.delimiter = delimiter;
@@ -51,7 +51,7 @@ public class DelimitedTarget implements SearchResultWriter.Target {
     }
 
     @Override
-    public void startLine() throws IOException {
+    public void startLine() {
         // Do nothing
     }
 
@@ -66,7 +66,7 @@ public class DelimitedTarget implements SearchResultWriter.Target {
     }
 
     @Override
-    public void writeValue(final Field field, final Object value) throws IOException {
+    public void writeValue(final Field field, final Val value) throws IOException {
         final String formatted = fieldFormatter.format(field, value);
         delimitedWriter.writeValue(formatted);
     }

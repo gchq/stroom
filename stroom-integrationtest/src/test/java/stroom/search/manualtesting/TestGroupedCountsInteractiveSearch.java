@@ -30,7 +30,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import stroom.CommonIndexingTest;
 import stroom.CommonTestControl;
-import stroom.dashboard.expression.v1.Count;
 import stroom.dashboard.server.QueryMarshaller;
 import stroom.dashboard.server.SearchDataSourceProviderRegistry;
 import stroom.dashboard.server.SearchResultCreator;
@@ -127,19 +126,19 @@ public class TestGroupedCountsInteractiveSearch {
                 StroomProperties.Source.TEST);
     }
 
-//    @Override
+    //    @Override
     protected boolean doSingleSetup() {
 
         List<Path> dataFiles = new ArrayList<>();
 //        if (!Files.exists(dataFile)) {
-            LOGGER.info("Generating test data");
-            IntStream.rangeClosed(1,STREAM_COUNT).forEach(i -> {
-                Path dataFile = testDir.resolve(String.format(DATA_FILE_NAME_FORMAT, i));
-                LOGGER.info("Generating test data in {}", dataFile.toAbsolutePath().toString());
-                NetworkMonitoringDataGenerator.generate(STREAM_ROW_COUNT, dataFile);
-                dataFiles.add(dataFile);
-            });
-            LOGGER.info("Completed test data generation");
+        LOGGER.info("Generating test data");
+        IntStream.rangeClosed(1, STREAM_COUNT).forEach(i -> {
+            Path dataFile = testDir.resolve(String.format(DATA_FILE_NAME_FORMAT, i));
+            LOGGER.info("Generating test data in {}", dataFile.toAbsolutePath().toString());
+            NetworkMonitoringDataGenerator.generate(STREAM_ROW_COUNT, dataFile);
+            dataFiles.add(dataFile);
+        });
+        LOGGER.info("Completed test data generation");
 //        } else {
 //            LOGGER.info("Using existing file");
 //        }
@@ -238,7 +237,7 @@ public class TestGroupedCountsInteractiveSearch {
         tableSettings.addField(groupedUserId);
 
         final Field countField = new Field("Count");
-        countField.setExpression(Count.NAME + "()");
+        countField.setExpression("count()");
         countField.setFormat(new Format(Format.Type.NUMBER));
         tableSettings.addField(countField);
 
@@ -250,7 +249,6 @@ public class TestGroupedCountsInteractiveSearch {
     }
 
 
-
     @Test
     @Ignore
     public void tearDownAndSetupOnly() {
@@ -260,7 +258,6 @@ public class TestGroupedCountsInteractiveSearch {
 
         doSingleSetup();
     }
-
 
 
 }

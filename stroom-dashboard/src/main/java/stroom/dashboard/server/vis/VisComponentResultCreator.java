@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.TypeConverter;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.server.ComponentResultCreator;
 import stroom.dashboard.server.MyDoubleSerialiser;
 import stroom.dashboard.server.vis.CompiledStructure.Direction;
@@ -501,11 +501,11 @@ public class VisComponentResultCreator implements ComponentResultCreator {
             if (structure.getNest() != null) {
                 final String keyType = getKeyType(structure);
                 store = new Store(key, keyType, null);
-                store.setMap(new HashMap<Object, Store>());
+                store.setMap(new HashMap<>());
                 map.put(key, store);
             } else if (structure.getValues() != null) {
                 final int len = structure.getValues().getFields().length;
-                store = new Store(key, new ArrayList<Object>(), null, len);
+                store = new Store(key, new ArrayList<>(), null, len);
                 map.put(key, store);
             }
         }
@@ -532,20 +532,15 @@ public class VisComponentResultCreator implements ComponentResultCreator {
     }
 
     private Object getValue(final Item item, final int index, final Type type) {
-        if (index >= 0 && item.getValues().length > index) {
-            final Object o = item.getValues()[index];
-            if (o != null) {
+        if (index >= 0 && item.getGenerators().length > index) {
+            final Generator generator = item.getGenerators()[index];
+            if (generator != null) {
                 // Convert all values into fully resolved objects evaluating
                 // functions where necessary.
-                Object val = o;
-                if (o instanceof Generator) {
-                    final Generator generator = (Generator) o;
-                    val = generator.eval();
-                }
-
+                final Val val = generator.eval();
                 if (val != null) {
                     if (Type.NUMBER.equals(type) || Type.DATE_TIME.equals(type)) {
-                        return TypeConverter.getDouble(val);
+                        return val.toDouble();
                     } else {
                         return val.toString();
                     }
@@ -558,21 +553,15 @@ public class VisComponentResultCreator implements ComponentResultCreator {
 
     private void addValue(final Item item, final int index, final Type type, final Double[] min, final Double[] max,
                           final Double[] sum, final Object[] arr, final int i) {
-        if (index >= 0 && item.getValues().length > index) {
-            final Object o = item.getValues()[index];
-            if (o != null) {
+        if (index >= 0 && item.getGenerators().length > index) {
+            final Generator generator = item.getGenerators()[index];
+            if (generator != null) {
                 // Convert all values into fully resolved objects evaluating
                 // functions where necessary.
-                Object val = o;
-                if (o instanceof Generator) {
-                    final Generator generator = (Generator) o;
-                    val = generator.eval();
-                }
-
+                final Val val = generator.eval();
                 if (val != null) {
                     if (Type.NUMBER.equals(type) || Type.DATE_TIME.equals(type)) {
-                        final Double v = TypeConverter.getDouble(val);
-
+                        final Double v = val.toDouble();
                         if (v != null) {
                             min[i] = min(min[i], v);
                             max[i] = max(max[i], v);

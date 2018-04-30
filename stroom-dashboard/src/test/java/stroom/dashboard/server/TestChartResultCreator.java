@@ -18,6 +18,10 @@ package stroom.dashboard.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.StaticValueFunction;
+import stroom.dashboard.expression.v1.ValDouble;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.server.vis.CompiledStructure;
 import stroom.dashboard.server.vis.StructureBuilder;
 import stroom.dashboard.server.vis.VisComponentResultCreator;
@@ -37,10 +41,10 @@ import java.util.List;
 import java.util.Map;
 
 public class TestChartResultCreator extends StroomUnitTest {
-    private static final String[] SERIES_CHOICE = new String[] { "", "Test1", "Test2" };
+    private static final String[] SERIES_CHOICE = new String[]{"", "Test1", "Test2"};
 
     @Test
-    public void testSeriesGen() throws Exception {
+    public void testSeriesGen() {
         for (int i = 0; i < 10; i++) {
             System.out.println(getSeries());
         }
@@ -48,9 +52,9 @@ public class TestChartResultCreator extends StroomUnitTest {
 
     @Test
     public void test() throws Exception {
-        final Items<Item> items = new ItemsArrayList<Item>();
+        final Items<Item> items = new ItemsArrayList<>();
         for (int i = 0; i < 100; i++) {
-            final Object[] values = new Object[3];
+            final Generator[] values = new Generator[3];
             values[0] = getSeries();
             values[1] = getXValue();
             values[2] = getYValue();
@@ -59,13 +63,13 @@ public class TestChartResultCreator extends StroomUnitTest {
             items.add(item);
         }
 
-        final Map<String, Items<Item>> childMap = new HashMap<String, Items<Item>>();
+        final Map<String, Items<Item>> childMap = new HashMap<>();
         childMap.put(null, items);
 
         final long size = items.size();
         final ResultStore resultStore = new ResultStore(childMap, size, size);
 
-        final List<Field> fields = new ArrayList<Field>();
+        final List<Field> fields = new ArrayList<>();
         fields.add(getField("Feed", Type.TEXT));
         fields.add(getField("X", Type.DATE_TIME));
         fields.add(getField("Y", Type.NUMBER));
@@ -90,16 +94,16 @@ public class TestChartResultCreator extends StroomUnitTest {
         return field;
     }
 
-    private String getSeries() {
+    private Generator getSeries() {
         final int index = (int) Math.floor(Math.random() * 3D);
-        return SERIES_CHOICE[index];
+        return new StaticValueFunction(ValString.create(SERIES_CHOICE[index])).createGenerator();
     }
 
-    private double getXValue() {
-        return Long.valueOf(System.currentTimeMillis() + (long) (Math.random() * 100000D)).doubleValue();
+    private Generator getXValue() {
+        return new StaticValueFunction(ValDouble.create(System.currentTimeMillis() + (long) (Math.random() * 100000D))).createGenerator();
     }
 
-    private double getYValue() {
-        return Double.valueOf(Math.random() * 1000D);
+    private Generator getYValue() {
+        return new StaticValueFunction(ValDouble.create(Math.random() * 1000D)).createGenerator();
     }
 }

@@ -20,7 +20,7 @@ package stroom.dashboard.server.format;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
-import stroom.dashboard.expression.v1.TypeConverter;
+import stroom.dashboard.expression.v1.Val;
 import stroom.query.shared.DateTimeFormatSettings;
 import stroom.query.shared.FormatSettings;
 import stroom.query.shared.TimeZone;
@@ -41,7 +41,7 @@ public class DateFormatter implements Formatter {
         int offsetMinutes = 0;
         String zoneId = "UTC";
 
-        if (settings != null && settings instanceof DateTimeFormatSettings) {
+        if (settings instanceof DateTimeFormatSettings) {
             final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) settings;
             if (dateTimeFormatSettings.getPattern() != null && dateTimeFormatSettings.getPattern().trim().length() > 0) {
                 pattern = dateTimeFormatSettings.getPattern();
@@ -96,19 +96,16 @@ public class DateFormatter implements Formatter {
     }
 
     @Override
-    public String format(final Object value) {
+    public String format(final Val value) {
         if (value == null) {
             return null;
         }
 
-        final Double dbl = TypeConverter.getDouble(value);
-        if (dbl != null) {
-            final long millis = dbl.longValue();
-
+        final Long millis = value.toLong();
+        if (millis != null) {
             if (format == null) {
                 return DateUtil.createNormalDateTimeString(millis);
             }
-
             return format.print(millis);
         }
         return value.toString();

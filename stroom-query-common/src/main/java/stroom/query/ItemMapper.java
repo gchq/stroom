@@ -18,12 +18,12 @@ package stroom.query;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.Var;
-import stroom.dashboard.expression.v1.VarString;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.mapreduce.MapperBase;
 import stroom.mapreduce.OutputCollector;
 
-public class ItemMapper extends MapperBase<Object, Var[], String, Item> {
+public class ItemMapper extends MapperBase<Object, Val[], String, Item> {
     private static final Generator[] PARENT_GENERATORS = new Generator[0];
 
     private final CompiledFields fields;
@@ -41,12 +41,12 @@ public class ItemMapper extends MapperBase<Object, Var[], String, Item> {
     }
 
     @Override
-    public void map(final Object key, final Var[] values, final OutputCollector<String, Item> output) {
+    public void map(final Object key, final Val[] values, final OutputCollector<String, Item> output) {
         // Add the item to the output recursively up to the max depth.
         addItem(values, null, PARENT_GENERATORS, 0, maxDepth, maxGroupDepth, output);
     }
 
-    private void addItem(final Var[] values, final String parentKey, final Generator[] parentGenerators,
+    private void addItem(final Val[] values, final String parentKey, final Generator[] parentGenerators,
                          final int depth, final int maxDepth, final int maxGroupDepth, final OutputCollector<String, Item> output) {
         // Process values into fields.
         final Generator[] generators = new Generator[fields.size()];
@@ -128,7 +128,7 @@ public class ItemMapper extends MapperBase<Object, Var[], String, Item> {
         // key to them.
         for (final Generator parent : parentGenerators) {
             if (parent != null) {
-                parent.addChildKey(new VarString(groupKey));
+                parent.addChildKey(ValString.create(groupKey));
             }
         }
 

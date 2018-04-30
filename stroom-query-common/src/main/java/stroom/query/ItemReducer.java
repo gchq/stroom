@@ -39,7 +39,7 @@ public class ItemReducer implements Reducer<String, Item, String, Item> {
             } else {
                 // Combine new values into original item values.
                 for (int i = 0; i < depths.length; i++) {
-                    dest.values[i] = combine(depths[i], maxDepth, dest.values[i], item.values[i], item.depth);
+                    dest.generators[i] = combine(depths[i], maxDepth, dest.generators[i], item.generators[i], item.depth);
                 }
             }
         }
@@ -47,17 +47,14 @@ public class ItemReducer implements Reducer<String, Item, String, Item> {
         output.collect(key, dest);
     }
 
-    private Object combine(final int groupDepth, final int maxDepth, final Object existingValue,
-            final Object addedValue, final int depth) {
-        Object output = null;
+    private Generator combine(final int groupDepth, final int maxDepth, final Generator existingValue,
+            final Generator addedValue, final int depth) {
+        Generator output = null;
 
         if (maxDepth >= depth) {
-            if (existingValue != null && addedValue != null && existingValue instanceof Generator
-                    && addedValue instanceof Generator) {
-                final Generator existingGenerator = (Generator) existingValue;
-                final Generator addedGenerator = (Generator) addedValue;
-                existingGenerator.merge(addedGenerator);
-                output = existingGenerator;
+            if (existingValue != null && addedValue != null) {
+                existingValue.merge(addedValue);
+                output = existingValue;
             } else if (groupDepth >= 0 && groupDepth <= depth) {
                 // This field is grouped so output existing as it must match the
                 // added value.

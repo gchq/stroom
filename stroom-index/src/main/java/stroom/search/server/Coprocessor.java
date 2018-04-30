@@ -16,9 +16,9 @@
 
 package stroom.search.server;
 
-import stroom.dashboard.expression.v1.Var;
+import stroom.dashboard.expression.v1.Val;
 import stroom.query.shared.CoprocessorSettings;
 
 public interface Coprocessor<S extends CoprocessorSettings> extends PayloadFactory {
-    void receive(Var[] values);
+    void receive(Val[] values);
 }
