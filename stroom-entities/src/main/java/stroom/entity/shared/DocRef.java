@@ -16,11 +16,9 @@
 
 package stroom.entity.shared;
 
-import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasType;
-import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -29,6 +27,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
 /**
  * Java class for DocRef complex type.
@@ -155,26 +154,17 @@ public class DocRef implements Comparable<DocRef>, SharedObject, HasDisplayValue
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(type);
-        builder.append(uuid);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DocRef)) return false;
+        final DocRef docRef = (DocRef) o;
+        return Objects.equals(type, docRef.type) &&
+                Objects.equals(uuid, docRef.uuid);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (o == null || !(o instanceof DocRef)) {
-            return false;
-        }
-
-        final DocRef docRef = (DocRef) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(type, docRef.type);
-        builder.append(uuid, docRef.uuid);
-        return builder.isEquals();
+    public int hashCode() {
+        return Objects.hash(type, uuid);
     }
 
     @Override
