@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
+
 * Issue **#753** : Fixed script editing in UI.
 
 * Issue **#751** : Fix inability to query on a dashboard with only use+read rights.
