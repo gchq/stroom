@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#749** : Fix inability to query with only `use` privileges on the index.
+
 * Issue **#751** : Fix inability to query on a dashboard with only use+read rights.
 
 * Issue **#735** : Change the format-date xslt function to parse dates in a case insensitive way.
