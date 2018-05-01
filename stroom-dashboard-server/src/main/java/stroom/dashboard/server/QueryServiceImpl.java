@@ -31,8 +31,8 @@ import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.logging.DocumentEventLog;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
@@ -68,12 +68,13 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
 
     @Override
     public QueryEntity create(final String name) throws RuntimeException {
-        final QueryEntity entity = super.create(name);
+        try (final SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            final QueryEntity entity = super.create(name);
+            // Create the initial user permissions for this new document.
+            securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
 
-        // Create the initial user permissions for this new document.
-        securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
-
-        return entity;
+            return entity;
+        }
     }
 
     @Override
