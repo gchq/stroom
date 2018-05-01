@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#753** : Fixed script editing in UI.
+
 ## [v6.0-alpha.22]
 
 * Issue **#719** : Fix creation of headless Jar to ensure logback is now included.
