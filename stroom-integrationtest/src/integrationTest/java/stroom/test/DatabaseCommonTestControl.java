@@ -27,7 +27,6 @@ import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
 import stroom.index.server.IndexShardManager;
 import stroom.index.server.IndexShardWriterCache;
@@ -110,7 +109,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             Policy.TABLE_NAME,
             QueryEntity.TABLE_NAME,
             Rack.TABLE_NAME,
-            Res.TABLE_NAME,
             Script.TABLE_NAME,
             StatisticStoreEntity.TABLE_NAME,
             Stream.TABLE_NAME,
