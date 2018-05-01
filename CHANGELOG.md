@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#753** : Fixed script editing in UI.
 
+* Issue **#751** : Fix inability to query on a dashboard with only use+read rights.
+
 ## [v6.0-alpha.22]
 
 * Issue **#719** : Fix creation of headless Jar to ensure logback is now included.
