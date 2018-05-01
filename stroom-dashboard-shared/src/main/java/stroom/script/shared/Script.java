@@ -20,19 +20,13 @@ import stroom.entity.shared.Copyable;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
-import stroom.entity.shared.Res;
 import stroom.entity.shared.SQLNameConstants;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 
 @Entity
@@ -40,28 +34,15 @@ import javax.xml.bind.annotation.XmlTransient;
 public class Script extends DocumentEntity implements Copyable<Script> {
     public static final String TABLE_NAME = SQLNameConstants.SCRIPT;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String RESOURCE = Res.FOREIGN_KEY;
     public static final String DEPENDENCIES = SQLNameConstants.DEPENDENCIES;
-    public static final String FETCH_RESOURCE = "resource";
     public static final String ENTITY_TYPE = "Script";
 
     private static final long serialVersionUID = 4519634323788508083L;
 
     private String description;
-    private Res resource;
-
+    private String data;
     private String dependenciesXML;
     private DocRefs dependencies;
-
-    @Override
-    public void clearPersistence() {
-        super.clearPersistence();
-        if (resource != null) {
-            final Res newResource = new Res();
-            newResource.setData(resource.getData());
-            resource = newResource;
-        }
-    }
 
     @Column(name = SQLNameConstants.DESCRIPTION)
     @Lob
@@ -73,15 +54,15 @@ public class Script extends DocumentEntity implements Copyable<Script> {
         this.description = description;
     }
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, optional = true)
-    @JoinColumn(name = RESOURCE)
+    @Column(name = SQLNameConstants.DATA, length = Integer.MAX_VALUE)
+    @Lob
     @ExternalFile("js")
-    public Res getResource() {
-        return resource;
+    public String getData() {
+        return data;
     }
 
-    public void setResource(final Res resource) {
-        this.resource = resource;
+    public void setData(final String data) {
+        this.data = data;
     }
 
     @Column(name = DEPENDENCIES, length = Integer.MAX_VALUE)
@@ -113,16 +94,8 @@ public class Script extends DocumentEntity implements Copyable<Script> {
     @Override
     public void copyFrom(final Script other) {
         this.description = other.description;
-
-        if (other.resource != null) {
-            this.resource = new Res();
-            this.resource.copyFrom(other.resource);
-        } else {
-            this.resource = null;
-        }
-
+        this.data = other.data;
         this.dependencies = other.dependencies;
-
         super.copyFrom(other);
     }
 

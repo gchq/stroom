@@ -18,7 +18,6 @@
 package stroom.script.server;
 
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
@@ -47,7 +46,7 @@ public class ScriptServlet extends HttpServlet {
 
     private static final long serialVersionUID = 2912973031600581055L;
 
-    private static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
+    private static final Set<String> FETCH_SET = Collections.emptySet();
 
     private final ScriptService scriptService;
     private final SecurityContext securityContext;
@@ -75,10 +74,9 @@ public class ScriptServlet extends HttpServlet {
                 final String uuid = queryParamMap.get("uuid");
                 if (uuid != null && uuid.length() > 0) {
                     final Script script = getScript(uuid);
-                    final Res res = script.getResource();
-                    if (res != null && res.getData() != null) {
+                    if (script != null && script.getData() != null) {
                         final PrintWriter pw = response.getWriter();
-                        pw.write(res.getData());
+                        pw.write(script.getData());
                         pw.close();
                     }
 

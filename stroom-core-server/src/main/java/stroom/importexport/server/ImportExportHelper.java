@@ -20,32 +20,27 @@ package stroom.importexport.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.util.BaseEntityBeanWrapper;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityDependencyServiceException;
+import stroom.entity.shared.NamedEntity;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
-import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.Res;
-import stroom.util.shared.Severity;
 import stroom.query.api.v2.DocRef;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,8 +53,6 @@ public class ImportExportHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportHelper.class);
 
     private final GenericEntityService genericEntityService;
-    private final ClassTypeMap classTypeMap = new ClassTypeMap();
-    private volatile boolean entitiesInitialised = false;
 
     @Inject
     public ImportExportHelper(final GenericEntityService genericEntityService) {
@@ -264,12 +257,13 @@ public class ImportExportHelper {
                 }
 
                 if (obj != null) {
-                    if (obj instanceof String) {
-                        final String string = (String) obj;
-                        if (StringUtils.hasText(string)) {
-                            setStringProperty(beanWrapper, propertyName, string, importState, importMode);
-                        }
-                    } else if (obj instanceof DocRef) {
+//                    if (obj instanceof String) {
+//                        final String string = (String) obj;
+//                        if (StringUtils.hasText(string)) {
+//                            setStringProperty(beanWrapper, propertyName, string, importState, importMode);
+//                        }
+//                    } else
+                    if (obj instanceof DocRef) {
                         final DocRef docRef = (DocRef) obj;
                         setDocRefProperty(beanWrapper, propertyName, docRef, importState, importMode);
                     }
@@ -356,32 +350,32 @@ public class ImportExportHelper {
         }
     }
 
-    private void setStringProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
-                                   final String value, final ImportState importState,
-                                   final ImportMode importMode) {
-        final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
-
-        // See if this property is a resource. If it is then create
-        // a new resource or update an existing one.
-        if (Res.class.equals(clazz)) {
-            Res res;
-            final Object existing = beanWrapper.getPropertyValue(propertyName);
-            if (existing == null) {
-                res = new Res();
-            } else {
-                res = (Res) existing;
-            }
-
-            if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                if (!EqualsUtil.isEquals(res.getData(), value)) {
-                    importState.getUpdatedFieldList().add(propertyName);
-                }
-            } else {
-                res.setData(value);
-                beanWrapper.setPropertyValue(propertyName, res);
-            }
-
-        }
+//    private void setStringProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
+//                                   final String value, final ImportState importState,
+//                                   final ImportMode importMode) {
+//        final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
+//
+//         See if this property is a resource. If it is then create
+//         a new resource or update an existing one.
+//        if (Res.class.equals(clazz)) {
+//            Res res;
+//            final Object existing = beanWrapper.getPropertyValue(propertyName);
+//            if (existing == null) {
+//                res = new Res();
+//            } else {
+//                res = (Res) existing;
+//            }
+//
+//            if (importMode == ImportMode.CREATE_CONFIRMATION) {
+//                if (!EqualsUtil.isEquals(res.getData(), value)) {
+//                    importState.getUpdatedFieldList().add(propertyName);
+//                }
+//            } else {
+//                res.setData(value);
+//                beanWrapper.setPropertyValue(propertyName, res);
+//            }
+//
+//        }
 //        else {
 //            // This property is an entity so get the referenced
 //            // entity if we can.
@@ -393,7 +387,7 @@ public class ImportExportHelper {
 //            }
 //            beanWrapper.setPropertyValue(propertyName, entity);
 //        }
-    }
+//    }
 
     private void setDocRefProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
                                    final DocRef docRef, final ImportState importState,
@@ -495,14 +489,7 @@ public class ImportExportHelper {
                 // do so.
                 if (property.isExternalFile()) {
                     if (value != null) {
-                        String data;
-                        if (value instanceof Res) {
-                            final Res res = (Res) value;
-                            data = res.getData();
-                        } else {
-                            data = String.valueOf(value);
-                        }
-
+                        final String data = String.valueOf(value);
                         if (data != null) {
                             final String fileExtension = property.getExtensionProvider().getExtension(entity,
                                     propertyName);
@@ -570,12 +557,5 @@ public class ImportExportHelper {
         }
 
         return dataMap;
-    }
-
-    private static class EntityClassComparator implements Comparator<Class<? extends DocumentEntity>> {
-        @Override
-        public int compare(final Class<? extends DocumentEntity> o1, final Class<? extends DocumentEntity> o2) {
-            return o1.getSimpleName().compareTo(o2.getSimpleName());
-        }
     }
 }

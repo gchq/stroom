@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
@@ -45,8 +44,6 @@ import java.util.stream.Collectors;
 @Component("scriptService")
 @Transactional
 public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScriptCriteria> implements ScriptService {
-    public static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ScriptServiceImpl.class);
 
     @Inject
@@ -70,28 +67,6 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     public Script loadByUuidInsecure(final String uuid, final Set<String> fetchSet) {
         return super.loadByUuidInsecure(uuid, fetchSet);
     }
-
-    //    @Override
-//    public DocRef copy(final String uuid, final String parentFolderUUID) {
-//        final Set<String> fetchSet = new HashSet<>();
-//        fetchSet.add(Script.FETCH_RESOURCE);
-//
-//        final Script entity = loadByUuid(uuid, fetchSet);
-//
-//        // This is going to be a copy so clear the persistence so save will create a new DB entry.
-//        entity.clearPersistence();
-//
-//        setFolder(entity, parentFolderUUID);
-//
-//        final Script result = create(entity);
-//        return DocRefUtil.create(result);
-//    }
-//
-//    @Override
-//    public Object read(final DocRef docRef) {
-//        return loadByUuid(docRef.getUuid(), FETCH_SET);
-//    }
-
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -123,15 +98,15 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
             docRefSetMarshaller = new ObjectMarshaller<>(DocRefs.class);
         }
 
-        @Override
-        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
-            super.appendBasicJoin(sql, alias, fetchSet);
-            if (fetchSet != null) {
-                if (fetchSet.contains("all") || fetchSet.contains(Script.FETCH_RESOURCE)) {
-                    sql.append(" LEFT OUTER JOIN FETCH " + alias + ".resource");
-                }
-            }
-        }
+//        @Override
+//        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
+//            super.appendBasicJoin(sql, alias, fetchSet);
+////            if (fetchSet != null) {
+////                if (fetchSet.contains("all") || fetchSet.contains(Script.FETCH_RESOURCE)) {
+//            sql.append(" LEFT OUTER JOIN FETCH " + alias + ".resource");
+////                }
+////            }
+//        }
 
         @Override
         protected void preSave(final Script entity) {

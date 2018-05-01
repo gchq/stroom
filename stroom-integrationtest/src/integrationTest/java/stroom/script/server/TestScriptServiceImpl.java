@@ -19,17 +19,12 @@ package stroom.script.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.Set;
 
 public class TestScriptServiceImpl extends AbstractCoreIntegrationTest {
-    private static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
-
     @Resource
     private ScriptService scriptService;
 
@@ -37,14 +32,11 @@ public class TestScriptServiceImpl extends AbstractCoreIntegrationTest {
     public void testUTF8Resource() {
         final String data = "var π = Math.PI, τ = 2 * π, halfπ = π / 2, ε = 1e-6, ε2 = ε * ε, d3_radians = π / 180, d3_degrees = 180 / π;";
 
-        final Res res = new Res();
-        res.setData(data);
-
         final Script script = scriptService.create("test");
-        script.setResource(res);
+        script.setData(data);
         scriptService.save(script);
-        final Script loaded = scriptService.load(script, FETCH_SET);
+        final Script loaded = scriptService.load(script);
 
-        Assert.assertEquals(data, loaded.getResource().getData());
+        Assert.assertEquals(data, loaded.getData());
     }
 }
