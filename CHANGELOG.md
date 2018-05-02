@@ -6,25 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.3.0] - 2018-05-02
+
 * Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
-
-## [v5.3.0-beta.3] - 2018-04-30
-
-* Move to stroom-expression v1.2.0
 
 * Added permission caching to reference data lookup.
 
-## [v5.3.0-beta.2] - 2018-04-30
-
-* Move to stroom-expression v1.2.0-beta.3
+* Updated to stroom-expression 1.3.1
 
     Added cast functions `toBoolean`, `toDouble`, `toInteger`, `toLong` and `toString`.
     Added `include` and `exclude` functions.
-
-## [v5.3.0-beta.1] - 2018-04-25
-
-* Move to stroom-expression v1.2.0-beta.1
-
     Added `if` and `not` functions.
     Added value functions `true()`, `false()`, `null()` and `err()`.
     Added `match` boolean function.
@@ -797,9 +788,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.3.0-beta.2...HEAD
-[v5.3.0-beta.2]: https://github.com/gchq/stroom/compare/v5.3.0-beta.1...v5.3.0-beta.2
-[v5.3.0-beta.1]: https://github.com/gchq/stroom/compare/v5.2.3...v5.3.0-beta.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.3.0...HEAD
+[v5.3.0]: https://github.com/gchq/stroom/compare/v5.2.3...v5.3.0
 [v5.2.3]: https://github.com/gchq/stroom/compare/v5.2.2...v5.2.3
 [v5.2.2]: https://github.com/gchq/stroom/compare/v5.2.1...v5.2.2
 [v5.2.1]: https://github.com/gchq/stroom/compare/v5.2.0...v5.2.1
