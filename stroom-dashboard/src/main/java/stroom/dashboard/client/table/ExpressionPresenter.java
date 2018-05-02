@@ -153,7 +153,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createCastSubMenuItems(item++, "Cast"));
         children.add(createDateSubMenuItems(item++, "Date"));
         children.add(createLogicSubMenuItems(item++, "Logic"));
-        children.add(createMathSubMenuItems(item++, "Math"));
+        children.add(createMathematicsSubMenuItems(item++, "Mathematics"));
         children.add(createStringSubMenuItems(item++, "String"));
         children.add(createUriSubMenuItems(item++, "Uri"));
         children.add(createValueSubMenuItems(item++, "Value"));
@@ -192,7 +192,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
-    private Item createMathSubMenuItems(final int pos, final String func) {
+    private Item createMathematicsSubMenuItems(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "average($)", "average("));
