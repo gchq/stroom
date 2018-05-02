@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
+
 ## [v5.3.0-beta.3] - 2018-04-30
 
 * Move to stroom-expression v1.2.0
