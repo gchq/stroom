@@ -6,6 +6,35 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
+
+* Added permission caching to reference data lookup.
+
+* Updated to stroom-expression 1.3.1
+
+    Added cast functions `toBoolean`, `toDouble`, `toInteger`, `toLong` and `toString`.
+    Added `include` and `exclude` functions.
+    Added `if` and `not` functions.
+    Added value functions `true()`, `false()`, `null()` and `err()`.
+    Added `match` boolean function.
+    Added `variance` and `stDev` functions.
+    Added `hash` function.
+    Added `formatDate` function.
+    Added `parseDate` function.
+    Made `substring` and `decode` functions capable of accepting functional parameters.
+    Added `substringBefore`, `substringAfter`, `indexOf` and `lastIndexOf` functions.
+    Added `countUnique` function.
+
+* Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
+
+* Issue **#753** : Fixed script editing in UI.
+
+* Issue **#751** : Fix inability to query on a dashboard with only use+read rights.
+
+## [v6.0-alpha.22]
+
+* Issue **#719** : Fix creation of headless Jar to ensure logback is now included.
+
 * Issue **#735** : Change the format-date xslt function to parse dates in a case insensitive way.
 
 * Issue **#719** : Fix creation of headless Jar. Exclude gwt-unitCache folder from build JARs.

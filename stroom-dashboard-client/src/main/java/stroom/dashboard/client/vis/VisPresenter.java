@@ -60,9 +60,6 @@ import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
 import stroom.widget.tab.client.presenter.LayerContainer;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
         implements ResultComponent, StatusHandler {
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation");
@@ -392,10 +389,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
         function.setStatus(LoadStatus.LOADING_SCRIPT);
 
-        final Set<String> fetchSet = new HashSet<>();
-
         final FetchScriptAction fetchScriptAction = new FetchScriptAction(scriptRef,
-                scriptCache.getLoadedScripts(), fetchSet);
+                scriptCache.getLoadedScripts());
         dispatcher.exec(fetchScriptAction).onSuccess(result -> startInjectingScripts(result, function));
     }
 

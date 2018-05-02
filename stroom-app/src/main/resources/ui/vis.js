@@ -59,7 +59,7 @@ function ScriptInjector() {
       if (removeTag) {
         scriptElement.parentNode.removeChild(scriptElement);
       }
-    }
+    };
     scriptElement.onload = function() {
       clearCallbacks();
       if (callback) {
@@ -87,11 +87,9 @@ function ScriptInjector() {
     var doc = wnd.document;
 
     var scriptElement = makeScriptElement(doc);
+    (doc.head || doc.getElementsByTagName("head")[0]).appendChild(scriptElement);
     attachListeners(scriptElement, url, callback, false);
-
     scriptElement.src = url;
-    (doc.head || doc.getElementsByTagName("head")[0])
-        .appendChild(scriptElement);
   }
 }
 
@@ -105,7 +103,7 @@ function VisualisationManager() {
   var currentData = null;
   var running = false;
 
-  var update = function() {
+  var update = function(callback) {
     if (vis && currentData) {
       vis.setData(currentContext, currentSettings, currentData);
     }
@@ -131,35 +129,33 @@ function VisualisationManager() {
     }
   };
 
-  var doStart = function() {
+  var doStart = function(callback) {
     running = true;
     if (vis && vis.start) {
       vis.start();
     }
   };
 
-  var doEnd = function() {
+  var doEnd = function(callback) {
     if (vis && vis.end) {
       vis.end();
     }
     running = false;
   };
 
-  this.injectScripts = function(scripts) {
-    var callback = new Callback(event, frameId, callbackId);
+  this.injectScripts = function(scripts, callback) {
     injectNextScript(scripts, callback);
   };
 
-  this.start = function() {
+  this.start = function(callback) {
     doStart();
   };
 
-  this.end = function() {
+  this.end = function(callback) {
     doEnd();
   };
 
-  this.setVisType = function(type) {
-    var callback = new Callback(event, frameId, callbackId);
+  this.setVisType = function(type, callback) {
     try {
       vis = eval("new " + type + "()");
       callback.onSuccess(null);
@@ -181,7 +177,7 @@ function VisualisationManager() {
     }
   };
 
-  this.setData = function(context, settings, data) {
+  this.setData = function(context, settings, data, callback) {
     currentContext = context;
     currentSettings = settings;
     currentData = data;
@@ -189,7 +185,7 @@ function VisualisationManager() {
     update();
   };
 
-  this.resize = function() {
+  this.resize = function(callback) {
     if (vis) {
       vis.resize();
     }
@@ -223,30 +219,28 @@ var messageListener = function(event) {
   if (origin.indexOf(host) === -1)
     return;
 
-  // try {
   var json = JSON.parse(event.data);
 
   if (json.data) {
+    var frameId;
+    var callbackId;
+
     if (json.frameId) {
       frameId = json.frameId;
-    } else {
-      frameId = null;
     }
-
     if (json.callbackId) {
       callbackId = json.callbackId;
-    } else {
-      callbackId = null;
     }
 
-    eval(json.data.functionName + ".apply(this, json.data.params);");
+    var callback = new Callback(event, frameId, callbackId);
+    var params = json.data.params;
+    if (!params) {
+        params = [];
+    }
+    params.push(callback);
+
+    eval(json.data.functionName + ".apply(this, params);");
   }
-  // } catch (ex) {
-  // if (frameId) {
-  // var msg = {exception: ex.message};
-  // sendMessage(event, frameId, JSON.stringify(msg));
-  // }
-  // }
 }
 
 if (window.addEventListener) {
