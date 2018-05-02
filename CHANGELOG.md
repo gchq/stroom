@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
+
 * Added permission caching to reference data lookup.
 
-* Move to stroom-expression v1.3.0
+* Updated to stroom-expression 1.3.1
 
     Added cast functions `toBoolean`, `toDouble`, `toInteger`, `toLong` and `toString`.
     Added `include` and `exclude` functions.
