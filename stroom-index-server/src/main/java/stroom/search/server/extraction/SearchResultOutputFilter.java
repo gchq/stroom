@@ -21,6 +21,8 @@ import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
@@ -41,7 +43,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
 
     private FieldIndexMap fieldIndexes;
     private ResultReceiver resultReceiver;
-    private String[] values;
+    private Val[] values;
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -56,12 +58,12 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
                 if (name.length() > 0 && value.length() > 0) {
                     final int fieldIndex = fieldIndexes.get(name);
                     if (fieldIndex >= 0) {
-                        values[fieldIndex] = value;
+                        values[fieldIndex] = ValString.create(value);
                     }
                 }
             }
         } else if (RECORD.equals(localName)) {
-            values = new String[fieldIndexes.size()];
+            values = new Val[fieldIndexes.size()];
         }
 
         super.startElement(uri, localName, qName, atts);

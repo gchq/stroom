@@ -28,9 +28,7 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.Res;
 import stroom.script.server.ScriptService;
-import stroom.query.api.v2.DocRef;
 import stroom.script.shared.Script;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.visualisation.server.VisualisationService;
@@ -105,11 +103,8 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private VisComponentSettings getVisSettings() {
-        final Res res = new Res();
-        res.setData("Test");
-
         Script script = scriptService.create("Test");
-        script.setResource(res);
+        script.setResource("Test");
         script = scriptService.save(script);
 
         Visualisation vis = visualisationService.create("Test");

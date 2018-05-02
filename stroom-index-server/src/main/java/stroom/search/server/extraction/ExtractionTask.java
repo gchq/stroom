@@ -17,6 +17,7 @@
 package stroom.search.server.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.query.api.v2.DocRef;
 
@@ -67,6 +68,6 @@ public class ExtractionTask {
     }
 
     public interface ResultReceiver {
-        void receive(String[] values);
+        void receive(Val[] values);
     }
 }

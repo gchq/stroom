@@ -8,7 +8,34 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#749** : Fix inability to query with only `use` privileges on the index.
 
+* Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
+
+* Added permission caching to reference data lookup.
+
+* Updated to stroom-expression 1.3.1
+
+    Added cast functions `toBoolean`, `toDouble`, `toInteger`, `toLong` and `toString`.
+    Added `include` and `exclude` functions.
+    Added `if` and `not` functions.
+    Added value functions `true()`, `false()`, `null()` and `err()`.
+    Added `match` boolean function.
+    Added `variance` and `stDev` functions.
+    Added `hash` function.
+    Added `formatDate` function.
+    Added `parseDate` function.
+    Made `substring` and `decode` functions capable of accepting functional parameters.
+    Added `substringBefore`, `substringAfter`, `indexOf` and `lastIndexOf` functions.
+    Added `countUnique` function.
+
+* Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
+
+* Issue **#753** : Fixed script editing in UI.
+
 * Issue **#751** : Fix inability to query on a dashboard with only use+read rights.
+
+## [v6.0-alpha.22]
+
+* Issue **#719** : Fix creation of headless Jar to ensure logback is now included.
 
 * Issue **#735** : Change the format-date xslt function to parse dates in a case insensitive way.
 
@@ -878,7 +905,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.21...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.22...6.0
+[v6.0-alpha.22]: https://github.com/gchq/stroom/compare/v6.0-alpha.21...v6.0-alpha.22
 [v6.0-alpha.21]: https://github.com/gchq/stroom/compare/v6.0-alpha.20...v6.0-alpha.21
 [v6.0-alpha.20]: https://github.com/gchq/stroom/compare/v6.0-alpha.19...v6.0-alpha.20
 [v6.0-alpha.19]: https://github.com/gchq/stroom/compare/v6.0-alpha.18...v6.0-alpha.19

@@ -16,7 +16,7 @@
 
 package stroom.dashboard.server.format;
 
-import stroom.dashboard.expression.v1.TypeConverter;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.shared.FormatSettings;
 import stroom.dashboard.shared.NumberFormatSettings;
 
@@ -29,21 +29,21 @@ public class NumberFormatter implements Formatter {
 
     public static NumberFormatter create(final FormatSettings settings) {
         NumberFormatSettings numberFormatSettings = null;
-        if (settings != null && settings instanceof NumberFormatSettings) {
+        if (settings instanceof NumberFormatSettings) {
             numberFormatSettings = (NumberFormatSettings) settings;
         }
         return new NumberFormatter(numberFormatSettings);
     }
 
     @Override
-    public String format(final Object value) {
+    public String format(final Val value) {
         if (value == null) {
             return null;
         }
 
-        final Double dbl = TypeConverter.getDouble(value);
+        final Double dbl = value.toDouble();
         if (dbl != null) {
-            final String string = TypeConverter.doubleToString(dbl);
+            final String string = value.toString();
 
             if (numberFormatSettings != null) {
                 final int index = string.indexOf(".");

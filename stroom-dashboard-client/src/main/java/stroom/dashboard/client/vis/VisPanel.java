@@ -78,9 +78,9 @@ public class VisPanel extends SimplePanel implements VisPane {
                     // and fetch it again.
                     loadedScripts.add(script.getId());
 
-                    if (script.getResource() != null && script.getResource().getData() != null) {
+                    if (script.getResource() != null) {
                         try {
-                            final String text = script.getResource().getData();
+                            final String text = script.getResource();
                             final FromString fromString = fromString(text);
                             fromString.inject();
 

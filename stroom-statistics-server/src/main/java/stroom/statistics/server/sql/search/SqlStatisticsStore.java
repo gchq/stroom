@@ -10,6 +10,7 @@ import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CompletionListener;
@@ -96,7 +97,7 @@ public class SqlStatisticsStore implements Store {
         resultHandler = new SearchResultHandler(coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
 
         //get the flowable for the search results
-        final Flowable<String[]> searchResultsFlowable = statisticsSearchService.search(
+        final Flowable<Val[]> searchResultsFlowable = statisticsSearchService.search(
                 statisticStoreEntity, criteria, fieldIndexMap);
 
         this.searchDisposable = startAsyncSearch(searchResultsFlowable, coprocessorMap, executor, taskContext);
@@ -177,7 +178,7 @@ public class SqlStatisticsStore implements Store {
         return paramMap;
     }
 
-    private Disposable startAsyncSearch(final Flowable<String[]> searchResultsFlowable,
+    private Disposable startAsyncSearch(final Flowable<Val[]> searchResultsFlowable,
                                         final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap,
                                         final Executor executor,
                                         final TaskContext taskContext) {

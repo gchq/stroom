@@ -27,16 +27,14 @@ public class FetchScriptAction extends Action<SharedList<Script>> {
 
     private DocRef script;
     private Set<DocRef> loadedScripts;
-    private Set<String> fetchSet;
 
     public FetchScriptAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchScriptAction(final DocRef script, final Set<DocRef> loadedScripts, final Set<String> fetchSet) {
+    public FetchScriptAction(final DocRef script, final Set<DocRef> loadedScripts) {
         this.script = script;
         this.loadedScripts = loadedScripts;
-        this.fetchSet = fetchSet;
     }
 
     public DocRef getScript() {
@@ -45,10 +43,6 @@ public class FetchScriptAction extends Action<SharedList<Script>> {
 
     public Set<DocRef> getLoadedScripts() {
         return loadedScripts;
-    }
-
-    public Set<String> getFetchSet() {
-        return fetchSet;
     }
 
     @Override
