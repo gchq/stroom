@@ -19,22 +19,20 @@ package stroom.script;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import stroom.explorer.ExplorerActionHandler;
-import stroom.explorer.shared.DocumentType;
-import stroom.importexport.ImportExportActionHandler;
 import stroom.entity.DocumentEntityServiceImpl;
 import stroom.entity.ObjectMarshaller;
 import stroom.entity.QueryAppender;
-import stroom.entity.util.HqlBuilder;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.DocRefs;
+import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
+import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
+import stroom.persist.EntityManagerSupport;
 import stroom.query.api.v2.DocRef;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
-import stroom.persist.EntityManagerSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,8 +46,6 @@ import java.util.stream.Collectors;
 @Singleton
 // @Transactional
 public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScriptCriteria> implements ScriptService, ExplorerActionHandler, ImportExportActionHandler {
-    public static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ScriptServiceImpl.class);
 
     @Inject
@@ -74,28 +70,6 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     public Script loadByUuidInsecure(final String uuid, final Set<String> fetchSet) {
         return super.loadByUuidInsecure(uuid, fetchSet);
     }
-
-    //    @Override
-//    public DocRef copy(final String uuid, final String parentFolderUUID) {
-//        final Set<String> fetchSet = new HashSet<>();
-//        fetchSet.add(Script.FETCH_RESOURCE);
-//
-//        final Script entity = loadByUuid(uuid, fetchSet);
-//
-//        // This is going to be a copy so clear the persistence so save will create a new DB entry.
-//        entity.clearPersistence();
-//
-//        setFolder(entity, parentFolderUUID);
-//
-//        final Script result = create(entity);
-//        return DocRefUtil.create(result);
-//    }
-//
-//    @Override
-//    public Object read(final DocRef docRef) {
-//        return loadByUuid(docRef.getUuid(), FETCH_SET);
-//    }
-
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -130,16 +104,6 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
         ScriptQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
             docRefSetMarshaller = new ObjectMarshaller<>(DocRefs.class);
-        }
-
-        @Override
-        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
-            super.appendBasicJoin(sql, alias, fetchSet);
-            if (fetchSet != null) {
-                if (fetchSet.contains("all") || fetchSet.contains(Script.FETCH_RESOURCE)) {
-                    sql.append(" LEFT OUTER JOIN FETCH " + alias + ".resource");
-                }
-            }
         }
 
         @Override

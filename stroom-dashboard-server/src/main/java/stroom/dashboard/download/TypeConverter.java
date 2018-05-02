@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard.download;
 
 import stroom.dashboard.expression.v1.DateUtil;
 

@@ -1,18 +1,18 @@
 package stroom.elastic;
 
-import org.eclipse.jetty.http.HttpStatus;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.eclipse.jetty.http.HttpStatus;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.ExternalDocRefConstants;
-import stroom.properties.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.errorhandler.LoggedException;
+import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.audit.client.DocRefResourceHttpClient;
-import stroom.query.audit.security.ServiceUser;
 import stroom.security.SecurityContext;
+import stroom.security.ServiceUser;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
