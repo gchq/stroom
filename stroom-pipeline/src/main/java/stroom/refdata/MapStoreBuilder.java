@@ -17,12 +17,13 @@
 package stroom.refdata;
 
 import stroom.entity.shared.Range;
-import stroom.xml.event.EventList;
+import stroom.refdata.saxevents.EventListValue;
+import stroom.refdata.saxevents.ValueProxy;
 
 public interface MapStoreBuilder {
-    void setEvents(String mapName, String keyName, EventList eventList, boolean overrideExistingValues);
+    void setEvents(String mapName, String keyName, ValueProxy<EventListValue> eventListProxy, boolean overrideExistingValues);
 
-    void setEvents(String mapName, Range<Long> range, EventList eventList, boolean overrideExistingValues);
+    void setEvents(String mapName, Range<Long> range, ValueProxy<EventListValue> eventListProxy, boolean overrideExistingValues);
 
     MapStore getMapStore();
 }

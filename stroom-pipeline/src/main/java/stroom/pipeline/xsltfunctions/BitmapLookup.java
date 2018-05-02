@@ -23,9 +23,12 @@ import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
+import stroom.refdata.saxevents.EventListProxyConsumer;
+import stroom.refdata.saxevents.EventListProxyConsumerFactory;
+import stroom.refdata.saxevents.EventListValue;
+import stroom.refdata.saxevents.ValueProxy;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
-import stroom.xml.event.np.NPEventList;
 
 import javax.inject.Inject;
 
@@ -44,7 +47,7 @@ class BitmapLookup extends AbstractLookup {
                                 final boolean ignoreWarnings,
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) throws XPathException {
-        SequenceMaker sequenceMaker = null;
+//        SequenceMaker sequenceMaker = null;
 
         int val;
         try {
@@ -64,7 +67,14 @@ class BitmapLookup extends AbstractLookup {
             for (final int bit : bits) {
                 final String k = String.valueOf(bit);
                 final ReferenceDataResult result = getReferenceData(map, k, eventTime, lookupIdentifier);
-                final NPEventList eventList = (NPEventList) result.getEventList();
+                final ValueProxy<EventListValue> eventListProxy = result.getEventListProxy();
+
+                final EventListProxyConsumer eventListConsumer = EventListProxyConsumerFactory.getConsumer(
+                        eventListProxy,
+                        context);
+
+                final Sequence sequence = eventListConsumer.map(eventListProxy);
+
                 if (eventList != null) {
                     if (sequenceMaker == null) {
                         sequenceMaker = new SequenceMaker(context);
@@ -106,10 +116,11 @@ class BitmapLookup extends AbstractLookup {
                 outputWarning(context, sb, null);
             }
 
-            if (sequenceMaker != null) {
-                sequenceMaker.close();
-                return sequenceMaker.toSequence();
-            }
+//            if (sequenceMaker != null) {
+//                sequenceMaker.close();
+//                return sequenceMaker.toSequence();
+//            }
+            return sequence;
         }
 
         return EmptyAtomicSequence.getInstance();

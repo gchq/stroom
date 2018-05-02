@@ -17,14 +17,16 @@
 package stroom.refdata;
 
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
-import stroom.xml.event.EventList;
+import stroom.refdata.saxevents.EventListValue;
+import stroom.refdata.saxevents.ValueProxy;
 
 /**
  * Stores and retrieves a list of XML events that are found in reference data
  * for specified map and key names.
  */
 public interface MapStore {
-    EventList getEvents(String mapName, String keyName);
+
+    ValueProxy<EventListValue> getEventListProxy(String mapName, String keyName);
 
     StoredErrorReceiver getErrorReceiver();
 }

@@ -7,11 +7,11 @@ import java.nio.ByteBuffer;
 class ValueFactory {
 
 
-    static AbstractOffHeapInternPoolValue fromByteBuffer(final ByteBuffer byteBuffer) {
+    static AbstractPoolValue fromByteBuffer(final ByteBuffer byteBuffer) {
 
         final short typeId = byteBuffer.getShort();
 
-        final AbstractOffHeapInternPoolValue value;
+        final AbstractPoolValue value;
         if (typeId == FastInfosetValue.TYPE_ID) {
             value = FastInfosetValue.fromByteBuffer(byteBuffer);
         } else if (typeId == StringValue.TYPE_ID){

@@ -22,13 +22,16 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.query.api.v2.DocRef;
+import stroom.refdata.saxevents.EventListValue;
+import stroom.refdata.saxevents.StringValue;
+import stroom.refdata.saxevents.ValueProxy;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.logging.LambdaLogger;
 import stroom.util.shared.Severity;
-import stroom.xml.event.EventList;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -36,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Optional;
 
 public class ReferenceData {
     // Actually 11.5 days but this is fine for the purposes of reference data.
@@ -95,15 +99,23 @@ public class ReferenceData {
             // Look up the KV then use that to recurse
             doGetValue(pipelineReferences, time, startMap, key, result);
 
-            //TODO why are we doing a toString on the eventList and using that as the
-            //key to look up in the MapStore?
+            final ValueProxy<EventListValue> valueProxy = result.getEventListProxy();
+            Optional<EventListValue> optValue = valueProxy.supplyValue();
+            // This is a nested map so we are expecting the value of the first map to be a simple
+            // string so we can use it as the key for the next map
 
-            final EventList nextKey = result.getEventList();
-            if (nextKey == null) {
+            if (!optValue.isPresent()) {
                 // map broken ... no link found
                 result.log(Severity.WARNING, () -> "No map found for '" + startMap + "'");
             } else {
-                getValue(pipelineReferences, time, nextMap, nextKey.toString(), result);
+                final EventListValue eventListValue = optValue.get();
+                try {
+                    final StringValue stringValue = (StringValue) eventListValue;
+                    getValue(pipelineReferences, time, nextMap, stringValue.getValue(), result);
+                } catch (ClassCastException e) {
+                    result.log(Severity.ERROR, () -> LambdaLogger.buildMessage("Value is the wrong type, expected: {}, found: {}",
+                            StringValue.class.getName(), eventListValue.getClass().getName()));
+                }
             }
         } else {
             doGetValue(pipelineReferences, time, mapName, key, result);
@@ -126,7 +138,7 @@ public class ReferenceData {
             }
 
             // If we have a list of events then we are done.
-            if (referenceDataResult.getEventList() != null) {
+            if (referenceDataResult.getEventListProxy() != null) {
                 return;
             }
         }
@@ -176,14 +188,15 @@ public class ReferenceData {
                     mapStore.getErrorReceiver().replay(result);
                 }
 
-                final EventList eventList = mapStore.getEvents(mapName, keyName);
-                if (eventList != null) {
+                //TODO is this an NPEventList or a SimpleEventList?
+                final ValueProxy<EventListValue> eventListProxy = mapStore.getEventListProxy(mapName, keyName);
+                if (eventListProxy != null) {
                     result.log(Severity.WARNING, () -> "Map store has no reference data for context data");
                 } else {
                     result.log(Severity.INFO, () -> "Map store contains reference data for context data");
                 }
 
-                result.setEventList(eventList);
+                result.setEventListProxy(eventListProxy);
             } else {
                 result.log(Severity.WARNING, () -> "No map store can be retrieved for context data");
             }
@@ -255,13 +268,11 @@ public class ReferenceData {
                             mapStore.getErrorReceiver().replay(result);
                         }
 
-                        final EventList eventList = mapStore.getEvents(mapName, keyName);
-                        if (eventList != null) {
+                        final ValueProxy<EventListValue> valueProxy = mapStore.getEventListProxy(mapName, keyName);
+                        if (valueProxy != null) {
                             result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
 
-
-                            // TODO change this to set the ValueProxy
-                            result.setEventList(eventList);
+                            result.setEventListProxy(valueProxy);
 
                         } else {
                             result.log(Severity.WARNING, () -> "Map store has no reference data (" + effectiveStream + ")");

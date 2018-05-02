@@ -229,8 +229,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                           final String key) {
         final ReferenceDataResult result = new ReferenceDataResult();
         data.getValue(pipelineReferences, time, mapName, key, result);
-        if (result.getEventList() != null) {
-            return result.getEventList().toString();
+        if (result.getEventListProxy() != null) {
+            return result.getEventListProxy().toString();
         }
 
         return null;

@@ -19,105 +19,113 @@ package stroom.refdata.saxevents;
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
 import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.event.Receiver;
-import net.sf.saxon.expr.parser.Location;
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
+import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.jvnet.fastinfoset.FastInfosetException;
 import org.xml.sax.SAXException;
+import stroom.util.logging.LambdaLogger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
-//public class FastInfosetConsumer extends DefaultHandler {
-public class FastInfosetConsumer {
-    private static final Location NULL_LOCATION = new NullLocation();
+class FastInfosetConsumer extends EventListProxyConsumer {
 
-    private static final String EMPTY = "";
-    private final Receiver receiver;
-    private final PipelineConfiguration pipe;
-    private final SAXDocumentParser saxDocumentParser;
-//    private final NamePool pool;
+    FastInfosetConsumer(final XPathContext context) {
+        super(context);
+    }
+//    private final SAXDocumentParser saxDocumentParser;
 
-    private final Map<Integer, Integer> codeMap = new HashMap<>();
+//    private final Map<Integer, Integer> codeMap = new HashMap<>();
 
-    public FastInfosetConsumer(final Receiver receiver, final PipelineConfiguration pipe) {
-        this.receiver = receiver;
-        this.pipe = pipe;
+//    public FastInfosetConsumer(final Receiver receiver, final PipelineConfiguration pipe) {
+//        super(receiver, pipe);
+//
+//        FastInfosetContentHandler fastInfosetContentHandler = new FastInfosetContentHandler();
+//        fastInfosetContentHandler.setPipelineConfiguration(pipe);
+//        fastInfosetContentHandler.setReceiver(receiver);
+//
+//        SAXDocumentParser saxDocumentParser = new SAXDocumentParser();
+//        saxDocumentParser.setContentHandler(fastInfosetContentHandler);
+//        this.saxDocumentParser = saxDocumentParser;
+//    }
 
-        FastInfosetContentHandler fastInfosetContentHandler = new FastInfosetContentHandler();
-        fastInfosetContentHandler.setPipelineConfiguration(pipe);
+
+//    @Override
+//    public void consume(final ValueProxy<EventListValue> eventListProxy) {
+//
+//        Class valueClazz = eventListProxy.getValueClazz();
+//        if (valueClazz != FastInfosetValue.class) {
+//            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClazz.getCanonicalName()));
+//        }
+//        // get the value the proxy is proxying for and use it inside the transaction
+//        eventListProxy.consumeValue(byteBuffer -> {
+//            ByteBufferInputStream inputStream = new ByteBufferInputStream(byteBuffer);
+//            try {
+//                saxDocumentParser.parse(inputStream);
+//            } catch (IOException | FastInfosetException | SAXException e) {
+//                throw new RuntimeException("Error parsing fastinfoset bytes, " + e.getMessage(), e);
+//            }
+//            saxDocumentParser.reset();
+//        });
+//    }
+
+    private Sequence convertByteBufferToSequence(final ByteBuffer byteBuffer) {
+        // Initialise objects for de-serialising the bytebuffer
+        final PipelineConfiguration pipelineConfiguration = buildPipelineConfguration();
+        final TinyBuilder receiver = new TinyBuilder(pipelineConfiguration);
+        try {
+            startDocument(receiver, pipelineConfiguration);
+        } catch (XPathException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error starting document"), e);
+        }
+
+        final FastInfosetContentHandler fastInfosetContentHandler = new FastInfosetContentHandler();
+        fastInfosetContentHandler.setPipelineConfiguration(pipelineConfiguration);
         fastInfosetContentHandler.setReceiver(receiver);
 
-//        pool = pipe.getConfiguration().getNamePool();
-        SAXDocumentParser saxDocumentParser = new SAXDocumentParser();
+        //TODO should we re-use this saxparser object in some way?
+        final SAXDocumentParser saxDocumentParser = new SAXDocumentParser();
         saxDocumentParser.setContentHandler(fastInfosetContentHandler);
-        this.saxDocumentParser = saxDocumentParser;
-    }
 
-    public void start() throws XPathException {
-        receiver.setPipelineConfiguration(pipe);
-        receiver.open();
-        receiver.startDocument(0);
-    }
-
-    public void end() throws XPathException {
-        receiver.endDocument();
-        receiver.close();
-    }
-
-
-//    @Override
-//    public void startElement(final String uri, final String localName, final String qName, final Attributes atts) throws SAXException {
-//        NodeInfo nodeInfo = new N
-////        receiver.startElement();
-//
-//    }
-//
-//    @Override
-//    public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-//
-//    }
-//
-//    @Override
-//    public void characters(final char[] ch, final int start, final int length) throws SAXException {
-//
-//    }
-
-
-    public void consume(final ByteBuffer byteBuffer) throws FastInfosetException, SAXException, IOException {
-
-        ByteBufferInputStream inputStream = new ByteBufferInputStream(byteBuffer);
-        saxDocumentParser.parse(inputStream);
+        final ByteBufferInputStream inputStream = new ByteBufferInputStream(byteBuffer);
+        try {
+            // do the parsing which will output to the tinyBuilder
+            saxDocumentParser.parse(inputStream);
+        } catch (IOException | FastInfosetException | SAXException e) {
+            throw new RuntimeException("Error parsing fastinfoset bytes, " + e.getMessage(), e);
+        }
         saxDocumentParser.reset();
+        try {
+            endDocument(receiver);
+        } catch (XPathException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error ending document"), e);
+        }
+        final Sequence sequence = receiver.getCurrentRoot();
+        // Reset the builder, detaching it from the constructed document.
+        receiver.reset();
+        return sequence;
     }
 
-    private static class NullLocation implements Location {
-        @Override
-        public String getSystemId() {
-            return null;
+
+    @Override
+    public Sequence map(final ValueProxy<EventListValue> eventListProxy) {
+        if (eventListProxy == null) {
+            return EmptyAtomicSequence.getInstance();
         }
 
-        @Override
-        public String getPublicId() {
-            return null;
+        Class valueClazz = eventListProxy.getValueClazz();
+        if (valueClazz != FastInfosetValue.class) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClazz.getCanonicalName()));
         }
 
-        @Override
-        public int getLineNumber() {
-            return 0;
-        }
+        // Get the value of the proxy and if found map it
+        Optional<Sequence> optSequence = eventListProxy.mapValue(this::convertByteBufferToSequence);
 
-        @Override
-        public int getColumnNumber() {
-            return 0;
-        }
-
-        @Override
-        public Location saveLocation() {
-            return this;
-        }
+        return optSequence.orElseGet(EmptyAtomicSequence::getInstance);
     }
 
 }

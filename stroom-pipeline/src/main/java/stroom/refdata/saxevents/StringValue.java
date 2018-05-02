@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-public class StringValue extends AbstractOffHeapInternPoolValue {
+public class StringValue extends EventListValue {
 
     static final short TYPE_ID = 0;
 
@@ -16,6 +16,10 @@ public class StringValue extends AbstractOffHeapInternPoolValue {
 
     public static StringValue of(String value) {
         return new StringValue(value);
+    }
+
+    public String getValue() {
+        return value;
     }
 
     @Override

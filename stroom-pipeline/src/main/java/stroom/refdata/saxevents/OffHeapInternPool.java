@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 // TODO rename to UniqueValuePool?
-public interface OffHeapInternPool<V extends AbstractOffHeapInternPoolValue> extends AutoCloseable {
+public interface OffHeapInternPool<V extends AbstractPoolValue> extends AutoCloseable {
 
     /**
      * Puts value into the pool if it doesn't already exist. The value must be serializable

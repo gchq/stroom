@@ -119,7 +119,7 @@ public class TestLmdbOffHeapInternPool {
         ValueProxy<StringValue> val1Supplier1 = pool.intern(StringValue.of("Value 1"));
         ValueProxy<StringValue> val6Supplier1 = pool.intern(StringValue.of("Value 000006"));
 
-        StringValue suppliedValue2Instance1 = val2Supplier1.supply().get();
+        StringValue suppliedValue2Instance1 = val2Supplier1.supplyValue().get();
 
         pool.dumpContents();
 //        Assertions.assertThat(pool.size()).isEqualTo(3);
@@ -129,8 +129,8 @@ public class TestLmdbOffHeapInternPool {
         ValueProxy<StringValue> val2Supplier2 = pool.intern(value2instance2);
         ValueProxy<StringValue> val2Supplier3 = pool.intern(value2instance3);
 
-        StringValue suppliedValue2Instance2 = val2Supplier2.supply().get();
-        StringValue suppliedValue2Instance3 = val2Supplier3.supply().get();
+        StringValue suppliedValue2Instance2 = val2Supplier2.supplyValue().get();
+        StringValue suppliedValue2Instance3 = val2Supplier3.supplyValue().get();
 
         SoftAssertions softAssertions = new SoftAssertions();
         softAssertions.assertThat(value2instance1).isNotSameAs(value2instance2);

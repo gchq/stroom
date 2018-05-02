@@ -27,12 +27,13 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.refdata.MapStoreHolder;
-import stroom.refdata.saxevents.AbstractOffHeapInternPoolValue;
+import stroom.refdata.saxevents.EventListValue;
 import stroom.refdata.saxevents.FastInfosetValue;
+import stroom.refdata.saxevents.OffHeapEventListInternPool;
 import stroom.refdata.saxevents.StringValue;
+import stroom.refdata.saxevents.ValueProxy;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
-import stroom.xml.event.EventList;
 
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
@@ -54,6 +55,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     private final MapStoreHolder mapStoreHolder;
     private final EventListInternPool internPool;
+    private final OffHeapEventListInternPool offHeapEventListInternPool;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
@@ -78,10 +80,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     @Inject
     public ReferenceDataFilter(final MapStoreHolder mapStoreHolder,
                                final EventListInternPool internPool,
-                               final ErrorReceiverProxy errorReceiverProxy) {
+                               final ErrorReceiverProxy errorReceiverProxy,
+                               final OffHeapEventListInternPool offHeapEventListInternPool) {
         this.mapStoreHolder = mapStoreHolder;
         this.internPool = internPool;
         this.errorReceiverProxy = errorReceiverProxy;
+        this.offHeapEventListInternPool = offHeapEventListInternPool;
     }
 
     /**
@@ -166,7 +170,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
 
-                final AbstractOffHeapInternPoolValue value;
+                final EventListValue value;
                 if (haveSeenXmlInValueElement) {
                     //serialize the event list using fastInfoset
                     byte[] fastInfosetBytes = byteArrayOutputStream.toByteArray();
@@ -177,6 +181,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     value = StringValue.of(contentBuffer.toString());
                 }
 
+                ValueProxy<EventListValue> eventListProxy = offHeapEventListInternPool.intern(value);
+
 
 
 
@@ -185,16 +191,15 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
                 // Intern the event list so we only have one identical copy in
                 // memory.
-                EventList eventList = null;  //TODO this was put here to make it compile mid-refactor
-                if (internPool != null) {
-                    eventList = internPool.intern(eventList);
-                }
+//                if (internPool != null) {
+//                    eventList = internPool.intern(eventList);
+//                }
 
                 // Store the events.
                 try {
                     if (map != null) {
                         if (key != null) {
-                            mapStoreHolder.getMapStoreBuilder().setEvents(map, key, eventList, overrideExistingValues);
+                            mapStoreHolder.getMapStoreBuilder().setEvents(map, key, eventListProxy, overrideExistingValues);
                         } else if (rangeFrom != null && rangeTo != null) {
                             if (rangeFrom > rangeTo) {
                                 errorReceiverProxy
@@ -207,11 +212,11 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                 // can treat this as a key
                                 // rather than a range. This will improve lookup
                                 // performance.
-                                mapStoreHolder.getMapStoreBuilder().setEvents(map, rangeFrom.toString(), eventList,
+                                mapStoreHolder.getMapStoreBuilder().setEvents(map, rangeFrom.toString(), eventListProxy,
                                         overrideExistingValues);
                             } else {
                                 mapStoreHolder.getMapStoreBuilder().setEvents(map, new Range<>(rangeFrom, rangeTo),
-                                        eventList, overrideExistingValues);
+                                        eventListProxy, overrideExistingValues);
                             }
                         }
                     }
@@ -226,6 +231,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 key = null;
                 rangeFrom = null;
                 rangeTo = null;
+                haveSeenXmlInValueElement = false;
             }
         }
 

@@ -7,12 +7,14 @@ import stroom.util.logging.LambdaLogger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 @Singleton
 public class OffHeapInternPoolFactory {
@@ -21,7 +23,7 @@ public class OffHeapInternPoolFactory {
     private static final String MAX_DB_SIZE_PROP_KEY = "stroom.offHeapData.internPool.maxDbSize";
     private static final String DIR_PREFIX = "OffHeapInternPool-";
 
-    private final Map<String, OffHeapInternPool<? extends AbstractOffHeapInternPoolValue>> poolMap = new ConcurrentHashMap<>();
+    private final Map<String, OffHeapInternPool<?>> poolMap = new ConcurrentHashMap<>();
     private final Path offHeapParentDir;
     private final long maxDbSize;
 
@@ -46,13 +48,16 @@ public class OffHeapInternPoolFactory {
     }
 
 
-    public OffHeapInternPool<? extends AbstractOffHeapInternPoolValue> getOffHeapInternPool(final String name) {
+    public OffHeapInternPool<? extends AbstractPoolValue> getOffHeapInternPool(
+            final String name,
+            final Function<ByteBuffer, ? extends AbstractPoolValue> valueMapper) {
 
-        OffHeapInternPool<? extends AbstractOffHeapInternPoolValue> pool = poolMap.computeIfAbsent(name, key -> {
+        final OffHeapInternPool<? extends AbstractPoolValue> pool = poolMap.computeIfAbsent(name, key -> {
             // TODO ensure name contains valid chars for a dir name, e.g. only [a-zA-Z]
             Path dbDir = offHeapParentDir.resolve(DIR_PREFIX + name);
-            return new LmdbOffHeapInternPool<>(dbDir, maxDbSize, ValueFactory::fromByteBuffer);
+            return new LmdbOffHeapInternPool<>(dbDir, maxDbSize, valueMapper);
         });
+
         return pool;
     }
 }

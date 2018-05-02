@@ -22,8 +22,10 @@ import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.util.shared.Severity;
-import stroom.xml.event.np.NPEventList;
+import stroom.refdata.saxevents.EventListProxyConsumer;
+import stroom.refdata.saxevents.EventListProxyConsumerFactory;
+import stroom.refdata.saxevents.EventListValue;
+import stroom.refdata.saxevents.ValueProxy;
 
 import javax.inject.Inject;
 
@@ -42,26 +44,35 @@ class Lookup extends AbstractLookup {
                                 final boolean ignoreWarnings,
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) throws XPathException {
-        final SequenceMaker sequenceMaker = new SequenceMaker(context);
         final ReferenceDataResult result = getReferenceData(map, key, eventTime, lookupIdentifier);
-        final NPEventList eventList = (NPEventList) result.getEventList();
-        if (eventList != null) {
-            sequenceMaker.open();
+        final ValueProxy<EventListValue> eventListProxy = result.getEventListProxy();
 
-            // TODO need to change the ReferenceDataResult to hold the value proxy
-            // then here we can pass our consume method (changed to accept a ByteBuffer (or maybe InputStream))
-            // to the OffHeapPool to consume inside a txn
-            sequenceMaker.consume(eventList);
+//        final SequenceMaker sequenceMaker = new SequenceMaker(context,
+//                EventListProxyConsumerFactory.getConsumerSupplier(eventListProxy));
+        final EventListProxyConsumer eventListConsumer = EventListProxyConsumerFactory.getConsumer(
+                eventListProxy,
+                context);
 
-            sequenceMaker.close();
+        final Sequence sequence = eventListConsumer.map(eventListProxy);
 
-            if (trace) {
-                outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
-            }
-        } else if (!ignoreWarnings) {
-            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
-        }
+//        if (eventListProxy != null) {
+//            sequenceMaker.open();
+//
+//            // TODO need to change the ReferenceDataResult to hold the value proxy
+//            // then here we can pass our consume method (changed to accept a ByteBuffer (or maybe InputStream))
+//            // to the OffHeapPool to consume inside a txn
+//            sequenceMaker.consume(eventListProxy);
+//
+//            sequenceMaker.close();
+//
+//            if (trace) {
+//                outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
+//            }
+//        } else if (!ignoreWarnings) {
+//            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
+//        }
 
-        return sequenceMaker.toSequence();
+//        return sequenceMaker.toSequence();
+        return sequence;
     }
 }

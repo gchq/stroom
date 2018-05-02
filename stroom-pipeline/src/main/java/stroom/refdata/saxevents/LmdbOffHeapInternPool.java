@@ -37,14 +37,12 @@ import java.util.function.Function;
  *
  * @param <V>
  */
-class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
-        implements OffHeapInternPool<V> {
+class LmdbOffHeapInternPool<V extends AbstractPoolValue> implements OffHeapInternPool<V> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LmdbOffHeapInternPool.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(LmdbOffHeapInternPool.class);
 
-    public static final String INTERN_POOL_DB_NAME = "InternPool";
-
+    private static final String INTERN_POOL_DB_NAME = "InternPool";
 
     private final Path dbDir;
     private final String dbName;
@@ -52,6 +50,7 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
     private final Env<ByteBuffer> env;
     private final Dbi<ByteBuffer> db;
     private final Function<ByteBuffer, V> valueMapper;
+    private final Function<ByteBuffer, ByteBuffer> byteBufferMapper;
 
     // An intern pool to ensure we only have one instance of a ValueProxy for the same
     // valueHashCode, uniqueId & LmdbOffHeapInternPool instance
@@ -60,6 +59,22 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
     LmdbOffHeapInternPool(final Path dbDir,
                           final long maxSize,
                           final Function<ByteBuffer, V> valueMapper) {
+        this(dbDir, maxSize, valueMapper, Function.identity());
+    }
+
+    /**
+     * @param dbDir The directory the LMDB environment will be created in, it must already exist
+     * @param maxSize The max size in bytes of the environment
+     * @param valueMapper The mapping function to use to map from the byteBuffer value in the DB
+     *                    to an instance of V
+     * @param byteBufferMapper A mapping function to change the view of the ByteBuffer returned by the
+     *                         database, e.g. to map to a sub set of the original ByteBuffer. This
+     *                         function will be called in the mapValue and consumeValue methods
+     */
+    LmdbOffHeapInternPool(final Path dbDir,
+                          final long maxSize,
+                          final Function<ByteBuffer, V> valueMapper,
+                          final Function<ByteBuffer, ByteBuffer> byteBufferMapper) {
         this.dbName = INTERN_POOL_DB_NAME;
         this.maxSize = maxSize;
         try {
@@ -70,12 +85,15 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
         }
         this.dbDir = dbDir;
         this.valueMapper = valueMapper;
+        this.byteBufferMapper = byteBufferMapper;
 
+        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}", maxSize, dbDir.toAbsolutePath().toString());
         env = Env.<ByteBuffer>create()
                 .setMapSize(maxSize)
                 .setMaxDbs(1)
                 .open(dbDir.toFile());
 
+        LOGGER.debug("Opening LMDB database with name: {}", dbName);
         db = env.openDbi(dbName, DbiFlags.MDB_CREATE);
     }
 
@@ -86,6 +104,7 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
      * @param value
      */
     synchronized public void forcedPut(final Key key, final V value) {
+        LOGGER.debug("forcedPut called for key {}, value: {}", key, value);
         LmdbUtils.doWithWriteTxn(env, txn -> {
             final ByteBuffer keyBuffer = buildKeyBuffer(key);
             final byte[] bValue = value.getValueBytes();
@@ -102,6 +121,7 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
 
     @Override
     public ValueProxy<V> intern(final V value) {
+        LOGGER.debug("intern called for value: {}", value);
         // TODO we may want to call get here with the default key to optimistically get
         // the value outside of a write txn and synchronized block, however if we get a value
         // we will have to do an equality check on the value. If that fails we would then need
@@ -109,7 +129,7 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
         // The benefits will depend on the degree of reuse of the values. Low reuse means we don't bother,
         // but high re-use (e.g. if the TTL is long) means we will benefit from an additional get.
         Key key = put(value);
-        ValueProxy<V> valueProxy = new ValueProxy<>(this, key);
+        ValueProxy<V> valueProxy = new ValueProxy<>(this, key, value.getClass());
 
         //ensure we only have one instance of this logical valueProxy
         //TODO using this intern pool incurs synchronisation, may be cheaper to accept
@@ -121,7 +141,7 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
     }
 
     synchronized Key put(final V value) {
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("put called for value {}", value.toString()));
+        LOGGER.debug("put called for value: {}", value);
         Preconditions.checkNotNull(value);
 
         final byte[] bValue = value.getValueBytes();
@@ -230,6 +250,7 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
 
     @Override
     public Optional<V> get(final ValueProxy<V> valueProxy) {
+        LOGGER.debug("get called for valueProxy: {}", valueProxy);
         return LmdbUtils.getWithReadTxn(env, txn -> {
             final ByteBuffer keyBuffer = buildKeyBuffer(valueProxy.getKey());
             final ByteBuffer valueBuffer = db.get(txn, keyBuffer).asReadOnlyBuffer();
@@ -241,11 +262,13 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
     @Override
     public <T> Optional<T> mapValue(final ValueProxy<V> valueProxy,
                                     final Function<ByteBuffer, T> valueMapper) {
+        LOGGER.debug("gepValue called for valueProxy: {}", valueProxy);
         return LmdbUtils.getWithReadTxn(env, txn -> {
             // make the buffers readonly to prevent the mapper from mutating them
             final ByteBuffer keyBuffer = buildKeyBuffer(valueProxy.getKey()).asReadOnlyBuffer();
             final ByteBuffer valueBuffer = db.get(txn, keyBuffer).asReadOnlyBuffer();
             return Optional.ofNullable(valueBuffer)
+                    .map(byteBufferMapper)
                     .map(valueMapper);
         });
     }
@@ -253,20 +276,24 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
     @Override
     public void consumeValue(final ValueProxy<V> valueProxy,
                              final Consumer<ByteBuffer> valueConsumer) {
+        LOGGER.debug("consumeValue called for valueProxy: {}", valueProxy);
         LmdbUtils.doWithReadTxn(env, txn -> {
             final ByteBuffer keyBuffer = buildKeyBuffer(valueProxy.getKey()).asReadOnlyBuffer();
             final ByteBuffer valueBuffer = db.get(txn, keyBuffer).asReadOnlyBuffer();
-            valueConsumer.accept(valueBuffer);
+            final ByteBuffer mappedValueBuffer = byteBufferMapper.apply(valueBuffer);
+            valueConsumer.accept(mappedValueBuffer);
         });
     }
 
     @Override
     public void clear() {
+        LOGGER.debug("clear called");
         LmdbUtils.doWithWriteTxn(env, db::drop);
     }
 
     @Override
     public long size() {
+        LOGGER.debug("size called");
         return LmdbUtils.getWithReadTxn(env, txn ->
             db.stat(txn).entries
         );
@@ -279,6 +306,7 @@ class LmdbOffHeapInternPool<V extends AbstractOffHeapInternPoolValue>
 
     @Override
     public void close() {
+        LOGGER.debug("Closing LMDB environment with dbDir: {}", maxSize, dbDir.toAbsolutePath().toString());
         if (env != null) {
             try {
                 env.close();

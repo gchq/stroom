@@ -3,7 +3,7 @@ package stroom.refdata.saxevents;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class FastInfosetValue extends AbstractOffHeapInternPoolValue {
+public class FastInfosetValue extends EventListValue {
 
     static final short TYPE_ID = 1;
 
@@ -12,6 +12,7 @@ public class FastInfosetValue extends AbstractOffHeapInternPoolValue {
     public FastInfosetValue(final byte[] fastInfosetBytes) {
         this.fastInfosetBytes = fastInfosetBytes;
     }
+
     static FastInfosetValue of(byte[] fastInfosetBytes) {
         return new FastInfosetValue(fastInfosetBytes);
     }

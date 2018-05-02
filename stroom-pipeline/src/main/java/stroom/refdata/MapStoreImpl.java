@@ -18,9 +18,10 @@ package stroom.refdata;
 
 import stroom.entity.shared.Range;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
+import stroom.refdata.saxevents.EventListValue;
+import stroom.refdata.saxevents.ValueProxy;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.xml.event.EventList;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -30,15 +31,17 @@ import java.util.Map.Entry;
 public class MapStoreImpl implements MapStore {
     private static final String EQUALS = " = ";
     private static final String NEW_LINE = "\n";
-    private final Map<MapStoreKey, EventList> keyMap;
+    private final Map<MapStoreKey, ValueProxy<EventListValue>> keyMap;
     private final Map<String, RangeStore[]> rangeMap;
     private final boolean overrideExistingValues;
     private final StoredErrorReceiver storedErrorReceiver;
     public MapStoreImpl() {
         this(null, null, true, null);
     }
-    public MapStoreImpl(final Map<MapStoreKey, EventList> keyMap, final Map<String, RangeStore[]> rangeMap,
-                        final boolean overrideExistingValues, final StoredErrorReceiver storedErrorReceiver) {
+    public MapStoreImpl(final Map<MapStoreKey, ValueProxy<EventListValue>> keyMap,
+                        final Map<String, RangeStore[]> rangeMap,
+                        final boolean overrideExistingValues,
+                        final StoredErrorReceiver storedErrorReceiver) {
         this.keyMap = keyMap;
         this.rangeMap = rangeMap;
         this.overrideExistingValues = overrideExistingValues;
@@ -46,17 +49,17 @@ public class MapStoreImpl implements MapStore {
     }
 
     @Override
-    public EventList getEvents(final String mapName, final String keyName) {
-        EventList eventList = null;
+    public ValueProxy<EventListValue> getEventListProxy(final String mapName, final String keyName) {
+        ValueProxy<EventListValue> valueProxy = null;
 
         // Try and find an exact match in the key map.
         if (keyMap != null) {
             final MapStoreKey key = new MapStoreKey(mapName, keyName);
-            eventList = keyMap.get(key);
+            valueProxy = keyMap.get(key);
         }
 
         // If we didn't find a key match then take a look in the range map.
-        if (eventList == null && rangeMap != null) {
+        if (valueProxy == null && rangeMap != null) {
             try {
                 final RangeStore[] rangeStores = rangeMap.get(mapName);
                 if (rangeStores != null) {
@@ -91,7 +94,7 @@ public class MapStoreImpl implements MapStore {
                                 final long diff = range.getTo() - range.getFrom();
                                 if (diff < currentDiff) {
                                     currentDiff = diff;
-                                    eventList = rangeStore.getEventList();
+                                    valueProxy = rangeStore.getEventListProxy();
 
                                 } else if (diff == currentDiff && overrideExistingValues) {
                                     // We have found matching range that is just
@@ -103,7 +106,7 @@ public class MapStoreImpl implements MapStore {
                                     // better to reuse this flag to choose
                                     // whether to keep the lower 'from' or the
                                     // new higher 'from' range.
-                                    eventList = rangeStore.getEventList();
+                                    valueProxy = rangeStore.getEventListProxy();
                                 }
                             }
                         }
@@ -114,7 +117,7 @@ public class MapStoreImpl implements MapStore {
             }
         }
 
-        return eventList;
+        return valueProxy;
     }
 
     @Override
@@ -143,7 +146,7 @@ public class MapStoreImpl implements MapStore {
         final StringBuilder sb = new StringBuilder();
 
         if (keyMap != null) {
-            for (final Entry<MapStoreKey, EventList> entry : keyMap.entrySet()) {
+            for (final Entry<MapStoreKey, ValueProxy<EventListValue>> entry : keyMap.entrySet()) {
                 sb.append(entry.getKey().toString());
                 sb.append(EQUALS);
                 sb.append(entry.getValue());
@@ -157,7 +160,7 @@ public class MapStoreImpl implements MapStore {
                     sb.append(":");
                     sb.append(rangeStore.getRange());
                     sb.append(EQUALS);
-                    sb.append(rangeStore.getEventList());
+                    sb.append(rangeStore.getEventListProxy());
                     sb.append(NEW_LINE);
                 }
             }
@@ -173,19 +176,19 @@ public class MapStoreImpl implements MapStore {
 
     public static class RangeStore {
         private final Range<Long> range;
-        private final EventList eventList;
+        private final ValueProxy<EventListValue> eventListProxy;
 
-        public RangeStore(final Range<Long> range, final EventList eventList) {
+        public RangeStore(final Range<Long> range, final ValueProxy<EventListValue> eventListProxy) {
             this.range = range;
-            this.eventList = eventList;
+            this.eventListProxy = eventListProxy;
         }
 
         public Range<Long> getRange() {
             return range;
         }
 
-        public EventList getEventList() {
-            return eventList;
+        public ValueProxy<EventListValue> getEventListProxy() {
+            return eventListProxy;
         }
 
         @Override
