@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.expression.v1;
+package stroom.dashboard.server;
+
+import stroom.dashboard.expression.v1.DateUtil;
 
 import java.math.BigDecimal;
 

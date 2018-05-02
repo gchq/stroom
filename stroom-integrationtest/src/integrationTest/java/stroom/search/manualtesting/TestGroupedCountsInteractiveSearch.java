@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.dashboard.expression.v1.Count;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.dictionary.spring.DictionaryConfiguration;
@@ -255,7 +254,7 @@ public class TestGroupedCountsInteractiveSearch {
 
         final Field countField = new Field.Builder()
                 .name("Count")
-                .expression(Count.NAME + "()")
+                .expression("count()")
                 .format(new Format(Format.Type.NUMBER))
                 .build();
 

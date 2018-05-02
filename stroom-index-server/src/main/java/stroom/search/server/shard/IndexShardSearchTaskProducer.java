@@ -18,6 +18,7 @@ package stroom.search.server.shard;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.search.server.ClusterSearchTask;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
@@ -60,7 +61,7 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
 
     public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
                                         final ClusterSearchTask clusterSearchTask,
-                                        final LinkedBlockingQueue<String[]> storedData,
+                                        final LinkedBlockingQueue<Val[]> storedData,
                                         final IndexShardSearcherCache indexShardSearcherCache,
                                         final List<Long> shards,
                                         final IndexShardQueryFactory queryFactory,

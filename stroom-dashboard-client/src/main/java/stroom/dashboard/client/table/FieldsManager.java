@@ -23,6 +23,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
+import com.google.inject.Provider;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Sort;
 import stroom.dashboard.shared.Sort.SortDirection;
@@ -53,19 +54,22 @@ import java.util.Set;
 public class FieldsManager implements HeadingListener {
     private static Resources resources;
     private final TablePresenter tablePresenter;
-    private final ExpressionPresenter expressionPresenter;
+    private final Provider<ExpressionPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
     private final FilterPresenter filterPresenter;
     private final MenuListPresenter menuListPresenter;
     private int fieldsStartIndex;
     private boolean busy;
     private TableComponentSettings tableSettings;
-    public FieldsManager(final TablePresenter tablePresenter, final MenuListPresenter menuListPresenter,
-                         final ExpressionPresenter expressionPresenter, final FormatPresenter formatPresenter,
+
+    public FieldsManager(final TablePresenter tablePresenter,
+                         final MenuListPresenter menuListPresenter,
+                         final Provider<ExpressionPresenter> expressionPresenterProvider,
+                         final FormatPresenter formatPresenter,
                          final FilterPresenter filterPresenter) {
         this.tablePresenter = tablePresenter;
         this.menuListPresenter = menuListPresenter;
-        this.expressionPresenter = expressionPresenter;
+        this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
         this.filterPresenter = filterPresenter;
 
@@ -220,7 +224,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     public void showExpression(final Field field) {
-        expressionPresenter.show(tablePresenter, field);
+        expressionPresenterProvider.get().show(tablePresenter, field);
     }
 
     public void showFormat(final Field field) {

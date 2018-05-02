@@ -17,7 +17,6 @@
 package stroom.dashboard.server;
 
 import org.springframework.stereotype.Component;
-import stroom.dashboard.expression.v1.TypeConverter;
 import stroom.dashboard.server.VisResult.Store;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.SearchResponse;
@@ -203,12 +202,12 @@ public class SearchResponseMapper {
             }
 
             store = new Store();
-            if (key != null && key instanceof List) {
+            if (key instanceof List) {
                 List list = (List) key;
                 store.key = list.get(list.size() - 1);
             }
             store.keyType = types[depth][0];
-            store.values = values.toArray(new Object[values.size()]);
+            store.values = values.toArray(new Object[0]);
             store.types = types[types.length - 1];
             store.min = min;
             store.max = max;

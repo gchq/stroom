@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
@@ -132,7 +133,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     private ClusterSearchTask task;
 
-    private LinkedBlockingQueue<String[]> storedData;
+    private LinkedBlockingQueue<Val[]> storedData;
 
     @Inject
     ClusterSearchTaskHandler(final IndexService indexService,
@@ -548,7 +549,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 // Check if search is finished before polling for stored data.
                 final boolean searchComplete = indexShardSearchTaskProducer.isComplete();
                 // Poll for the next stored data result.
-                final String[] values = storedData.poll(1, TimeUnit.SECONDS);
+                final Val[] values = storedData.poll(1, TimeUnit.SECONDS);
 
                 if (values != null) {
                     // Send the data to all coprocessors.

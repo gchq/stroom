@@ -16,6 +16,7 @@
 
 package stroom.dashboard.server.format;
 
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.shared.Field;
 
 import java.util.HashMap;
@@ -29,7 +30,7 @@ public class FieldFormatter {
         this.formatterFactory = formatterFactory;
     }
 
-    public String format(final Field field, final Object value) {
+    public String format(final Field field, final Val value) {
         Formatter formatter = formatterCache.get(field);
         if (formatter == null) {
             formatter = formatterFactory.create(field);

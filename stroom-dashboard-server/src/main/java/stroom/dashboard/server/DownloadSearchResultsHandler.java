@@ -20,8 +20,6 @@ import org.springframework.context.annotation.Scope;
 import stroom.dashboard.server.download.DelimitedTarget;
 import stroom.dashboard.server.download.ExcelTarget;
 import stroom.dashboard.server.download.SearchResultWriter;
-import stroom.dashboard.server.format.FieldFormatter;
-import stroom.dashboard.server.format.FormatterFactory;
 import stroom.dashboard.server.logging.SearchEventLog;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.Dashboard;
@@ -159,8 +157,7 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
             final List<stroom.dashboard.shared.Field> fields = tableResultRequest.getTableSettings().getFields();
             final List<Row> rows = tableResult.getRows();
 
-            download(fields, rows, file, action.getFileType(), action.isSample(),
-                    action.getPercent(), action.getDateTimeLocale());
+            download(fields, rows, file, action.getFileType(), action.isSample(), action.getPercent());
 
             searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
         } catch (final Exception ex) {
@@ -172,10 +169,7 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
     }
 
     private void download(final List<stroom.dashboard.shared.Field> fields, final List<Row> rows, final Path file,
-                          final DownloadSearchResultFileType fileType, final boolean sample, final int percent, final String dateTimeLocale) {
-        final FormatterFactory formatterFactory = new FormatterFactory(dateTimeLocale);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
-
+                          final DownloadSearchResultFileType fileType, final boolean sample, final int percent) {
         try {
             final OutputStream outputStream = Files.newOutputStream(file);
             SearchResultWriter.Target target = null;
@@ -183,10 +177,10 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
             // Write delimited file.
             switch (fileType) {
                 case CSV:
-                    target = new DelimitedTarget(fieldFormatter, outputStream, ",");
+                    target = new DelimitedTarget(outputStream, ",");
                     break;
                 case TSV:
-                    target = new DelimitedTarget(fieldFormatter, outputStream, "\t");
+                    target = new DelimitedTarget(outputStream, "\t");
                     break;
                 case EXCEL:
                     target = new ExcelTarget(outputStream);
