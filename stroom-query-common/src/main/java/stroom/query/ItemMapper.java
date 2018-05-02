@@ -18,10 +18,12 @@ package stroom.query;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.Key;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
 import stroom.mapreduce.MapperBase;
 import stroom.mapreduce.OutputCollector;
+
+import java.util.Objects;
 
 public class ItemMapper extends MapperBase<Object, Val[], String, Item> {
     private static final Generator[] PARENT_GENERATORS = new Generator[0];
@@ -128,7 +130,7 @@ public class ItemMapper extends MapperBase<Object, Val[], String, Item> {
         // key to them.
         for (final Generator parent : parentGenerators) {
             if (parent != null) {
-                parent.addChildKey(ValString.create(groupKey));
+                parent.addChildKey(new GroupKey(groupKey));
             }
         }
 
@@ -138,6 +140,32 @@ public class ItemMapper extends MapperBase<Object, Val[], String, Item> {
         // If we haven't reached the max depth then recurse.
         if (depth < maxDepth) {
             addItem(values, groupKey, generators, depth + 1, maxDepth, maxGroupDepth, output);
+        }
+    }
+
+    private static final class GroupKey implements Key {
+        private final String string;
+
+        public GroupKey(final String string) {
+            this.string = string;
+        }
+
+        @Override
+        public int hashCode() {
+            return string.hashCode();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final GroupKey key = (GroupKey) o;
+            return Objects.equals(string, key.string);
+        }
+
+        @Override
+        public String toString() {
+            return string;
         }
     }
 }
