@@ -16,6 +16,8 @@
 
 package stroom.dashboard.server.format;
 
+import stroom.dashboard.expression.v1.Val;
+
 public class StringFormatter implements Formatter {
     private StringFormatter() {
     }
@@ -25,11 +27,10 @@ public class StringFormatter implements Formatter {
     }
 
     @Override
-    public String format(final Object value) {
+    public String format(final Val value) {
         if (value == null) {
             return null;
         }
-
         return value.toString();
     }
 }

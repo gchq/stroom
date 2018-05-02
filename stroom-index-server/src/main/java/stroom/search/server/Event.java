@@ -16,11 +16,13 @@
 
 package stroom.search.server;
 
+import stroom.dashboard.expression.v1.Val;
+
 public class Event implements Comparable<Event> {
     private final long id;
-    private final String[] values;
+    private final Val[] values;
 
-    public Event(final long id, final String[] values) {
+    public Event(final long id, final Val[] values) {
         this.id = id;
         this.values = values;
     }
@@ -29,7 +31,7 @@ public class Event implements Comparable<Event> {
         return id;
     }
 
-    public String[] getValues() {
+    public Val[] getValues() {
         return values;
     }
 

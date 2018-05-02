@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added permission caching to reference data lookup.
+
+* Move to stroom-expression v1.3.0
+
+    Added cast functions `toBoolean`, `toDouble`, `toInteger`, `toLong` and `toString`.
+    Added `include` and `exclude` functions.
+    Added `if` and `not` functions.
+    Added value functions `true()`, `false()`, `null()` and `err()`.
+    Added `match` boolean function.
+    Added `variance` and `stDev` functions.
+    Added `hash` function.
+    Added `formatDate` function.
+    Added `parseDate` function.
+    Made `substring` and `decode` functions capable of accepting functional parameters.
+    Added `substringBefore`, `substringAfter`, `indexOf` and `lastIndexOf` functions.
+    Added `countUnique` function.
+
 * Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
 
 * Issue **#753** : Fixed script editing in UI.
