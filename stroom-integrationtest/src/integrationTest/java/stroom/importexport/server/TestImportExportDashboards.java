@@ -126,7 +126,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         if (!skipVisCreation) {
             final DocRef scriptRef = explorerService.create(Script.ENTITY_TYPE, "Test Script", folder2, null);
             Script script = scriptService.readDocument(scriptRef);
-            script.setData("Test Data");
+            script.setResource("Test Data");
             script = scriptService.save(script);
 
             final DocRef visRef = explorerService.create(Visualisation.ENTITY_TYPE, "Test Vis", folder2, null);

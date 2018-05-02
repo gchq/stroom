@@ -74,9 +74,9 @@ public class ScriptServlet extends HttpServlet {
                 final String uuid = queryParamMap.get("uuid");
                 if (uuid != null && uuid.length() > 0) {
                     final Script script = getScript(uuid);
-                    if (script != null && script.getData() != null) {
+                    if (script != null && script.getResource() != null) {
                         final PrintWriter pw = response.getWriter();
-                        pw.write(script.getData());
+                        pw.write(script.getResource());
                         pw.close();
                     }
 

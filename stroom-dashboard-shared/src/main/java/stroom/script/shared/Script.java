@@ -57,11 +57,11 @@ public class Script extends DocumentEntity implements Copyable<Script> {
     @Column(name = SQLNameConstants.DATA, length = Integer.MAX_VALUE)
     @Lob
     @ExternalFile("js")
-    public String getData() {
+    public String getResource() {
         return data;
     }
 
-    public void setData(final String data) {
+    public void setResource(final String data) {
         this.data = data;
     }
 

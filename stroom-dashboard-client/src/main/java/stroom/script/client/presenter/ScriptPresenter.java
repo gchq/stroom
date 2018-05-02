@@ -119,7 +119,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     protected void onWrite(final Script script) {
         settingsPresenter.write(script);
         if (loadedResource) {
-            script.setData(codePresenter.getText());
+            script.setResource(codePresenter.getText());
         }
         loadedResource = false;
     }
@@ -132,8 +132,8 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
 
     private void loadResource(final EditorPresenter codePresenter, final ContentCallback callback) {
         if (!loadedResource) {
-            if (getEntity().getData() != null) {
-                codePresenter.setText(getEntity().getData());
+            if (getEntity().getResource() != null) {
+                codePresenter.setText(getEntity().getResource());
             }
 
             if (callback != null) {

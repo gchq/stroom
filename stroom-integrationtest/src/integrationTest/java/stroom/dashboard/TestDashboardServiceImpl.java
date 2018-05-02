@@ -104,7 +104,7 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
 
     private VisComponentSettings getVisSettings() {
         Script script = scriptService.create("Test");
-        script.setData("Test");
+        script.setResource("Test");
         script = scriptService.save(script);
 
         Visualisation vis = visualisationService.create("Test");
