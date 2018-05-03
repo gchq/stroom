@@ -64,7 +64,7 @@
     <gwtp-all.version>0.7</gwtp-all.version>
     <gin.version>2.1.2</gin.version>
     <gwt-d3-js.version>3.4.8</gwt-d3-js.version>
-    <Saxon-HE.version>9.7.0-18</Saxon-HE.version>
+    <Saxon-HE.version>9.6.0-6</Saxon-HE.version>
     <jackson.version>2.5.3</jackson.version>
     <hessian.version>4.0.38</hessian.version>
     <lucene.version>4.6.1</lucene.version>

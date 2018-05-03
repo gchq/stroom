@@ -1101,7 +1101,7 @@ public class NPEventListNamePool implements Serializable {
         }
         for (int u = 0; u < urisUsed; u++) {
             System.err.println("URI " + u + " = " + uris[u]);
-            FastStringBuffer fsb = new FastStringBuffer(FastStringBuffer.C64);
+            FastStringBuffer fsb = new FastStringBuffer(FastStringBuffer.SMALL);
             for (int p = 0; p < prefixCodesForUri[u].length; p++) {
                 fsb.append(prefixCodesForUri[u][p] + ", ");
             }
