@@ -306,11 +306,11 @@ public final class StoreCreationTool {
 
         streamStore.closeStreamTarget(dataTarget);
 
-        // Check that the data was written ok.
-        final String data = StreamUtil.fileToString(dataLocation);
-        final StreamSource checkSource = streamStore.openStreamSource(stream.getId());
-        Assert.assertEquals(data, StreamUtil.streamToString(checkSource.getInputStream()));
-        streamStore.closeStreamSource(checkSource);
+//        // Check that the data was written ok.
+//        final String data = StreamUtil.fileToString(dataLocation);
+//        final StreamSource checkSource = streamStore.openStreamSource(stream.getId());
+//        Assert.assertEquals(data, StreamUtil.streamToString(checkSource.getInputStream()));
+//        streamStore.closeStreamSource(checkSource);
 
         return eventFeed;
     }

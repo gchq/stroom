@@ -18,19 +18,23 @@
     </logger>
 
     <logger name="stroom">
-        <level value="INFO"/>
+        <level value="warn"/>
+    </logger>
+
+    <logger name="stroom.pipeline.server.task.TestTranslationTask">
+        <level value="info" />
     </logger>
 
     <logger name="stroom.statistics">
-        <level value="debug"/>
+        <level value="warn"/>
     </logger>
 
     <logger name="org.springframework">
-        <level value="INFO"/>
+        <level value="warn"/>
     </logger>
 
     <logger name="org.hibernate.tool.hbm2ddl.SchemaUpdate" additivity="false">
-        <level value="debug"/>
+        <level value="warn"/>
         <appender-ref ref="SCHEMA"/>
     </logger>
 
