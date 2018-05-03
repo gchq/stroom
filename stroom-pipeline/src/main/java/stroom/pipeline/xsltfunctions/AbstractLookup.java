@@ -16,20 +16,29 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.event.Builder;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.Receiver;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
+import stroom.refdata.saxevents.EventListProxyConsumer;
+import stroom.refdata.saxevents.EventListValue;
+import stroom.refdata.saxevents.ValueProxy;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import java.util.List;
+import java.util.function.BiFunction;
 
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
@@ -189,60 +198,60 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         log(context, severity, message, null);
     }
 
-//    static class SequenceMaker {
-//        private final XPathContext context;
-//        private Builder builder;
-//        private EventListProxyConsumer consumer;
-//        private BiFunction<Receiver, PipelineConfiguration, EventListProxyConsumer> consumerSupplier;
-//
-//        SequenceMaker(final XPathContext context,
-//                      final BiFunction<Receiver, PipelineConfiguration, EventListProxyConsumer> consumerSupplier) {
-//            this.context = context;
-//            this.consumerSupplier = consumerSupplier;
-//        }
-//
-//        void open() throws XPathException {
-//            // Make sure we have made a consumer.
-//            ensureConsumer();
-//
-//            // TODO : Possibly replace NPEventList with TinyTree to improve performance.
-//            consumer.startDocument();
-//        }
-//
-//        void close() throws XPathException {
-//            consumer.endDocument();
-//        }
-//
-//        void consume(final ValueProxy<EventListValue> eventList) throws XPathException {
-//            // TODO : Possibly replace NPEventList with TinyTree to improve performance.
-//            consumer.consume(eventList);
-//        }
-//
-//        private void ensureConsumer() {
-//            if (consumer == null) {
-//                // We have some reference data so build a tiny tree.
-//                final Configuration configuration = context.getConfiguration();
-//
-//                final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
-//
-//                builder = new TinyBuilder(pipe);
-//                consumer = consumerSupplier.apply(builder, pipe);
-//            }
-//        }
-//
-//        Sequence toSequence() {
-//            if (builder == null) {
-//                return EmptyAtomicSequence.getInstance();
-//            }
-//
-//            final Sequence sequence = builder.getCurrentRoot();
-//
-//            // Reset the builder, detaching it from the constructed document.
-//            builder.reset();
-//
-//            return sequence;
-//        }
-//    }
+    static class SequenceMaker {
+        private final XPathContext context;
+        private Builder builder;
+        private EventListProxyConsumer consumer;
+        private BiFunction<Receiver, PipelineConfiguration, EventListProxyConsumer> consumerSupplier;
+
+        SequenceMaker(final XPathContext context,
+                      final BiFunction<Receiver, PipelineConfiguration, EventListProxyConsumer> consumerSupplier) {
+            this.context = context;
+            this.consumerSupplier = consumerSupplier;
+        }
+
+        void open() throws XPathException {
+            // Make sure we have made a consumer.
+            ensureConsumer();
+
+            // TODO : Possibly replace NPEventList with TinyTree to improve performance.
+            consumer.startDocument();
+        }
+
+        void close() throws XPathException {
+            consumer.endDocument();
+        }
+
+        void consume(final ValueProxy<EventListValue> eventList) throws XPathException {
+            // TODO : Possibly replace NPEventList with TinyTree to improve performance.
+            consumer.consume(eventList);
+        }
+
+        private void ensureConsumer() {
+            if (consumer == null) {
+                // We have some reference data so build a tiny tree.
+                final Configuration configuration = context.getConfiguration();
+
+                final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
+
+                builder = new TinyBuilder(pipe);
+                consumer = consumerSupplier.apply(builder, pipe);
+            }
+        }
+
+        Sequence toSequence() {
+            if (builder == null) {
+                return EmptyAtomicSequence.getInstance();
+            }
+
+            final Sequence sequence = builder.getCurrentRoot();
+
+            // Reset the builder, detaching it from the constructed document.
+            builder.reset();
+
+            return sequence;
+        }
+    }
 
     static class LookupIdentifier {
         private final String map;
