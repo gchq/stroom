@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#749** : Fix inability to query with only `use` privileges on the index.
+
 * Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
 
 * Added permission caching to reference data lookup.
