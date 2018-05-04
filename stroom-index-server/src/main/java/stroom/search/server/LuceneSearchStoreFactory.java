@@ -40,6 +40,7 @@ import stroom.query.common.v2.StoreFactory;
 import stroom.query.common.v2.StoreSize;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.security.UserTokenUtil;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
@@ -98,7 +99,10 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         final Query query = searchRequest.getQuery();
 
         // Load the index.
-        final Index index = indexService.loadByUuid(query.getDataSource().getUuid());
+        final Index index;
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            index = indexService.loadByUuid(query.getDataSource().getUuid());
+        }
 
         // Extract highlights.
         final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
