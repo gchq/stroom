@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added `pipeline-name` and `put` XSLT functions back into the code as they were lost in a merge.
+
 * Issue **#613** : Fixed visualisation display in latest Firefox and Chrome.
 
 * Added permission caching to reference data lookup.

@@ -290,6 +290,26 @@ public class StroomXSLTFunctionLibrary {
                 })
                 .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("pipeline-name")
+                .library(this)
+                .delegateClass(PipelineName.class)
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("put")
+                .library(this)
+                .delegateClass(Put.class)
+                .minArgs(2)
+                .maxArgs(2)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.EMPTY_SEQUENCE)
+                .build());
     }
 
     void registerInUse(final DelegateExtensionFunctionCall call) {
