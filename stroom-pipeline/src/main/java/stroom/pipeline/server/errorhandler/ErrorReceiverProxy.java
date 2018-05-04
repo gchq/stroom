@@ -44,6 +44,10 @@ public class ErrorReceiverProxy implements ErrorReceiver {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(message, e);
         }
+        if (severity.greaterThan(Severity.ERROR)) {
+            LOGGER.fatal("FATAL: " + message);
+            System.exit(-1);
+        }
 
         errorReceiver.log(severity, location, elementId, message, e);
     }
