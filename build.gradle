@@ -95,6 +95,7 @@ ext.libs = [
     stroomQueryApi     : "stroom:stroom-query-api:$versions.stroomQuery",
     stroomQueryAudit   : "stroom:stroom-query-audit:$versions.stroomQuery",
     stroomQueryCommon  : "stroom:stroom-query-common:$versions.stroomQuery",
+    stroomQueryAuthorisation  : "stroom:stroom-query-authorisation:$versions.stroomQuery",
     stroomExpression   : "stroom:stroom-expression:$versions.stroomExpression",
     stroomStatsSchema  : "stroom:stroom-stats-schema:$versions.stroomStats",
     stroomAuthApi      : "stroom:stroom-auth-service-api:$versions.stroomAuth",

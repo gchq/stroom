@@ -16,6 +16,7 @@ dependencies {
     compile libs.slf4j_api
     compile libs.stroomQueryApi
     compile libs.stroomQueryAudit
+    compile libs.stroomQueryAuthorisation
     compile libs.ws_rs_api
     compile libs.xml_apis
 }
