@@ -30,14 +30,6 @@
             <id>writeRecordCountFilter</id>
             <type>RecordCountFilter</type>
          </element>
-         <element>
-            <id>xmlWriter</id>
-            <type>XMLWriter</type>
-         </element>
-         <element>
-            <id>fileAppender</id>
-            <type>FileAppender</type>
-         </element>
       </add>
    </elements>
    <properties>
@@ -77,13 +69,6 @@
                <boolean>false</boolean>
             </value>
          </property>
-         <property>
-            <element>fileAppender</element>
-            <name>outputPaths</name>
-            <value>
-               <string>${stroom.temp}/text/output1/${pipeline}/${streamId}_${feed}-${uuid}.out,${stroom.temp}/text/output2/${pipeline}/${streamId}_${feed}-${uuid}.out</string>
-            </value>
-         </property>
       </add>
    </properties>
    <links>
@@ -111,14 +96,6 @@
          <link>
             <from>recordOutputFilter</from>
             <to>writeRecordCountFilter</to>
-         </link>
-         <link>
-            <from>writeRecordCountFilter</from>
-            <to>xmlWriter</to>
-         </link>
-         <link>
-            <from>xmlWriter</from>
-            <to>fileAppender</to>
          </link>
       </add>
    </links>
