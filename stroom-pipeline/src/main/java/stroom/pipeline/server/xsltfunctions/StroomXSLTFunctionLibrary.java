@@ -170,6 +170,30 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("hex-to-dec")
+                .library(this)
+                .delegateClass(HexToDec.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("hex-to-oct")
+                .library(this)
+                .delegateClass(HexToOct.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("json-to-xml")
                 .library(this)
                 .delegateClass(JsonToXml.class)
@@ -247,6 +271,26 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("pipeline-name")
+                .library(this)
+                .delegateClass(PipelineName.class)
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("put")
+                .library(this)
+                .delegateClass(Put.class)
+                .minArgs(2)
+                .maxArgs(2)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.EMPTY_SEQUENCE)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("random")
                 .library(this)
                 .delegateClass(Random.class)
@@ -265,50 +309,6 @@ public class StroomXSLTFunctionLibrary {
                 .library(this)
                 .delegateClass(StreamId.class)
                 .resultType(SequenceType.OPTIONAL_STRING)
-                .build());
-
-        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("hex-to-dec")
-                .library(this)
-                .delegateClass(HexToDec.class)
-                .minArgs(1)
-                .maxArgs(1)
-                .argTypes(new SequenceType[]{
-                        SequenceType.SINGLE_STRING
-                })
-                .resultType(SequenceType.OPTIONAL_STRING)
-                .build());
-
-        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("hex-to-oct")
-                .library(this)
-                .delegateClass(HexToOct.class)
-                .minArgs(1)
-                .maxArgs(1)
-                .argTypes(new SequenceType[]{
-                        SequenceType.SINGLE_STRING
-                })
-                .resultType(SequenceType.OPTIONAL_STRING)
-                .build());
-
-        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("pipeline-name")
-                .library(this)
-                .delegateClass(PipelineName.class)
-                .resultType(SequenceType.OPTIONAL_STRING)
-                .build());
-
-        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("put")
-                .library(this)
-                .delegateClass(Put.class)
-                .minArgs(2)
-                .maxArgs(2)
-                .argTypes(new SequenceType[]{
-                        SequenceType.SINGLE_STRING,
-                        SequenceType.SINGLE_STRING
-                })
-                .resultType(SequenceType.EMPTY_SEQUENCE)
                 .build());
     }
 
