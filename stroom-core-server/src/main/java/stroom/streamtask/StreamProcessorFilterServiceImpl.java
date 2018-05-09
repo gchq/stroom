@@ -22,6 +22,7 @@ import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
+import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.PipelineEntity;
@@ -31,6 +32,7 @@ import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
+import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
@@ -171,6 +173,14 @@ class StreamProcessorFilterServiceImpl
     @Override
     protected String permission() {
         return PermissionNames.MANAGE_PROCESSORS_PERMISSION;
+    }
+
+
+    @Override
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindStreamTaskCriteria.FIELD_PRIORITY, "PRIORITY_1", "priority")
+                .add(FindStreamTaskCriteria.FIELD_PIPELINE_NAME, "P_NAME", "streamProcessor.pipeline.name");
     }
 
     private static class StreamProcessorFilterQueryAppender extends QueryAppender<StreamProcessorFilter, FindStreamProcessorFilterCriteria> {
