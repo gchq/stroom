@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#756** : Fix for state being held by `InheritableThreadLocal` causing objects to be held in memory longer than necessary.
+
 * Issue **#761** : Fixed premature truncation of SQL stats queries due to thread interruption.
 
 * Added `pipeline-name` and `put` XSLT functions back into the code as they were lost in a merge.
