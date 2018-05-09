@@ -20,60 +20,75 @@ import stroom.query.Payload;
 import stroom.query.ResultHandler;
 import stroom.query.ResultStore;
 import stroom.query.SearchResultCollector;
-import stroom.task.server.TaskCallback;
-import stroom.task.server.TaskManager;
+import stroom.query.shared.CoprocessorSettings;
+import stroom.query.shared.Search;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.task.server.TaskContext;
 import stroom.task.server.TaskTerminatedException;
 import stroom.util.logging.StroomLogger;
-import stroom.util.shared.Task;
-import stroom.util.shared.VoidResult;
 
+import javax.inject.Provider;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 public class StatStoreSearchResultCollector implements SearchResultCollector {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(StatStoreSearchResultCollector.class);
 
-    private final TaskManager taskManager;
-    private final Task<VoidResult> task;
+    private final Executor executor;
+    private final TaskContext taskContext;
+    private final String searchName;
+    private final Search search;
+    private final StatisticStoreEntity entity;
+    private final Map<Integer, CoprocessorSettings> coprocessorMap;
+    private final Provider<StatStoreSearchTaskHandler> statStoreSearchTaskHandlerProvider;
     private final ResultHandler resultHandler;
     private final Set<String> errors = new HashSet<>();
 
-    public StatStoreSearchResultCollector(final TaskManager taskManager, final Task<VoidResult> task,
-            final ResultHandler resultHandler) {
-        this.taskManager = taskManager;
-        this.task = task;
+    public StatStoreSearchResultCollector(final Executor executor,
+                                          final TaskContext taskContext,
+                                          final String searchName,
+                                          final Search search,
+                                          final StatisticStoreEntity entity,
+                                          final Map<Integer, CoprocessorSettings> coprocessorMap,
+                                          final Provider<StatStoreSearchTaskHandler> statStoreSearchTaskHandlerProvider,
+                                          final ResultHandler resultHandler) {
+        this.executor = executor;
+        this.taskContext = taskContext;
+        this.searchName = searchName;
+        this.search = search;
+        this.entity = entity;
+        this.coprocessorMap = coprocessorMap;
+        this.statStoreSearchTaskHandlerProvider = statStoreSearchTaskHandlerProvider;
         this.resultHandler = resultHandler;
     }
 
     @Override
     public void start() {
         // Start asynchronous search execution.
-        taskManager.execAsync(task, new TaskCallback<VoidResult>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
-                // Do nothing here as the results go into the collector.
-            }
+        executor.execute(() -> {
+            try {
+                final StatStoreSearchTaskHandler statStoreSearchTaskHandler = statStoreSearchTaskHandlerProvider.get();
+                statStoreSearchTaskHandler.exec(searchName, search, entity, coprocessorMap, StatStoreSearchResultCollector.this);
+            } catch (final RuntimeException e) {
+                resultHandler.setComplete(true);
 
-            @Override
-            public void onFailure(final Throwable t) {
                 // We can expect some tasks to throw a task terminated exception
                 // as they may be terminated before we even try to execute them.
-                if (!(t instanceof TaskTerminatedException)) {
-                    LOGGER.error(t.getMessage(), t);
-                    addError(t.getMessage());
+                if (!(e instanceof TaskTerminatedException)) {
+                    LOGGER.error(e.getMessage(), e);
+                    addError(e.getMessage());
                     resultHandler.setComplete(true);
-                    throw new RuntimeException(t.getMessage(), t);
+                    throw e;
                 }
-
-                resultHandler.setComplete(true);
             }
         });
     }
 
     @Override
     public void destroy() {
-        task.terminate();
+        taskContext.terminate();
     }
 
     @Override
@@ -83,7 +98,7 @@ public class StatStoreSearchResultCollector implements SearchResultCollector {
 
     public void handle(final Map<Integer, Payload> payloadMap) {
         if (payloadMap != null && !payloadMap.isEmpty()) {
-            resultHandler.handle(payloadMap, task);
+            resultHandler.handle(payloadMap, taskContext);
         }
     }
 

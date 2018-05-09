@@ -27,15 +27,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class TaskScopeContext {
     public static final StroomLogger LOGGER = StroomLogger.getLogger(TaskScopeContext.class);
-    private final Map<String, Object> beanMap;
 
-    private final Map<String, Runnable> requestDestructionCallback;
+    private Map<String, Object> beanMap;
+    private Map<String, Runnable> requestDestructionCallback;
+    private Task<?> task;
 
-    private final TaskScopeContext parent;
-    private final Task<?> task;
-
-    public TaskScopeContext(final TaskScopeContext parent, final Task<?> task) {
-        this.parent = parent;
+    TaskScopeContext(final Task<?> task) {
         this.task = task;
         this.beanMap = new ConcurrentHashMap<>();
         this.requestDestructionCallback = new ConcurrentHashMap<>();
@@ -76,16 +73,17 @@ public class TaskScopeContext {
         requestDestructionCallback.put(name, runnable);
     }
 
-    public TaskScopeContext getParent() {
-        return parent;
-    }
-
     final void clear() {
-        for (final String key : requestDestructionCallback.keySet()) {
-            requestDestructionCallback.get(key).run();
+        for (final Runnable runnable : requestDestructionCallback.values()) {
+            runnable.run();
         }
 
         requestDestructionCallback.clear();
+        requestDestructionCallback = null;
+
         beanMap.clear();
+        beanMap = null;
+
+        task = null;
     }
 }

@@ -22,6 +22,7 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.mapreduce.BlockingPairQueue;
@@ -35,17 +36,16 @@ import stroom.query.ItemPartitioner;
 import stroom.query.Payload;
 import stroom.query.TableCoprocessorSettings;
 import stroom.query.TablePayload;
+import stroom.query.shared.CoprocessorSettings;
+import stroom.query.shared.Search;
 import stroom.query.shared.TableSettings;
 import stroom.security.SecurityContext;
 import stroom.statistics.common.FindEventCriteria;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -57,41 +57,38 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") // Instantiated by TaskManager
-@TaskHandlerBean(task = StatStoreSearchTask.class)
-@Scope(value = StroomScope.TASK)
-public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSearchTask, VoidResult> {
-
+@Component
+@Scope(value = StroomScope.PROTOTYPE)
+public class StatStoreSearchTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
 
-    public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
+    private static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
 
-
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final SecurityContext securityContext;
     private final StatisticsSearchService statisticsSearchService;
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
-    StatStoreSearchTaskHandler(final TaskMonitor taskMonitor,
+    StatStoreSearchTaskHandler(final TaskContext taskContext,
                                final SecurityContext securityContext,
                                final StatisticsSearchService statisticsSearchService) {
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.securityContext = securityContext;
         this.statisticsSearchService = statisticsSearchService;
     }
 
-    @Override
-    public VoidResult exec(final StatStoreSearchTask task) {
+    public void exec(final String searchName,
+                     final Search search,
+                     final StatisticStoreEntity entity,
+                     final Map<Integer, CoprocessorSettings> coprocessorMap,
+                     final StatStoreSearchResultCollector resultCollector) {
         try {
             securityContext.elevatePermissions();
 
-            final StatStoreSearchResultCollector resultCollector = task.getResultCollector();
-
-            if (!task.isTerminated()) {
-                taskMonitor.info(task.getSearchName() + " - initialising");
-
-                final StatisticStoreEntity entity = task.getEntity();
+            if (!taskContext.isTerminated()) {
+                taskContext.info(searchName + " - initialising");
 
                 Preconditions.checkNotNull(entity);
 
@@ -101,23 +98,23 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                 final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
 
                 //each coprocessor has its own settings and field requirements
-                final List<StatStoreTableCoprocessor> tableCoprocessors = task.getCoprocessorMap().entrySet().stream()
+                final List<StatStoreTableCoprocessor> tableCoprocessors = coprocessorMap.entrySet().stream()
                         .map(entry ->
                                 new StatStoreTableCoprocessor(
                                         entry.getKey(),
                                         (TableCoprocessorSettings) entry.getValue(),
                                         fieldIndexMap,
-                                        task.getMonitor(),
-                                        task.getSearch().getParamMap()))
+                                        taskContext,
+                                        search.getParamMap()))
                         .collect(ImmutableList.toImmutableList());
 
                 // convert the search into something stats understands
                 final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(
-                        task.getSearch(),
+                        search,
                         entity);
 
                 final AtomicLong counter = new AtomicLong(0);
-                taskMonitor.info(task.getSearchName() + " - executing database query");
+                taskContext.info(searchName + " - executing database query");
 
                 // subscribe to the flowable, mapping each resultSet to a String[]
                 // After the window period has elapsed a new flowable is create for those rows received 
@@ -149,7 +146,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                                                 //completed our timed window so create and pass on a payload for the
                                                 //data we have gathered so far
                                                 processPayloads(resultCollector, tableCoprocessors);
-                                                taskMonitor.info(task.getSearchName() +
+                                                taskContext.info(searchName +
                                                         " - running database query (" + counter.get() + " rows fetched)");
                                             });
                                 },
@@ -163,16 +160,14 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
                 //flows all complete, so process any remaining data
                 processPayloads(resultCollector, tableCoprocessors);
-                taskMonitor.info(task.getSearchName() +
+                taskContext.info(searchName +
                         " - completed database query (" + counter.get() + " rows fetched)");
             }
 
             // Let the result handler know search has finished.
             resultCollector.getResultHandler().setComplete(true);
 
-            taskMonitor.info(task.getSearchName() + " - complete");
-
-            return VoidResult.INSTANCE;
+            taskContext.info(searchName + " - complete");
 
         } finally {
             securityContext.restorePermissions();
@@ -201,7 +196,7 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
     }
 
     private Consumer<Val[]> buildDataArrayConsumer(
-            final StatStoreSearchTask task,
+            final Search search,
             final Map<Integer, Payload> payloadMap,
             final FieldIndexMap fieldIndexMap,
             final Integer id,
@@ -215,10 +210,10 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
 
         final CompiledFields compiledFields = new CompiledFields(
                 tableSettings.getFields(),
-                fieldIndexMap, task.getSearch().getParamMap());
+                fieldIndexMap, search.getParamMap());
 
         // Create a queue of string arrays.
-        final PairQueue<String, Item> queue = new BlockingPairQueue<>(taskMonitor);
+        final PairQueue<String, Item> queue = new BlockingPairQueue<>(taskContext);
         final ItemMapper mapper = new ItemMapper(
                 queue,
                 compiledFields,

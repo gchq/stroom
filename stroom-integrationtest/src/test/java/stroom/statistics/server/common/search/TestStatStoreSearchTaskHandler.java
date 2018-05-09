@@ -62,13 +62,15 @@ import stroom.statistics.sql.SQLStatisticFlushTask;
 import stroom.statistics.sql.SQLStatisticFlushTaskHandler;
 import stroom.statistics.sql.SQLStatisticNames;
 import stroom.statistics.sql.SQLStatisticValueBatchSaveService;
+import stroom.task.server.ExecutorProvider;
+import stroom.task.server.TaskContext;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
-import stroom.util.task.ServerTask;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
+import javax.inject.Provider;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -122,6 +124,8 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
 
 
     @Resource
+    private ExecutorProvider executorProvider;
+    @Resource
     private CommonTestControl commonTestControl;
     @Resource
     private DataSource statisticsDataSource;
@@ -132,15 +136,15 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
     @Resource
     private SQLStatisticAggregationTransactionHelper sqlStatisticAggregationTransactionHelper;
     @Resource
-    private SQLStatisticEventStore sqlStatisticEventStore;
-    @Resource
     private StroomDatabaseInfo stroomDatabaseInfo;
-    @Resource
-    private TaskManager taskManager;
     @Resource
     private StatisticStoreEntityService statisticStoreEntityService;
     @Resource
     private FolderService folderService;
+    @Resource
+    private TaskContext taskContext;
+    @Resource
+    private Provider<StatStoreSearchTaskHandler> statStoreSearchTaskHandlerProvider;
 
     private StatisticStoreEntity statisticStoreEntity;
 
@@ -360,26 +364,22 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
         // Create a coprocessor map.
         final CoprocessorMap coprocessorMap = new CoprocessorMap(search.getComponentSettingsMap());
 
-        StatStoreSearchTask task = new StatStoreSearchTask(
-                ServerTask.INTERNAL_PROCESSING_USER_TOKEN,
-                "mySearch",
-                search,
-                statisticStoreEntity,
-                coprocessorMap.getMap());
-
         // Create a handler for search results.
         final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorMap);
 
         // Create the search result collector.
-        final StatStoreSearchResultCollector searchResultCollector = new StatStoreSearchResultCollector(taskManager,
-                task, resultHandler);
-
-        // Tell the task where results will be collected.
-        task.setResultCollector(searchResultCollector);
+        final StatStoreSearchResultCollector searchResultCollector = new StatStoreSearchResultCollector(
+                executorProvider.getExecutor(),
+                taskContext,
+                "mySearch",
+                search,
+                statisticStoreEntity,
+                coprocessorMap.getMap(),
+                statStoreSearchTaskHandlerProvider,
+                resultHandler);
 
         LOGGER.debug("Starting search");
         searchResultCollector.start();
-
 
         while (!searchResultCollector.isComplete()) {
             ThreadUtil.sleep(250);

@@ -1,9 +1,7 @@
 package stroom.security.server;
 
 import stroom.security.shared.UserRef;
-
-import java.util.Deque;
-import java.util.LinkedList;
+import stroom.util.thread.Link;
 
 final class CurrentUserState {
     private static class State {
@@ -24,56 +22,55 @@ final class CurrentUserState {
         }
     }
 
-    private static final ThreadLocal<Deque<State>> THREAD_LOCAL = InheritableThreadLocal.withInitial(LinkedList::new);
+    private static final ThreadLocal<Link<State>> THREAD_LOCAL = new InheritableThreadLocal<>();
 
     private CurrentUserState() {
         // Utility.
     }
 
     static void pushUserRef(final UserRef userRef) {
-        final Deque<State> deque = THREAD_LOCAL.get();
+        final Link<State> link = THREAD_LOCAL.get();
 
-        final State state = deque.peek();
-        if (state != null) {
-            deque.push(new State(userRef, state.isElevatePermissions()));
-        } else {
-            deque.push(new State(userRef, false));
+        boolean elevatePermissions = false;
+        if (link != null) {
+            elevatePermissions = link.getObject().isElevatePermissions();
         }
+
+        THREAD_LOCAL.set(new Link<>(new State(userRef, elevatePermissions), link));
     }
 
     static UserRef popUserRef() {
-        final Deque<State> deque = THREAD_LOCAL.get();
-        final State state = deque.pop();
-        return state.getUserRef();
+        final Link<State> link = THREAD_LOCAL.get();
+        THREAD_LOCAL.set(link.getParent());
+        return link.getObject().getUserRef();
     }
 
     static UserRef currentUserRef() {
-        final Deque<State> deque = THREAD_LOCAL.get();
-        final State state = deque.peek();
-        if (state != null) {
-            return state.getUserRef();
+        final Link<State> link = THREAD_LOCAL.get();
+        if (link != null) {
+            return link.getObject().getUserRef();
         }
         return null;
     }
 
     static void elevatePermissions() {
-        final Deque<State> deque = THREAD_LOCAL.get();
-        final State state = deque.peek();
-        if (state != null) {
-            deque.push(new State(state.getUserRef(), true));
-        } else {
-            deque.push(new State(null, true));
+        final Link<State> link = THREAD_LOCAL.get();
+
+        UserRef userRef = null;
+        if (link != null) {
+            userRef = link.getObject().getUserRef();
         }
+
+        THREAD_LOCAL.set(new Link<>(new State(userRef, true), link));
     }
 
     static void restorePermissions() {
-        final Deque<State> deque = THREAD_LOCAL.get();
-        deque.pop();
+        final Link<State> link = THREAD_LOCAL.get();
+        THREAD_LOCAL.set(link.getParent());
     }
 
     static boolean isElevatePermissions() {
-        final Deque<State> deque = THREAD_LOCAL.get();
-        final State state = deque.peek();
-        return state != null && state.isElevatePermissions();
+        final Link<State> link = THREAD_LOCAL.get();
+        return link != null && link.getObject().isElevatePermissions();
     }
 }

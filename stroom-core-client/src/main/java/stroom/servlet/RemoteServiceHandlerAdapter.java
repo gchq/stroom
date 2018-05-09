@@ -42,7 +42,7 @@ import java.util.Enumeration;
 public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements HandlerAdapter, ServletContextAware {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(RemoteServiceHandlerAdapter.class);
     private static final long serialVersionUID = -7421136737990135393L;
-    private static ThreadLocal<Object> handlerHolder = new ThreadLocal<Object>();
+    private static ThreadLocal<Object> handlerHolder = new ThreadLocal<>();
     private transient ServletContext servletContext;
 
     @Resource

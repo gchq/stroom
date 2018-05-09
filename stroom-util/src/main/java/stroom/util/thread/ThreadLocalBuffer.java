@@ -25,31 +25,25 @@ public class ThreadLocalBuffer {
     /**
      * Same size as JDK's Buffered Output Stream.
      */
-    public static final int DEFAULT_BUFFER_SIZE = 8192;
+    private static final int DEFAULT_BUFFER_SIZE = 8192;
 
     private String bufferSize = null;
 
-    private ThreadLocal<byte[]> threadLocalBuffer = new ThreadLocal<byte[]>();
+    private ThreadLocal<byte[]> threadLocalBuffer = ThreadLocal.withInitial(() -> new byte[getDerivedBufferSize()]);
 
     public byte[] getBuffer() {
-        byte[] buffer = threadLocalBuffer.get();
-        if (buffer == null) {
-            buffer = new byte[getDerivedBufferSize()];
-            threadLocalBuffer.set(buffer);
-        }
-        return buffer;
+        return threadLocalBuffer.get();
     }
 
     public void setBufferSize(String bufferSize) {
         this.bufferSize = bufferSize;
     }
 
-    public int getDerivedBufferSize() {
+    private int getDerivedBufferSize() {
         if (!StringUtils.hasText(bufferSize)) {
             return DEFAULT_BUFFER_SIZE;
         } else {
             return Integer.parseInt(bufferSize);
         }
     }
-
 }
