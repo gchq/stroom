@@ -18,30 +18,32 @@ package stroom.task.server;
 
 import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
-
-import java.util.Deque;
-import java.util.LinkedList;
+import stroom.util.thread.Link;
 
 final class CurrentTaskState {
-    private static final ThreadLocal<Deque<TaskState>> THREAD_LOCAL = InheritableThreadLocal.withInitial(LinkedList::new);
+    private static final ThreadLocal<Link<TaskState>> THREAD_LOCAL = new InheritableThreadLocal<>();
 
     private CurrentTaskState() {
         // Utility.
     }
 
     static void pushState(final Task<?> task, final Monitor monitor) {
-        final Deque<TaskState> deque = THREAD_LOCAL.get();
-        deque.push(new TaskState(task, monitor));
+        THREAD_LOCAL.set(new Link<>(new TaskState(task, monitor), THREAD_LOCAL.get()));
     }
 
-    static TaskState popState() {
-        final Deque<TaskState> deque = THREAD_LOCAL.get();
-        return deque.pop();
+    static void popState() {
+        final Link<TaskState> link = THREAD_LOCAL.get();
+        if (link != null) {
+            THREAD_LOCAL.set(link.getParent());
+        }
     }
 
     private static TaskState currentState() {
-        final Deque<TaskState> deque = THREAD_LOCAL.get();
-        return deque.peek();
+        final Link<TaskState> link = THREAD_LOCAL.get();
+        if (link != null) {
+            return link.getObject();
+        }
+        return null;
     }
 
     static Task<?> currentTask() {

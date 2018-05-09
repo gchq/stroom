@@ -19,6 +19,7 @@ package stroom.util.task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.shared.Task;
+import stroom.util.thread.Link;
 
 /**
  * Class to control access to the thread scope context.
@@ -26,8 +27,7 @@ import stroom.util.shared.Task;
 public class TaskScopeContextHolder {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskScopeContextHolder.class);
 
-
-    private static final ThreadLocal<TaskScopeContext> THREAD_LOCAL_CONTEXT = new InheritableThreadLocal<>();
+    private static final ThreadLocal<Link<TaskScopeContext>> THREAD_LOCAL_LINK = new InheritableThreadLocal<>();
 
     /**
      * Get the current context if there is one or throws an illegal state
@@ -35,38 +35,34 @@ public class TaskScopeContextHolder {
      * exist.
      */
     public static TaskScopeContext getContext() throws IllegalStateException {
-        final TaskScopeContext context = THREAD_LOCAL_CONTEXT.get();
-        if (context == null) {
+        final Link<TaskScopeContext> link = currentLink();
+        if (link == null) {
             throw new IllegalStateException("No task scope context active");
         }
-        return context;
-    }
-
-    private static void setContext(final TaskScopeContext context) {
-        THREAD_LOCAL_CONTEXT.set(context);
+        return link.getObject();
     }
 
     /**
      * Gets the current context if there is one or returns null if one isn't
      * currently in use.
      */
-    private static TaskScopeContext currentContext() {
-        return THREAD_LOCAL_CONTEXT.get();
+    private static Link<TaskScopeContext> currentLink() {
+        return THREAD_LOCAL_LINK.get();
     }
 
     public static boolean contextExists() {
-        return currentContext() != null;
+        return currentLink() != null;
     }
 
     /**
      * Called to add a task scope context.
      */
     public static void addContext() {
-        final TaskScopeContext context = currentContext();
-        if (context != null) {
-            addContext(context.getTask());
+        final Link<TaskScopeContext> link = currentLink();
+        if (link != null) {
+            addContext(link.getObject().getTask(), link);
         } else {
-            addContext(null);
+            addContext(null, null);
         }
     }
 
@@ -74,9 +70,11 @@ public class TaskScopeContextHolder {
      * Called to add a task scope context.
      */
     public static void addContext(final Task<?> task) {
-        final TaskScopeContext context = currentContext();
-        final TaskScopeContext taskScopeContext = new TaskScopeContext(context, task);
-        setContext(taskScopeContext);
+        addContext(task, currentLink());
+    }
+
+    private static void addContext(final Task<?> task, final Link<TaskScopeContext> parentLink) {
+        THREAD_LOCAL_LINK.set(new Link<>(new TaskScopeContext(task), parentLink));
     }
 
     /**
@@ -84,13 +82,16 @@ public class TaskScopeContextHolder {
      */
     public static void removeContext() throws IllegalStateException {
         try {
-            final TaskScopeContext context = getContext();
+            final Link<TaskScopeContext> link = currentLink();
+            if (link == null) {
+                throw new IllegalStateException("No task scope context active");
+            }
+
             // Switch the context to the parent context.
-            final TaskScopeContext parentContext = context.getParent();
-            setContext(parentContext);
+            THREAD_LOCAL_LINK.set(link.getParent());
 
             // Destroy previous context.
-            context.clear();
+            link.getObject().clear();
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
             throw e;
