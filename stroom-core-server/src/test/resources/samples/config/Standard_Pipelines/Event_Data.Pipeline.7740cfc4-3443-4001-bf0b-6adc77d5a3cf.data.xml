@@ -19,14 +19,6 @@
             <type>XSLTFilter</type>
          </element>
          <element>
-            <id>decorationFilter</id>
-            <type>XSLTFilter</type>
-         </element>
-         <element>
-            <id>flattenFilter</id>
-            <type>XSLTFilter</type>
-         </element>
-         <element>
             <id>schemaFilter</id>
             <type>SchemaFilter</type>
          </element>
@@ -37,22 +29,6 @@
          <element>
             <id>writeRecordCountFilter</id>
             <type>RecordCountFilter</type>
-         </element>
-         <element>
-            <id>xmlWriter</id>
-            <type>XMLWriter</type>
-         </element>
-         <element>
-            <id>textWriter</id>
-            <type>TextWriter</type>
-         </element>
-         <element>
-            <id>streamAppender</id>
-            <type>StreamAppender</type>
-         </element>
-         <element>
-            <id>fileAppender</id>
-            <type>FileAppender</type>
          </element>
       </add>
    </elements>
@@ -93,27 +69,6 @@
                <boolean>false</boolean>
             </value>
          </property>
-         <property>
-            <element>streamAppender</element>
-            <name>segmentOutput</name>
-            <value>
-               <boolean>true</boolean>
-            </value>
-         </property>
-         <property>
-            <element>streamAppender</element>
-            <name>streamType</name>
-            <value>
-               <string>Events</string>
-            </value>
-         </property>
-         <property>
-            <element>fileAppender</element>
-            <name>outputPaths</name>
-            <value>
-               <string>${stroom.temp}/text/output1/${pipeline}/${streamId}_${feed}-${uuid}.out,${stroom.temp}/text/output2/${pipeline}/${streamId}_${feed}-${uuid}.out</string>
-            </value>
-         </property>
       </add>
    </properties>
    <links>
@@ -132,10 +87,6 @@
          </link>
          <link>
             <from>translationFilter</from>
-            <to>decorationFilter</to>
-         </link>
-         <link>
-            <from>decorationFilter</from>
             <to>schemaFilter</to>
          </link>
          <link>
@@ -145,26 +96,6 @@
          <link>
             <from>recordOutputFilter</from>
             <to>writeRecordCountFilter</to>
-         </link>
-         <link>
-            <from>writeRecordCountFilter</from>
-            <to>flattenFilter</to>
-         </link>
-         <link>
-            <from>writeRecordCountFilter</from>
-            <to>xmlWriter</to>
-         </link>
-         <link>
-            <from>xmlWriter</from>
-            <to>streamAppender</to>
-         </link>
-         <link>
-            <from>flattenFilter</from>
-            <to>textWriter</to>
-         </link>
-         <link>
-            <from>textWriter</from>
-            <to>fileAppender</to>
          </link>
       </add>
    </links>

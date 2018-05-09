@@ -18,23 +18,27 @@ package stroom.pipeline.task;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.test.CommonTranslationTest;
-import stroom.test.ComparisonHelper;
-import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.shared.Severity;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class TestTranslationTask extends AbstractProcessIntegrationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestTranslationTask.class);
+
     private static final int N3 = 3;
     private static final int N4 = 4;
 
@@ -44,6 +48,8 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
     private MockStreamStore streamStore;
     @Inject
     private CommonTranslationTest commonPipelineTest;
+    @Inject
+    private CommonTestControl commonTestControl;
 
     /**
      * Tests Task with a valid resource and feed.
@@ -52,37 +58,63 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
      */
     @Test
     public void testBothValid() throws IOException {
-        commonPipelineTest.setup();
+        final Path csv = Paths.get("/Users/stroomdev66/tmp/performance.csv");
+        final BufferedWriter writer = Files.newBufferedWriter(csv, Charset.forName("UTF-8"));
 
-        final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();
-        Assert.assertEquals(N4, results.size());
-        for (final StreamProcessorTaskExecutor result : results) {
-            final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
-            Assert.assertTrue(result.toString(), processor.getWritten() > 0);
-            Assert.assertTrue(result.toString(), processor.getRead() <= processor.getWritten());
-            Assert.assertEquals(result.toString(), 0, processor.getMarkerCount(Severity.SEVERITIES));
+        for (int i = 1; i <= 100; i++) {
+            commonTestControl.teardown();
+            commonTestControl.setup();
+            streamStore.clear();
+
+            LOGGER.info("Run " + i);
+
+            long setupTime = System.currentTimeMillis();
+            commonPipelineTest.setup();
+            setupTime = System.currentTimeMillis() - setupTime;
+            LOGGER.info("Setup ran in " + ModelStringUtil.formatDurationString(setupTime) + " (" + setupTime + ")");
+
+            long processTime = System.currentTimeMillis();
+            final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();
+            processTime = System.currentTimeMillis() - processTime;
+            LOGGER.info("Process ran in " + ModelStringUtil.formatDurationString(processTime) + " (" + processTime + ")");
+
+//            writer.write(String.valueOf(i));
+//            writer.write(",");
+            writer.write(String.valueOf(processTime));
+            writer.write("\n");
+            writer.flush();
         }
 
-        final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
-        final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
+        writer.close();
 
-        for (final Stream stream : streamStore.getFileData().keySet()) {
-            if (stream.getStreamType().equals(StreamType.EVENTS)) {
-                final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamType().getId());
-
-                // Write the actual XML out.
-                final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTranslationTask.out");
-                os.write(data);
-                os.flush();
-                os.close();
-
-                ComparisonHelper.compareFiles(inputDir.resolve("TestTranslationTask.out"),
-                        outputDir.resolve("TestTranslationTask.out"));
-            }
-        }
-
-        // Make sure 26 records were written.
-        Assert.assertEquals(26, ((PipelineStreamProcessor) results.get(N3)).getWritten());
+//        Assert.assertEquals(N4, results.size());
+//        for (final StreamProcessorTaskExecutor result : results) {
+//            final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
+//            Assert.assertTrue(result.toString(), processor.getWritten() > 0);
+//            Assert.assertTrue(result.toString(), processor.getRead() <= processor.getWritten());
+//            Assert.assertEquals(result.toString(), 0, processor.getMarkerCount(Severity.SEVERITIES));
+//        }
+//
+//        final File inputDir = new File(StroomProcessTestFileUtil.getTestResourcesDir(), DIR);
+//        final File outputDir = new File(StroomProcessTestFileUtil.getTestOutputDir(), DIR);
+//
+//        for (final Stream stream : streamStore.getFileData().keySet()) {
+//            if (stream.getStreamType().equals(StreamType.EVENTS)) {
+//                final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamType().getId());
+//
+//                // Write the actual XML out.
+//                final OutputStream os = StroomProcessTestFileUtil.getOutputStream(outputDir, "TestTranslationTask.out");
+//                os.write(data);
+//                os.flush();
+//                os.close();
+//
+//                ComparisonHelper.compareFiles(new File(inputDir, "TestTranslationTask.out"),
+//                        new File(outputDir, "TestTranslationTask.out"));
+//            }
+//        }
+//
+//        // Make sure 26 records were written.
+//        Assert.assertEquals(26, ((PipelineStreamProcessor) results.get(N3)).getWritten());
     }
 
     /**

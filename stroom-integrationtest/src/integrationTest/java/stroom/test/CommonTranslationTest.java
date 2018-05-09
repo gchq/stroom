@@ -34,6 +34,8 @@ import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -111,7 +113,45 @@ public class CommonTranslationTest {
     }
 
     public void setup() throws IOException {
-        setup(FEED_NAME, Collections.singletonList(VALID_RESOURCE_NAME));
+        LOGGER.info("Writing test data");
+        final Writer writer = Files.newBufferedWriter(VALID_RESOURCE_NAME);
+        writer.write("Date,Time,EventType,Device,UserName,ID,ErrorCode,IPAddress,Server,Message\n");
+        for (int i = 0; i < 100000; i++) {
+            writer.write("18/08/2007,09:49:51,authenticationFailed,device0,user1,192.168.0.2,E0123,192.168.0.3,server1,Invalid password\n");
+            writer.write("18/09/2007,13:18:56,authorisationFailed,device1,user2,192.168.0.2,E0567,192.168.0.3,server1,A message that I made up 1\n");
+            writer.write("18/10/2007,13:19:23,authorisationFailed,device2,user3,192.168.0.2,E0567,192.168.0.3,server2,A message that I made up 2\n");
+            writer.write("18/11/2007,13:20:23,authorisationFailed,device3,user4,192.168.0.2,E0567,192.168.0.3,server3,Another message that I made up 1\n");
+            writer.write("18/12/2007,13:21:48,authorisationFailed,device4,user5,192.168.0.2,E0567,192.168.0.3,server4,Another message that I made up 2\n");
+            writer.write("18/08/2007,13:22:27,authorisationFailed,device5,user2,192.168.0.2,E0567,192.168.0.3,server5,msg=foo bar\n");
+            writer.write("18/08/2007,13:23:49,authorisationFailed,device6,user3,192.168.0.2,E0567,192.168.0.3,server6,msg=foo bar\n");
+            writer.write("18/08/2007,13:43:16,authorisationFailed,device7,user4,192.168.0.2,E0567,192.168.0.3,server7,msg=foo bar\n");
+            writer.write("18/08/2007,13:44:23,authorisationFailed,device8,user5,192.168.0.2,E0567,192.168.0.3,server8,msg=foo bar\n");
+            writer.write("18/08/2007,13:46:21,authorisationFailed,device9,user6,192.168.0.2,E0567,192.168.0.3,server9,msg=foo bar\n");
+            writer.write("18/08/2007,13:47:21,authorisationFailed,device1,user2,192.168.0.2,E0567,192.168.0.3,server1,msg=foo bar\n");
+            writer.write("18/08/2007,13:49:12,authorisationFailed,device2,user3,192.168.0.2,E0567,192.168.0.3,server2,msg=foo bar\n");
+            writer.write("18/08/2007,13:50:56,authorisationFailed,device3,user4,192.168.0.2,E0567,192.168.0.3,server3,msg=foo bar\n");
+            writer.write("18/01/2007,13:56:42,authorisationFailed,device4,user5,192.168.0.2,E0567,192.168.0.3,server4,msg=foo bar\n");
+            writer.write("18/08/2007,14:11:33,authorisationFailed,device5,user1,192.168.0.2,E0567,192.168.0.3,server6,msg=foo bar\n");
+            writer.write("18/08/2007,14:13:11,authorisationFailed,device6,user2,192.168.0.2,E0567,192.168.0.3,server6,msg=foo bar\n");
+            writer.write("18/08/2007,14:14:24,authorisationFailed,device7,user3,192.168.0.2,E0567,192.168.0.3,server7,msg=foo bar\n");
+            writer.write("18/08/2007,14:16:56,authorisationFailed,device8,user2,192.168.0.2,E0567,192.168.0.3,server8,msg=foo bar\n");
+            writer.write("18/08/2007,14:19:59,authorisationFailed,device9,user4,192.168.0.2,E0567,192.168.0.3,server9,msg=foo bar\n");
+            writer.write("18/02/2007,14:23:43,authorisationFailed,device1,user5,192.168.0.2,E0567,192.168.0.3,server1,msg=foo bar\n");
+            writer.write("18/08/2007,14:25:16,authorisationFailed,device2,user2,192.168.0.2,E0567,192.168.0.3,server2,msg=foo bar\n");
+            writer.write("18/08/2007,14:28:15,authorisationFailed,device3,user4,192.168.0.2,E0567,192.168.0.3,server3,msg=foo bar\n");
+            writer.write("18/03/2007,14:34:41,authorisationFailed,device4,user5,192.168.0.2,E0567,192.168.0.3,server4,msg=foo bar\n");
+            writer.write("18/08/2007,14:37:23,authorisationFailed,device5,user6,192.168.0.2,E0567,192.168.0.3,server5,msg=foo bar\n");
+            writer.write("18/08/2007,14:39:55,authorisationFailed,device6,user1,192.168.0.2,E0567,192.168.0.3,server6,some message\n");
+            writer.write("18/08/2007,14:45:52,authorisationFailed,device6,user1,192.168.0.2,E0567,192.168.0.3,server7,some other message 2\n");
+
+            if (i % 1000 == 0) {
+                LOGGER.info("Done: " + i);
+            }
+        }
+        writer.close();
+        LOGGER.info("Done writing test data");
+
+        setup(FEED_NAME, VALID_RESOURCE_NAME);
     }
 
     public void setup(final Path dataLocation) throws IOException {
