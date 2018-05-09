@@ -34,7 +34,7 @@ import java.util.ArrayDeque;
 public class StroomHibernateJpaVendorAdapter extends HibernateJpaVendorAdapter {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomHibernateJpaVendorAdapter.class);
 
-    static ThreadLocal<ArrayDeque<StackTraceElement[]>> threadTransactionStack = new ThreadLocal<ArrayDeque<StackTraceElement[]>>();
+    static ThreadLocal<ArrayDeque<StackTraceElement[]>> threadTransactionStack = ThreadLocal.withInitial(ArrayDeque::new);
 
     public static class StroomHibernateJpaDialect extends HibernateJpaDialect {
         private static final long serialVersionUID = 1L;
@@ -49,11 +49,7 @@ public class StroomHibernateJpaVendorAdapter extends HibernateJpaVendorAdapter {
         @Override
         public Object beginTransaction(EntityManager entityManager, TransactionDefinition definition)
                 throws PersistenceException, SQLException, TransactionException {
-            ArrayDeque<StackTraceElement[]> stack = threadTransactionStack.get();
-            if (stack == null) {
-                stack = new ArrayDeque<>();
-                threadTransactionStack.set(stack);
-            }
+            final ArrayDeque<StackTraceElement[]> stack = threadTransactionStack.get();
             stack.push(Thread.currentThread().getStackTrace());
 
             if (stack.size() > 2) {

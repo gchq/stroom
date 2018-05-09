@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#756** : Fix for state being held by `InheritableThreadLocal` causing objects to be held in memory longer than necessary.
+
 * Issue **#761** : Fixed premature truncation of SQL stats queries due to thread interruption.
 
 ## [v5.3.0] - 2018-05-02

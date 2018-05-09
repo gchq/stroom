@@ -31,7 +31,7 @@ public class SpringRequestFactoryServlet extends RequestFactoryServlet {
 
     private static final long serialVersionUID = 8357087931212763451L;
 
-    private static final ThreadLocal<ServletContext> threadLocalContext = new ThreadLocal<ServletContext>();
+    private static final ThreadLocal<ServletContext> threadLocalContext = new ThreadLocal<>();
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)

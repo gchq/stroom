@@ -16,11 +16,11 @@
 
 package stroom.util.thread;
 
+import stroom.util.logging.StroomLogger;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import stroom.util.logging.StroomLogger;
 
 /**
  * Class to hold the spring thread bound variables.
@@ -28,9 +28,8 @@ import stroom.util.logging.StroomLogger;
 public class ThreadScopeContext {
     protected static final StroomLogger LOGGER = StroomLogger.getLogger(ThreadScopeContext.class);
 
-    private final Map<String, Object> beanMap;
-
-    private final Map<String, Runnable> requestDestructionCallback;
+    private Map<String, Object> beanMap;
+    private Map<String, Runnable> requestDestructionCallback;
 
     public ThreadScopeContext() {
         beanMap = new HashMap<>();
@@ -59,11 +58,14 @@ public class ThreadScopeContext {
     }
 
     final void clear() {
-        for (final String key : requestDestructionCallback.keySet()) {
-            requestDestructionCallback.get(key).run();
+        for (final Runnable runnable : requestDestructionCallback.values()) {
+            runnable.run();
         }
 
         requestDestructionCallback.clear();
+        requestDestructionCallback = null;
+
         beanMap.clear();
+        beanMap = null;
     }
 }

@@ -26,25 +26,36 @@ import stroom.query.shared.Search;
 import stroom.query.shared.SearchRequest;
 import stroom.statistics.common.StatisticStoreCache;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.task.server.TaskManager;
+import stroom.task.server.ExecutorProvider;
+import stroom.task.server.TaskContext;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import java.util.concurrent.Executor;
 
 @Component
 public class StatStoreSearchDataSourceProvider implements SearchDataSourceProvider {
-    private final TaskManager taskManager;
+    private final ExecutorProvider executorProvider;
+    private final TaskContext taskContext;
     private final StatisticStoreCache statisticsDataSourceCache;
+    private final Provider<StatStoreSearchTaskHandler> statStoreSearchTaskHandlerProvider;
 
     @Inject
-    public StatStoreSearchDataSourceProvider(final TaskManager taskManager,
-            final StatisticStoreCache statisticsDataSourceCache) {
-        this.taskManager = taskManager;
+    public StatStoreSearchDataSourceProvider(
+            final ExecutorProvider executorProvider,
+            final TaskContext taskContext,
+            final StatisticStoreCache statisticsDataSourceCache,
+            final Provider<StatStoreSearchTaskHandler> statStoreSearchTaskHandlerProvider) {
+        this.executorProvider = executorProvider;
+        this.taskContext = taskContext;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
+        this.statStoreSearchTaskHandlerProvider = statStoreSearchTaskHandlerProvider;
     }
 
     @Override
-    public SearchResultCollector createCollector(final String userToken, final QueryKey queryKey,
-            final SearchRequest searchRequest) {
+    public SearchResultCollector createCollector(final String userToken,
+                                                 final QueryKey queryKey,
+                                                 final SearchRequest searchRequest) {
         final Search search = searchRequest.getSearch();
 
         final StatisticStoreEntity entity = statisticsDataSourceCache
@@ -62,18 +73,21 @@ public class StatStoreSearchDataSourceProvider implements SearchDataSourceProvid
 
         // Create a stat store search task.
         final String searchName = "Search '" + queryKey.toString() + "'";
-        final StatStoreSearchTask statStoreSearchTask = new StatStoreSearchTask(userToken, searchName, search,
-                entity, coprocessorMap.getMap());
-
         // Create a handler for search results.
         final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorMap);
 
         // Create the search result collector.
-        final StatStoreSearchResultCollector searchResultCollector = new StatStoreSearchResultCollector(taskManager,
-                statStoreSearchTask, resultHandler);
+        final Executor executor = executorProvider.getExecutor();
 
-        // Tell the task where results will be collected.
-        statStoreSearchTask.setResultCollector(searchResultCollector);
+        final StatStoreSearchResultCollector searchResultCollector = new StatStoreSearchResultCollector(
+                executor,
+                taskContext,
+                searchName,
+                search,
+                entity,
+                coprocessorMap.getMap(),
+                statStoreSearchTaskHandlerProvider,
+                resultHandler);
 
         return searchResultCollector;
     }
