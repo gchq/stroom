@@ -15,19 +15,26 @@
  *
  */
 
-package stroom.refdata.lmdb;
+package stroom.refdata.offheapstore;
 
-import org.lmdbjava.Env;
+import stroom.refdata.lmdb.serde.Deserializer;
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.lmdb.serde.Serializer;
+import stroom.refdata.saxevents.uid.UID;
 
 import java.nio.ByteBuffer;
 
-public class BasicLmdbDb<K,V> extends AbstractLmdbDb<K, V> {
+public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> {
 
-    public BasicLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
-                final Serde<K> keySerde,
-                final Serde<V> valueSerde,
-                final String dbName) {
-        super(lmdbEnvironment, keySerde, valueSerde, dbName);
+    @Override
+    public UID deserialize(final ByteBuffer byteBuffer) {
+        return UID.from(byteBuffer);
+    }
+
+    @Override
+    public void serialize(final ByteBuffer byteBuffer, final UID uid) {
+        //TODO may need to allocate a capacity equal to the max key size
+        byteBuffer.put(uid.getBackingArray(), uid.getOffset(), UID.length());
+        byteBuffer.flip();
     }
 }

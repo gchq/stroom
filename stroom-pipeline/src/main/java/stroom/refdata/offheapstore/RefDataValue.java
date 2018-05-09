@@ -15,12 +15,17 @@
  *
  */
 
-package stroom.refdata.lmdb.serde;
+package stroom.refdata.offheapstore;
 
-import java.nio.ByteBuffer;
+public abstract class RefDataValue {
 
-public interface Deserializer<T> {
+    public abstract boolean equals(Object obj);
 
-    T deserialize(final ByteBuffer byteBuffer);
+    public abstract int hashCode();
+
+    /**
+     * @return A code to represent the class of this, unique within all sub-classes of {@link RefDataValue}
+     */
+    public abstract short getTypeId();
 
 }

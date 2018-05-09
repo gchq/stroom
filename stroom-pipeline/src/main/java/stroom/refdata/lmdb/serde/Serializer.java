@@ -21,5 +21,22 @@ import java.nio.ByteBuffer;
 
 public interface Serializer<T> {
 
-    ByteBuffer serialize(final T object);
+    static final int DEFAULT_CAPACITY = 1_000;
+
+    /**
+     * Serialize the passed objects to bytes returning a new {@link ByteBuffer} containing
+     * those bytes.
+     */
+    default ByteBuffer serialize(final T object) {
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(DEFAULT_CAPACITY);
+        serialize(byteBuffer, object);
+        return byteBuffer;
+    }
+
+
+    /**
+     * Serialize object into the passed {@link ByteBuffer}. Assumes there is sufficient capacity.
+     * This method will flip the buffer after writing to it.
+     */
+    void serialize(final ByteBuffer byteBuffer, final T object);
 }

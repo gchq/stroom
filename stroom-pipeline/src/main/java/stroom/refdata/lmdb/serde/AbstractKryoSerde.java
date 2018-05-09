@@ -47,22 +47,25 @@ public abstract class AbstractKryoSerde<T> implements
 
     public abstract T deserialize(final ByteBuffer byteBuffer);
 
-    public ByteBuffer serialize(final KryoPool kryoPool, int bufferCapacity, final T object) {
-        return kryoPool.run(kryo -> {
+    public void serialize(final KryoPool kryoPool, final ByteBuffer byteBuffer, final T object) {
+        kryoPool.run(kryo -> {
             // TODO how do we know how big the serialized form will be
-            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferCapacity);
             ByteBufferOutputStream stream = new ByteBufferOutputStream(byteBuffer);
             Output output = new Output(stream);
             kryo.writeClassAndObject(output, object);
             output.close();
             //TODO how do we ensure bb has enough remaining length when passed in
             byteBuffer.flip();
-            return byteBuffer;
+            return null;
         });
     }
 
+    public ByteBuffer serialize(final KryoPool kryoPool, int bufferCapacity, final T object) {
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferCapacity);
+        serialize(kryoPool, byteBuffer, object);
+        return byteBuffer;
+    }
+
     @Override
-    public abstract ByteBuffer serialize(final T object);
-
-
+    public abstract void serialize(final ByteBuffer byteBuffer, final T object);
 }

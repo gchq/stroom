@@ -19,6 +19,8 @@ package stroom.refdata.saxevents.uid;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.nio.ByteBuffer;
+
 /**
  * A holder for a byte[] representation of a Unique ID. The object is backed by a
  * byte[] that either is the complete Unique ID, or the Unique ID is a subset of it.
@@ -63,14 +65,26 @@ public class UID implements Comparable<UID> {
         this(bytes, 0);
     }
 
+    /**
+     * Wraps a new UID around the passed array. The array is NOT copied so must not be mutated.
+     */
     public static UID from(final byte[] bytes) {
         return new UID(bytes);
     }
 
-    public static UID copyOf(final byte[] bytes) {
+    /**
+     * Copies the content of the {@link ByteBuffer} into a new array and wraps the new UID around
+     * that array
+     */
+    public static UID from(final ByteBuffer byteBuffer) {
+        byte[] bytes = new byte[UID.length()];
+        byteBuffer.get(bytes);
         return new UID(bytes);
     }
 
+    /**
+     * Wraps a new UID around the UID section of the passed array. The array is NOT copied so must not be mutated.
+     */
     public static UID from(final byte[] bytes, final int offset) {
         return new UID(bytes, offset);
     }

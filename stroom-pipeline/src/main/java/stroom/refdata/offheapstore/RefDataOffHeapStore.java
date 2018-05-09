@@ -22,11 +22,15 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.Range;
+import stroom.refdata.lmdb.BasicLmdbDb;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class RefDataOffHeapStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
@@ -43,15 +47,15 @@ public class RefDataOffHeapStore {
     private final long maxSize;
 
     private final Env<ByteBuffer> env;
-    private final  keyValueStoreDb;
-    private final  rangeStoreDb;
-    private final  valueStoreDb;
-    private final  mapUidStoreForwardDb;
-    private final  mapUidStoreBackwardDb;
-    private final  processedMapsStoreDb;
+    private final BasicLmdbDb<KeyValueStoreKey, ValueStoreKey> keyValueStoreDb;
+    private final rangeStoreDb;
+    private final valueStoreDb;
+    private final mapUidStoreForwardDb;
+    private final mapUidStoreBackwardDb;
+    private final processedMapsStoreDb;
 
     /**
-     * @param dbDir The directory the LMDB environment will be created in, it must already exist
+     * @param dbDir   The directory the LMDB environment will be created in, it must already exist
      * @param maxSize The max size in bytes of the environment. This should be less than the available
      *                disk space for dbDir. This size covers all DBs created in this environment.
      */
@@ -66,7 +70,12 @@ public class RefDataOffHeapStore {
                 .open(dbDir.toFile());
 
         // create all the databases
-        keyValueStoreDbi = openDbi(env, KEY_VALUE_STORE_DB_NAME);
+        this.keyValueStoreDb = new BasicLmdbDb<>(
+                env,
+                new KeyValueStoreKeySerde(),
+                new ValueStoreKeySerde(),
+                KEY_VALUE_STORE_DB_NAME);
+
         rangeStoreDbi = openDbi(env, RANGE_STORE_DB_NAME);
         valueStoreDbi = openDbi(env, VALUE_STORE_DB_NAME);
         mapUidStoreForwardDbi = openDbi(env, MAP_UID_STORE_FORWARD_DB_NAME);
@@ -74,6 +83,27 @@ public class RefDataOffHeapStore {
         processedMapsStoreDbi = openDbi(env, PROCESSED_STREAMS_DB_NAME);
     }
 
+    //TODO consider a bulk put method or a builder type class to check/load them all in one txn
+    public void putIfAbsent(final MapDefinition mapDefinition,
+                            final String key,
+                            final Supplier<RefDataValue> refDataValueSupplier) {
+
+    }
+
+    public void putIfAbsent(final MapDefinition mapDefinition,
+                            final Range<Long> keyRange,
+                            final Supplier<RefDataValue> refDataValueSupplier) {
+
+    }
+
+    public RefDataValue getValue(final MapDefinition mapDefinition,
+                            final String key) {
+    }
+
+    public void consumeValue(final MapDefinition mapDefinition,
+                             final String key,
+                             final Consumer<RefDataValue> valueConsumer) {
+    }
 
 
 
@@ -81,6 +111,8 @@ public class RefDataOffHeapStore {
         LOGGER.debug("Opening LMDB database with name: {}", name);
         return env.openDbi(name, DbiFlags.MDB_CREATE);
     }
+
+
 
 
 }

@@ -63,9 +63,8 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
     }
 
     @Override
-    public ByteBuffer serialize(final MapDefinition object) {
-        // TODO how do we know how big the serialized form will be
-        return super.serialize(pool, 1_000, object);
+    public void serialize(final ByteBuffer byteBuffer, final MapDefinition object) {
+        super.serialize(pool, byteBuffer, object);
     }
 
     private static class MapDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<MapDefinition> {
@@ -74,7 +73,9 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
         public void write(final Kryo kryo, final Output output, final MapDefinition mapDefinition) {
             output.writeString(mapDefinition.getPipelineDocRef().getUuid());
             output.writeString(mapDefinition.getPipelineDocRef().getType());
-            output.writeLong(mapDefinition.getStreamId());
+
+            // write as variable length bytes as we don't require fixed width
+            output.writeLong(mapDefinition.getStreamId(), true);
             output.writeString(mapDefinition.getMapName());
         }
 

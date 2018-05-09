@@ -63,30 +63,24 @@ public class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
     }
 
     @Override
-    public ByteBuffer serialize(final KeyValueStoreKey object) {
-        // TODO how do we know how big the serialized form will be
-        return super.serialize(pool, 1_000, object);
+    public void serialize(final ByteBuffer byteBuffer, final KeyValueStoreKey object) {
+        super.serialize(pool, byteBuffer, object);
     }
 
     private static class KeyValueStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<KeyValueStoreKey> {
 
         @Override
         public void write(final Kryo kryo, final Output output, final KeyValueStoreKey key) {
-            final UID mapUid = key.getMapUid();
-            output.write(mapUid.getBackingArray(), mapUid.getOffset(), UID.length());
+            RefDataSerdeUtils.writeUid(output, key.getMapUid());
             output.writeString(key.getKey());
-
-            //TODO need to be sure this is written in correct endian-ness so lexicographical scanning works
-            output.writeLong(key.getEffectiveTimeEpochMs());
+            RefDataSerdeUtils.writeTimeMs(output, key.getEffectiveTimeEpochMs());
         }
 
         @Override
         public KeyValueStoreKey read(final Kryo kryo, final Input input, final Class<KeyValueStoreKey> type) {
-            final UID mapUid = UID.from(input.readBytes(UID.length()));
+            final UID mapUid = RefDataSerdeUtils.readUid(input);
             final String key = input.readString();
-
-            //TODO need to be sure this is written in correct endian-ness so lexicographical scanning works
-            final long effectiveTimeEpochMs = input.readLong();
+            final long effectiveTimeEpochMs = RefDataSerdeUtils.readTimeMs(input);
             return new KeyValueStoreKey(mapUid, key, effectiveTimeEpochMs);
         }
     }
