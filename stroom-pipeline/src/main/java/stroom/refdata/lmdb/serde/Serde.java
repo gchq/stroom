@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.lmdb.serde;
 
 public interface Serde<T> extends Serializer<T>, Deserializer<T> {
 

@@ -25,17 +25,17 @@ import com.esotericsoftware.kryo.pool.KryoPool;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.api.v2.DocRef;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
+import stroom.refdata.saxevents.uid.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
-public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
+public class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionSerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionSerde.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreKeySerde.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreKeySerde.class);
 
     private static final KryoFactory kryoFactory = () -> {
         Kryo kryo = new Kryo();
@@ -43,7 +43,7 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
             LAMBDA_LOGGER.debug(() -> String.format("Initialising Kryo on thread %s",
                     Thread.currentThread().getName()));
 
-            kryo.register(MapDefinition.class, new MapDefinitionKryoSerializer());
+            kryo.register(KeyValueStoreKey.class, new KeyValueStoreKeyKryoSerializer());
             ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy()).setFallbackInstantiatorStrategy(
                     new StdInstantiatorStrategy());
             kryo.setRegistrationRequired(true);
@@ -58,33 +58,36 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
             .build();
 
     @Override
-    public MapDefinition deserialize(final ByteBuffer byteBuffer) {
+    public KeyValueStoreKey deserialize(final ByteBuffer byteBuffer) {
         return super.deserialize(pool, byteBuffer);
     }
 
     @Override
-    public ByteBuffer serialize(final MapDefinition object) {
+    public ByteBuffer serialize(final KeyValueStoreKey object) {
         // TODO how do we know how big the serialized form will be
         return super.serialize(pool, 1_000, object);
     }
 
-    private static class MapDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<MapDefinition> {
+    private static class KeyValueStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<KeyValueStoreKey> {
 
         @Override
-        public void write(final Kryo kryo, final Output output, final MapDefinition mapDefinition) {
-            output.writeString(mapDefinition.getPipelineDocRef().getUuid());
-            output.writeString(mapDefinition.getPipelineDocRef().getType());
-            output.writeLong(mapDefinition.getStreamId());
-            output.writeString(mapDefinition.getMapName());
+        public void write(final Kryo kryo, final Output output, final KeyValueStoreKey key) {
+            final UID mapUid = key.getMapUid();
+            output.write(mapUid.getBackingArray(), mapUid.getOffset(), UID.length());
+            output.writeString(key.getKey());
+
+            //TODO need to be sure this is written in correct endian-ness so lexicographical scanning works
+            output.writeLong(key.getEffectiveTimeEpochMs());
         }
 
         @Override
-        public MapDefinition read(final Kryo kryo, final Input input, final Class<MapDefinition> type) {
-            final String pipelineUuid = input.readString();
-            final String pipelineType = input.readString();
-            final long streamId = input.readLong();
-            final String mapName = input.readString();
-            return new MapDefinition(new DocRef(pipelineUuid, pipelineType), streamId, mapName);
+        public KeyValueStoreKey read(final Kryo kryo, final Input input, final Class<KeyValueStoreKey> type) {
+            final UID mapUid = UID.from(input.readBytes(UID.length()));
+            final String key = input.readString();
+
+            //TODO need to be sure this is written in correct endian-ness so lexicographical scanning works
+            final long effectiveTimeEpochMs = input.readLong();
+            return new KeyValueStoreKey(mapUid, key, effectiveTimeEpochMs);
         }
     }
 }

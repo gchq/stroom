@@ -15,11 +15,22 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.lmdb.eval;
 
-import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-public interface Deserializer<T> {
+public interface KeyValueStore extends AutoCloseable {
 
-    T deserialize(final ByteBuffer byteBuffer);
+    void put(final String key, final String value);
+
+    void putBatch(final List<Map.Entry<String, String>> entries);
+
+    Optional<String> get(final String key);
+
+    Optional<String> getWithTxn(final String key);
+
+    void clear();
+
 }

@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.lmdb;
 
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
@@ -23,6 +23,7 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.refdata.lmdb.serde.Serde;
 import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;

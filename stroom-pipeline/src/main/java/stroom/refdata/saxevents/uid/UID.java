@@ -42,9 +42,6 @@ public class UID implements Comparable<UID> {
     private final byte[] bytes;
     private final int offset;
 
-    //cached for performance, relies on the array not being mutated
-    private final int hashCode;
-
     /**
      * Object representing part of a byte[] that forms a Unique Identifier
      * Does NOT copy the passed bytes, so the passed bytes must not be changed
@@ -54,7 +51,7 @@ public class UID implements Comparable<UID> {
     public UID(final byte[] bytes, final int offset) {
         this.bytes = bytes;
         this.offset = offset;
-        this.hashCode = buildHashCode();
+//        this.hashCode = buildHashCode();
     }
 
     /**
@@ -67,6 +64,10 @@ public class UID implements Comparable<UID> {
     }
 
     public static UID from(final byte[] bytes) {
+        return new UID(bytes);
+    }
+
+    public static UID copyOf(final byte[] bytes) {
         return new UID(bytes);
     }
 

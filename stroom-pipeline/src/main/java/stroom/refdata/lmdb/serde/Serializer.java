@@ -15,18 +15,11 @@
  *
  */
 
-package stroom.refdata.offheapstore;
-
-import org.lmdbjava.Env;
+package stroom.refdata.lmdb.serde;
 
 import java.nio.ByteBuffer;
 
-public class BasicLmdbDb<K,V> extends AbstractLmdbDb<K, V> {
+public interface Serializer<T> {
 
-    BasicLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
-                final Serde<K> keySerde,
-                final Serde<V> valueSerde,
-                final String dbName) {
-        super(lmdbEnvironment, keySerde, valueSerde, dbName);
-    }
+    ByteBuffer serialize(final T object);
 }

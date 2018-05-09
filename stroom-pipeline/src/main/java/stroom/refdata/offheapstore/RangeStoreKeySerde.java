@@ -25,17 +25,18 @@ import com.esotericsoftware.kryo.pool.KryoPool;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.api.v2.DocRef;
+import stroom.entity.shared.Range;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
+import stroom.refdata.saxevents.uid.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
-public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
+public class RangeStoreKeySerde extends AbstractKryoSerde<RangeStoreKey> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionSerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionSerde.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreKeySerde.class);
 
     private static final KryoFactory kryoFactory = () -> {
         Kryo kryo = new Kryo();
@@ -43,7 +44,7 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
             LAMBDA_LOGGER.debug(() -> String.format("Initialising Kryo on thread %s",
                     Thread.currentThread().getName()));
 
-            kryo.register(MapDefinition.class, new MapDefinitionKryoSerializer());
+            kryo.register(RangeStoreKey.class, new RangeStoreKeyKryoSerializer());
             ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy()).setFallbackInstantiatorStrategy(
                     new StdInstantiatorStrategy());
             kryo.setRegistrationRequired(true);
@@ -58,33 +59,34 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
             .build();
 
     @Override
-    public MapDefinition deserialize(final ByteBuffer byteBuffer) {
+    public RangeStoreKey deserialize(final ByteBuffer byteBuffer) {
         return super.deserialize(pool, byteBuffer);
     }
 
     @Override
-    public ByteBuffer serialize(final MapDefinition object) {
+    public ByteBuffer serialize(final RangeStoreKey object) {
         // TODO how do we know how big the serialized form will be
         return super.serialize(pool, 1_000, object);
     }
 
-    private static class MapDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<MapDefinition> {
+    private static class RangeStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<RangeStoreKey> {
 
         @Override
-        public void write(final Kryo kryo, final Output output, final MapDefinition mapDefinition) {
-            output.writeString(mapDefinition.getPipelineDocRef().getUuid());
-            output.writeString(mapDefinition.getPipelineDocRef().getType());
-            output.writeLong(mapDefinition.getStreamId());
-            output.writeString(mapDefinition.getMapName());
+        public void write(final Kryo kryo, final Output output, final RangeStoreKey key) {
+            RefDataSerdeUtils.writeUid(output, key.getMapUid());
+            RefDataSerdeUtils.writeTimeMs(output, key.getEffectiveTimeEpochMs());
+            Range<Long> range = key.getKeyRange();
+            RefDataSerdeUtils.writeTimeMs(output, range.getFrom());
+            RefDataSerdeUtils.writeTimeMs(output, range.getTo());
         }
 
         @Override
-        public MapDefinition read(final Kryo kryo, final Input input, final Class<MapDefinition> type) {
-            final String pipelineUuid = input.readString();
-            final String pipelineType = input.readString();
-            final long streamId = input.readLong();
-            final String mapName = input.readString();
-            return new MapDefinition(new DocRef(pipelineUuid, pipelineType), streamId, mapName);
+        public RangeStoreKey read(final Kryo kryo, final Input input, final Class<RangeStoreKey> type) {
+            final UID mapUid = RefDataSerdeUtils.readUid(input);
+            final long effectiveTimeEpochMs = RefDataSerdeUtils.readTimeMs(input);
+            long startMs = RefDataSerdeUtils.readTimeMs(input);
+            long endMs = RefDataSerdeUtils.readTimeMs(input);
+            return new RangeStoreKey(mapUid, effectiveTimeEpochMs, new Range<>(startMs, endMs));
         }
     }
 }
