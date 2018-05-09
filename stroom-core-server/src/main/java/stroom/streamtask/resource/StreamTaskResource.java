@@ -182,7 +182,8 @@ public class StreamTaskResource implements HasHealthCheck {
                         .withLastPollAge(filter.getStreamProcessorFilterTracker().getLastPollAge())
                         .withTaskCount(filter.getStreamProcessorFilterTracker().getLastPollTaskCount())
                         .withMinStreamId(filter.getStreamProcessorFilterTracker().getMinStreamId())
-                        .withMinEventId(filter.getStreamProcessorFilterTracker().getMinEventId());
+                        .withMinEventId(filter.getStreamProcessorFilterTracker().getMinEventId())
+                        .withStatus((filter.getStreamProcessorFilterTracker().getStatus()));
             }
 
             StreamTask streamTask = builder.build();
