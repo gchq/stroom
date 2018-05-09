@@ -47,6 +47,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Api(
@@ -60,6 +61,8 @@ public class StreamTaskResource implements HasHealthCheck {
     private final StreamProcessorService streamProcessorService;
     private final SecurityContext securityContext;
     private final Security security;
+
+    private final String FIELD_PROGRESS = "progress";
 
     @Inject
     public StreamTaskResource(
@@ -97,9 +100,13 @@ public class StreamTaskResource implements HasHealthCheck {
         }
 
         if(sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PIPELINE_NAME)
-//                || sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PROGRESS_??) // TODO: create this
                 || sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PRIORITY)){
             criteria.setSort(sortBy, direction, false);
+        }
+        else if(sortBy.equalsIgnoreCase(FIELD_PROGRESS)){
+            // Sorting is done below -- this is here for completeness.
+            // Percentage is a calculated variable so it has to be done after retrieval.
+            // This poses a problem for paging and at the moment sorting by tracker % won't work correctly when paging.
         }
         else {
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortBy field").build();
@@ -123,6 +130,15 @@ public class StreamTaskResource implements HasHealthCheck {
         criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
 
         final List<StreamTask> values = find(criteria);
+
+        if(sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
+            if(direction == Sort.Direction.ASCENDING) {
+                values.sort(Comparator.comparingInt(StreamTask::getTrackerPercent));
+            }
+            else{
+                values.sort(Comparator.comparingInt(StreamTask::getTrackerPercent).reversed());
+            }
+        }
 
         return Response.ok(values).build();
     }
