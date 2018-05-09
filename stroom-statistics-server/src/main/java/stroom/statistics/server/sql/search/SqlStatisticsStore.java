@@ -25,6 +25,7 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreSize;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
+import stroom.query.common.v2.TablePayload;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
@@ -227,10 +228,10 @@ public class SqlStatisticsStore implements Store {
                                             },
                                             () -> {
                                                 LAMBDA_LOGGER.debug(() ->
-                                                        String.format("onComplete of inner flowable called, processing results so far, counter: %s",
+                                                        String.format("onComplete of inner flowable called, counter: %s",
                                                                 counter.get()));
-                                                //completed our window so create and pass on a payload for the
-                                                //data we have gathered so far
+                                                // completed our window so create and pass on a payload for the
+                                                // data we have gathered so far
                                                 processPayloads(resultHandler, coprocessorMap, terminationMonitor);
                                             });
                             taskContext.setName(TASK_NAME);
@@ -243,8 +244,9 @@ public class SqlStatisticsStore implements Store {
                             completeSearch();
                         },
                         () -> {
-                            LOGGER.debug("onComplete of outer flowable called");
-                            //flows all complete, so process any remaining data
+                            LAMBDA_LOGGER.debug(() ->
+                                    String.format("onComplete of outer flowable called, counter: %s", counter.get()));
+                            // flows all complete, so process any remaining data
                             taskContext.info("Sql Statistics search " + searchKey +
                                     " - completed database query (" + counter.get() + " rows fetched)");
                             processPayloads(resultHandler, coprocessorMap, terminationMonitor);
@@ -300,19 +302,46 @@ public class SqlStatisticsStore implements Store {
                                               final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap,
                                               final HasTerminate terminationMonitor) {
 
-        LAMBDA_LOGGER.debug(() ->
-                LambdaLogger.buildMessage("processPayloads called for {} coprocessors", coprocessorMap.size()));
+        if (!Thread.currentThread().isInterrupted()) {
+            LAMBDA_LOGGER.debug(() ->
+                    LambdaLogger.buildMessage("processPayloads called for {} coprocessors", coprocessorMap.size()));
 
-        //build a payload map from whatever the coprocessors have in them, if anything
-        final Map<CoprocessorSettingsMap.CoprocessorKey, Payload> payloadMap = coprocessorMap.entrySet().stream()
-                .map(entry ->
-                        Maps.immutableEntry(entry.getKey(), entry.getValue().createPayload()))
-                .filter(entry ->
-                        entry.getValue() != null)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            //build a payload map from whatever the coprocessors have in them, if anything
+            final Map<CoprocessorSettingsMap.CoprocessorKey, Payload> payloadMap = coprocessorMap.entrySet().stream()
+                    .map(entry ->
+                            Maps.immutableEntry(entry.getKey(), entry.getValue().createPayload()))
+                    .filter(entry ->
+                            entry.getValue() != null)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        // give the processed results to the collector, it will handle nulls
-        resultHandler.handle(payloadMap, terminationMonitor);
+            // log the queue sizes in the payload map
+            if (LOGGER.isDebugEnabled()) {
+                final String contents = payloadMap.entrySet().stream()
+                        .map(entry -> {
+                            String key = entry.getKey() != null ? entry.getKey().toString() : "null";
+                            String size;
+                            // entry checked for null in stream above
+                            if (entry.getValue() instanceof TablePayload) {
+                                TablePayload tablePayload = (TablePayload) entry.getValue();
+                                if (tablePayload.getQueue() != null) {
+                                    size = Integer.toString(tablePayload.getQueue().size());
+                                } else {
+                                    size = "null";
+                                }
+                            } else {
+                                size = "?";
+                            }
+                            return key + ": " + size;
+                        })
+                        .collect(Collectors.joining(", "));
+                LOGGER.debug("payloadMap: [{}]", contents);
+            }
+
+            // give the processed results to the collector, it will handle nulls
+            resultHandler.handle(payloadMap, terminationMonitor);
+        } else {
+            LOGGER.debug("Thread is interrupted, not processing payload");
+        }
     }
 
     private static Coprocessor createCoprocessor(final CoprocessorSettings settings,
