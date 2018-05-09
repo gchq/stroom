@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.3.1] - 2018-05-09
+
 * Issue **#756** : Fix for state being held by `InheritableThreadLocal` causing objects to be held in memory longer than necessary.
 
 * Issue **#761** : Fixed premature truncation of SQL stats queries due to thread interruption.
@@ -792,7 +794,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.3.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.3.1...HEAD
+[v5.3.1]: https://github.com/gchq/stroom/compare/v5.3.0...v5.3.1
 [v5.3.0]: https://github.com/gchq/stroom/compare/v5.2.3...v5.3.0
 [v5.2.3]: https://github.com/gchq/stroom/compare/v5.2.2...v5.2.3
 [v5.2.2]: https://github.com/gchq/stroom/compare/v5.2.1...v5.2.2
