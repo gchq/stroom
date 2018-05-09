@@ -41,7 +41,10 @@ import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -74,6 +77,33 @@ public class StreamTaskResource implements HasHealthCheck {
         this.streamProcessorService = streamProcessorService;
         this.securityContext = securityContext;
         this.security = security;
+    }
+
+    @PATCH
+    @Path("/{filterId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response enable(
+            @PathParam("filterId") int filterId,
+            StreamTaskPatch patch) {
+        StreamProcessorFilter streamProcessorFilter = streamProcessorFilterService.loadById(filterId);
+        //TODO what if it doesn't exist?
+
+        boolean patchApplied = false;
+        if(patch.getOp().equalsIgnoreCase("replace")){
+            if(patch.getPath().equalsIgnoreCase("enabled")){
+                streamProcessorFilter.setEnabled(Boolean.parseBoolean(patch.getValue()));
+                patchApplied = true;
+            }
+        }
+
+        if(patchApplied) {
+            streamProcessorFilterService.save(streamProcessorFilter);
+            return Response.ok().build();
+        }
+        else {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Unable to apply the requested patch. See server logs for details.").build();
+        }
     }
 
     @GET
