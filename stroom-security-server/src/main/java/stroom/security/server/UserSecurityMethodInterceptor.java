@@ -44,7 +44,7 @@ public class UserSecurityMethodInterceptor {
 
     private static final Class<?>[] SECURITY_ANNOTATIONS = new Class<?>[]{Secured.class,
             Insecure.class};
-    private final ThreadLocal<Boolean> checkTypeThreadLocal = new ThreadLocal<>();
+    private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
     private final SecurityContext securityContext;
 
@@ -73,11 +73,7 @@ public class UserSecurityMethodInterceptor {
     public Object secureMethod(final ProceedingJoinPoint joinPoint) throws Throwable {
         try {
             // Initiate current check type.
-            Boolean currentCheckType = checkTypeThreadLocal.get();
-            if (currentCheckType == null) {
-                currentCheckType = Boolean.TRUE;
-                checkTypeThreadLocal.set(currentCheckType);
-            }
+            final Boolean currentCheckType = checkTypeThreadLocal.get();
 
             // If we aren't currently checking anything then just proceed.
             if (Boolean.FALSE.equals(currentCheckType)) {

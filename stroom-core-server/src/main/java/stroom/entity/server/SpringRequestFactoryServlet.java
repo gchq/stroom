@@ -33,14 +33,14 @@ public class SpringRequestFactoryServlet extends RequestFactoryServlet {
 
     private static final ThreadLocal<ServletContext> threadLocalContext = new ThreadLocal<>();
 
-    public static ServletContext getThreadLocalContext() {
-        return threadLocalContext.get();
-    }
-
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
         threadLocalContext.set(getServletContext());
         super.doPost(request, response);
+    }
+
+    public static ServletContext getThreadLocalContext() {
+        return threadLocalContext.get();
     }
 }
