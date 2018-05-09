@@ -15,12 +15,15 @@
  *
  */
 
-package stroom.refdata.saxevents;
+package stroom.refdata.offheapstore;
 
-import net.sf.saxon.event.ReceivingContentHandler;
+public interface Serde<T> extends Serializer<T>, Deserializer<T> {
 
-public class FastInfosetContentHandler extends ReceivingContentHandler {
+    default Serializer<T> serializer() {
+        return this;
+    }
 
-
-
+    default Deserializer<T> deserializer() {
+        return this;
+    }
 }

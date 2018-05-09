@@ -72,6 +72,7 @@ public class TestMapStoreCache extends StroomUnitTest {
                 feed.setId(i);
                 final MapStoreCacheKey mapStoreCacheKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1);
                 final MapStore mapStore = mapStoreCache.get(mapStoreCacheKey);
+
                 final EventList eventList = mapStore.getEvents("TEST_MAP_NAME", "TEST_KEY_NAME");
                 if (eventString == null) {
                     eventString = eventList.toString();

@@ -15,12 +15,18 @@
  *
  */
 
-package stroom.refdata.saxevents;
+package stroom.refdata.offheapstore;
 
-import net.sf.saxon.event.ReceivingContentHandler;
+import org.lmdbjava.Env;
 
-public class FastInfosetContentHandler extends ReceivingContentHandler {
+import java.nio.ByteBuffer;
 
+public class BasicLmdbDb<K,V> extends AbstractLmdbDb<K, V> {
 
-
+    BasicLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
+                final Serde<K> keySerde,
+                final Serde<V> valueSerde,
+                final String dbName) {
+        super(lmdbEnvironment, keySerde, valueSerde, dbName);
+    }
 }

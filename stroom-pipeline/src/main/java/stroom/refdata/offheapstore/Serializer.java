@@ -15,12 +15,11 @@
  *
  */
 
-package stroom.refdata.saxevents;
+package stroom.refdata.offheapstore;
 
-import net.sf.saxon.event.ReceivingContentHandler;
+import java.nio.ByteBuffer;
 
-public class FastInfosetContentHandler extends ReceivingContentHandler {
+public interface Serializer<T> {
 
-
-
+    ByteBuffer serialize(final T object);
 }

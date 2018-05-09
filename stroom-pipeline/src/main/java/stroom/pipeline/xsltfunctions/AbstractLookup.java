@@ -215,6 +215,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             ensureConsumer();
 
             // TODO : Possibly replace NPEventList with TinyTree to improve performance.
+
             consumer.startDocument();
         }
 

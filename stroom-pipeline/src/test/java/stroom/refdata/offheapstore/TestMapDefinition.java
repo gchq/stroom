@@ -15,12 +15,27 @@
  *
  */
 
-package stroom.refdata.saxevents;
+package stroom.refdata.offheapstore;
 
-import net.sf.saxon.event.ReceivingContentHandler;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
+import stroom.query.api.v2.DocRef;
 
-public class FastInfosetContentHandler extends ReceivingContentHandler {
+import java.util.UUID;
 
+public class TestMapDefinition {
 
+    @Test
+    public void serialize() {
+        MapDefinition def = new MapDefinition(
+                new DocRef("MyType", UUID.randomUUID().toString()),
+                123456L,
+                "MyMapName");
 
+        byte[] bytes = def.serialize();
+
+        MapDefinition def2 = MapDefinition.deserialize(bytes);
+
+        Assertions.assertThat(def).isEqualTo(def2);
+    }
 }
