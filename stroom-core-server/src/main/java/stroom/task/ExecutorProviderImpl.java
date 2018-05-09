@@ -77,7 +77,15 @@ class ExecutorProviderImpl implements ExecutorProvider {
         @Override
         public void execute(final Runnable command) {
             final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, userToken, taskName, null);
-            genericServerTask.setRunnable(command);
+            final Runnable runnable = () -> {
+                try {
+                    command.run();
+                } finally {
+                    genericServerTask.setRunnable(null);
+                }
+            };
+            genericServerTask.setRunnable(runnable);
+
             if (threadPool == null) {
                 taskManager.execAsync(genericServerTask);
             } else {
