@@ -143,11 +143,12 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                                                         throwable.getMessage()), throwable);
                                             },
                                             () -> {
+                                                // thread may be interrupted if outer onComplete is called before this one
                                                 LAMBDA_LOGGER.debug(() ->
-                                                        String.format("onComplete of inner flowable called, processing results so far, counter: %s",
+                                                        String.format("onComplete of inner flowable called, counter: %s",
                                                                 counter.get()));
-                                                //completed our timed window so create and pass on a payload for the
-                                                //data we have gathered so far
+                                                // completed our timed window so create and pass on a payload for the
+                                                // data we have gathered so far
                                                 processPayloads(resultCollector, tableCoprocessors);
                                                 taskMonitor.info(task.getSearchName() +
                                                         " - running database query (" + counter.get() + " rows fetched)");
@@ -157,11 +158,19 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
                                     throw new RuntimeException(String.format("Error in flow, %s",
                                             throwable.getMessage()), throwable);
                                 },
-                                () -> LOGGER.debug("onComplete of outer flowable called"));
+                                () -> {
+                                    LAMBDA_LOGGER.debug(() ->
+                                            String.format("onComplete of outer flowable called, counter: %s",
+                                                    counter.get()));
+                                    // When this onComplete is called rxJava will call cancel on any window threads
+                                    // which will issue an interrupt(). Calling processPayloads here, which is synchronised
+                                    // ensures all results are processed before any threads are interrupted.
+                                    processPayloads(resultCollector, tableCoprocessors);
+                                });
 
                 LOGGER.debug("Out of flowable");
 
-                //flows all complete, so process any remaining data
+                // flows all complete, so process any remaining data
                 processPayloads(resultCollector, tableCoprocessors);
                 taskMonitor.info(task.getSearchName() +
                         " - completed database query (" + counter.get() + " rows fetched)");
@@ -186,18 +195,45 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
     private synchronized void processPayloads(final StatStoreSearchResultCollector resultCollector,
                                               final List<StatStoreTableCoprocessor> tableCoprocessors) {
 
-        LOGGER.debug("processPayloads called for {} coprocessors", tableCoprocessors.size());
+        if (!Thread.currentThread().isInterrupted()) {
+            LOGGER.debug("processPayloads called for {} coprocessors", tableCoprocessors.size());
 
-        //build a payload map from whatever the coprocessors have in them, if anything
-        final Map<Integer, Payload> payloadMap = tableCoprocessors.stream()
-                .map(tableCoprocessor ->
-                        Maps.immutableEntry(tableCoprocessor.getId(), tableCoprocessor.createPayload()))
-                .filter(entry ->
-                        entry.getValue() != null)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            //build a payload map from whatever the coprocessors have in them, if anything
+            final Map<Integer, Payload> payloadMap = tableCoprocessors.stream()
+                    .map(tableCoprocessor ->
+                            Maps.immutableEntry(tableCoprocessor.getId(), tableCoprocessor.createPayload()))
+                    .filter(entry ->
+                            entry.getValue() != null)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        // give the processed results to the collector, it will handle nulls
-        resultCollector.handle(payloadMap);
+            // log the queue sizes in the payload map
+            if (LOGGER.isDebugEnabled()) {
+                final String contents = payloadMap.entrySet().stream()
+                        .map(entry -> {
+                            String id = Integer.toString(entry.getKey());
+                            String size;
+                            // entry checked for null in stream above
+                            if (entry.getValue() instanceof TablePayload) {
+                                TablePayload tablePayload = (TablePayload) entry.getValue();
+                                if (tablePayload.getQueue() != null) {
+                                    size = Integer.toString(tablePayload.getQueue().size());
+                                } else {
+                                    size = "null";
+                                }
+                            } else {
+                                size = "?";
+                            }
+                            return id + ": " + size;
+                        })
+                        .collect(Collectors.joining(", "));
+                LOGGER.debug("payloadMap: [{}]", contents);
+            }
+
+            // give the processed results to the collector, it will handle nulls
+            resultCollector.handle(payloadMap);
+        } else {
+            LOGGER.debug("Thread is interrupted, not processing payload");
+        }
     }
 
     private Consumer<Val[]> buildDataArrayConsumer(
