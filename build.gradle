@@ -187,7 +187,7 @@ ext.libs = [
     unirest                         :  "com.mashape.unirest:unirest-java:$versions.unirest",
     validation_api                  :  "javax.validation:validation-api:1.0.0.GA", //GWT 2.8.0 throws errors on gwtCompile if validation-api 1.1.0.Final is used
     vavr                            :  "io.vavr:vavr:0.9.0",
-    ws_rs_api                       :  "javax.ws.rs:javax.ws.rs-api:2.0.1",
+    ws_rs_api                       :  "javax.ws.rs:javax.ws.rs-api:2.1",
     xml_apis                        :  "xml-apis:xml-apis:1.0.b2",
     zzDUMMYzz                       :  "makes sorting easier"
 ]
