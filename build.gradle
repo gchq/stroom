@@ -63,8 +63,8 @@ ext.versions = [
     hadoopCommonShaded :  'v2.6.4-5',
     hadoopHdfsShaded   :  'v2.6.4-4',
     stroomAuth         :  'v0.1-alpha.3',
-    stroomExpression   :  'v1.3.1',
-    stroomQuery        :  'v3.1-beta.1', //same version for both stroom-query-api and stroom-query-common
+    stroomExpression   :  'v1.3.2',
+    stroomQuery        :  'v3.1-beta.5', //same version for both stroom-query-api and stroom-query-common
     stroomStats        :  'v0.6.0-alpha.2',
 
     //------------3rd-party------------
@@ -74,7 +74,7 @@ ext.versions = [
     guava              :  '21.0',
     gwt                :  '2.8.2',
     hibernate          :  '5.2.13.Final', //dropwiz 1.2.5 uses -validator 5.4.2.Final and -core 5.2.12.Final
-    jackson            :  '2.8.6',
+    jackson            :  '2.9.0', //in line with dropwizard 1.2.5
     jersey             :  '2.25.1',
     jetty              :  '9.4.8.v20171121', //in line with dropwizard 1.2.5
     logback            :  '1.2.3', //in line with dropwizard 1.2.5

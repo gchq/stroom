@@ -11,8 +11,8 @@ import stroom.pipeline.errorhandler.LoggedException;
 import stroom.properties.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.audit.client.DocRefResourceHttpClient;
+import stroom.query.security.ServiceUser;
 import stroom.security.SecurityContext;
-import stroom.security.ServiceUser;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 

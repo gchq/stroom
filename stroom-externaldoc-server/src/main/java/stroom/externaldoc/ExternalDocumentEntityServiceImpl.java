@@ -29,8 +29,8 @@ import stroom.query.api.v2.DocRefInfo;
 import stroom.query.audit.ExportDTO;
 import stroom.query.audit.client.DocRefResourceHttpClient;
 import stroom.query.audit.model.DocRefEntity;
+import stroom.query.security.ServiceUser;
 import stroom.security.SecurityContext;
-import stroom.security.ServiceUser;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
