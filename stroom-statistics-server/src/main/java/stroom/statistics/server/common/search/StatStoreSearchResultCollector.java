@@ -22,8 +22,11 @@ import stroom.query.ResultStore;
 import stroom.query.SearchResultCollector;
 import stroom.query.shared.CoprocessorSettings;
 import stroom.query.shared.Search;
+import stroom.security.SecurityContext;
 import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskContext;
+import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
 import stroom.util.logging.StroomLogger;
 
@@ -31,12 +34,12 @@ import javax.inject.Provider;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 public class StatStoreSearchResultCollector implements SearchResultCollector {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(StatStoreSearchResultCollector.class);
 
-    private final Executor executor;
+    private final String userToken;
+    private final TaskManager taskManager;
     private final TaskContext taskContext;
     private final String searchName;
     private final Search search;
@@ -46,7 +49,8 @@ public class StatStoreSearchResultCollector implements SearchResultCollector {
     private final ResultHandler resultHandler;
     private final Set<String> errors = new HashSet<>();
 
-    public StatStoreSearchResultCollector(final Executor executor,
+    public StatStoreSearchResultCollector(final String userToken,
+                                          final TaskManager taskManager,
                                           final TaskContext taskContext,
                                           final String searchName,
                                           final Search search,
@@ -54,7 +58,8 @@ public class StatStoreSearchResultCollector implements SearchResultCollector {
                                           final Map<Integer, CoprocessorSettings> coprocessorMap,
                                           final Provider<StatStoreSearchTaskHandler> statStoreSearchTaskHandlerProvider,
                                           final ResultHandler resultHandler) {
-        this.executor = executor;
+        this.userToken = userToken;
+        this.taskManager = taskManager;
         this.taskContext = taskContext;
         this.searchName = searchName;
         this.search = search;
@@ -67,7 +72,8 @@ public class StatStoreSearchResultCollector implements SearchResultCollector {
     @Override
     public void start() {
         // Start asynchronous search execution.
-        executor.execute(() -> {
+        final GenericServerTask genericServerTask = GenericServerTask.create(null, userToken, "Stat Store Search", null);
+        final Runnable runnable = () -> {
             try {
                 final StatStoreSearchTaskHandler statStoreSearchTaskHandler = statStoreSearchTaskHandlerProvider.get();
                 statStoreSearchTaskHandler.exec(searchName, search, entity, coprocessorMap, StatStoreSearchResultCollector.this);
@@ -82,8 +88,12 @@ public class StatStoreSearchResultCollector implements SearchResultCollector {
                     resultHandler.setComplete(true);
                     throw e;
                 }
+            } finally {
+                genericServerTask.setRunnable(null);
             }
-        });
+        };
+        genericServerTask.setRunnable(runnable);
+        taskManager.execAsync(genericServerTask);
     }
 
     @Override

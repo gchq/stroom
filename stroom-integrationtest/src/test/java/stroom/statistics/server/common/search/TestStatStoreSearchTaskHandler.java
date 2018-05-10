@@ -57,15 +57,14 @@ import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.sql.SQLStatisticAggregateMap;
 import stroom.statistics.sql.SQLStatisticAggregationManager;
 import stroom.statistics.sql.SQLStatisticAggregationTransactionHelper;
-import stroom.statistics.sql.SQLStatisticEventStore;
 import stroom.statistics.sql.SQLStatisticFlushTask;
 import stroom.statistics.sql.SQLStatisticFlushTaskHandler;
 import stroom.statistics.sql.SQLStatisticNames;
 import stroom.statistics.sql.SQLStatisticValueBatchSaveService;
-import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
+import stroom.util.task.ServerTask;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.thread.ThreadUtil;
 
@@ -124,7 +123,7 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
 
 
     @Resource
-    private ExecutorProvider executorProvider;
+    private TaskManager taskManager;
     @Resource
     private CommonTestControl commonTestControl;
     @Resource
@@ -369,7 +368,8 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
 
         // Create the search result collector.
         final StatStoreSearchResultCollector searchResultCollector = new StatStoreSearchResultCollector(
-                executorProvider.getExecutor(),
+                ServerTask.INTERNAL_PROCESSING_USER_TOKEN,
+                taskManager,
                 taskContext,
                 "mySearch",
                 search,

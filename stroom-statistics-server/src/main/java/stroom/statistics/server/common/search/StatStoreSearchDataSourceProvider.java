@@ -26,27 +26,26 @@ import stroom.query.shared.Search;
 import stroom.query.shared.SearchRequest;
 import stroom.statistics.common.StatisticStoreCache;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
+import stroom.task.server.TaskManager;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.concurrent.Executor;
 
 @Component
 public class StatStoreSearchDataSourceProvider implements SearchDataSourceProvider {
-    private final ExecutorProvider executorProvider;
+    private final TaskManager taskManager;
     private final TaskContext taskContext;
     private final StatisticStoreCache statisticsDataSourceCache;
     private final Provider<StatStoreSearchTaskHandler> statStoreSearchTaskHandlerProvider;
 
     @Inject
     public StatStoreSearchDataSourceProvider(
-            final ExecutorProvider executorProvider,
+            final TaskManager taskManager,
             final TaskContext taskContext,
             final StatisticStoreCache statisticsDataSourceCache,
             final Provider<StatStoreSearchTaskHandler> statStoreSearchTaskHandlerProvider) {
-        this.executorProvider = executorProvider;
+        this.taskManager = taskManager;
         this.taskContext = taskContext;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statStoreSearchTaskHandlerProvider = statStoreSearchTaskHandlerProvider;
@@ -76,11 +75,9 @@ public class StatStoreSearchDataSourceProvider implements SearchDataSourceProvid
         // Create a handler for search results.
         final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorMap);
 
-        // Create the search result collector.
-        final Executor executor = executorProvider.getExecutor();
-
-        final StatStoreSearchResultCollector searchResultCollector = new StatStoreSearchResultCollector(
-                executor,
+        return new StatStoreSearchResultCollector(
+                userToken,
+                taskManager,
                 taskContext,
                 searchName,
                 search,
@@ -88,8 +85,6 @@ public class StatStoreSearchDataSourceProvider implements SearchDataSourceProvid
                 coprocessorMap.getMap(),
                 statStoreSearchTaskHandlerProvider,
                 resultHandler);
-
-        return searchResultCollector;
     }
 
     @Override

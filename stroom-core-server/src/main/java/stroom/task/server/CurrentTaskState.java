@@ -42,10 +42,7 @@ final class CurrentTaskState {
     }
 
     static void popState() {
-        final Link<TaskState> link = THREAD_LOCAL.get();
-        if (link != null) {
-            THREAD_LOCAL.set(link.getParent());
-        }
+        THREAD_LOCAL.set(THREAD_LOCAL.get().getParent());
     }
 
     private static TaskState currentState() {

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#761** : Fixed statistic searches failing to search more than once.
+
 ## [v5.3.1] - 2018-05-09
 
 * Issue **#756** : Fix for state being held by `InheritableThreadLocal` causing objects to be held in memory longer than necessary.
