@@ -15,6 +15,7 @@ class StreamTask {
     private Integer eventCount;
     private String status;
     private Boolean enabled; //TODO: Updatable?
+    private String filterXml;
 
     // Supporting data
     private Long filterId;
@@ -101,6 +102,10 @@ class StreamTask {
         return filterName;
     }
 
+    public String getFilterXml() {
+        return filterXml;
+    }
+
     public static final class StreamTaskBuilder {
         // Most important data, probably
         private String filterName;
@@ -115,6 +120,7 @@ class StreamTask {
         private Integer eventCount;
         private String status;
         private Boolean enabled; //TODO: Updatable?
+        private String filterXml;
         // Supporting data
         private Long filterId;
         private String createUser;
@@ -191,6 +197,11 @@ class StreamTask {
             return this;
         }
 
+        public StreamTaskBuilder withFilterXml(String filterXml) {
+            this.filterXml = filterXml;
+            return this;
+        }
+
         public StreamTaskBuilder withFilterId(Long filterId) {
             this.filterId = filterId;
             return this;
@@ -228,25 +239,26 @@ class StreamTask {
 
         public StreamTask build() {
             StreamTask streamTask = new StreamTask();
-            streamTask.streamCount = this.streamCount;
-            streamTask.lastPollAge = this.lastPollAge;
-            streamTask.updateUser = this.updateUser;
+            streamTask.priority = this.priority;
+            streamTask.trackerPercent = this.trackerPercent;
+            streamTask.minEventId = this.minEventId;
+            streamTask.pipelineName = this.pipelineName;
+            streamTask.pipelineId = this.pipelineId;
+            streamTask.minStreamId = this.minStreamId;
+            streamTask.status = this.status;
             streamTask.createUser = this.createUser;
             streamTask.eventCount = this.eventCount;
             streamTask.updatedOn = this.updatedOn;
-            streamTask.pipelineId = this.pipelineId;
+            streamTask.lastPollAge = this.lastPollAge;
+            streamTask.streamCount = this.streamCount;
+            streamTask.taskCount = this.taskCount;
+            streamTask.enabled = this.enabled;
+            streamTask.trackerMs = this.trackerMs;
+            streamTask.updateUser = this.updateUser;
             streamTask.createdOn = this.createdOn;
-            streamTask.status = this.status;
-            streamTask.minStreamId = this.minStreamId;
+            streamTask.filterXml = this.filterXml;
             streamTask.filterId = this.filterId;
             streamTask.filterName = this.filterName;
-            streamTask.pipelineName = this.pipelineName;
-            streamTask.enabled = this.enabled;
-            streamTask.trackerPercent = this.trackerPercent;
-            streamTask.minEventId = this.minEventId;
-            streamTask.trackerMs = this.trackerMs;
-            streamTask.taskCount = this.taskCount;
-            streamTask.priority = this.priority;
             return streamTask;
         }
     }

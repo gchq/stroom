@@ -42,7 +42,6 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PATCH;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -193,9 +192,7 @@ public class StreamTaskResource implements HasHealthCheck {
             StreamTask.StreamTaskBuilder builder = StreamTask.StreamTaskBuilder.aStreamTask();
 
             // Indented to make the source easier to read
-
             builder
-//                    .withFilterName(     filter.getStreamProcessor().get) //?
                     .withPipelineName(   filter.getStreamProcessor().getPipeline().getName())
                     .withPipelineId(     filter.getStreamProcessor().getPipeline().getId())
                     .withPriority(       filter.getPriority())
@@ -204,7 +201,8 @@ public class StreamTaskResource implements HasHealthCheck {
                     .withCreateUser(     filter.getCreateUser())
                     .withCreatedOn(      filter.getCreateTime())
                     .withUpdateUser(     filter.getUpdateUser())
-                    .withUpdatedOn(      filter.getUpdateTime());
+                    .withUpdatedOn(      filter.getUpdateTime())
+                    .withFilterXml(      filter.getData());
 
             if(filter.getStreamProcessorFilterTracker() != null) {
                 builder.withTrackerMs(filter.getStreamProcessorFilterTracker().getStreamCreateMs())
