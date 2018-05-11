@@ -21,6 +21,14 @@ else
     # Increase the size of the heap
     export JAVA_OPTS=-Xmx1024m
 
+    echo "Clone our event-logging repo"
+    git clone https://github.com/gchq/event-logging.git
+    pushd event-logging
+    git checkout 3.0
+    echo "Building event-logging"
+    mvn clean install
+    popd
+
     echo "Clone our stroom-resources repo"
     git clone https://github.com/gchq/stroom-resources.git
     pushd stroom-resources/bin
