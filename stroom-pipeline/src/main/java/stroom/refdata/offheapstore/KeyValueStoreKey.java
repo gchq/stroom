@@ -17,8 +17,6 @@
 
 package stroom.refdata.offheapstore;
 
-import stroom.refdata.saxevents.uid.UID;
-
 import java.util.Objects;
 
 public class KeyValueStoreKey {

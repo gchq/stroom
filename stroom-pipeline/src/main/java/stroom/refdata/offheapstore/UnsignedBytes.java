@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.saxevents.uid;
+package stroom.refdata.offheapstore;
 
 public class UnsignedBytes {
     private static final byte[] ZERO_BYTES = new byte[0];

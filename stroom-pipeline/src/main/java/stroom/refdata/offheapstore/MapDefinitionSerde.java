@@ -32,7 +32,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
-public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
+class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionSerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionSerde.class);

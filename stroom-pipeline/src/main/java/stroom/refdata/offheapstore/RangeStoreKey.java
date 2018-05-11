@@ -18,7 +18,6 @@
 package stroom.refdata.offheapstore;
 
 import stroom.entity.shared.Range;
-import stroom.refdata.saxevents.uid.UID;
 import stroom.util.logging.LambdaLogger;
 
 import java.util.Objects;

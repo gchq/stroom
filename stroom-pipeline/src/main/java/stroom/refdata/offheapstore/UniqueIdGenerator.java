@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.saxevents.uid;
+package stroom.refdata.offheapstore;
 
 
 import java.util.Optional;

@@ -19,7 +19,6 @@ package stroom.refdata.offheapstore;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import stroom.refdata.saxevents.uid.UID;
 
 /**
  * Utility methods for working with Kryo to ensure consistency

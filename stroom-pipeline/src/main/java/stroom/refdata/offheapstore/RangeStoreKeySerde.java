@@ -27,13 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
-import stroom.refdata.saxevents.uid.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
-public class RangeStoreKeySerde extends AbstractKryoSerde<RangeStoreKey> {
+class RangeStoreKeySerde extends AbstractKryoSerde<RangeStoreKey> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreKeySerde.class);
@@ -64,9 +63,9 @@ public class RangeStoreKeySerde extends AbstractKryoSerde<RangeStoreKey> {
     }
 
     @Override
-    public ByteBuffer serialize(final RangeStoreKey object) {
+    public void serialize(final ByteBuffer byteBuffer, final RangeStoreKey rangeStoreKey) {
         // TODO how do we know how big the serialized form will be
-        return super.serialize(pool, 1_000, object);
+        super.serialize(pool, byteBuffer, rangeStoreKey);
     }
 
     private static class RangeStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<RangeStoreKey> {

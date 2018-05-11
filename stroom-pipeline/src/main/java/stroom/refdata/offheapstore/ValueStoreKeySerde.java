@@ -23,7 +23,7 @@ import stroom.refdata.lmdb.serde.Serializer;
 
 import java.nio.ByteBuffer;
 
-public class ValueStoreKeySerde implements Serde<ValueStoreKey>, Serializer<ValueStoreKey>, Deserializer<ValueStoreKey> {
+class ValueStoreKeySerde implements Serde<ValueStoreKey>, Serializer<ValueStoreKey>, Deserializer<ValueStoreKey> {
 
     @Override
     public ValueStoreKey deserialize(final ByteBuffer byteBuffer) {

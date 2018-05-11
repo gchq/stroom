@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.saxevents.uid;
+package stroom.refdata.offheapstore;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
  * byte[] that either is the complete Unique ID, or the Unique ID is a subset of it.
  * The backing array must not be mutated!
  */
-public class UID implements Comparable<UID> {
+class UID implements Comparable<UID> {
     // this is the width of the byte array used for storing the Unique ID
     // values.
     // Changing this value would require any data stored using UIDs to be

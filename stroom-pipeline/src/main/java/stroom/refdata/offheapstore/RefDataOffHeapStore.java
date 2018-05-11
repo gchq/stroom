@@ -29,7 +29,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class RefDataOffHeapStore {
@@ -41,18 +43,20 @@ public class RefDataOffHeapStore {
     private static final String VALUE_STORE_DB_NAME = "ValueStore";
     private static final String MAP_UID_STORE_FORWARD_DB_NAME = "MapUidStoreForward";
     private static final String MAP_UID_STORE_BACKWARD_DB_NAME = "MapUidStoreBackward";
-    private static final String PROCESSED_STREAMS_DB_NAME = "ProcessedMapsStore";
+    private static final String PROCESSING_INFO_DB_NAME = "ProcessingInfoMapsStore";
 
     private final Path dbDir;
     private final long maxSize;
 
     private final Env<ByteBuffer> env;
+
+    // the DBs that make up the store
     private final BasicLmdbDb<KeyValueStoreKey, ValueStoreKey> keyValueStoreDb;
-    private final rangeStoreDb;
-    private final valueStoreDb;
-    private final mapUidStoreForwardDb;
-    private final mapUidStoreBackwardDb;
-    private final processedMapsStoreDb;
+    private final BasicLmdbDb<RangeStoreKey, ValueStoreKey> rangeStoreDb;
+    private final BasicLmdbDb<ValueStoreKey, RefDataValue> valueStoreDb;
+    private final BasicLmdbDb<MapDefinition, UID> mapUidStoreForwardDb;
+    private final BasicLmdbDb<UID, MapDefinition> mapUidStoreBackwardDb;
+    private final BasicLmdbDb<UID, ProcessingInfo> processedMapsStoreDb;
 
     /**
      * @param dbDir   The directory the LMDB environment will be created in, it must already exist
@@ -71,18 +75,24 @@ public class RefDataOffHeapStore {
 
         // create all the databases
         this.keyValueStoreDb = new BasicLmdbDb<>(
-                env,
-                new KeyValueStoreKeySerde(),
-                new ValueStoreKeySerde(),
-                KEY_VALUE_STORE_DB_NAME);
-
-        rangeStoreDbi = openDbi(env, RANGE_STORE_DB_NAME);
-        valueStoreDbi = openDbi(env, VALUE_STORE_DB_NAME);
-        mapUidStoreForwardDbi = openDbi(env, MAP_UID_STORE_FORWARD_DB_NAME);
-        mapUidStoreBackwardDbi = openDbi(env, MAP_UID_STORE_BACKWARD_DB_NAME);
-        processedMapsStoreDbi = openDbi(env, PROCESSED_STREAMS_DB_NAME);
+                env, new KeyValueStoreKeySerde(), new ValueStoreKeySerde(), KEY_VALUE_STORE_DB_NAME);
+        this.rangeStoreDb = new BasicLmdbDb<>(
+                env, new RangeStoreKeySerde(), new ValueStoreKeySerde(), RANGE_STORE_DB_NAME);
+        this.valueStoreDb = new BasicLmdbDb<>(
+                env, new ValueStoreKeySerde(), new RefDataValueSerde(), VALUE_STORE_DB_NAME);
+        this.mapUidStoreForwardDb = new BasicLmdbDb<>(
+                env, new MapDefinitionSerde(), new UIDSerde(), MAP_UID_STORE_FORWARD_DB_NAME);
+        this.mapUidStoreBackwardDb = new BasicLmdbDb<>(
+                env, new UIDSerde(), new MapDefinitionSerde(), MAP_UID_STORE_BACKWARD_DB_NAME);
+        this.processedMapsStoreDb = new BasicLmdbDb<>(
+                env, new UIDSerde(), new ProcessingInfoSerde(), PROCESSING_INFO_DB_NAME);
     }
 
+    /**
+     * Performs a lookup using the passed mapDefinition and key and if not found will call the refDataValueSupplier
+     * to create a new entry for that mapDefinition, key and value. The check-and-put will be done in an atomic way
+     * so no external synchronisation is required.
+     */
     //TODO consider a bulk put method or a builder type class to check/load them all in one txn
     public void putIfAbsent(final MapDefinition mapDefinition,
                             final String key,
@@ -90,21 +100,47 @@ public class RefDataOffHeapStore {
 
     }
 
+    /**
+     * Performs a lookup using the passed mapDefinition and keyRange and if not found will call the refDataValueSupplier
+     * to create a new entry for that mapDefinition, keyRange and value. The check-and-put will be done in an atomic way
+     * so no external synchronisation is required.
+     */
     public void putIfAbsent(final MapDefinition mapDefinition,
                             final Range<Long> keyRange,
                             final Supplier<RefDataValue> refDataValueSupplier) {
 
     }
 
-    public RefDataValue getValue(final MapDefinition mapDefinition,
-                            final String key) {
+    /**
+     * Gets a value from the store for the passed mapDefinition and key. If not found returns an empty {@link Optional}.
+     */
+    public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
+                                           final String key) {
+        return Optional.empty();
     }
 
-    public void consumeValue(final MapDefinition mapDefinition,
-                             final String key,
-                             final Consumer<RefDataValue> valueConsumer) {
+    /**
+     * Performs a lookup using the passed mapDefinition and key and then applies the valueConsumer to
+     * the found value. If no value is found the valueConsumer is not called
+     */
+    public void useValue(final MapDefinition mapDefinition,
+                         final String key,
+                         final Consumer<RefDataValue> valueConsumer) {
+
+
     }
 
+    /**
+     * Performs a lookup using the passed mapDefinition and key and then applies the valueMapper to
+     * the found value, returning the value in an {@link Optional}. If no value is found an empty
+     * {@link Optional} is returned. The valueMapper will be applied inside a transaction.
+     */
+    public <T> Optional<T> map(final MapDefinition mapDefinition,
+                               final String key,
+                               final Function<RefDataValue, T> valueMapper) {
+
+        return Optional.empty();
+    }
 
 
     private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env, final String name) {
@@ -113,6 +149,9 @@ public class RefDataOffHeapStore {
     }
 
 
+    public static class RefDataLoader {
 
+        
+    }
 
 }

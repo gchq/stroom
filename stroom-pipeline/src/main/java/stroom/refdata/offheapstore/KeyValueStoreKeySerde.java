@@ -26,13 +26,12 @@ import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
-import stroom.refdata.saxevents.uid.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
-public class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
+class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreKeySerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreKeySerde.class);

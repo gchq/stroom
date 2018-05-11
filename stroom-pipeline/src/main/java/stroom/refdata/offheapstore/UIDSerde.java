@@ -20,7 +20,6 @@ package stroom.refdata.offheapstore;
 import stroom.refdata.lmdb.serde.Deserializer;
 import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.lmdb.serde.Serializer;
-import stroom.refdata.saxevents.uid.UID;
 
 import java.nio.ByteBuffer;
 

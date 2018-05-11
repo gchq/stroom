@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.saxevents.uid;
+package stroom.refdata.offheapstore;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
