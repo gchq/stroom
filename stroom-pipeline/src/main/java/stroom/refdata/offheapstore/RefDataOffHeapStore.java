@@ -17,9 +17,11 @@
 
 package stroom.refdata.offheapstore;
 
+import org.apache.hadoop.fs.ByteBufferUtil;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
+import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
@@ -89,6 +91,14 @@ public class RefDataOffHeapStore {
     }
 
     /**
+     * Returns the {@link ProcessingInfo} for the passed {@link MapDefinition}, or an empty
+     * {@link Optional} if there isn't one.
+     */
+    public Optional<ProcessingInfo> getPrcProcessingInfo(final MapDefinition mapDefinition) {
+        return Optional.empty();
+    }
+
+    /**
      * Performs a lookup using the passed mapDefinition and key and if not found will call the refDataValueSupplier
      * to create a new entry for that mapDefinition, key and value. The check-and-put will be done in an atomic way
      * so no external synchronisation is required.
@@ -149,9 +159,30 @@ public class RefDataOffHeapStore {
     }
 
 
-    public static class RefDataLoader {
+    /**
+     * Class for adding multiple items to the {@link RefDataOffHeapStore} within a single
+     * write transaction.  Must be used inside a try-with-resources block to ensure the transaction
+     * is closed, e.g.
+     * try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }
+     * The transaction will be committed when the loader is closed
+     */
+    public static class RefDataLoader implements AutoCloseable {
 
-        
+        private final Txn<ByteBufferUtil> txn;
+
+        RefDataLoader(final Env<ByteBufferUtil> lmdbEnvironment, final MapDefinition mapDefinition) {
+            this.txn = lmdbEnvironment.txnWrite();
+        }
+
+        public void put()
+
+        @Override
+        public void close() throws Exception {
+            if (txn != null) {
+                txn.commit();
+                txn.close();
+            }
+        }
     }
 
 }
