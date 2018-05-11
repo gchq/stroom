@@ -180,11 +180,10 @@ else
     echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs}${NC}]"
 
     #Do the maven build
-    # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
-    mvn --settings settings.xml dependency:go-offline
+    mvn --settings settings.xml dependency:list-repositories
 
     echo -e "${BLUE}Running maven build${NC}"
-    mvn --settings settings.xml clean install -U
+    mvn --settings settings.xml clean install 
 
     #Don't do a docker build for pull requests
     if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
