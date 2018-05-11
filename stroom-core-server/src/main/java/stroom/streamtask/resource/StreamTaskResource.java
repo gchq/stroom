@@ -37,6 +37,7 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.util.HasHealthCheck;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -113,21 +114,22 @@ public class StreamTaskResource implements HasHealthCheck {
             value = "TODO",
             response = Response.class)
     public Response getAll(
-           @NotNull @QueryParam("offset") Long offset,
-           @QueryParam("pageSize") Integer pageSize,
-           @NotNull @QueryParam("sortBy") String sortBy,
-           @NotNull @QueryParam("sortDirection") String sortDirection) {
+            @NotNull @QueryParam("offset") Long offset,
+            @QueryParam("pageSize") Integer pageSize,
+            @NotNull @QueryParam("sortBy") String sortBy,
+            @NotNull @QueryParam("sortDirection") String sortDirection,
+            @Nullable @QueryParam("filter") String filter) {
         // TODO: Authorisation
 
         final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();
 
+        // SORTING
         Sort.Direction direction;
         try {
              direction = Sort.Direction.valueOf(sortDirection.toUpperCase());
         }catch(IllegalArgumentException exception){
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortDirection field").build();
         }
-
         if(sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PIPELINE_NAME)
                 || sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PRIORITY)){
             criteria.setSort(sortBy, direction, false);
@@ -141,15 +143,21 @@ public class StreamTaskResource implements HasHealthCheck {
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortBy field").build();
         }
 
+        // PAGING
         if(offset < 0) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Page offset must be greater than 0").build();
         }
-
         if(pageSize != null && pageSize < 1){
             return Response.status(Response.Status.BAD_REQUEST).entity("Page size, if used, must be greater than 1").build();
         }
-
         criteria.setPageRequest(new PageRequest(offset, pageSize));
+
+        // FILTERING
+        if(filter != null){
+            //TODO First take out expressions
+            criteria.setPipelineNameFilter(filter);
+        }
+
 
         if (!securityContext.isAdmin()) {
             criteria.setCreateUser(securityContext.getUserId());

@@ -22,6 +22,7 @@ import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
+import stroom.entity.shared.StringCriteria;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.persist.EntityManagerSupport;
@@ -154,6 +155,7 @@ class StreamProcessorFilterServiceImpl
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items,
                                final FindStreamProcessorFilterCriteria criteria) {
+        CriteriaLoggingUtil.appendStringTerm(items, "pipelineName", criteria.getPipelineNameFilter());
         CriteriaLoggingUtil.appendRangeTerm(items, "priorityRange", criteria.getPriorityRange());
         CriteriaLoggingUtil.appendRangeTerm(items, "lastPollPeriod", criteria.getLastPollPeriod());
         CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet", criteria.getStreamProcessorIdSet());
@@ -211,6 +213,11 @@ class StreamProcessorFilterServiceImpl
         protected void appendBasicCriteria(final HqlBuilder sql, final String alias,
                                            final FindStreamProcessorFilterCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
+
+            sql.appendValueQuery(
+                    alias + ".streamProcessor.pipeline.name",
+                    new StringCriteria(criteria.getPipelineNameFilter(), StringCriteria.MatchStyle.WildStandAndEnd));
+
             sql.appendRangeQuery(alias + ".priority", criteria.getPriorityRange());
 
             sql.appendValueQuery(alias + ".streamProcessor.enabled", criteria.getStreamProcessorEnabled());
