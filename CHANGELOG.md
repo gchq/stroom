@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#761** : New fix for premature truncation of SQL stats queries due to thread interruption.
+
 ## [v5.3.2] - 2018-05-11
 
 * Issue **#761** : Fixed statistic searches failing to search more than once.
