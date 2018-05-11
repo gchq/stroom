@@ -20,14 +20,6 @@
                     <name>stroom</name>
                     <url>https://dl.bintray.com/stroom/stroom</url>
                 </repository>
-                <repository>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                    <id>event-logging</id>
-                    <name>event-logging</name>
-                    <url>https://dl.bintray.com/stroom/event-logging</url>
-                </repository>
             </repositories>
             <pluginRepositories>
                 <pluginRepository>
