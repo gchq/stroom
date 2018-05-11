@@ -42,5 +42,5 @@ deploy:
 cache:
   directories:
     - .autoconf
-    - $HOME/.m2
+    #- $HOME/.m2
 
