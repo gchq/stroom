@@ -20,6 +20,7 @@
 package stroom.streamtask.resource;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang.NotImplementedException;
@@ -50,8 +51,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Api(
         value = "stream task - /v1",
@@ -154,8 +157,19 @@ public class StreamTaskResource implements HasHealthCheck {
 
         // FILTERING
         if(filter != null){
-            //TODO First take out expressions
-            criteria.setPipelineNameFilter(filter);
+            String[] keywords = filter.split(" ");
+
+            Arrays.stream(keywords)
+                    .filter(keyword -> keyword.contains(":"))
+                    .forEach(special -> add(special, criteria));
+
+            String plainOldFilter = Arrays.stream(keywords)
+                    .filter(keyword -> !keyword.contains(":"))
+                    .collect(Collectors.joining());
+
+            if(!Strings.isNullOrEmpty(plainOldFilter)) {
+                criteria.setPipelineNameFilter(plainOldFilter);
+            }
         }
 
 
@@ -227,5 +241,18 @@ public class StreamTaskResource implements HasHealthCheck {
         }
 
         return streamTasks;
+    }
+
+    private void add(String special, FindStreamProcessorFilterCriteria criteria){
+        String[] terms = special.split(":");
+        if(terms.length == 2) {
+            if (terms[0].equalsIgnoreCase("is")) {
+                if (terms[1].equalsIgnoreCase("enabled")) {
+                    criteria.setStreamProcessorFilterEnabled(true);
+                } else if (terms[1].equalsIgnoreCase("disabled")) {
+                    criteria.setStreamProcessorFilterEnabled(false);
+                }
+            }
+        }
     }
 }
