@@ -28,6 +28,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.mapreduce.BlockingPairQueue;
 import stroom.mapreduce.PairQueue;
 import stroom.mapreduce.UnsafePairQueue;
+import stroom.node.server.StroomPropertyService;
 import stroom.query.CompiledDepths;
 import stroom.query.CompiledFields;
 import stroom.query.Item;
@@ -51,7 +52,6 @@ import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -63,20 +63,24 @@ public class StatStoreSearchTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
 
-    private static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
+    private static final String PROP_KEY_RESULT_HANDLER_BATCH_SIZE = "stroom.statistics.sql.search.resultHandlerBatchSize";
+    private static final long DEFAULT_ROWS_IN_BATCH = 5_000;
 
     private final TaskContext taskContext;
     private final SecurityContext securityContext;
     private final StatisticsSearchService statisticsSearchService;
+    private final StroomPropertyService stroomPropertyService;
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
     StatStoreSearchTaskHandler(final TaskContext taskContext,
                                final SecurityContext securityContext,
-                               final StatisticsSearchService statisticsSearchService) {
+                               final StatisticsSearchService statisticsSearchService,
+                               final StroomPropertyService stroomPropertyService) {
         this.taskContext = taskContext;
         this.securityContext = securityContext;
         this.statisticsSearchService = statisticsSearchService;
+        this.stroomPropertyService = stroomPropertyService;
     }
 
     public void exec(final String searchName,
@@ -116,13 +120,15 @@ public class StatStoreSearchTaskHandler {
                 final AtomicLong counter = new AtomicLong(0);
                 taskContext.info(searchName + " - executing database query");
 
+                long resultHandlerBatchSize = getResultHandlerBatchSize();
+
                 // subscribe to the flowable, mapping each resultSet to a String[]
                 // After the window period has elapsed a new flowable is create for those rows received 
                 // in that window, which can all be processed and sent
                 // If the task is canceled, the flowable produced by search() will stop emitting
                 // Set up the results flowable, the search wont be executed until subscribe is called
                 statisticsSearchService.search(entity, criteria, fieldIndexMap)
-                        .window(PROCESS_PAYLOAD_INTERVAL_SECS, TimeUnit.SECONDS)
+                        .window(resultHandlerBatchSize)
                         .subscribe(
                                 windowedFlowable -> {
                                     LOGGER.trace("onNext called for outer flowable");
@@ -279,5 +285,8 @@ public class StatStoreSearchTaskHandler {
         };
     }
 
+    private long getResultHandlerBatchSize() {
+        return stroomPropertyService.getLongProperty(PROP_KEY_RESULT_HANDLER_BATCH_SIZE, DEFAULT_ROWS_IN_BATCH);
+    }
 
 }
