@@ -181,6 +181,9 @@ else
 
     #Do the maven build
     # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
+    mvn dependency:go-offline
+
+    echo -e "${BLUE}Running maven build${NC}"
     mvn --settings settings.xml clean install -U
 
     #Don't do a docker build for pull requests
