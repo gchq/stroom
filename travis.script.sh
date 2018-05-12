@@ -172,16 +172,19 @@ else
         doDockerBuild=true
     fi
 
+    cd ${TRAVIS_BUILD_DIR}
+
     echo -e "VERSION FIXED DOCKER TAG:      [${GREEN}${VERSION_FIXED_TAG}${NC}]"
     echo -e "SNAPSHOT FLOATING DOCKER TAG:  [${GREEN}${SNAPSHOT_FLOATING_TAG}${NC}]"
     echo -e "MAJOR VER FLOATING DOCKER TAG: [${GREEN}${MAJOR_VER_FLOATING_TAG}${NC}]"
     echo -e "MINOR VER FLOATING DOCKER TAG: [${GREEN}${MINOR_VER_FLOATING_TAG}${NC}]"
     echo -e "doDockerBuild:                 [${GREEN}${doDockerBuild}${NC}]"
     echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs}${NC}]"
+    echo -e "PWD:                           [${GREEN}$(pwd)${NC}]"
 
     #Do the maven build
     #mvn --settings settings.xml dependency:list-repositories
-    mvn dependency:list-repositories
+    #mvn dependency:list-repositories
 
     echo -e "${BLUE}Running maven build${NC}"
     #mvn --settings settings.xml clean install 

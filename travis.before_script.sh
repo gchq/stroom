@@ -12,7 +12,7 @@ BLUE='\033[1;34m'
 NC='\033[0m' # No Colour 
 
 echo -e "TRAVIS_EVENT_TYPE:   [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
-echo -e "PWD:                 [$(pwd)]"
+echo -e "PWD:                 [${GREEN}$(pwd)${NC}]"
 
 if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
     echo "Cron build so don't set up gradle plugins or docker containers"
@@ -21,8 +21,8 @@ else
     # Increase the size of the heap
     export JAVA_OPTS=-Xmx1024m
 
-    mkdir -p ~/.m2/repository
-    cp ~/stroom/settings.xml ~/.m2/
+    mkdir -p ~/.m2
+    cp ${TRAVIS_BUILD_DIR}/settings.xml ~/.m2/
 
     echo "Clone our event-logging repo"
     cd ~
