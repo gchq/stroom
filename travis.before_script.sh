@@ -21,6 +21,9 @@ else
     # Increase the size of the heap
     export JAVA_OPTS=-Xmx1024m
 
+    mkdir -p ~/.m2/repository
+    cp ~/stroom/settings.xml ~/.m2/
+
     echo "Clone our event-logging repo"
     cd ~
     git clone https://github.com/gchq/event-logging.git
