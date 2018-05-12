@@ -180,10 +180,12 @@ else
     echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs}${NC}]"
 
     #Do the maven build
-    mvn --settings settings.xml dependency:list-repositories
+    #mvn --settings settings.xml dependency:list-repositories
+    mvn dependency:list-repositories
 
     echo -e "${BLUE}Running maven build${NC}"
-    mvn --settings settings.xml clean install 
+    #mvn --settings settings.xml clean install 
+    mvn clean install 
 
     #Don't do a docker build for pull requests
     if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then

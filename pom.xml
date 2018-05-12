@@ -33,6 +33,15 @@
     ~ See the License for the specific language governing permissions and
     ~ limitations under the License.
   -->
+
+  <repositories>
+      <repository>
+          <id>stroom</id>
+          <name>stroom</name>
+          <url>https://dl.bintray.com/stroom/stroom</url>
+      </repository>
+  </repositories>
+
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>stroom</groupId>
