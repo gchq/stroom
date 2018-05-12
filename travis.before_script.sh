@@ -33,6 +33,11 @@ else
     mvn clean install
     cd ~
 
+    echo "Listing stroom dirs in ~/.m2"
+    find ~/.m2 -type d | grep stroom
+    echo "Listing event-logging dirs in ~/.m2"
+    find ~/.m2 -type d | grep "event-logging"
+
     echo "Clone our stroom-resources repo"
     git clone https://github.com/gchq/stroom-resources.git
     cd stroom-resources/bin
