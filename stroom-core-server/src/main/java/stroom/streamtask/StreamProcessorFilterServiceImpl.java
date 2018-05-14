@@ -214,23 +214,25 @@ class StreamProcessorFilterServiceImpl
                                            final FindStreamProcessorFilterCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
+            sql.appendRangeQuery(alias + ".priority", criteria.getPriorityRange());
+            sql.appendValueQuery(alias + ".enabled", criteria.getStreamProcessorFilterEnabled());
+            sql.appendValueQuery(alias + ".createUser", criteria.getCreateUser());
+
+            sql.appendEntityIdSetQuery(alias + ".streamProcessor", criteria.getStreamProcessorIdSet());
+            sql.appendValueQuery(alias + ".streamProcessor.enabled", criteria.getStreamProcessorEnabled());
+            sql.appendEntityIdSetQuery(alias + ".streamProcessor.pipeline", criteria.getPipelineIdSet());
             sql.appendValueQuery(
                     alias + ".streamProcessor.pipeline.name",
                     new StringCriteria(criteria.getPipelineNameFilter(), StringCriteria.MatchStyle.WildStandAndEnd));
 
-            sql.appendRangeQuery(alias + ".priority", criteria.getPriorityRange());
-
-            sql.appendValueQuery(alias + ".streamProcessor.enabled", criteria.getStreamProcessorEnabled());
-
-            sql.appendValueQuery(alias + ".enabled", criteria.getStreamProcessorFilterEnabled());
-
-            sql.appendRangeQuery(alias + ".streamProcessorFilterTracker.lastPollMs", criteria.getLastPollPeriod());
-
-            sql.appendEntityIdSetQuery(alias + ".streamProcessor.pipeline", criteria.getPipelineIdSet());
-
-            sql.appendEntityIdSetQuery(alias + ".streamProcessor", criteria.getStreamProcessorIdSet());
-
-            sql.appendValueQuery(alias + ".createUser", criteria.getCreateUser());
+            sql.appendRangeQuery(alias + ".streamProcessorFilterTracker.lastPollMs",
+                    criteria.getLastPollPeriod());
+            StringCriteria statusStringCriteria = new StringCriteria(criteria.getStatus(),
+                    StringCriteria.MatchStyle.WildEnd);
+            if(criteria.getStatus() == "") {
+                statusStringCriteria.setMatchNull(true);
+            }
+            sql.appendValueQuery(alias + ".streamProcessorFilterTracker.status", statusStringCriteria);
         }
 
         @Override

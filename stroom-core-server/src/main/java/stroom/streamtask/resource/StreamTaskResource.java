@@ -36,6 +36,7 @@ import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.util.HasHealthCheck;
 
 import javax.annotation.Nullable;
@@ -251,6 +252,12 @@ public class StreamTaskResource implements HasHealthCheck {
                     criteria.setStreamProcessorFilterEnabled(true);
                 } else if (terms[1].equalsIgnoreCase("disabled")) {
                     criteria.setStreamProcessorFilterEnabled(false);
+                }
+
+                else if (terms[1].equalsIgnoreCase("complete")) {
+                    criteria.setStatus(StreamProcessorFilterTracker.COMPLETE);
+                } else if (terms[1].equalsIgnoreCase("incomplete")) {
+                    criteria.setStatus("");
                 }
             }
         }
