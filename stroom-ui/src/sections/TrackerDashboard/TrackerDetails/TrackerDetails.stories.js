@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-import { combineReducers } from 'redux';
-import { routerReducer } from 'react-router-redux';
-import {
-  authenticationReducer as authentication,
-  authorisationReducer as authorisation,
-} from 'components/Authentication';
-import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
-import config from './config';
+import React from 'react';
+import { storiesOf } from '@storybook/react';
 
-export default combineReducers({
-  routing: routerReducer,
-  authentication,
-  authorisation,
-  config,
-  trackerDashboard,
-});
+import StoryRouter from 'storybook-react-router';
+import { Provider } from 'components/storybookReduxDecorator';
+
+import TrackerDetails from './TrackerDetails';
+
+storiesOf('TrackerDetails', module)
+  .addDecorator(story => <Provider story={story()} />)
+  .addDecorator(StoryRouter())
+  .add('basic', () => <TrackerDetails />);

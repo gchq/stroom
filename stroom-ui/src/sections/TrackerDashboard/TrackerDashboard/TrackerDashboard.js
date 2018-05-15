@@ -25,7 +25,7 @@ import 'semantic-ui-css/semantic.min.css';
 import { sortByOptions, directions, actionCreators } from '../redux';
 import { fetchTrackers } from '../streamTasksResourceClient'
 
-import TrackerDetails from '../TrackerDetails'
+import TrackerDetails from '../TrackerDetails/TrackerDetails'
 import './TrackerDashboard.css';
 
 class TrackerDashboard extends Component {
