@@ -24,8 +24,9 @@ import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang.NotImplementedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Sort;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Security;
@@ -63,6 +64,7 @@ import java.util.stream.Collectors;
 @Path("/streamtasks/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements HasHealthCheck {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskResource.class);
 
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
@@ -117,8 +119,8 @@ public class StreamTaskResource implements HasHealthCheck {
     @ApiOperation(
             value = "TODO",
             response = Response.class)
-    public Response getAll(
-            @NotNull @QueryParam("offset") Long offset,
+    public Response fetch(
+            @NotNull @QueryParam("offset") Integer offset,
             @QueryParam("pageSize") Integer pageSize,
             @NotNull @QueryParam("sortBy") String sortBy,
             @NotNull @QueryParam("sortDirection") String sortDirection,
@@ -154,7 +156,6 @@ public class StreamTaskResource implements HasHealthCheck {
         if(pageSize != null && pageSize < 1){
             return Response.status(Response.Status.BAD_REQUEST).entity("Page size, if used, must be greater than 1").build();
         }
-        criteria.setPageRequest(new PageRequest(offset, pageSize));
 
         // FILTERING
         if(filter != null){
@@ -181,6 +182,7 @@ public class StreamTaskResource implements HasHealthCheck {
         criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
         criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
 
+        // We have to load everything because we need to sort by progress, and we can't do that on the database.
         final List<StreamTask> values = find(criteria);
 
         if(sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
@@ -192,7 +194,17 @@ public class StreamTaskResource implements HasHealthCheck {
             }
         }
 
-        return Response.ok(values).build();
+        int from = offset * pageSize;
+        int to = (offset * pageSize) + pageSize;
+        if(values.size() <= to){
+            to = values.size();
+        }
+        // PAGING
+        List<StreamTask> pageToReturn = values.subList(from, to);
+
+        final StreamTasks response = new StreamTasks(pageToReturn, values.size());
+
+        return Response.ok(response).build();
     }
 
     @Override
@@ -206,6 +218,7 @@ public class StreamTaskResource implements HasHealthCheck {
     }
 
     private List<StreamTask> find(final FindStreamProcessorFilterCriteria criteria){
+
         final BaseResultList<StreamProcessorFilter> streamProcessorFilters = streamProcessorFilterService
                 .find(criteria);
 
