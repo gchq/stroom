@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v5.3.4] - 2018-05-15
 
-* Issue **#770** : Speculative fix for memory leak in SQL Stats queries
+* Issue **#766** : Fix NullPointerExceptions when downloading table results to Excel format.
+
+* Issue **#770** : Speculative fix for memory leak in SQL Stats queries.
 
 ## [v5.3.3] - 2018-05-11
 
