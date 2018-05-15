@@ -33,6 +33,7 @@ import stroom.query.shared.NumberFormatSettings;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.Optional;
 
 public class ExcelTarget implements SearchResultWriter.Target {
     // Excel cannot store more than 32767 characters in a cell so we must truncate some values.
@@ -124,8 +125,10 @@ public class ExcelTarget implements SearchResultWriter.Target {
 
                 switch (type) {
                     case TEXT:
-                        cell.setCellValue(getText(value));
-                        cell.setCellType(Cell.CELL_TYPE_STRING);
+                        getText(value).ifPresent(str -> {
+                            cell.setCellValue(str);
+                            cell.setCellType(Cell.CELL_TYPE_STRING);
+                        });
                         break;
                     case NUMBER:
                         number(wb, cell, value, settings);
@@ -146,7 +149,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
         if (dbl != null) {
             cell.setCellValue(dbl);
         } else {
-            cell.setCellValue(getText(value));
+            getText(value).ifPresent(cell::setCellValue);
         }
     }
 
@@ -175,7 +178,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
             cell.setCellStyle(cs);
 
         } else {
-            cell.setCellValue(getText(value));
+            getText(value).ifPresent(cell::setCellValue);
         }
     }
 
@@ -209,15 +212,19 @@ public class ExcelTarget implements SearchResultWriter.Target {
                 cell.setCellStyle(cs);
             }
         } else {
-            cell.setCellValue(getText(value));
+            getText(value).ifPresent(cell::setCellValue);
         }
     }
 
-    private String getText(final Val value) {
-        String text = value.toString();
-        if (text.length() > EXCEL_MAX_CELL_CHARACTERS) {
-            text = text.substring(0, TRUNCATED_LENGTH) + TRUNCATION_MARKER;
-        }
-        return text;
+    private Optional<String> getText(final Val value) {
+        return Optional.ofNullable(value)
+                .flatMap(val -> Optional.ofNullable(val.toString()))
+                .map(text -> {
+                    if (text.length() > EXCEL_MAX_CELL_CHARACTERS) {
+                        return text.substring(0, TRUNCATED_LENGTH) + TRUNCATION_MARKER;
+                    } else {
+                        return text;
+                    }
+                });
     }
 }
