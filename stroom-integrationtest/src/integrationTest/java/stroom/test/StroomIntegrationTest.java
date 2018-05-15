@@ -145,7 +145,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
         }
     }
 
-    void importSchemas(final boolean force) {
+    public void importSchemas(final boolean force) {
         if (force || !XML_SCHEMAS_DOWNLOADED) {
             contentImportService.importXmlSchemas();
             XML_SCHEMAS_DOWNLOADED = true;

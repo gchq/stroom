@@ -21,6 +21,7 @@ import stroom.dashboard.shared.DateTimeFormatSettings;
 import stroom.dashboard.shared.FormatSettings;
 import stroom.dashboard.shared.TimeZone;
 import stroom.dashboard.shared.TimeZone.Use;
+import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
 
 import java.time.Instant;
@@ -81,7 +82,7 @@ public class DateFormatter implements Formatter {
             zone = ZoneOffset.ofHoursMinutes(offsetHours, offsetMinutes);
         }
 
-        final DateTimeFormatter format = DateTimeFormatter.ofPattern(pattern);
+        final DateTimeFormatter format = DateFormatterCache.getFormatter(pattern);
         return new DateFormatter(format);
     }
 
