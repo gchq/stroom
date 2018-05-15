@@ -34,19 +34,6 @@ public class DefaultProperties {
                 .description("Temp folder to write stuff to. Should only be set per node in application property file")
                 .build());
 
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.offHeapData.parentDir")
-                .value("${stroom.temp}/offHeapData")
-                .description("Parent directory for all offHeap node specific memory persistence")
-                .editable(false)
-                .build());
-
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.offHeapData.internPool.maxDbSize")
-                .value(Long.toString(ByteSizeUnit.GIBIBYTE.longBytes(10)))
-                .description("The maximum size in bytes for each off heap intern pool database")
-                .editable(false)
-                .build());
 
         // Stroom Proxy Repository and Aggregation
         list.add(new GlobalProperty.Builder()
@@ -1311,6 +1298,24 @@ public class DefaultProperties {
                 .description("How often should the stroom proxy store be rolled")
                 .editable(true)
                 .build());
+
+        // ========================================START===========================================
+        // Reference data loader properties
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.localDir")
+                .value("${stroom.temp}/refDataOffHeapStore")
+                .description("The full directory path (must be on local disk) to use for storing the reference data store. The directory will be created if it doesn't exist")
+                .editable(false)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.maxStoreSize")
+                .value(Long.toString(ByteSizeUnit.GIBIBYTE.longBytes(10)))
+                .description("The maximum size in bytes for the ref loader off heap store. There must be available space on the disk to accommodate this size.")
+                .editable(false)
+                .build());
+        // ========================================END===========================================
 
         return Collections.unmodifiableList(list);
     }

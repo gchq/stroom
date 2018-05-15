@@ -22,6 +22,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.query.api.v2.DocRef;
+import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.saxevents.EventListValue;
 import stroom.refdata.saxevents.StringValue;
 import stroom.refdata.saxevents.ValueProxy;
@@ -57,6 +58,7 @@ public class ReferenceData {
     private final StreamHolder streamHolder;
     private final ContextDataLoader contextDataLoader;
     private final DocumentPermissionCache documentPermissionCache;
+    private final RefDataStore refDataStore;
 
     @Inject
     ReferenceData(final EffectiveStreamCache effectiveStreamCache,
@@ -64,13 +66,15 @@ public class ReferenceData {
                   final FeedHolder feedHolder,
                   final StreamHolder streamHolder,
                   final ContextDataLoader contextDataLoader,
-                  final DocumentPermissionCache documentPermissionCache) {
+                  final DocumentPermissionCache documentPermissionCache,
+                  final RefDataStore refDataStore) {
         this.effectiveStreamCache = effectiveStreamCache;
         this.mapStoreCache = mapStoreCache;
         this.feedHolder = feedHolder;
         this.streamHolder = streamHolder;
         this.contextDataLoader = contextDataLoader;
         this.documentPermissionCache = documentPermissionCache;
+        this.refDataStore = refDataStore;
     }
 
     /**

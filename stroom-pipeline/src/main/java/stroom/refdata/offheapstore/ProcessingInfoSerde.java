@@ -35,7 +35,7 @@ class ProcessingInfoSerde implements
         final long effectiveTimeEpochMs = byteBuffer.getLong();
         final byte processtingStateId = byteBuffer.get();
         final ProcessingInfo.ProcessingState processingState = ProcessingInfo.ProcessingState.valueOf(processtingStateId);
-        return new ProcessingInfo(createTimeEpochMs, effectiveTimeEpochMs, processingState);
+        return new ProcessingInfo(createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, processingState);
     }
 
     @Override

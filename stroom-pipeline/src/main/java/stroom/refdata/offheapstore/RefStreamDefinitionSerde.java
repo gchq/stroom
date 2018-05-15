@@ -25,16 +25,18 @@ import com.esotericsoftware.kryo.pool.KryoPool;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.query.api.v2.DocRef;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
-class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
+public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinition> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionSerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionSerde.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RefStreamDefinitionSerde.class);
+    private static final LambdaLogger LAMBDA_LOGGER= LambdaLoggerFactory.getLogger(RefStreamDefinitionSerde.class);
 
     private static final KryoFactory kryoFactory = () -> {
         Kryo kryo = new Kryo();
@@ -42,9 +44,9 @@ class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
             LAMBDA_LOGGER.debug(() -> String.format("Initialising Kryo on thread %s",
                     Thread.currentThread().getName()));
 
-            kryo.register(MapDefinition.class, new MapDefinitionKryoSerializer());
-            ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy()).setFallbackInstantiatorStrategy(
-                    new StdInstantiatorStrategy());
+            kryo.register(RefStreamDefinition.class, new RefStreamDefinitionKryoSerializer());
+            ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy())
+                    .setFallbackInstantiatorStrategy(new StdInstantiatorStrategy());
             kryo.setRegistrationRequired(true);
         } catch (Exception e) {
             LOGGER.error("Exception occurred configuring kryo instance", e);
@@ -57,34 +59,34 @@ class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
             .build();
 
     @Override
-    public MapDefinition deserialize(final ByteBuffer byteBuffer) {
+    public RefStreamDefinition deserialize(final ByteBuffer byteBuffer) {
         return super.deserialize(pool, byteBuffer);
     }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final MapDefinition object) {
+    public void serialize(final ByteBuffer byteBuffer, final RefStreamDefinition object) {
         super.serialize(pool, byteBuffer, object);
     }
 
-    static class MapDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<MapDefinition> {
+    static class RefStreamDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<RefStreamDefinition> {
 
-        private final RefStreamDefinitionSerde.RefStreamDefinitionKryoSerializer refStreamDefinitionSerializer;
+        @Override
+        public void write(final Kryo kryo, final Output output, final RefStreamDefinition refStreamDefinition) {
+            output.writeString(refStreamDefinition.getPipelineDocRef().getUuid());
+            output.writeString(refStreamDefinition.getPipelineDocRef().getType());
+            output.writeByte(refStreamDefinition.getPipelineVersion());
 
-        MapDefinitionKryoSerializer() {
-            this.refStreamDefinitionSerializer = new RefStreamDefinitionSerde.RefStreamDefinitionKryoSerializer();
+            // write as variable length bytes as we don't require fixed width
+            output.writeLong(refStreamDefinition.getStreamId(), true);
         }
 
         @Override
-        public void write(final Kryo kryo, final Output output, final MapDefinition mapDefinition) {
-            refStreamDefinitionSerializer.write(kryo, output, mapDefinition.getRefStreamDefinition());
-            output.writeString(mapDefinition.getMapName());
-        }
-
-        @Override
-        public MapDefinition read(final Kryo kryo, final Input input, final Class<MapDefinition> type) {
-            RefStreamDefinition refStreamDefinition = refStreamDefinitionSerializer.read(kryo, input, RefStreamDefinition.class);
-            final String mapName = input.readString();
-            return new MapDefinition(refStreamDefinition, mapName);
+        public RefStreamDefinition read(final Kryo kryo, final Input input, final Class<RefStreamDefinition> type) {
+            final String pipelineUuid = input.readString();
+            final String pipelineType = input.readString();
+            final byte pipelineVersion = input.readByte();
+            final long streamId = input.readLong();
+            return new RefStreamDefinition(new DocRef(pipelineUuid, pipelineType), pipelineVersion, streamId);
         }
     }
 }

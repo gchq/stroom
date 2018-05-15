@@ -30,28 +30,32 @@ public class MapDefinition {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinition.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinition.class);
 
-    public static final int UUID_BYTES_LENGTH = 16;
-
-    private final DocRef pipelineDocRef;
-    private final long streamId;
+    private final RefStreamDefinition refStreamDefinition;
     private final String mapName;
 
-    MapDefinition(final DocRef pipelineDocRef, final long streamId, final String mapName) {
-        this.pipelineDocRef = pipelineDocRef;
-        this.streamId = streamId;
+    MapDefinition(final RefStreamDefinition refStreamDefinition, final String mapName) {
+        this.refStreamDefinition = refStreamDefinition;
         this.mapName = mapName;
     }
 
     DocRef getPipelineDocRef() {
-        return pipelineDocRef;
+        return refStreamDefinition.getPipelineDocRef();
+    }
+
+    byte getPipelineVersion() {
+        return refStreamDefinition.getPipelineVersion();
     }
 
     long getStreamId() {
-        return streamId;
+        return refStreamDefinition.getStreamId();
     }
 
     String getMapName() {
         return mapName;
+    }
+
+    RefStreamDefinition getRefStreamDefinition() {
+        return refStreamDefinition;
     }
 
     @Override
@@ -59,24 +63,21 @@ public class MapDefinition {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final MapDefinition that = (MapDefinition) o;
-        return streamId == that.streamId &&
-                Objects.equals(pipelineDocRef, that.pipelineDocRef) &&
+        return Objects.equals(refStreamDefinition, that.refStreamDefinition) &&
                 Objects.equals(mapName, that.mapName);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(pipelineDocRef, streamId, mapName);
+        return Objects.hash(refStreamDefinition, mapName);
     }
 
     @Override
     public String toString() {
         return "MapDefinition{" +
-                "pipelineDocRef=" + pipelineDocRef +
-                ", streamId=" + streamId +
+                "refStreamDefinition=" + refStreamDefinition +
                 ", mapName='" + mapName + '\'' +
                 '}';
     }
-
 }

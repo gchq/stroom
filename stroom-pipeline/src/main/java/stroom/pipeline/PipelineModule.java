@@ -28,6 +28,8 @@ import stroom.importexport.ImportExportHelper;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
+import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.security.SecurityContext;
 import stroom.persist.EntityManagerSupport;
 import stroom.task.TaskHandler;
@@ -44,6 +46,7 @@ public class PipelineModule extends AbstractModule {
         bind(TextConverterService.class).to(TextConverterServiceImpl.class);
         bind(URIResolver.class).to(CustomURIResolver.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
+        bind(RefDataStore.class).toProvider(RefDataStoreProvider.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.pipeline.FetchDataHandler.class);

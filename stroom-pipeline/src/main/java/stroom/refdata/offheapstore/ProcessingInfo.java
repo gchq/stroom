@@ -24,17 +24,26 @@ import java.util.Objects;
 public class ProcessingInfo {
 
     private final long createTimeEpochMs;
+    private final long lastAccessedTimeEpochMs;
     private final long effectiveTimeEpochMs;
     private final ProcessingState processingState;
 
-    ProcessingInfo(final long createTimeEpochMs, final long effectiveTimeEpochMs, final ProcessingState processingState) {
+    ProcessingInfo(final long createTimeEpochMs,
+                   final long lastAccessedTimeEpochMs,
+                   final long effectiveTimeEpochMs,
+                   final ProcessingState processingState) {
         this.createTimeEpochMs = createTimeEpochMs;
+        this.lastAccessedTimeEpochMs = lastAccessedTimeEpochMs;
         this.effectiveTimeEpochMs = effectiveTimeEpochMs;
         this.processingState = processingState;
     }
 
     ProcessingInfo updateState(final ProcessingState newProcessingState) {
-        return new ProcessingInfo(createTimeEpochMs, effectiveTimeEpochMs, newProcessingState);
+        return new ProcessingInfo(createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, newProcessingState);
+    }
+
+    ProcessingInfo updateLastAccessedTime() {
+        return new ProcessingInfo(createTimeEpochMs, System.currentTimeMillis(), effectiveTimeEpochMs, processingState);
     }
 
     long getCreateTimeEpochMs() {

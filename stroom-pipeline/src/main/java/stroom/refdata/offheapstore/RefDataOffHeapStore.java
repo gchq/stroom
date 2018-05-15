@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class RefDataOffHeapStore {
+public class RefDataOffHeapStore implements RefDataStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
@@ -94,7 +94,8 @@ public class RefDataOffHeapStore {
      * Returns the {@link ProcessingInfo} for the passed {@link MapDefinition}, or an empty
      * {@link Optional} if there isn't one.
      */
-    public Optional<ProcessingInfo> getPrcProcessingInfo(final MapDefinition mapDefinition) {
+    @Override
+    public Optional<ProcessingInfo> getProcessingInfo(final MapDefinition mapDefinition) {
         return Optional.empty();
     }
 
@@ -104,6 +105,7 @@ public class RefDataOffHeapStore {
      * so no external synchronisation is required.
      */
     //TODO consider a bulk put method or a builder type class to check/load them all in one txn
+    @Override
     public void putIfAbsent(final MapDefinition mapDefinition,
                             final String key,
                             final Supplier<RefDataValue> refDataValueSupplier) {
@@ -115,6 +117,7 @@ public class RefDataOffHeapStore {
      * to create a new entry for that mapDefinition, keyRange and value. The check-and-put will be done in an atomic way
      * so no external synchronisation is required.
      */
+    @Override
     public void putIfAbsent(final MapDefinition mapDefinition,
                             final Range<Long> keyRange,
                             final Supplier<RefDataValue> refDataValueSupplier) {
@@ -124,6 +127,7 @@ public class RefDataOffHeapStore {
     /**
      * Gets a value from the store for the passed mapDefinition and key. If not found returns an empty {@link Optional}.
      */
+    @Override
     public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
                                            final String key) {
         return Optional.empty();
@@ -133,9 +137,10 @@ public class RefDataOffHeapStore {
      * Performs a lookup using the passed mapDefinition and key and then applies the valueConsumer to
      * the found value. If no value is found the valueConsumer is not called
      */
-    public void useValue(final MapDefinition mapDefinition,
-                         final String key,
-                         final Consumer<RefDataValue> valueConsumer) {
+    @Override
+    public void consumeValue(final MapDefinition mapDefinition,
+                             final String key,
+                             final Consumer<RefDataValue> valueConsumer) {
 
 
     }
@@ -145,6 +150,7 @@ public class RefDataOffHeapStore {
      * the found value, returning the value in an {@link Optional}. If no value is found an empty
      * {@link Optional} is returned. The valueMapper will be applied inside a transaction.
      */
+    @Override
     public <T> Optional<T> map(final MapDefinition mapDefinition,
                                final String key,
                                final Function<RefDataValue, T> valueMapper) {
@@ -174,7 +180,7 @@ public class RefDataOffHeapStore {
             this.txn = lmdbEnvironment.txnWrite();
         }
 
-        public void put()
+//        public void put()
 
         @Override
         public void close() throws Exception {
