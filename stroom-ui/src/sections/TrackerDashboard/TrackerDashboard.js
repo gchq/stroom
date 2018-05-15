@@ -19,10 +19,10 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import Mousetrap from 'mousetrap'
 
-import { Label, Table, Progress, Button, Input, Menu, Pagination, Grid } from 'semantic-ui-react';
+import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-import { fetchTrackers, sortByOptions, directions, enableToggle, updateTrackerSelection, updateSearchCriteria, changePage, actionCreators } from './trackerDashboardData';
+import { fetchTrackers, sortByOptions, directions, enableToggle, actionCreators } from './trackerDashboardData';
 
 import TrackerDetails from './TrackerDetails'
 import './TrackerDashboard.css';
@@ -57,7 +57,7 @@ class TrackerDashboard extends Component {
   }
   
   render() {
-    const { trackers, sortBy, sortDirection, selectedTrackerId, searchCriteria, pageOffset, pageSize, totalTrackers, numberOfPages } = this.props;
+    const { trackers, sortBy, sortDirection, selectedTrackerId, searchCriteria, pageOffset, numberOfPages } = this.props;
     const { onHandleTrackerSelection, onMoveSelection, onHandleSearchChange, onHandleSearch, onHandlePageChange, onHandlePageRight, onHandlePageLeft } = this.props;    
 
     const selectedTracker = trackers.find(tracker => tracker.filterId === selectedTrackerId)

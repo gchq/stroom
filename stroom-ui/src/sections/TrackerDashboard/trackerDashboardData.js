@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createAction, createActions, handleActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 import { push } from 'react-router-redux';
 
@@ -40,31 +40,10 @@ type UpdateTrackerAction = {
 type Action = UpdateTrackerAction;
 
 // These are common to all thunks --TODO move it
-type Dispatch = (action: Action | ThunkAction | PromiseAction) => any;
-type ThunkAction = (dispatch: Dispatch, getState: GetState) => any;
+type Dispatch = (action: Action | ThunkAction | PromiseAction) => any; // eslint-disable-line no-use-before-define
+type ThunkAction = (dispatch: Dispatch, getState: GetState) => any; // eslint-disable-line no-use-before-define
 type GetState = () => StateRoot;
 type PromiseAction = Promise<Action>;
-
-// This is common to all reducers --TODO move it
-declare type StateRoot = {
-  trackerDashboard: TrackerState,
-  authentication: AuthenticationState,
-  config: ConfigState
-};
-
-const fetch = window.fetch;
-
-export const directions = { ascending: 'ascending', descending: 'descending' };
-declare type Direction = $Keys<typeof directions>;
-
-export const sortByOptions = { Pipeline: 'Pipeline', Priority: 'Priority', Progress: 'progress' };
-declare type SortByOption = $Keys<typeof sortByOptions>;
-
-declare type Tracker = {
-  name: string,
-  trackerMs: Date,
-  trackerPercentage: number
-};
 
 type TrackerState = {
   +trackers: Array<Tracker>,
@@ -92,6 +71,27 @@ const initialState: TrackerState = {
   totalTrackers: 0,
   numberOfPages: 0,
   selectedTrackerId: undefined,
+};
+
+// This is common to all reducers --TODO move it
+declare type StateRoot = {
+  trackerDashboard: TrackerState,
+  authentication: AuthenticationState,
+  config: ConfigState
+};
+
+const fetch = window.fetch;
+
+export const directions = { ascending: 'ascending', descending: 'descending' };
+declare type Direction = $Keys<typeof directions>;
+
+export const sortByOptions = { Pipeline: 'Pipeline', Priority: 'Priority', Progress: 'progress' };
+declare type SortByOption = $Keys<typeof sortByOptions>;
+
+declare type Tracker = {
+  name: string,
+  trackerMs: Date,
+  trackerPercentage: number
 };
 
 export const actionCreators = createActions({
@@ -206,13 +206,13 @@ export const fetchTrackers = (): ThunkAction => (dispatch, getState) => {
   const state = getState();
   const jwsToken = state.authentication.idToken;
 
-  const rowsToFetch = getRowsPerPage(state.trackerDashboard.selectedTrackerId != undefined);
+  const rowsToFetch = getRowsPerPage(state.trackerDashboard.selectedTrackerId !== undefined);
   dispatch(actionCreators.updatePageSize(rowsToFetch));
 
   let url = `${state.config.streamTaskServiceUrl}/?`;
   url += `pageSize=${rowsToFetch}`;
   url += `&offset=${state.trackerDashboard.pageOffset}`;
-  if (state.trackerDashboard.sortBy != undefined) {
+  if (state.trackerDashboard.sortBy !== undefined) {
     url += `&sortBy=${state.trackerDashboard.sortBy}`;
     url += `&sortDirection=${state.trackerDashboard.sortDirection}`;
   }
@@ -241,9 +241,6 @@ export const fetchTrackers = (): ThunkAction => (dispatch, getState) => {
     .catch((error) => {
       // TODO: handle a bad response from the service, i.e. send the use to an error
       dispatch(push('/error'));
-      console.log('Unable to fetch trackers!');
-      console.log(error);
-      this;
     });
 };
 
@@ -271,9 +268,6 @@ export const enableToggle = (filterId: string, isCurrentlyEnabled: boolean): Thu
     })
     .catch((error) => {
       dispatch(push('/error'));
-      console.log('Unable to patch tracker!');
-      console.log(error);
-      this;
     });
 };
 
@@ -289,7 +283,7 @@ export const getRowsPerPage = (isDetailsVisible: boolean) => {
   let rowsInViewport = 20; // Fallback default
   const headerHeight = 46;
   const footerHeight = 36;
-  const detailsHeight = 295;
+  // const detailsHeight = 295;
   const rowHeight = 30;
   if (viewport) {
     const viewportHeight = viewport.offsetHeight;
