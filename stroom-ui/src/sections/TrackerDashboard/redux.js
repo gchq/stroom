@@ -52,7 +52,7 @@ type TrackerState = {
   +searchCriteria: string,
   totalTrackers: number,
   numberOfPages: number,
-  selectedTrackerId: number
+  selectedTrackerId?: number
 };
 
 const initialState: TrackerState = {

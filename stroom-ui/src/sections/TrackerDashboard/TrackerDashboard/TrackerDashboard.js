@@ -23,8 +23,8 @@ import 'semantic-ui-css/semantic.min.css';
 
 import { sortByOptions, directions, actionCreators } from '../redux';
 import { fetchTrackers } from '../streamTasksResourceClient'
-
 import TrackerDetails from '../TrackerDetails/TrackerDetails'
+
 import './TrackerDashboard.css';
 
 class TrackerDashboard extends Component {
@@ -63,6 +63,8 @@ class TrackerDashboard extends Component {
     const selectedTracker = trackers.find(tracker => tracker.filterId === selectedTrackerId)
     const showDetails = selectedTracker !== undefined
 
+    // TODO: At some point move the shortcuts to some common location;
+    //       we will want to use the same binding for 'search' throughout.
     // Set up hotkeys to move the selection up and down
     Mousetrap.bind('up', () => onMoveSelection('up'));
     Mousetrap.bind('down', () => onMoveSelection('down'));
