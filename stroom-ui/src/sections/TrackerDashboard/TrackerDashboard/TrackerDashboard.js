@@ -15,7 +15,6 @@
  */
 
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import Mousetrap from 'mousetrap'
 
@@ -160,18 +159,6 @@ class TrackerDashboard extends Component {
         </div>
     );
   }
-}
-
-TrackerDashboard.contextTypes = {
-  store: PropTypes.object.isRequired,
-};
-
-TrackerDashboard.propTypes = {
-  onHandleSort: PropTypes.func.isRequired,
-  onMoveSelection: PropTypes.func.isRequired,
-  onHandleSearchChange: PropTypes.func.isRequired,
-  onHandleSearch: PropTypes.func.isRequired,
-  onHandlePageChange: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({

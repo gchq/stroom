@@ -125,15 +125,6 @@ class TrackerDetails extends Component {
   }
 }
 
-// TrackerDetails.contextTypes = {
-//     store: PropTypes.object.isRequired,
-//   };
-
-TrackerDetails.propTypes = {
-  // onHandleSort: PropTypes.func.isRequired,
-  // onHandleEnableToggle: PropTypes.func.isRequired
-};
-
 const mapStateToProps = state => ({
   selectedTracker: state.trackerDashboard.trackers.find(tracker => tracker.filterId === state.trackerDashboard.selectedTrackerId),
 });
