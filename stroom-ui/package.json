@@ -1,0 +1,43 @@
+{
+  "name": "stroom-ui",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "jwt-decode": "^2.2.0",
+    "moment": "^2.22.1",
+    "mousetrap": "^1.6.1",
+    "react": "^16.3.2",
+    "react-datepicker": "^1.4.1",
+    "react-dom": "^16.3.2",
+    "react-redux": "^5.0.7",
+    "react-router-dom": "^4.2.2",
+    "react-router-redux": "^5.0.0-alpha.9",
+    "react-scripts": "1.1.4",
+    "redux": "^4.0.0",
+    "redux-actions": "^2.3.2",
+    "redux-logger": "^3.0.6",
+    "redux-thunk": "^2.2.0",
+    "semantic-ui-css": "^2.3.1",
+    "semantic-ui-react": "^0.79.1",
+    "sjcl": "^1.0.7"
+  },
+  "scripts": {
+    "start": "./config.template.sh && BROWSER=none react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "storybook": "start-storybook -p 9001 -c .storybook"
+  },
+  "devDependencies": {
+    "@storybook/react": "^3.4.2",
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^8.2.3",
+    "babel-preset-flow": "^6.23.0",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-flowtype": "^2.46.3",
+    "eslint-plugin-node": "^6.0.1",
+    "prettier-eslint": "^8.8.1",
+    "standard": "^11.0.1",
+    "storybook-react-router": "^1.0.1"
+  }
+}
