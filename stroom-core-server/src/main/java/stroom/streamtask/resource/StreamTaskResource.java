@@ -20,12 +20,8 @@
 package stroom.streamtask.resource;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang.NotImplementedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort;
 import stroom.pipeline.shared.PipelineEntity;
@@ -37,7 +33,6 @@ import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.util.HasHealthCheck;
 
 import javax.annotation.Nullable;
@@ -53,10 +48,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static stroom.entity.shared.Sort.Direction.ASCENDING;
+import static stroom.streamtask.resource.SearchKeywords.SORT_NEXT;
+import static stroom.streamtask.resource.SearchKeywords.addFiltering;
 
 @Api(
         value = "stream task - /v1",
@@ -64,8 +61,6 @@ import java.util.stream.Collectors;
 @Path("/streamtasks/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements HasHealthCheck {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskResource.class);
-
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
     private final SecurityContext securityContext;
@@ -116,9 +111,6 @@ public class StreamTaskResource implements HasHealthCheck {
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "TODO",
-            response = Response.class)
     public Response fetch(
             @NotNull @QueryParam("offset") Integer offset,
             @QueryParam("pageSize") Integer pageSize,
@@ -141,7 +133,7 @@ public class StreamTaskResource implements HasHealthCheck {
             criteria.setSort(sortBy, direction, false);
         }
         else if(sortBy.equalsIgnoreCase(FIELD_PROGRESS)){
-            // Sorting is done below -- this is here for completeness.
+            // Sorting progress is done below -- this is here for completeness.
             // Percentage is a calculated variable so it has to be done after retrieval.
             // This poses a problem for paging and at the moment sorting by tracker % won't work correctly when paging.
         }
@@ -157,23 +149,7 @@ public class StreamTaskResource implements HasHealthCheck {
             return Response.status(Response.Status.BAD_REQUEST).entity("Page size, if used, must be greater than 1").build();
         }
 
-        // FILTERING
-        if(filter != null){
-            String[] keywords = filter.split(" ");
-
-            Arrays.stream(keywords)
-                    .filter(keyword -> keyword.contains(":"))
-                    .forEach(special -> add(special, criteria));
-
-            String plainOldFilter = Arrays.stream(keywords)
-                    .filter(keyword -> !keyword.contains(":"))
-                    .collect(Collectors.joining());
-
-            if(!Strings.isNullOrEmpty(plainOldFilter)) {
-                criteria.setPipelineNameFilter(plainOldFilter);
-            }
-        }
-
+        addFiltering(filter, criteria);
 
         if (!securityContext.isAdmin()) {
             criteria.setCreateUser(securityContext.getUserId());
@@ -185,8 +161,9 @@ public class StreamTaskResource implements HasHealthCheck {
         // We have to load everything because we need to sort by progress, and we can't do that on the database.
         final List<StreamTask> values = find(criteria);
 
-        if(sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
-            if(direction == Sort.Direction.ASCENDING) {
+        // If the user is requesting a sort:next then we don't want to apply any other sorting.
+        if(sortBy.equalsIgnoreCase(FIELD_PROGRESS) && !filter.contains(SORT_NEXT)) {
+            if(direction == ASCENDING) {
                 values.sort(Comparator.comparingInt(StreamTask::getTrackerPercent));
             }
             else{
@@ -257,22 +234,4 @@ public class StreamTaskResource implements HasHealthCheck {
         return streamTasks;
     }
 
-    private void add(String special, FindStreamProcessorFilterCriteria criteria){
-        String[] terms = special.split(":");
-        if(terms.length == 2) {
-            if (terms[0].equalsIgnoreCase("is")) {
-                if (terms[1].equalsIgnoreCase("enabled")) {
-                    criteria.setStreamProcessorFilterEnabled(true);
-                } else if (terms[1].equalsIgnoreCase("disabled")) {
-                    criteria.setStreamProcessorFilterEnabled(false);
-                }
-
-                else if (terms[1].equalsIgnoreCase("complete")) {
-                    criteria.setStatus(StreamProcessorFilterTracker.COMPLETE);
-                } else if (terms[1].equalsIgnoreCase("incomplete")) {
-                    criteria.setStatus("");
-                }
-            }
-        }
-    }
 }
