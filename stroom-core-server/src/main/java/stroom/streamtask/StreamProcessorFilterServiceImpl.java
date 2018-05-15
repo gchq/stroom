@@ -182,6 +182,7 @@ class StreamProcessorFilterServiceImpl
     protected FieldMap createFieldMap() {
         return super.createFieldMap()
                 .add(FindStreamTaskCriteria.FIELD_PRIORITY, "PRIORITY_1", "priority")
+                .add(FindStreamTaskCriteria.FIELD_POLL_AGE, "LAST_POLL_MS ", "streamProcessorFilterTracker.lastPollMs")
                 .add(FindStreamTaskCriteria.FIELD_PIPELINE_NAME, "P_NAME", "streamProcessor.pipeline.name");
     }
 
@@ -193,20 +194,28 @@ class StreamProcessorFilterServiceImpl
             marshaller = new StreamProcessorFilterMarshaller();
         }
 
-        @Override
-        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
+        protected void appendBasicJoin(
+                final HqlBuilder sql,
+                final String alias,
+                final Set<String> fetchSet,
+                final boolean fetchJoin) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null) {
                 if (fetchSet.contains(StreamProcessor.ENTITY_TYPE) || fetchSet.contains(PipelineEntity.ENTITY_TYPE)) {
-                    sql.append(" INNER JOIN FETCH ");
+                    sql.append(fetchJoin ? " INNER JOIN FETCH " : " INNER JOIN ");
                     sql.append(alias);
                     sql.append(".streamProcessor as sp");
                 }
                 if (fetchSet.contains(PipelineEntity.ENTITY_TYPE)) {
-                    sql.append(" INNER JOIN FETCH ");
+                    sql.append(fetchJoin ? " INNER JOIN FETCH " : " INNER JOIN ");
                     sql.append("sp.pipeline");
                 }
             }
+        }
+
+        @Override
+        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
+            appendBasicJoin(sql, alias, fetchSet, true);
         }
 
         @Override

@@ -61,4 +61,9 @@ public class MockStreamProcessorFilterService
     public Class<StreamProcessorFilter> getEntityClass() {
         return StreamProcessorFilter.class;
     }
+
+    @Override
+    public long count(FindStreamProcessorFilterCriteria criteria) {
+        return 0;
+    }
 }

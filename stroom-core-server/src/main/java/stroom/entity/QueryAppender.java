@@ -34,6 +34,9 @@ public class QueryAppender<E extends Entity, C extends BaseCriteria> {
     protected void appendBasicJoin(HqlBuilder sql, String alias, Set<String> fetchSet) {
     }
 
+    protected void appendNonFetchJoin(HqlBuilder sql, String alias, Set<String> fetchSet) {
+    }
+
     protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final C criteria) {
         if (criteria instanceof FindNamedEntityCriteria) {
             final FindNamedEntityCriteria findNamedEntityCriteria = (FindNamedEntityCriteria) criteria;

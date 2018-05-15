@@ -18,6 +18,7 @@
 package stroom.streamtask;
 
 import stroom.entity.BaseEntityService;
+import stroom.entity.CountService;
 import stroom.entity.FindService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.shared.QueryData;
@@ -26,7 +27,9 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 
 public interface StreamProcessorFilterService
-        extends BaseEntityService<StreamProcessorFilter>, FindService<StreamProcessorFilter, FindStreamProcessorFilterCriteria> {
+        extends BaseEntityService<StreamProcessorFilter>,
+        FindService<StreamProcessorFilter, FindStreamProcessorFilterCriteria>,
+        CountService<FindStreamProcessorFilterCriteria> {
     void addFindStreamCriteria(StreamProcessor streamProcessor,
                                int priority,
                                QueryData queryData);

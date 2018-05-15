@@ -29,12 +29,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCriteria> implements BaseEntityService<E>, FindService<E, C>, SupportsCriteriaLogging<C> {
+public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCriteria>
+        implements BaseEntityService<E>, FindService<E, C>, CountService<C>, SupportsCriteriaLogging<C> {
     private final StroomEntityManager entityManager;
     private final Security security;
     private final QueryAppender<E, C> queryAppender;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
+    private final CountServiceHelper<E, C> countServiceHelper;
 
     private String entityType;
     private FieldMap sqlFieldMap;
@@ -46,6 +48,7 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
         this.findServiceHelper = new FindServiceHelper<>(entityManager, getEntityClass(), queryAppender);
+        this.countServiceHelper = new CountServiceHelper<>(entityManager, getEntityClass(), queryAppender);
     }
 
     @Override
@@ -81,6 +84,11 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
     @Override
     public BaseResultList<E> find(C criteria) {
         return security.secureResult(permission(), () -> findServiceHelper.find(criteria, getSqlFieldMap()));
+    }
+
+    @Override
+    public long count(C criteria) {
+        return security.secureResult(permission(), () -> countServiceHelper.count(criteria));
     }
 
     public String getEntityType() {
