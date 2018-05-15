@@ -22,10 +22,10 @@ import Mousetrap from 'mousetrap'
 import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-import { sortByOptions, directions, actionCreators } from './trackerDashboardData';
-import { fetchTrackers } from './streamTasksResourceClient'
+import { sortByOptions, directions, actionCreators } from '../redux';
+import { fetchTrackers } from '../streamTasksResourceClient'
 
-import TrackerDetails from './TrackerDetails'
+import TrackerDetails from '../TrackerDetails'
 import './TrackerDashboard.css';
 
 class TrackerDashboard extends Component {

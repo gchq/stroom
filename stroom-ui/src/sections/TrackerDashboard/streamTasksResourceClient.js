@@ -2,7 +2,7 @@ import { push } from 'react-router-redux';
 
 import { HttpError } from '../../ErrorTypes';
 
-import { actionCreators } from './trackerDashboardData';
+import { actionCreators } from './redux';
 
 const fetch = window.fetch;
 

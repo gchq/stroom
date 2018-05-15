@@ -18,7 +18,7 @@ import {
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-import { actionCreators } from '../trackerDashboardData';
+import { actionCreators } from '../redux';
 import { enableToggle } from '../streamTasksResourceClient';
 
 class TrackerDetails extends Component {
