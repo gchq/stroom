@@ -22,7 +22,7 @@ plugins {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.1'
+    gradleVersion = '4.7'
 }
 
 apply plugin: 'ca.cutterslade.analyze'
