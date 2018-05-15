@@ -23,7 +23,7 @@ import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semanti
 import 'semantic-ui-css/semantic.min.css';
 
 import { sortByOptions, directions, actionCreators } from './trackerDashboardData';
-import { fetchTrackers } from './trackerDashboardApiCalls'
+import { fetchTrackers } from './streamTasksResourceClient'
 
 import TrackerDetails from './TrackerDetails'
 import './TrackerDashboard.css';
