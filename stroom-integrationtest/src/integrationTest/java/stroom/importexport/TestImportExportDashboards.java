@@ -31,7 +31,6 @@ import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Res;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -125,12 +124,9 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         Visualisation vis = null;
         if (!skipVisCreation) {
-            final Res res = new Res();
-            res.setData("Test Data");
-
             final DocRef scriptRef = explorerService.create(Script.ENTITY_TYPE, "Test Script", folder2, null);
             Script script = scriptService.readDocument(scriptRef);
-            script.setResource(res);
+            script.setResource("Test Data");
             script = scriptService.save(script);
 
             final DocRef visRef = explorerService.create(Visualisation.ENTITY_TYPE, "Test Vis", folder2, null);

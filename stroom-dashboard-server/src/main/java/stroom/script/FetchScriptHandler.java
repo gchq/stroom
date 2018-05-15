@@ -56,7 +56,7 @@ class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedLi
                 }
 
                 // Load the script and it's dependencies.
-                loadScripts(action.getScript(), uiLoadedScripts, new HashSet<>(), scripts, action.getFetchSet());
+                loadScripts(action.getScript(), uiLoadedScripts, new HashSet<>(), scripts);
 
                 return new SharedList<>(scripts);
             });
@@ -64,26 +64,18 @@ class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedLi
     }
 
     private void loadScripts(final DocRef docRef, final Set<DocRef> uiLoadedScripts, final Set<DocRef> loadedScripts,
-                             final List<Script> scripts, final Set<String> actionFetchSet) {
+                             final List<Script> scripts) {
         // Prevent circular reference loading with this set.
         if (!loadedScripts.contains(docRef)) {
             loadedScripts.add(docRef);
 
             // Load the script.
-            final Set<String> fetchSet = new HashSet<>();
-            // Don't bother to fetch the script resource if the UI will not need
-            // it.
-            if (actionFetchSet != null && actionFetchSet.contains(Script.FETCH_RESOURCE)
-                    && !uiLoadedScripts.contains(docRef)) {
-                fetchSet.add(Script.FETCH_RESOURCE);
-            }
-
-            final Script loadedScript = scriptService.loadByUuid(docRef.getUuid(), fetchSet);
+            final Script loadedScript = scriptService.loadByUuid(docRef.getUuid());
             if (loadedScript != null) {
                 // Add required dependencies first.
                 if (loadedScript.getDependencies() != null) {
                     for (final DocRef dep : loadedScript.getDependencies()) {
-                        loadScripts(dep, uiLoadedScripts, loadedScripts, scripts, actionFetchSet);
+                        loadScripts(dep, uiLoadedScripts, loadedScripts, scripts);
                     }
                 }
 

@@ -12,5 +12,6 @@ dependencies {
     compile libs.javax_inject
     compile libs.stroomQueryApi
     compile libs.stroomQueryAudit
+    compile libs.stroomQueryAuthorisation
     compile libs.ws_rs_api
 }

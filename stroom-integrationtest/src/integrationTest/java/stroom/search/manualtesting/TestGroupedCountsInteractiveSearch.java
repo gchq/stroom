@@ -24,7 +24,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.expression.v1.Count;
 import stroom.dictionary.DictionaryStore;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.IndexService;
@@ -205,7 +204,7 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
 
         final Field countField = new Field.Builder()
                 .name("Count")
-                .expression(Count.NAME + "()")
+                .expression("count()")
                 .format(new Format(Format.Type.NUMBER))
                 .build();
 

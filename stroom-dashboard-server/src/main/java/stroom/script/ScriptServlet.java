@@ -17,7 +17,6 @@
 
 package stroom.script;
 
-import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.security.Security;
 
@@ -41,7 +40,7 @@ import java.util.Set;
 public class ScriptServlet extends HttpServlet {
     private static final long serialVersionUID = 2912973031600581055L;
 
-    private static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
+    private static final Set<String> FETCH_SET = Collections.emptySet();
 
     private final ScriptService scriptService;
     private final Security security;
@@ -68,10 +67,9 @@ public class ScriptServlet extends HttpServlet {
                     final String uuid = queryParamMap.get("uuid");
                     if (uuid != null && !uuid.isEmpty()) {
                         final Script script = getScript(uuid);
-                        final Res res = script.getResource();
-                        if (res != null && res.getData() != null) {
+                        if (script != null && script.getResource() != null) {
                             final PrintWriter pw = response.getWriter();
-                            pw.write(res.getData());
+                            pw.write(script.getResource());
                             pw.close();
                         }
                     }

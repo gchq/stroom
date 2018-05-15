@@ -27,14 +27,12 @@ import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityDependencyServiceException;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.Res;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.query.api.v2.DocRef;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -57,8 +55,6 @@ public class ImportExportHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportHelper.class);
 
     private final Provider<GenericEntityService> genericEntityServiceProvider;
-//    private final ClassTypeMap classTypeMap = new ClassTypeMap();
-//    private volatile boolean entitiesInitialised = false;
 
     @Inject
     public ImportExportHelper(final Provider<GenericEntityService> genericEntityServiceProvider) {
@@ -211,12 +207,7 @@ public class ImportExportHelper {
                 }
 
                 if (obj != null) {
-                    if (obj instanceof String) {
-                        final String string = (String) obj;
-                        if (string != null && !string.isEmpty()) {
-                            setStringProperty(entity, property, string, importState, importMode);
-                        }
-                    } else if (obj instanceof DocRef) {
+                    if (obj instanceof DocRef) {
                         final DocRef docRef = (DocRef) obj;
                         setDocRefProperty(entity, property, docRef, importState, importMode);
                     }
@@ -320,34 +311,6 @@ public class ImportExportHelper {
             }
         } catch (final RuntimeException | IllegalAccessException | InvocationTargetException e) {
             throw EntityServiceExceptionUtil.create(e);
-        }
-    }
-
-    private void setStringProperty(final Entity entity,
-                                   final Property property,
-                                   final String value,
-                                   final ImportState importState,
-                                   final ImportMode importMode) throws IllegalAccessException, InvocationTargetException {
-
-        // See if this property is a resource. If it is then create
-        // a new resource or update an existing one.
-        if (Res.class.equals(property.getType())) {
-            Res res;
-            final Object existing = property.get(entity);
-            if (existing == null) {
-                res = new Res();
-            } else {
-                res = (Res) existing;
-            }
-
-            if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                if (!EqualsUtil.isEquals(res.getData(), value)) {
-                    importState.getUpdatedFieldList().add(property.getName());
-                }
-            } else {
-                res.setData(value);
-                property.set(entity, res);
-            }
         }
     }
 
@@ -455,14 +418,7 @@ public class ImportExportHelper {
                 // do so.
                 if (property.isExternalFile()) {
                     if (value != null) {
-                        String data;
-                        if (value instanceof Res) {
-                            final Res res = (Res) value;
-                            data = res.getData();
-                        } else {
-                            data = String.valueOf(value);
-                        }
-
+                        final String data = String.valueOf(value);
                         if (data != null) {
                             final String fileExtension = property.getExtensionProvider().getExtension(entity,
                                     propertyName);
