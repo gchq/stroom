@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
 
-import { connect } from 'react-redux';
+import { connect } from "react-redux";
 
-import moment from 'moment';
+import moment from "moment";
 
 import {
   Grid,
@@ -14,12 +14,12 @@ import {
   Checkbox,
   List,
   Card,
-  Icon,
-} from 'semantic-ui-react';
-import 'semantic-ui-css/semantic.min.css';
+  Icon
+} from "semantic-ui-react";
+import "semantic-ui-css/semantic.min.css";
 
-import { actionCreators } from '../trackerDashboardData';
-import { enableToggle } from './trackerDetailsApiCalls';
+import { actionCreators } from "../trackerDashboardData";
+import { enableToggle } from "./trackerDetailsApiCalls";
 
 class TrackerDetails extends Component {
   truncate(text, limit) {
@@ -27,7 +27,11 @@ class TrackerDetails extends Component {
   }
 
   render() {
-    const { selectedTracker, onHandleEnableToggle, onHandleTrackerSelection } = this.props;
+    const {
+      selectedTracker,
+      onHandleEnableToggle,
+      onHandleTrackerSelection
+    } = this.props;
     if (selectedTracker !== undefined) {
       return (
         <div className="details-container">
@@ -49,21 +53,33 @@ class TrackerDetails extends Component {
                     toggle
                     checked={selectedTracker.enabled}
                     onMouseDown={() =>
-                      onHandleEnableToggle(selectedTracker.filterId, selectedTracker.enabled)
+                      onHandleEnableToggle(
+                        selectedTracker.filterId,
+                        selectedTracker.enabled
+                      )
                     }
                   />
                 </Table.Cell>
 
                 <Table.Cell className="name-column" textAlign="right" width={5}>
-                  <Header as="h3">{this.truncate(selectedTracker.pipelineName, 25)}</Header>
+                  <Header as="h3">
+                    {this.truncate(selectedTracker.pipelineName, 25)}
+                  </Header>
                 </Table.Cell>
-                <Table.Cell className="priority-column" textAlign="center" width={1}>
+                <Table.Cell
+                  className="priority-column"
+                  textAlign="center"
+                  width={1}
+                >
                   <Label circular color="green">
                     {selectedTracker.priority}
                   </Label>
                 </Table.Cell>
                 <Table.Cell className="progress-column" width={8}>
-                  <Progress percent={selectedTracker.trackerPercent} indicating />
+                  <Progress
+                    percent={selectedTracker.trackerPercent}
+                    indicating
+                  />
                 </Table.Cell>
               </Table.Row>
             </Table.Body>
@@ -78,39 +94,48 @@ class TrackerDetails extends Component {
 
               <List bulleted>
                 <List.Item>
-                  has a <strong>last poll age</strong> of {selectedTracker.lastPollAge}
+                  has a <strong>last poll age</strong> of{" "}
+                  {selectedTracker.lastPollAge}
                 </List.Item>
                 <List.Item>
-                  has a <strong>task count</strong> of {selectedTracker.taskCount}
+                  has a <strong>task count</strong> of{" "}
+                  {selectedTracker.taskCount}
                 </List.Item>
                 <List.Item>
-                  was <strong>last active</strong>{' '}
+                  was <strong>last active</strong>{" "}
                   {moment(selectedTracker.trackerMs)
                     .calendar()
                     .toLowerCase()}
                 </List.Item>
                 <List.Item>
-                  {selectedTracker.status ? 'has a' : 'does not have a'} <strong>status</strong>
-                  {selectedTracker.status ? ` of ${selectedTracker.status}` : undefined}
+                  {selectedTracker.status ? "has a" : "does not have a"}{" "}
+                  <strong>status</strong>
+                  {selectedTracker.status
+                    ? ` of ${selectedTracker.status}`
+                    : undefined}
                 </List.Item>
                 <List.Item>
-                  {selectedTracker.streamCount ? 'has a' : 'does not have a'}{' '}
+                  {selectedTracker.streamCount ? "has a" : "does not have a"}{" "}
                   <strong>stream count</strong>
-                  {selectedTracker.streamCount ? ` of ${selectedTracker.streamCount}` : undefined}
+                  {selectedTracker.streamCount
+                    ? ` of ${selectedTracker.streamCount}`
+                    : undefined}
                 </List.Item>
                 <List.Item>
-                  {selectedTracker.eventCount ? 'has an' : 'does not have an'}{' '}
+                  {selectedTracker.eventCount ? "has an" : "does not have an"}{" "}
                   <strong>event count</strong>
-                  {selectedTracker.eventCount ? ` of ${selectedTracker.eventCount}` : undefined}
+                  {selectedTracker.eventCount
+                    ? ` of ${selectedTracker.eventCount}`
+                    : undefined}
                 </List.Item>
                 <List.Item>
-                  was <strong>created</strong> by '{selectedTracker.createUser}'{' '}
+                  was <strong>created</strong> by '{selectedTracker.createUser}'{" "}
                   {moment(selectedTracker.createdOn)
                     .calendar()
                     .toLowerCase()}
                 </List.Item>
                 <List.Item>
-                  was <strong>updated</strong> by '{selectedTracker.updateUser}'{' '}
+                  was <strong>updated</strong> by '{selectedTracker.updateUser}'{" "}
                   {moment(selectedTracker.updatedOn)
                     .calendar()
                     .toLowerCase()}
@@ -135,16 +160,18 @@ TrackerDetails.propTypes = {
 };
 
 const mapStateToProps = state => ({
-  selectedTracker: state.trackerDashboard.trackers.find(tracker => tracker.filterId === state.trackerDashboard.selectedTrackerId),
+  selectedTracker: state.trackerDashboard.trackers.find(
+    tracker => tracker.filterId === state.trackerDashboard.selectedTrackerId
+  )
 });
 
 const mapDispatchToProps = dispatch => ({
   onHandleEnableToggle: (filterId, isCurrentlyEnabled) => {
     dispatch(enableToggle(filterId, isCurrentlyEnabled));
   },
-  onHandleTrackerSelection: (filterId) => {
+  onHandleTrackerSelection: filterId => {
     dispatch(actionCreators.updateTrackerSelection(filterId));
-  },
+  }
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(TrackerDetails);

@@ -21,13 +21,13 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 
 import Home from 'sections/Home';
-import ErrorPage from 'sections/ErrorPage'
+import ErrorPage from 'sections/ErrorPage';
 import OriginalList from 'prototypes/OriginalList';
 import Graph from 'prototypes/Graph';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import { AuthenticationRequest, HandleAuthenticationResponse } from 'components/Authentication';
 
-import PathNotFound from 'sections/pathNotFound'
+import PathNotFound from 'sections/pathNotFound';
 
 class Routes extends Component {
   isLoggedIn() {
@@ -35,53 +35,50 @@ class Routes extends Component {
   }
 
   render() {
-    const { history } = this.props
+    const { history } = this.props;
     return (
-        <Router history={history} basename={'/'}>
-          <Switch>
-            {/* Authentication routes */}
-            <Route
-              exact
-              path="/handleAuthenticationResponse"
-              render={() => (
-                <HandleAuthenticationResponse
+      <Router history={history} basename="/">
+        <Switch>
+          {/* Authentication routes */}
+          <Route
+            exact
+            path="/handleAuthenticationResponse"
+            render={() => (
+              <HandleAuthenticationResponse
+                authenticationServiceUrl={this.props.authenticationServiceUrl}
+                authorisationServiceUrl={this.props.authorisationServiceUrl}
+              />
+            )}
+          />
+
+          {/* Application routes - no authentication required */}
+          <Route exact path="/" component={Home} />
+          <Route exact path="/error" component={ErrorPage} />
+          <Route exact path="/prototypes/original_list" component={OriginalList} />
+          <Route exact path="/prototypes/graph" component={Graph} />
+
+          {/* Application Routes - require authentication */}
+          <Route
+            exact
+            path="/trackers"
+            render={() =>
+              (this.isLoggedIn() ? (
+                <TrackerDashboard />
+              ) : (
+                <AuthenticationRequest
+                  referrer="/trackers"
+                  uiUrl={this.props.advertisedUrl}
+                  appClientId={this.props.appClientId}
                   authenticationServiceUrl={this.props.authenticationServiceUrl}
-                  authorisationServiceUrl={this.props.authorisationServiceUrl}
+                  appPermission="MANAGE_USERS"
                 />
-              )}
-            />
-
-            {/* Application routes - no authentication required */}
-            <Route exact path="/" component={Home} />
-            <Route exact path="/error" component={ErrorPage} />
-            <Route exact path="/prototypes/original_list" component={OriginalList} />
-            <Route exact path="/prototypes/graph" component={Graph} />
-
-            {/* Application Routes - require authentication */}
-            <Route
-              exact
-              path="/trackers"
-              render={() => {
-                return (
-                this.isLoggedIn() ? 
-                  <TrackerDashboard />
-                : 
-                  <AuthenticationRequest
-                    referrer="/trackers"
-                    uiUrl={this.props.advertisedUrl}
-                    appClientId={this.props.appClientId}
-                    authenticationServiceUrl={this.props.authenticationServiceUrl}
-                    appPermission="MANAGE_USERS"
-                  />
-                )
-              }
-              
+              ))
             }
-            />
+          />
 
-                   <Route component={PathNotFound} />
-          </Switch>
-        </Router>
+          <Route component={PathNotFound} />
+        </Switch>
+      </Router>
     );
   }
 }

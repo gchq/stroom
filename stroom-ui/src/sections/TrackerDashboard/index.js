@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import TrackerDashboard from './TrackerDashboard'
+import TrackerDashboard from './TrackerDashboard';
 
-export { default as trackerDashboard } from './trackerDashboardData'
-export default TrackerDashboard
+export { default as trackerDashboard } from './trackerDashboardData';
+export default TrackerDashboard;
