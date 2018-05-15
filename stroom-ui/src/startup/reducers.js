@@ -19,7 +19,7 @@ import { routerReducer } from 'react-router-redux';
 import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
-} from 'components/Authentication';
+} from 'startup/Authentication';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import config from './config';
 

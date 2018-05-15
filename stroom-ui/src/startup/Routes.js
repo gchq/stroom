@@ -24,7 +24,7 @@ import ErrorPage from 'sections/ErrorPage';
 import OriginalList from 'prototypes/OriginalList';
 import Graph from 'prototypes/Graph';
 import TrackerDashboard from 'sections/TrackerDashboard';
-import { AuthenticationRequest, HandleAuthenticationResponse } from 'components/Authentication';
+import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
 
 import PathNotFound from 'sections/PathNotFound';
 
