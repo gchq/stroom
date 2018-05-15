@@ -114,31 +114,31 @@ public class StreamTaskResource implements HasHealthCheck {
     public Response fetch(
             @NotNull @QueryParam("offset") Integer offset,
             @QueryParam("pageSize") Integer pageSize,
-            @NotNull @QueryParam("sortBy") String sortBy,
-            @NotNull @QueryParam("sortDirection") String sortDirection,
-            @Nullable @QueryParam("filter") String filter) {
+            @QueryParam("sortBy") String sortBy,
+            @QueryParam("sortDirection") String sortDirection,
+            @QueryParam("filter") String filter) {
         // TODO: Authorisation
 
         final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();
 
         // SORTING
-        Sort.Direction direction;
-        try {
-             direction = Sort.Direction.valueOf(sortDirection.toUpperCase());
-        }catch(IllegalArgumentException exception){
-            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortDirection field").build();
-        }
-        if(sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PIPELINE_NAME)
-                || sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PRIORITY)){
-            criteria.setSort(sortBy, direction, false);
-        }
-        else if(sortBy.equalsIgnoreCase(FIELD_PROGRESS)){
-            // Sorting progress is done below -- this is here for completeness.
-            // Percentage is a calculated variable so it has to be done after retrieval.
-            // This poses a problem for paging and at the moment sorting by tracker % won't work correctly when paging.
-        }
-        else {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortBy field").build();
+        Sort.Direction direction = ASCENDING;
+        if(sortBy != null) {
+            try {
+                direction = Sort.Direction.valueOf(sortDirection.toUpperCase());
+            } catch (IllegalArgumentException exception) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortDirection field").build();
+            }
+            if (sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PIPELINE_NAME)
+                    || sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PRIORITY)) {
+                criteria.setSort(sortBy, direction, false);
+            } else if (sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
+                // Sorting progress is done below -- this is here for completeness.
+                // Percentage is a calculated variable so it has to be done after retrieval.
+                // This poses a problem for paging and at the moment sorting by tracker % won't work correctly when paging.
+            } else {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortBy field").build();
+            }
         }
 
         // PAGING
@@ -161,13 +161,14 @@ public class StreamTaskResource implements HasHealthCheck {
         // We have to load everything because we need to sort by progress, and we can't do that on the database.
         final List<StreamTask> values = find(criteria);
 
-        // If the user is requesting a sort:next then we don't want to apply any other sorting.
-        if(sortBy.equalsIgnoreCase(FIELD_PROGRESS) && !filter.contains(SORT_NEXT)) {
-            if(direction == ASCENDING) {
-                values.sort(Comparator.comparingInt(StreamTask::getTrackerPercent));
-            }
-            else{
-                values.sort(Comparator.comparingInt(StreamTask::getTrackerPercent).reversed());
+        if(sortBy != null) {
+            // If the user is requesting a sort:next then we don't want to apply any other sorting.
+            if (sortBy.equalsIgnoreCase(FIELD_PROGRESS) && !filter.contains(SORT_NEXT)) {
+                if (direction == ASCENDING) {
+                    values.sort(Comparator.comparingInt(StreamTask::getTrackerPercent));
+                } else {
+                    values.sort(Comparator.comparingInt(StreamTask::getTrackerPercent).reversed());
+                }
             }
         }
 
