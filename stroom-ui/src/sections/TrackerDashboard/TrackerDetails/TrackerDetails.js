@@ -18,7 +18,8 @@ import {
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-import { enableToggle, actionCreators } from '../trackerDashboardData';
+import { actionCreators } from '../trackerDashboardData';
+import { enableToggle } from './trackerDetailsApiCalls';
 
 class TrackerDetails extends Component {
   truncate(text, limit) {

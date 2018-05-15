@@ -22,7 +22,7 @@ import Mousetrap from 'mousetrap'
 import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-import { fetchTrackers, sortByOptions, directions, enableToggle, actionCreators } from './trackerDashboardData';
+import { fetchTrackers, sortByOptions, directions, actionCreators } from './trackerDashboardData';
 
 import TrackerDetails from './TrackerDetails'
 import './TrackerDashboard.css';
@@ -167,7 +167,6 @@ TrackerDashboard.contextTypes = {
 
 TrackerDashboard.propTypes = {
   onHandleSort: PropTypes.func.isRequired,
-  onHandleEnableToggle: PropTypes.func.isRequired,
   onMoveSelection: PropTypes.func.isRequired,
   onHandleSearchChange: PropTypes.func.isRequired,
   onHandleSearch: PropTypes.func.isRequired,
@@ -193,9 +192,6 @@ const mapDispatchToProps = dispatch => {
     onHandleSort: (sortBy, sortDirection) => {
       dispatch(actionCreators.updateSort(sortBy, sortDirection))
       dispatch(fetchTrackers())
-    },
-    onHandleEnableToggle: (filterId, isCurrentlyEnabled) => {
-      dispatch(enableToggle(filterId, isCurrentlyEnabled))
     },
     onHandleTrackerSelection: (filterId) => {
       dispatch(actionCreators.updateTrackerSelection(filterId))
