@@ -22,7 +22,8 @@ import Mousetrap from 'mousetrap'
 import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-import { fetchTrackers, sortByOptions, directions, actionCreators } from './trackerDashboardData';
+import { sortByOptions, directions, actionCreators } from './trackerDashboardData';
+import { fetchTrackers } from './trackerDashboardApiCalls'
 
 import TrackerDetails from './TrackerDetails'
 import './TrackerDashboard.css';
