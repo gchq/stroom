@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#770** : Speculative fix for memory leak in SQL Stats queries
+
 ## [v5.3.3] - 2018-05-11
 
 * Issue **#761** : New fix for premature truncation of SQL stats queries due to thread interruption.
