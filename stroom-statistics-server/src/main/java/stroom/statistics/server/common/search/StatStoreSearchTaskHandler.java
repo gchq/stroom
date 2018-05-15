@@ -19,6 +19,7 @@ package stroom.statistics.server.common.search;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import io.reactivex.disposables.CompositeDisposable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -49,10 +50,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -64,7 +68,8 @@ public class StatStoreSearchTaskHandler {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatStoreSearchTaskHandler.class);
 
     private static final String PROP_KEY_RESULT_HANDLER_BATCH_SIZE = "stroom.statistics.sql.search.resultHandlerBatchSize";
-    private static final long DEFAULT_ROWS_IN_BATCH = 5_000;
+    private static final int DEFAULT_ROWS_IN_BATCH = 5_000;
+    public static final Duration RESULT_SEND_INTERVAL = Duration.ofSeconds(1);
 
     private final TaskContext taskContext;
     private final SecurityContext securityContext;
@@ -117,66 +122,67 @@ public class StatStoreSearchTaskHandler {
                         search,
                         entity);
 
-                final AtomicLong counter = new AtomicLong(0);
+                final LongAdder counter = new LongAdder();
                 taskContext.info(searchName + " - executing database query");
 
-                long resultHandlerBatchSize = getResultHandlerBatchSize();
+                int resultHandlerBatchSize = getResultHandlerBatchSize();
 
                 // subscribe to the flowable, mapping each resultSet to a String[]
                 // After the window period has elapsed a new flowable is create for those rows received 
                 // in that window, which can all be processed and sent
                 // If the task is canceled, the flowable produced by search() will stop emitting
                 // Set up the results flowable, the search wont be executed until subscribe is called
-                statisticsSearchService.search(entity, criteria, fieldIndexMap)
-                        .window(resultHandlerBatchSize)
-                        .subscribe(
-                                windowedFlowable -> {
-                                    LOGGER.trace("onNext called for outer flowable");
-                                    windowedFlowable.subscribe(
-                                            data -> {
-                                                LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
-                                                counter.incrementAndGet();
+                final CompositeDisposable compositeDisposable = new CompositeDisposable();
+                final AtomicLong nextProcessPayloadsTime = new AtomicLong(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
+                final AtomicLong countSinceLastSend = new AtomicLong(0);
+                final Instant queryStart = Instant.now();
+                try {
+                    compositeDisposable.add(statisticsSearchService.search(entity, criteria, fieldIndexMap)
+                            .subscribe(data -> {
+                                        counter.increment();
+                                        countSinceLastSend.incrementAndGet();
+                                        LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
 
-                                                // give the data array to each of our coprocessors
-                                                tableCoprocessors.forEach(tableCoprocessor ->
-                                                        tableCoprocessor.receive(data));
-                                            },
-                                            throwable -> {
-                                                throw new RuntimeException(String.format("Error in flow, %s",
-                                                        throwable.getMessage()), throwable);
-                                            },
-                                            () -> {
-                                                // thread may be interrupted if outer onComplete is called before this one
-                                                LAMBDA_LOGGER.debug(() ->
-                                                        String.format("onComplete of inner flowable called, counter: %s",
-                                                                counter.get()));
-                                                // completed our timed window so create and pass on a payload for the
-                                                // data we have gathered so far
-                                                processPayloads(resultCollector, tableCoprocessors);
-                                                taskContext.info(searchName +
-                                                        " - running database query (" + counter.get() + " rows fetched)");
-                                            });
-                                },
-                                throwable -> {
-                                    throw new RuntimeException(String.format("Error in flow, %s",
-                                            throwable.getMessage()), throwable);
-                                },
-                                () -> {
-                                    LAMBDA_LOGGER.debug(() ->
-                                            String.format("onComplete of outer flowable called, counter: %s",
-                                                    counter.get()));
-                                    // When this onComplete is called rxJava will call cancel on any window threads
-                                    // which will issue an interrupt(). Calling processPayloads here, which is synchronised
-                                    // ensures all results are processed before any threads are interrupted.
-                                    processPayloads(resultCollector, tableCoprocessors);
-                                });
+                                        // give the data array to each of our coprocessors
+                                        tableCoprocessors.forEach(tableCoprocessor ->
+                                                tableCoprocessor.receive(data));
 
-                LOGGER.debug("Out of flowable");
+                                        // send what we have every 1s or when the batch reaches a set size
+                                        long now = System.currentTimeMillis();
+                                        if (now >= nextProcessPayloadsTime.get() ||
+                                                countSinceLastSend.get() >= resultHandlerBatchSize) {
 
+                                            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("{} vs {}, {} vs {}",
+                                                    now, nextProcessPayloadsTime,
+                                                    countSinceLastSend.get(), resultHandlerBatchSize));
+
+                                            processPayloads(resultCollector, tableCoprocessors);
+                                            taskContext.info(searchName +
+                                                    " - running database query (" + counter.longValue() + " rows fetched)");
+                                            nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
+                                            countSinceLastSend.set(0);
+                                        }
+                                    },
+                                    throwable -> {
+                                        throw new RuntimeException(String.format("Error in flow, %s",
+                                                throwable.getMessage()), throwable);
+                                    },
+                                    () -> {
+                                        LAMBDA_LOGGER.debug(() ->
+                                                String.format("onComplete of flowable called, counter: %s",
+                                                        counter.longValue()));
+                                    }));
+                } finally {
+                    compositeDisposable.clear();
+                }
                 // flows all complete, so process any remaining data
                 processPayloads(resultCollector, tableCoprocessors);
+
+                LAMBDA_LOGGER.debug(() ->
+                        LambdaLogger.buildMessage("Query finished in {}", Duration.between(queryStart, Instant.now())));
+
                 taskContext.info(searchName +
-                        " - completed database query (" + counter.get() + " rows fetched)");
+                        " - completed database query (" + counter.longValue() + " rows fetched)");
             }
 
             // Let the result handler know search has finished.
@@ -285,8 +291,8 @@ public class StatStoreSearchTaskHandler {
         };
     }
 
-    private long getResultHandlerBatchSize() {
-        return stroomPropertyService.getLongProperty(PROP_KEY_RESULT_HANDLER_BATCH_SIZE, DEFAULT_ROWS_IN_BATCH);
+    private int getResultHandlerBatchSize() {
+        return stroomPropertyService.getIntProperty(PROP_KEY_RESULT_HANDLER_BATCH_SIZE, DEFAULT_ROWS_IN_BATCH);
     }
 
 }
