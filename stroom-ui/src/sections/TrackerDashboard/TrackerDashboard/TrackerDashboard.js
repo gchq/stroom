@@ -15,13 +15,14 @@
  */
 
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import Mousetrap from 'mousetrap'
 
 import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-import { sortByOptions, directions, actionCreators } from '../redux';
+import { actionCreators, Directions, SortByOptions } from '../redux';
 import { fetchTrackers } from '../streamTasksResourceClient'
 import TrackerDetails from '../TrackerDetails/TrackerDetails'
 
@@ -44,15 +45,15 @@ class TrackerDashboard extends Component {
 
   handleSort(newSortBy, currentSortBy, currentDirection) {
     if(currentSortBy === newSortBy){
-      if(currentDirection === directions.ascending){
-        return this.props.onHandleSort(newSortBy, directions.descending)
+      if(currentDirection === Directions.ascending){
+        return this.props.onHandleSort(newSortBy, Directions.descending)
       }
       else {
-        return this.props.onHandleSort(newSortBy, directions.ascending)
+        return this.props.onHandleSort(newSortBy, Directions.ascending)
       }
     }
     else {
-      return this.props.onHandleSort(newSortBy, directions.ascending)
+      return this.props.onHandleSort(newSortBy, Directions.ascending)
     }
   }
   
@@ -97,20 +98,20 @@ class TrackerDashboard extends Component {
                 <Table.Header>
                   <Table.Row>
                     <Table.HeaderCell
-                      sorted={sortBy === sortByOptions.Pipeline ? sortDirection : null}
-                      onClick={() => this.handleSort(sortByOptions.Pipeline, sortBy, sortDirection)}
+                      sorted={sortBy === SortByOptions.pipeline ? sortDirection : null}
+                      onClick={() => this.handleSort(SortByOptions.pipeline, sortBy, sortDirection)}
                     >
                       Pipeline name
                     </Table.HeaderCell>
                     <Table.HeaderCell
-                      sorted={sortBy === sortByOptions.Priority ? sortDirection : null}
-                      onClick={() => this.handleSort(sortByOptions.Priority, sortBy, sortDirection)}
+                      sorted={sortBy === SortByOptions.priority ? sortDirection : null}
+                      onClick={() => this.handleSort(SortByOptions.priority, sortBy, sortDirection)}
                     >
                       Priority
                     </Table.HeaderCell>
                     <Table.HeaderCell
-                      sorted={sortBy === sortByOptions.Progress ? sortDirection : null}
-                      onClick={() => this.handleSort(sortByOptions.Progress, sortBy, sortDirection)}
+                      sorted={sortBy === SortByOptions.progress ? sortDirection : null}
+                      onClick={() => this.handleSort(SortByOptions.progress, sortBy, sortDirection)}
                     >
                       Progress
                     </Table.HeaderCell>
@@ -162,6 +163,10 @@ class TrackerDashboard extends Component {
     );
   }
 }
+
+TrackerDashboard.contextTypes = {
+  store: PropTypes.object.isRequired,
+};
 
 const mapStateToProps = state => ({
   dimTable: state.trackerDashboard.isLoading,

@@ -1,5 +1,3 @@
-// @flow
-
 /*
  * Copyright 2018 Crown Copyright
  *
@@ -15,47 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from 'redux-actions';
 
-// This is just for the auth code -- TODO move it
-declare type AuthenticationState = {
-  idToken: string
-};
+import { createActions, createAction, handleActions } from 'redux-actions';
 
-// This is just for the Config code -- TODO Move it
-declare type ConfigState = {
-  streamTaskServiceUrl: string
-};
-export const UPDATE_TRACKERS: string = 'trackerDashboard/UPDATE_TRACKERS';
-
-type UpdateTrackerAction = {
-  type: typeof UPDATE_TRACKERS,
-  trackers: Array<Tracker>
-};
-
-type Action = UpdateTrackerAction;
-
-// These are common to all thunks --TODO move it
-type Dispatch = (action: Action | ThunkAction | PromiseAction) => any; // eslint-disable-line no-use-before-define
-type ThunkAction = (dispatch: Dispatch, getState: GetState) => any; // eslint-disable-line no-use-before-define
-type GetState = () => StateRoot;
-type PromiseAction = Promise<Action>;
-
-type TrackerState = {
-  +trackers: Array<Tracker>,
-  +isLoading: boolean,
-  +showCompleted: boolean,
-  +sortBy: SortByOption,
-  +sortDirection: Direction,
-  +pageSize: number,
-  +pageOffset: number,
-  +searchCriteria: string,
-  totalTrackers: number,
-  numberOfPages: number,
-  selectedTrackerId?: number
-};
-
-const initialState: TrackerState = {
+const initialState = {
   trackers: [],
   isLoading: false,
   showCompleted: false,
@@ -69,28 +30,15 @@ const initialState: TrackerState = {
   selectedTrackerId: undefined,
 };
 
-// This is common to all reducers --TODO move it
-declare type StateRoot = {
-  trackerDashboard: TrackerState,
-  authentication: AuthenticationState,
-  config: ConfigState
-};
-
-export const directions = { ascending: 'ascending', descending: 'descending' };
-declare type Direction = $Keys<typeof directions>;
-
-export const sortByOptions = { Pipeline: 'Pipeline', Priority: 'Priority', Progress: 'progress' };
-declare type SortByOption = $Keys<typeof sortByOptions>;
-
-declare type Tracker = {
-  name: string,
-  trackerMs: Date,
-  trackerPercentage: number
-};
+export const Directions = Object.freeze({ ascending: 'ascending', descending: 'descending' });
+export const SortByOptions = { pipeline: 'Pipeline', priority: 'Priority', progress: 'progress' };
 
 export const actionCreators = createActions({
   UPDATE_SORT: (sortBy, sortDirection) => ({ sortBy, sortDirection }),
-  UPDATE_TRACKERS: (streamTasks, totalStreamTasks) => ({ streamTasks, totalStreamTasks }),
+  UPDATE_TRACKERS: (streamTasks, totalStreamTasks) => ({
+    streamTasks,
+    totalStreamTasks,
+  }),
   MOVE_SELECTION: direction => ({ direction }),
   UPDATE_ENABLED: (filterId, enabled) => ({ filterId, enabled }),
   UPDATE_TRACKER_SELECTION: filterId => ({ filterId }),
@@ -104,10 +52,10 @@ export const actionCreators = createActions({
 
 const reducers = handleActions(
   {
-    UPDATE_SORT: (state, action) => ({
+    UPDATE_SORT: (state, { payload }) => ({
       ...state,
-      sortBy: action.payload.sortBy,
-      sortDirection: action.payload.sortDirection,
+      sortBy: payload.sortBy,
+      sortDirection: payload.sortDirection,
     }),
     UPDATE_TRACKERS: (state, action) => ({
       ...state,
