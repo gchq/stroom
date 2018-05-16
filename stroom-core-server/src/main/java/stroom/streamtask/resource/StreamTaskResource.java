@@ -35,7 +35,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.util.HasHealthCheck;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -48,9 +47,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
+import static java.util.Comparator.comparingInt;
 import static stroom.entity.shared.Sort.Direction.ASCENDING;
 import static stroom.streamtask.resource.SearchKeywords.SORT_NEXT;
 import static stroom.streamtask.resource.SearchKeywords.addFiltering;
@@ -165,9 +164,9 @@ public class StreamTaskResource implements HasHealthCheck {
             // If the user is requesting a sort:next then we don't want to apply any other sorting.
             if (sortBy.equalsIgnoreCase(FIELD_PROGRESS) && !filter.contains(SORT_NEXT)) {
                 if (direction == ASCENDING) {
-                    values.sort(Comparator.comparingInt(StreamTask::getTrackerPercent));
+                    values.sort(comparingInt(StreamTask::getTrackerPercent));
                 } else {
-                    values.sort(Comparator.comparingInt(StreamTask::getTrackerPercent).reversed());
+                    values.sort(comparingInt(StreamTask::getTrackerPercent).reversed());
                 }
             }
         }
@@ -219,8 +218,12 @@ public class StreamTaskResource implements HasHealthCheck {
                     .withFilterXml(      filter.getData());
 
             if(filter.getStreamProcessorFilterTracker() != null) {
+                Integer trackerPercent = filter.getStreamProcessorFilterTracker().getTrackerStreamCreatePercentage();
+                if(trackerPercent == null) {
+                    trackerPercent = 0;
+                }
                 builder.withTrackerMs(filter.getStreamProcessorFilterTracker().getStreamCreateMs())
-                        .withTrackerPercent(filter.getStreamProcessorFilterTracker().getTrackerStreamCreatePercentage())
+                        .withTrackerPercent(trackerPercent)
                         .withLastPollAge(filter.getStreamProcessorFilterTracker().getLastPollAge())
                         .withTaskCount(filter.getStreamProcessorFilterTracker().getLastPollTaskCount())
                         .withMinStreamId(filter.getStreamProcessorFilterTracker().getMinStreamId())
