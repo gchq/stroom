@@ -9,7 +9,6 @@ This project uses ESLint for linting, configured with the style described by Sta
 If you're using VSCode you should install the following extensions:
 
 * ESLint
-* Flow Language Support
 * Prettier
 
 ## Directory structure
