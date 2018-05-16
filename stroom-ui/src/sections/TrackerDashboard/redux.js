@@ -48,6 +48,9 @@ export const actionCreators = createActions({
   RESET_PAGING: () => ({}),
   PAGE_RIGHT: () => ({}),
   PAGE_LEFT: () => ({}),
+  SELECT_FIRST: () => ({}),
+  SELECT_LAST: () => ({}),
+  SELECT_NONE: () => ({}),
 });
 
 const reducers = handleActions(
@@ -57,31 +60,31 @@ const reducers = handleActions(
       sortBy: payload.sortBy,
       sortDirection: payload.sortDirection,
     }),
-    UPDATE_TRACKERS: (state, action) => ({
+    UPDATE_TRACKERS: (state, { payload }) => ({
       ...state,
-      trackers: action.payload.streamTasks,
-      totalTrackers: action.payload.totalStreamTasks,
-      numberOfPages: Math.ceil(action.payload.totalStreamTasks / state.pageSize),
+      trackers: payload.streamTasks,
+      totalTrackers: payload.totalStreamTasks,
+      numberOfPages: Math.ceil(payload.totalStreamTasks / state.pageSize),
     }),
-    UPDATE_ENABLED: (state, action) => ({
+    UPDATE_ENABLED: (state, { payload }) => ({
       ...state,
       // TODO: use a filter then a map
       trackers: state.trackers.map((tracker, i) =>
-        (tracker.filterId === action.payload.filterId
-          ? { ...tracker, enabled: action.payload.enabled }
+        (tracker.filterId === payload.filterId
+          ? { ...tracker, enabled: payload.enabled }
           : tracker)),
     }),
-    UPDATE_TRACKER_SELECTION: (state, action) => ({
+    UPDATE_TRACKER_SELECTION: (state, { payload }) => ({
       ...state,
-      selectedTrackerId: action.payload.filterId,
+      selectedTrackerId: payload.filterId,
     }),
-    MOVE_SELECTION: (state, action) => {
+    MOVE_SELECTION: (state, { payload }) => {
       const currentIndex = state.trackers.findIndex(tracker => tracker.filterId === state.selectedTrackerId);
 
       let nextSelectedId;
       if (currentIndex === -1) {
         // There's no selection so we'll leave the selection as undefined
-      } else if (action.payload.direction.toLowerCase() === 'up') {
+      } else if (payload.direction.toLowerCase() === 'up') {
         if (currentIndex === 0) {
           nextSelectedId = state.trackers[currentIndex].filterId;
         } else {
@@ -97,28 +100,28 @@ const reducers = handleActions(
         selectedTrackerId: nextSelectedId,
       };
     },
-    UPDATE_SEARCH_CRITERIA: (state, action) => {
+    UPDATE_SEARCH_CRITERIA: (state, { payload }) => {
       let sortBy = state.sortBy;
-      if (action.payload.searchCriteria.includes('sort:next')) {
+      if (payload.searchCriteria.includes('sort:next')) {
         sortBy = undefined;
       }
       return {
         ...state,
-        searchCriteria: action.payload.searchCriteria,
+        searchCriteria: payload.searchCriteria,
         sortBy,
       };
     },
-    CHANGE_PAGE: (state, action) => ({
+    CHANGE_PAGE: (state, { payload }) => ({
       ...state,
-      pageOffset: action.payload.page,
+      pageOffset: payload.page,
     }),
-    UPDATE_PAGE_SIZE: (state, action) => ({ ...state, pageSize: action.payload.pageSize }),
-    RESET_PAGING: (state, action) => ({
+    UPDATE_PAGE_SIZE: (state, { payload }) => ({ ...state, pageSize: payload.pageSize }),
+    RESET_PAGING: (state, { payload }) => ({
       ...state,
       pageOffset: initialState.pageOffset,
       // This does not reset pageSize because that is managed to be the size of the viewport
     }),
-    PAGE_RIGHT: (state, action) => {
+    PAGE_RIGHT: (state, { payload }) => {
       // We don't want to page further than is possible
       const currentPageOffset = state.pageOffset;
       const numberOfPages = state.numberOfPages - 1;
@@ -129,7 +132,7 @@ const reducers = handleActions(
         pageOffset: newPageOffset,
       };
     },
-    PAGE_LEFT: (state, action) => {
+    PAGE_LEFT: (state, { payload }) => {
       // We don't want to page further than is possible
       const currentPageOffset = state.pageOffset;
       const newPageOffset = currentPageOffset > 0 ? currentPageOffset - 1 : 0;
@@ -138,6 +141,15 @@ const reducers = handleActions(
         pageOffset: newPageOffset,
       };
     },
+    SELECT_FIRST: (state, { payload }) => ({
+      ...state,
+      selectedTrackerId: state.trackers[0].filterId,
+    }),
+    SELECT_LAST: (state, { payload }) => ({
+      ...state,
+      selectedTrackerId: state.trackers[state.trackers.length - 1].filterId,
+    }),
+    SELECT_NONE: (state, { payload }) => ({ ...state, selectedTrackerId: undefined }),
   },
   initialState,
 );

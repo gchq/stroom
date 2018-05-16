@@ -23,7 +23,7 @@ import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semanti
 import 'semantic-ui-css/semantic.min.css';
 
 import { actionCreators, Directions, SortByOptions } from '../redux';
-import { fetchTrackers } from '../streamTasksResourceClient'
+import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient'
 import TrackerDetails from '../TrackerDetails/TrackerDetails'
 
 import './TrackerDashboard.css';
@@ -209,11 +209,11 @@ const mapDispatchToProps = dispatch => {
     },
     onHandlePageRight: () => { 
       dispatch(actionCreators.pageRight())
-      dispatch(fetchTrackers())
+      dispatch(fetchTrackers(TrackerSelection.first))
     },
     onHandlePageLeft: () => { 
       dispatch(actionCreators.pageLeft())
-      dispatch(fetchTrackers())
+      dispatch(fetchTrackers(TrackerSelection.first))
     }
   }
 };

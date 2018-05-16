@@ -6,7 +6,9 @@ import { actionCreators } from './redux';
 
 const fetch = window.fetch;
 
-export const fetchTrackers = (): ThunkAction => (dispatch, getState) => {
+export const TrackerSelection = Object.freeze({ first: 'first', last: 'last', none: 'none' });
+
+export const fetchTrackers = trackerSelection => (dispatch, getState) => {
   const state = getState();
   const jwsToken = state.authentication.idToken;
 
@@ -41,6 +43,19 @@ export const fetchTrackers = (): ThunkAction => (dispatch, getState) => {
     .then(response => response.json())
     .then((trackers) => {
       dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
+      switch (trackerSelection) {
+        case TrackerSelection.first:
+          dispatch(actionCreators.selectFirst());
+          break;
+        case TrackerSelection.last:
+          dispatch(actionCreators.selectLast());
+          break;
+        case TrackerSelection.none:
+          dispatch(actionCreators.selectNone());
+          break;
+        default:
+          break;
+      }
     })
     .catch((error) => {
       // TODO: handle a bad response from the service, i.e. send the use to an error
@@ -48,10 +63,7 @@ export const fetchTrackers = (): ThunkAction => (dispatch, getState) => {
     });
 };
 
-export const enableToggle = (filterId: string, isCurrentlyEnabled: boolean): ThunkAction => (
-  dispatch,
-  getState,
-) => {
+export const enableToggle = (filterId, isCurrentlyEnabled) => (dispatch, getState) => {
   const state = getState();
   const jwsToken = state.authentication.idToken;
   const url = `${state.config.streamTaskServiceUrl}/${filterId}`;
@@ -75,7 +87,7 @@ export const enableToggle = (filterId: string, isCurrentlyEnabled: boolean): Thu
     });
 };
 
-const getRowsPerPage = (isDetailsVisible: boolean) => {
+const getRowsPerPage = (isDetailsVisible) => {
   const viewport = document.getElementById('table-container');
   let rowsInViewport = 20; // Fallback default
   const headerHeight = 46;
