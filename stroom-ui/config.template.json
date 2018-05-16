@@ -2,6 +2,6 @@
   "authenticationServiceUrl": "https://IP_ADDRESS/authService/authentication/v1",
   "authorisationServiceUrl": "http://IP_ADDRESS:8080/api/authorisation/v1",
   "streamTaskServiceUrl": "http://IP_ADDRESS:8080/api/streamtasks/v1",
-  "advertisedUrl": "http://IP_ADDRESS:3000",
+  "advertisedUrl": "http://IP_ADDRESS:3001",
   "appClientId": "stroom-ui"
 }
