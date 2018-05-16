@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v5.3.4] - 2018-05-15
+## [v5.3.4] - 2018-05-16
 
 * Issue **#766** : Fix NullPointerExceptions when downloading table results to Excel format.
 
