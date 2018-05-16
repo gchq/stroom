@@ -2,6 +2,6 @@
   "authenticationServiceUrl": "https://192.168.1.10/authService/authentication/v1",
   "authorisationServiceUrl": "http://192.168.1.10:8080/api/authorisation/v1",
   "streamTaskServiceUrl": "http://192.168.1.10:8080/api/streamtasks/v1",
-  "advertisedUrl": "http://192.168.1.10:3000",
+  "advertisedUrl": "http://192.168.1.10:3001",
   "appClientId": "stroom-ui"
 }

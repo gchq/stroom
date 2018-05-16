@@ -22,7 +22,7 @@
     "sjcl": "^1.0.7"
   },
   "scripts": {
-    "start": "./config.template.sh && BROWSER=none react-scripts start",
+    "start": "./config.template.sh && BROWSER=none PORT=3001 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
@@ -32,9 +32,7 @@
     "@storybook/react": "^3.4.2",
     "babel-cli": "^6.26.0",
     "babel-eslint": "^8.2.3",
-    "babel-preset-flow": "^6.23.0",
     "eslint-config-airbnb": "^16.1.0",
-    "eslint-plugin-flowtype": "^2.46.3",
     "eslint-plugin-node": "^6.0.1",
     "prettier-eslint": "^8.8.1",
     "standard": "^11.0.1",
