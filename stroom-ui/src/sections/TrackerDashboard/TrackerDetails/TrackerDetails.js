@@ -77,32 +77,40 @@ class TrackerDetails extends Component {
               <Card.Meta>This tracker:</Card.Meta>
 
               <List bulleted>
-                <List.Item>
-                  has a <strong>last poll age</strong> of {selectedTracker.lastPollAge}
-                </List.Item>
-                <List.Item>
-                  has a <strong>task count</strong> of {selectedTracker.taskCount}
-                </List.Item>
-                <List.Item>
-                  was <strong>last active</strong>{' '}
-                  {moment(selectedTracker.trackerMs)
-                    .calendar()
-                    .toLowerCase()}
-                </List.Item>
-                <List.Item>
-                  {selectedTracker.status ? 'has a' : 'does not have a'} <strong>status</strong>
-                  {selectedTracker.status ? ` of ${selectedTracker.status}` : undefined}
-                </List.Item>
-                <List.Item>
-                  {selectedTracker.streamCount ? 'has a' : 'does not have a'}{' '}
-                  <strong>stream count</strong>
-                  {selectedTracker.streamCount ? ` of ${selectedTracker.streamCount}` : undefined}
-                </List.Item>
-                <List.Item>
-                  {selectedTracker.eventCount ? 'has an' : 'does not have an'}{' '}
-                  <strong>event count</strong>
-                  {selectedTracker.eventCount ? ` of ${selectedTracker.eventCount}` : undefined}
-                </List.Item>
+                {selectedTracker.lastPollAge === null ? (
+                  <List.Item>has not yet done any work</List.Item>
+                ) : (
+                  <React.Fragment>
+                    <List.Item>
+                      has a <strong>last poll age</strong> of {selectedTracker.lastPollAge}
+                    </List.Item>
+                    <List.Item>
+                      has a <strong>task count</strong> of {selectedTracker.taskCount}
+                    </List.Item>
+                    <List.Item>
+                      was <strong>last active</strong>{' '}
+                      {moment(selectedTracker.trackerMs)
+                        .calendar()
+                        .toLowerCase()}
+                    </List.Item>
+                    <List.Item>
+                      {selectedTracker.status ? 'has a' : 'does not have a'} <strong>status</strong>
+                      {selectedTracker.status ? ` of ${selectedTracker.status}` : undefined}
+                    </List.Item>
+                    <List.Item>
+                      {selectedTracker.streamCount ? 'has a' : 'does not have a'}{' '}
+                      <strong>stream count</strong>
+                      {selectedTracker.streamCount
+                        ? ` of ${selectedTracker.streamCount}`
+                        : undefined}
+                    </List.Item>
+                    <List.Item>
+                      {selectedTracker.eventCount ? 'has an' : 'does not have an'}{' '}
+                      <strong>event count</strong>
+                      {selectedTracker.eventCount ? ` of ${selectedTracker.eventCount}` : undefined}
+                    </List.Item>
+                  </React.Fragment>
+                )}
                 <List.Item>
                   was <strong>created</strong> by '{selectedTracker.createUser}'{' '}
                   {moment(selectedTracker.createdOn)
