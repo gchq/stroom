@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { createActions, createAction, handleActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 const initialState = {
   trackers: [],
