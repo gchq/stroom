@@ -46,9 +46,9 @@ import {
 
 import {
     receiveDocTree,
-} from 'components/docExplorer/redux';
+} from 'components/DocExplorer/redux';
 
-import { testTree } from 'components/docExplorer/storybook/testTree';
+import { testTree } from 'components/DocExplorer/storybook/testTree';
 
 import {
     testExpression,

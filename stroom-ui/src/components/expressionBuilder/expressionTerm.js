@@ -32,7 +32,7 @@ import { displayValues } from './conditions';
 import {
     DocRefDropdownPicker,
     DocRefModalPicker
-} from '../docExplorer';
+} from '../DocExplorer';
 
 
 import {
