@@ -22,7 +22,7 @@
     "sjcl": "^1.0.7"
   },
   "scripts": {
-    "start": "./config.template.sh && BROWSER=none PORT=3001 react-scripts start",
+    "start": "./config.template.sh && BROWSER=none PORT=5001 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
@@ -34,7 +34,12 @@
     "babel-eslint": "^8.2.3",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-node": "^6.0.1",
+    "expect": "^22.4.3",
+    "fetch-mock": "^6.4.2",
+    "jest": "^20.0.3",
     "prettier-eslint": "^8.8.1",
+    "react-test-renderer": "^16.3.2",
+    "redux-mock-store": "^1.5.1",
     "standard": "^11.0.1",
     "storybook-react-router": "^1.0.1"
   }
