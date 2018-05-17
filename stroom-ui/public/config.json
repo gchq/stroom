@@ -1,7 +1,0 @@
-{
-  "authenticationServiceUrl": "https://10.211.223.124/authService/authentication/v1",
-  "authorisationServiceUrl": "http://10.211.223.124:8080/api/authorisation/v1",
-  "streamTaskServiceUrl": "http://10.211.223.124:8080/api/streamtasks/v1",
-  "advertisedUrl": "http://10.211.223.124:3001",
-  "appClientId": "stroom-ui"
-}
