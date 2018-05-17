@@ -56,17 +56,17 @@ export function moveItemInTree(rootNode, itemToMove, destination) {
 /**
  * Recursively check that a tree node is inside the child hierarchy of the given destination tree node.
  * 
- * @param {treeNode} itemToMove The item we are checking against, this will be recursed through children
- * @param {treeNode} destination The destination tree node being checked
+ * @param {treeNode} treeNode The node we are looking into, this will be recursed through children
+ * @param {treeNode} itemToFind The item to find
  */
-let findMatch = (itemToMove, destination) => {
-    if (itemToMove.uuid === destination.uuid) {
+export function findMatch(treeNode, itemToFind) {
+    if (treeNode.uuid === itemToFind.uuid) {
         return true;
     }
 
-    if (!!itemToMove.children) {
-        return itemToMove.children
-            .filter(c => findMatch(c, destination))
+    if (!!treeNode.children) {
+        return treeNode.children
+            .filter(c => findMatch(c, itemToFind))
             .length !== 0;
     }
 
