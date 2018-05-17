@@ -11,6 +11,12 @@ If you're using VSCode you should install the following extensions:
 * ESLint
 * Prettier
 
+## SCSS
+
+The various startup and test scripts include the running of an SCSS pre-processor.
+Any new style sheets should be written with the .scss extension, the pre-processor will then convert them to .css.
+The components should then import the .css files.
+
 ## Directory structure
 
 The directory structure here aims to reduce coupling between different areas of the app.
@@ -22,6 +28,12 @@ public/
 
 src/
 The main folder. Notable because it also contains the main index.
+
+src/
+├── lib/
+General purpose JavaScript source files
+├── lib/storybook
+Storybook decorators, and redux middleware for putting redux actions into storybook actions.
 
 src/
 ├── components/
