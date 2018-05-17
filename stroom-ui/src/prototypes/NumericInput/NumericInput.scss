@@ -13,33 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ 
 .row div {
-  float: left; }
+  float: left;
+}
 
 .input-row {
-  width: 90px; }
+  width:90px;
+} 
 
-.input-row input {
+.input-row input{
   border-top-right-radius: 0px !important;
-  border-bottom-right-radius: 0px !important; }
-
+  border-bottom-right-radius: 0px !important;
+}
 .numeric-input {
   width: 55px;
-  border-right-color: rgba(34, 36, 38, 0.15) !important; }
+  border-right-color: rgba(34, 36, 38, 0.15) !important;
+}
 
 .numeric-input button {
   height: 20px !important;
   padding: 0px 0px 0px 9px !important;
   border-top-left-radius: 0px !important;
-  border-bottom-left-radius: 0px !important; }
+  border-bottom-left-radius: 0px !important;
+}
 
 .numeric-input .button-top {
-  border-bottom-right-radius: 0px !important; }
+  border-bottom-right-radius: 0px !important;
+}
 
 .numeric-input .button-bottom {
-  border-top-right-radius: 0px !important; }
+  border-top-right-radius: 0px !important;
+}
 
 .numeric-input-error-label {
   /* We need to move the whole thing left otherwise it will overlap the buttons */
-  margin-left: 35px !important;
-  margin-top: 7px !important; }
+  margin-left:35px !important;
+  margin-top: 7px !important;
+}

@@ -1,6 +1,6 @@
 import { push } from 'react-router-redux';
 
-import { HttpError } from '../../ErrorTypes';
+import { HttpError } from '../../lib/ErrorTypes';
 
 import { actionCreators } from './redux';
 

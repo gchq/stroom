@@ -13,46 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .App {
-  text-align: center; }
+  text-align: center;
+}
 
 .App-logo {
   animation: App-logo-spin infinite 20s linear;
-  height: 80px; }
+  height: 80px;
+}
 
 .App-header {
   background-color: #222;
   height: 75px;
   padding: 20px;
-  color: white; }
+  color: white;
+}
 
 .App-title {
-  font-size: 1.5em; }
+  font-size: 1.5em;
+}
 
 .App-intro {
-  font-size: large; }
+  font-size: large;
+}
 
 @keyframes App-logo-spin {
   from {
-    transform: rotate(0deg); }
+    transform: rotate(0deg);
+  }
   to {
-    transform: rotate(360deg); } }
+    transform: rotate(360deg);
+  }
+}
 
 .tracker-dashboard {
   height: 100%;
   position: relative;
-  min-height: 150px; }
+  min-height: 150px;
+}
 
 #root {
-  height: 100%; }
+  height: 100%;
+}
 
 .ui.grid > .row {
   padding-top: 1px !important;
-  padding-bottom: 1px !important; }
+  padding-bottom: 1px !important;
+}
 
 .trackers-container {
   margin: 0 auto !important;
-  width: 900px; }
+  width: 900px;
+}
 
 .headerDivider {
   border-left: 1px solid #38546d;
@@ -60,44 +73,54 @@
   height: 80px;
   position: absolute;
   /* right:249px; */
-  top: 10px; }
+  top: 10px;
+}
 
 .react-datepicker__time-list {
-  padding-left: 0px !important; }
+  padding-left: 0px !important;
+}
 
 .tracker-table .td {
-  padding: 0px !important; }
+  padding: 0px !important;
+}
 
 .tracker-table .progress {
   margin: 0px !important;
-  padding: 0px !important; }
+  padding: 0px !important;
+}
 
 .tracker-table .progress-column .progress {
-  background-color: transparent; }
+  background-color: transparent;
+}
 
 .tracker-table .name-column .label {
-  width: 100% !important; }
+  width: 100% !important;
+}
 
 .tracker-row td {
   padding-top: 0.185714em !important;
   padding-right: 0.1785714em !important;
   padding-bottom: 0.1785714em !important;
-  padding-left: 0.1785714em !important; }
+  padding-left: 0.1785714em !important;
+}
 
 .tracker-details-table .progress {
   margin: 0px !important;
-  padding: 0px !important; }
+  padding: 0px !important;
+}
 
 .tracker-details-table {
   border: 5px 0px 0px 0px !important;
-  padding: 10px !important; }
+  padding: 10px !important;
+}
 
 .ui.active.progress .bar::after {
   /* This disables 'active' animation. This is the point of the 'active' class but 
 unfortunately it's applied when the 'indicating' class is added and there's noo 
 way to have the neat colourisation from 'indicating' without the 'active' class also being applied. So we need to stomp on the annoying animation here. */
   -webkit-animation: none !important;
-  animation: none !important; }
+  animation: none !important;
+}
 
 .tracker-dashboard .search-container {
   width: 100% !important;
@@ -106,10 +129,12 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
   height: 45px;
   right: 0px;
   overflow: hidden;
-  position: absolute; }
+  position: absolute;
+}
 
 .tracker-dashboard .search-container .input {
-  width: 100% !important; }
+  width: 100% !important;
+}
 
 .tracker-dashboard .table-container {
   top: 45px;
@@ -117,13 +142,16 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
   left: 0px;
   right: 0px;
   position: absolute;
-  overflow: auto; }
+  overflow: auto;
+}
 
 .tracker-dashboard .table-container table {
-  margin-bottom: 0px; }
+  margin-bottom: 0px;
+}
 
 .tracker-dashboard .table-container.showing-details {
-  bottom: 295px; }
+  bottom: 295px;
+}
 
 .tracker-dashboard .details-container {
   border-top: solid 3px lightgray;
@@ -133,20 +161,25 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
   bottom: 0px;
   height: 295px;
   left: 0px;
-  right: 0px; }
+  right: 0px;
+}
 
 .tracker-dashboard .details-container .details-grid {
-  border-bottom: 1px solid rgba(34, 36, 38, 0.15); }
+  border-bottom: 1px solid rgba(34, 36, 38, 0.15);
+}
 
 .tracker-dashboard .details-container .card {
-  padding: 0px !important; }
+  padding: 0px !important;
+}
 
 .tracker-dashboard .pagination-container {
   width: 100% !important;
   text-align: center;
-  border: solid 1px lightgray; }
+  border: solid 1px lightgray;
+}
 
 .tracker-dashboard .pagination-container .ui.menu {
   border: none !important;
   -webkit-box-shadow: none;
-  box-shadow: none; }
+  box-shadow: none;
+}

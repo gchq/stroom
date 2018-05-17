@@ -20,6 +20,13 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
+import {
+  explorerTreeReducer as explorerTree
+} from '../components/docExplorer/redux';
+import {
+  expressionReducer as expressions,
+  dataSourceReducer as dataSources
+} from '../components/expressionBuilder/redux';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import config from './config';
 
@@ -29,4 +36,7 @@ export default combineReducers({
   authorisation,
   config,
   trackerDashboard,
+  explorerTree,
+  dataSources,
+  expressions,
 });

@@ -18,11 +18,11 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 
 import StoryRouter from 'storybook-react-router';
-import { Provider } from 'components/storybookReduxDecorator';
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 import TrackerDetails from './TrackerDetails';
 
 storiesOf('TrackerDetails', module)
-  .addDecorator(story => <Provider story={story()} />)
+  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
   .add('basic', () => <TrackerDetails />);

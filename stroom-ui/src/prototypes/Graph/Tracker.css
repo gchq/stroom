@@ -13,37 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
 /*Not working */
 .tracker-summary-segment {
-    padding-left:0px;
-    padding-right:0px;
-}
+  padding-left: 0px;
+  padding-right: 0px; }
 
 .table .wide {
-    margin:0px !important;
-    padding: 0px !important;
-}
+  margin: 0px !important;
+  padding: 0px !important; }
 
 .graph .label {
-    width: 100%;
-}
+  width: 100%; }
 
 .graph .circular.label {
-    width:10px;
-}
+  width: 10px; }
 
 .graph .progress {
-    margin:0px !important;
-    padding: 0px !important;
-}
+  margin: 0px !important;
+  padding: 0px !important; }
 
 .graph .column {
-    padding-top:0px !important;
-    padding-right:0px !important;
-    padding-left:0px !important;
-}
+  padding-top: 0px !important;
+  padding-right: 0px !important;
+  padding-left: 0px !important; }
 
 .graph .priority-column {
-    width:15px !important;
-}
+  width: 15px !important; }

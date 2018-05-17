@@ -18,8 +18,10 @@ import React from 'react'
 import { storiesOf } from '@storybook/react'
 import TrackerDashboard from './TrackerDashboard'
 import StoryRouter from 'storybook-react-router'
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 storiesOf('TrackerDashboard', module)
+  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
   .add('basic', () => (
     <TrackerDashboard />

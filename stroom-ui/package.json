@@ -3,11 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@storybook/addon-notes": "^3.4.4",
+    "@storybook/addons": "^3.4.4",
     "jwt-decode": "^2.2.0",
     "moment": "^2.22.1",
     "mousetrap": "^1.6.1",
+    "node-sass-chokidar": "^1.3.0",
+    "npm-run-all": "^4.1.3",
     "react": "^16.3.2",
     "react-datepicker": "^1.4.1",
+    "react-dnd": "^2.6.0",
+    "react-dnd-html5-backend": "^2.6.0",
     "react-dom": "^16.3.2",
     "react-redux": "^5.0.7",
     "react-router-dom": "^4.2.2",
@@ -22,11 +28,17 @@
     "sjcl": "^1.0.7"
   },
   "scripts": {
-    "start": "./config.template.sh && BROWSER=none PORT=3001 react-scripts start",
-    "build": "react-scripts build",
+    "build-css": "node-sass-chokidar src/ -o src/",
+    "watch-css": "npm run build-css && node-sass-chokidar src/ -o src/ --watch --recursive",
+    "start-js": "./config.template.sh && BROWSER=none PORT=3001 react-scripts start",
+    "start": "npm-run-all -p watch-css start-js",
+    "build-js": "react-scripts build",
+    "build": "npm-run-all build-css build-js",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "storybook": "start-storybook -p 9001 -c .storybook"
+    "storybook-js": "start-storybook -p 9001 -c .storybook",
+    "storybook": "npm-run-all -p storybook-js watch-css",
+    "build-storybook": "build-storybook -s public"
   },
   "devDependencies": {
     "@storybook/react": "^3.4.2",
