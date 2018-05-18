@@ -168,6 +168,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "toInteger($)", "toInteger("));
         children.add(createFunction(item++, "toLong($)", "toLong("));
         children.add(createFunction(item++, "toString($)", "toString("));
+        children.add(createFunction(item++, "typeOf($)", "typeOf("));
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
