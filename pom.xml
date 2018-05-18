@@ -77,7 +77,7 @@
     <hessian.version>4.0.38</hessian.version>
     <lucene.version>4.6.1</lucene.version>
     <event-logging.version>3.0.0</event-logging.version>
-    <stroom-expression.version>v1.3.1</stroom-expression.version>
+    <stroom-expression.version>v1.4.0</stroom-expression.version>
 
     <!-- ***************************** -->
     <!-- LATEST CHECK 2015/02/27 START -->
