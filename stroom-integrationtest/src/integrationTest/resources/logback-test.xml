@@ -16,14 +16,14 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="info" />
+    <logger name="stroom" level="warn" />
 
-    <logger name="stroom.statistics" level="info" />
+    <logger name="stroom.pipeline.task.TestTranslationTask" level="info" />
 
     <logger name="org.flywaydb" level="info" />
 
     <logger name="org.hibernate.tool.hbm2ddl.SchemaUpdate" additivity="false">
-        <level value="debug"/>
+        <level value="warn"/>
         <appender-ref ref="SCHEMA"/>
     </logger>
 

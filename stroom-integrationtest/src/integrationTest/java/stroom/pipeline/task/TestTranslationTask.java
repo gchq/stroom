@@ -65,6 +65,7 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
             commonTestControl.teardown();
             commonTestControl.setup();
             streamStore.clear();
+            importSchemas(true);
 
             LOGGER.info("Run " + i);
 

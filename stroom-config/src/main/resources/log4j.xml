@@ -13,10 +13,10 @@
     </logger>
 
     <logger name="stroom">
-        <level value="info"/>
+        <level value="warn"/>
     </logger>
 
-    <logger name="stroom.statistics">
+    <logger name="stroom.pipeline.task.TestTranslationTask">
         <level value="info"/>
     </logger>
 
