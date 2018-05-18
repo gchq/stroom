@@ -39,6 +39,11 @@ import {
     expressionItemDeleted
 } from './redux';
 
+import {
+    domRectBoundCalcs,
+    LineTo
+} from 'prototypes/LineTo'
+
 const LOGICAL_OPERATORS = [
     "NOT", 
     "AND",
@@ -140,12 +145,19 @@ class ExpressionOperator extends Component {
         return this.props.operator.children.map(c => {
             switch (c.type) {
                 case 'term':
-                    return <ExpressionTerm 
-                                key={c.uuid}
-                                dataSource={this.props.dataSource} 
-                                expressionId={this.props.expressionId}
-                                isEnabled={this.props.isEnabled && c.enabled}
-                                term={c} />
+                    return <div id={'expression-item' + c.uuid}>
+                                <ExpressionTerm 
+                                    key={c.uuid}
+                                    dataSource={this.props.dataSource} 
+                                    expressionId={this.props.expressionId}
+                                    isEnabled={this.props.isEnabled && c.enabled}
+                                    term={c} />
+                                <LineTo fromId={'expression-item' + this.props.operator.uuid} 
+                                    toId={'expression-item' + c.uuid}
+                                    calculateStart={domRectBoundCalcs.bottomLeft}
+                                    calculateEnd={domRectBoundCalcs.leftCentre}
+                                    />
+                            </div>
                 case 'operator':
                     return <DndExpressionOperator 
                                 key={c.uuid}
@@ -201,7 +213,7 @@ class ExpressionOperator extends Component {
             <div className={className}>
                 {connectDragSource(connectDropTarget(
                     <div>
-                        <span><Icon color={color} name='list layout'/></span>
+                        <span id={'expression-item' + this.props.operator.uuid}><Icon color={color} name='list layout'/></span>
                         
                         <Button.Group>
                             {LOGICAL_OPERATORS.map(l => {

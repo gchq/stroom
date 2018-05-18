@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux'
 
 import ExpressionOperator from './ExpressionOperator';
+import { LineContainer } from 'prototypes/LineTo'
 
 import './ExpressionBuilder.css'
 
@@ -52,12 +53,14 @@ class ExpressionBuilder extends Component {
     render() {
         if (!!this.state.expression && !!this.state.dataSource) {
             return (
-                <ExpressionOperator 
-                    dataSource={this.state.dataSource}
-                    expressionId={this.props.expressionId}
-                    isRoot={true}
-                    isEnabled={true}
-                    operator={this.state.expression}  />
+                <LineContainer id={'expression-lines-' + this.props.expressionId}>
+                    <ExpressionOperator 
+                        dataSource={this.state.dataSource}
+                        expressionId={this.props.expressionId}
+                        isRoot={true}
+                        isEnabled={true}
+                        operator={this.state.expression}  />
+                </LineContainer>
             )
         } else {
             return <div>Error - Data Source ({!this.state.dataSource ? 'missing' : 'ok'}), Expression ({!this.state.expression ? 'missing' : 'ok'})</div>

@@ -26,7 +26,7 @@ const LineContainer = (props) => (
                 width='1000px'
                 height='1000px'
                 style={{
-                    'position':'fixed',
+                    'position':'absolute',
                     'top':0,
                     'left':0
                 }}/>

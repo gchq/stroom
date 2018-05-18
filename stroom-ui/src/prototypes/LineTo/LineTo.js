@@ -21,18 +21,22 @@ import LineContext from './LineContext';
 export const domRectBoundCalcs = {
     leftCentre : (r) => ({
         x : r.left,
-        y : r.y + (r.height / 2)
+        y : r.top + (r.height / 2)
     }),
     rightCentre : (r) => ({
         x : r.right,
-        y : r.y + (r.height / 2)
+        y : r.top + (r.height / 2)
     }),
     topCentre : (r) => ({
-        x : r.x + (r.width / 2),
+        x : r.left + (r.width / 2),
         y : r.top
     }),
     bottomCentre : (r) => ({
-        x : r.x + (r.width / 2),
+        x : r.left + (r.width / 2),
+        y : r.bottom
+    }),
+    bottomLeft : (r) => ({
+        x : r.left,
         y : r.bottom
     })
 }
