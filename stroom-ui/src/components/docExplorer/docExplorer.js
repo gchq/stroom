@@ -28,7 +28,7 @@ import {
     searchTermChanged,
     explorerTreeOpened,
     DEFAULT_EXPLORER_ID
-} from './redux/explorerTreeReducer';
+} from './redux';
 
 class DocExplorer extends Component {
     static propTypes = {
@@ -50,6 +50,19 @@ class DocExplorer extends Component {
         typeFilter : undefined
     }
 
+    state = {
+        explorer : undefined
+    }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+        let explorer = nextProps.explorers[nextProps.explorerId];
+        let searchTerm = (!!explorer) ? explorer.searchTerm : '';
+        return {
+            explorer,
+            searchTerm
+        }
+    }
+
     componentDidMount() {
         // We give these properties to the explorer state, then the nested objects can read these values from
         // redux using the explorerId which is passed all the way down.
@@ -61,9 +74,8 @@ class DocExplorer extends Component {
 
     render() {
         let { documentTree, searchTermChanged } = this.props;
-        let explorerState = this.props.explorers[this.props.explorerId];
 
-        if (!explorerState) {
+        if (!this.state.explorer) {
             return (<div>Awaiting explorer state</div>)
         }
 
@@ -71,7 +83,7 @@ class DocExplorer extends Component {
             <div>
                 <Input icon='search'
                     placeholder='Search...'
-                    value={explorerState.searchTerm}
+                    value={this.state.searchTerm}
                     onChange={e => searchTermChanged(this.props.explorerId, e.target.value)}
                 />
                 <Folder explorerId={this.props.explorerId} folder={documentTree} />

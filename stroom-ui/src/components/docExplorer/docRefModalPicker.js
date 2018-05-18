@@ -30,7 +30,7 @@ import { findItem } from 'lib/treeUtils';
 
 import {
     pickDocRef
-} from './redux/explorerTreeReducer';
+} from './redux';
 
 import DocExplorer from './docExplorer';
 

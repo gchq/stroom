@@ -26,7 +26,7 @@ import {
 
 import { DragSource, DropTarget } from 'react-dnd';
 
-import { canMove } from '../../lib/treeUtils';
+import { canMove } from 'lib/treeUtils';
 import { ItemTypes } from './dragDropTypes';
 
 import ExpressionTerm from './expressionTerm';
@@ -37,7 +37,7 @@ import {
     expressionItemUpdated,
     expressionItemMoved,
     expressionItemDeleted
-} from './redux/expressionReducer';
+} from './redux';
 
 const LOGICAL_OPERATORS = [
     "NOT", 

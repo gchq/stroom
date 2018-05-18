@@ -25,8 +25,6 @@ export {
     DocRef,
     Folder,
     DocRefModalPicker,
-    ReduxDocRefModalPicker,
     DocRefDropdownPicker,
-    ReduxDocRefDropdownPicker,
     DocRefMenu
 }

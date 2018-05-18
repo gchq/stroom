@@ -40,9 +40,12 @@ import {
 } from '../index';
 
 import {
-    expressionChanged,
-    receiveDataSource
+    expressionChanged
 } from '../redux';
+
+import {
+    receiveDataSource
+} from 'components/DataSource/redux';
 
 import {
     receiveDocTree,

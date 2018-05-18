@@ -25,9 +25,7 @@ import {
     DocRef,
     Folder,
     DocRefModalPicker,
-    ReduxDocRefModalPicker,
-    DocRefDropdownPicker,
-    ReduxDocRefDropdownPicker
+    DocRefDropdownPicker
 } from '../index';
 
 import {

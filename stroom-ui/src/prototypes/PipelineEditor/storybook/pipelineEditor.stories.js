@@ -23,16 +23,29 @@ import { withNotes } from '@storybook/addon-notes';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
+import { 
+    testMultiInitialisationDecorator,
+    testInitialisationDecorator
+} from 'lib/storybook/testDataDecorator';
+
 import {
     PipelineEditor
-} from '../index'
+} from '../index';
 
+import {
+    pipelineChanged
+} from '../redux';
+
+import { testPipeline } from './testPipelines';
 
 storiesOf('Pipeline Editor', module)
+    .addDecorator(testMultiInitialisationDecorator(pipelineChanged, {
+        'testPipeline' : testPipeline
+    }))
     .addDecorator(ReduxDecorator) // must be recorder after/outside of the test initialisation decorators
     .addDecorator(DragDropDecorator)
-    .add('Pipeline Editor (empty)', () => 
+    .add('Pipeline Editor (test)', () => 
         <PipelineEditor 
-            pipelineId='empty-pipe'
+            pipelineId='testPipeline'
             />
     )

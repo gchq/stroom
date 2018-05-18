@@ -1,11 +1,13 @@
 import { 
     guid, 
     findMatch,
-    canMove
-} from './treeUtils';
+    canMove,
+    findItem
+} from '../src/lib/treeUtils';
 
 import expect from 'expect.js';
 
+// Denormalised so I can refer to individual elements in the tree.
 const oneOne = {
     uuid: '1-1',
     type: 'file',
@@ -155,5 +157,23 @@ describe('Tree Utils', () => {
             let allowed = canMove(oneFive, oneFive)
             expect(allowed).to.be(false);
         });
-    })
+    });
+    describe('#findItem()', () => {
+        it('should find a match when is root', () => {
+            let found = findItem(testTree, testTree.uuid);
+            expect(found).to.be(testTree);
+        });
+        it('should find a match when present within children', () => {
+            let found = findItem(testTree, oneTwo.uuid);
+            expect(found).to.be(oneTwo);
+        });
+        it('should find a match when present within grand-children', () => {
+            let found = findItem(testTree, oneThreeOne.uuid);
+            expect(found).to.be(oneThreeOne);
+        });
+        it('should not find a match when missing', () => {
+            let found = findItem(testTree, {uuid:'fifty'});
+            expect(found).to.be(undefined);
+        })
+    });
 });

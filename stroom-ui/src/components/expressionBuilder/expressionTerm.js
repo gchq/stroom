@@ -34,11 +34,10 @@ import {
     DocRefModalPicker
 } from '../DocExplorer';
 
-
 import {
     expressionItemUpdated,
     expressionItemDeleted
-} from './redux/expressionReducer';
+} from './redux';
 
 const dragSource = {
     beginDrag(props) {
@@ -256,7 +255,7 @@ class ExpressionTerm extends Component {
                     dictUuid = this.props.term.dictionary.uuid;
                 }
                 valueWidget = <DocRefModalPicker 
-                                pickerId={this.props.expressionId + ' -' + this.props.term.uuid}
+                                pickerId={this.props.expressionId + '-' + this.props.term.uuid}
                                 value={this.props.term.dictionary} 
                                 onChange={this.onDictionaryChange.bind(this)}
                                 typeFilter='dictionary'

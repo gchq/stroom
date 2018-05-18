@@ -27,7 +27,7 @@ import {
     selectDocRef,
     openDocRef,
     openDocRefContextMenu
-} from './redux/explorerTreeReducer';
+} from './redux';
 
 import DocRefMenu from './docRefMenu';
 

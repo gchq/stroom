@@ -22,7 +22,20 @@ import PipelineElement from './pipelineElement';
 
 class PipelineEditor extends Component {
     static propTypes = {
-        pipelineId : PropTypes.string.isRequired
+        pipelineId : PropTypes.string.isRequired,
+        pipelines : PropTypes.object.isRequired
+    }
+
+    state = {
+        pipeline : undefined
+    }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+        let pipeline = nextProps.pipelines[nextProps.pipelineId];
+
+        return {
+            pipeline
+        }
     }
 
     render() {
@@ -45,7 +58,7 @@ class PipelineEditor extends Component {
 
 export default connect(
     (state) => ({
-        // state
+        pipelines : state.pipelines
     }),
     {
         // actions

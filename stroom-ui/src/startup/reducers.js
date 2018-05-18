@@ -22,11 +22,16 @@ import {
 } from 'startup/Authentication';
 import {
   explorerTreeReducer as explorerTree
-} from '../components/DocExplorer/redux';
+} from 'components/DocExplorer/redux';
 import {
-  expressionReducer as expressions,
   dataSourceReducer as dataSources
-} from '../components/ExpressionBuilder/redux';
+} from 'components/DataSource/redux';
+import {
+  expressionReducer as expressions
+} from 'components/ExpressionBuilder/redux';
+import {
+  pipelineReducer as pipelines
+} from 'prototypes/PipelineEditor/redux'
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import config from './config';
 
@@ -39,4 +44,5 @@ export default combineReducers({
   explorerTree,
   dataSources,
   expressions,
+  pipelines
 });

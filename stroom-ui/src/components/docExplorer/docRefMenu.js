@@ -29,7 +29,7 @@ import {
     deleteDocRef,
     openDocRefContextMenu,
     closeDocRefContextMenu
-} from './redux/explorerTreeReducer';
+} from './redux';
 
 class DocRefMenu extends Component {
     static propTypes = {

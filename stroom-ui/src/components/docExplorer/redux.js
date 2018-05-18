@@ -21,7 +21,7 @@ import {
     iterateNodes, 
     getIsInFilteredMap,
     deleteItemFromTree
-} from 'lib/treeUtils';
+} from '../../lib/treeUtils';
 
 const OPEN_STATES = {
     closed: 0,
@@ -80,6 +80,7 @@ const defaultExplorerState = {
     isSelected : {},
     isVisible : {}, // based on search
     inSearch: {},
+    inTypeFilter: {},
     contextMenuItemUuid : undefined // will be a UUID
 }
 
@@ -138,7 +139,7 @@ function getFolderIsOpenMap(documentTree, isInTypeFilterMap, isSearching, isInSe
     return isFolderOpen;
 }
 
-function getUpdatedExplorer(documentTree, optExplorer, searchTerm) {
+function getUpdatedExplorer(documentTree, optExplorer, searchTerm, typeFilter) {
     let explorer = (!!optExplorer) ? optExplorer : defaultExplorerState;
 
     let searchRegex;
@@ -156,8 +157,8 @@ function getUpdatedExplorer(documentTree, optExplorer, searchTerm) {
     }
 
     let typeFilterFunction = (lineage, node) => {
-        if (getIsValidFilterTerm(explorer.typeFilter)) {
-            return explorer.typeFilter === node.type;
+        if (getIsValidFilterTerm(typeFilter)) {
+            return typeFilter === node.type;
         } else {
             return true;
         }
@@ -165,14 +166,16 @@ function getUpdatedExplorer(documentTree, optExplorer, searchTerm) {
 
     let isSearching = getIsValidFilterTerm(searchTerm);
     let isInSearchMap = getIsInFilteredMap(documentTree, searchFilterFunction);
-
     let isInTypeFilterMap = getIsInFilteredMap(documentTree, typeFilterFunction);
+
     return {
         ...explorer,
+        typeFilter : typeFilter,
         searchTerm : searchTerm,
         isVisible : getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap),
         isFolderOpen : getFolderIsOpenMap(documentTree, isInTypeFilterMap, isSearching, isInSearchMap, explorer.isFolderOpen),
-        inSearch : isInSearchMap
+        inSearch : isInSearchMap,
+        inTypeFilter : isInTypeFilterMap
     }
 }
 
@@ -180,7 +183,7 @@ function getStateAfterTreeUpdate(state, documentTree) {
     // Update all the explorers with the new tree
     let explorers = {};
     Object.entries(state.explorers).forEach(k => {
-        explorers[k[0]] = getUpdatedExplorer(documentTree, k[1], k[1].searchTerm)
+        explorers[k[0]] = getUpdatedExplorer(documentTree, k[1], k[1].searchTerm, k[1].typeFilter)
     });
 
     return {
@@ -207,10 +210,9 @@ const explorerTreeReducer = handleActions(
                 explorers: {
                     ...state.explorers,
                     [explorerId] : {
-                        ...getUpdatedExplorer(state.documentTree, undefined, ''),
+                        ...getUpdatedExplorer(state.documentTree, undefined, '', typeFilter),
                         allowMultiSelect,
-                        allowDragAndDrop,
-                        typeFilter
+                        allowDragAndDrop
                     }
                 }
             }
@@ -285,7 +287,10 @@ const explorerTreeReducer = handleActions(
         (state, action) => {
             let { explorerId, searchTerm } = action.payload;
 
-            let explorer = getUpdatedExplorer(state.documentTree, state.explorers[explorerId], searchTerm);
+            let explorer = getUpdatedExplorer(state.documentTree, 
+                state.explorers[explorerId], 
+                searchTerm, 
+                state.explorers[explorerId].typeFilter);
 
             return {
                 ...state,

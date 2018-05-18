@@ -30,28 +30,39 @@ const defaultExpression = {
     "enabled" : true
 };
 
-const ExpressionBuilder = ({dataSourceUuid, expressionId, dataSources, expressions, expressionChanged}) => {
-    let expression = expressions[expressionId];
-    let dataSource = dataSources[dataSourceUuid];
-
-    if (!!expression && !!dataSource) {
-        return (
-            <ExpressionOperator 
-                dataSource={dataSource}
-                expressionId={expressionId}
-                isRoot={true}
-                isEnabled={true}
-                operator={expression}  />
-        )
-    } else {
-        return <div>Error - Data Source ({!dataSource ? 'missing' : 'ok'}), Expression ({!expression ? 'missing' : 'ok'})</div>
+class ExpressionBuilder extends Component {
+    static propTypes = {
+        dataSourceUuid: PropTypes.string.isRequired,
+        expressionId: PropTypes.string.isRequired,
+        expressions: PropTypes.object.isRequired, // expects the entire map of expressions to be available
     }
-}
 
-ExpressionBuilder.propTypes = {
-    dataSourceUuid: PropTypes.string.isRequired,
-    expressionId: PropTypes.string.isRequired,
-    expressions: PropTypes.object.isRequired, // expects the entire map of expressions to be available
+    state = {
+        expression : undefined,
+        dataSource : undefined
+    }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+        return {
+            expression : nextProps.expressions[nextProps.expressionId],
+            dataSource : nextProps.dataSources[nextProps.dataSourceUuid]
+        }
+    }
+
+    render() {
+        if (!!this.state.expression && !!this.state.dataSource) {
+            return (
+                <ExpressionOperator 
+                    dataSource={this.state.dataSource}
+                    expressionId={this.props.expressionId}
+                    isRoot={true}
+                    isEnabled={true}
+                    operator={this.state.expression}  />
+            )
+        } else {
+            return <div>Error - Data Source ({!this.state.dataSource ? 'missing' : 'ok'}), Expression ({!this.state.expression ? 'missing' : 'ok'})</div>
+        }
+    }
 }
 
 export default connect(

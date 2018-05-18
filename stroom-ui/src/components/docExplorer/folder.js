@@ -32,7 +32,7 @@ import {
     moveExplorerItem,
     toggleFolderOpen,
     openDocRefContextMenu
-} from './redux/explorerTreeReducer';
+} from './redux';
 
 const dragSource = {
 	canDrag(props) {

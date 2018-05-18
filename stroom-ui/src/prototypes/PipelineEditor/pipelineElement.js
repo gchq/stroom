@@ -25,18 +25,19 @@ class PipelineEditor extends Component {
     }
 
     render() {
+        let pipeline = this.props.pipelines[this.props.pipelineId];
+
         return (
-            <g>
-                <text x="20" y="35">Pipeline Element {this.props.pipelineId} - {this.props.elementId}</text>
-                <circle cx={100} cy={100} r={20} />
-            </g>
+            <div>
+                <h4>Pipeline Element {this.props.pipelineId} - {this.props.elementId}</h4>
+            </div>
         )
     }
 }
 
 export default connect(
     (state) => ({
-        // state
+        pipelines : state.pipelines
     }),
     {
         // actions

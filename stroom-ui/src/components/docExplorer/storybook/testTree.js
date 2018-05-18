@@ -114,7 +114,7 @@ const eowyn = {
     type: DOC_REF_TYPES.HUMAN,
 }
 
-const menOfRohan = {
+const ridersOfRohan = {
     uuid: guid(),
     name: 'Riders of Rohan',
     type: DOC_REF_TYPES.FOLDER,
@@ -131,7 +131,7 @@ const goodGuys = {
     type: DOC_REF_TYPES.FOLDER,
     children: [
         fellowship,
-        menOfRohan
+        ridersOfRohan
     ]
 }
 
@@ -234,6 +234,24 @@ const testTree = {
 export {
     DOC_REF_TYPES,
     sam, 
+    frodo,
+    pippin,
+    merrin,
+    boromir,
+    gandalf,
+    aragorn,
+    sauron,
+    saruman,
+    badGuys,
+    goodGuys,
+    smaug,
+    golem,
+    shelob,
+    agents_of_chaos,
+    evilTrinkets,
+    giftsFromGaladriel,
+    favouriteAdjectives,
+    ridersOfRohan,
     gimli,
     fellowship,
     testTree

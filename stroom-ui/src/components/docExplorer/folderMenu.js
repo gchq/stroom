@@ -28,7 +28,7 @@ import {
     toggleFolderOpen,
     deleteDocRef,
     closeDocRefContextMenu
-} from './redux/explorerTreeReducer';
+} from './redux';
 
 class FolderMenu extends Component {
     static propTypes = {
