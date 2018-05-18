@@ -29,7 +29,7 @@ import { DragSource, DropTarget } from 'react-dnd';
 import { canMove } from 'lib/treeUtils';
 import { ItemTypes } from './dragDropTypes';
 
-import ExpressionTerm from './expressionTerm';
+import ExpressionTerm from './ExpressionTerm';
 
 import {
     expressionTermAdded,

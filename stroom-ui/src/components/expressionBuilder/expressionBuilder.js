@@ -18,9 +18,9 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux'
 
-import ExpressionOperator from './expressionOperator';
+import ExpressionOperator from './ExpressionOperator';
 
-import './expressionBuilder.css'
+import './ExpressionBuilder.css'
 
 const defaultExpression = {
     "uuid" : "root",

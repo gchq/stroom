@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import DocExplorer from './docExplorer'
-import DocRef from './docRef';
-import Folder from './folder';
-import DocRefModalPicker from './docRefModalPicker';
-import DocRefDropdownPicker from './docRefDropdownPicker';
-import DocRefMenu from './docRefMenu';
+import DocExplorer from './DocExplorer'
+import DocRefModalPicker from './DocRefModalPicker';
+import DocRefDropdownPicker from './DocRefDropdownPicker';
 
 export {
     DocExplorer,
-    DocRef,
-    Folder,
     DocRefModalPicker,
-    DocRefDropdownPicker,
-    DocRefMenu
+    DocRefDropdownPicker
 }

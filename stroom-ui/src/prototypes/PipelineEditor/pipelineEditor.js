@@ -18,7 +18,9 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux'
 
-import PipelineElement from './pipelineElement';
+import PipelineElement from './PipelineElement';
+
+import './pipelineEditor.css';
 
 class PipelineEditor extends Component {
     static propTypes = {
@@ -39,15 +41,19 @@ class PipelineEditor extends Component {
     }
 
     render() {
+        if (!this.state.pipeline) {
+            return <div>Awaiting state</div>
+        }
+        
         return (
             <div className='pipeline-editor'>
-                <svg>
-                    <text x="20" y="35">Pipeline Editor {this.props.pipelineId}</text>
+                <div>
+                    <h4>Pipeline Editor {this.props.pipelineId}</h4>
                     <PipelineElement 
                         pipelineId={this.props.pipelineId}
                         elementId='test1'
                         />
-                </svg>
+                </div>
                 <div>
                     Pipeline Element Settings
                 </div>

@@ -29,7 +29,7 @@ import {
     openDocRefContextMenu
 } from './redux';
 
-import DocRefMenu from './docRefMenu';
+import DocRefMenu from './DocRefMenu';
 
 const dragSource = {
 	canDrag(props) {

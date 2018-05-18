@@ -26,7 +26,7 @@ import {
     Breadcrumb
 } from 'semantic-ui-react'
 
-import DocExplorer from './docExplorer';
+import DocExplorer from './DocExplorer';
 
 import { iterateNodes, findItem } from 'lib/treeUtils';
 

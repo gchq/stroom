@@ -20,9 +20,9 @@ import { connect } from 'react-redux'
 
 import { Input, Icon } from 'semantic-ui-react'
 
-import './docExplorer.css'
+import './DocExplorer.css'
 
-import Folder from './folder';
+import Folder from './Folder';
 
 import {
     searchTermChanged,

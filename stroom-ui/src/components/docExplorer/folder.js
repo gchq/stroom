@@ -24,9 +24,9 @@ import { DragSource, DropTarget } from 'react-dnd';
 
 import { Icon } from 'semantic-ui-react'
 
-import DocRef from './docRef';
+import DocRef from './DocRef';
 
-import FolderMenu from './folderMenu';
+import FolderMenu from './FolderMenu';
 
 import {
     moveExplorerItem,

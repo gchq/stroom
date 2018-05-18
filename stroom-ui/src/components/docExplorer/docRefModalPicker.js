@@ -32,7 +32,7 @@ import {
     pickDocRef
 } from './redux';
 
-import DocExplorer from './docExplorer';
+import DocExplorer from './DocExplorer';
 
 class DocRefModalPicker extends Component {
     static propTypes = {

@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import ExpressionBuilder from './expressionBuilder';
-import ExpressionTerm from './expressionTerm';
-import ExpressionOperator from './expressionOperator';
+import ExpressionBuilder from './ExpressionBuilder';
 
 export {
-    ExpressionBuilder,
-    ExpressionTerm,
-    ExpressionOperator
+    ExpressionBuilder
 };

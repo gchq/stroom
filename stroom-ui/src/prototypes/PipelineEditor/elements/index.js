@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import XmlReader from './xmlReader';
-import XsltFilter from './xsltFilter';
+import XmlReader from './XmlReader';
+import XsltFilter from './XsltFilter';
 
 export default {
     'XML_READER' : XmlReader,
