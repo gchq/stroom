@@ -139,7 +139,7 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
 
             // Find last XSLT filter.
             final XMLFilter lastFilter = getLastFilter(pipeline);
-            if (lastFilter == null || !(lastFilter instanceof HasTargets)) {
+            if (!(lastFilter instanceof HasTargets)) {
                 throw new ProcessException(
                         "No appendable filters can be found in pipeline '" + pipelineEntity.getName() + "'");
             }
