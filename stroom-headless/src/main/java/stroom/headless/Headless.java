@@ -98,7 +98,7 @@ public class Headless extends AbstractCommandLineTool {
         this.config = config;
     }
 
-    public void setTmp(final String tmp) throws IOException {
+    public void setTmp(final String tmp) {
         this.tmp = tmp;
 
         final Path tempDir = Paths.get(tmp);

@@ -16,13 +16,24 @@
 
 package stroom.pipeline.server.filter;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.XMLFilterImpl;
+import stroom.pipeline.server.factory.ConfigurableElement;
+import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
+import stroom.util.spring.StroomScope;
 
+@Component
+@Scope(StroomScope.PROTOTYPE)
+@ConfigurableElement(type = "SafeXMLFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.XML)
 public class SafeXMLFilter extends XMLFilterImpl {
     private SafeBuffer safeBuffer = new SafeBuffer(500);
     private SafeAttributes safeAttributes = new SafeAttributes(safeBuffer);
@@ -127,8 +138,8 @@ public class SafeXMLFilter extends XMLFilterImpl {
          * the process.
          */
         private void move(final char[] buffer, final int start, final int end) {
-            char c = 0;
-            int codePoint = 0;
+            char c;
+            int codePoint;
 
             outputBuffer.clear();
             for (int i = start, j = 0; i < end; i++) {
@@ -159,8 +170,8 @@ public class SafeXMLFilter extends XMLFilterImpl {
         }
 
         private boolean inValues(final int codePoint, final int[] codePoints) {
-            for (int i = 0; i < codePoints.length; i++) {
-                if (codePoint == codePoints[i]) {
+            for (final int codePoint1 : codePoints) {
+                if (codePoint == codePoint1) {
                     return true;
                 }
             }

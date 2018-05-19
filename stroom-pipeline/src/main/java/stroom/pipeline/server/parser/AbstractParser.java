@@ -106,17 +106,18 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
     public void startProcessing() {
         try {
             xmlReader = createReader();
-            xmlReader.setContentHandler(getFilter());
+            if (xmlReader != null) {
+                xmlReader.setContentHandler(getFilter());
 
-            final ErrorHandler errorHandler = new ErrorHandlerAdaptor(getElementId(), locationFactory,
-                    errorReceiverProxy);
-            xmlReader.setErrorHandler(errorHandler);
+                final ErrorHandler errorHandler = new ErrorHandlerAdaptor(getElementId(), locationFactory,
+                        errorReceiverProxy);
+                xmlReader.setErrorHandler(errorHandler);
 
-            // Errors may be throw right away as start processing
-            // compiles XSLT etc. If an error is thrown we don't
-            // want to keep on parsing.
-            filter.startProcessing();
-
+                // Errors may be throw right away as start processing
+                // compiles XSLT etc. If an error is thrown we don't
+                // want to keep on parsing.
+                filter.startProcessing();
+            }
         } catch (final LoggedException e) {
             throw e;
         } catch (final Throwable e) {
