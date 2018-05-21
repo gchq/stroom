@@ -50,10 +50,35 @@ class ExpressionBuilder extends Component {
         }
     }
 
+    generateCurve({lineId, fromRect, toRect}) {
+        let from = {
+            x : fromRect.left + (fromRect.width / 2),
+            y : fromRect.bottom
+        };
+        let to = {
+            x : toRect.left,
+            y : toRect.top + (toRect.height / 2)
+        };
+        let pathSpec = 'M ' + from.x + ' ' + from.y
+                    + ' C ' + from.x + ' ' + from.y + ' '
+                            + from.x + ' ' + to.y + ' '
+                            + to.x + ' ' + to.y;
+        return (
+            <path key={lineId}  d={pathSpec} style={{
+                stroke:'black',
+                strokeWidth: 2,
+                fill: 'none'
+            }} />
+        )
+    }
+
     render() {
         if (!!this.state.expression && !!this.state.dataSource) {
             return (
-                <LineContainer id={'expression-lines-' + this.props.expressionId}>
+                <LineContainer 
+                    lineContextId={'expression-lines-' + this.props.expressionId}
+                    lineElementCreator={this.generateCurve}
+                    >
                     <ExpressionOperator 
                         dataSource={this.state.dataSource}
                         expressionId={this.props.expressionId}

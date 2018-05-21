@@ -1,5 +1,5 @@
 import React from 'react';
 
-const LineContext = React.createContext('default-line-context');
+const LineContext = React.createContext('default-svg-line-context');
 
 export default LineContext;

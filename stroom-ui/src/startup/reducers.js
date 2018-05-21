@@ -20,6 +20,7 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
+import { lineContainerReducer as lineContainer } from 'prototypes/LineTo';
 import { explorerTreeReducer as explorerTree } from 'components/DocExplorer';
 import { dataSourceReducer as dataSources } from 'components/DataSource';
 import { expressionReducer as expressions } from 'components/ExpressionBuilder';
@@ -37,4 +38,5 @@ export default combineReducers({
   dataSources,
   expressions,
   pipelines,
+  lineContainer
 });

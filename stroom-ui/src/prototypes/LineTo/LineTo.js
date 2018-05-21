@@ -16,66 +16,30 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { connect } from 'react-redux'
+
 import LineContext from './LineContext';
 
-export const domRectBoundCalcs = {
-    leftCentre : (r) => ({
-        x : r.left,
-        y : r.top + (r.height / 2)
-    }),
-    rightCentre : (r) => ({
-        x : r.right,
-        y : r.top + (r.height / 2)
-    }),
-    topCentre : (r) => ({
-        x : r.left + (r.width / 2),
-        y : r.top
-    }),
-    bottomCentre : (r) => ({
-        x : r.left + (r.width / 2),
-        y : r.bottom
-    }),
-    bottomLeft : (r) => ({
-        x : r.left,
-        y : r.bottom
-    })
-}
+import { lineCreated, lineDestroyed } from './redux';
 
 class LineTo extends Component {
     static propTypes = {
         // These are the id's of the endpoint elements.
+        lineContextId : PropTypes.string.isRequired,
+        lineId : PropTypes.string.isRequired,
         fromId : PropTypes.string.isRequired,
-        toId : PropTypes.string.isRequired,
-
-        // These need to be functions that accept a domRect and return appropriate start/end points
-        calculateStart : PropTypes.func.isRequired,
-        calculateEnd : PropTypes.func.isRequired
-    }
-
-    static defaultProps = {
-        calculateStart : domRectBoundCalcs.rightCentre,
-        calculateEnd : domRectBoundCalcs.leftCentre
+        toId : PropTypes.string.isRequired
     }
 
     componentDidMount() {
-        const canvas = document.getElementById(this.props.lineContextId);
-        const fromElement = document.getElementById(this.props.fromId);
-        const toElement = document.getElementById(this.props.toId);
+        this.props.lineCreated(this.props.lineContextId, 
+            this.props.lineId,
+            this.props.fromId,
+            this.props.toId);
+    }
 
-        let fromRect = fromElement.getBoundingClientRect();
-        let toRect = toElement.getBoundingClientRect();
-
-        let fromPosition = this.props.calculateStart(fromRect);
-        let toPosition = this.props.calculateEnd(toRect);
-
-        console.log('From Position', fromPosition);
-        console.log('To Position', toPosition);
-
-        const ctx = canvas.getContext("2d");
-        ctx.beginPath();
-        ctx.moveTo(fromPosition.x, fromPosition.y);
-        ctx.lineTo(toPosition.x, toPosition.y);
-        ctx.stroke();
+    componentWillUnmount() {
+        this.props.lineDestroyed(this.props.lineContextId, this.props.lineId);
     }
 
     render() {
@@ -85,8 +49,19 @@ class LineTo extends Component {
     }
 }
 
+const ReduxLineTo = connect(
+    (state) => ({
+        // operators are nested, so take all their props from parent
+
+    }),
+    {
+        lineCreated,
+        lineDestroyed
+    }
+)(LineTo)
+
 export default props => (
     <LineContext.Consumer>
-        {lineContextId => <LineTo {...props} lineContextId={lineContextId} />}
+        {lineContextId => <ReduxLineTo {...props} lineContextId={lineContextId} />}
     </LineContext.Consumer>
   );

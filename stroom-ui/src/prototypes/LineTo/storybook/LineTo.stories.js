@@ -18,26 +18,24 @@ import PropTypes from 'prop-types';
 
 import { storiesOf } from '@storybook/react';
 
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+
 import { LineContainer, LineTo } from '../index';
 
-import {
-    domRectBoundCalcs
-} from '../LineTo';
-
-
 let testBlockStyle = {
-    position: 'fixed',
+    position: 'absolute',
     width:'50px',
     backgroundColor: 'red',
     borderStyle: 'thin',
     color: 'white'
 }
 
-storiesOf('Line To', module)
+storiesOf('Line To SVG', module)
+    .addDecorator(ReduxDecorator)
     .add('Single Line', () => {
         return (
             <div>
-                <LineContainer id='testLines1'>
+                <LineContainer lineContextId='testLines1'>
                     <div id='myFirst' style={{
                         ...testBlockStyle,
                         top: '50px', 
@@ -46,15 +44,41 @@ storiesOf('Line To', module)
                         ...testBlockStyle,
                         top: '250px', 
                         left: '150px'}}>To</div>
-                    <LineTo fromId='myFirst' toId='mySecond' />
+                    <LineTo 
+                        lineId='myLine1'
+                        fromId='myFirst'
+                        toId='mySecond' 
+                        />
                 </LineContainer>
             </div>
         )
     })
-    .add('Customised Line', () => {
+    .add('Custom Curve', () => {
+        const generateCurve = ({lineId, fromRect, toRect}) => {
+            let from = {
+                x : fromRect.left + (fromRect.width / 2),
+                y : fromRect.bottom
+            };
+            let to = {
+                x : toRect.left,
+                y : toRect.top + (toRect.height / 2)
+            };
+            let pathSpec = 'M ' + from.x + ' ' + from.y
+                        + ' C ' + from.x + ' ' + from.y + ' '
+                                + from.x + ' ' + to.y + ' '
+                                + to.x + ' ' + to.y;
+            return (
+                <path key={lineId}  d={pathSpec} style={{
+                    stroke:'black',
+                    strokeWidth: 2,
+                    fill: 'none'
+                }} />
+            )
+        }
+
         return (
             <div>
-                <LineContainer id='testLines2'>
+                <LineContainer lineContextId='testLines2' lineElementCreator={generateCurve}>
                     <div id='myFirst' style={{
                         ...testBlockStyle,
                         top: '50px', 
@@ -62,12 +86,21 @@ storiesOf('Line To', module)
                     <div id='mySecond' style={{
                         ...testBlockStyle,
                         top: '250px', 
-                        left: '50px'}}>To</div>
+                        left: '50px'}}>Mid1</div>
+                    <div id='myThird' style={{
+                        ...testBlockStyle,
+                        top: '150px', 
+                        left: '350px'}}>End</div>
                     <LineTo 
-                        fromId='myFirst' 
+                        lineId='myLine2'
+                        fromId='myFirst'
                         toId='mySecond' 
-                        calculateStart={domRectBoundCalcs.leftCentre}
-                        calculateEnd={domRectBoundCalcs.rightCentre}/>
+                        />
+                    <LineTo 
+                        lineId='myLine3'
+                        fromId='mySecond'
+                        toId='myThird' 
+                        />
                 </LineContainer>
             </div>
         )
