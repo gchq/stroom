@@ -40,9 +40,8 @@ import {
 } from './redux';
 
 import {
-    domRectBoundCalcs,
     LineTo
-} from 'prototypes/LineTo'
+} from 'components/LineTo'
 
 const LOGICAL_OPERATORS = [
     "NOT", 
@@ -143,29 +142,44 @@ class ExpressionOperator extends Component {
 
     renderChildren() {
         return this.props.operator.children.map(c => {
+            let itemElement;
             switch (c.type) {
                 case 'term':
-                    return <div id={'expression-item' + c.uuid}>
-                                <ExpressionTerm 
-                                    key={c.uuid}
-                                    dataSource={this.props.dataSource} 
+                    itemElement = (
+                        <div key={c.uuid} id={'expression-item' + c.uuid}>
+                            <ExpressionTerm 
+                                        dataSource={this.props.dataSource} 
+                                        expressionId={this.props.expressionId}
+                                        isEnabled={this.props.isEnabled && c.enabled}
+                                        term={c} />
+                        </div>
+                    )
+                    break;
+                case 'operator':
+                    itemElement = (
+                        <DndExpressionOperator 
+                                    dataSource={this.props.dataSource}  
                                     expressionId={this.props.expressionId}
                                     isEnabled={this.props.isEnabled && c.enabled}
-                                    term={c} />
-                                <LineTo fromId={'expression-item' + this.props.operator.uuid} 
-                                    toId={'expression-item' + c.uuid}
-                                    calculateStart={domRectBoundCalcs.bottomLeft}
-                                    calculateEnd={domRectBoundCalcs.leftCentre}
-                                    />
-                            </div>
-                case 'operator':
-                    return <DndExpressionOperator 
-                                key={c.uuid}
-                                dataSource={this.props.dataSource}  
-                                expressionId={this.props.expressionId}
-                                isEnabled={this.props.isEnabled && c.enabled}
-                                operator={c} />
+                                    operator={c} />
+                    )
+                    break;
             }
+
+            // Wrap it with a line to
+            return (
+                <div key={c.uuid}>
+                    <LineTo 
+                        lineId={c.uuid}
+                        lineType='curve'
+                        fromId={'expression-item' + this.props.operator.uuid} 
+                        fromAnchor='bottomCentre'
+                        toId={'expression-item' + c.uuid}
+                        toAnchor='leftCentre'
+                        />
+                    {itemElement}
+                </div>
+            )
         }).filter(c => !!c) // null filter
     }
 

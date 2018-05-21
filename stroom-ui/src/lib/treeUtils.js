@@ -197,6 +197,23 @@ export function updateItemInTree(treeNode, uuid, updates) {
 }
 
 /**
+ * Used to create a copy of an object with a particular key removed.
+ * We can't use array filtering on objects.
+ * 
+ * @param {object} input The input object
+ * @param {string} key The key to remove
+ */
+export function deleteItemFromObject(input, key) {
+    let output = {};
+
+    Object.keys(input)
+        .filter(k => k !== key)
+        .forEach(k => output[k] = input[k])
+
+    return output;
+}
+
+/**
  * Given a tree, this function returns a copy of the tree with the item removed with the matching UUID.
  * 
  * @param {treeNode} treeNode The tree from which to remove the item.
