@@ -22,7 +22,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import org.xml.sax.helpers.XMLFilterImpl;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -34,7 +33,7 @@ import stroom.util.spring.StroomScope;
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "SafeXMLFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.XML)
-public class SafeXMLFilter extends XMLFilterImpl {
+public class SafeXMLFilter extends AbstractXMLFilter {
     private SafeBuffer safeBuffer = new SafeBuffer(500);
     private SafeAttributes safeAttributes = new SafeAttributes(safeBuffer);
 
@@ -103,7 +102,7 @@ public class SafeXMLFilter extends XMLFilterImpl {
 
         private final OutputBuffer outputBuffer;
 
-        public SafeBuffer(final int initialSize) {
+        SafeBuffer(final int initialSize) {
             super(initialSize);
             outputBuffer = new OutputBuffer(initialSize);
         }
@@ -212,7 +211,7 @@ public class SafeXMLFilter extends XMLFilterImpl {
     private static class OutputBuffer extends CharBuffer {
         private static final long serialVersionUID = 5324120855707144530L;
 
-        public OutputBuffer(final int initialSize) {
+        OutputBuffer(final int initialSize) {
             super(initialSize);
         }
 
@@ -224,7 +223,7 @@ public class SafeXMLFilter extends XMLFilterImpl {
     private class SafeAttributes extends AttributesImpl {
         private final SafeBuffer safeBuffer;
 
-        public SafeAttributes(final SafeBuffer safeBuffer) {
+        SafeAttributes(final SafeBuffer safeBuffer) {
             this.safeBuffer = safeBuffer;
         }
 

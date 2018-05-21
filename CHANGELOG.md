@@ -16,6 +16,10 @@ Uplift stroom-expression to v1.4.1
 
 * Issue **#761** : New fix for premature truncation of SQL stats queries due to thread interruption.
 
+## [v6.0-alpha.24]
+
+* Issue **#748** : Fix build issue resulting from a change to SafeXMLFilter.
+
 ## [v6.0-alpha.23]
 
 * Issue **#748** : Added a command line interface (CLI) in addition to headless execution so that full pipelines can be run against input files.
@@ -929,7 +933,8 @@ Uplift stroom-expression to v1.4.1
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.23...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...6.0
+[v6.0-alpha.24]: https://github.com/gchq/stroom/compare/v6.0-alpha.23...v6.0-alpha.24
 [v6.0-alpha.23]: https://github.com/gchq/stroom/compare/v6.0-alpha.22...v6.0-alpha.23
 [v6.0-alpha.22]: https://github.com/gchq/stroom/compare/v6.0-alpha.21...v6.0-alpha.22
 [v6.0-alpha.21]: https://github.com/gchq/stroom/compare/v6.0-alpha.20...v6.0-alpha.21
