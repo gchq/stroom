@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import ErrorPage from './ErrorPage';
+import React from 'react';
+import { storiesOf } from '@storybook/react';
+import ErrorPage from 'sections/ErrorPage';
 
-export { default as errorPageReducer, setErrorMessageAction, setStackTraceAction } from './redux';
-export default ErrorPage;
+storiesOf('ErrorPage', module).add('basic', () => (
+  <div className="container">
+    <ErrorPage />
+  </div>
+));

@@ -4,6 +4,8 @@ import { HttpError } from '../../lib/ErrorTypes';
 
 import { actionCreators } from './redux';
 
+import { setErrorMessageAction, setStackTraceAction } from 'sections/ErrorPage';
+
 const fetch = window.fetch;
 
 export const TrackerSelection = Object.freeze({ first: 'first', last: 'last', none: 'none' });
@@ -58,7 +60,9 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
       }
     })
     .catch((error) => {
-      dispatch(push(`/error?message=${error.message}`));
+      dispatch(setErrorMessageAction(error.message));
+      dispatch(setStackTraceAction(error.stack));
+      dispatch(push('/error'));
     });
 };
 

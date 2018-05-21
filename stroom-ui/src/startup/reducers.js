@@ -25,6 +25,7 @@ import { dataSourceReducer as dataSources } from 'components/DataSource';
 import { expressionReducer as expressions } from 'components/ExpressionBuilder';
 import { pipelineReducer as pipelines } from 'prototypes/PipelineEditor';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
+import { errorPageReducer as errorPage } from 'sections/ErrorPage';
 import config from './config';
 
 export default combineReducers({
@@ -37,4 +38,5 @@ export default combineReducers({
   dataSources,
   expressions,
   pipelines,
+  errorPage,
 });
