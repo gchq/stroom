@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
+
+Uplift stroom-expression to v1.4.1
+
+* Issue **#766** : Fix NullPointerExceptions when downloading table results to Excel format.
+
+* Issue **#770** : Speculative fix for memory leak in SQL Stats queries.
+
+* Issue **#761** : New fix for premature truncation of SQL stats queries due to thread interruption.
+
 ## [v6.0-alpha.23]
 
 * Issue **#748** : Added a command line interface (CLI) in addition to headless execution so that full pipelines can be run against input files.

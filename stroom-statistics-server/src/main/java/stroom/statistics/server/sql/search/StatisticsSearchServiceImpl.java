@@ -20,9 +20,9 @@ import stroom.statistics.server.sql.SQLStatisticNames;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
-import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -62,7 +62,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
-    private final TaskContext taskContext;
+    private final TaskMonitor taskMonitor;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
@@ -76,10 +76,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @Inject
     StatisticsSearchServiceImpl(@Named("statisticsDataSource") final DataSource statisticsDataSource,
                                 final StroomPropertyService propertyService,
-                                final TaskContext taskContext) {
+                                final TaskMonitor taskMonitor) {
         this.statisticsDataSource = statisticsDataSource;
         this.propertyService = propertyService;
-        this.taskContext = taskContext;
+        this.taskMonitor = taskMonitor;
     }
 
     @Override
@@ -379,9 +379,13 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                         }
                                     },
                                     (rs, emitter) -> {
+                                        // The line below can be un-commented in development debugging to slow down the
+                                        // return of all results to test iterative results and dashboard polling.
+                                        // LockSupport.parkNanos(200_000);
+
                                         //advance the resultSet, if it is a row emit it, else finish the flow
                                         // TODO prob needs to change in 6.1
-                                        if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
+                                        if (Thread.currentThread().isInterrupted() || taskMonitor.isTerminated()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
                                         } else {
