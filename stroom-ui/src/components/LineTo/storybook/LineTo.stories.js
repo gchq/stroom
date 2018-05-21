@@ -54,7 +54,7 @@ storiesOf('Line To SVG', module)
         )
     })
     .add('Custom Curve', () => {
-        const generateCurve = ({lineId, fromRect, toRect}) => {
+        const curve = ({lineId, fromRect, toRect}) => {
             let from = {
                 x : fromRect.left + (fromRect.width / 2),
                 y : fromRect.bottom
@@ -76,9 +76,13 @@ storiesOf('Line To SVG', module)
             )
         }
 
+        let lineCreators = {
+            'curve': curve
+        }
+
         return (
             <div>
-                <LineContainer lineContextId='testLines2' lineElementCreator={generateCurve}>
+                <LineContainer lineContextId='testLines2' lineElementCreators={lineCreators}>
                     <div id='myFirst' style={{
                         ...testBlockStyle,
                         top: '50px', 
@@ -93,11 +97,109 @@ storiesOf('Line To SVG', module)
                         left: '350px'}}>End</div>
                     <LineTo 
                         lineId='myLine2'
+                        lineType='curve'
                         fromId='myFirst'
                         toId='mySecond' 
                         />
                     <LineTo 
                         lineId='myLine3'
+                        lineType='curve'
+                        fromId='mySecond'
+                        toId='myThird' 
+                        />
+                </LineContainer>
+            </div>
+        )
+    })
+
+    .add('Mixed Line Types', () => {
+        const straightLineDown = ({lineId, fromRect, toRect}) => {
+            return (
+                <line key={lineId} 
+                    x1={fromRect.left + (fromRect.width / 2)} y1={fromRect.bottom}
+                    x2={toRect.left + (toRect.width / 2)} y2={toRect.top}
+                    style={{
+                        stroke:'black',
+                        strokeWidth: 2,
+                        fill: 'none'
+                    }}
+                    />
+            )
+        }
+        
+        const straightLineLeftToRight = ({lineId, fromRect, toRect}) => {
+            return (
+                <line key={lineId} 
+                    x1={fromRect.right} y1={fromRect.top + (fromRect.height / 2)}
+                    x2={toRect.left} y2={toRect.top + (toRect.height / 2)}
+                    style={{
+                        stroke:'black',
+                        strokeWidth: 2,
+                        fill: 'none'
+                    }}
+                    />
+            )
+        }
+
+        let lineCreators = {
+            'straight-left-to-right': straightLineLeftToRight,
+            'straight-down': straightLineDown
+        }
+
+        return (
+            <div>
+                <LineContainer lineContextId='testLines2' lineElementCreators={lineCreators}>
+                    <div id='myFirst' style={{
+                        ...testBlockStyle,
+                        top: '50px', 
+                        left: '50px'}}>First</div>
+                    <div id='myFirstDetails' style={{
+                        ...testBlockStyle,
+                        top: '250px', 
+                        left: '50px'}}>First Details</div>
+                    <div id='mySecond' style={{
+                        ...testBlockStyle,
+                        top: '50px', 
+                        left: '150px'}}>Second</div>
+                    <div id='mySecondDetails' style={{
+                        ...testBlockStyle,
+                        top: '250px', 
+                        left: '150px'}}>Second Details</div>
+                    <div id='myThird' style={{
+                        ...testBlockStyle,
+                        top: '50px', 
+                        left: '250px'}}>Third</div>
+                    <div id='myThirdDetails' style={{
+                        ...testBlockStyle,
+                        top: '250px', 
+                        left: '250px'}}>Third Details</div>
+                    <LineTo 
+                        lineId='myFirstDetailsLine'
+                        lineType='straight-down'
+                        fromId='myFirst'
+                        toId='myFirstDetails' 
+                        />
+                    <LineTo 
+                        lineId='mySecondDetailsLine'
+                        lineType='straight-down'
+                        fromId='mySecond'
+                        toId='mySecondDetails' 
+                        />
+                    <LineTo 
+                        lineId='myThirdDetailsLine'
+                        lineType='straight-down'
+                        fromId='myThird'
+                        toId='myThirdDetails' 
+                        />
+                    <LineTo 
+                        lineId='myLine2'
+                        lineType='straight-left-to-right'
+                        fromId='myFirst'
+                        toId='mySecond' 
+                        />
+                    <LineTo 
+                        lineId='myLine3'
+                        lineType='straight-left-to-right'
                         fromId='mySecond'
                         toId='myThird' 
                         />

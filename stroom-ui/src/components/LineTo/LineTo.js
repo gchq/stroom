@@ -27,6 +27,7 @@ class LineTo extends Component {
         // These are the id's of the endpoint elements.
         lineContextId : PropTypes.string.isRequired,
         lineId : PropTypes.string.isRequired,
+        lineType : PropTypes.string,
         fromId : PropTypes.string.isRequired,
         toId : PropTypes.string.isRequired
     }
@@ -34,6 +35,7 @@ class LineTo extends Component {
     componentDidMount() {
         this.props.lineCreated(this.props.lineContextId, 
             this.props.lineId,
+            this.props.lineType,
             this.props.fromId,
             this.props.toId);
     }

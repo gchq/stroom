@@ -25,48 +25,11 @@ import {
     lineContainerDestroyed
 } from './redux';
 
-const endpointCalculators = {
-    // midway points on edges
-    leftCentre : (r) => ({
-        x : r.left,
-        y : r.top + (r.height / 2)
-    }),
-    rightCentre : (r) => ({
-        x : r.right,
-        y : r.top + (r.height / 2)
-    }),
-    topCentre : (r) => ({
-        x : r.left + (r.width / 2),
-        y : r.top
-    }),
-    bottomCentre : (r) => ({
-        x : r.left + (r.width / 2),
-        y : r.bottom
-    }),
-    // The corners
-    bottomLeft : (r) => ({
-        x : r.left,
-        y : r.bottom
-    }),
-    bottomRight : (r) => ({
-        x : r.right,
-        y : r.bottom
-    }),
-    topLeft : (r) => ({
-        x : r.left,
-        y : r.top
-    }),
-    topRight : (r) => ({
-        x : r.right,
-        y : r.top
-    })
-}
-
 const straightLineCreator = ({lineId, fromRect, toRect}) => {
     return (
         <line key={lineId} 
-            x1={fromRect.right} y1={fromRect.bottom}
-            x2={toRect.left} y2={toRect.top}
+            x1={fromRect.right} y1={fromRect.top + (fromRect.height / 2)}
+            x2={toRect.left} y2={toRect.top + (toRect.height / 2)}
             style={{
                 stroke:'black',
                 strokeWidth: 2,
@@ -80,6 +43,7 @@ function calculateLine(k) {
     let lineId = k[0];
     let lineData = k[1];
 
+    let lineType = lineData.lineType;
     const fromElement = document.getElementById(lineData.fromId);
     const toElement = document.getElementById(lineData.toId);
 
@@ -88,19 +52,24 @@ function calculateLine(k) {
 
     return {
         lineId,
+        lineType,
         fromRect,
         toRect
     }
 }
 
+const DEFAULT_LINE_TYPE = 'straight-line';
+
 class LineContainer extends Component {
     static propTypes = {
         lineContextId : PropTypes.string.isRequired,
-        lineElementCreator : PropTypes.func.isRequired // ({lineId, fromRect, toRect})
+        lineElementCreators : PropTypes.object.isRequired // {'someLineType': ({lineId, fromRect, toRect}) => (<div>)}
     }
 
     static defaultProps = {
-        lineElementCreator : straightLineCreator
+        lineElementCreators : {
+            [DEFAULT_LINE_TYPE] : straightLineCreator
+        }
     }
 
     state = {
@@ -136,7 +105,12 @@ class LineContainer extends Component {
 
     renderChildren() {
         return this.state.lines.map(l => {
-            return this.props.lineElementCreator(l);
+            let lt = l.lineType || DEFAULT_LINE_TYPE;
+            let ltf = this.props.lineElementCreators[lt];
+            if (!ltf) {
+                return <text key={l.lineId}>Invalid line type for known creators {lt}</text>
+            }
+            return ltf(l);
         })
     }
 

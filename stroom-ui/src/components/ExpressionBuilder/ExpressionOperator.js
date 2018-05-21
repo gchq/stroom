@@ -173,9 +173,7 @@ class ExpressionOperator extends Component {
                         lineId={c.uuid}
                         lineType='curve'
                         fromId={'expression-item' + this.props.operator.uuid} 
-                        fromAnchor='bottomCentre'
                         toId={'expression-item' + c.uuid}
-                        toAnchor='leftCentre'
                         />
                     {itemElement}
                 </div>
