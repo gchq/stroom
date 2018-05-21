@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,12 @@
  * limitations under the License.
  */
 
-import React, {Component} from 'react'
-import {bindActionCreators} from 'redux'
-import {connect} from 'react-redux'
+import ErrorPage from './ErrorPage';
 
-import './ErrorPage.css'
-// import '../Layout.css'
-
-class ErrorPage extends Component {
-  render () {
-    return (
-      <div className='content-floating-without-appbar'>
-        <div className='ErrorPage-card'>
-          <h3>There has been an error!</h3>
-        </div>
-      </div>
-    )
-  }
-}
-
-const mapStateToProps = state => ({})
-
-const mapDispatchToProps = dispatch => bindActionCreators({}, dispatch)
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(ErrorPage)
+export {
+  default as errorPageReducer,
+  setErrorMessageAction,
+  setStackTraceAction,
+  setHttpErrorCodeAction,
+} from './redux';
+export default ErrorPage;

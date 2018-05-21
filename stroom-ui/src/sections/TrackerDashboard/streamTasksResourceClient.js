@@ -4,6 +4,12 @@ import { HttpError } from '../../lib/ErrorTypes';
 
 import { actionCreators } from './redux';
 
+import {
+  setErrorMessageAction,
+  setStackTraceAction,
+  setHttpErrorCodeAction,
+} from 'sections/ErrorPage';
+
 const fetch = window.fetch;
 
 export const TrackerSelection = Object.freeze({ first: 'first', last: 'last', none: 'none' });
@@ -58,7 +64,9 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
       }
     })
     .catch((error) => {
-      // TODO: handle a bad response from the service, i.e. send the use to an error
+      dispatch(setErrorMessageAction(error.message));
+      dispatch(setStackTraceAction(error.stack));
+      dispatch(setHttpErrorCodeAction(error.status));
       dispatch(push('/error'));
     });
 };
