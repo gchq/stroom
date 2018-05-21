@@ -58,8 +58,7 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
       }
     })
     .catch((error) => {
-      // TODO: handle a bad response from the service, i.e. send the use to an error
-      dispatch(push('/error'));
+      dispatch(push(`/error?message=${error.message}`));
     });
 };
 

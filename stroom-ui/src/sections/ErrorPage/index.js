@@ -14,30 +14,53 @@
  * limitations under the License.
  */
 
-import React, {Component} from 'react'
-import {bindActionCreators} from 'redux'
-import {connect} from 'react-redux'
+import React, { Component } from 'react';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import qs from 'qs';
+import PropTypes, { object } from 'prop-types';
 
-import './ErrorPage.css'
-// import '../Layout.css'
+import './ErrorPage.css';
 
 class ErrorPage extends Component {
-  render () {
+  componentWillMount() {
+    const queryString = this.context.router.route.location.search;
+    const trimmedQueryString = queryString.substring(1); // Get rid of the '?'
+    const query = qs.parse(trimmedQueryString);
+
+    if (query.message) {
+      this.setState({ message: query.message });
+    }
+  }
+
+  render() {
+    const errorMessage = this.state.message;
     return (
-      <div className='content-floating-without-appbar'>
-        <div className='ErrorPage-card'>
+      <div className="content-floating-without-appbar">
+        <div className="ErrorPage-card">
           <h3>There has been an error!</h3>
+          {errorMessage ? (
+            <p>
+              <strong>Error message: </strong>
+              {errorMessage}
+            </p>
+          ) : (
+            undefined
+          )}
         </div>
       </div>
-    )
+    );
   }
 }
 
-const mapStateToProps = state => ({})
+ErrorPage.contextTypes = {
+  router: PropTypes.shape({
+    history: object.isRequired,
+  }),
+};
 
-const mapDispatchToProps = dispatch => bindActionCreators({}, dispatch)
+const mapStateToProps = state => ({});
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(ErrorPage)
+const mapDispatchToProps = dispatch => bindActionCreators({}, dispatch);
+
+export default connect(mapStateToProps, mapDispatchToProps)(ErrorPage);
