@@ -16,5 +16,10 @@
 
 import ErrorPage from './ErrorPage';
 
-export { default as errorPageReducer, setErrorMessageAction, setStackTraceAction } from './redux';
+export {
+  default as errorPageReducer,
+  setErrorMessageAction,
+  setStackTraceAction,
+  setHttpErrorCodeAction,
+} from './redux';
 export default ErrorPage;

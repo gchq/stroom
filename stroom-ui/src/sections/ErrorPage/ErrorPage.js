@@ -23,19 +23,8 @@ import PropTypes, { object } from 'prop-types';
 import './ErrorPage.css';
 
 class ErrorPage extends Component {
-  componentWillMount() {
-    const queryString = this.context.router.route.location.search;
-    const trimmedQueryString = queryString.substring(1); // Get rid of the '?'
-    const query = qs.parse(trimmedQueryString);
-
-    if (query.message) {
-      this.setState({ message: query.message });
-    }
-  }
-
   render() {
-    // const errorMessage = this.state.message;
-    const { errorMessage, stackTrace } = this.props;
+    const { errorMessage, stackTrace, httpErrorCode } = this.props;
     return (
       <div className="content-floating-without-appbar">
         <div className="ErrorPage-card">
@@ -43,21 +32,30 @@ class ErrorPage extends Component {
           {errorMessage ? (
             <div>
               <p>
-                <strong>Error message: </strong>
+                <strong>Error message: </strong> <code>{errorMessage}</code>
               </p>
-              <code>{errorMessage}</code>
+            </div>
+          ) : (
+            undefined
+          )}
+
+          {httpErrorCode ? (
+            <div>
+              <p>
+                <strong>HTTP error code: </strong> <code>{httpErrorCode}</code>
+              </p>
             </div>
           ) : (
             undefined
           )}
 
           {stackTrace ? (
-            <div>
+            <span>
               <p>
                 <strong>Stack trace: </strong>
               </p>
               <code>{stackTrace}</code>
-            </div>
+            </span>
           ) : (
             undefined
           )}
@@ -67,15 +65,10 @@ class ErrorPage extends Component {
   }
 }
 
-ErrorPage.contextTypes = {
-  router: PropTypes.shape({
-    history: object.isRequired,
-  }),
-};
-
 const mapStateToProps = state => ({
   errorMessage: state.errorPage.errorMessage,
   stackTrace: state.errorPage.stackTrace,
+  httpErrorCode: state.errorPage.httpErrorCode,
 });
 
 const mapDispatchToProps = dispatch => bindActionCreators({}, dispatch);

@@ -19,6 +19,7 @@ import { createAction, handleActions } from 'redux-actions';
 const initialState = {
   errorMessage: '',
   stackTrace: '',
+  httpErrorCode: 0,
 };
 
 export const setErrorMessageAction = createAction('SET_ERROR_MESSAGE', errorMessage => ({
@@ -27,6 +28,10 @@ export const setErrorMessageAction = createAction('SET_ERROR_MESSAGE', errorMess
 
 export const setStackTraceAction = createAction('SET_STACK_TRACE', stackTrace => ({
   stackTrace,
+}));
+
+export const setHttpErrorCodeAction = createAction('SET_HTTP_ERROR_CODE', httpErrorCode => ({
+  httpErrorCode,
 }));
 
 const reducers = handleActions(
@@ -38,6 +43,10 @@ const reducers = handleActions(
     SET_STACK_TRACE: (state, { payload }) => ({
       ...state,
       stackTrace: payload.stackTrace,
+    }),
+    SET_HTTP_ERROR_CODE: (state, { payload }) => ({
+      ...state,
+      httpErrorCode: payload.httpErrorCode,
     }),
   },
   initialState,
