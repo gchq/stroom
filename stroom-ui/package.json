@@ -3,8 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@storybook/addon-notes": "^3.4.4",
-    "@storybook/addons": "^3.4.4",
     "expect.js": "^0.3.1",
     "jwt-decode": "^2.2.0",
     "moment": "^2.22.1",
@@ -43,7 +41,11 @@
     "build-storybook": "build-storybook -s public"
   },
   "devDependencies": {
-    "@storybook/react": "^3.4.2",
+    "@storybook/addon-notes": "^3.4.4",
+    "@storybook/addons": "^3.4.4",
+    "@storybook/addon-actions": "^3.4.4",
+    "@storybook/react": "^3.4.4",
+    "storybook-react-router": "^1.0.1",
     "babel-cli": "^6.26.0",
     "babel-eslint": "^8.2.3",
     "babel-plugin-transform-class-properties": "^6.24.1",
@@ -59,7 +61,6 @@
     "prettier-eslint": "^8.8.1",
     "react-test-renderer": "^16.3.2",
     "redux-mock-store": "^1.5.1",
-    "standard": "^11.0.1",
-    "storybook-react-router": "^1.0.1"
+    "standard": "^11.0.1"
   }
 }

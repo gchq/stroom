@@ -1,3 +1,3 @@
-import { dataSourceReducer } from './redux';
+import { dataSourceReducer, receiveDataSource } from './redux';
 
-export { dataSourceReducer };
+export { dataSourceReducer, receiveDataSource };

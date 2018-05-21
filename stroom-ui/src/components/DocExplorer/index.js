@@ -16,7 +16,17 @@
 import DocExplorer from './DocExplorer';
 import DocRefModalPicker from './DocRefModalPicker';
 import DocRefDropdownPicker from './DocRefDropdownPicker';
+import { explorerTreeReducer, receiveDocTree } from './redux';
 
-import { explorerTreeReducer } from './redux';
+import { testTree } from './storybook/testTree';
 
-export { DocExplorer, DocRefModalPicker, DocRefDropdownPicker, explorerTreeReducer };
+export {
+  DocExplorer,
+  DocRefModalPicker,
+  DocRefDropdownPicker,
+  explorerTreeReducer,
+  receiveDocTree,
+};
+
+// Test exports
+export { testTree };
