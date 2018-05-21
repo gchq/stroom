@@ -15,6 +15,6 @@
  */
 import PipelineEditor from './PipelineEditor';
 
-export {
-    PipelineEditor
-}
+import { pipelineReducer } from './redux';
+
+export { PipelineEditor, pipelineReducer };

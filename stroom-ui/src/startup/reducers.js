@@ -20,18 +20,10 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
-import {
-  explorerTreeReducer as explorerTree
-} from 'components/DocExplorer/redux';
-import {
-  dataSourceReducer as dataSources
-} from 'components/DataSource/redux';
-import {
-  expressionReducer as expressions
-} from 'components/ExpressionBuilder/redux';
-import {
-  pipelineReducer as pipelines
-} from 'prototypes/PipelineEditor/redux'
+import { explorerTreeReducer as explorerTree } from 'components/DocExplorer';
+import { dataSourceReducer as dataSources } from 'components/DataSource';
+import { expressionReducer as expressions } from 'components/ExpressionBuilder';
+import { pipelineReducer as pipelines } from 'prototypes/PipelineEditor';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import config from './config';
 
@@ -44,5 +36,5 @@ export default combineReducers({
   explorerTree,
   dataSources,
   expressions,
-  pipelines
+  pipelines,
 });

@@ -15,7 +15,7 @@
  */
 
 import jwtDecode from 'jwt-decode';
-import uuidv4 from 'uuid/v4';
+import uuidv4 from 'uuid';
 import sjcl from 'sjcl';
 import { push } from 'react-router-redux';
 

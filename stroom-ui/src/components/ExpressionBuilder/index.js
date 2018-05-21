@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import DocExplorer from './DocExplorer'
-import DocRefModalPicker from './DocRefModalPicker';
-import DocRefDropdownPicker from './DocRefDropdownPicker';
+import ExpressionBuilder from './ExpressionBuilder';
+import { expressionReducer } from './redux';
 
-export {
-    DocExplorer,
-    DocRefModalPicker,
-    DocRefDropdownPicker
-}
+export { ExpressionBuilder, expressionReducer };
