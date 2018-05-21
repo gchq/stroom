@@ -41,7 +41,7 @@ import {
 
 import {
     LineTo
-} from 'prototypes/LineTo'
+} from 'components/LineTo'
 
 const LOGICAL_OPERATORS = [
     "NOT", 

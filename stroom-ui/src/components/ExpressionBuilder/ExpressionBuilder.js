@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux'
 
 import ExpressionOperator from './ExpressionOperator';
-import { LineContainer } from 'prototypes/LineTo'
+import { LineContainer } from 'components/LineTo'
 
 import './ExpressionBuilder.css'
 
