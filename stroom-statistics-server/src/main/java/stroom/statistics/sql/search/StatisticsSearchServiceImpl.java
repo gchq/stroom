@@ -41,7 +41,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("unused") //called by DI
+@SuppressWarnings("unused")
+        //called by DI
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
@@ -228,7 +229,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         final StatisticType statisticType = statisticStoreEntity.getStatisticType();
                         if (statisticType.equals(StatisticType.COUNT)) {
                             extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
-                        } else if (statisticType.equals(StatisticType.VALUE)){
+                        } else if (statisticType.equals(StatisticType.VALUE)) {
                             // value stat
                             extractor = buildStatValueExtractor(idx);
                         } else {

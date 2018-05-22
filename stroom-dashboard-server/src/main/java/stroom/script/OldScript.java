@@ -90,14 +90,6 @@ public class OldScript extends DocumentEntity {
         return String.valueOf(getName());
     }
 
-    @Override
-    public void copyFrom(final Script other) {
-        this.description = other.description;
-        this.data = other.data;
-        this.dependencies = other.dependencies;
-        super.copyFrom(other);
-    }
-
     @Transient
     @Override
     public final String getType() {
