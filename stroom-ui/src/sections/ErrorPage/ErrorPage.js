@@ -20,47 +20,59 @@ import { connect } from 'react-redux';
 import qs from 'qs';
 import PropTypes, { object } from 'prop-types';
 
+import { Grid, Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
+import 'semantic-ui-css/semantic.min.css';
+
 import './ErrorPage.css';
 
 class ErrorPage extends Component {
   render() {
     const { errorMessage, stackTrace, httpErrorCode } = this.props;
     return (
-      <div className="content-floating-without-appbar">
-        <div className="ErrorPage-card">
+      <Grid className="ErrorPage-card">
+        <Grid.Row>
           <h3>There has been an error!</h3>
-          {errorMessage ? (
-            <div>
-              <p>
-                <strong>Error message: </strong> <code>{errorMessage}</code>
-              </p>
-            </div>
-          ) : (
-            undefined
-          )}
+        </Grid.Row>
 
-          {httpErrorCode ? (
-            <div>
-              <p>
-                <strong>HTTP error code: </strong> <code>{httpErrorCode}</code>
-              </p>
-            </div>
-          ) : (
-            undefined
-          )}
+        {errorMessage ? (
+          <Grid.Row>
+            <Grid.Column width={3}>
+              <strong>Error message: </strong>
+            </Grid.Column>
+            <Grid.Column width={13}>
+              <code>{errorMessage}</code>
+            </Grid.Column>
+          </Grid.Row>
+        ) : (
+          undefined
+        )}
 
-          {stackTrace ? (
-            <span>
-              <p>
-                <strong>Stack trace: </strong>
-              </p>
+        {httpErrorCode ? (
+          <Grid.Row>
+            <Grid.Column width={3}>
+              <strong>HTTP error code:</strong>
+            </Grid.Column>
+            <Grid.Column width={13}>
+              <code>{httpErrorCode}</code>
+            </Grid.Column>
+          </Grid.Row>
+        ) : (
+          undefined
+        )}
+
+        {stackTrace ? (
+          <Grid.Row>
+            <Grid.Column width={3}>
+              <strong>Stack trace:</strong>
+            </Grid.Column>
+            <Grid.Column width={13}>
               <code>{stackTrace}</code>
-            </span>
-          ) : (
-            undefined
-          )}
-        </div>
-      </div>
+            </Grid.Column>
+          </Grid.Row>
+        ) : (
+          undefined
+        )}
+      </Grid>
     );
   }
 }
