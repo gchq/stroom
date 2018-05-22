@@ -23,9 +23,10 @@ const lineContainerDestroyed = createAction('LINE_CONTAINER_DESTROYED',
     (lineContextId) => ({lineContextId}));
 
 const lineCreated = createAction('LINE_CREATED',
-    (lineContextId, lineId, fromId, toId) => ({
+    (lineContextId, lineId, lineType, fromId, toId) => ({
         lineContextId, 
         lineId,
+        lineType,
         fromId,
         toId
     }));
@@ -51,6 +52,7 @@ const lineContainerReducer = handleActions({
         [action.payload.lineContextId] : {
             ...state[action.payload.lineContextId],
             [action.payload.lineId]: {
+                lineType : action.payload.lineType,
                 fromId : action.payload.fromId,
                 toId : action.payload.toId
             }

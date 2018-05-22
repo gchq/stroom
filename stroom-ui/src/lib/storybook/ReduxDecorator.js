@@ -15,8 +15,15 @@
  */
 import React from 'react';
 import { Provider } from 'react-redux';
+import { action } from '@storybook/addon-actions';
 
 import store from 'startup/store';
+
+const stateChangedAction = action('redux-state-changed');
+
+store.subscribe(() => {
+  stateChangedAction(store.getState());
+})
 
 export const ReduxDecorator = (storyFn) => (
   <Provider store={store}>
