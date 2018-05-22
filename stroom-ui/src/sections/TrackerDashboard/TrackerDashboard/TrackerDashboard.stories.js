@@ -18,16 +18,15 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import TrackerDashboard from './TrackerDashboard';
 import StoryRouter from 'storybook-react-router';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import {
-  testInitialisationDecorator,
-  testMultiInitialisationDecorator,
-} from 'lib/storybook/testDataDecorator';
+import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+
+import { maximalTracker, minimalTracker } from '../trackerTestData.test';
 
 import { actionCreators } from '../redux';
 
 storiesOf('TrackerDashboard', module)
-  .addDecorator(testInitialisationDecorator(actionCreators.updateTrackers, []))
-  .addDecorator(ReduxDecorator)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackers([minimalTracker, maximalTracker], 2));
+  }))
   .addDecorator(StoryRouter())
   .add('basic', () => <TrackerDashboard />);

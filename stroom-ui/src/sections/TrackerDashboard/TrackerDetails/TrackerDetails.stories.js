@@ -18,24 +18,22 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 
 import StoryRouter from 'storybook-react-router';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import {
-  testInitialisationDecorator,
-  testMultiInitialisationDecorator,
-} from 'lib/storybook/testDataDecorator';
+import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
 import TrackerDetails from './TrackerDetails';
 import { actionCreators } from '../redux';
 import { maximalTracker, minimalTracker } from '../trackerTestData.test';
 
 storiesOf('TrackerDetails', module)
-  .addDecorator(testInitialisationDecorator(actionCreators.updateTrackerSelection, 2))
-  .addDecorator(testInitialisationDecorator(actionCreators.updateTrackers, [maximalTracker]))
-  .addDecorator(ReduxDecorator)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackerSelection(2));
+    store.dispatch(actionCreators.updateTrackers([maximalTracker]));
+  }))
   .add('Maximal tracker', () => <TrackerDetails />);
 
 storiesOf('TrackerDetails', module)
-  .addDecorator(testInitialisationDecorator(actionCreators.updateTrackerSelection, 2))
-  .addDecorator(testInitialisationDecorator(actionCreators.updateTrackers, [minimalTracker]))
-  .addDecorator(ReduxDecorator)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackerSelection(2));
+    store.dispatch(actionCreators.updateTrackers([minimalTracker]));
+  }))
   .add('Minimal tracker', () => <TrackerDetails />);
