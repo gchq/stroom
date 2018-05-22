@@ -19,10 +19,23 @@ import { storiesOf } from '@storybook/react';
 
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import {
+  testInitialisationDecorator,
+  testMultiInitialisationDecorator,
+} from 'lib/storybook/testDataDecorator';
 
 import TrackerDetails from './TrackerDetails';
+import { actionCreators } from '../redux';
+import { maximalTracker, minimalTracker } from '../trackerTestData.test';
 
 storiesOf('TrackerDetails', module)
+  .addDecorator(testInitialisationDecorator(actionCreators.updateTrackerSelection, 2))
+  .addDecorator(testInitialisationDecorator(actionCreators.updateTrackers, [maximalTracker]))
   .addDecorator(ReduxDecorator)
-  .addDecorator(StoryRouter())
-  .add('basic', () => <TrackerDetails />);
+  .add('Maximal tracker', () => <TrackerDetails />);
+
+storiesOf('TrackerDetails', module)
+  .addDecorator(testInitialisationDecorator(actionCreators.updateTrackerSelection, 2))
+  .addDecorator(testInitialisationDecorator(actionCreators.updateTrackers, [minimalTracker]))
+  .addDecorator(ReduxDecorator)
+  .add('Minimal tracker', () => <TrackerDetails />);

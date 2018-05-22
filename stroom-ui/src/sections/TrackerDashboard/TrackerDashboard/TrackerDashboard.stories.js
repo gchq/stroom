@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-import React from 'react'
-import { storiesOf } from '@storybook/react'
-import TrackerDashboard from './TrackerDashboard'
-import StoryRouter from 'storybook-react-router'
+import React from 'react';
+import { storiesOf } from '@storybook/react';
+import TrackerDashboard from './TrackerDashboard';
+import StoryRouter from 'storybook-react-router';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import {
+  testInitialisationDecorator,
+  testMultiInitialisationDecorator,
+} from 'lib/storybook/testDataDecorator';
+
+import { actionCreators } from '../redux';
 
 storiesOf('TrackerDashboard', module)
+  .addDecorator(testInitialisationDecorator(actionCreators.updateTrackers, []))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('basic', () => (
-    <TrackerDashboard />
-  ))
+  .add('basic', () => <TrackerDashboard />);
