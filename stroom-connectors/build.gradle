@@ -1,6 +1,5 @@
 ext.moduleName = 'stroom.connectors'
 
 dependencies {
-    compile libs.stroomDocRef
     compile libs.slf4j_api
 }
