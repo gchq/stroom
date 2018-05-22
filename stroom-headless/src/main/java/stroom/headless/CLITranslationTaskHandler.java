@@ -35,8 +35,6 @@ import stroom.pipeline.errorhandler.RecordErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.filter.RecordOutputFilter;
-import stroom.pipeline.filter.XSLTFilter;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
@@ -44,8 +42,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.refdata.ContextDataLoader;
-import stroom.streamstore.StreamStore;
+import stroom.security.Security;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
@@ -58,147 +55,141 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
-import javax.annotation.Resource;
-import javax.inject.Scope;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 
 @TaskHandlerBean(task = CLITranslationTask.class)
-@Scope(StroomScope.TASK)
-public class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, VoidResult> {
-    @Resource
-    private PipelineFactory pipelineFactory;
-    @Resource
-    private StreamStore streamStore;
-    @Resource(name = "cachedFeedService")
-    private FeedService feedService;
-    @Resource(name = "cachedPipelineService")
-    private PipelineService pipelineService;
-    @Resource
-    private ContextDataLoader contextDataLoader;
-    @Resource
-    private MetaData metaData;
-    @Resource
-    private PipelineHolder pipelineHolder;
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    @Resource
-    private ErrorWriterProxy errorWriterProxy;
-    @Resource
-    private RecordErrorReceiver recordErrorReceiver;
-    @Resource
-    private PipelineDataCache pipelineDataCache;
-    @Resource
-    private StreamHolder streamHolder;
+class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, VoidResult> {
+    private final PipelineFactory pipelineFactory;
+    private final FeedService feedService;
+    private final PipelineService pipelineService;
+    private final MetaData metaData;
+    private final PipelineHolder pipelineHolder;
+    private final FeedHolder feedHolder;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final ErrorWriterProxy errorWriterProxy;
+    private final RecordErrorReceiver recordErrorReceiver;
+    private final PipelineDataCache pipelineDataCache;
+    private final StreamHolder streamHolder;
+    private final Security security;
+
+    @Inject
+    CLITranslationTaskHandler(final PipelineFactory pipelineFactory,
+                              @Named("cachedFeedService") final FeedService feedService,
+                              @Named("cachedPipelineService") final PipelineService pipelineService,
+                              final MetaData metaData,
+                              final PipelineHolder pipelineHolder,
+                              final FeedHolder feedHolder,
+                              final ErrorReceiverProxy errorReceiverProxy,
+                              final ErrorWriterProxy errorWriterProxy,
+                              final RecordErrorReceiver recordErrorReceiver,
+                              final PipelineDataCache pipelineDataCache,
+                              final StreamHolder streamHolder,
+                              final Security security) {
+        this.pipelineFactory = pipelineFactory;
+        this.feedService = feedService;
+        this.pipelineService = pipelineService;
+        this.metaData = metaData;
+        this.pipelineHolder = pipelineHolder;
+        this.feedHolder = feedHolder;
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.errorWriterProxy = errorWriterProxy;
+        this.recordErrorReceiver = recordErrorReceiver;
+        this.pipelineDataCache = pipelineDataCache;
+        this.streamHolder = streamHolder;
+        this.security = security;
+    }
 
     @Override
     public VoidResult exec(final CLITranslationTask task) {
-        try {
-            final ErrorWriter errorWriter = new CLIErrorWriter(task.getErrorWriter());
-
-            // Setup the error handler and receiver.
-            errorWriterProxy.setErrorWriter(errorWriter);
-            errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
-
-            final InputStream dataStream = task.getDataStream();
-            final InputStream metaStream = task.getMetaStream();
-
-            if (metaStream == null) {
-                throw new RuntimeException("No meta data found");
-            }
-
-            // Load the meta and context data.
-            final MetaMap metaData = new MetaMap();
-            metaData.read(metaStream, false);
-
-            // Get the feed.
-            final String feedName = metaData.get(StroomHeaderArguments.FEED);
-            final Feed feed = getFeed(feedName);
-            feedHolder.setFeed(feed);
-
-            // Set the pipeline so it can be used by a filter if needed.
-            final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria(feedName);
-            final BaseResultList<PipelineEntity> pipelines = pipelineService.find(findPipelineCriteria);
-            if (pipelines == null || pipelines.size() == 0) {
-                throw new ProcessException("No pipeline found for feed name '" + feedName + "'");
-            }
-            if (pipelines.size() > 1) {
-                throw new ProcessException("More than one pipeline found for feed name '" + feedName + "'");
-            }
-
-            final PipelineEntity pipelineEntity = pipelines.getFirst();
-            pipelineHolder.setPipeline(pipelineEntity);
-
-            // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
-            final Pipeline pipeline = pipelineFactory.create(pipelineData);
-
-            // Output the meta data for the new stream.
-            this.metaData.putAll(metaData);
-
-            // Create the stream.
-            final Stream stream = new Stream();
-            // Set the feed.
-            stream.setFeed(feed);
-
-            // Set effective time.
+        return security.secureResult(() -> {
             try {
-                final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
-                if (effectiveTime != null && effectiveTime.length() > 0) {
-                    stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
+                final ErrorWriter errorWriter = new CLIErrorWriter(task.getErrorWriter());
+
+                // Setup the error handler and receiver.
+                errorWriterProxy.setErrorWriter(errorWriter);
+                errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
+
+                final InputStream dataStream = task.getDataStream();
+                final InputStream metaStream = task.getMetaStream();
+
+                if (metaStream == null) {
+                    throw new RuntimeException("No meta data found");
                 }
-            } catch (final Exception e) {
+
+                // Load the meta and context data.
+                final MetaMap metaData = new MetaMap();
+                metaData.read(metaStream, false);
+
+                // Get the feed.
+                final String feedName = metaData.get(StroomHeaderArguments.FEED);
+                final Feed feed = getFeed(feedName);
+                feedHolder.setFeed(feed);
+
+                // Set the pipeline so it can be used by a filter if needed.
+                final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria(feedName);
+                final BaseResultList<PipelineEntity> pipelines = pipelineService.find(findPipelineCriteria);
+                if (pipelines == null || pipelines.size() == 0) {
+                    throw new ProcessException("No pipeline found for feed name '" + feedName + "'");
+                }
+                if (pipelines.size() > 1) {
+                    throw new ProcessException("More than one pipeline found for feed name '" + feedName + "'");
+                }
+
+                final PipelineEntity pipelineEntity = pipelines.getFirst();
+                pipelineHolder.setPipeline(pipelineEntity);
+
+                // Create the parser.
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                final Pipeline pipeline = pipelineFactory.create(pipelineData);
+
+                // Output the meta data for the new stream.
+                this.metaData.putAll(metaData);
+
+                // Create the stream.
+                final Stream stream = new Stream();
+                // Set the feed.
+                stream.setFeed(feed);
+
+                // Set effective time.
+                try {
+                    final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
+                    if (effectiveTime != null && !effectiveTime.isEmpty()) {
+                        stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
+                    }
+                } catch (final RuntimeException e) {
+                    outputError(e);
+                }
+
+                // Add stream providers for lookups etc.
+                final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
+                        new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
+                streamHolder.setStream(stream);
+                streamHolder.addProvider(streamProvider, StreamType.RAW_EVENTS);
+                if (task.getMetaStream() != null) {
+                    final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
+                            new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
+                    streamHolder.addProvider(metaStreamProvider, StreamType.META);
+                }
+                if (task.getContextStream() != null) {
+                    final BasicInputStreamProvider contextStreamProvider = new BasicInputStreamProvider(
+                            new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
+                    streamHolder.addProvider(contextStreamProvider, StreamType.CONTEXT);
+                }
+
+                try {
+                    pipeline.process(dataStream, feed.getEncoding());
+                } catch (final RuntimeException e) {
+                    outputError(e);
+                }
+            } catch (final IOException | RuntimeException e) {
                 outputError(e);
             }
 
-            // Add stream providers for lookups etc.
-            final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
-                    new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-            streamHolder.setStream(stream);
-            streamHolder.addProvider(streamProvider, StreamType.RAW_EVENTS);
-            if (task.getMetaStream() != null) {
-                final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
-                        new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
-                streamHolder.addProvider(metaStreamProvider, StreamType.META);
-            }
-            if (task.getContextStream() != null) {
-                final BasicInputStreamProvider contextStreamProvider = new BasicInputStreamProvider(
-                        new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
-                streamHolder.addProvider(contextStreamProvider, StreamType.CONTEXT);
-            }
-
-            try {
-                pipeline.process(dataStream, feed.getEncoding());
-            } catch (final Throwable e) {
-                outputError(e);
-            }
-        } catch (final Throwable e) {
-            outputError(e);
-        }
-
-        return VoidResult.INSTANCE;
-    }
-
-    private XMLFilter getLastFilter(final Pipeline pipeline) {
-        XMLFilter filter = getLastFilter(pipeline, RecordOutputFilter.class);
-        if (filter == null) {
-            filter = getLastFilter(pipeline, SchemaFilter.class);
-        }
-        if (filter == null) {
-            filter = getLastFilter(pipeline, XSLTFilter.class);
-        }
-        return filter;
-    }
-
-    private <T extends XMLFilter> T getLastFilter(final Pipeline pipeline, final Class<T> clazz) {
-        final List<T> filters = pipeline.findFilters(clazz);
-        if (filters.size() > 0) {
-            return filters.get(filters.size() - 1);
-        }
-        return null;
+            return VoidResult.INSTANCE;
+        });
     }
 
     private Feed getFeed(final String feedName) {
@@ -228,7 +219,7 @@ public class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslatio
                 } else {
                     errorReceiverProxy.log(Severity.FATAL_ERROR, null, "PipelineStreamProcessor", ex.toString(), ex);
                 }
-            } catch (final Throwable e) {
+            } catch (final RuntimeException e) {
                 // Ignore exception as we generated it.
             }
 
