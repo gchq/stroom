@@ -25,6 +25,7 @@ dependencies {
     permitUnusedDeclared "${libs.stroomQueryApi}:sources"
     compile "${libs.stroomQueryCommon}:sources"
     permitUnusedDeclared libs.stroomQueryCommon
+    permitUnusedDeclared "${libs.stroomQueryCommon}:sources"
 
     compile libs.gin
     compile libs.guice3

@@ -19,18 +19,16 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import stroom.entity.util.SqlBuilder;
+import stroom.docref.DocRef;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.docref.DocRef;
+import stroom.entity.util.SqlBuilder;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.PersistenceException;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;

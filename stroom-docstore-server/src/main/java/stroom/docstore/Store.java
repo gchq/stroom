@@ -19,12 +19,12 @@ package stroom.docstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -34,6 +34,7 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -317,12 +318,12 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
 
     private D create(final String type, final String uuid, final String name) {
         try {
-            final D document = clazz.newInstance();
+            final D document = clazz.getDeclaredConstructor(new Class[0]).newInstance();
             document.setType(type);
             document.setUuid(uuid);
             document.setName(name);
             return document;
-        } catch (final InstantiationException | IllegalAccessException e) {
+        } catch (final InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
