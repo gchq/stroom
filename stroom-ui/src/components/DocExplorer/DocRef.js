@@ -29,12 +29,13 @@ import {
     openDocRefContextMenu
 } from './redux';
 
+import { withExistingExplorer } from './withExplorer';
+
 import DocRefMenu from './DocRefMenu';
 
 const dragSource = {
 	canDrag(props) {
-        let explorerState = props.explorers[props.explorerId];
-		return explorerState.allowDragAndDrop;
+		return props.explorer.allowDragAndDrop;
 	},
     beginDrag(props) {
         return {
@@ -54,10 +55,8 @@ class DocRef extends Component {
     static propTypes = {
         // Props
         explorerId : PropTypes.string.isRequired,
+        explorer : PropTypes.object.isRequired,
         docRef : PropTypes.object.isRequired,
-
-        // State
-        explorers : PropTypes.object.isRequired,
 
         // Actions
         selectDocRef : PropTypes.func.isRequired,
@@ -73,28 +72,6 @@ class DocRef extends Component {
     timer = 0;
     delay = 200;
     prevent = false;
-
-    state = {
-        isReady : false,
-        isSelected : false,
-        isContextMenuOpen : false
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        let explorer = nextProps.explorers[nextProps.explorerId];
-
-        if (!!explorer) {
-            return {
-                isReady : true,
-                isSelected : explorer.isSelected[nextProps.docRef.uuid],
-                isContextMenuOpen : !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === nextProps.docRef.uuid
-            }
-        } else {
-            return {
-                isReady : false
-            }
-        }
-    }
 
     onSingleClick() {
         this.timer = setTimeout(function() {
@@ -117,20 +94,25 @@ class DocRef extends Component {
     }
 
     render() {
-        if (!this.state.isReady) {
-            return (<div>Awaiting explorer state</div>)
-        }
+        const {
+            connectDragSource,
+            isDragging,
+            explorerId,
+            explorer,
+            docRef
+        } = this.props;
 
-        const { connectDragSource, isDragging } = this.props;
+        let isSelected = explorer.isSelected[docRef.uuid];
+        let isContextMenuOpen = !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === docRef.uuid;
 
         let className = ''
         if (isDragging) {
             className += ' doc-ref__dragging'
         }
-        if (this.state.isSelected) {
+        if (isSelected) {
             className += ' doc-ref__selected'
         }
-        if (this.state.isContextMenuOpen) {
+        if (isContextMenuOpen) {
             className += ' doc-ref__context-menu-open'
         }
 
@@ -140,13 +122,13 @@ class DocRef extends Component {
                 onDoubleClick={this.onDoubleClick.bind(this)}
                 onClick={this.onSingleClick.bind(this)}>
                 <DocRefMenu 
-                    explorerId={this.props.explorerId}
-                    docRef={this.props.docRef}
-                    isOpen={this.state.isContextMenuOpen}
+                    explorerId={explorerId}
+                    docRef={docRef}
+                    isOpen={isContextMenuOpen}
                 />
                 <span>
                     <Icon name='file outline'/>
-                    {this.props.docRef.name}
+                    {docRef.name}
                 </span>
             </div>
         )
@@ -155,12 +137,12 @@ class DocRef extends Component {
 
 export default connect(
     (state) => ({
-        explorers : state.explorerTree.explorers
+        // state
     }),
     {
         selectDocRef,
         openDocRef,
         openDocRefContextMenu
     }
-)
-    (DragSource(ItemTypes.DOC_REF, dragSource, dragCollect)(DocRef));
+)(withExistingExplorer(
+    (DragSource(ItemTypes.DOC_REF, dragSource, dragCollect)(DocRef))));

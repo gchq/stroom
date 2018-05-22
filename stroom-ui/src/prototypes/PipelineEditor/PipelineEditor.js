@@ -16,7 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux'
+import { withPipeline } from './withPipeline'
 
 import PipelineElement from './PipelineElement';
 
@@ -25,26 +25,11 @@ import './pipelineEditor.css';
 class PipelineEditor extends Component {
     static propTypes = {
         pipelineId : PropTypes.string.isRequired,
-        pipelines : PropTypes.object.isRequired
-    }
-
-    state = {
-        pipeline : undefined
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        let pipeline = nextProps.pipelines[nextProps.pipelineId];
-
-        return {
-            pipeline
-        }
+        pipeline : PropTypes.object.isRequired,
+        pipelineTree : PropTypes.object.isRequired
     }
 
     render() {
-        if (!this.state.pipeline) {
-            return <div>Awaiting state</div>
-        }
-        
         return (
             <div className='pipeline-editor'>
                 <div>
@@ -62,11 +47,4 @@ class PipelineEditor extends Component {
     }
 }
 
-export default connect(
-    (state) => ({
-        pipelines : state.pipelines
-    }),
-    {
-        // actions
-    }
-)(PipelineEditor)
+export default withPipeline(PipelineEditor)

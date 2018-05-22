@@ -41,15 +41,11 @@ import {
     DOC_REF_TYPES 
 } from './testTree'
 
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
 import {
     DragDropDecorator
 } from 'lib/storybook/DragDropDecorator';
-
-import { 
-    testInitialisationDecorator
-} from 'lib/storybook/testDataDecorator';
 
 import ManagedPickerHarness from 'lib/storybook/ManagedPickerHarness';
 
@@ -87,8 +83,9 @@ class ManagedDocRefModalPicker extends ManagedPickerHarness {
 }
 
 storiesOf('Document Explorer', module)
-    .addDecorator(testInitialisationDecorator(receiveDocTree, testTree))
-    .addDecorator(ReduxDecorator) // must be recorder after/outside of the test initialisation decorators
+    .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+        store.dispatch(receiveDocTree(testTree));
+    })) // must be recorder after/outside of the test initialisation decorators
     .addDecorator(DragDropDecorator)
     .add('Explorer Tree (multi-select, dnd)', () => 
         <DocExplorer 
