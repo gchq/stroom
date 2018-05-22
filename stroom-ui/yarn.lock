@@ -116,7 +116,7 @@
     global "^4.3.2"
     prop-types "^15.6.1"
 
-"@storybook/addon-notes@^3.4.4":
+"@storybook/addon-notes@^3.4.5":
   version "3.4.5"
   resolved "https://registry.yarnpkg.com/@storybook/addon-notes/-/addon-notes-3.4.5.tgz#b36b175664849370975e520af244b32c76c256e5"
   dependencies:

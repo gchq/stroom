@@ -16,6 +16,7 @@
 
 import React from 'react';
 import { storiesOf } from '@storybook/react';
+import { withNotes } from '@storybook/addon-notes';
 import TrackerDashboard from './TrackerDashboard';
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
@@ -23,6 +24,11 @@ import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 import { trackers } from '../trackerTestData.test';
 
 import { actionCreators } from '../redux';
+
+const containerStyle = {
+  border: '30px solid green',
+  height: '500px',
+};
 
 storiesOf('TrackerDashboard', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
@@ -32,4 +38,22 @@ storiesOf('TrackerDashboard', module)
     ));
   }))
   .addDecorator(StoryRouter())
-  .add('basic', () => <TrackerDashboard />);
+  .add('basic', () => (
+    <div style={containerStyle}>
+      <TrackerDashboard />
+    </div>
+  ));
+
+storiesOf('TrackerDashboard', module)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackers([], undefined));
+  }))
+  .addDecorator(StoryRouter())
+  .add(
+    'No trackers',
+    withNotes("This is what the dashboard looks like when it doesn't have any trackers")(() => (
+      <div style={containerStyle}>
+        <TrackerDashboard />
+      </div>
+    )),
+  );

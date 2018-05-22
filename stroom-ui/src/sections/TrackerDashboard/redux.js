@@ -26,7 +26,7 @@ const initialState = {
   pageOffset: 0,
   searchCriteria: 'is:incomplete ',
   totalTrackers: 0,
-  numberOfPages: 0,
+  numberOfPages: 1,
   selectedTrackerId: undefined,
 };
 

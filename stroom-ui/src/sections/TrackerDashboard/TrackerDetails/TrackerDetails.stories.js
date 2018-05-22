@@ -24,30 +24,50 @@ import TrackerDetails from './TrackerDetails';
 import { actionCreators } from '../redux';
 import { trackers } from '../trackerTestData.test';
 
+const containerStyle = {
+  border: '30px solid green',
+};
+
 storiesOf('TrackerDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackerSelection(2));
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_nullLastPollAge]));
   }))
-  .add('Minimal tracker with null last poll age', () => <TrackerDetails />);
+  .add('Minimal tracker with null last poll age', () => (
+    <div style={containerStyle}>
+      <TrackerDetails />
+    </div>
+  ));
 
 storiesOf('TrackerDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackerSelection(2));
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_undefinedLastPollAge]));
   }))
-  .add('Minimal tracker with undefined last poll age', () => <TrackerDetails />);
+  .add('Minimal tracker with undefined last poll age', () => (
+    <div style={containerStyle}>
+      <TrackerDetails />
+    </div>
+  ));
 
 storiesOf('TrackerDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackerSelection(2));
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_emptyLastPollAge]));
   }))
-  .add('Minimal tracker with empty last poll age', () => <TrackerDetails />);
+  .add('Minimal tracker with empty last poll age', () => (
+    <div style={containerStyle}>
+      <TrackerDetails />
+    </div>
+  ));
 
 storiesOf('TrackerDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackerSelection(2));
     store.dispatch(actionCreators.updateTrackers([trackers.maximalTracker]));
   }))
-  .add('Maximal tracker', () => <TrackerDetails />);
+  .add('Maximal tracker', () => (
+    <div style={containerStyle}>
+      <TrackerDetails />
+    </div>
+  ));

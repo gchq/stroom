@@ -1,5 +1,5 @@
 const minimalTracker_undefinedLastPollAge = {
-  filterId: 2,
+  filterId: 1,
   enabled: true,
   lastPollAge: undefined,
   pipelineName: 'Long, long, long-long-long name',
@@ -21,7 +21,7 @@ const minimalTracker_nullLastPollAge = {
 };
 
 const minimalTracker_emptyLastPollAge = {
-  filterId: 2,
+  filterId: 3,
   enabled: true,
   lastPollAge: '',
   pipelineName: 'Long, long, long-long-long name',
@@ -32,7 +32,7 @@ const minimalTracker_emptyLastPollAge = {
 };
 
 const maximalTracker = {
-  filterId: 2,
+  filterId: 4,
   enabled: true,
   pipelineName: 'Pipeline name',
   trackerPercent: 79,
