@@ -180,17 +180,21 @@ public class SqlStatisticsStore implements Store {
         taskContext.setName(TASK_NAME);
         taskContext.info("Sql Statistics search " + searchKey + " - running query");
 
-        final AtomicLong counter = new AtomicLong(0);
+        final LongAdder counter = new LongAdder();
         // subscribe to the flowable, mapping each resultSet to a String[]
-        // After the window size has been filled a new flowable is created for those rows received
-        // in that window, which can all be processed and sent
+        // Every n secs or m records process the results so far to send them to the result handler
         // If the task is canceled, the flowable produced by search() will stop emitting
         // Set up the results flowable, the search wont be executed until subscribe is called
         final Scheduler scheduler = Schedulers.from(executor);
+        final AtomicLong nextProcessPayloadsTime = new AtomicLong(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
+        final AtomicLong countSinceLastSend = new AtomicLong(0);
+        final Instant queryStart = Instant.now();
 
         // TODO this may need to change in 6.1 due to differences in task termination
         // concatMapping a just() is a bit of a hack to ensure we have a single thread for task
         // monitoring and termination purposes.
+        final CompositeDisposable compositeDisposable = new CompositeDisposable();
+
         final Disposable searchResultsDisposable = Flowable.just(0)
                 .subscribeOn(scheduler)
                 .concatMap(val -> searchResultsFlowable)
@@ -199,52 +203,54 @@ public class SqlStatisticsStore implements Store {
                 })
                 .window(resultHandlerBatchSize) // using size based window as time based ones require a scheduler
                 .subscribe(
-                        windowedFlowable -> {
-                            LOGGER.trace("onNext called for outer flowable");
-                            windowedFlowable
-                                    .subscribe(
-                                            data -> {
-                                                LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
-                                                counter.incrementAndGet();
+                        data -> {
+                            counter.increment();
+                            countSinceLastSend.incrementAndGet();
+                            LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
 
-                                                // give the data array to each of our coprocessors
-                                                coprocessorMap.values().forEach(coprocessor ->
-                                                        coprocessor.receive(data));
-                                            },
-                                            throwable -> {
-                                                LOGGER.error("Error in windowed flow: {}", throwable.getMessage(), throwable);
-                                                errors.add(throwable.getMessage());
-                                            },
-                                            () -> {
-                                                LAMBDA_LOGGER.debug(() ->
-                                                        String.format("onComplete of inner flowable called, counter: %s",
-                                                                counter.get()));
-                                                // completed our window so create and pass on a payload for the
-                                                // data we have gathered so far
-                                                processPayloads(resultHandler, coprocessorMap);
-                                            });
-                            taskContext.setName(TASK_NAME);
-                            taskContext.info("Sql Statistics search " + searchKey +
-                                    " - processing results so far (" + counter.get() + " rows fetched)");
+                            // give the data array to each of our coprocessors
+                            coprocessorMap.values().forEach(coprocessor ->
+                                    coprocessor.receive(data));
+                            // send what we have every 1s or when the batch reaches a set size
+                            long now = System.currentTimeMillis();
+                            if (now >= nextProcessPayloadsTime.get() ||
+                                    countSinceLastSend.get() >= resultHandlerBatchSize) {
+
+                                LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("{} vs {}, {} vs {}",
+                                        now, nextProcessPayloadsTime,
+                                        countSinceLastSend.get(), resultHandlerBatchSize));
+
+                                processPayloads(resultHandler, coprocessorMap, terminationMonitor);
+                                taskContext.setName(TASK_NAME);
+                                taskContext.info(searchKey +
+                                        " - running database query (" + counter.longValue() + " rows fetched)");
+                                nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
+                                countSinceLastSend.set(0);
+                            }
                         },
                         throwable -> {
-                            LOGGER.error("Error in flow: {}", throwable.getMessage(), throwable);
+                            LOGGER.error("Error in windowed flow: {}", throwable.getMessage(), throwable);
                             errors.add(throwable.getMessage());
-                            completeSearch();
                         },
                         () -> {
                             LAMBDA_LOGGER.debug(() ->
-                                    String.format("onComplete of outer flowable called, counter: %s", counter.get()));
-                            //flows all complete, so process any remaining data
-                            taskContext.info("Sql Statistics search " + searchKey +
-                                    " - completed database query (" + counter.get() + " rows fetched)");
-                            processPayloads(resultHandler, coprocessorMap);
+                                    String.format("onComplete of flowable called, counter: %s",
+                                            counter.longValue()));
+                            // completed our window so create and pass on a payload for the
+                            // data we have gathered so far
+                            processPayloads(resultHandler, coprocessorMap, terminationMonitor);
+                            taskContext.info(searchKey + " - complete");
                             completeSearch();
+
+                            LAMBDA_LOGGER.debug(() ->
+                                    LambdaLogger.buildMessage("Query finished in {}", Duration.between(queryStart, Instant.now())));
                         });
 
         LOGGER.debug("Out of flowable");
 
-        return searchResultsDisposable;
+        compositeDisposable.add(searchResultsDisposable);
+
+        return compositeDisposable;
     }
 
     private Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> getCoprocessorMap(

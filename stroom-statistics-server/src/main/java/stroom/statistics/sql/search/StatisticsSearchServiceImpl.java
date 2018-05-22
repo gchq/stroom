@@ -377,6 +377,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                         }
                                     },
                                     (rs, emitter) -> {
+                                        // The line below can be un-commented in development debugging to slow down the
+                                        // return of all results to test iterative results and dashboard polling.
+                                        // LockSupport.parkNanos(200_000);
+
                                         //advance the resultSet, if it is a row emit it, else finish the flow
                                         // TODO prob needs to change in 6.1
                                         if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {

@@ -16,26 +16,28 @@
 
 package stroom.headless;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
-import stroom.entity.util.XMLUtil;
-import stroom.guice.PipelineScopeRunnable;
-import stroom.importexport.ImportExportService;
-import stroom.node.NodeCache;
-import stroom.node.VolumeService;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import stroom.dictionary.spring.DictionaryConfiguration;
+import stroom.entity.server.util.XMLUtil;
+import stroom.explorer.server.ExplorerConfiguration;
+import stroom.importexport.server.ImportExportService;
+import stroom.node.server.NodeCache;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
-import stroom.persist.PersistService;
-import stroom.pipeline.filter.SafeXMLFilter;
+import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.task.ExternalShutdownController;
-import stroom.task.TaskManager;
+import stroom.spring.PersistenceConfiguration;
+import stroom.spring.ScopeConfiguration;
+import stroom.spring.ServerConfiguration;
+import stroom.task.server.GenericServerTask;
+import stroom.task.server.TaskManager;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.config.StroomProperties;
 import stroom.util.config.StroomProperties.Source;
@@ -43,8 +45,10 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.spring.StroomSpringProfiles;
+import stroom.util.task.ExternalShutdownController;
+import stroom.util.task.TaskScopeRunnable;
 
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedOutputStream;
@@ -52,6 +56,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -62,29 +67,31 @@ import java.util.stream.Stream;
 /**
  * Command line tool to process some files from a proxy stroom.
  */
-public class Headless extends AbstractCommandLineTool {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Headless.class);
+public class CLI extends AbstractCommandLineTool {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CLI.class);
+
+    private ApplicationContext appContext = null;
 
     private String input;
-    private String output;
+    private String error;
     private String config;
     private String tmp;
 
     private Path inputDir;
-    private Path outputFile;
+    private Path errorFile;
     private Path configFile;
     private Path tmpDir;
 
-    public static void main(final String[] args) {
-        new Headless().doMain(args);
+    public static void main(final String[] args) throws Exception {
+        new CLI().doMain(args);
     }
 
     public void setInput(final String input) {
         this.input = input;
     }
 
-    public void setOutput(final String output) {
-        this.output = output;
+    public void setError(final String error) {
+        this.error = error;
     }
 
     public void setConfig(final String config) {
@@ -97,7 +104,7 @@ public class Headless extends AbstractCommandLineTool {
         final Path tempDir = Paths.get(tmp);
 
         // Redirect the temp dir for headless.
-        StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, FileUtil.getCanonicalPath(tempDir), StroomProperties.Source.USER_CONF);
+        StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, FileUtil.getCanonicalPath(tempDir), Source.USER_CONF);
 
         FileUtil.forgetTempDir();
     }
@@ -107,8 +114,8 @@ public class Headless extends AbstractCommandLineTool {
         if (input == null) {
             failArg("input", "required");
         }
-        if (output == null) {
-            failArg("output", "required");
+        if (error == null) {
+            failArg("error", "required");
         }
         if (config == null) {
             failArg("config", "required");
@@ -120,15 +127,15 @@ public class Headless extends AbstractCommandLineTool {
 
     private void init() {
         inputDir = Paths.get(input);
-        outputFile = Paths.get(output);
+        errorFile = Paths.get(error);
         configFile = Paths.get(config);
         tmpDir = Paths.get(tmp);
 
         if (!Files.isDirectory(inputDir)) {
             throw new RuntimeException("Input directory \"" + FileUtil.getCanonicalPath(inputDir) + "\" cannot be found!");
         }
-        if (!Files.isDirectory(outputFile.getParent())) {
-            throw new RuntimeException("Output file \"" + FileUtil.getCanonicalPath(outputFile.getParent())
+        if (!Files.isDirectory(errorFile.getParent())) {
+            throw new RuntimeException("Output file \"" + FileUtil.getCanonicalPath(errorFile.getParent())
                     + "\" parent directory cannot be found!");
         }
         if (!Files.isRegularFile(configFile)) {
@@ -137,7 +144,7 @@ public class Headless extends AbstractCommandLineTool {
 
         // Make sure tmp dir exists and is empty.
         FileUtil.mkdirs(tmpDir);
-        FileUtil.deleteFile(outputFile);
+        FileUtil.deleteFile(errorFile);
         FileUtil.deleteContents(tmpDir);
     }
 
@@ -160,7 +167,12 @@ public class Headless extends AbstractCommandLineTool {
 
             StroomProperties.setOverrideProperty("stroom.lifecycle.enabled", "false", Source.TEST);
 
-            process();
+            new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
+                @Override
+                protected void exec() {
+                    process();
+                }
+            }.run();
         } finally {
             StroomProperties.removeOverrides();
 
@@ -174,75 +186,44 @@ public class Headless extends AbstractCommandLineTool {
         // Initialise some variables.
         init();
 
-        final Injector injector = createInjector();
-        // Start persistance.
-        injector.getInstance(PersistService.class).start();
+        // Read the configuration.
+        readConfig();
+
+        Writer errorWriter = null;
         try {
-            final PipelineScopeRunnable pipelineScopeRunnable = injector.getInstance(PipelineScopeRunnable.class);
-            pipelineScopeRunnable.scopeRunnable(() -> {
-                process(injector);
-            });
+            // Create the required output stream writer.
+            final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(errorFile));
+            errorWriter = new OutputStreamWriter(outputStream, StreamUtil.DEFAULT_CHARSET);
+
+            // Create an XML writer.
+            final TransformerHandler th = XMLUtil.createTransformerHandler(true);
+            th.setResult(new StreamResult(errorWriter));
+
+
+            processRepository(errorWriter);
+
+
+        } catch (final Throwable e) {
+            LOGGER.error("Unable to process headless", e);
         } finally {
-            // Stop persistance.
-            injector.getInstance(PersistService.class).stop();
+            try {
+                // Close the output stream writer.
+                if (errorWriter != null) {
+                    errorWriter.flush();
+                    errorWriter.close();
+                }
+            } catch (final IOException e) {
+                LOGGER.error("Unable to flush and close outputStreamWriter", e);
+            }
         }
 
         LOGGER.info("Processing completed in "
                 + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
     }
 
-    private void process(final Injector injector) {
-        // Because we use HSQLDB for headless we need to insert stream types this way for now.
-        final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper = injector.getInstance(StreamTypeServiceTransactionHelper.class);
-        streamTypeServiceTransactionHelper.doInserts();
-
-        // Read the configuration.
-        readConfig(injector);
-
-        OutputStreamWriter outputStreamWriter = null;
+    private void processRepository(final Writer errorWriter) {
         try {
-            // Create the required output stream writer.
-            final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(outputFile));
-            outputStreamWriter = new OutputStreamWriter(outputStream, StreamUtil.DEFAULT_CHARSET);
-
-            // Create an XML writer.
-            final TransformerHandler th = XMLUtil.createTransformerHandler(true);
-            th.setResult(new StreamResult(outputStreamWriter));
-
-            // Make sure the output is safe.
-            final SafeXMLFilter safeXMLFilter = new SafeXMLFilter();
-            safeXMLFilter.setContentHandler(th);
-
-            // Create a filter that will deal with errors etc.
-            final HeadlessFilter headlessFilter = new HeadlessFilter();
-            headlessFilter.setContentHandler(safeXMLFilter);
-
-            // Output the start root element.
-            headlessFilter.beginOutput();
-
-            processRepository(injector, headlessFilter);
-
-            // Output the end root element.
-            headlessFilter.endOutput();
-
-        } catch (final IOException | TransformerConfigurationException | SAXException | RuntimeException e) {
-            LOGGER.error("Unable to process headless", e);
-        } finally {
-            try {
-                // Close the output stream writer.
-                if (outputStreamWriter != null) {
-                    outputStreamWriter.flush();
-                    outputStreamWriter.close();
-                }
-            } catch (final IOException e) {
-                LOGGER.error("Unable to flush and close outputStreamWriter", e);
-            }
-        }
-    }
-
-    private void processRepository(final Injector injector, final HeadlessFilter headlessFilter) {
-        try {
-            final TaskManager taskManager = injector.getInstance(TaskManager.class);
+            final TaskManager taskManager = getAppContext().getBean(TaskManager.class);
 
             // Loop over all of the data files in the repository.
             final StroomZipRepository repo = new StroomZipRepository(FileUtil.getCanonicalPath(inputDir));
@@ -262,40 +243,62 @@ public class Headless extends AbstractCommandLineTool {
                             final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
                             final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
 
-                            final HeadlessTranslationTask task = new HeadlessTranslationTask(
+                            final CLITranslationTask task = new CLITranslationTask(
                                     IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
-                                    IgnoreCloseInputStream.wrap(contextStream), headlessFilter);
+                                    IgnoreCloseInputStream.wrap(contextStream), errorWriter);
                             taskManager.exec(task);
                         }
 
                         // Close the zip file.
                         stroomZipFile.close();
-                    } catch (final IOException e) {
+                    } catch (final Exception e) {
                         LOGGER.error(e.getMessage(), e);
                     }
                 });
             }
-        } catch (final RuntimeException e) {
+        } catch (final Exception e) {
             LOGGER.error("Unable to process repository!", e);
         }
     }
 
-    private void readConfig(final Injector injector) {
+    private void readConfig() {
         LOGGER.info("Reading configuration from: " + FileUtil.getCanonicalPath(configFile));
 
-        final ImportExportService importExportService = injector.getInstance(ImportExportService.class);
+        final ImportExportService importExportService = getAppContext().getBean(ImportExportService.class);
         importExportService.performImportWithoutConfirmation(configFile);
 
-        final NodeCache nodeCache = injector.getInstance(NodeCache.class);
-        final VolumeService volumeService = injector.getInstance(VolumeService.class);
+        final NodeCache nodeCache = getAppContext().getBean(NodeCache.class);
+        final VolumeService volumeService = getAppContext().getBean(VolumeService.class);
         volumeService
                 .save(Volume.create(nodeCache.getDefaultNode(), FileUtil.getCanonicalPath(tmpDir) + "/cvol", VolumeType.PUBLIC));
     }
 
-    private Injector createInjector() {
-        final Injector injector = Guice.createInjector(new HeadlessModule());
-        injector.injectMembers(this);
+    private ApplicationContext getAppContext() {
+        if (appContext == null) {
+            appContext = buildAppContext();
+        }
+        return appContext;
+    }
 
-        return injector;
+    private ApplicationContext buildAppContext() {
+        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
+        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+//                DashboardConfiguration.class,
+//                EventLoggingConfiguration.class,
+//                IndexConfiguration.class,
+//                MetaDataStatisticConfiguration.class,
+                PersistenceConfiguration.class,
+                DictionaryConfiguration.class,
+                PipelineConfiguration.class,
+                ScopeConfiguration.class,
+//                ScriptConfiguration.class,
+//                SearchConfiguration.class,
+//                SecurityConfiguration.class,
+                ExplorerConfiguration.class,
+                ServerConfiguration.class,
+//                StatisticsConfiguration.class,
+//                VisualisationConfiguration.class,
+                HeadlessConfiguration.class);
+        return context;
     }
 }
