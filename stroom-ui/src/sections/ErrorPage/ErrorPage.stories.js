@@ -16,13 +16,9 @@
 
 import React from 'react';
 import { storiesOf } from '@storybook/react';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 import { withNotes } from '@storybook/addon-notes';
 import ErrorPage from 'sections/ErrorPage';
-import {
-  testInitialisationDecorator,
-  testMultiInitialisationDecorator,
-} from 'lib/storybook/testDataDecorator';
 
 import { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction } from './redux';
 
@@ -52,10 +48,11 @@ at renderRoot (http://localhost:9001/static/preview.bundle.js:40027:9)`;
 const httpErrorStatus = 501;
 
 storiesOf('ErrorPage', module)
-  .addDecorator(testInitialisationDecorator(setErrorMessageAction, undefined))
-  .addDecorator(testInitialisationDecorator(setStackTraceAction, undefined))
-  .addDecorator(testInitialisationDecorator(setHttpErrorCodeAction, undefined))
-  .addDecorator(ReduxDecorator)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(setErrorMessageAction())
+    store.dispatch(setStackTraceAction())
+    store.dispatch(setHttpErrorCodeAction())
+  }))
   .add('No details', () => (
     <div className="container">
       <ErrorPage />
@@ -63,10 +60,11 @@ storiesOf('ErrorPage', module)
   ));
 
 storiesOf('ErrorPage', module)
-  .addDecorator(testInitialisationDecorator(setErrorMessageAction, errorMessage))
-  .addDecorator(testInitialisationDecorator(setStackTraceAction, undefined))
-  .addDecorator(testInitialisationDecorator(setHttpErrorCodeAction, undefined))
-  .addDecorator(ReduxDecorator)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(setErrorMessageAction(errorMessage))
+    store.dispatch(setStackTraceAction())
+    store.dispatch(setHttpErrorCodeAction())
+  }))
   .add('Just error message', () => (
     <div className="container">
       <ErrorPage />
@@ -74,10 +72,11 @@ storiesOf('ErrorPage', module)
   ));
 
 storiesOf('ErrorPage', module)
-  .addDecorator(testInitialisationDecorator(setErrorMessageAction, errorMessage))
-  .addDecorator(testInitialisationDecorator(setStackTraceAction, stackTrace))
-  .addDecorator(testInitialisationDecorator(setHttpErrorCodeAction, undefined))
-  .addDecorator(ReduxDecorator)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(setErrorMessageAction(errorMessage))
+    store.dispatch(setStackTraceAction(stackTrace))
+    store.dispatch(setHttpErrorCodeAction())
+  }))
   .add('Error message and stack trace', () => (
     <div className="container">
       <ErrorPage />
@@ -85,10 +84,11 @@ storiesOf('ErrorPage', module)
   ));
 
 storiesOf('ErrorPage', module)
-  .addDecorator(testInitialisationDecorator(setErrorMessageAction, errorMessage))
-  .addDecorator(testInitialisationDecorator(setStackTraceAction, stackTrace))
-  .addDecorator(testInitialisationDecorator(setHttpErrorCodeAction, httpErrorStatus))
-  .addDecorator(ReduxDecorator)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(setErrorMessageAction(errorMessage))
+    store.dispatch(setStackTraceAction(stackTrace))
+    store.dispatch(setHttpErrorCodeAction(httpErrorStatus))
+  }))
   .add('Everything', () => (
     <div className="container">
       <ErrorPage />

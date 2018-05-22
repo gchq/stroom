@@ -22,12 +22,7 @@ import { withNotes } from '@storybook/addon-notes';
 
 import { connect } from 'react-redux';
 
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-
-import {
-  testMultiInitialisationDecorator,
-  testInitialisationDecorator,
-} from 'lib/storybook/testDataDecorator';
+import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
@@ -51,15 +46,12 @@ import {
 import markdown from './expressionBuilder.md';
 
 storiesOf('Expression Builder', module)
-  .addDecorator(testInitialisationDecorator(receiveDocTree, testTree))
-  .addDecorator(testMultiInitialisationDecorator(receiveDataSource, {
-    testDs: testDataSource,
-  }))
-  .addDecorator(testMultiInitialisationDecorator(expressionChanged, {
-    populatedEx: testExpression,
-    simplestEx: simplestExpression,
-  }))
-  .addDecorator(ReduxDecorator) // must be recorder after/outside of the test initialisation decorators
+  .addDecorator(ReduxDecoratorWithInitialisation((store => {
+    store.dispatch(receiveDocTree(testTree));
+    store.dispatch(receiveDataSource('testDs', testDataSource));
+    store.dispatch(expressionChanged('populatedEx', testExpression));
+    store.dispatch(expressionChanged('simplestEx', simplestExpression));
+  }))) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
   .add('Populated', () => <ExpressionBuilder dataSourceUuid="testDs" expressionId="populatedEx" />)
   .add('Simplest', () => <ExpressionBuilder dataSourceUuid="testDs" expressionId="simplestEx" />)

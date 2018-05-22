@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Provider } from 'react-redux';
 import { action } from '@storybook/addon-actions';
 
@@ -30,3 +31,33 @@ export const ReduxDecorator = (storyFn) => (
       {storyFn()}
   </Provider>
 )
+
+class ReduxWithInit extends Component {
+  static propTypes = {
+    storeInit : PropTypes.func.isRequired,
+    store : PropTypes.object.isRequired
+  }
+
+  componentDidMount() {
+    let {
+      storeInit,
+      store
+    } = this.props;
+
+    storeInit(store);
+  }
+
+  render() {
+    return <div>{this.props.children}</div>
+  }
+}
+
+export const ReduxDecoratorWithInitialisation = (storeInit) => {
+  return (storyFn) => (
+    <Provider store={store}>
+      <ReduxWithInit storeInit={storeInit} store={store}>
+        {storyFn()}
+      </ReduxWithInit>
+    </Provider>
+  )
+}
