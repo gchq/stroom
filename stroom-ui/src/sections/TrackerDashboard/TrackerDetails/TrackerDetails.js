@@ -63,7 +63,10 @@ class TrackerDetails extends Component {
                   </Label>
                 </Table.Cell>
                 <Table.Cell className="progress-column" width={8}>
-                  <Progress percent={selectedTracker.trackerPercent} indicating />
+                  <Progress
+                    percent={selectedTracker.trackerPercent ? selectedTracker.trackerPercent : 0}
+                    indicating
+                  />
                 </Table.Cell>
               </Table.Row>
             </Table.Body>
@@ -77,7 +80,10 @@ class TrackerDetails extends Component {
               <Card.Meta>This tracker:</Card.Meta>
 
               <List bulleted>
-                {selectedTracker.lastPollAge === null ? (
+                {/* It'd be more convenient to just check for truthy, but I'm not sure if '0' is a valid lastPollAge */}
+                {selectedTracker.lastPollAge === null ||
+                selectedTracker.lastPollAge === undefined ||
+                selectedTracker.lastPollAge === '' ? (
                   <List.Item>has not yet done any work</List.Item>
                 ) : (
                   <React.Fragment>

@@ -1,6 +1,7 @@
-export const minimalTracker = {
+const minimalTracker_undefinedLastPollAge = {
   filterId: 2,
   enabled: true,
+  lastPollAge: undefined,
   pipelineName: 'Long, long, long-long-long name',
   priority: 89,
   filterXml: '<xml/>',
@@ -8,7 +9,29 @@ export const minimalTracker = {
   createdOn: 87134234234,
 };
 
-export const maximalTracker = {
+const minimalTracker_nullLastPollAge = {
+  filterId: 2,
+  enabled: true,
+  lastPollAge: null,
+  pipelineName: 'Long, long, long-long-long name',
+  priority: 89,
+  filterXml: '<xml/>',
+  createUser: 'tester',
+  createdOn: 87134234234,
+};
+
+const minimalTracker_emptyLastPollAge = {
+  filterId: 2,
+  enabled: true,
+  lastPollAge: '',
+  pipelineName: 'Long, long, long-long-long name',
+  priority: 89,
+  filterXml: '<xml/>',
+  createUser: 'tester',
+  createdOn: 87134234234,
+};
+
+const maximalTracker = {
   filterId: 2,
   enabled: true,
   pipelineName: 'Pipeline name',
@@ -25,4 +48,11 @@ export const maximalTracker = {
   createdOn: 87134234234,
   updateUser: 'tester2',
   updatedOn: 87934234234,
+};
+
+export const trackers = {
+  minimalTracker_undefinedLastPollAge,
+  minimalTracker_nullLastPollAge,
+  minimalTracker_emptyLastPollAge,
+  maximalTracker,
 };

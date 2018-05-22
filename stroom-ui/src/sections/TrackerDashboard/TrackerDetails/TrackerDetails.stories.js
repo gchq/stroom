@@ -22,18 +22,32 @@ import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
 import TrackerDetails from './TrackerDetails';
 import { actionCreators } from '../redux';
-import { maximalTracker, minimalTracker } from '../trackerTestData.test';
+import { trackers } from '../trackerTestData.test';
 
 storiesOf('TrackerDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackerSelection(2));
-    store.dispatch(actionCreators.updateTrackers([maximalTracker]));
+    store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_nullLastPollAge]));
+  }))
+  .add('Minimal tracker with null last poll age', () => <TrackerDetails />);
+
+storiesOf('TrackerDetails', module)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackerSelection(2));
+    store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_undefinedLastPollAge]));
+  }))
+  .add('Minimal tracker with undefined last poll age', () => <TrackerDetails />);
+
+storiesOf('TrackerDetails', module)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackerSelection(2));
+    store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_emptyLastPollAge]));
+  }))
+  .add('Minimal tracker with empty last poll age', () => <TrackerDetails />);
+
+storiesOf('TrackerDetails', module)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackerSelection(2));
+    store.dispatch(actionCreators.updateTrackers([trackers.maximalTracker]));
   }))
   .add('Maximal tracker', () => <TrackerDetails />);
-
-storiesOf('TrackerDetails', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackerSelection(2));
-    store.dispatch(actionCreators.updateTrackers([minimalTracker]));
-  }))
-  .add('Minimal tracker', () => <TrackerDetails />);

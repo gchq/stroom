@@ -20,13 +20,16 @@ import TrackerDashboard from './TrackerDashboard';
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
-import { maximalTracker, minimalTracker } from '../trackerTestData.test';
+import { trackers } from '../trackerTestData.test';
 
 import { actionCreators } from '../redux';
 
 storiesOf('TrackerDashboard', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackers([minimalTracker, maximalTracker], 2));
+    store.dispatch(actionCreators.updateTrackers(
+      [trackers.minimalTracker_undefinedLastPollAge, trackers.maximalTracker],
+      2,
+    ));
   }))
   .addDecorator(StoryRouter())
   .add('basic', () => <TrackerDashboard />);
