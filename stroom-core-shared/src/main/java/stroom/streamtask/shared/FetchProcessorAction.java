@@ -20,8 +20,8 @@ import stroom.dispatch.shared.TreeAction;
 import stroom.entity.shared.Action;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.ResultList;
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.SharedObject;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -17,7 +17,7 @@
 package stroom.pipeline.shared;
 
 import stroom.entity.shared.Action;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.shared.SharedString;
 
 public class FetchPipelineXmlAction extends Action<SharedString> {

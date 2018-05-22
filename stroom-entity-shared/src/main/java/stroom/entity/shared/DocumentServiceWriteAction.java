@@ -17,8 +17,8 @@
 
 package stroom.entity.shared;
 
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.SharedObject;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 
 public class DocumentServiceWriteAction<D extends SharedObject> extends AbstractEntityAction<D> {
     private static final long serialVersionUID = 800905016214418723L;

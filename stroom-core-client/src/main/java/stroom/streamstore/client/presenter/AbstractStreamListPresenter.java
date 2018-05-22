@@ -49,7 +49,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -74,9 +73,9 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     private ResultList<StreamAttributeMap> resultList = null;
 
     AbstractStreamListPresenter(final EventBus eventBus,
-                                       final ClientDispatchAsync dispatcher,
-                                       final TooltipPresenter tooltipPresenter,
-                                       final boolean allowSelectAll) {
+                                final ClientDispatchAsync dispatcher,
+                                final TooltipPresenter tooltipPresenter,
+                                final boolean allowSelectAll) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
@@ -389,7 +388,10 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                return ModelStringUtil.format(row.getStream().getFeed());
+                if (row != null && row.getStream() != null && row.getStream().getFeed() != null) {
+                    return row.getStream().getFeed().getDisplayValue();
+                }
+                return "";
             }
         }, "Feed", ColumnSizeConstants.BIG_COL);
         // }
@@ -400,7 +402,10 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                return ModelStringUtil.format(row.getStream().getStreamType());
+                if (row != null && row.getStream() != null && row.getStream().getStreamType() != null) {
+                    return row.getStream().getStreamType().getDisplayValue();
+                }
+                return "";
             }
         }, "Type", 80);
         // }

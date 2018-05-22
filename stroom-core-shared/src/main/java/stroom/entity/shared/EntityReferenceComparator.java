@@ -16,7 +16,7 @@
 
 package stroom.entity.shared;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.util.Comparator;
 

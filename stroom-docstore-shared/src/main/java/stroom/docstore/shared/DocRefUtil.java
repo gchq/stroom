@@ -16,7 +16,7 @@
 
 package stroom.docstore.shared;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public final class DocRefUtil {
     private DocRefUtil() {

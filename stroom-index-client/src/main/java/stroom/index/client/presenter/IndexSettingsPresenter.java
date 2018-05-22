@@ -36,7 +36,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPresenter.IndexSettingsView>
         implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers, IndexSettingsUiHandlers {

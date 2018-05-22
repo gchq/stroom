@@ -19,7 +19,7 @@ package stroom.search;
 import org.junit.Assert;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;

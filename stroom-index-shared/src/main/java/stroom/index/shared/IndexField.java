@@ -18,7 +18,7 @@ package stroom.index.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

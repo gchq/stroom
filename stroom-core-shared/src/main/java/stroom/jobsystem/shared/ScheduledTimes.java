@@ -16,7 +16,7 @@
 
 package stroom.jobsystem.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class ScheduledTimes implements SharedObject {
     private static final long serialVersionUID = 3064047113379759479L;

@@ -26,7 +26,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.client.ClientSecurityContext;

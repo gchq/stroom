@@ -1,10 +1,13 @@
+ext.moduleName = 'stroom.statistics.shared'
+
 dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-docstore-shared')
     compile project(':stroom-statistics-api')
-    compile project(':stroom-util-shared')
 
+    compile libs.stroomDocRef
     compile libs.jackson_annotations
+    compile libs.jaxb_api
 
     testCompile libs.junit
 

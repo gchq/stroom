@@ -1,6 +1,8 @@
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+ext.moduleName = 'stroom.util'
+
 dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-security-api')
@@ -16,6 +18,7 @@ dependencies {
     compile libs.jackson_databind
     compile libs.javax_servlet_api
     compile libs.javax_inject
+    compile libs.jaxb_api
     compile libs.slf4j_api
 
     testCompile libs.junit

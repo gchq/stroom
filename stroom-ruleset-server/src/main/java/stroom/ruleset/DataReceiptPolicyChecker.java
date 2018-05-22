@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dictionary.DictionaryStore;
 import stroom.feed.MetaMap;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
 import stroom.ruleset.shared.RuleSet;

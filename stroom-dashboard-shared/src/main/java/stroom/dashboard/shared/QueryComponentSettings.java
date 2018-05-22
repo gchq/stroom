@@ -17,7 +17,7 @@
 package stroom.dashboard.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;

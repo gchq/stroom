@@ -16,7 +16,7 @@
 
 package stroom.entity.shared;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;

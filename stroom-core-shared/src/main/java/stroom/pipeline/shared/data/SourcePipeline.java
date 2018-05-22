@@ -18,8 +18,8 @@ package stroom.pipeline.shared.data;
 
 import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.SharedObject;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 
 public class SourcePipeline implements SharedObject {
     private static final long serialVersionUID = -3209898449831302066L;

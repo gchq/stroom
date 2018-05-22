@@ -34,7 +34,7 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineStoreImpl;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.refdata.impl.MockReferenceDataLoader;
 import stroom.security.MockSecurityContext;
 import stroom.security.SecurityContext;

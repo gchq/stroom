@@ -1,5 +1,3 @@
-import de.undercouch.gradle.tasks.download.Download
-
 buildscript {
     repositories {
         mavenLocal()
@@ -33,7 +31,7 @@ ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
-ext.getPropertyOrDefault = { propName, defaultValue -> 
+ext.getPropertyOrDefault = { propName, defaultValue ->
     def val;
     if (project.hasProperty(propName) && project.getProperty(propName) != "unspecified" && project.getProperty(propName) != "") {
         val = project.getProperty(propName)
@@ -46,151 +44,153 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
 }
 
 ext.gwtCompilerProps = [
-    mainClass: 'stroom.gwt.GwtCompilerWrapper',
-    minHeap: getPropertyOrDefault('gwtCompilerMinHeap', '1G'),
-    maxHeap: getPropertyOrDefault('gwtCompilerMaxHeap', '4G'),
-    workers: getPropertyOrDefault('gwtCompilerWorkers', '5')
+        mainClass: 'stroom.gwt.GwtCompilerWrapper',
+        minHeap  : getPropertyOrDefault('gwtCompilerMinHeap', '1G'),
+        maxHeap  : getPropertyOrDefault('gwtCompilerMaxHeap', '4G'),
+        workers  : getPropertyOrDefault('gwtCompilerWorkers', '5')
 ]
 
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
 ext.versions = [
-    //----------Stroom-----------------
-    stroom: getPropertyOrDefault('version', 'SNAPSHOT'),
+        //----------Stroom-----------------
+        stroom            : getPropertyOrDefault('version', 'SNAPSHOT'),
 
-    //------Stroom-repos---------------
+        //------Stroom-repos---------------
 //    stroomProxyRepo: 'v5.1-beta.8',
-    eventLogging       :  'v3.1.2_schema-v3.1.2',
-    hadoopCommonShaded :  'v2.6.4-5',
-    hadoopHdfsShaded   :  'v2.6.4-4',
-    stroomAuth         :  'v0.1-alpha.3',
-    stroomExpression   :  'v1.4.0',
-    stroomQuery        :  'v3.1-beta.5', //same version for both stroom-query-api and stroom-query-common
-    stroomStats        :  'v0.6.0-alpha.2',
+        eventLogging      : 'v3.2.3_schema-v3.2.4',
+        hadoopCommonShaded: 'v2.6.4-5',
+        hadoopHdfsShaded  : 'v2.6.4-4',
+        stroomAuth        : 'v0.1-alpha.3',
+        stroomExpression  : 'v1.4.1',
+        stroomQuery       : 'v3.1-beta.7', //same version for both stroom-query-api and stroom-query-common
+        stroomStats       : 'v0.6.0-alpha.2',
 
-    //------------3rd-party------------
-    curator            :  '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
-    dropwizard         :  '1.2.5', //if you change this version you should check the versions below that need to move in sync with it
-    dropwizard_metrics :  '3.2.5', //should be kept in step with dropwizard
-    guava              :  '21.0',
-    gwt                :  '2.8.2',
-    hibernate          :  '5.2.13.Final', //dropwiz 1.2.5 uses -validator 5.4.2.Final and -core 5.2.12.Final
-    jackson            :  '2.9.0', //in line with dropwizard 1.2.5
-    jersey             :  '2.25.1',
-    jetty              :  '9.4.8.v20171121', //in line with dropwizard 1.2.5
-    logback            :  '1.2.3', //in line with dropwizard 1.2.5
-    lucene             :  '5.5.3',
-    rxjava             :  '2.1.10',
-    slf4j              :  '1.7.25', //in line with dropwizard 1.2.5
-    swagger            :  '1.5.16',
-    unirest            :  '1.4.9',
-    zzDUMMYzz          :  'makes sorting easier'
+        //------------3rd-party------------
+        curator           : '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
+        dropwizard        : '1.2.2', //if you change this version you should check the versions below that need to move in sync with it
+        dropwizard_metrics: '3.2.5', //should be kept in step with dropwizard
+        guava             : '21.0',
+        gwt               : '2.8.2',
+        hibernate         : '5.2.13.Final', //dropwiz 1.2.5 uses -validator 5.4.2.Final and -core 5.2.12.Final
+        jackson           : '2.9.1', //in line with dropwizard 1.2.2
+        jersey            : '2.25.1',
+        jetty             : '9.4.8.v20171121', //in line with dropwizard 1.2.2
+        logback           : '1.2.3', //in line with dropwizard 1.2.2
+        lucene            : '5.5.3',
+        rxjava            : '2.1.10',
+        slf4j             : '1.7.25', //in line with dropwizard 1.2.5
+        swagger           : '1.5.16',
+        unirest           : '1.4.9',
+        zzDUMMYzz         : 'makes sorting easier'
 ]
 
 //dependency strings for use in sub projects
 ext.libs = [
-    //------Stroom-libs---------------
-    eventLogging       : "event-logging:event-logging:$versions.eventLogging",
-    hadoopCommonShaded : "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
-    hadoopHdfsShaded   : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
-    stroomQueryApi     : "stroom:stroom-query-api:$versions.stroomQuery",
-    stroomQueryAudit   : "stroom:stroom-query-audit:$versions.stroomQuery",
-    stroomQueryCommon  : "stroom:stroom-query-common:$versions.stroomQuery",
-    stroomQueryAuthorisation  : "stroom:stroom-query-authorisation:$versions.stroomQuery",
-    stroomExpression   : "stroom:stroom-expression:$versions.stroomExpression",
-    stroomStatsSchema  : "stroom:stroom-stats-schema:$versions.stroomStats",
-    stroomAuthApi      : "stroom:stroom-auth-service-api:$versions.stroomAuth",
+        //------Stroom-libs---------------
+        eventLogging                   : "event-logging:event-logging:$versions.eventLogging",
+        hadoopCommonShaded             : "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
+        hadoopHdfsShaded               : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
+        stroomDocRef                   : "stroom:stroom-docref:$versions.stroomQuery",
+        stroomQueryApi                 : "stroom:stroom-query-api:$versions.stroomQuery",
+        stroomQueryAudit               : "stroom:stroom-query-audit:$versions.stroomQuery",
+        stroomQueryCommon              : "stroom:stroom-query-common:$versions.stroomQuery",
+        stroomQueryAuthorisation       : "stroom:stroom-query-authorisation:$versions.stroomQuery",
+        stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
+        stroomStatsSchema              : "stroom:stroom-stats-schema:$versions.stroomStats",
+        stroomAuthApi                  : "stroom:stroom-auth-service-api:$versions.stroomAuth",
 
-    //------3rd Party-libs---------------
-    aopalliance                     :  "aopalliance:aopalliance:1.0",
-    assertj_core                    :  "org.assertj:assertj-core:3.8.0",
-    c3p0                            :  "com.mchange:c3p0:0.9.5.2",
-    commons_codec                   :  "commons-codec:commons-codec:1.11",
-    commons_compress                :  "org.apache.commons:commons-compress:1.12",
-    commons_exec                    :  "org.apache.commons:commons-exec:1.3",
-    commons_fileupload              :  "commons-fileupload:commons-fileupload:1.3.2",
-    commons_io                      :  "commons-io:commons-io:2.5",
-    commons_lang                    :  "commons-lang:commons-lang:2.6",
-    commons_pool2                   :  "org.apache.commons:commons-pool2:2.4.2",
-    curator_client                  :  "org.apache.curator:curator-client:$versions.curator",
-    curator_framework               :  "org.apache.curator:curator-framework:$versions.curator",
-    curator_x_discovery             :  "org.apache.curator:curator-x-discovery:$versions.curator",
-    dropwizard_assets               :  "io.dropwizard:dropwizard-assets:$versions.dropwizard"  ,
-    dropwizard_client               :  "io.dropwizard:dropwizard-client:$versions.dropwizard",
-    dropwizard_core                 :  "io.dropwizard:dropwizard-core:$versions.dropwizard"  ,
-    dropwizard_jersey               :  "io.dropwizard:dropwizard-jersey:$versions.dropwizard",
-    dropwizard_jetty                :  "io.dropwizard:dropwizard-jetty:$versions.dropwizard", //was 1.0.6 now 1.1.0
-    dropwizard_lifecycle            :  "io.dropwizard:dropwizard-lifecycle:$versions.dropwizard",
-    dropwizard_metrics_annotation   :  "io.dropwizard.metrics:metrics-annotation:$versions.dropwizard_metrics",
-    dropwizard_metrics_healthchecks :  "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
-    dropwizard_servlets             :  "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
-    dropwizard_testing              :  "io.dropwizard:dropwizard-testing:$versions.dropwizard",
-    dropwizard_configuration        :  "io.dropwizard:dropwizard-configuration:$versions.dropwizard",
-    fast_classpath_scanner          :  "io.github.lukehutch:fast-classpath-scanner:2.9.4",
-    flyway_core                     :  "org.flywaydb:flyway-core:4.0.3",
-    gin                             :  "com.google.gwt.inject:gin:2.1.2",
-    guava                           :  "com.google.guava:guava:$versions.guava", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
-    guice4                          :  "com.google.inject:guice:4.2.0",
-    guice3                          :  "com.google.inject:guice:3.0",
-    guice_multibindings             :  "com.google.inject.extensions:guice-multibindings:4.2.0",
-    gwt_dev                         :  "com.google.gwt:gwt-dev:$versions.gwt",
-    gwt_servlet                     :  "com.google.gwt:gwt-servlet:$versions.gwt",
-    gwt_user                        :  "com.google.gwt:gwt-user:$versions.gwt",
-    gwtp_mvp_client                 :  "com.gwtplatform:gwtp-mvp-client:0.7",
-    hamcrest_core                   :  "org.hamcrest:hamcrest-core:1.3",
-    hbase                           :  "org.apache.hbase:hbase-common:1.2.1", //should be set to be consistent with CDH version
-    hessian                         :  "com.caucho:hessian:4.0.38",
-    hibernate_core                  :  "org.hibernate:hibernate-core:$versions.hibernate" /* LATEST 5.2.13.Final */,
-    hibernate_entitymanager         :  "org.hibernate:hibernate-entitymanager:$versions.hibernate" /* LATEST 5.2.5.Final */,
-    hibernate_jpa_api               :  "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.2.Final",
-    hibernate_validator             :  "org.hibernate:hibernate-validator:5.3.4.Final",
-    hsqldb                          :  "org.hsqldb:hsqldb:2.3.4",
-    jBCrypt                         :  "de.svenkubiak:jBCrypt:0.4.1",
-    jackson_annotations             :  "com.fasterxml.jackson.core:jackson-annotations:$versions.jackson",
-    jackson_core                    :  "com.fasterxml.jackson.core:jackson-core:$versions.jackson",
-    jackson_databind                :  "com.fasterxml.jackson.core:jackson-databind:$versions.jackson", //was 2.8.5, now 2.8.6
-    java_jwt                        :  "com.auth0:java-jwt:3.1.0",
-    javassist                       :  "org.javassist:javassist:3.18.1-GA",
-    javax_el                        :  "org.glassfish:javax.el:3.0.1-b08",
-    javax_el_api                    :  "javax.el:javax.el-api:3.0.0",
-    javax_inject                    :  "javax.inject:javax.inject:1",
-    javax_mail_api                  :  "javax.mail:javax.mail-api:1.6.0",
-    javax_servlet_api               :  "javax.servlet:javax.servlet-api:3.1.0",
-    javax_validation                :  'javax.validation:validation-api:1.1.0.Final',
-    jcl_over_slf4j                  :  "org.slf4j:jcl-over-slf4j:$versions.slf4j",
-    jcommander                      :  'com.beust:jcommander:1.72',
-    jersey_client                   :  "org.glassfish.jersey.core:jersey-client:$versions.jersey",
-    jersey_common                   :  "org.glassfish.jersey.core:jersey-common:$versions.jersey",
-    jersey_server                   :  "org.glassfish.jersey.core:jersey-server:$versions.jersey", //was 2.25 now 2.25.1
-    jetty_http                      :  "org.eclipse.jetty:jetty-http:$versions.jetty",
-    jetty_server                    :  "org.eclipse.jetty:jetty-server:$versions.jetty",
-    jetty_servlet                   :  "org.eclipse.jetty:jetty-servlet:$versions.jetty",
-    jetty_servlets                  :  "org.eclipse.jetty:jetty-servlets:$versions.jetty",
-    jose4j                          :  "org.bitbucket.b_c:jose4j:0.5.5",
-    jsinterop_annotations           :  "com.google.jsinterop:jsinterop-annotations:1.0.1",
-    jul_to_slf4j                    :  "org.slf4j:jul-to-slf4j:$versions.slf4j",
-    junit                           :  "junit:junit:4.12",
-    log4j_over_slf4j                :  "org.slf4j:log4j-over-slf4j:$versions.slf4j",
-    logback_classic                 :  "ch.qos.logback:logback-classic:$versions.logback",
-    logback_core                    :  "ch.qos.logback:logback-core:$versions.logback",
-    lucene_analyzers_common         :  "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
-    lucene_core                     :  "org.apache.lucene:lucene-core:$versions.lucene",
-    lucene_queryparser              :  "org.apache.lucene:lucene-queryparser:$versions.lucene",
-    mockito_core                    :  "org.mockito:mockito-core:2.0.2-beta",
-    mysql_connector_java            :  "mysql:mysql-connector-java:5.1.40",
-    poi                             :  "org.apache.poi:poi:3.17",
-    poi_ooxml                       :  "org.apache.poi:poi-ooxml:3.17",
-    reactivestreams                 :  "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
-    rxjava                          :  "io.reactivex.rxjava2:rxjava:$versions.rxjava",
-    saxon_he                        :  "net.sf.saxon:Saxon-HE:9.7.0-18",
-    slf4j_api                       :  "org.slf4j:slf4j-api:$versions.slf4j",
-    stax_api                        :  "stax:stax-api:1.0.1",
-    swagger_annotations             :  "io.swagger:swagger-annotations:$versions.swagger",
-    unirest                         :  "com.mashape.unirest:unirest-java:$versions.unirest",
-    validation_api                  :  "javax.validation:validation-api:1.0.0.GA", //GWT 2.8.0 throws errors on gwtCompile if validation-api 1.1.0.Final is used
-    vavr                            :  "io.vavr:vavr:0.9.0",
-    ws_rs_api                       :  "javax.ws.rs:javax.ws.rs-api:2.0.1",
-    xml_apis                        :  "xml-apis:xml-apis:1.0.b2",
-    zzDUMMYzz                       :  "makes sorting easier"
+        //------3rd Party-libs---------------
+        aopalliance                    : "aopalliance:aopalliance:1.0",
+        assertj_core                   : "org.assertj:assertj-core:3.8.0",
+        c3p0                           : "com.mchange:c3p0:0.9.5.2",
+        commons_codec                  : "commons-codec:commons-codec:1.11",
+        commons_compress               : "org.apache.commons:commons-compress:1.12",
+        commons_exec                   : "org.apache.commons:commons-exec:1.3",
+        commons_fileupload             : "commons-fileupload:commons-fileupload:1.3.2",
+        commons_io                     : "commons-io:commons-io:2.5",
+        commons_lang                   : "commons-lang:commons-lang:2.6",
+        commons_pool2                  : "org.apache.commons:commons-pool2:2.4.2",
+        curator_client                 : "org.apache.curator:curator-client:$versions.curator",
+        curator_framework              : "org.apache.curator:curator-framework:$versions.curator",
+        curator_x_discovery            : "org.apache.curator:curator-x-discovery:$versions.curator",
+        dropwizard_assets              : "io.dropwizard:dropwizard-assets:$versions.dropwizard",
+        dropwizard_client              : "io.dropwizard:dropwizard-client:$versions.dropwizard",
+        dropwizard_core                : "io.dropwizard:dropwizard-core:$versions.dropwizard",
+        dropwizard_jersey              : "io.dropwizard:dropwizard-jersey:$versions.dropwizard",
+        dropwizard_jetty               : "io.dropwizard:dropwizard-jetty:$versions.dropwizard", //was 1.0.6 now 1.1.0
+        dropwizard_lifecycle           : "io.dropwizard:dropwizard-lifecycle:$versions.dropwizard",
+        dropwizard_metrics_annotation  : "io.dropwizard.metrics:metrics-annotation:$versions.dropwizard_metrics",
+        dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
+        dropwizard_servlets            : "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
+        dropwizard_testing             : "io.dropwizard:dropwizard-testing:$versions.dropwizard",
+        dropwizard_configuration       : "io.dropwizard:dropwizard-configuration:$versions.dropwizard",
+        fast_classpath_scanner         : "io.github.lukehutch:fast-classpath-scanner:2.9.4",
+        flyway_core                    : "org.flywaydb:flyway-core:4.0.3",
+        gin                            : "com.google.gwt.inject:gin:2.1.2",
+        guava                          : "com.google.guava:guava:$versions.guava", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
+        guice4                         : "com.google.inject:guice:4.2.0",
+        guice3                         : "com.google.inject:guice:3.0",
+        guice_multibindings            : "com.google.inject.extensions:guice-multibindings:4.2.0",
+        gwt_dev                        : "com.google.gwt:gwt-dev:$versions.gwt",
+        gwt_servlet                    : "com.google.gwt:gwt-servlet:$versions.gwt",
+        gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
+        gwtp_mvp_client                : "com.gwtplatform:gwtp-mvp-client:0.7",
+        hamcrest_core                  : "org.hamcrest:hamcrest-core:1.3",
+        hbase                          : "org.apache.hbase:hbase-common:1.2.1", //should be set to be consistent with CDH version
+        hessian                        : "com.caucho:hessian:4.0.38",
+        hibernate_core                 : "org.hibernate:hibernate-core:$versions.hibernate" /* LATEST 5.2.13.Final */,
+        hibernate_entitymanager        : "org.hibernate:hibernate-entitymanager:$versions.hibernate" /* LATEST 5.2.5.Final */,
+        hibernate_jpa_api              : "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.2.Final",
+        hibernate_validator            : "org.hibernate:hibernate-validator:5.3.4.Final",
+        hsqldb                         : "org.hsqldb:hsqldb:2.3.4",
+        jBCrypt                        : "de.svenkubiak:jBCrypt:0.4.1",
+        jackson_annotations            : "com.fasterxml.jackson.core:jackson-annotations:$versions.jackson",
+        jackson_core                   : "com.fasterxml.jackson.core:jackson-core:$versions.jackson",
+        jackson_databind               : "com.fasterxml.jackson.core:jackson-databind:$versions.jackson", //was 2.8.5, now 2.8.6
+        java_jwt                       : "com.auth0:java-jwt:3.1.0",
+        javassist                      : "org.javassist:javassist:3.18.1-GA",
+        javax_el                       : "org.glassfish:javax.el:3.0.1-b08",
+        javax_el_api                   : "javax.el:javax.el-api:3.0.0",
+        javax_inject                   : "javax.inject:javax.inject:1",
+        javax_mail_api                 : "javax.mail:javax.mail-api:1.6.0",
+        javax_servlet_api              : "javax.servlet:javax.servlet-api:3.1.0",
+        javax_validation               : 'javax.validation:validation-api:1.1.0.Final',
+        jaxb_api                       : "javax.xml.bind:jaxb-api:2.3.0",
+        jcl_over_slf4j                 : "org.slf4j:jcl-over-slf4j:$versions.slf4j",
+        jcommander                     : 'com.beust:jcommander:1.72',
+        jersey_client                  : "org.glassfish.jersey.core:jersey-client:$versions.jersey",
+        jersey_common                  : "org.glassfish.jersey.core:jersey-common:$versions.jersey",
+        jersey_server                  : "org.glassfish.jersey.core:jersey-server:$versions.jersey", //was 2.25 now 2.25.1
+        jetty_http                     : "org.eclipse.jetty:jetty-http:$versions.jetty",
+        jetty_server                   : "org.eclipse.jetty:jetty-server:$versions.jetty",
+        jetty_servlet                  : "org.eclipse.jetty:jetty-servlet:$versions.jetty",
+        jetty_servlets                 : "org.eclipse.jetty:jetty-servlets:$versions.jetty",
+        jose4j                         : "org.bitbucket.b_c:jose4j:0.5.5",
+        jsinterop_annotations          : "com.google.jsinterop:jsinterop-annotations:1.0.1",
+        jul_to_slf4j                   : "org.slf4j:jul-to-slf4j:$versions.slf4j",
+        junit                          : "junit:junit:4.12",
+        log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j:$versions.slf4j",
+        logback_classic                : "ch.qos.logback:logback-classic:$versions.logback",
+        logback_core                   : "ch.qos.logback:logback-core:$versions.logback",
+        lucene_analyzers_common        : "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
+        lucene_core                    : "org.apache.lucene:lucene-core:$versions.lucene",
+        lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
+        mockito_core                   : "org.mockito:mockito-core:2.0.2-beta",
+        mysql_connector_java           : "mysql:mysql-connector-java:5.1.40",
+        poi                            : "org.apache.poi:poi:3.17",
+        poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",
+        reactivestreams                : "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
+        rxjava                         : "io.reactivex.rxjava2:rxjava:$versions.rxjava",
+        saxon_he                       : "net.sf.saxon:Saxon-HE:9.7.0-18",
+        slf4j_api                      : "org.slf4j:slf4j-api:$versions.slf4j",
+        stax_api                       : "stax:stax-api:1.0.1",
+        swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
+        unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
+        validation_api                 : "javax.validation:validation-api:1.0.0.GA", //GWT 2.8.0 throws errors on gwtCompile if validation-api 1.1.0.Final is used
+        vavr                           : "io.vavr:vavr:0.9.0",
+        ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.0.1",
+        xml_apis                       : "xml-apis:xml-apis:1.0.b2",
+        zzDUMMYzz                      : "makes sorting easier"
 ]
 
 def contentPackImportDir = "${System.properties['user.home']}/.stroom/contentPackImport/"
@@ -200,21 +200,21 @@ def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations
 
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
-    'core-xml-schemas': 'v2.0',
-    'internal-statistics-stroom-stats': 'v2.1',
-    'internal-statistics-sql': 'v2.1',
-    'internal-dashboards': 'v1.1',
-    'stroom-101': 'v1.0',
-    'event-logging-xml-schema': 'v3.2.3'
+        'core-xml-schemas'                : 'v2.0',
+        'internal-statistics-stroom-stats': 'v2.1',
+        'internal-statistics-sql'         : 'v2.1',
+        'internal-dashboards'             : 'v1.1',
+        'stroom-101'                      : 'v1.0',
+        'event-logging-xml-schema'        : 'v3.2.3'
 ]
 
 //defines a list of gradle projects that we will publish with maven/bintray
 def projectsToBePublished = subprojects.findAll { project ->
     project.path in [
-        ':stroom-entity-shared',
-        ':stroom-util',
-        ':stroom-util-shared',
-        'zzDUMMYzz to ease sorting'
+            ':stroom-entity-shared',
+            ':stroom-util',
+            ':stroom-util-shared',
+            'zzDUMMYzz to ease sorting'
     ]
 }
 
@@ -222,14 +222,14 @@ def projectsToBePublished = subprojects.findAll { project ->
 //projects to use
 def projectsWithSharedTestJars = subprojects.findAll { project ->
     project.path in [
-        ':stroom-core-server',
-        ':stroom-pipeline',
-        ':stroom-dashboard-server',
-        ':stroom-entity-shared',
-        ':stroom-index-server',
-        ':stroom-security-server',
-        ':stroom-util',
-        'zzDUMMYzz to ease sorting'
+            ':stroom-core-server',
+            ':stroom-pipeline',
+            ':stroom-dashboard-server',
+            ':stroom-entity-shared',
+            ':stroom-index-server',
+            ':stroom-security-server',
+            ':stroom-util',
+            'zzDUMMYzz to ease sorting'
     ]
 }
 
@@ -295,12 +295,12 @@ subprojects {
                 }
 
                 forcedModules = [
-                    //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
-                    //libs.guava
+                        //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
+                        //libs.guava
                 ]
             }
         }
-        
+
         // This means our integration tests get all the dependencies from our tests and we don't need to specify them twice.
         integrationTestCompile.extendsFrom testCompile
         integrationTestRuntime.extendsFrom testRuntime
@@ -318,7 +318,7 @@ subprojects {
         reports.html.destination = file("${reporting.baseDir}/${name}")
 
 
-        afterSuite { desc, result -> 
+        afterSuite { desc, result ->
             if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
 
                 //test class failed so add its project info and test report file to a global list for
@@ -344,31 +344,31 @@ subprojects {
         classpath = sourceSets.integrationTest.runtimeClasspath
 
         // Integration tests are quite slow so output progress for each test to keep travis alive
-        afterTest { desc, result -> 
+        afterTest { desc, result ->
             println "Executed test ${desc.name} [${desc.className}] with result: ${result.resultType}"
         }
-        
-        //afterSuite { desc, result -> 
-            //if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
-                ////test class failed so add its project info and test report file to a global list for
-                ////processing at the end of the build
 
-                //def reportFileName = "${project.name}/build/test-results/integrationTest/TEST-${desc.className}.xml"
-                //def reportFile = file(reportFileName)
-                //def pair = new Tuple2("${project.name} ${desc.name}", reportFile)
-                //failedTestReportFiles.add(pair)
-            //}
+        //afterSuite { desc, result -> 
+        //if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
+        ////test class failed so add its project info and test report file to a global list for
+        ////processing at the end of the build
+
+        //def reportFileName = "${project.name}/build/test-results/integrationTest/TEST-${desc.className}.xml"
+        //def reportFile = file(reportFileName)
+        //def pair = new Tuple2("${project.name} ${desc.name}", reportFile)
+        //failedTestReportFiles.add(pair)
+        //}
         //}
 
         //Use full logging for test exceptions so we can see where the failure occurred 
         //testLogging {
-            //events "failed"
-            //exceptionFormat = 'full'
-            //showStackTraces = true
+        //events "failed"
+        //exceptionFormat = 'full'
+        //showStackTraces = true
         //}
     }
 
-    clean{
+    clean {
         //clear out the 'out' dirs used by intelliJ
         delete "out"
     }
@@ -376,6 +376,78 @@ subprojects {
     // These lines pull the integration test task into our build process.
     tasks.check.dependsOn integrationTest
     tasks.integrationTest.mustRunAfter test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//    afterEvaluate {
+//        repositories {
+//            jcenter()
+//        }
+//
+//        compileJava {
+//            inputs.property("moduleName", moduleName)
+//            doFirst {
+//                options.compilerArgs = [
+//                        '--module-path', classpath.asPath,
+//                ]
+//                classpath = files()
+//            }
+//        }
+//
+//        compileTestJava {
+//            inputs.property("moduleName", moduleName)
+//            doFirst {
+//                options.compilerArgs = [
+//                        '--module-path', classpath.asPath,
+////                        '--add-modules', 'junit',
+////                        '--add-reads', "$moduleName=junit",
+//                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.srcDirs).asPath,
+//                ]
+//                classpath = files()
+//            }
+//        }
+//
+//        test {
+//            inputs.property("moduleName", moduleName)
+//            doFirst {
+//                jvmArgs = [
+//                        '--module-path', classpath.asPath,
+//                        '--add-modules', 'ALL-MODULE-PATH',
+////                        '--add-reads', "$moduleName=junit",
+//                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
+//                ]
+//                classpath = files()
+//            }
+//        }
+//
+//        javadoc {
+//            options.addStringOption('-module-path', classpath.asPath)
+//            options.addStringOption('Xdoclint:all,-missing', '-html5')
+//        }
+//
+//        jar {
+//            inputs.property("moduleName", moduleName)
+//            manifest {
+//                attributes(
+//                        "Automatic-Module-Name": moduleName,
+//                )
+//            }
+//            version versions.stroomQuery
+//        }
+//    }
 }
 
 //configures only those projects in publishedProjectsPaths
@@ -414,7 +486,7 @@ configure(projectsToBePublished) {
             }
         }
         scm {
-           url "https://github.com/stroom/stroom"
+            url "https://github.com/stroom/stroom"
         }
     }
 
@@ -463,7 +535,7 @@ configure(projectsToBePublished) {
             version {
                 name = "${versions.stroom}"
                 desc = "stroom-${versions.stroom}"
-                released  = new Date()
+                released = new Date()
                 vcsTag = "${versions.stroom}"
                 gpg {
                     //Bintray will self-sign the files
@@ -555,14 +627,14 @@ gradle.buildFinished {
     //if any of the tests failed dump the junit xml to the console
     if (getPropertyOrDefault('dumpFailedTestXml', 'false') == 'true' && failedTestReportFiles.size > 0) {
         println "Build has ${failedTestReportFiles.size} failed test classes, dumping JUnit xml output"
-        failedTestReportFiles.each { pair -> 
+        failedTestReportFiles.each { pair ->
             def info = pair.first
             def reportFile = pair.second
 
             if (reportFile.exists()) {
                 println "-----Failed test class ${info} ------------------"
                 def lines = reportFile.readLines()
-                lines.each { String line -> 
+                lines.each { String line ->
                     println "${line}"
                 }
                 println "-----End of test class ${info} ------------------"

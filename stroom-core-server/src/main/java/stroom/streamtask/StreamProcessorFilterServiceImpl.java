@@ -25,7 +25,7 @@ import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.HqlBuilder;
 import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.ExpressionToFindCriteria;

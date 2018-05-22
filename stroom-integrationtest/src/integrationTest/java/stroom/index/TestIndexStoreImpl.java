@@ -23,7 +23,7 @@ import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;

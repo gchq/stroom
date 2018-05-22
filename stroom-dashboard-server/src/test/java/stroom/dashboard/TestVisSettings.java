@@ -39,7 +39,6 @@ public class TestVisSettings {
 
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
         mapper.setSerializationInclusion(Include.NON_NULL);
         final VisSettings visSettings = mapper.readValue(json, VisSettings.class);
 

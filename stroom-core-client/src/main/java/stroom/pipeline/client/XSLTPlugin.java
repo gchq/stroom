@@ -28,7 +28,7 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.presenter.XSLTPresenter;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class XSLTPlugin extends DocumentPlugin<XsltDoc> {
     private final Provider<XSLTPresenter> editorProvider;

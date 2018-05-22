@@ -1,6 +1,6 @@
 package stroom.statistics.internal;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.util.List;
 import java.util.Map;

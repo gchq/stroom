@@ -33,7 +33,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticType;
 import stroom.stats.shared.EventStoreTimeIntervalEnum;
 import stroom.stats.shared.StatisticRollUpType;

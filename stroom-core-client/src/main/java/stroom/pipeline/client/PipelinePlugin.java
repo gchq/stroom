@@ -30,7 +30,7 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.process.client.presenter.ProcessorPresenter;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.streamtask.shared.StreamProcessor;
 
 public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {

@@ -16,8 +16,8 @@
 
 package stroom.security.shared;
 
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.SharedObject;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 
 public class UserRef extends DocRef implements SharedObject {
     private static final long serialVersionUID = 5883121212911541301L;

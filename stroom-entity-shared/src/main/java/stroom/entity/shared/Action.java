@@ -16,7 +16,7 @@
 
 package stroom.entity.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;

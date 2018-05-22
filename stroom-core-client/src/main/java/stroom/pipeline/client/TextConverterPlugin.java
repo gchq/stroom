@@ -28,7 +28,7 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.shared.TextConverterDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
     private final Provider<TextConverterPresenter> editorProvider;

@@ -28,7 +28,7 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.index.client.presenter.IndexPresenter;
 import stroom.index.shared.IndexDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class IndexPlugin extends DocumentPlugin<IndexDoc> {
     private final Provider<IndexPresenter> editorProvider;

@@ -18,7 +18,7 @@ package stroom.entity.shared;
 
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
 import java.util.List;

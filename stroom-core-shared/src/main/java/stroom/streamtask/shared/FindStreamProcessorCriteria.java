@@ -19,7 +19,7 @@ package stroom.streamtask.shared;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 /**
  * Class used to find translations.

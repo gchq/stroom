@@ -2,7 +2,7 @@ package stroom.docstore.fs;
 
 import stroom.docstore.Persistence;
 import stroom.docstore.RWLockFactory;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

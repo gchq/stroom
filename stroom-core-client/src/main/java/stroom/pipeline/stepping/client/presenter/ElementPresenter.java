@@ -38,9 +38,9 @@ import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.shared.Indicators;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 

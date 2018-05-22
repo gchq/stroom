@@ -17,7 +17,7 @@
 package stroom.entity.shared;
 
 import stroom.util.shared.HasType;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;

@@ -19,7 +19,7 @@ package stroom.index;
 
 import stroom.document.DocumentStore;
 import stroom.index.shared.IndexDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.util.List;
 

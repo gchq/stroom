@@ -17,7 +17,7 @@
 package stroom.entity.shared;
 
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.List;
 

@@ -20,7 +20,7 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

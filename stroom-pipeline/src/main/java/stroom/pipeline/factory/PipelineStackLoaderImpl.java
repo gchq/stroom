@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

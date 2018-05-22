@@ -1,3 +1,5 @@
+ext.moduleName = 'stroom.pipeline'
+
 dependencies {
     //testCompile project(':stroom-core-server')
     compile project(':stroom-core-server')
@@ -24,6 +26,7 @@ dependencies {
     compile libs.saxon_he
     compile libs.slf4j_api
     compile libs.stax_api
+    compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.ws_rs_api
     compile libs.xml_apis

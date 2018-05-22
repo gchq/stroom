@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.common.v2.Coprocessor;
 import stroom.search.Event;
 import stroom.search.extraction.ExtractionTask.ResultReceiver;

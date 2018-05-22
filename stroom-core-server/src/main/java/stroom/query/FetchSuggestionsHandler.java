@@ -25,7 +25,7 @@ import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.feed.FeedService;
 import stroom.node.NodeService;
 import stroom.pipeline.PipelineStore;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsAction;
 import stroom.security.Security;
 import stroom.streamstore.StreamTypeService;

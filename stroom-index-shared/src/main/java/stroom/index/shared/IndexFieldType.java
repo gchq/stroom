@@ -16,7 +16,7 @@
 
 package stroom.index.shared;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 public enum IndexFieldType implements HasDisplayValue {
     FIELD("Text", false),

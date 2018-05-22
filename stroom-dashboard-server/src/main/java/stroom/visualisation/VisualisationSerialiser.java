@@ -6,7 +6,7 @@ import stroom.docstore.EncodingUtil;
 import stroom.docstore.JsonSerialiser2;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.util.XMLMarshallerUtil;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.xml.bind.JAXBContext;

@@ -42,7 +42,7 @@ import stroom.dashboard.shared.TimeZone;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.query.api.v2.DateTimeFormat;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormat;
 import stroom.query.api.v2.Param;
@@ -396,7 +396,6 @@ public class SearchRequestMapper {
 
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
             mapper.setSerializationInclusion(Include.NON_NULL);
 
             final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);

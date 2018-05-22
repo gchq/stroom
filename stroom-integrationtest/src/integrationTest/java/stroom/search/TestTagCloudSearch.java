@@ -25,7 +25,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.index.IndexStore;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.IndexDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;

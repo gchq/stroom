@@ -16,7 +16,7 @@
 
 package stroom.entity.shared;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 public enum PermissionInheritance implements HasDisplayValue {
     NONE("None"), SOURCE("Source"), DESTINATION("Destination"), COMBINED("Combined");

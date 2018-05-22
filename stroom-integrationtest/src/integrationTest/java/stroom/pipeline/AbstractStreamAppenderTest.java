@@ -17,7 +17,7 @@
 package stroom.pipeline;
 
 import org.junit.Assert;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;

@@ -16,8 +16,8 @@
 
 package stroom.security.shared;
 
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.SharedObject;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 
 import java.util.Collections;
 import java.util.Map;

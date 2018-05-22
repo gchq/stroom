@@ -17,7 +17,7 @@
 package stroom.streamstore.shared;
 
 import stroom.util.shared.Severity;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class ReprocessDataInfo implements SharedObject {
     private static final long serialVersionUID = 7549523500761890727L;

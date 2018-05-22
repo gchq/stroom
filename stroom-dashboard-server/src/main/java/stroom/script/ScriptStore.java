@@ -18,7 +18,7 @@
 package stroom.script;
 
 import stroom.document.DocumentStore;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 
 import java.util.List;

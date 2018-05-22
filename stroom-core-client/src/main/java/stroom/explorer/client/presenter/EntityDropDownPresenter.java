@@ -22,7 +22,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 
 public class EntityDropDownPresenter extends DropDownPresenter implements HasDataSelectionHandlers<ExplorerNode> {

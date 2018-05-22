@@ -16,7 +16,7 @@
 
 package stroom.entity.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class EntityServiceFindAction<C extends BaseCriteria, E extends SharedObject> extends FindAction<C, E> {
     private static final long serialVersionUID = 800905016214418723L;

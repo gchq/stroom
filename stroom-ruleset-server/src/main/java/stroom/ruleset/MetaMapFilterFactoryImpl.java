@@ -20,7 +20,7 @@ package stroom.ruleset;
 import stroom.datafeed.MetaMapFilter;
 import stroom.datafeed.MetaMapFilterFactory;
 import stroom.dictionary.DictionaryStore;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 

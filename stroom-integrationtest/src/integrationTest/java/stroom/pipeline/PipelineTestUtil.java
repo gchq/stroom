@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public final class PipelineTestUtil {
     private static final PipelineSerialiser SERIALISER = new PipelineSerialiser();

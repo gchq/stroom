@@ -17,7 +17,7 @@
 
 package stroom.document;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.util.Map;
 import java.util.Set;

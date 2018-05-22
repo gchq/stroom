@@ -16,7 +16,7 @@
 
 package stroom.util;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.AbstractCollection;
 import java.util.ArrayList;

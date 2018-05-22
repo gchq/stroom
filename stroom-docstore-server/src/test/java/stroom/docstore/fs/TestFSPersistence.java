@@ -3,7 +3,7 @@ package stroom.docstore.fs;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.docstore.Persistence;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

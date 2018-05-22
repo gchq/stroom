@@ -17,7 +17,7 @@
 package stroom.pipeline.state;
 
 import stroom.guice.PipelineScoped;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 @PipelineScoped
 public class PipelineHolder {

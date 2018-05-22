@@ -1,3 +1,5 @@
+ext.moduleName = 'stroom.elastic.server'
+
 dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-core-server')
@@ -14,7 +16,7 @@ dependencies {
     compile libs.guice4
     compile libs.javax_inject
     compile libs.slf4j_api
-    compile libs.stroomQueryApi
+    compile libs.stroomDocRef
     compile libs.stroomQueryAudit
     compile libs.stroomQueryAuthorisation
     compile libs.ws_rs_api

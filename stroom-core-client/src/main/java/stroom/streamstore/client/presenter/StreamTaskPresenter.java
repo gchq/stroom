@@ -23,10 +23,10 @@ import com.gwtplatform.mvp.client.View;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.StreamTaskView>
         implements HasDocumentRead<SharedObject> {

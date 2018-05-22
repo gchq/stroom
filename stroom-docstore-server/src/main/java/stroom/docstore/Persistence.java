@@ -1,6 +1,6 @@
 package stroom.docstore;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.io.IOException;
 import java.io.InputStream;

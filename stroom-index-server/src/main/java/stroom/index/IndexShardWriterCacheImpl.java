@@ -26,7 +26,7 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.properties.StroomPropertyService;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
 import stroom.task.ThreadPoolImpl;

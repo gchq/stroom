@@ -27,7 +27,7 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
 public class DictionarySettingsPresenter extends DocumentSettingsPresenter<DictionarySettingsPresenter.DictionarySettingsView, DictionaryDoc> {

@@ -12,7 +12,7 @@ import stroom.mapreduce.v2.UnsafePairQueue;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.query.api.v2.DateTimeFormat;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;

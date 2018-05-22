@@ -18,7 +18,7 @@
 package stroom.index;
 
 import stroom.node.shared.Volume;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.util.Collections;
 import java.util.Set;

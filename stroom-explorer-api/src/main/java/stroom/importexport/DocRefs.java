@@ -17,7 +17,7 @@
 package stroom.importexport;
 
 import io.swagger.annotations.ApiModel;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

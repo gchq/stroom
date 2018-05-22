@@ -18,7 +18,7 @@
 package stroom.statistics.sql.entity;
 
 import stroom.document.DocumentStore;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStoreDoc;
 
 import java.util.List;

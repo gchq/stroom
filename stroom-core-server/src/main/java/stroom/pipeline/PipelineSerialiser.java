@@ -7,7 +7,7 @@ import stroom.docstore.JsonSerialiser2;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

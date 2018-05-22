@@ -18,7 +18,7 @@ package stroom.index.shared;
 
 import stroom.entity.shared.Action;
 import stroom.node.shared.Volume;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.shared.SharedList;
 
 public class FetchIndexVolumesAction extends Action<SharedList<Volume>> {

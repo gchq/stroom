@@ -1,3 +1,5 @@
+ext.moduleName = 'stroom.statistics.server'
+
 dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
@@ -13,6 +15,7 @@ dependencies {
     compile project(':stroom-connectors')
     compile project(':stroom-explorer-api')
 
+    compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.stroomExpression
     compile libs.stroomQueryCommon
@@ -27,6 +30,7 @@ dependencies {
     compile libs.guava
     compile libs.guice4
     compile libs.javax_inject
+    compile libs.jaxb_api
     compile libs.reactivestreams
     compile libs.rxjava
     compile libs.slf4j_api

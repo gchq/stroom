@@ -30,7 +30,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.util.ProcessorUtil;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.MockSecurityContext;
 import stroom.security.SecurityContext;
 import stroom.statistics.shared.StatisticStore;

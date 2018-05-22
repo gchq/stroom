@@ -16,7 +16,7 @@
 
 package stroom.refdata;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.date.DateUtil;
 
 import java.util.Objects;

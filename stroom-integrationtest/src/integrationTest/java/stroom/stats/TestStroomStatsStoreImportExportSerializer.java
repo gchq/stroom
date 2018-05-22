@@ -23,7 +23,7 @@ import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.entity.StatisticsDataSourceProvider;

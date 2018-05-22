@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
 

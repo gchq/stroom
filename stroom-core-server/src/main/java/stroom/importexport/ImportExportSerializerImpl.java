@@ -29,7 +29,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.io.AbstractFileVisitor;

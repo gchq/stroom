@@ -18,7 +18,7 @@ package stroom.data.grid.client;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.user.cellview.client.Column;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 public abstract class OrderByColumn<T, C> extends Column<T, C> implements HasDisplayValue {
     private final String field;

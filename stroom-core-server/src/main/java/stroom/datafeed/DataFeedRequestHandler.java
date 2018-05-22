@@ -28,7 +28,7 @@ import stroom.feed.StroomStreamException;
 import stroom.feed.shared.Feed;
 import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamtask.StreamTargetStroomStreamHandler;

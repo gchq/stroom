@@ -1,3 +1,5 @@
+ext.moduleName = 'stroom.index.client'
+
 dependencies {
     compile project(':stroom-core-client')
     compile project(':stroom-core-client-widget')
@@ -8,7 +10,7 @@ dependencies {
     compile project(':stroom-security-client-api')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomQueryApi
+    compile libs.stroomDocRef
     compile libs.gin
     compile libs.guice3
     compile libs.gwt_user

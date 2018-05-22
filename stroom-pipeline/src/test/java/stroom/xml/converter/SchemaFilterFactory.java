@@ -27,7 +27,7 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.state.PipelineContext;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.MockSecurityContext;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;

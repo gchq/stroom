@@ -39,7 +39,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;

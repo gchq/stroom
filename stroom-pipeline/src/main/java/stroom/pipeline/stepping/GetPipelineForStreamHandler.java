@@ -23,7 +23,7 @@ import stroom.feed.shared.Feed;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.ExpressionUtil;

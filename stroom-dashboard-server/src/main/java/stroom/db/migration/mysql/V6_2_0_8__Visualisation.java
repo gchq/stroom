@@ -17,7 +17,7 @@
 package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.visualisation.VisualisationSerialiser;
 import stroom.visualisation.shared.VisualisationDoc;
 

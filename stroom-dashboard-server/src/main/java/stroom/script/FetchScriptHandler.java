@@ -17,7 +17,7 @@
 
 package stroom.script;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.Security;

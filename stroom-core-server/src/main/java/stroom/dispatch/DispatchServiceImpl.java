@@ -36,7 +36,7 @@ import stroom.task.TaskHandlerBeanRegistry;
 import stroom.task.TaskIdFactory;
 import stroom.task.TaskManager;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;

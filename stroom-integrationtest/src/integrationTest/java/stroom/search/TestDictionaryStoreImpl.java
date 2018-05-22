@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;

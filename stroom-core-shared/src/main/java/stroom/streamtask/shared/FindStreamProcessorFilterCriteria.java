@@ -22,7 +22,7 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class FindStreamProcessorFilterCriteria extends BaseCriteria {
     private static final long serialVersionUID = 1L;

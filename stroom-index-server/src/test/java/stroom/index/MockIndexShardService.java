@@ -27,7 +27,7 @@ import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Singleton;

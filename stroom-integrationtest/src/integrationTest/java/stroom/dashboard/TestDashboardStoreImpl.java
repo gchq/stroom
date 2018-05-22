@@ -26,7 +26,7 @@ import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.script.ScriptStore;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;

@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.MockSecurityContext;
 import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;

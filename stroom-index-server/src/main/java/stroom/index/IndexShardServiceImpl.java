@@ -35,7 +35,7 @@ import stroom.index.shared.IndexShardKey;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;

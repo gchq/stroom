@@ -16,11 +16,11 @@
 
 package stroom.importexport.shared;
 
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.DocRef;
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -42,7 +42,7 @@ import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.jobsystem.shared.JobNodeInfo;
 import stroom.jobsystem.shared.JobNodeRow;
 import stroom.monitoring.client.presenter.SchedulePresenter;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.ModelStringUtil;

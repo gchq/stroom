@@ -23,8 +23,8 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.IdSet;
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.SharedObject;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 
 public class ClassificationWrappedStreamPresenter extends ClassificationWrapperPresenter
         implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<SharedObject> {

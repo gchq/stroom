@@ -16,7 +16,7 @@
 
 package stroom.pipeline;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;

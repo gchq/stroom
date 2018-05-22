@@ -17,7 +17,7 @@
 package stroom.dashboard.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.ToStringBuilder;

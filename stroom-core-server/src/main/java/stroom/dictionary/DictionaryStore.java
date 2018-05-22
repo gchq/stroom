@@ -19,7 +19,7 @@ package stroom.dictionary;
 
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.document.DocumentStore;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.util.List;
 

@@ -16,7 +16,7 @@
 
 package stroom.node.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class VolumeIOStatus implements SharedObject {
     private static final long serialVersionUID = 1727071475174943132L;

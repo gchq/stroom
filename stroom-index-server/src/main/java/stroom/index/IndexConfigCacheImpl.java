@@ -24,7 +24,7 @@ import stroom.entity.shared.Clearable;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 

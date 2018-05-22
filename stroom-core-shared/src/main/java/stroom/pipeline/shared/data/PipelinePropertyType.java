@@ -19,7 +19,7 @@ package stroom.pipeline.shared.data;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HasType;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class PipelinePropertyType implements Comparable<PipelinePropertyType>, HasType, SharedObject {
     private static final long serialVersionUID = 2290622144151007980L;

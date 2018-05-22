@@ -19,7 +19,7 @@ package stroom.script;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 

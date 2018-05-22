@@ -45,7 +45,7 @@ import stroom.node.VolumeService;
 import stroom.node.shared.Volume;
 import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;

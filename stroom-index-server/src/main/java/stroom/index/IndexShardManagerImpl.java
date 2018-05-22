@@ -23,7 +23,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.GenericServerTask;

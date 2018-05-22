@@ -35,7 +35,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.DocumentServiceReadAction;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.task.client.TaskEndEvent;

@@ -10,7 +10,7 @@ import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.repo.StroomStreamProcessor;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.thread.BufferFactory;
 

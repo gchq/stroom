@@ -18,7 +18,7 @@ package stroom.pipeline.shared;
 
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class StepLocation implements SharedObject {
     private static final long serialVersionUID = 6018818196613322322L;

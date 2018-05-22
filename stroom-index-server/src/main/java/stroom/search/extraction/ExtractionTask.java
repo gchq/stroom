@@ -19,7 +19,7 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class ExtractionTask {
     private final long streamId;

@@ -18,7 +18,7 @@
 package stroom.visualisation;
 
 import stroom.document.DocumentStore;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import java.util.List;

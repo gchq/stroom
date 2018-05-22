@@ -38,7 +38,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.writer.TestAppender;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.streamtask.StreamProcessorService;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;

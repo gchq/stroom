@@ -22,7 +22,7 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;

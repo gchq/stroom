@@ -7,7 +7,7 @@ import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;

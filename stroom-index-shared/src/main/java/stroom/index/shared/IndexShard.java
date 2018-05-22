@@ -24,7 +24,7 @@ import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.Column;

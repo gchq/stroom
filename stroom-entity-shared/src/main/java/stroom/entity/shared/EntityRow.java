@@ -16,7 +16,7 @@
 
 package stroom.entity.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class EntityRow<E extends BaseEntity> implements SharedObject, HasEntity<E> {
     private static final long serialVersionUID = 3085808847358588309L;

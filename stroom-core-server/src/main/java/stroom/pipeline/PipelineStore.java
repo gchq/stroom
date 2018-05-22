@@ -19,7 +19,7 @@ package stroom.pipeline;
 
 import stroom.document.DocumentStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.util.List;
 

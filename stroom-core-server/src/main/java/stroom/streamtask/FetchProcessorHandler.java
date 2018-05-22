@@ -33,7 +33,7 @@ import stroom.streamtask.shared.StreamProcessorRow;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Expander;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

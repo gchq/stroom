@@ -32,7 +32,7 @@ import stroom.node.shared.Volume;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.policy.DataRetentionService;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.security.Security;

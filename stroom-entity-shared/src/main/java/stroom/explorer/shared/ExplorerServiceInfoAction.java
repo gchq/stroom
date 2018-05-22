@@ -2,7 +2,7 @@ package stroom.explorer.shared;
 
 import stroom.entity.shared.Action;
 import stroom.entity.shared.SharedDocRefInfo;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class ExplorerServiceInfoAction extends Action<SharedDocRefInfo> {
 

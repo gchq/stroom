@@ -16,8 +16,8 @@
 
 package stroom.stats.shared;
 
-import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.SharedObject;
+import stroom.docref.HasDisplayValue;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

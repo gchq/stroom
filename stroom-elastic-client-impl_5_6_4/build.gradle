@@ -1,5 +1,7 @@
 apply plugin: 'com.github.johnrengelman.shadow'
 
+ext.moduleName = 'stroom.elastic.client.impl'
+
 dependencies {
     compile project(':stroom-connectors')
 
