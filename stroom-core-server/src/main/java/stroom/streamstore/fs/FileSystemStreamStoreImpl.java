@@ -44,13 +44,12 @@ import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Volume;
 import stroom.persist.EntityManagerSupport;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.ExpressionToFindCriteria.Context;
@@ -126,7 +125,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final NodeCache nodeCache;
     private final StreamProcessorService streamProcessorService;
-    private final PipelineService pipelineService;
     private final FeedService feedService;
     private final StreamTypeService streamTypeService;
     private final VolumeService volumeService;
@@ -177,7 +175,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               final StroomDatabaseInfo stroomDatabaseInfo,
                               final NodeCache nodeCache,
                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
-                              @Named("cachedPipelineService") final PipelineService pipelineService,
                               @Named("cachedFeedService") final FeedService feedService,
                               @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                               final VolumeService volumeService,
@@ -190,7 +187,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.nodeCache = nodeCache;
         this.streamProcessorService = streamProcessorService;
-        this.pipelineService = pipelineService;
         this.feedService = feedService;
         this.streamTypeService = streamTypeService;
         this.volumeService = volumeService;
@@ -207,7 +203,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         outerCriteria.obtainPageRequest().setLength(1000);
         outerCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
         final FileSystemStreamStoreImpl fileSystemStreamStore = new FileSystemStreamStoreImpl(null, null, null, null, null,
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
         final SqlBuilder sql = new SqlBuilder();
 
         sql.append("SELECT U.* FROM ( ");
@@ -291,7 +287,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.append(" INNER JOIN FETCH e.feed");
 
         if (fetchSet != null) {
-//            if (fetchSet.contains(Feed.ENTITY_TYPE)) {
+//            if (fetchSet.contains(Feed.DOCUMENT_TYPE)) {
 //                sql.append(" INNER JOIN FETCH e.feed");
 //            }
             if (fetchSet.contains(StreamType.ENTITY_TYPE)) {
@@ -475,13 +471,13 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-//    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
+//    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
     public StreamTarget openStreamTarget(final Stream stream) {
         return openStreamTarget(stream, false);
     }
 
     @Override
-//    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
+//    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
     @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     public StreamTarget openStreamTarget(final Stream stream, final boolean append) {
         return entityManagerSupport.transactionResult(em -> {
@@ -789,9 +785,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             if (originalCriteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE)) {
                 stream.setStreamProcessor(streamProcessorService.load(stream.getStreamProcessor()));
                 if (stream.getStreamProcessor() != null) {
-                    if (originalCriteria.getFetchSet().contains(PipelineEntity.ENTITY_TYPE)) {
-                        stream.getStreamProcessor()
-                                .setPipeline(pipelineService.load(stream.getStreamProcessor().getPipeline()));
+                    if (originalCriteria.getFetchSet().contains(PipelineDoc.DOCUMENT_TYPE)) {
+                        stream.getStreamProcessor().setPipelineUuid(stream.getStreamProcessor().getPipelineUuid());
                     }
                 }
             }
@@ -929,7 +924,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             chooseIndex = false;
         }
 
-        if (chooseIndex && criteria.getPipelineIdSet() != null && criteria.getPipelineIdSet().getSet().size() == 1) {
+        if (chooseIndex && criteria.getPipelineSet() != null && criteria.getPipelineSet().size() == 1) {
             chooseIndex = false;
             indexToUse = MYSQL_INDEX_STRM_FK_STRM_PROC_ID_CRT_MS_IDX;
         }
@@ -986,7 +981,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     private void appendStreamProcessorJoin(final OldFindStreamCriteria queryCriteria, final SqlBuilder sql) {
-        if (queryCriteria.getPipelineIdSet() != null && queryCriteria.getPipelineIdSet().isConstrained()) {
+        if (queryCriteria.getPipelineSet() != null && queryCriteria.getPipelineSet().isConstrained()) {
             sql.append(" JOIN ");
             sql.append(StreamProcessor.TABLE_NAME);
             sql.append(" SP ON (SP.");
@@ -1084,7 +1079,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.appendEntityIdSetQuery("S." + StreamType.FOREIGN_KEY, criteria.getStreamTypeIdSet());
         sql.appendIncludeExcludeSetQuery("S." + Feed.FOREIGN_KEY, criteria.getFeeds());
 
-        sql.appendEntityIdSetQuery("SP." + PipelineEntity.FOREIGN_KEY, criteria.getPipelineIdSet());
+        sql.appendDocRefSetQuery("SP." + StreamProcessor.PIPELINE_UUID, criteria.getPipelineSet());
         sql.appendEntityIdSetQuery("S." + StreamProcessor.FOREIGN_KEY, criteria.getStreamProcessorIdSet());
     }
 

@@ -1,13 +1,50 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <description/>
-   <name>XML_READER-EVENTS</name>
-   <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
-      &lt;doc&gt;
-      &lt;type&gt;Pipeline&lt;/type&gt;
-      &lt;uuid&gt;bd7be478-632b-40fe-8fda-f578ec57e959&lt;/uuid&gt;
-      &lt;name&gt;Common Test Event Pipeline&lt;/name&gt;
-      &lt;/doc&gt;
-   </parentPipelineXML>
-   <uuid>e40ifda1-0210-49cn-9695-c3f6fa8c67d7</uuid>
+   <elements>
+      <add>
+         <element>
+            <id>bomRemovalFilterInput</id>
+            <type>BOMRemovalFilterInput</type>
+         </element>
+         <element>
+            <id>invalidCharFilterReader</id>
+            <type>InvalidCharFilterReader</type>
+         </element>
+         <element>
+            <id>InvalidXMLCharFilterReader</id>
+            <type>InvalidXMLCharFilterReader</type>
+         </element>
+      </add>
+   </elements>
+   <properties>
+      <add>
+         <property>
+            <element>translationFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>c688dc4a-f2a9-4888-9837-d254ba25a0a6</uuid>
+                  <name>DATA_SPLITTER-EVENTS</name>
+               </entity>
+            </value>
+         </property>
+      </add>
+   </properties>
+   <links>
+      <add>
+         <link>
+            <from>bomRemovalFilterInput</from>
+            <to>invalidCharFilterReader</to>
+         </link>
+         <link>
+            <from>invalidCharFilterReader</from>
+            <to>InvalidXMLCharFilterReader</to>
+         </link>
+         <link>
+            <from>InvalidXMLCharFilterReader</from>
+            <to>combinedParser</to>
+         </link>
+      </add>
+   </links>
 </pipeline>

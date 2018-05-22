@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TestHessian {
@@ -62,8 +63,8 @@ public class TestHessian {
         final Rack rack = Rack.create("rack");
         final Node node = Node.create(rack, "node");
 
-        final IndexFields indexFields = createIndexFields();
-        final IndexField[] fields = indexFields.getIndexFields().toArray(new IndexField[0]);
+        final List<IndexField> indexFields = createIndexFields();
+        final IndexField[] fields = indexFields.toArray(new IndexField[0]);
 
         final Field field = new Field(
                 "test",
@@ -141,8 +142,8 @@ public class TestHessian {
         return new StaticValueFunction(ValString.create(string)).createGenerator();
     }
 
-    private IndexFields createIndexFields() {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+    private List<IndexField> createIndexFields() {
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("Feed"));
         indexFields.add(IndexField.createField("Feed (Keyword)", AnalyzerType.KEYWORD));
         indexFields.add(IndexField.createField("Action"));

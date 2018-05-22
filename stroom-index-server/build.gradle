@@ -18,6 +18,8 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
+    compile project(':stroom-docstore-shared')
+    compile project(':stroom-docstore-server')
     compile project(':stroom-index-shared')
     compile project(':stroom-pipeline')
     compile project(':stroom-security-api')
@@ -28,10 +30,11 @@ dependencies {
     compile libs.stroomQueryApi
     compile libs.stroomQueryCommon
     compile libs.stroomExpression
+    compile libs.hibernate_jpa_api
     compile libs.eventLogging
     compile libs.guava
     compile libs.javax_inject
-        compile libs.lucene_analyzers_common
+    compile libs.lucene_analyzers_common
     compile libs.lucene_core
     compile libs.lucene_queryparser
     compile libs.slf4j_api

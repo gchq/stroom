@@ -19,8 +19,9 @@ package stroom.search;
 import org.junit.Assert;
 import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.task.PipelineStreamProcessor;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.CommonTranslationTest;
@@ -29,6 +30,7 @@ import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalInt;
@@ -69,8 +71,8 @@ public class CommonIndexingTest {
         try {
             // Add data.
             commonTranslationTest.setup();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
         runProcessing(1, maxDocsPerShard);
     }
@@ -80,8 +82,8 @@ public class CommonIndexingTest {
             // Add data.
             commonTranslationTest.setup(dataFiles.stream()
                     .collect(Collectors.toList()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
         runProcessing(dataFiles.size(), maxDocsPerShard);
     }
@@ -125,11 +127,11 @@ public class CommonIndexingTest {
         return 1;
     }
 
-    public PipelineEntity getSearchResultPipeline() {
+    public DocRef getSearchResultPipeline() {
         return storeCreationTool.getSearchResultPipeline("Search result", SEARCH_RESULT_XSLT);
     }
 
-    public PipelineEntity getSearchResultTextPipeline() {
+    public DocRef getSearchResultTextPipeline() {
         return storeCreationTool.getSearchResultPipeline("Search result text", SEARCH_RESULT_TEXT_XSLT);
     }
 }

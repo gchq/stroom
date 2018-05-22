@@ -1,0 +1,23 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "603f0853-26ae-11e7-b9dc-0242ac110002",
+  "name" : "PipelineStreamProcessor",
+  "version" : "0a3636f3-a15c-4b85-a5a8-8b999acc55aa",
+  "description" : "This is my description",
+  "statisticType" : "COUNT",
+  "rollUpType" : "ALL",
+  "precision" : 60000,
+  "enabled" : true,
+  "config" : {
+    "statisticFields" : [ {
+      "fieldName" : "Feed"
+    }, {
+      "fieldName" : "Node"
+    }, {
+      "fieldName" : "Pipeline"
+    } ],
+    "customRollUpMasks" : [ {
+      "rolledUpTagPositions" : [ ]
+    } ]
+  }
+}

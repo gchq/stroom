@@ -23,7 +23,7 @@ import stroom.cache.ParserFactoryPool;
 import stroom.cache.StoredParserFactory;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
-import stroom.pipeline.TextConverterService;
+import stroom.pipeline.TextConverterStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -33,7 +33,7 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
-import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
@@ -48,7 +48,7 @@ import javax.inject.Inject;
         PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.TEXT)
 public class DSParser extends AbstractParser implements SupportsCodeInjection {
     private final ParserFactoryPool parserFactoryPool;
-    private final TextConverterService textConverterService;
+    private final TextConverterStore textConverterStore;
 
     private String injectedCode;
     private boolean usePool = true;
@@ -59,10 +59,10 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
     public DSParser(final ErrorReceiverProxy errorReceiverProxy,
                     final LocationFactoryProxy locationFactory,
                     final ParserFactoryPool parserFactoryPool,
-                    final TextConverterService textConverterService) {
+                    final TextConverterStore textConverterStore) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
-        this.textConverterService = textConverterService;
+        this.textConverterStore = textConverterStore;
     }
 
     @Override
@@ -79,7 +79,7 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
         // TODO: We need to use the cached TextConverter service ideally but
         // before we do it needs to be aware cluster
         // wide when TextConverter has been updated.
-        final TextConverter tc = textConverterService.loadByUuid(textConverterRef.getUuid());
+        final TextConverterDoc tc = textConverterStore.readDocument(textConverterRef);
         if (tc == null) {
             throw new ProcessException(
                     "TextConverter \"" + textConverterRef.getName() + "\" appears to have been deleted");
@@ -129,7 +129,7 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
     }
 
     @PipelineProperty(description = "The data splitter configuration that should be used to parse the input data.")
-    @PipelinePropertyDocRef(types = TextConverter.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = TextConverterDoc.DOCUMENT_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

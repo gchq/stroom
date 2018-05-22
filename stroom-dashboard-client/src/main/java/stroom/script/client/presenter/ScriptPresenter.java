@@ -26,16 +26,15 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.shared.DocRefUtil;
 import stroom.query.api.v2.DocRef;
-import stroom.script.shared.Script;
+import stroom.script.shared.ScriptDoc;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import javax.inject.Provider;
 
-public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Script> {
+public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ScriptDoc> {
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData SCRIPT_TAB = new TabDataImpl("Script");
 
@@ -83,7 +82,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
                     registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
                     registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
 
-                    loadResource(codePresenter, callback);
+                    loadResource(codePresenter);
                 }
             } else {
                 callback.onReady(codePresenter);
@@ -94,20 +93,20 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    public void onRead(final DocRef docRef, final Script script) {
+    public void onRead(final DocRef docRef, final ScriptDoc script) {
         super.onRead(docRef, script);
         loadCount++;
         settingsPresenter.read(docRef, script);
 
         // Reload the resource if we have loaded it before.
         if (codePresenter != null) {
-            loadResource(codePresenter, null);
+            loadResource(codePresenter);
         }
 
         if (loadCount > 1) {
             // Remove the script function from the cache so dashboards reload
             // it.
-            ClearScriptCacheEvent.fire(this, DocRefUtil.create(script));
+            ClearScriptCacheEvent.fire(this, docRef);
 
             // This script might be used by any visualisation so clear the vis
             // function cache so that scripts are requested again if needed.
@@ -116,10 +115,10 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    protected void onWrite(final Script script) {
+    protected void onWrite(final ScriptDoc script) {
         settingsPresenter.write(script);
         if (loadedResource) {
-            script.setResource(codePresenter.getText());
+            script.setData(codePresenter.getText());
         }
         loadedResource = false;
     }
@@ -130,22 +129,15 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
         this.readOnly = readOnly;
     }
 
-    private void loadResource(final EditorPresenter codePresenter, final ContentCallback callback) {
+    private void loadResource(final EditorPresenter codePresenter) {
         if (!loadedResource) {
-            if (getEntity().getResource() != null) {
-                codePresenter.setText(getEntity().getResource());
-            }
-
-            if (callback != null) {
-                callback.onReady(codePresenter);
-            }
-
+            codePresenter.setText(getEntity().getData());
             loadedResource = true;
         }
     }
 
     @Override
     public String getType() {
-        return Script.ENTITY_TYPE;
+        return ScriptDoc.DOCUMENT_TYPE;
     }
 }

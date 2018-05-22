@@ -17,6 +17,8 @@
 
 package stroom.datafeed;
 
+import stroom.query.api.v2.DocRef;
+
 public interface MetaMapFilterFactory {
-    MetaMapFilter create(String uuid);
+    MetaMapFilter create(DocRef policyRef);
 }

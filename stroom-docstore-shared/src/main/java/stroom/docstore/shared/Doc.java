@@ -152,4 +152,13 @@ public class Doc implements SharedObject {
         result = 31 * result + (updateUser != null ? updateUser.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "DocRef{" +
+                "type='" + type + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }

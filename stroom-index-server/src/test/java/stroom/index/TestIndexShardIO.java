@@ -22,7 +22,7 @@ import org.apache.lucene.search.SearcherManager;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexFieldsMap;
@@ -38,12 +38,13 @@ import stroom.util.test.StroomUnitTest;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestIndexShardIO extends StroomUnitTest {
 
     //    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
-    private static final IndexFields INDEX_FIELDS = IndexFields.createStreamIndexFields();
+    private static final List<IndexField> INDEX_FIELDS = IndexFields.createStreamIndexFields();
     //    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
 //    private static final IndexShardManager INDEX_SHARD_MANAGER = new MockIndexShardManager();
     private static final IndexConfig INDEX_CONFIG;
@@ -53,7 +54,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         INDEX_FIELDS.add(IndexField.createField("Test"));
         INDEX_FIELDS.add(IndexField.createField("Id2"));
 
-        final Index index = new Index();
+        final IndexDoc index = new IndexDoc();
         index.setName("Test");
         INDEX_CONFIG = new IndexConfig(index, INDEX_FIELDS, new IndexFieldsMap(INDEX_FIELDS));
     }
@@ -77,12 +78,12 @@ public class TestIndexShardIO extends StroomUnitTest {
     public void testOpenCloseManyWrite() throws IOException {
         final Volume volume = new Volume();
         volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
-        final Index index = new Index();
+        final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
         final IndexShard idx1 = new IndexShard();
         idx1.setId(1L);
-        idx1.setIndex(index);
+        idx1.setIndexUuid(index.getUuid());
         idx1.setPartition("all");
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
@@ -105,13 +106,13 @@ public class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     public void testOpenCloseManyReadWrite() throws IOException {
-        final Index index = new Index();
+        final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
         final Volume volume = new Volume();
         volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
-        idx1.setIndex(index);
+        idx1.setIndexUuid(index.getUuid());
         idx1.setPartition("all");
         idx1.setId(1L);
         idx1.setVolume(volume);
@@ -142,7 +143,7 @@ public class TestIndexShardIO extends StroomUnitTest {
     }
 
     @Test
-    public void testShardCorruption() throws IOException {
+    public void testShardCorruption() {
 //        final Executor executor = Executors.newCachedThreadPool();
 //
 //        final Index index = new Index();
@@ -250,7 +251,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 //        }
 //
 //
-//        CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+//        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 //
 //        final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1, writer1.getWriter());
 //        final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
@@ -282,13 +283,13 @@ public class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     public void testFailToCloseAndReopen() throws IOException {
-        final Index index = new Index();
+        final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
         final Volume volume = new Volume();
         volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
-        idx1.setIndex(index);
+        idx1.setIndexUuid(index.getUuid());
         idx1.setPartition("all");
         idx1.setId(1L);
         idx1.setVolume(volume);
@@ -313,13 +314,13 @@ public class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     public void testFailToCloseFlushAndReopen() throws IOException {
-        final Index index = new Index();
+        final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
         final Volume volume = new Volume();
         volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
-        idx1.setIndex(index);
+        idx1.setIndexUuid(index.getUuid());
         idx1.setPartition("all");
         idx1.setId(1L);
         idx1.setVolume(volume);
@@ -344,7 +345,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     public void testWriteLoadsNoFlush() throws IOException {
-        final Index index = new Index();
+        final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
         final Volume volume = new Volume();
@@ -352,7 +353,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         volume.setPath(FileUtil.getCanonicalPath(testDir));
         FileUtil.deleteDir(testDir);
         final IndexShard idx1 = new IndexShard();
-        idx1.setIndex(index);
+        idx1.setIndexUuid(index.getUuid());
         idx1.setPartition("all");
         idx1.setId(1L);
         idx1.setVolume(volume);
@@ -368,7 +369,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
         Long lastSize = null;
 
-        final HashSet<Integer> flushSet = new HashSet<Integer>();
+        final HashSet<Integer> flushSet = new HashSet<>();
 
         for (int i = 1; i <= 100; i++) {
             writer.addDocument(buildDocument(i));
@@ -380,7 +381,7 @@ public class TestIndexShardIO extends StroomUnitTest {
             if (newSize != null) {
                 if (lastSize != null) {
                     if (!lastSize.equals(newSize)) {
-                        flushSet.add(Integer.valueOf(i));
+                        flushSet.add(i);
                     }
                 }
                 lastSize = newSize;

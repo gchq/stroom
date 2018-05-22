@@ -71,7 +71,7 @@ public class SummaryDataRow implements SharedObject {
     public boolean equals(final Object o) {
         if (o == this) {
             return true;
-        } else if (o == null || !(o instanceof SummaryDataRow)) {
+        } else if (!(o instanceof SummaryDataRow)) {
             return false;
         }
 

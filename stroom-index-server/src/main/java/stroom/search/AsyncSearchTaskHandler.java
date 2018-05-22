@@ -20,10 +20,10 @@ package stroom.search;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Sort.Direction;
-import stroom.index.IndexService;
+import stroom.index.IndexStore;
 import stroom.index.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
@@ -64,7 +64,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final IndexService indexService;
+    private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
     private final Security security;
@@ -74,7 +74,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                            final TargetNodeSetFactory targetNodeSetFactory,
                            final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
                            final ClusterDispatchAsyncHelper dispatchHelper,
-                           final IndexService indexService,
+                           final IndexStore indexStore,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
                            final Security security) {
@@ -82,7 +82,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.dispatchAsyncProvider = dispatchAsyncProvider;
         this.dispatchHelper = dispatchHelper;
-        this.indexService = indexService;
+        this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
         this.security = security;
@@ -105,7 +105,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         final Query query = task.getQuery();
 
                         // Reload the index.
-                        final Index index = indexService.loadByUuid(query.getDataSource().getUuid());
+                        final IndexDoc index = indexStore.readDocument(query.getDataSource());
 
                         // Get an array of stored index fields that will be used for
                         // getting stored data.
@@ -215,16 +215,14 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         taskManager.execAsync(outerTask);
     }
 
-    private IndexField[] getStoredFields(final Index index) {
-        final List<IndexField> indexFields = index.getIndexFieldsObject().getIndexFields();
+    private IndexField[] getStoredFields(final IndexDoc index) {
+        final List<IndexField> indexFields = index.getIndexFields();
         final List<IndexField> list = new ArrayList<>(indexFields.size());
         for (final IndexField indexField : indexFields) {
             if (indexField.isStored()) {
                 list.add(indexField);
             }
         }
-        IndexField[] array = new IndexField[list.size()];
-        array = list.toArray(array);
-        return array;
+        return list.toArray(new IndexField[0]);
     }
 }

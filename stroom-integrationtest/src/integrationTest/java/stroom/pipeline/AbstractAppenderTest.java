@@ -17,6 +17,7 @@
 package stroom.pipeline;
 
 import org.junit.Assert;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -25,17 +26,17 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
+import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.guice.PipelineScopeRunnable;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
@@ -52,7 +53,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
+abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
@@ -60,11 +61,11 @@ public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTes
     @Inject
     private Provider<RecordCount> recordCountProvider;
     @Inject
-    private XSLTService xsltService;
+    private XsltStore xsltStore;
     @Inject
-    private TextConverterService textConverterService;
+    private TextConverterStore textConverterStore;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private PipelineDataCache pipelineDataCache;
     @Inject
@@ -81,53 +82,58 @@ public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTes
         commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;
-        final TextConverter textConverter = createTextConverter(dir + name + ".ds3.xml", name, TextConverterType.DATA_SPLITTER);
-        final XSLT filteredXSLT = createXSLT(stem + ".xsl", name);
-        final PipelineEntity pipelineEntity = createPipeline(stem + "_Pipeline.xml", textConverter, filteredXSLT);
-        test(pipelineEntity, dir, name, type, stem + ".out", null);
+        final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml", name, TextConverterType.DATA_SPLITTER);
+        final DocRef filteredXSLT = createXSLT(stem + ".xsl", name);
+        final DocRef pipelineRef = createPipeline(stem + "_Pipeline.xml", textConverterRef, filteredXSLT);
+        test(pipelineRef, dir, name, type, stem + ".out", null);
     }
 
-    private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
-                                          final XSLT xslt) {
+    private DocRef createPipeline(final String pipelineFile,
+                                  final DocRef textConverterRef,
+                                  final DocRef xsltRef) {
         // Load the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(pipelineFile);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
+        final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
-        if (textConverter != null) {
-            pipelineEntity.getPipelineData().addProperty(
-                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
+        if (textConverterRef != null) {
+            pipelineDoc.getPipelineData().addProperty(
+                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
         }
-        if (xslt != null) {
-            pipelineEntity.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
+        if (xsltRef != null) {
+            pipelineDoc.getPipelineData()
+                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
         }
 
-        return pipelineService.save(pipelineEntity);
+        pipelineStore.writeDocument(pipelineDoc);
+        return pipelineRef;
     }
 
-    private TextConverter createTextConverter(final String textConverterFile, final String name,
-                                              final TextConverterType textConverterType) {
+    private DocRef createTextConverter(final String textConverterFile, final String name,
+                                       final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(textConverterFile);
-        TextConverter textConverter = textConverterService.create(name);
+        final DocRef textConverterRef = textConverterStore.createDocument(name);
+        TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
         textConverter.setConverterType(textConverterType);
         textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
-        textConverter = textConverterService.save(textConverter);
-        return textConverter;
+        textConverterStore.writeDocument(textConverter);
+        return textConverterRef;
     }
 
-    private XSLT createXSLT(final String xsltPath, final String name) {
+    private DocRef createXSLT(final String xsltPath, final String name) {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(xsltPath);
-        XSLT xslt = xsltService.create(name);
-        xslt.setData(StreamUtil.streamToString(xsltInputStream));
-        xslt = xsltService.save(xslt);
-        return xslt;
+        final DocRef xsltRef = xsltStore.createDocument(name);
+        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+        xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
+        xsltStore.writeDocument(xsltDoc);
+        return xsltRef;
     }
 
     // TODO This method is 80% the same in a whole bunch of test classes -
     // refactor some of the repetition out.
-    void test(final PipelineEntity pipelineEntity,
+    void test(final DocRef pipelineRef,
               final String dir,
               final String name,
               final String type,
@@ -140,7 +146,8 @@ public abstract class AbstractAppenderTest extends AbstractProcessIntegrationTes
                 errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
 
                 // Create the parser.
-                final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                 final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
                 // Get the input streams.

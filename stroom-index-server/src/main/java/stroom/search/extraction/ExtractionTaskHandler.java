@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -31,12 +31,14 @@ import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.filter.IdEnrichmentFilter;
 import stroom.pipeline.filter.XMLFilter;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.query.api.v2.DocRef;
 import stroom.search.SearchException;
 import stroom.security.Security;
@@ -44,6 +46,7 @@ import stroom.security.SecurityContext;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
+import stroom.streamtask.StreamProcessorService;
 import stroom.task.TaskContext;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
@@ -65,12 +68,14 @@ public class ExtractionTaskHandler {
     private final StreamStore streamStore;
     private final FeedService feedService;
     private final FeedHolder feedHolder;
+    private final MetaDataHolder metaDataHolder;
     private final CurrentUserHolder currentUserHolder;
     private final StreamHolder streamHolder;
     private final PipelineHolder pipelineHolder;
+    private final StreamProcessorService streamProcessorService;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineFactory pipelineFactory;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final TaskContext taskContext;
     private final Security security;
@@ -82,12 +87,14 @@ public class ExtractionTaskHandler {
     ExtractionTaskHandler(final StreamStore streamStore,
                           final FeedService feedService,
                           final FeedHolder feedHolder,
+                          final MetaDataHolder metaDataHolder,
                           final CurrentUserHolder currentUserHolder,
                           final StreamHolder streamHolder,
                           final PipelineHolder pipelineHolder,
+                          final StreamProcessorService streamProcessorService,
                           final ErrorReceiverProxy errorReceiverProxy,
                           final PipelineFactory pipelineFactory,
-                          @Named("cachedPipelineService") final PipelineService pipelineService,
+                          @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                           final PipelineDataCache pipelineDataCache,
                           final TaskContext taskContext,
                           final Security security,
@@ -95,12 +102,14 @@ public class ExtractionTaskHandler {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.feedHolder = feedHolder;
+        this.metaDataHolder = metaDataHolder;
         this.currentUserHolder = currentUserHolder;
         this.streamHolder = streamHolder;
         this.pipelineHolder = pipelineHolder;
+        this.streamProcessorService = streamProcessorService;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineFactory = pipelineFactory;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.taskContext = taskContext;
         this.security = security;
@@ -135,13 +144,13 @@ public class ExtractionTaskHandler {
             final DocRef pipelineRef = task.getPipelineRef();
 
             // Get the translation that will be used to display results.
-            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(pipelineRef.getUuid());
-            if (pipelineEntity == null) {
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            if (pipelineDoc == null) {
                 throw new SearchException("Unable to find result pipeline: " + pipelineRef);
             }
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
             if (pipeline == null) {
                 throw new SearchException("Unable to create parser for pipeline: " + pipelineRef);
@@ -165,7 +174,7 @@ public class ExtractionTaskHandler {
             searchResultOutputFilter.setup(task.getFieldIndexes(), task.getResultReceiver());
 
             // Process the stream segments.
-            processData(task.getStreamId(), task.getEventIds(), pipelineEntity, pipeline);
+            processData(task.getStreamId(), task.getEventIds(), pipelineRef, pipeline);
 
         } catch (final RuntimeException e) {
             error(e.getMessage(), e);
@@ -177,15 +186,14 @@ public class ExtractionTaskHandler {
         if (filters == null || filters.size() != 1) {
             throw new SearchException("Unable to find single '" + clazz.getName() + "' in search result pipeline");
         }
-        final T filter = filters.get(0);
-        return filter;
+        return filters.get(0);
     }
 
     /**
      * Extract data from the segment list. Returns the total number of segments
      * that were successfully extracted.
      */
-    private long processData(final long streamId, final long[] eventIds, final PipelineEntity pipelineEntity,
+    private long processData(final long streamId, final long[] eventIds, final DocRef pipelineRef,
                              final Pipeline pipeline) {
         final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
             task.getErrorReceiver().log(severity, location, elementId, message, e);
@@ -214,7 +222,7 @@ public class ExtractionTaskHandler {
                         }
 
                         // Now try and extract the data.
-                        extract(pipelineEntity, pipeline, streamSource, segmentInputStream, count);
+                        extract(pipelineRef, pipeline, streamSource, segmentInputStream, count);
 
                     } catch (final RuntimeException e) {
                         // Something went wrong extracting data from this
@@ -240,7 +248,7 @@ public class ExtractionTaskHandler {
     /**
      * We do this one by one
      */
-    private void extract(final PipelineEntity pipelineEntity, final Pipeline pipeline, final StreamSource source,
+    private void extract(final DocRef pipelineRef, final Pipeline pipeline, final StreamSource source,
                          final RASegmentInputStream segmentInputStream, final long count) {
         if (source != null && segmentInputStream != null) {
             if (LOGGER.isDebugEnabled()) {
@@ -252,8 +260,12 @@ public class ExtractionTaskHandler {
                 // objects Translation etc
                 final Feed feed = feedService.load(source.getStream().getFeed());
                 feedHolder.setFeed(feed);
+
+                // Setup the meta data holder.
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+
                 streamHolder.setStream(source.getStream());
-                pipelineHolder.setPipeline(pipelineEntity);
+                pipelineHolder.setPipeline(pipelineRef);
 
                 final InputStream inputStream = new IgnoreCloseInputStream(segmentInputStream);
 
@@ -264,7 +276,7 @@ public class ExtractionTaskHandler {
                 LAMBDA_LOGGER.logDurationIfDebugEnabled(
                         () -> pipeline.process(inputStream, encoding),
                         () -> LambdaLogger.buildMessage("Processing pipeline {}, stream {}",
-                                pipelineEntity.getUuid(), source.getStream().getId()));
+                                pipelineRef.getUuid(), source.getStream().getId()));
 
             } catch (final TerminatedException e) {
                 // Ignore stopped pipeline exceptions as we are meant to get

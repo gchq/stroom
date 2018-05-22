@@ -37,7 +37,7 @@ import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadQueryAction;
@@ -53,7 +53,7 @@ import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.CreateProcessorEvent;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -230,7 +230,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }));
         registerHandler(historyButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId());
+                historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getUuid());
             }
         }));
         registerHandler(favouriteButton.addClickHandler(event -> {
@@ -238,7 +238,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 final ExpressionOperator root = expressionPresenter.write();
                 favouritesPresenter.show(
                         QueryPresenter.this,
-                        getComponents().getDashboard().getId(),
+                        getComponents().getDashboard().getUuid(),
                         getSettings().getDataSource(),
                         root);
 
@@ -368,7 +368,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
-        chooser.setIncludedTypes(PipelineEntity.ENTITY_TYPE);
+        chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.USE);
         chooser.addDataSelectionHandler(event -> {
             final DocRef pipeline = chooser.getSelectedEntityReference();
@@ -479,8 +479,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         queryComponentSettings = getSettings();
 
         // Create and register the search model.
-        final Dashboard dashboard = getComponents().getDashboard();
-        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getId(), dashboard.getName(), getComponentData().getId());
+        final DashboardDoc dashboard = getComponents().getDashboard();
+        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getUuid(), dashboard.getName(), getComponentData().getId());
         searchModel.setDashboardUUID(dashboardUUID);
 
         // Read data source.
@@ -671,14 +671,14 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     false,
                     null);
 
-            final Dashboard dashboard = getComponents().getDashboard();
+            final DashboardDoc dashboard = getComponents().getDashboard();
             final DashboardUUID dashboardUUID = new DashboardUUID(
-                    dashboard.getId(),
+                    dashboard.getUuid(),
                     dashboard.getName(),
                     getComponentData().getId());
             final DashboardQueryKey dashboardQueryKey = DashboardQueryKey.create(
                     dashboardUUID.getUUID(),
-                    dashboard.getId(),
+                    dashboard.getUuid(),
                     dashboardUUID.getComponentId());
 
             if (dashboardQueryKey != null) {

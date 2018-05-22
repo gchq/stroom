@@ -1,0 +1,21 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "603f10b3-26ae-11e7-b9dc-0242ac110002",
+  "name" : "Benchmark-Cluster Test",
+  "version" : "3521482d-3617-440d-9414-d7ce13f641dc",
+  "description" : "Benchmark-Cluster Test",
+  "statisticType" : "VALUE",
+  "rollUpType" : "ALL",
+  "precision" : 60000,
+  "enabled" : true,
+  "config" : {
+    "statisticFields" : [ {
+      "fieldName" : "Feed"
+    }, {
+      "fieldName" : "Node"
+    }, {
+      "fieldName" : "Type"
+    } ],
+    "customRollUpMasks" : [ ]
+  }
+}

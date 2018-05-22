@@ -19,7 +19,7 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.DashboardStore;
 import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.NamedEntity;
@@ -30,25 +30,20 @@ import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.index.IndexService;
-import stroom.index.shared.FindIndexCriteria;
-import stroom.index.shared.Index;
+import stroom.index.IndexStore;
+import stroom.index.IndexVolumeService;
+import stroom.index.shared.IndexDoc;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.shared.FindPipelineEntityCriteria;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.PipelineStore;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.statistics.shared.StatisticStore;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.sql.entity.FindStatisticsEntityCriteria;
-import stroom.statistics.sql.entity.StatisticStoreEntityService;
-import stroom.statistics.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
-import stroom.statistics.stroomstats.entity.StroomStatsStoreEntityService;
-import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.statistics.sql.entity.StatisticStoreStore;
+import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.streamstore.StreamAttributeKeyService;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
@@ -67,7 +62,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -77,6 +71,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 /**
  * Script to create some base data for testing.
@@ -105,11 +100,13 @@ public final class SetupSampleDataBean {
     private final CommonTestControl commonTestControl;
     private final ImportExportSerializer importExportSerializer;
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
+    private final DashboardStore dashboardStore;
     private final VolumeService volumeService;
-    private final IndexService indexService;
-    private final StatisticStoreEntityService statisticsDataSourceService;
-    private final StroomStatsStoreEntityService stroomStatsStoreEntityService;
+    private final IndexStore indexStore;
+    private final IndexVolumeService indexVolumeService;
+    private final StatisticStoreStore statisticStoreStore;
+    private final StroomStatsStoreStore stroomStatsStoreStore;
 
     @Inject
     SetupSampleDataBean(final FeedService feedService,
@@ -118,22 +115,26 @@ public final class SetupSampleDataBean {
                         final CommonTestControl commonTestControl,
                         final ImportExportSerializer importExportSerializer,
                         final StreamProcessorFilterService streamProcessorFilterService,
-                        final PipelineService pipelineService,
+                        final PipelineStore pipelineStore,
+                        final DashboardStore dashboardStore,
                         final VolumeService volumeService,
-                        final IndexService indexService,
-                        final StatisticStoreEntityService statisticsDataSourceService,
-                        final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
+                        final IndexStore indexStore,
+                        final IndexVolumeService indexVolumeService,
+                        final StatisticStoreStore statisticStoreStore,
+                        final StroomStatsStoreStore stroomStatsStoreStore) {
         this.feedService = feedService;
         this.streamStore = streamStore;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.commonTestControl = commonTestControl;
         this.importExportSerializer = importExportSerializer;
         this.streamProcessorFilterService = streamProcessorFilterService;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
+        this.dashboardStore = dashboardStore;
         this.volumeService = volumeService;
-        this.indexService = indexService;
-        this.statisticsDataSourceService = statisticsDataSourceService;
-        this.stroomStatsStoreEntityService = stroomStatsStoreEntityService;
+        this.indexStore = indexStore;
+        this.indexVolumeService = indexVolumeService;
+        this.statisticStoreStore = statisticStoreStore;
+        this.stroomStatsStoreStore = stroomStatsStoreStore;
     }
 
     private void createStreamAttributes() {
@@ -155,7 +156,7 @@ public final class SetupSampleDataBean {
         }
     }
 
-    public void run(final boolean shutdown) throws IOException {
+    public void run(final boolean shutdown) {
         // Ensure admin user exists.
 //        LOGGER.info("Creating admin user");
 //        authenticationService.getUserRef(new AuthenticationToken("admin", null));
@@ -178,24 +179,22 @@ public final class SetupSampleDataBean {
 
         // Add volumes to all indexes.
         final BaseResultList<Volume> volumeList = volumeService.find(new FindVolumeCriteria());
-        final BaseResultList<Index> indexList = indexService.find(new FindIndexCriteria());
-        logEntities(indexList, "indexes");
+        final List<DocRef> indexList = indexStore.list();
+        logDocRefs(indexList, "indexes");
         final Set<Volume> volumeSet = new HashSet<>(volumeList);
 
-        for (final Index index : indexList) {
-            index.setVolumes(volumeSet);
-            indexService.save(index);
+        for (final DocRef indexRef : indexList) {
+            indexVolumeService.setVolumesForIndex(indexRef, volumeSet);
 
             // Find the pipeline for this index.
-            final BaseResultList<PipelineEntity> pipelines = pipelineService
-                    .find(new FindPipelineEntityCriteria(index.getName()));
+            final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> indexRef.getName().equals(docRef.getName())).collect(Collectors.toList());
 
             if (pipelines == null || pipelines.size() == 0) {
-                LOGGER.warn("No pipeline found for index [{}]", index.getName());
+                LOGGER.warn("No pipeline found for index [{}]", indexRef.getName());
             } else if (pipelines.size() > 1) {
-                LOGGER.warn("More than 1 pipeline found for index [{}]", index.getName());
+                LOGGER.warn("More than 1 pipeline found for index [{}]", indexRef.getName());
             } else {
-                final PipelineEntity pipeline = pipelines.getFirst();
+                final DocRef pipeline = pipelines.get(0);
 
                 // Create a processor for this index.
                 final QueryData criteria = new QueryData.Builder()
@@ -229,26 +228,22 @@ public final class SetupSampleDataBean {
 
         // code to check that the statisticsDataSource objects are stored
         // correctly
-        final BaseResultList<StatisticStoreEntity> statisticsDataSources = statisticsDataSourceService
-                .find(FindStatisticsEntityCriteria.instance());
-        logEntities(statisticsDataSources, "statisticStores");
+        final List<DocRef> statisticsDataSources = statisticStoreStore.list();
+        logDocRefs(statisticsDataSources, "statisticStores");
 
-        final BaseResultList<StroomStatsStoreEntity> stroomStatsStoreEntities = stroomStatsStoreEntityService
-                .find(FindStroomStatsStoreEntityCriteria.instance());
-        logEntities(stroomStatsStoreEntities, "stroomStatsStores");
+        final List<DocRef> stroomStatsStoreEntities = stroomStatsStoreStore.list();
+        logDocRefs(stroomStatsStoreEntities, "stroomStatsStores");
 
         // Create stream processors for all feeds.
         for (final Feed feed : feeds) {
             // Find the pipeline for this feed.
-            final BaseResultList<PipelineEntity> pipelines = pipelineService
-                    .find(new FindPipelineEntityCriteria(feed.getName()));
-
+            final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> feed.getName().equals(docRef.getName())).collect(Collectors.toList());
             if (pipelines == null || pipelines.size() == 0) {
                 LOGGER.warn("No pipeline found for feed '" + feed.getName() + "'");
             } else if (pipelines.size() > 1) {
                 LOGGER.warn("More than 1 pipeline found for feed '" + feed.getName() + "'");
             } else {
-                final PipelineEntity pipeline = pipelines.getFirst();
+                final DocRef pipeline = pipelines.get(0);
 
                 // Create a processor for this feed.
                 final QueryData criteria = new QueryData.Builder()
@@ -289,10 +284,6 @@ public final class SetupSampleDataBean {
         }
     }
 
-    private static void logEntities(BaseResultList<? extends NamedEntity> entities, String entityTypes) {
-        logEntities(entities.getValues(), entityTypes);
-    }
-
     private static void logEntities(List<? extends NamedEntity> entities, String entityTypes) {
         LOGGER.info("Listing loaded {}:", entityTypes);
         entities.stream()
@@ -301,7 +292,15 @@ public final class SetupSampleDataBean {
                 .forEach(name -> LOGGER.info("  {}", name));
     }
 
-    public void loadDirectory(final boolean shutdown, final Path importRootDir) throws IOException {
+    private static void logDocRefs(List<DocRef> entities, String entityTypes) {
+        LOGGER.info("Listing loaded {}:", entityTypes);
+        entities.stream()
+                .map(DocRef::getName)
+                .sorted()
+                .forEach(name -> LOGGER.info("  {}", name));
+    }
+
+    public void loadDirectory(final boolean shutdown, final Path importRootDir) {
         LOGGER.info("Loading sample data for directory: " + FileUtil.getCanonicalPath(importRootDir));
 
         final Path configDir = importRootDir.resolve("config");
@@ -324,10 +323,10 @@ public final class SetupSampleDataBean {
             LOGGER.info("Volume count = " + commonTestControl.countEntity(Volume.class));
             LOGGER.info("Feed count = " + commonTestControl.countEntity(Feed.class));
             LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
-            LOGGER.info("Dashboard count = " + commonTestControl.countEntity(Dashboard.class));
-            LOGGER.info("Pipeline count = " + commonTestControl.countEntity(PipelineEntity.class));
-            LOGGER.info("Index count = " + commonTestControl.countEntity(Index.class));
-            LOGGER.info("StatisticDataSource count = " + commonTestControl.countEntity(StatisticStore.class));
+            LOGGER.info("Dashboard count = " + dashboardStore.list().size());
+            LOGGER.info("Pipeline count = " + pipelineStore.list().size());
+            LOGGER.info("Index count = " + indexStore.list().size());
+            LOGGER.info("StatisticDataSource count = " + statisticStoreStore.list().size());
 
         } else {
             LOGGER.info("Directory {} doesn't exist so skipping", configDir);
@@ -505,7 +504,7 @@ public final class SetupSampleDataBean {
     // final FindPipelineCriteria findTranslationCriteria = new
     // FindPipelineCriteria();
     // findTranslationCriteria.setName(name);
-    // final BaseResultList<Pipeline> list = pipelineService
+    // final BaseResultList<Pipeline> list = pipelineStore
     // .find(findTranslationCriteria);
     // if (list != null && list.size() > 0) {
     // return list.getFirst();
@@ -517,7 +516,7 @@ public final class SetupSampleDataBean {
     // private XSLT findXSLT(final String name) {
     // final FindXSLTCriteria findXSLTCriteria = new FindXSLTCriteria();
     // findXSLTCriteria.setName(name);
-    // final BaseResultList<XSLT> list = xsltService.find(findXSLTCriteria);
+    // final BaseResultList<XSLT> list = xsltStore.find(findXSLTCriteria);
     // if (list != null && list.size() > 0) {
     // return list.getFirst();
     // }
@@ -532,7 +531,7 @@ public final class SetupSampleDataBean {
     // index.setFolder(folder);
     // index.setName(indexName);
     //
-    // index = indexService.save(index);
+    // index = indexStore.save(index);
     //
     // return index;
     // }

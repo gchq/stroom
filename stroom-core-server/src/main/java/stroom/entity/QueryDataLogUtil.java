@@ -32,7 +32,8 @@ import java.util.List;
 
 public class QueryDataLogUtil {
     public static void appendExpressionItem(final List<BaseAdvancedQueryItem> items,
-                                            final DictionaryStore dictionaryStore, final ExpressionItem item) {
+                                            final DictionaryStore dictionaryStore,
+                                            final ExpressionItem item) {
         if (item == null) {
             return;
         }
@@ -103,7 +104,8 @@ public class QueryDataLogUtil {
     }
 
     private static void appendOperator(final List<BaseAdvancedQueryItem> items,
-                                       final DictionaryStore dictionaryStore, final ExpressionOperator exp) {
+                                       final DictionaryStore dictionaryStore,
+                                       final ExpressionOperator exp) {
         BaseAdvancedQueryOperator operator;
         if (exp.getOp() == Op.NOT) {
             operator = new BaseAdvancedQueryOperator.Not();

@@ -10,6 +10,7 @@ import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.query.api.v2.DocRef;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.thread.BufferFactory;
 
@@ -42,7 +43,7 @@ public class ProxyRequestHandler implements RequestHandler {
                                final MetaMapFilterFactory metaMapFilterFactory,
                                final LogStream logStream) {
         this.streamHandlerFactory = streamHandlerFactory;
-        this.metaMapFilter = metaMapFilterFactory.create(proxyRequestConfig.getReceiptPolicyUuid());
+        this.metaMapFilter = metaMapFilterFactory.create(new DocRef("RuleSet", proxyRequestConfig.getReceiptPolicyUuid()));
         this.logStream = logStream;
     }
 

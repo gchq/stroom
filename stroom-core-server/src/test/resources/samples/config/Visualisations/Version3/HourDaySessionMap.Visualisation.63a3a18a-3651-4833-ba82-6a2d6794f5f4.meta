@@ -1,0 +1,13 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "63a3a18a-3651-4833-ba82-6a2d6794f5f4",
+  "name" : "HourDaySessionMap",
+  "version" : "7357cff2-a33b-4bfc-bae4-e21425496f82",
+  "description" : "Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4\nGit commit time: 2016-09-21 17:03:32 +0100",
+  "functionName" : "visualisations.HourDaySessionMap",
+  "scriptRef" : {
+    "type" : "Script",
+    "uuid" : "69305470-0ff8-4797-9f6e-baf52123547f",
+    "name" : "HourDaySessionMap"
+  }
+}

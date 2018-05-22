@@ -22,13 +22,15 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.query.api.v2.DocRef;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
-import stroom.visualisation.shared.Visualisation;
+import stroom.visualisation.shared.VisualisationDoc;
 
-public class VisualisationPlugin extends EntityPlugin<Visualisation> {
+public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
     private final Provider<VisualisationPresenter> editorProvider;
 
     @Inject
@@ -48,6 +50,11 @@ public class VisualisationPlugin extends EntityPlugin<Visualisation> {
 
     @Override
     public String getType() {
-        return Visualisation.ENTITY_TYPE;
+        return VisualisationDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final VisualisationDoc document) {
+        return DocRefUtil.create(document);
     }
 }

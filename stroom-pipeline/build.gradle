@@ -2,6 +2,7 @@ dependencies {
     //testCompile project(':stroom-core-server')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
+    compile project(':stroom-docstore-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')

@@ -34,7 +34,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.query.api.v2.DocRef;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.svg.client.SvgPresets;
@@ -45,7 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
-        implements HasDocumentRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers {
+        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers {
     private final StatisticsFieldEditPresenter statisticsFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -223,9 +223,9 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     }
 
     @Override
-    public void read(final DocRef docRef, final StatisticStoreEntity statisticsDataSource) {
+    public void read(final DocRef docRef, final StatisticStoreDoc statisticsDataSource) {
         if (statisticsDataSource != null) {
-            statisticsDataSourceData = statisticsDataSource.getStatisticDataSourceDataObject();
+            statisticsDataSourceData = statisticsDataSource.getConfig();
 
             if (customMaskListPresenter != null) {
                 customMaskListPresenter.read(docRef, statisticsDataSource);
@@ -235,8 +235,8 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     }
 
     @Override
-    public void write(final StatisticStoreEntity entity) {
-        entity.setStatisticDataSourceDataObject(statisticsDataSourceData);
+    public void write(final StatisticStoreDoc entity) {
+        entity.setConfig(statisticsDataSourceData);
     }
 
     @Override

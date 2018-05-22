@@ -22,7 +22,7 @@ import stroom.util.shared.SharedList;
 
 import java.util.Set;
 
-public class FetchScriptAction extends Action<SharedList<Script>> {
+public class FetchScriptAction extends Action<SharedList<ScriptDoc>> {
     private static final long serialVersionUID = -1773544031158236156L;
 
     private DocRef script;

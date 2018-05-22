@@ -21,7 +21,7 @@ import stroom.pipeline.factory.PipelineDataValidator;
 import stroom.pipeline.factory.PipelineStackLoader;
 import stroom.pipeline.shared.FetchPipelineDataAction;
 import stroom.pipeline.shared.PipelineDataMerger;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
@@ -36,17 +36,17 @@ import java.util.Map;
 
 @TaskHandlerBean(task = FetchPipelineDataAction.class)
 class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataAction, SharedList<PipelineData>> {
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final PipelineStackLoader pipelineStackLoader;
     private final PipelineDataValidator pipelineDataValidator;
     private final Security security;
 
     @Inject
-    FetchPipelineDataHandler(final PipelineService pipelineService,
+    FetchPipelineDataHandler(final PipelineStore pipelineStore,
                              final PipelineStackLoader pipelineStackLoader,
                              final PipelineDataValidator pipelineDataValidator,
                              final Security security) {
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.pipelineStackLoader = pipelineStackLoader;
         this.pipelineDataValidator = pipelineDataValidator;
         this.security = security;
@@ -55,15 +55,15 @@ class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataActi
     @Override
     public SharedList<PipelineData> exec(final FetchPipelineDataAction action) {
         return security.secureResult(() -> {
-            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(action.getPipeline());
 
             // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
             return security.useAsReadResult(() -> {
-                final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
+                final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
                 final SharedList<PipelineData> result = new SharedList<>(pipelines.size());
 
                 final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
-                for (final PipelineEntity pipe : pipelines) {
+                for (final PipelineDoc pipe : pipelines) {
                     final PipelineData pipelineData = pipe.getPipelineData();
 
                     // Validate the pipeline data and add element and property type

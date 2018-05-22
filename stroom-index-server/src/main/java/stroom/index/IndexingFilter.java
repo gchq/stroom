@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFieldsMap;
@@ -106,7 +106,7 @@ class IndexingFilter extends AbstractXMLFilter {
                 throw new LoggedException("Unable to load index");
             }
 
-            final Index index = indexConfig.getIndex();
+            final IndexDoc index = indexConfig.getIndex();
             indexFieldsMap = indexConfig.getIndexFieldsMap();
 
             // Create a key to create shards with.
@@ -244,7 +244,7 @@ class IndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(description = "The index to send records to.")
-    @PipelinePropertyDocRef(types = Index.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = IndexDoc.DOCUMENT_TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }

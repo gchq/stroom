@@ -24,10 +24,6 @@ import stroom.query.api.v2.DocRef;
 import java.util.List;
 
 public interface DictionaryStore extends DocumentStore<DictionaryDoc> {
-    DictionaryDoc read(String uuid);
-
-    DictionaryDoc update(DictionaryDoc doc);
-
     List<DocRef> findByName(String name);
 
     List<DocRef> list();

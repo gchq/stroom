@@ -21,7 +21,7 @@ import stroom.entity.shared.FindDocumentEntityCriteria;
 public class FindQueryCriteria extends FindDocumentEntityCriteria {
     public static final String FIELD_TIME = "Time";
     private static final long serialVersionUID = -4421720204507720754L;
-    private Long dashboardId;
+    private String dashboardUuid;
     private String queryId;
     private Boolean favourite;
 
@@ -33,12 +33,12 @@ public class FindQueryCriteria extends FindDocumentEntityCriteria {
         super(name);
     }
 
-    public Long getDashboardId() {
-        return dashboardId;
+    public String getDashboardUuid() {
+        return dashboardUuid;
     }
 
-    public void setDashboardId(final Long dashboardId) {
-        this.dashboardId = dashboardId;
+    public void setDashboardUuid(final String dashboardUuid) {
+        this.dashboardUuid = dashboardUuid;
     }
 
     public String getQueryId() {

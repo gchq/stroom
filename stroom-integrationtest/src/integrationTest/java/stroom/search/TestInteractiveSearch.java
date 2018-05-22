@@ -21,11 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.entity.shared.DocRefUtil;
-import stroom.index.IndexService;
-import stroom.index.shared.FindIndexCriteria;
-import stroom.index.shared.Index;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.index.IndexStore;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -54,7 +50,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     @Inject
     private CommonIndexingTest commonIndexingTest;
     @Inject
-    private IndexService indexService;
+    private IndexStore indexStore;
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject
@@ -295,9 +291,9 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     @Test
     public void dictionaryTest1() {
         final DocRef docRef = dictionaryStore.createDocument("users");
-        final DictionaryDoc dic = dictionaryStore.read(docRef.getUuid());
+        final DictionaryDoc dic = dictionaryStore.readDocument(docRef);
         dic.setData("user1\nuser2\nuser5");
-        dictionaryStore.update(dic);
+        dictionaryStore.writeDocument(dic);
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
         and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic));
@@ -313,14 +309,14 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     @Test
     public void dictionaryTest2() {
         final DocRef docRef1 = dictionaryStore.createDocument("users");
-        DictionaryDoc dic1 = dictionaryStore.read(docRef1.getUuid());
+        DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
         dic1.setData("user1\nuser2\nuser5");
-        dictionaryStore.update(dic1);
+        dictionaryStore.writeDocument(dic1);
 
         final DocRef docRef2 = dictionaryStore.createDocument("command");
-        DictionaryDoc dic2 = dictionaryStore.read(docRef2.getUuid());
+        DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
         dic2.setData("msg");
-        dictionaryStore.update(dic2);
+        dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
         and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
@@ -338,14 +334,14 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     @Test
     public void dictionaryTest3() {
         final DocRef docRef1 = dictionaryStore.createDocument("users");
-        DictionaryDoc dic1 = dictionaryStore.read(docRef1.getUuid());
+        DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
         dic1.setData("user1\nuser2\nuser5");
-        dictionaryStore.update(dic1);
+        dictionaryStore.writeDocument(dic1);
 
         final DocRef docRef2 = dictionaryStore.createDocument("command");
-        DictionaryDoc dic2 = dictionaryStore.read(docRef2.getUuid());
+        DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
         dic2.setData("msg foo bar");
-        dictionaryStore.update(dic2);
+        dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
         and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
@@ -422,7 +418,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
                 resultMapConsumer,
                 1,
                 1,
-                indexService);
+                indexStore);
     }
 
     private void testEvents(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
@@ -430,11 +426,10 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
         StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
-        final Index index = indexService.find(new FindIndexCriteria()).getFirst();
-        Assert.assertNotNull("Index is null", index);
-        final DocRef dataSourceRef = DocRefUtil.create(index);
+        final DocRef indexRef = indexStore.list().get(0);
+        Assert.assertNotNull("Index is null", indexRef);
 
-        final Query query = new Query(dataSourceRef, expressionIn.build());
+        final Query query = new Query(indexRef, expressionIn.build());
 
         final CountDownLatch complete = new CountDownLatch(1);
 
@@ -484,12 +479,12 @@ public class TestInteractiveSearch extends AbstractSearchTest {
                 .format(Format.Type.DATE_TIME)
                 .build();
 
-        final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultPipeline();
+        final DocRef resultPipeline = commonIndexingTest.getSearchResultPipeline();
         return new TableSettings(
                 null,
                 Arrays.asList(idField, timeField),
                 extractValues,
-                DocRefUtil.create(resultPipeline),
+                resultPipeline,
                 null,
                 null);
     }

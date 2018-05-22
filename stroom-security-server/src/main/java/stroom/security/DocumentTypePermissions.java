@@ -58,10 +58,7 @@ class DocumentTypePermissions {
             Collections.sort(permissionList);
 
             permissionList.addAll(Arrays.asList(STANDARD_PERMISSIONS));
-
-            String[] arr = new String[permissionList.size()];
-            arr = permissionList.toArray(arr);
-            folderPermissions = arr;
+            folderPermissions = permissionList.toArray(new String[0]);
         }
 
         return folderPermissions;

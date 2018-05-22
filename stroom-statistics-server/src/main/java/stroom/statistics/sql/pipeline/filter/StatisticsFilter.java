@@ -32,14 +32,14 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.query.api.v2.DocRef;
+import stroom.statistics.shared.StatisticStoreDoc;
+import stroom.statistics.shared.StatisticType;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.sql.SQLStatisticsEventValidator;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.StatisticTag;
 import stroom.statistics.sql.Statistics;
-import stroom.statistics.sql.entity.StatisticStoreEntityService;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.StatisticType;
-import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
@@ -74,13 +74,13 @@ public class StatisticsFilter extends AbstractXMLFilter {
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
-    private final StatisticStoreEntityService statisticsDataSourceService;
+    private final StatisticStoreStore statisticStoreStore;
     private final Statistics statistics;
     private final List<StatisticEvent> statisticEventList = new ArrayList<>(EVENT_BUFFER_SIZE);
     private final StringBuilder textBuffer = new StringBuilder();
     private final Map<String, String> emptyTagToValueMap = new HashMap<>();
     private DocRef statisticStoreRef;
-    private StatisticStoreEntity statisticStoreEntity;
+    private StatisticStoreDoc statisticStoreEntity;
     private Statistics statisticEventStore;
     /**
      * Events attributes
@@ -97,11 +97,11 @@ public class StatisticsFilter extends AbstractXMLFilter {
     public StatisticsFilter(final ErrorReceiverProxy errorReceiverProxy,
                             final LocationFactoryProxy locationFactory,
                             final Statistics statistics,
-                            final StatisticStoreEntityService statisticsDataSourceService) {
+                            final StatisticStoreStore statisticStoreStore) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.statistics = statistics;
-        this.statisticsDataSourceService = statisticsDataSourceService;
+        this.statisticStoreStore = statisticStoreStore;
     }
 
     @Override
@@ -112,7 +112,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
         }
 
         // Reload the data source as we might have new fields.
-        statisticStoreEntity = statisticsDataSourceService.loadByUuid(statisticStoreRef.getUuid());
+        statisticStoreEntity = statisticStoreStore.readDocument(statisticStoreRef);
 
         if (statisticStoreEntity == null) {
             log(Severity.FATAL_ERROR, "Unable to load Statistics data source ", null);
@@ -274,7 +274,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
                 try {
                     currentStatisticValue = Double.valueOf(textBuffer.toString());
                 } catch (final RuntimeException e) {
-                    throw new RuntimeException(String.format("Statistic vlaue [%s] cannot be converted to a double",
+                    throw new RuntimeException(String.format("Statistic value [%s] cannot be converted to a double",
                             textBuffer.toString()), e);
                 }
             } else if (COUNT.equals(localName)) {
@@ -351,7 +351,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(description = "The statistics data source to record statistics against.")
-    @PipelinePropertyDocRef(types = StatisticStoreEntity.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = StatisticStoreDoc.DOCUMENT_TYPE)
     public void setStatisticsDataSource(final DocRef statisticStoreRef) {
         this.statisticStoreRef = statisticStoreRef;
     }

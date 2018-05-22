@@ -30,10 +30,10 @@ import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 public class XMLSchemaSettingsPresenter
-        extends DocumentSettingsPresenter<XMLSchemaSettingsView, XMLSchema> {
+        extends DocumentSettingsPresenter<XMLSchemaSettingsView, XmlSchemaDoc> {
     @Inject
     public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view,
                                       final ClientSecurityContext securityContext) {
@@ -56,11 +56,11 @@ public class XMLSchemaSettingsPresenter
 
     @Override
     public String getType() {
-        return XMLSchema.ENTITY_TYPE;
+        return XmlSchemaDoc.DOCUMENT_TYPE;
     }
 
     @Override
-    public void onRead(final DocRef docRef, final XMLSchema xmlSchema) {
+    public void onRead(final DocRef docRef, final XmlSchemaDoc xmlSchema) {
         getView().getDescription().setText(xmlSchema.getDescription());
         getView().getNamespaceURI().setText(xmlSchema.getNamespaceURI());
         getView().getSystemId().setText(xmlSchema.getSystemId());
@@ -69,7 +69,7 @@ public class XMLSchemaSettingsPresenter
     }
 
     @Override
-    public void onWrite(final XMLSchema xmlSchema) {
+    public void onWrite(final XmlSchemaDoc xmlSchema) {
         xmlSchema.setDescription(getView().getDescription().getText().trim());
         xmlSchema.setNamespaceURI(getView().getNamespaceURI().getText().trim());
         xmlSchema.setSystemId(getView().getSystemId().getText());

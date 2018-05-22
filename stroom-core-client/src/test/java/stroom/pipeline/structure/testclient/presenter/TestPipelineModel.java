@@ -19,13 +19,14 @@ package stroom.pipeline.structure.testclient.presenter;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.StreamType;
 
 import java.util.ArrayList;
@@ -221,10 +222,8 @@ public class TestPipelineModel {
 
     @Test
     public void testInheritanceRefsSame() {
-        final PipelineEntity pipelineEntity = new PipelineEntity();
-        pipelineEntity.setId(1);
-        final Feed feed = new Feed();
-        feed.setId(1);
+        final DocRef pipeline = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1");
+        final DocRef feed = new DocRef(Feed.ENTITY_TYPE, "1");
 
         final List<PipelineData> baseStack = new ArrayList<>();
 
@@ -232,23 +231,21 @@ public class TestPipelineModel {
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addPipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.EVENTS.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.EVENTS.getName()));
         base.addLink("test1", "test2");
         baseStack.add(base);
 
         final PipelineData override = new PipelineData();
         override.addPipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.EVENTS.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.EVENTS.getName()));
 
         test(baseStack, override, 0, 0, 0, 0, 1, 0, 0, 0);
     }
 
     @Test
     public void testInheritanceRefsDiff() {
-        final PipelineEntity pipelineEntity = new PipelineEntity();
-        pipelineEntity.setId(1);
-        final Feed feed = new Feed();
-        feed.setId(1);
+        final DocRef pipeline = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1");
+        final DocRef feed = new DocRef(Feed.ENTITY_TYPE, "1");
 
         final List<PipelineData> baseStack = new ArrayList<>();
 
@@ -256,23 +253,21 @@ public class TestPipelineModel {
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addPipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.EVENTS.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.EVENTS.getName()));
         base.addLink("test1", "test2");
         baseStack.add(base);
 
         final PipelineData override = new PipelineData();
         override.addPipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.REFERENCE.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.REFERENCE.getName()));
 
         test(baseStack, override, 0, 0, 0, 0, 1, 0, 0, 0);
     }
 
     @Test
     public void testInheritanceRefsRemove() {
-        final PipelineEntity pipelineEntity = new PipelineEntity();
-        pipelineEntity.setId(1);
-        final Feed feed = new Feed();
-        feed.setId(1);
+        final DocRef pipeline = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1");
+        final DocRef feed = new DocRef(Feed.ENTITY_TYPE, "1");
 
         final List<PipelineData> baseStack = new ArrayList<>();
 
@@ -280,13 +275,13 @@ public class TestPipelineModel {
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addPipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.EVENTS.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.EVENTS.getName()));
         base.addLink("test1", "test2");
         baseStack.add(base);
 
         final PipelineData override = new PipelineData();
         override.removePipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.EVENTS.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.EVENTS.getName()));
 
         test(baseStack, override, 0, 0, 0, 0, 0, 1, 0, 0);
     }

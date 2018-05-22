@@ -1,5 +1,9 @@
 package stroom.docstore;
 
+import java.util.function.Supplier;
+
 public interface RWLockFactory {
-    RWLock lock(String uuid);
+    void lock(String uuid, Runnable runnable);
+
+    <T> T lockResult(String uuid, Supplier<T> supplier);
 }

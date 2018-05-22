@@ -18,9 +18,9 @@ package stroom.dashboard.shared;
 
 import stroom.entity.shared.Action;
 import stroom.query.api.v2.DocRef;
-import stroom.visualisation.shared.Visualisation;
+import stroom.visualisation.shared.VisualisationDoc;
 
-public class FetchVisualisationAction extends Action<Visualisation> {
+public class FetchVisualisationAction extends Action<VisualisationDoc> {
     private static final long serialVersionUID = -6668626615097471925L;
 
     private DocRef visualisation;

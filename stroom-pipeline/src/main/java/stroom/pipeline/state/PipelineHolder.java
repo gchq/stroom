@@ -16,18 +16,18 @@
 
 package stroom.pipeline.state;
 
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.guice.PipelineScoped;
+import stroom.query.api.v2.DocRef;
 
 @PipelineScoped
 public class PipelineHolder {
-    private PipelineEntity pipelineEntity;
+    private DocRef pipelineRef;
 
-    public PipelineEntity getPipeline() {
-        return pipelineEntity;
+    public DocRef getPipeline() {
+        return pipelineRef;
     }
 
-    public void setPipeline(final PipelineEntity pipelineEntity) {
-        this.pipelineEntity = pipelineEntity;
+    public void setPipeline(final DocRef pipelineRef) {
+        this.pipelineRef = pipelineRef;
     }
 }

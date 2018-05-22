@@ -6,6 +6,7 @@ import stroom.util.shared.Version;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -70,8 +71,8 @@ public abstract class AbstractContentDownloader {
                     output.write(buffer, 0, n);
                 }
             }
-        } catch (IOException e) {
-            throw new RuntimeException(String.format("Error downloading url %s to %s",
+        } catch (final IOException e) {
+            throw new UncheckedIOException(String.format("Error downloading url %s to %s",
                     fileUrl.toString(), FileUtil.getCanonicalPath(destFilename)), e);
         }
     }

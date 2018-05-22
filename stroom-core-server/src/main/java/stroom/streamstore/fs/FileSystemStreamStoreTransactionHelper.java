@@ -76,8 +76,8 @@ public class FileSystemStreamStoreTransactionHelper {
 //                                   final long statusMs) {
 //        final SQLBuilder sql = new SQLBuilder();
 //
-//        final boolean joinStreamProcessor = criteria.getPipelineIdSet() != null
-//                && criteria.getPipelineIdSet().isConstrained();
+//        final boolean joinStreamProcessor = criteria.getPipelineSet() != null
+//                && criteria.getPipelineSet().isConstrained();
 //
 //        if (stroomDatabaseInfo.isMysql()) {
 //            sql.append("UPDATE ");
@@ -149,7 +149,7 @@ public class FileSystemStreamStoreTransactionHelper {
 //
 //        // applySqlCriteriaStreamProcessor(criteria, "SP.", sql);
 //        if (joinStreamProcessor) {
-//            SQLUtil.appendSetQuery(sql, false, "SP." + PipelineEntity.FOREIGN_KEY, criteria.getPipelineIdSet());
+//            SQLUtil.appendSetQuery(sql, false, "SP." + PipelineEntity.FOREIGN_KEY, criteria.getPipelineSet());
 //        }
 ////        if (joinFolder) {
 ////            UserManagerQueryUtil.appendFolderCriteria(criteria.getFolderIdSet(), "F.ID", sql, false,

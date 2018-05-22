@@ -35,7 +35,7 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
 import stroom.dashboard.client.query.QueryInfoPresenter;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.LayoutConfig;
@@ -70,7 +70,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Dashboard>
+public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
         implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers {
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final ButtonView saveButton;
@@ -170,7 +170,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final Dashboard dashboard) {
+    protected void onRead(final DocRef docRef, final DashboardDoc dashboard) {
         if (!loaded) {
             loaded = true;
 
@@ -178,7 +178,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             components.clear();
             LayoutConfig layoutData = null;
 
-            final DashboardConfig dashboardData = dashboard.getDashboardData();
+            final DashboardConfig dashboardData = dashboard.getDashboardConfig();
             if (dashboardData != null) {
                 if (null == currentParams) {
                     currentParams = "";
@@ -279,7 +279,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    protected void onWrite(final Dashboard dashboard) {
+    protected void onWrite(final DashboardDoc dashboard) {
         String params = getView().getParams();
         if (params != null && params.trim().length() == 0) {
             params = null;
@@ -297,7 +297,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         dashboardData.setComponents(componentDataList);
         dashboardData.setLayout(layoutPresenter.getLayoutData());
         dashboardData.setTabVisibility(TabVisibility.SHOW_ALL);
-        dashboard.setDashboardData(dashboardData);
+        dashboard.setDashboardConfig(dashboardData);
     }
 
     @Override
@@ -325,7 +325,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public String getType() {
-        return Dashboard.ENTITY_TYPE;
+        return DashboardDoc.DOCUMENT_TYPE;
     }
 
     @Override

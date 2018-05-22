@@ -16,17 +16,21 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.util.Arrays;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "size", propOrder = {"width", "height"})
+@JsonPropertyOrder({"width", "height"})
+@XmlRootElement(name = "size")
+@XmlType(name = "Size", propOrder = {"width", "height"})
 public class Size implements SharedObject {
     private static final long serialVersionUID = 8201392610412513780L;
 

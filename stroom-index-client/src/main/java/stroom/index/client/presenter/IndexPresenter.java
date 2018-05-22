@@ -24,18 +24,18 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Index> {
+public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, IndexDoc> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData SHARDS = new TabDataImpl("Shards");
 
-    private final TabContentProvider<Index> tabContentProvider = new TabContentProvider<>();
+    private final TabContentProvider<IndexDoc> tabContentProvider = new TabContentProvider<>();
 
     @Inject
     public IndexPresenter(final EventBus eventBus, final LinkTabPanelView view,
@@ -65,7 +65,7 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
     }
 
     @Override
-    public void onRead(final DocRef docRef, final Index index) {
+    public void onRead(final DocRef docRef, final IndexDoc index) {
         super.onRead(docRef, index);
         tabContentProvider.read(docRef, index);
     }
@@ -77,12 +77,12 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
     }
 
     @Override
-    protected void onWrite(final Index index) {
+    protected void onWrite(final IndexDoc index) {
         tabContentProvider.write(index);
     }
 
     @Override
     public String getType() {
-        return Index.ENTITY_TYPE;
+        return IndexDoc.DOCUMENT_TYPE;
     }
 }

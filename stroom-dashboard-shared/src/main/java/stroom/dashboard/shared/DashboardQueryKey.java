@@ -17,19 +17,20 @@
 package stroom.dashboard.shared;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class DashboardQueryKey implements Serializable {
     private String uuid;
-    private long dashboardId;
+    private String dashboardUuid;
     private String queryId;
 
     public DashboardQueryKey() {
     }
 
-    public static DashboardQueryKey create(final String uuid, final long dashboardId, final String queryId) {
+    public static DashboardQueryKey create(final String uuid, final String dashboardUuid, final String queryId) {
         final DashboardQueryKey dashboardQueryKey = new DashboardQueryKey();
         dashboardQueryKey.uuid = uuid;
-        dashboardQueryKey.dashboardId = dashboardId;
+        dashboardQueryKey.dashboardUuid = dashboardUuid;
         dashboardQueryKey.queryId = queryId;
         return dashboardQueryKey;
     }
@@ -38,8 +39,8 @@ public class DashboardQueryKey implements Serializable {
         return uuid;
     }
 
-    public long getDashboardId() {
-        return dashboardId;
+    public String getDashboardUuid() {
+        return dashboardUuid;
     }
 
     public String getQueryId() {
@@ -50,27 +51,22 @@ public class DashboardQueryKey implements Serializable {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         final DashboardQueryKey that = (DashboardQueryKey) o;
-
-        if (dashboardId != that.dashboardId) return false;
-        if (uuid != null ? !uuid.equals(that.uuid) : that.uuid != null) return false;
-        return queryId != null ? queryId.equals(that.queryId) : that.queryId == null;
+        return Objects.equals(uuid, that.uuid) &&
+                Objects.equals(dashboardUuid, that.dashboardUuid) &&
+                Objects.equals(queryId, that.queryId);
     }
 
     @Override
     public int hashCode() {
-        int result = uuid != null ? uuid.hashCode() : 0;
-        result = 31 * result + (int) (dashboardId ^ (dashboardId >>> 32));
-        result = 31 * result + (queryId != null ? queryId.hashCode() : 0);
-        return result;
+        return Objects.hash(uuid, dashboardUuid, queryId);
     }
 
     @Override
     public String toString() {
         return "DashboardQueryKey{" +
                 "uuid='" + uuid + '\'' +
-                ", dashboardId=" + dashboardId +
+                ", dashboardUuid=" + dashboardUuid +
                 ", queryId='" + queryId + '\'' +
                 '}';
     }

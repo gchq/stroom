@@ -23,7 +23,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.datasource.api.v2.DataSource;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -37,7 +37,6 @@ import stroom.security.Security;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -51,15 +50,15 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class StroomIndexQueryResource implements HasHealthCheck {
     private final SearchResponseCreatorManager searchResponseCreatorManager;
-    private final IndexService indexService;
+    private final IndexStore indexStore;
     private final Security security;
 
     @Inject
     public StroomIndexQueryResource(final LuceneSearchResponseCreatorManager searchResponseCreatorManager,
-                                    final IndexService indexService,
+                                    final IndexStore indexStore,
                                     final Security security) {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
-        this.indexService = indexService;
+        this.indexStore = indexStore;
         this.security = security;
     }
 
@@ -73,7 +72,7 @@ public class StroomIndexQueryResource implements HasHealthCheck {
             response = DataSource.class)
     public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
         return security.useAsReadResult(() -> {
-            final Index index = indexService.loadByUuid(docRef.getUuid());
+            final IndexDoc index = indexStore.readDocument(docRef);
             return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index));
         });
     }

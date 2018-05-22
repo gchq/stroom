@@ -24,27 +24,28 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
-import stroom.index.shared.Index;
+import stroom.guice.PipelineScopeRunnable;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
+import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
-import stroom.guice.PipelineScopeRunnable;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -65,9 +66,9 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     @Inject
     private MockIndexShardWriterCache indexShardWriterCache;
     @Inject
-    private IndexService indexService;
+    private IndexStore indexStore;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private PipelineDataCache pipelineDataCache;
     @Inject
@@ -81,7 +82,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     public void testSimpleDocuments() {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
         indexFields.add(IndexField.createField("sid2", AnalyzerType.ALPHA_NUMERIC, false, true, true, false));
         indexFields.add(IndexField.create(IndexFieldType.NUMERIC_FIELD, "size", AnalyzerType.KEYWORD, false, false,
@@ -108,7 +109,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     public void testDuplicateFields() {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
         indexFields.add(IndexField.createDateField("eventTime"));
 
@@ -123,7 +124,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     public void testBlankDocuments() {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
 
         final List<Document> documents = doTest("TestIndexDocumentFilter/BlankDocuments.xml", indexFields);
@@ -132,7 +133,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     public void testInvalidContent1() {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
 
         final List<Document> documents = doTest("TestIndexDocumentFilter/InvalidContent1.xml", indexFields);
@@ -141,7 +142,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     public void testInvalidContent2() {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
 
         final List<Document> documents = doTest("TestIndexDocumentFilter/InvalidContent2.xml", indexFields);
@@ -150,7 +151,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     public void testComplexContent() {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("f1", AnalyzerType.ALPHA_NUMERIC, false, true, true, true));
         indexFields.add(IndexField.createField("f2", AnalyzerType.ALPHA_NUMERIC, false, false, true, false));
         indexFields.add(IndexField.createDateField("d1"));
@@ -172,13 +173,13 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     }
 
-    private List<Document> doTest(final String resourceName, final IndexFields indexFields) {
+    private List<Document> doTest(final String resourceName, final List<IndexField> indexFields) {
         return pipelineScopeRunnable.scopeResult(() -> {
             // Setup the index.
-            Index index = indexService.create("Test index");
-            index.setIndexFieldsObject(indexFields);
-            index = new IndexMarshaller().marshal(index);
-            index = indexService.save(index);
+            final DocRef indexRef = indexStore.createDocument("Test index");
+            final IndexDoc index = indexStore.readDocument(indexRef);
+            index.setIndexFields(indexFields);
+            indexStore.writeDocument(index);
 
             final Path tempDir = getCurrentTestDir();
 
@@ -191,15 +192,19 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
             // Create the pipeline.
             final String data = StroomPipelineTestFileUtil.getString(PIPELINE);
-            PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
-            pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
-            pipelineEntity = pipelineService.save(pipelineEntity);
+            final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
+            pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
             feedHolderProvider.get().setFeed(new Feed());
+
+//            // Setup the meta data holder.
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
 
             // Set the input.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(resourceName);

@@ -16,17 +16,15 @@
 
 package stroom.test;
 
-import org.junit.Assert;
 import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.BaseEntity;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.HqlBuilder;
+import stroom.entity.util.SqlBuilder;
 
 import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,7 +44,7 @@ public class DatabaseCommonTestControlTransactionHelper {
     /**
      * Clear a HIBERNATE context.
      */
-    public void clearContext() {
+    void clearContext() {
         entityManager.clearContext();
     }
 
@@ -63,67 +61,32 @@ public class DatabaseCommonTestControlTransactionHelper {
         return (int) entityManager.executeQueryLongResult(sql);
     }
 
-    /**
-     * Helper.
-     */
-    @SuppressWarnings({"unchecked"})
-    public void deleteClass(final Class<?> clazz) {
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT e FROM ");
-        sql.append(clazz.getName());
-        sql.append(" as e ");
-        final List<BaseEntity> results = entityManager.executeQueryResultList(sql);
-
-        boolean foundError = true;
-        int tryCount = 0;
-        final int maxTryCount = 3;
-
-        // Try to delete entities more than once if needed as we have self
-        // referential entities in some cases.
-        while (foundError && tryCount < maxTryCount) {
-            foundError = false;
-            tryCount++;
-
-            for (int i = results.size() - 1; i >= 0; i--) {
-                final BaseEntity baseEntity = results.get(i);
-                try {
-                    entityManager.deleteEntity(baseEntity);
-                    results.remove(i);
-                } catch (final RuntimeException e) {
-                    foundError = true;
-
-                    if (tryCount == maxTryCount) {
-                        throw e;
-                    }
-                }
-            }
-
-            entityManager.flush();
-        }
-
-        final int count = countEntity(clazz);
-        if (count > 0) {
-            Assert.fail("Entities not deleted for: " + clazz.getName());
-        }
-    }
+//    int countDocs(final String type) {
+//        final SqlBuilder sql = new SqlBuilder();
+//        sql.append("SELECT count(*) FROM doc WHERE type = ");
+//        sql.arg(type);
+//        sql.append(" AND ext = ");
+//        sql.arg("meta");
+//        return (int) entityManager.executeNativeQueryLongResult(sql);
+//    }
 
     public void shutdown() {
         entityManager.shutdown();
     }
 
-    public void truncateTable(final String tableName) {
-        truncateTables(Collections.singletonList(tableName));
-    }
+//    public void truncateTable(final String tableName) {
+//        truncateTables(Collections.singletonList(tableName));
+//    }
+//
+//    public void truncateTables(final List<String> tableNames) {
+//        List<String> truncateStatements = tableNames.stream()
+//                .map(tableName -> "TRUNCATE TABLE " + tableName)
+//                .collect(Collectors.toList());
+//
+//        executeStatementsWithNoConstraints(truncateStatements);
+//    }
 
-    public void truncateTables(final List<String> tableNames) {
-        List<String> truncateStatements = tableNames.stream()
-                .map(tableName -> "TRUNCATE TABLE " + tableName)
-                .collect(Collectors.toList());
-
-        executeStatementsWithNoConstraints(truncateStatements);
-    }
-
-    public void clearTables(final List<String> tableNames) {
+    void clearTables(final List<String> tableNames) {
         List<String> deleteStatements = tableNames.stream()
                 .map(tableName -> "DELETE FROM " + tableName)
                 .collect(Collectors.toList());
@@ -131,7 +94,7 @@ public class DatabaseCommonTestControlTransactionHelper {
         executeStatementsWithNoConstraints(deleteStatements);
     }
 
-    public void enableConstraints() {
+    void enableConstraints() {
         final String sql = "SET FOREIGN_KEY_CHECKS=1";
         try (final Connection connection = ConnectionUtil.getConnection()) {
             ConnectionUtil.executeStatement(connection, sql);

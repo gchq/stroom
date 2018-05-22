@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -26,20 +27,18 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "component", propOrder = {"type", "id", "name", "settings"})
+@JsonPropertyOrder({"type", "id", "name", "settings"})
 @XmlRootElement(name = "component")
+@XmlType(name = "ComponentConfig", propOrder = {"type", "id", "name", "settings"})
 public class ComponentConfig implements SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "type")
     private String type;
-
     @XmlElement(name = "id")
     private String id;
-
     @XmlElement(name = "name")
     private String name;
-
     @XmlElements({@XmlElement(name = "query", type = QueryComponentSettings.class),
             @XmlElement(name = "table", type = TableComponentSettings.class),
             @XmlElement(name = "text", type = TextComponentSettings.class),

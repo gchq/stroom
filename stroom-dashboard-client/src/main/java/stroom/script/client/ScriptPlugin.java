@@ -22,13 +22,15 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.query.api.v2.DocRef;
 import stroom.script.client.presenter.ScriptPresenter;
-import stroom.script.shared.Script;
+import stroom.script.shared.ScriptDoc;
 
-public class ScriptPlugin extends EntityPlugin<Script> {
+public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
     private final Provider<ScriptPresenter> editorProvider;
 
     @Inject
@@ -48,6 +50,11 @@ public class ScriptPlugin extends EntityPlugin<Script> {
 
     @Override
     public String getType() {
-        return Script.ENTITY_TYPE;
+        return ScriptDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final ScriptDoc document) {
+        return DocRefUtil.create(document);
     }
 }

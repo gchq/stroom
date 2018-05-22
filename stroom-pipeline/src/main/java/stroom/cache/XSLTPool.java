@@ -18,15 +18,15 @@ package stroom.cache;
 
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pool.Pool;
 import stroom.pool.PoolItem;
 
 import java.util.List;
 
-public interface XSLTPool extends Pool<XSLT, StoredXsltExecutable> {
+public interface XSLTPool extends Pool<XsltDoc, StoredXsltExecutable> {
     PoolItem<StoredXsltExecutable> borrowConfiguredTemplate(
-            XSLT k, ErrorReceiver errorReceiver, LocationFactory locationFactory,
+            XsltDoc k, ErrorReceiver errorReceiver, LocationFactory locationFactory,
             List<PipelineReference> pipelineReferences, boolean usePool);
 }

@@ -18,18 +18,18 @@ package stroom.pipeline.filter;
 
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
-import stroom.xmlschema.XMLSchemaCache;
-import stroom.xmlschema.XMLSchemaCache.SchemaSet;
+import stroom.xmlschema.XmlSchemaCache;
+import stroom.xmlschema.XmlSchemaCache.SchemaSet;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import java.util.List;
 
 public class LSResourceResolverImpl implements LSResourceResolver {
-    private final XMLSchemaCache xmlSchemaCache;
+    private final XmlSchemaCache xmlSchemaCache;
     private final FindXMLSchemaCriteria schemaConstraint;
 
-    public LSResourceResolverImpl(final XMLSchemaCache xmlSchemaCache,
+    public LSResourceResolverImpl(final XmlSchemaCache xmlSchemaCache,
                                   final FindXMLSchemaCriteria schemaConstraint) {
         this.xmlSchemaCache = xmlSchemaCache;
         this.schemaConstraint = schemaConstraint;
@@ -42,7 +42,7 @@ public class LSResourceResolverImpl implements LSResourceResolver {
                                    final String systemId,
                                    final String baseURI) {
         // Try and get a schema using the constraints of the calling schema filter.
-        XMLSchema xmlSchema = getConstrainedMatch(systemId, namespaceURI);
+        XmlSchemaDoc xmlSchema = getConstrainedMatch(systemId, namespaceURI);
 
         // If we couldn't find a schema then look at all available schemas.
         if (xmlSchema == null) {
@@ -59,13 +59,13 @@ public class LSResourceResolverImpl implements LSResourceResolver {
         return null;
     }
 
-    private XMLSchema getConstrainedMatch(final String systemId,
-                                          final String namespaceURI) {
+    private XmlSchemaDoc getConstrainedMatch(final String systemId,
+                                             final String namespaceURI) {
         final SchemaSet schemaSet = xmlSchemaCache.getSchemaSet(schemaConstraint);
         schemaSet.getBestMatch(systemId, namespaceURI);
 
         // Try and find a matching schema by system id. The constraints applied mean there should be only one match.
-        List<XMLSchema> matches = schemaSet.getSchemaBySystemId(systemId);
+        List<XmlSchemaDoc> matches = schemaSet.getSchemaBySystemId(systemId);
         if (matches != null) {
             if (matches.size() > 1) {
                 throw new RuntimeException("More than one schema found for system id '" + systemId + "'");

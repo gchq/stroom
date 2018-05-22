@@ -19,7 +19,6 @@ package stroom.stats;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
 import stroom.importexport.ImportExportSerializer;
@@ -28,10 +27,9 @@ import stroom.query.api.v2.DocRef;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.entity.StatisticsDataSourceProvider;
-import stroom.statistics.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
-import stroom.statistics.stroomstats.entity.StroomStatsStoreEntityService;
+import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.stats.shared.StatisticField;
-import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.stats.shared.StroomStatsStoreDoc;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -39,12 +37,13 @@ import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
+import java.util.List;
 
 public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
-    private StroomStatsStoreEntityService stroomStatsStoreEntityService;
+    private StroomStatsStoreStore stroomStatsStoreStore;
     @Inject
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
     @Inject
@@ -63,16 +62,16 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
      */
     @Test
     public void testStatisticsDataSource() {
-        final DocRef docRef = explorerService.create(StroomStatsStoreEntity.ENTITY_TYPE,"StatName1", null, null);
-        final StroomStatsStoreEntity entity = stroomStatsStoreEntityService.readDocument(docRef);
+        final DocRef docRef = explorerService.create(StroomStatsStoreDoc.DOCUMENT_TYPE, "StatName1", null, null);
+        final StroomStatsStoreDoc entity = stroomStatsStoreStore.readDocument(docRef);
         entity.setDescription("My Description");
         entity.setStatisticType(StatisticType.COUNT);
-        entity.setDataObject(new StroomStatsStoreEntityData());
-        entity.getDataObject().addStatisticField(new StatisticField("tag1"));
-        entity.getDataObject().addStatisticField(new StatisticField("tag2"));
-        stroomStatsStoreEntityService.save(entity);
+        entity.setConfig(new StroomStatsStoreEntityData());
+        entity.getConfig().addStatisticField(new StatisticField("tag1"));
+        entity.getConfig().addStatisticField(new StatisticField("tag2"));
+        stroomStatsStoreStore.writeDocument(entity);
 
-        Assert.assertEquals(1, stroomStatsStoreEntityService.find(FindStroomStatsStoreEntityCriteria.instance()).size());
+        Assert.assertEquals(1, stroomStatsStoreStore.list().size());
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
@@ -83,26 +82,25 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
         docRefs.add(docRef);
         importExportSerializer.write(testDataDir, docRefs, true, null);
 
-        Assert.assertEquals(3, FileUtil.count(testDataDir));
+        Assert.assertEquals(2, FileUtil.count(testDataDir));
 
         // now clear out the java entities and import from file
         clean(true);
 
-        Assert.assertEquals(0, stroomStatsStoreEntityService.find(FindStroomStatsStoreEntityCriteria.instance()).size());
+        Assert.assertEquals(0, stroomStatsStoreStore.list().size());
 
         importExportSerializer.read(testDataDir, null, ImportState.ImportMode.IGNORE_CONFIRMATION);
 
-        final BaseResultList<StroomStatsStoreEntity> dataSources = stroomStatsStoreEntityService
-                .find(FindStroomStatsStoreEntityCriteria.instance());
+        final List<DocRef> dataSources = stroomStatsStoreStore.list();
 
         Assert.assertEquals(1, dataSources.size());
 
-        final StroomStatsStoreEntity importedDataSource = dataSources.get(0);
+        final StroomStatsStoreDoc importedDataSource = stroomStatsStoreStore.readDocument(dataSources.get(0));
 
         Assert.assertEquals(entity.getName(), importedDataSource.getName());
         Assert.assertEquals(entity.getStatisticType(), importedDataSource.getStatisticType());
         Assert.assertEquals(entity.getDescription(), importedDataSource.getDescription());
 
-        Assert.assertEquals(entity.getDataObject(), importedDataSource.getDataObject());
+        Assert.assertEquals(entity.getConfig(), importedDataSource.getConfig());
     }
 }

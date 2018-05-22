@@ -1,0 +1,13 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "ce55cb67-22ef-4146-b866-f8ba955b9ba6",
+  "name" : "Doughnut",
+  "version" : "f9261764-248b-483f-af66-60be2f3dc0a7",
+  "description" : "Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4\nGit commit time: 2016-09-21 17:03:32 +0100",
+  "functionName" : "visualisations.Doughnut",
+  "scriptRef" : {
+    "type" : "Script",
+    "uuid" : "213eb661-579e-4c08-b7a5-1355d7b782f8",
+    "name" : "Doughnut"
+  }
+}

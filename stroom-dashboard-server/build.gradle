@@ -17,6 +17,8 @@
 dependencies {
     compile project(':stroom-dashboard-shared')
     compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-docstore-server')
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
@@ -37,9 +39,10 @@ dependencies {
     compile libs.slf4j_api
     compile libs.ws_rs_api
     compile libs.guice4
+    compile libs.flyway_core
+    compile libs.hibernate_jpa_api
 
     testCompile project(':stroom-test-common')
-    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 
     testCompile libs.hamcrest_core
     testCompile libs.junit

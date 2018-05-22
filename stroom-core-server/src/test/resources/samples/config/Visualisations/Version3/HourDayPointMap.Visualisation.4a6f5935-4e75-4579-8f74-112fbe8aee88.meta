@@ -1,0 +1,13 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "4a6f5935-4e75-4579-8f74-112fbe8aee88",
+  "name" : "HourDayPointMap",
+  "version" : "a8a7718b-eff1-4e9f-8f6f-d69bbc4b1d19",
+  "description" : "Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4\nGit commit time: 2016-09-21 17:03:32 +0100",
+  "functionName" : "visualisations.HourDayPointMap",
+  "scriptRef" : {
+    "type" : "Script",
+    "uuid" : "e733aa62-ede1-4530-bd05-5702de05f9fd",
+    "name" : "HourDayPointMap"
+  }
+}

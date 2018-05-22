@@ -32,14 +32,14 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.index.shared.Index;
-import stroom.index.shared.Index.PartitionBy;
+import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
 import stroom.query.api.v2.DocRef;
 
 public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPresenter.IndexSettingsView>
-        implements HasDocumentRead<Index>, HasWrite<Index>, HasDirtyHandlers, IndexSettingsUiHandlers {
+        implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers, IndexSettingsUiHandlers {
 
     private final IndexVolumeListPresenter indexVolumeListPresenter;
 
@@ -78,7 +78,7 @@ public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPrese
     }
 
     @Override
-    public void read(final DocRef docRef, final Index index) {
+    public void read(final DocRef docRef, final IndexDoc index) {
         if (index != null) {
             getView().getDescription().setText(index.getDescription());
             getView().setMaxDocsPerShard(index.getMaxDocsPerShard());
@@ -92,7 +92,7 @@ public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPrese
     }
 
     @Override
-    public void write(final Index index) {
+    public void write(final IndexDoc index) {
         if (index != null) {
             index.setDescription(getView().getDescription().getText().trim());
             index.setMaxDocsPerShard(getView().getMaxDocsPerShard());

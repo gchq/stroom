@@ -17,10 +17,12 @@
 package stroom.streamtask.shared;
 
 import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.query.api.v2.DocRef;
 
 public class FindStreamProcessorFilterCriteria extends BaseCriteria {
     private static final long serialVersionUID = 1L;
@@ -31,7 +33,7 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
     private Range<Integer> priorityRange = null;
     private Period lastPollPeriod = null;
     private EntityIdSet<StreamProcessor> streamProcessorIdSet = null;
-    private EntityIdSet<PipelineEntity> pipelineIdSet = null;
+    private CriteriaSet<DocRef> pipelineSet = null;
     private Boolean streamProcessorEnabled = null;
     private Boolean streamProcessorFilterEnabled = null;
     private String createUser;
@@ -40,8 +42,8 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FindStreamProcessorFilterCriteria(final PipelineEntity pipeline) {
-        obtainPipelineIdSet().add(pipeline);
+    public FindStreamProcessorFilterCriteria(final DocRef pipeline) {
+        obtainPipelineSet().add(pipeline);
     }
 
     public FindStreamProcessorFilterCriteria(final StreamProcessor streamProcessor) {
@@ -78,19 +80,19 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         return lastPollPeriod;
     }
 
-    public EntityIdSet<PipelineEntity> getPipelineIdSet() {
-        return pipelineIdSet;
+    public CriteriaSet<DocRef> getPipelineSet() {
+        return pipelineSet;
     }
 
-    public void setPipelineIdSet(EntityIdSet<PipelineEntity> pipelineIdSet) {
-        this.pipelineIdSet = pipelineIdSet;
+    public void setPipelineSet(final CriteriaSet<DocRef> pipelineSet) {
+        this.pipelineSet = pipelineSet;
     }
 
-    public EntityIdSet<PipelineEntity> obtainPipelineIdSet() {
-        if (pipelineIdSet == null) {
-            pipelineIdSet = new EntityIdSet<>();
+    public CriteriaSet<DocRef> obtainPipelineSet() {
+        if (pipelineSet == null) {
+            pipelineSet = new CriteriaSet<>();
         }
-        return pipelineIdSet;
+        return pipelineSet;
     }
 
     public EntityIdSet<StreamProcessor> getStreamProcessorIdSet() {

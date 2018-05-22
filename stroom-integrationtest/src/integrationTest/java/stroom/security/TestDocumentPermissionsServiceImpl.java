@@ -21,10 +21,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRefUtil;
-import stroom.index.IndexService;
-import stroom.index.shared.Index;
 import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
@@ -46,8 +42,6 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
     @Inject
     private UserService userService;
     @Inject
-    private IndexService indexService;
-    @Inject
     private DocumentPermissionService documentPermissionService;
     @Inject
     private UserGroupsCache userGroupsCache;
@@ -60,44 +54,43 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
         final UserRef userGroup2 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
         final UserRef userGroup3 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
 
-        final Index doc = commonTestScenarioCreator.createIndex(FileSystemTestUtil.getUniqueTestString());
+        final DocRef docRef = commonTestScenarioCreator.createIndex(FileSystemTestUtil.getUniqueTestString());
         final String[] permissions = DocumentPermissionNames.DOCUMENT_PERMISSIONS;
         final String c1 = permissions[0];
         final String p1 = permissions[1];
         final String p2 = permissions[2];
 
         final DocumentPermissions documentPermissions = documentPermissionService
-                .getPermissionsForDocument(DocRefUtil.create(doc));
+                .getPermissionsForDocument(docRef);
         Assert.assertArrayEquals(permissions, documentPermissions.getAllPermissions());
 
-        addPermissions(userGroup1, doc, c1, p1);
-        addPermissions(userGroup2, doc, c1, p2);
-        addPermissions(userGroup3, doc, c1);
+        addPermissions(userGroup1, docRef, c1, p1);
+        addPermissions(userGroup2, docRef, c1, p2);
+        addPermissions(userGroup3, docRef, c1);
 
-        checkDocumentPermissions(userGroup1, doc, c1, p1);
-        checkDocumentPermissions(userGroup2, doc, c1, p2);
-        checkDocumentPermissions(userGroup3, doc, c1);
+        checkDocumentPermissions(userGroup1, docRef, c1, p1);
+        checkDocumentPermissions(userGroup2, docRef, c1, p2);
+        checkDocumentPermissions(userGroup3, docRef, c1);
 
-        removePermissions(userGroup2, doc, p2);
-        checkDocumentPermissions(userGroup2, doc, c1);
+        removePermissions(userGroup2, docRef, p2);
+        checkDocumentPermissions(userGroup2, docRef, c1);
 
         // Check user permissions.
         final UserRef user = createUser(FileSystemTestUtil.getUniqueTestString());
         userService.addUserToGroup(user, userGroup1);
         userService.addUserToGroup(user, userGroup3);
-        checkUserPermissions(user, doc, c1, p1);
+        checkUserPermissions(user, docRef, c1, p1);
 
-        addPermissions(userGroup2, doc, c1, p2);
+        addPermissions(userGroup2, docRef, c1, p2);
 
         userService.addUserToGroup(user, userGroup2);
-        checkUserPermissions(user, doc, c1, p1, p2);
+        checkUserPermissions(user, docRef, c1, p1, p2);
 
-        removePermissions(userGroup2, doc, p2);
-        checkUserPermissions(user, doc, c1, p1);
+        removePermissions(userGroup2, docRef, p2);
+        checkUserPermissions(user, docRef, c1, p1);
     }
 
-    private void addPermissions(final UserRef user, final BaseEntity entity, final String... permissions) {
-        final DocRef docRef = DocRefUtil.create(entity);
+    private void addPermissions(final UserRef user, final DocRef docRef, final String... permissions) {
         for (final String permission : permissions) {
             try {
                 documentPermissionService.addPermission(user, docRef, permission);
@@ -107,15 +100,13 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
         }
     }
 
-    private void removePermissions(final UserRef user, final BaseEntity entity, final String... permissions) {
-        final DocRef docRef = DocRefUtil.create(entity);
+    private void removePermissions(final UserRef user, final DocRef docRef, final String... permissions) {
         for (final String permission : permissions) {
             documentPermissionService.removePermission(user, docRef, permission);
         }
     }
 
-    private void checkDocumentPermissions(final UserRef user, final BaseEntity entity, final String... permissions) {
-        final DocRef docRef = DocRefUtil.create(entity);
+    private void checkDocumentPermissions(final UserRef user, final DocRef docRef, final String... permissions) {
         final DocumentPermissions documentPermissions = documentPermissionService
                 .getPermissionsForDocument(docRef);
         final Set<String> permissionSet = documentPermissions.getPermissionsForUser(user);
@@ -124,12 +115,10 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
             Assert.assertTrue(permissionSet.contains(permission));
         }
 
-        checkUserPermissions(user, entity, permissions);
+        checkUserPermissions(user, docRef, permissions);
     }
 
-    private void checkUserPermissions(final UserRef user, final BaseEntity entity, final String... permissions) {
-        final DocRef docRef = DocRefUtil.create(entity);
-
+    private void checkUserPermissions(final UserRef user, final DocRef docRef, final String... permissions) {
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
         allUsers.addAll(userService.findGroupsForUser(user));
@@ -146,12 +135,10 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
             Assert.assertTrue(combinedPermissions.contains(permission));
         }
 
-        checkUserCachePermissions(user, entity, permissions);
+        checkUserCachePermissions(user, docRef, permissions);
     }
 
-    private void checkUserCachePermissions(final UserRef user, final BaseEntity entity, final String... permissions) {
-        final DocRef docRef = DocRefUtil.create(entity);
-
+    private void checkUserCachePermissions(final UserRef user, final DocRef docRef, final String... permissions) {
         userGroupsCache.clear();
         documentPermissionsCache.clear();
 

@@ -26,7 +26,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.unknown.UnknownComponentPresenter;
-import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
@@ -50,7 +50,7 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
     private final Provider<UnknownComponentPresenter> unknownComponentProvider;
 
     private final JavaScriptObject context;
-    private Dashboard dashboard;
+    private DashboardDoc dashboard;
 
     @Inject
     public Components(final EventBus eventBus, final ComponentRegistry componentRegistry,
@@ -194,11 +194,11 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
         return idMap.size();
     }
 
-    public Dashboard getDashboard() {
+    public DashboardDoc getDashboard() {
         return dashboard;
     }
 
-    public void setDashboard(final Dashboard dashboard) {
+    public void setDashboard(final DashboardDoc dashboard) {
         this.dashboard = dashboard;
     }
 

@@ -23,7 +23,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
@@ -31,7 +31,7 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import javax.inject.Provider;
 
-public class XSLTPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XSLT> {
+public class XSLTPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XsltDoc> {
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData XSLT_TAB = new TabDataImpl("XSLT");
 
@@ -71,7 +71,7 @@ public class XSLTPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XS
     }
 
     @Override
-    public void onRead(final DocRef docRef, final XSLT xslt) {
+    public void onRead(final DocRef docRef, final XsltDoc xslt) {
         super.onRead(docRef, xslt);
         settingsPresenter.read(docRef, xslt);
 
@@ -81,7 +81,7 @@ public class XSLTPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XS
     }
 
     @Override
-    protected void onWrite(final XSLT xslt) {
+    protected void onWrite(final XsltDoc xslt) {
         settingsPresenter.write(xslt);
 
         if (codePresenter != null) {
@@ -106,6 +106,6 @@ public class XSLTPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XS
 
     @Override
     public String getType() {
-        return XSLT.ENTITY_TYPE;
+        return XsltDoc.DOCUMENT_TYPE;
     }
 }

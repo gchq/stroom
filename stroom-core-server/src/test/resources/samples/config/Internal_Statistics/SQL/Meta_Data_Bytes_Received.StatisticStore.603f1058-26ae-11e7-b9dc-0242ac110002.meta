@@ -1,0 +1,17 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "603f1058-26ae-11e7-b9dc-0242ac110002",
+  "name" : "Meta Data-Bytes Received",
+  "version" : "5f42a894-8405-4810-8400-c20a981859ce",
+  "description" : "Meta Data-Bytes Received",
+  "statisticType" : "COUNT",
+  "rollUpType" : "ALL",
+  "precision" : 3600000,
+  "enabled" : true,
+  "config" : {
+    "statisticFields" : [ {
+      "fieldName" : "feed"
+    } ],
+    "customRollUpMasks" : [ ]
+  }
+}

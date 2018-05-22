@@ -19,30 +19,26 @@ package stroom.visualisation;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import stroom.dashboard.shared.Dashboard;
 import stroom.entity.FindService;
-import stroom.entity.StroomEntityManager;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.importexport.ImportExportHelper;
-import stroom.security.SecurityContext;
-import stroom.visualisation.shared.Visualisation;
+import stroom.visualisation.shared.VisualisationDoc;
 
 public class VisualisationModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(VisualisationService.class).to(VisualisationServiceImpl.class);
+        bind(VisualisationStore.class).to(VisualisationStoreImpl.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.visualisation.VisualisationServiceImpl.class);
+        explorerActionHandlerBinder.addBinding().to(stroom.visualisation.VisualisationStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.visualisation.VisualisationServiceImpl.class);
+        importExportActionHandlerBinder.addBinding().to(stroom.visualisation.VisualisationStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(Visualisation.ENTITY_TYPE).to(stroom.visualisation.VisualisationServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(VisualisationDoc.DOCUMENT_TYPE).to(stroom.visualisation.VisualisationStoreImpl.class);
 
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(stroom.visualisation.VisualisationServiceImpl.class);
+//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+//        findServiceBinder.addBinding().to(stroom.visualisation.VisualisationStoreImpl.class);
     }
 }

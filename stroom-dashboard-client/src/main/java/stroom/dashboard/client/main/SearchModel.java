@@ -141,7 +141,7 @@ public class SearchModel {
 
                 currentQueryKey = DashboardQueryKey.create(
                         dashboardUUID.getUUID(),
-                        dashboardUUID.getDashboardId(),
+                        dashboardUUID.getDashboardUuid(),
                         dashboardUUID.getComponentId());
 
                 currentSearch = new Search.Builder()
@@ -392,7 +392,7 @@ public class SearchModel {
         destroy();
         currentQueryKey = DashboardQueryKey.create(
                 dashboardUUID.getUUID(),
-                dashboardUUID.getDashboardId(),
+                dashboardUUID.getDashboardUuid(),
                 dashboardUUID.getComponentId());
     }
 

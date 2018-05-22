@@ -22,13 +22,14 @@ import event.logging.Object;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docstore.shared.Doc;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
 import stroom.entity.shared.NamedEntity;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 
@@ -71,13 +72,6 @@ class BasicEventInfoProvider implements EventInfoProvider {
                     description = feed.getDescription();
                 } catch (final RuntimeException e) {
                     LOGGER.error("Unable to get feed description!", e);
-                }
-            } else if (entity instanceof PipelineEntity) {
-                try {
-                    final PipelineEntity pipelineEntity = (PipelineEntity) entity;
-                    description = pipelineEntity.getDescription();
-                } catch (final RuntimeException e) {
-                    LOGGER.error("Unable to get pipeline description!", e);
                 }
             }
 
@@ -124,6 +118,29 @@ class BasicEventInfoProvider implements EventInfoProvider {
             }
 
             return object;
+
+        } else if (obj instanceof Doc) {
+            final Doc doc = (Doc) obj;
+
+            String description = null;
+
+            // Add name.
+            if (doc instanceof PipelineDoc) {
+                try {
+                    final PipelineDoc pipelineDoc = (PipelineDoc) doc;
+                    description = pipelineDoc.getDescription();
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Unable to get pipeline description!", e);
+                }
+            }
+
+            final Object object = new Object();
+            object.setType(doc.getType());
+            object.setId(doc.getUuid());
+            object.setName(doc.getName());
+            object.setDescription(description);
+
+            return object;
         }
 
         return null;
@@ -152,8 +169,7 @@ class BasicEventInfoProvider implements EventInfoProvider {
             String name = criteria.getClass().getSimpleName();
             final StringBuilder sb = new StringBuilder();
             final char[] chars = name.toCharArray();
-            for (int i = 0; i < chars.length; i++) {
-                final char c = chars[i];
+            for (final char c : chars) {
                 if (Character.isUpperCase(c)) {
                     sb.append(" ");
                 }

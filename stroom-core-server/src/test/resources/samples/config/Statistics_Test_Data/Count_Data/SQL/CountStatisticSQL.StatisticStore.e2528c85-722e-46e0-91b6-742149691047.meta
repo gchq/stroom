@@ -1,0 +1,21 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "e2528c85-722e-46e0-91b6-742149691047",
+  "name" : "CountStatisticSQL",
+  "version" : "8c1f7df6-d59b-4f3e-8cb3-ad4cdab14b47",
+  "description" : "This is my description",
+  "statisticType" : "COUNT",
+  "rollUpType" : "ALL",
+  "precision" : 60000,
+  "enabled" : true,
+  "config" : {
+    "statisticFields" : [ {
+      "fieldName" : "colour"
+    }, {
+      "fieldName" : "state"
+    }, {
+      "fieldName" : "user"
+    } ],
+    "customRollUpMasks" : [ ]
+  }
+}

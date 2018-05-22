@@ -37,12 +37,12 @@ import stroom.query.api.v2.DocRef;
 import stroom.statistics.shared.StatisticType;
 import stroom.stats.shared.EventStoreTimeIntervalEnum;
 import stroom.stats.shared.StatisticRollUpType;
-import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.stats.shared.StroomStatsStoreDoc;
 import stroom.widget.tickbox.client.view.TickBox;
 
 public class StroomStatsStoreSettingsPresenter
         extends MyPresenterWidget<StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView>
-        implements HasDocumentRead<StroomStatsStoreEntity>, HasWrite<StroomStatsStoreEntity>, HasDirtyHandlers,
+        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers,
         StroomStatsStoreSettingsUiHandlers {
 
     @Inject
@@ -69,18 +69,18 @@ public class StroomStatsStoreSettingsPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    public void read(final DocRef docRef, final StroomStatsStoreDoc stroomStatsStoreEntity) {
         if (stroomStatsStoreEntity != null) {
             getView().getDescription().setText(stroomStatsStoreEntity.getDescription());
             getView().setStatisticType(stroomStatsStoreEntity.getStatisticType());
             getView().getEnabled().setBooleanValue(stroomStatsStoreEntity.isEnabled());
-            getView().setPrecision(stroomStatsStoreEntity.getPrecisionAsInterval());
+            getView().setPrecision(stroomStatsStoreEntity.getPrecision());
             getView().setRollUpType(stroomStatsStoreEntity.getRollUpType());
         }
     }
 
     @Override
-    public void write(final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    public void write(final StroomStatsStoreDoc stroomStatsStoreEntity) {
         if (stroomStatsStoreEntity != null) {
             stroomStatsStoreEntity.setDescription(getView().getDescription().getText());
             stroomStatsStoreEntity.setStatisticType(getView().getStatisticType());

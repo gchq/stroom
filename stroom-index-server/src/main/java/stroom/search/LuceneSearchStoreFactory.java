@@ -20,9 +20,9 @@ package stroom.search;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
-import stroom.index.IndexService;
+import stroom.index.IndexStore;
 import stroom.index.LuceneVersionUtil;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.node.NodeCache;
 import stroom.node.shared.ClientProperties;
@@ -54,7 +54,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
-    private final IndexService indexService;
+    private final IndexStore indexStore;
     private final DictionaryStore dictionaryStore;
     private final StroomPropertyService stroomPropertyService;
     private final NodeCache nodeCache;
@@ -64,7 +64,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
     private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
 
     @Inject
-    public LuceneSearchStoreFactory(final IndexService indexService,
+    public LuceneSearchStoreFactory(final IndexStore indexStore,
                                     final DictionaryStore dictionaryStore,
                                     final StroomPropertyService stroomPropertyService,
                                     final NodeCache nodeCache,
@@ -72,7 +72,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                                     final SecurityContext securityContext,
                                     final Security security,
                                     final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory) {
-        this.indexService = indexService;
+        this.indexStore = indexStore;
         this.dictionaryStore = dictionaryStore;
         this.stroomPropertyService = stroomPropertyService;
         this.nodeCache = nodeCache;
@@ -90,7 +90,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         final Query query = searchRequest.getQuery();
 
         // Load the index.
-        final Index index = security.useAsReadResult(() -> indexService.loadByUuid(query.getDataSource().getUuid()));
+        final IndexDoc index = security.useAsReadResult(() -> indexStore.readDocument(query.getDataSource()));
 
         // Extract highlights.
         final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
@@ -172,12 +172,12 @@ public class LuceneSearchStoreFactory implements StoreFactory {
      * Compiles the query, extracts terms and then returns them for use in hit
      * highlighting.
      */
-    private Set<String> getHighlights(final Index index, final ExpressionOperator expression, final String timeZoneId, final long nowEpochMilli) {
+    private Set<String> getHighlights(final IndexDoc index, final ExpressionOperator expression, final String timeZoneId, final long nowEpochMilli) {
         Set<String> highlights = Collections.emptySet();
 
         try {
             // Create a map of index fields keyed by name.
-            final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
+            final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFields());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                     dictionaryStore, indexFieldsMap, maxBooleanClauseCount, timeZoneId, nowEpochMilli);

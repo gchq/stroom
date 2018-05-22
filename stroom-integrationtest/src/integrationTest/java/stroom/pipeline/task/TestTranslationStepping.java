@@ -18,7 +18,7 @@ package stroom.pipeline.task;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.task.TaskManager;

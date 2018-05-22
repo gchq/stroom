@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.ToStringBuilder;
@@ -23,11 +24,14 @@ import stroom.util.shared.ToStringBuilder;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "field", propOrder = {"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
+@JsonPropertyOrder({"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
+@XmlRootElement(name = "field")
+@XmlType(name = "Field", propOrder = {"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
 public class Field implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 

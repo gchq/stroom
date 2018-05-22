@@ -19,7 +19,7 @@ package stroom.script;
 
 import stroom.query.api.v2.DocRef;
 import stroom.script.shared.FetchScriptAction;
-import stroom.script.shared.Script;
+import stroom.script.shared.ScriptDoc;
 import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -32,23 +32,23 @@ import java.util.List;
 import java.util.Set;
 
 @TaskHandlerBean(task = FetchScriptAction.class)
-class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedList<Script>> {
-    private final ScriptService scriptService;
+class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedList<ScriptDoc>> {
+    private final ScriptStore scriptStore;
     private final Security security;
 
     @Inject
-    FetchScriptHandler(final ScriptService scriptService,
+    FetchScriptHandler(final ScriptStore scriptStore,
                        final Security security) {
-        this.scriptService = scriptService;
+        this.scriptStore = scriptStore;
         this.security = security;
     }
 
     @Override
-    public SharedList<Script> exec(final FetchScriptAction action) {
+    public SharedList<ScriptDoc> exec(final FetchScriptAction action) {
         return security.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
             return security.useAsReadResult(() -> {
-                final List<Script> scripts = new ArrayList<>();
+                final List<ScriptDoc> scripts = new ArrayList<>();
 
                 Set<DocRef> uiLoadedScripts = action.getLoadedScripts();
                 if (uiLoadedScripts == null) {
@@ -64,13 +64,13 @@ class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedLi
     }
 
     private void loadScripts(final DocRef docRef, final Set<DocRef> uiLoadedScripts, final Set<DocRef> loadedScripts,
-                             final List<Script> scripts) {
+                             final List<ScriptDoc> scripts) {
         // Prevent circular reference loading with this set.
         if (!loadedScripts.contains(docRef)) {
             loadedScripts.add(docRef);
 
-            // Load the script.
-            final Script loadedScript = scriptService.loadByUuid(docRef.getUuid());
+
+            final ScriptDoc loadedScript = scriptStore.readDocument(docRef);
             if (loadedScript != null) {
                 // Add required dependencies first.
                 if (loadedScript.getDependencies() != null) {

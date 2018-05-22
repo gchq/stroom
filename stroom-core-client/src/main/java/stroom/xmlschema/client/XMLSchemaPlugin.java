@@ -22,13 +22,15 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.query.api.v2.DocRef;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
-public class XMLSchemaPlugin extends EntityPlugin<XMLSchema> {
+public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
     private final Provider<XMLSchemaPresenter> editorProvider;
 
     @Inject
@@ -48,6 +50,11 @@ public class XMLSchemaPlugin extends EntityPlugin<XMLSchema> {
 
     @Override
     public String getType() {
-        return XMLSchema.ENTITY_TYPE;
+        return XmlSchemaDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final XmlSchemaDoc document) {
+        return DocRefUtil.create(document);
     }
 }

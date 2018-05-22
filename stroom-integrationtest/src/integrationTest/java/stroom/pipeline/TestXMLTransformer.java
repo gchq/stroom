@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.shared.DocRefUtil;
+import stroom.guice.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -26,17 +26,17 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
+import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.guice.PipelineScopeRunnable;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -76,11 +76,11 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     @Inject
     private Provider<RecordCount> recordCountProvider;
     @Inject
-    private XSLTService xsltService;
+    private XsltStore xsltStore;
     @Inject
-    private TextConverterService textConverterService;
+    private TextConverterStore textConverterStore;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private PipelineDataCache pipelineDataCache;
     @Inject
@@ -125,48 +125,54 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
 
     @Test
     public void testFragment() {
-        final PipelineEntity pipelineEntity = createFragmentPipeline();
-        test(pipelineEntity, INPUT_FRAGMENT, null);
+        final DocRef pipelineRef = createFragmentPipeline();
+        test(pipelineRef, INPUT_FRAGMENT, null);
     }
 
     private void testXMLTransformer(final String inputResource, final String encoding) {
-        final PipelineEntity pipelineEntity = createTransformerPipeline();
-        test(pipelineEntity, inputResource, encoding);
+        final DocRef pipelineRef = createTransformerPipeline();
+        test(pipelineRef, inputResource, encoding);
     }
 
-    private PipelineEntity createFragmentPipeline() {
+    private DocRef createFragmentPipeline() {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(FRAGMENT_WRAPPER);
-        TextConverter textConverter = textConverterService.create("Test Text Converter");
+        final DocRef docRef = textConverterStore.createDocument("Test Text Converter");
+        final TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
         textConverter.setConverterType(TextConverterType.XML_FRAGMENT);
         textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
-        textConverter = textConverterService.save(textConverter);
+        textConverterStore.writeDocument(textConverter);
 
         // Get the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(FRAGMENT_PIPELINE);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
-        pipelineEntity.getPipelineData().addProperty(
-                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
-        pipelineEntity.setParentPipeline(DocRefUtil.create(createTransformerPipeline()));
-        return pipelineService.save(pipelineEntity);
+        final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        pipelineDoc.getPipelineData().addProperty(
+                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
+        pipelineDoc.setParentPipeline(createTransformerPipeline());
+        pipelineStore.writeDocument(pipelineDoc);
+        return pipelineRef;
     }
 
-    private PipelineEntity createTransformerPipeline() {
+    private DocRef createTransformerPipeline() {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_PATH);
-        XSLT xslt = xsltService.create("Test XSLT");
-        xslt.setData(StreamUtil.streamToString(xsltInputStream));
-        xslt = xsltService.save(xslt);
+        final DocRef xsltRef = xsltStore.createDocument("Test XSLT");
+        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+        xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
+        xsltStore.writeDocument(xsltDoc);
 
         // Get the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(TRANSFORMER_PIPELINE);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
-        pipelineEntity.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
-        return pipelineService.save(pipelineEntity);
+        final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        pipelineDoc.getPipelineData()
+                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+        pipelineStore.writeDocument(pipelineDoc);
+        return pipelineRef;
     }
 
-    private void test(final PipelineEntity pipelineEntity, final String inputResource, final String encoding) {
+    private void test(final DocRef pipelineRef, final String inputResource, final String encoding) {
         pipelineScopeRunnable.scopeRunnable(() -> {
             try {
                 final Path tempDir = getCurrentTestDir();
@@ -185,7 +191,8 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
                 errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
 
                 // Create the parser.
-                final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                 final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
                 // Get the input stream.

@@ -2,6 +2,8 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
+    compile project(':stroom-docstore-server')
+    compile project(':stroom-docstore-shared')
     compile project(':stroom-pipeline')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
@@ -33,6 +35,11 @@ dependencies {
     compile libs.ws_rs_api
     compile libs.xml_apis
     compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
+    compile libs.guice4
+    compile libs.hibernate_jpa_api
+
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

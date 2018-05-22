@@ -23,7 +23,7 @@ import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.HqlBuilder;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
@@ -63,7 +63,7 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
 
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamProcessorCriteria criteria) {
-        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", criteria.getPipelineIdSet());
+        CriteriaLoggingUtil.appendCriteriaSet(items, "pipelineSet", criteria.getPipelineSet());
         super.appendCriteria(items, criteria);
     }
 
@@ -85,7 +85,7 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
         @Override
         protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
-            if (fetchSet != null && fetchSet.contains(PipelineEntity.ENTITY_TYPE)) {
+            if (fetchSet != null && fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
                 sql.append(" LEFT OUTER JOIN FETCH ");
                 sql.append(alias);
                 sql.append(".pipeline");
@@ -96,7 +96,7 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
         protected void appendBasicCriteria(final HqlBuilder sql, final String entityName,
                                            final FindStreamProcessorCriteria criteria) {
             super.appendBasicCriteria(sql, entityName, criteria);
-            sql.appendEntityIdSetQuery(entityName + ".pipeline", criteria.getPipelineIdSet());
+            sql.appendDocRefSetQuery(entityName + ".pipelineUuid", criteria.getPipelineSet());
         }
     }
 }

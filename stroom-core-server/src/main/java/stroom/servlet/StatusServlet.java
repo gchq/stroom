@@ -87,7 +87,7 @@ public class StatusServlet extends HttpServlet {
                 super.service(arg0, arg1);
             } catch (ServletException e) {
                 throw new RuntimeException(e.getMessage(), e);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         });

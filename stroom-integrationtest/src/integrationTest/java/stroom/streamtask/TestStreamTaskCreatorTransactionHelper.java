@@ -25,6 +25,8 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.feed.shared.Feed;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
@@ -79,7 +81,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
                 streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
 
         findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainPipelineIdSet().add(1L);
+        findStreamCriteria.obtainPipelineSet().add(new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234"));
         Assert.assertEquals(0,
                 streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
     }

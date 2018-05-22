@@ -21,7 +21,7 @@ import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -40,7 +40,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private FeedService feedService;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 

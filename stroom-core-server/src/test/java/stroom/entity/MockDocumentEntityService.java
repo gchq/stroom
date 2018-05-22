@@ -169,7 +169,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //    private void setFolder(final E entity, final String folderUUID) {
 //        DocRef folderRef = null;
 //        if (folderUUID != null) {
-//            folderRef = new DocRef(Folder.ENTITY_TYPE, folderUUID);
+//            folderRef = new DocRef(Folder.DOCUMENT_TYPE, folderUUID);
 //        }
 //
 //        setFolder(entity, folderRef);
@@ -362,7 +362,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     // START OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         if (importExportHelper == null) {
             throw new RuntimeException("Import not supported for this test");
         }
@@ -400,7 +400,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         return DocRefUtil.create(entity);
     }
 
-    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
         return null;
     }
 

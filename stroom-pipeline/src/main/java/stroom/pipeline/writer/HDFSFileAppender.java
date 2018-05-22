@@ -103,8 +103,8 @@ public class HDFSFileAppender extends AbstractAppender {
         final String user = runAsUser.orElseGet(() -> {
             try {
                 return UserGroupInformation.getCurrentUser().getUserName();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
             }
         });
 

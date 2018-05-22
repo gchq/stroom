@@ -23,7 +23,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
@@ -31,7 +31,7 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import javax.inject.Provider;
 
-public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, TextConverter> {
+public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, TextConverterDoc> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData CONVERSION = new TabDataImpl("Conversion");
 
@@ -76,7 +76,7 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    public void onRead(final DocRef docRef, final TextConverter textConverter) {
+    public void onRead(final DocRef docRef, final TextConverterDoc textConverter) {
         super.onRead(docRef, textConverter);
 
         settingsPresenter.read(docRef, textConverter);
@@ -87,7 +87,7 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    protected void onWrite(final TextConverter textConverter) {
+    protected void onWrite(final TextConverterDoc textConverter) {
         settingsPresenter.write(textConverter);
 
         if (codePresenter != null) {
@@ -112,6 +112,6 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
 
     @Override
     public String getType() {
-        return TextConverter.ENTITY_TYPE;
+        return TextConverterDoc.DOCUMENT_TYPE;
     }
 }

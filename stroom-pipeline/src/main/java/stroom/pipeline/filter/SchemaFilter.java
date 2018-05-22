@@ -34,10 +34,10 @@ import stroom.pool.PoolItem;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.xmlschema.XMLSchemaCache;
-import stroom.xmlschema.XMLSchemaCache.SchemaSet;
+import stroom.xmlschema.XmlSchemaCache;
+import stroom.xmlschema.XmlSchemaCache.SchemaSet;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
 import javax.xml.XMLConstants;
@@ -60,7 +60,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     private static final Pattern NS_REDUCTION_PATTERN = Pattern.compile("\"[^\"]*\":");
 
     private final SchemaPool schemaPool;
-    private final XMLSchemaCache xmlSchemaCache;
+    private final XmlSchemaCache xmlSchemaCache;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
@@ -84,7 +84,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
 
     @Inject
     public SchemaFilter(final SchemaPool schemaPool,
-                        final XMLSchemaCache xmlSchemaCache,
+                        final XmlSchemaCache xmlSchemaCache,
                         final ErrorReceiverProxy errorReceiverProxy,
                         final LocationFactoryProxy locationFactory,
                         final PipelineContext pipelineContext) {
@@ -415,7 +415,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
 
         // Make sure the namespace or location for the root schema can be found
         // within the set of valid schemas.
-        final XMLSchema bestMatch = schemaSet.getBestMatch(rootLocation, rootURI);
+        final XmlSchemaDoc bestMatch = schemaSet.getBestMatch(rootLocation, rootURI);
         if (bestMatch == null) {
             invalidSchemaLocation(rootLocation, validLocations, schemaConstraint);
             return false;
@@ -428,7 +428,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
         for (final Entry<String, String> entry : schemaLocations.entrySet()) {
             final String namespaceURI = entry.getKey();
             final String systemId = entry.getValue();
-            final XMLSchema res = allSchemas.getBestMatch(systemId, namespaceURI);
+            final XmlSchemaDoc res = allSchemas.getBestMatch(systemId, namespaceURI);
             if (res == null) {
                 invalidSchemaLocation(systemId, allSchemas.getLocations(), null);
                 return false;

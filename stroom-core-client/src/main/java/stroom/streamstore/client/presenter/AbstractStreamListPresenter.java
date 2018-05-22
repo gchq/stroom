@@ -39,7 +39,7 @@ import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Volume;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
@@ -310,20 +310,20 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         StreamTooltipPresenterUtil.addRowDateString(html, "Created", row.getStream().getCreateMs());
         StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getStream().getEffectiveMs());
 
-        //if (securityContext.hasAppPermission(StreamType.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        //if (securityContext.hasAppPermission(StreamType.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         StreamTooltipPresenterUtil.addRowNameString(html, "Stream Type", row.getStream().getStreamType());
         //}
-        //if (securityContext.hasAppPermission(Feed.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        //if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         StreamTooltipPresenterUtil.addRowNameString(html, "Feed", row.getStream().getFeed());
         //}
 
-        //if (securityContext.hasAppPermission(StreamProcessor.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        //if (securityContext.hasAppPermission(StreamProcessor.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         if (row.getStream().getStreamProcessor() != null) {
-            TooltipUtil.addRowData(html, "Stream Processor Id", row.getStream().getStreamProcessor().getId());
-            if (row.getStream().getStreamProcessor().getPipeline() != null) {
-                //if (securityContext.hasAppPermission(PipelineEntity.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-                StreamTooltipPresenterUtil.addRowNameString(html, "Stream Processor Pipeline",
-                        row.getStream().getStreamProcessor().getPipeline());
+            TooltipUtil.addRowData(html, "Stream Processor Uuid", row.getStream().getStreamProcessor().getId());
+            if (row.getStream().getStreamProcessor().getPipelineUuid() != null) {
+                //if (securityContext.hasAppPermission(PipelineEntity.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
+                TooltipUtil.addRowData(html, "Stream Processor Pipeline",
+                        row.getStream().getStreamProcessor().getPipelineName());
                 //}
             }
         }
@@ -347,7 +347,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             html.append(e.getMessage());
         }
 
-        // if (securityContext.hasAppPermission(Volume.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        // if (securityContext.hasAppPermission(Volume.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         if (row.getFileNameList() != null) {
             TooltipUtil.addBreak(html);
             TooltipUtil.addHeading(html, "Files");
@@ -385,7 +385,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 //    }
 
     void addFeedColumn() {
-        // if (securityContext.hasAppPermission(Feed.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        // if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
@@ -396,7 +396,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     }
 
     void addStreamTypeColumn() {
-        // if (securityContext.hasAppPermission(StreamType.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        // if (securityContext.hasAppPermission(StreamType.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
@@ -407,13 +407,13 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     }
 
     void addPipelineColumn() {
-        // if (securityContext.hasAppPermission(PipelineEntity.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        // if (securityContext.hasAppPermission(PipelineEntity.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
                 if (row.getStream().getStreamProcessor() != null) {
-                    if (row.getStream().getStreamProcessor().getPipeline() != null) {
-                        return row.getStream().getStreamProcessor().getPipeline().getDisplayValue();
+                    if (row.getStream().getStreamProcessor().getPipelineName() != null) {
+                        return row.getStream().getStreamProcessor().getPipelineName();
                     } else {
                         return "Not visible";
                     }
@@ -464,21 +464,21 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     }
 
     private void populateFetchSet(final Set<String> fetchSet, final boolean forInfo) {
-        // if (securityContext.hasAppPermission(StreamType.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        // if (securityContext.hasAppPermission(StreamType.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         fetchSet.add(StreamType.ENTITY_TYPE);
         // }
-        // if (securityContext.hasAppPermission(Feed.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        // if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         fetchSet.add(Feed.ENTITY_TYPE);
         // }
-        // if (securityContext.hasAppPermission(StreamProcessor.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        // if (securityContext.hasAppPermission(StreamProcessor.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         fetchSet.add(StreamProcessor.ENTITY_TYPE);
         // }
-        // if (securityContext.hasAppPermission(PipelineEntity.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-        fetchSet.add(PipelineEntity.ENTITY_TYPE);
+        // if (securityContext.hasAppPermission(PipelineEntity.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
+        fetchSet.add(PipelineDoc.DOCUMENT_TYPE);
         // }
 
         // For info ? load up the files
-        // if (securityContext.hasAppPermission(Volume.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        // if (securityContext.hasAppPermission(Volume.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         fetchSet.add(Volume.ENTITY_TYPE);
         //  }
 

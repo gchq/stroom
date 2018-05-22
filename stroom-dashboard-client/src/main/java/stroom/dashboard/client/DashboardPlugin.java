@@ -22,13 +22,15 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dashboard.client.main.DashboardPresenter;
-import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.query.api.v2.DocRef;
 
-public class DashboardPlugin extends EntityPlugin<Dashboard> {
+public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     private final Provider<DashboardPresenter> editorProvider;
 
     @Inject
@@ -48,6 +50,11 @@ public class DashboardPlugin extends EntityPlugin<Dashboard> {
 
     @Override
     public String getType() {
-        return Dashboard.ENTITY_TYPE;
+        return DashboardDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final DashboardDoc document) {
+        return DocRefUtil.create(document);
     }
 }

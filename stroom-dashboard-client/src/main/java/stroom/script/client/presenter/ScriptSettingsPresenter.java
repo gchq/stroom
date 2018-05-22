@@ -28,11 +28,11 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.query.api.v2.DocRef;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
-import stroom.script.shared.Script;
+import stroom.script.shared.ScriptDoc;
 import stroom.security.client.ClientSecurityContext;
 
 public class ScriptSettingsPresenter
-        extends DocumentSettingsPresenter<ScriptSettingsView, Script> {
+        extends DocumentSettingsPresenter<ScriptSettingsView, ScriptDoc> {
     private final ScriptDependencyListPresenter scriptDependencyListPresenter;
 
     @Inject
@@ -56,7 +56,7 @@ public class ScriptSettingsPresenter
 
     @Override
     public String getType() {
-        return Script.ENTITY_TYPE;
+        return ScriptDoc.DOCUMENT_TYPE;
     }
 
     @Override
@@ -66,14 +66,14 @@ public class ScriptSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final Script script) {
+    protected void onRead(final DocRef docRef, final ScriptDoc script) {
         getView().getDescription().setText(script.getDescription());
 
         scriptDependencyListPresenter.read(docRef, script);
     }
 
     @Override
-    protected void onWrite(final Script script) {
+    protected void onWrite(final ScriptDoc script) {
         script.setDescription(getView().getDescription().getText().trim());
 
         scriptDependencyListPresenter.write(script);

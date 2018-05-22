@@ -95,7 +95,7 @@ public class HqlBuilder extends AbstractSqlBuilder {
     @Override
     void appendDocRefSet(final String fieldOrEntity, final CriteriaSet<DocRef> set) {
         append(fieldOrEntity);
-        append(".uuid IN (");
+        append(" IN (");
 
         boolean added = false;
         for (final DocRef item : set) {

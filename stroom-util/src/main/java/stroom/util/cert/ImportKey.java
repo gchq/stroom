@@ -123,7 +123,7 @@ public final class ImportKey {
                 certs[0] = cert;
             } else {
                 System.out.println("Certificate chain length: " + c.size());
-                certs = c.toArray(certs);
+                certs = c.toArray(new Certificate[0]);
             }
 
             ks.setKeyEntry(alias, ff, keyPass.toCharArray(), certs);

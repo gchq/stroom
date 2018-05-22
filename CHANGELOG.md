@@ -6,9 +6,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Moved Index entities over to the new multi part document store.
+
+* Moved Pipeline entities over to the new multi part document store.
+
+* Moved both Statistic Store entity types over to the new multi part document store.
+
+* Moved XSLT entities over to the new multi part document store.
+
+* Moved Visualisation entities over to the new multi part document store.
+
+* Moved Script entities over to the new multi part document store.
+
+* Moved Dashboard entities over to the new multi part document store.
+
+* Moved XmlSchema entities over to the new multi part document store.
+
+* Moved TextConverter entities over to the new multi part document store.
+
+* Modified the storage of dictionaries to use the new multi part document store.
+
+* Changed the document store to hold multiple entries for a document so that various parts of a document can be written separately, e.g. the meta data about a dictionary and the dictionary text are now written as separate DB entries. Entries are combined during the serialisation/deserialisation process.
+
+* Changed the import export API to use byte arrays to hold values rather than strings. *POSSIBLE BREAKING CHANGE*
 Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
-Uplift stroom-expression to v1.4.1
+* Uplift stroom-expression to v1.4.1
 
 * Issue **#766** : Fix NullPointerExceptions when downloading table results to Excel format.
 

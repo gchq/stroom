@@ -16,8 +16,8 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.entity.shared.DocRefUtil;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 import stroom.util.shared.SharedObject;
 
@@ -30,7 +30,7 @@ public class SourcePipeline implements SharedObject {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SourcePipeline(final PipelineEntity pipeline) {
+    public SourcePipeline(final PipelineDoc pipeline) {
         this.pipeline = DocRefUtil.create(pipeline);
     }
 

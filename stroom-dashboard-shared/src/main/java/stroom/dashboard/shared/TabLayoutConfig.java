@@ -16,20 +16,30 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "tabLayout", propOrder = {"tabs", "selected"})
+@JsonPropertyOrder({"preferredSize", "tabs", "selected"})
+@XmlRootElement(name = "tabLayout")
+@XmlType(name = "TabLayoutConfig", propOrder = {"preferredSize", "tabs", "selected"})
 public class TabLayoutConfig extends LayoutConfig {
     private static final long serialVersionUID = -2105048053435792675L;
 
+    /**
+     * The preferred size of this layout in width, height.
+     */
+    @XmlElement(name = "preferredSize")
+    private Size preferredSize = new Size();
     @XmlElementWrapper(name = "tabs")
     @XmlElements({@XmlElement(name = "tab", type = TabConfig.class)})
     private List<TabConfig> tabs;
@@ -46,6 +56,16 @@ public class TabLayoutConfig extends LayoutConfig {
                 add(tab);
             }
         }
+    }
+
+    @Override
+    public Size getPreferredSize() {
+        return preferredSize;
+    }
+
+    @Override
+    public void setPreferredSize(final Size preferredSize) {
+        this.preferredSize = preferredSize;
     }
 
     public TabConfig get(final int index) {

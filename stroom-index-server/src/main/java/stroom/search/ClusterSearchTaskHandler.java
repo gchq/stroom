@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.DictionaryStore;
-import stroom.index.IndexService;
-import stroom.index.shared.Index;
+import stroom.index.IndexStore;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.errorhandler.ErrorReceiver;
@@ -94,7 +94,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
-    private final IndexService indexService;
+    private final IndexStore indexStore;
     private final DictionaryStore dictionaryStore;
     private final TaskContext taskContext;
     private final CoprocessorFactory coprocessorFactory;
@@ -118,7 +118,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private LinkedBlockingQueue<Optional<Val[]>> storedData;
 
     @Inject
-    ClusterSearchTaskHandler(final IndexService indexService,
+    ClusterSearchTaskHandler(final IndexStore indexStore,
                              final DictionaryStore dictionaryStore,
                              final TaskContext taskContext,
                              final CoprocessorFactory coprocessorFactory,
@@ -133,7 +133,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                              final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                              final ExecutorProvider executorProvider) {
-        this.indexService = indexService;
+        this.indexStore = indexStore;
         this.dictionaryStore = dictionaryStore;
         this.taskContext = taskContext;
         this.coprocessorFactory = coprocessorFactory;
@@ -165,7 +165,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     final long frequency = task.getResultSendFrequency();
 
                     // Reload the index.
-                    final Index index = indexService.loadByUuid(query.getDataSource().getUuid());
+                    final IndexDoc index = indexStore.readDocument(query.getDataSource());
 
                     // Make sure we have a search index.
                     if (index == null) {
@@ -197,7 +197,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     filterStreams = true;
 
                     // Create a map of index fields keyed by name.
-                    final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
+                    final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFields());
 
                     // Compile all of the result component options to optimise pattern matching etc.
                     if (task.getCoprocessorMap() != null) {

@@ -19,7 +19,7 @@ package stroom.pipeline.shared.data;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.DocRef;
 
 import java.util.Collections;
@@ -75,14 +75,6 @@ public class PipelineDataUtil {
                                                     final DocRef feed,
                                                     final String streamType) {
         return new PipelineReference(element, name, pipeline, feed, streamType);
-    }
-
-    public static PipelineReference createReference(final String element,
-                                                    final String name,
-                                                    final PipelineEntity pipeline,
-                                                    final Feed feed,
-                                                    final String streamType) {
-        return new PipelineReference(element, name, DocRefUtil.create(pipeline), DocRefUtil.create(feed), streamType);
     }
 
     public static PipelineLink createLink(final String from, final String to) {

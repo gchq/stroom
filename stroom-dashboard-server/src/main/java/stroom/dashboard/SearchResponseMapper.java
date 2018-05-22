@@ -142,9 +142,7 @@ public class SearchResponseMapper {
                             group = entry.getKey();
                         }
 
-                        String[] row = new String[entry.getValue().size()];
-                        row = entry.getValue().toArray(row);
-                        types[group] = row;
+                        types[group] = entry.getValue().toArray(new String[0]);
                     }
 
                     final int valueCount = fields.size() - valueOffset;

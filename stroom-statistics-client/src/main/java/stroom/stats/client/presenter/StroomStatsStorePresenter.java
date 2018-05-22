@@ -26,17 +26,17 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
-import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.stats.shared.StroomStatsStoreDoc;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabPanelView, StroomStatsStoreEntity> {
+public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabPanelView, StroomStatsStoreDoc> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData CUSTOM_ROLLUPS = new TabDataImpl("Custom Roll-ups");
 
-    private final TabContentProvider<StroomStatsStoreEntity> tabContentProvider = new TabContentProvider<>();
+    private final TabContentProvider<StroomStatsStoreDoc> tabContentProvider = new TabContentProvider<>();
 
     @Inject
     public StroomStatsStorePresenter(final EventBus eventBus, final LinkTabPanelView view,
@@ -69,11 +69,11 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     }
 
     @Override
-    public void onRead(final DocRef docRef, final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    public void onRead(final DocRef docRef, final StroomStatsStoreDoc stroomStatsStoreEntity) {
         super.onRead(docRef, stroomStatsStoreEntity);
         if (stroomStatsStoreEntity != null) {
-            if (stroomStatsStoreEntity.getDataObject() == null) {
-                stroomStatsStoreEntity.setDataObject(new StroomStatsStoreEntityData());
+            if (stroomStatsStoreEntity.getConfig() == null) {
+                stroomStatsStoreEntity.setConfig(new StroomStatsStoreEntityData());
             }
         }
 
@@ -86,12 +86,12 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     }
 
     @Override
-    protected void onWrite(final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    protected void onWrite(final StroomStatsStoreDoc stroomStatsStoreEntity) {
         tabContentProvider.write(stroomStatsStoreEntity);
     }
 
     @Override
     public String getType() {
-        return StroomStatsStoreEntity.ENTITY_TYPE;
+        return StroomStatsStoreDoc.DOCUMENT_TYPE;
     }
 }

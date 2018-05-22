@@ -16,19 +16,30 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "splitLayout", propOrder = {"dimension", "children"})
+@JsonPropertyOrder({"preferredSize", "dimension", "children"})
+@XmlRootElement(name = "splitLayout")
+@XmlType(name = "SplitLayoutConfig", propOrder = {"preferredSize", "dimension", "children"})
 public class SplitLayoutConfig extends LayoutConfig {
     private static final long serialVersionUID = 8201392610412513780L;
+
+    /**
+     * The preferred size of this layout in width, height.
+     */
+    @XmlElement(name = "preferredSize")
+    private Size preferredSize = new Size();
     @XmlElement(name = "dimension")
     private int dimension;
     @XmlElementWrapper(name = "children")
@@ -47,6 +58,16 @@ public class SplitLayoutConfig extends LayoutConfig {
                 add(child);
             }
         }
+    }
+
+    @Override
+    public Size getPreferredSize() {
+        return preferredSize;
+    }
+
+    @Override
+    public void setPreferredSize(final Size preferredSize) {
+        this.preferredSize = preferredSize;
     }
 
     public int getDimension() {

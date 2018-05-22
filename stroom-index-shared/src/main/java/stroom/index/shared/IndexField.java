@@ -16,6 +16,7 @@
 
 package stroom.index.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.HasDisplayValue;
 
@@ -64,6 +65,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
      * in the XML
      */
     @XmlTransient
+    @JsonIgnore
     private List<Condition> supportedConditions;
 
     public IndexField() {
@@ -195,6 +197,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         this.termPositions = termPositions;
     }
 
+    @JsonIgnore
     public List<Condition> getSupportedConditions() {
         if (supportedConditions == null) {
             return getDefaultConditions();
@@ -203,6 +206,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         }
     }
 
+    @JsonIgnore
     public void setSupportedConditions(final List<Condition> supportedConditions) {
         if (supportedConditions == null) {
             this.supportedConditions = null;
@@ -212,6 +216,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     }
 
     @Override
+    @JsonIgnore
     public String getDisplayValue() {
         return fieldName;
     }
@@ -288,8 +293,13 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     }
 
     public enum AnalyzerType implements HasDisplayValue {
-        KEYWORD("Keyword"), ALPHA("Alpha"), NUMERIC("Numeric"), ALPHA_NUMERIC("Alpha numeric"), WHITESPACE(
-                "Whitespace"), STOP("Stop words"), STANDARD("Standard");
+        KEYWORD("Keyword"),
+        ALPHA("Alpha"),
+        NUMERIC("Numeric"),
+        ALPHA_NUMERIC("Alpha numeric"),
+        WHITESPACE("Whitespace"),
+        STOP("Stop words"),
+        STANDARD("Standard");
 
         private final String displayValue;
 

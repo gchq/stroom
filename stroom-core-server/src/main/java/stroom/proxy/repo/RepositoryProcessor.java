@@ -163,7 +163,7 @@ public final class RepositoryProcessor {
         }
 
         // Wait for all processes to complete.
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     private FeedPathMap createFeedPathMap(final StroomZipRepository stroomZipRepository) {
@@ -179,7 +179,7 @@ public final class RepositoryProcessor {
         }
 
         // Wait for all of the feed name extraction tasks to complete.
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
         LOGGER.debug("Found Feeds {}", map.keySet());
 

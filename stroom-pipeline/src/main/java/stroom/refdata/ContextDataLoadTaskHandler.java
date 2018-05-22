@@ -22,19 +22,23 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.EncodingSelection;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Severity;
@@ -51,8 +55,11 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     private final PipelineFactory pipelineFactory;
     private final MapStoreHolder mapStoreHolder;
     private final FeedHolder feedHolder;
+    private final MetaDataHolder metaDataHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
+    private final StreamProcessorService streamProcessorService;
+    private final StreamHolder streamHolder;
     private final PipelineDataCache pipelineDataCache;
     private final Security security;
 
@@ -62,15 +69,21 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     ContextDataLoadTaskHandler(final PipelineFactory pipelineFactory,
                                final MapStoreHolder mapStoreHolder,
                                final FeedHolder feedHolder,
+                               final MetaDataHolder metaDataHolder,
                                final ErrorReceiverProxy errorReceiverProxy,
-                               @Named("cachedPipelineService") final PipelineService pipelineService,
+                               @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+                               final StreamProcessorService streamProcessorService,
+                               final StreamHolder streamHolder,
                                final PipelineDataCache pipelineDataCache,
                                final Security security) {
         this.pipelineFactory = pipelineFactory;
         this.mapStoreHolder = mapStoreHolder;
         this.feedHolder = feedHolder;
+        this.metaDataHolder = metaDataHolder;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
+        this.streamProcessorService = streamProcessorService;
+        this.streamHolder = streamHolder;
         this.pipelineDataCache = pipelineDataCache;
         this.security = security;
     }
@@ -108,11 +121,14 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                     }
 
                     // Create the parser.
-                    final PipelineEntity pipelineEntity = pipelineService.loadByUuid(task.getContextPipeline().getUuid());
-                    final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(task.getContextPipeline());
+                    final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                     final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
                     feedHolder.setFeed(feed);
+
+                    // Setup the meta data holder.
+                    metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
 
                     // Get the appropriate encoding for the stream type.
                     final String encoding = EncodingSelection.select(feed, StreamType.CONTEXT);

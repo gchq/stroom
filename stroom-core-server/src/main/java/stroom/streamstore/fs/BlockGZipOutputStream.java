@@ -232,8 +232,8 @@ public class BlockGZipOutputStream extends OutputStream implements SeekableOutpu
         } finally {
             try {
                 streamCloser.close();
-            } catch (IOException e) {
-                throw e;
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
             } finally {
                 super.close();
             }

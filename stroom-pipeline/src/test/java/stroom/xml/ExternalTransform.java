@@ -17,7 +17,7 @@
 package stroom.xml;
 
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class ExternalTransform {
     private Feed eventFeed;
-    private List<PipelineEntity> otherTranslationList;
+    private List<PipelineDoc> otherTranslationList;
     private List<DataProcess> dataProcessList;
     private String basePath;
 
@@ -56,11 +56,11 @@ public class ExternalTransform {
         this.dataProcessList = dataProcessList;
     }
 
-    public List<PipelineEntity> getOtherTranslationList() {
+    public List<PipelineDoc> getOtherTranslationList() {
         return otherTranslationList;
     }
 
-    public void setOtherTranslationList(final List<PipelineEntity> otherTranslationList) {
+    public void setOtherTranslationList(final List<PipelineDoc> otherTranslationList) {
         this.otherTranslationList = otherTranslationList;
     }
 

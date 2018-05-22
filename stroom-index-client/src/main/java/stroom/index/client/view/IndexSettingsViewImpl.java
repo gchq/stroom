@@ -27,7 +27,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.client.presenter.IndexSettingsUiHandlers;
-import stroom.index.shared.Index.PartitionBy;
+import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
 import stroom.widget.layout.client.view.ResizeSimplePanel;

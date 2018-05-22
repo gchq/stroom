@@ -25,6 +25,7 @@ import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -136,9 +137,9 @@ public class ContentPackImport {
             //make sure the directory exists
             Files.createDirectories(destDir);
             Files.move(contentPack, destPath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException(String.format("Error moving file from %s to %s",
-                    FileUtil.getCanonicalPath(contentPack), FileUtil.getCanonicalPath(destPath)));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(String.format("Error moving file from %s to %s",
+                    FileUtil.getCanonicalPath(contentPack), FileUtil.getCanonicalPath(destPath)), e);
         }
     }
 

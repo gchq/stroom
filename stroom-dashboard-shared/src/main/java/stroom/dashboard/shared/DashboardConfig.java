@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.SharedObject;
 
@@ -29,10 +30,12 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "dashboard", propOrder = {"parameters", "components", "layout", "tabVisibility"})
+@JsonPropertyOrder({"parameters", "components", "layout", "tabVisibility"})
 @XmlRootElement(name = "dashboard")
+@XmlType(name = "DashboardConfig", propOrder = {"parameters", "components", "layout", "tabVisibility"})
 public class DashboardConfig implements SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;
+
     @XmlElement(name = "parameters")
     private String parameters;
     @XmlElementWrapper(name = "components")

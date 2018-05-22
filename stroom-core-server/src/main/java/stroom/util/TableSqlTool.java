@@ -25,9 +25,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
@@ -37,7 +35,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.date.DateUtil;
-import stroom.xmlschema.shared.XMLSchema;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,12 +42,24 @@ import java.util.Collections;
 import java.util.List;
 
 public class TableSqlTool {
-    public static final List<String> TABLE_CREATE_ORDER = Collections.unmodifiableList(Arrays.asList(
-            Rack.TABLE_NAME, Node.TABLE_NAME, StreamType.TABLE_NAME, ClusterLock.TABLE_NAME, PipelineEntity.TABLE_NAME,
-            XSLT.TABLE_NAME, TextConverter.TABLE_NAME, Feed.TABLE_NAME, Volume.TABLE_NAME, VolumeState.TABLE_NAME,
-            GlobalProperty.TABLE_NAME, XMLSchema.TABLE_NAME, Job.TABLE_NAME, JobNode.TABLE_NAME,
-            StreamProcessor.TABLE_NAME, StreamProcessorFilter.TABLE_NAME, StreamType.TABLE_NAME, Stream.TABLE_NAME,
-            StreamAttributeKey.TABLE_NAME, StreamAttributeValue.TABLE_NAME, StreamVolume.TABLE_NAME,
+    private static final List<String> TABLE_CREATE_ORDER = Collections.unmodifiableList(Arrays.asList(
+            Rack.TABLE_NAME,
+            Node.TABLE_NAME,
+            StreamType.TABLE_NAME,
+            ClusterLock.TABLE_NAME,
+            Feed.TABLE_NAME,
+            Volume.TABLE_NAME,
+            VolumeState.TABLE_NAME,
+            GlobalProperty.TABLE_NAME,
+            Job.TABLE_NAME,
+            JobNode.TABLE_NAME,
+            StreamProcessor.TABLE_NAME,
+            StreamProcessorFilter.TABLE_NAME,
+            StreamType.TABLE_NAME,
+            Stream.TABLE_NAME,
+            StreamAttributeKey.TABLE_NAME,
+            StreamAttributeValue.TABLE_NAME,
+            StreamVolume.TABLE_NAME,
             StreamTask.TABLE_NAME));
 
     public static void main(final String[] args) {

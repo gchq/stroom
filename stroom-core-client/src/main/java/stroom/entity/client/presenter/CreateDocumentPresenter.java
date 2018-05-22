@@ -74,7 +74,7 @@ public class CreateDocumentPresenter
 //            ExplorerNode folder = null;
 //            for (final ExplorerNode parent : event.getCurrentParents()) {
 //                if (folder == null && parent != null && parent instanceof EntityData
-//                        && Folder.ENTITY_TYPE.equals(parent.getType())) {
+//                        && Folder.DOCUMENT_TYPE.equals(parent.getType())) {
 //                    folder = parent;
 //                }
 //            }

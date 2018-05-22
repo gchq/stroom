@@ -39,6 +39,7 @@ import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -81,8 +82,8 @@ public class TestContentPackImport {
                     if (Files.isRegularFile(file)) {
                         Files.deleteIfExists(file);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(String.format("Error deleting files from {}",
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(String.format("Error deleting files from {}",
                             contentPackDir.toAbsolutePath().toString()), e);
                 }
             });

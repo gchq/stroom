@@ -36,7 +36,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.shared.FetchDocRefsAction;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -75,7 +75,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     private final ClientDispatchAsync dispatcher;
 
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
-    private PipelineEntity pipelineEntity;
+    private PipelineDoc pipelineDoc;
     private PipelineModel pipelineModel;
     private List<PipelineProperty> defaultProperties;
 
@@ -289,8 +289,8 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
         getView().addEndColumn(new EndColumn<>());
     }
 
-    public void setPipeline(final PipelineEntity pipelineEntity) {
-        this.pipelineEntity = pipelineEntity;
+    public void setPipeline(final PipelineDoc pipelineDoc) {
+        this.pipelineDoc = pipelineDoc;
     }
 
     public void setPipelineModel(final PipelineModel pipelineModel) {
@@ -343,7 +343,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
             final PipelineProperty editing = new PipelineProperty();
             editing.copyFrom(localProperty);
-            editing.setSource(new SourcePipeline(pipelineEntity));
+            editing.setSource(new SourcePipeline(pipelineDoc));
             editing.setValue(localProperty.getValue());
 
             final Source source = getSource(editing);
