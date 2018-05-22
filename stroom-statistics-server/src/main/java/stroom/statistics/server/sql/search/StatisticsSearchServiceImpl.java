@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import io.reactivex.Flowable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
@@ -20,9 +21,10 @@ import stroom.statistics.server.sql.SQLStatisticNames;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
+import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.task.TaskMonitor;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,6 +46,7 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") //called by DI
 @Component
+@Scope(value = StroomScope.PROTOTYPE)
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
@@ -62,7 +65,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
@@ -76,10 +79,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @Inject
     StatisticsSearchServiceImpl(@Named("statisticsDataSource") final DataSource statisticsDataSource,
                                 final StroomPropertyService propertyService,
-                                final TaskMonitor taskMonitor) {
+                                final TaskContext taskContext) {
         this.statisticsDataSource = statisticsDataSource;
         this.propertyService = propertyService;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -385,7 +388,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
                                         //advance the resultSet, if it is a row emit it, else finish the flow
                                         // TODO prob needs to change in 6.1
-                                        if (Thread.currentThread().isInterrupted() || taskMonitor.isTerminated()) {
+                                        if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
                                         } else {
