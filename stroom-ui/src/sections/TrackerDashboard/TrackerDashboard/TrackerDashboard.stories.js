@@ -21,7 +21,7 @@ import TrackerDashboard from './TrackerDashboard';
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
-import { trackers } from '../trackerTestData.test';
+import { trackers, generateGenericTracker } from '../trackerTestData.test';
 
 import { actionCreators } from '../redux';
 
@@ -51,6 +51,25 @@ storiesOf('TrackerDashboard', module)
   .addDecorator(StoryRouter())
   .add(
     'No trackers',
+    withNotes("This is what the dashboard looks like when it doesn't have any trackers")(() => (
+      <div style={containerStyle}>
+        <TrackerDashboard />
+      </div>
+    )),
+  );
+
+const lotsOfTrackers = [];
+[...Array(10).keys()].forEach((i) => {
+  lotsOfTrackers[i] = generateGenericTracker(i);
+});
+
+storiesOf('TrackerDashboard', module)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackers(lotsOfTrackers, 100));
+  }))
+  .addDecorator(StoryRouter())
+  .add(
+    'Lots of trackers',
     withNotes("This is what the dashboard looks like when it doesn't have any trackers")(() => (
       <div style={containerStyle}>
         <TrackerDashboard />
