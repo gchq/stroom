@@ -62,7 +62,7 @@ public class SqlStatisticsStore implements Store {
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
     private final TaskContext taskContext;
     private final String searchKey;
-    private final Disposable searchDisposable;
+    private final CompositeDisposable compositeDisposable;
 
     SqlStatisticsStore(final SearchRequest searchRequest,
                        final StatisticStoreEntity statisticStoreEntity,
@@ -99,7 +99,7 @@ public class SqlStatisticsStore implements Store {
         final Flowable<Val[]> searchResultsFlowable = statisticsSearchService.search(
                 statisticStoreEntity, criteria, fieldIndexMap);
 
-        this.searchDisposable = startAsyncSearch(searchResultsFlowable, coprocessorMap, executor);
+        this.compositeDisposable = startAsyncSearch(searchResultsFlowable, coprocessorMap, executor);
 
         LOGGER.debug("Async search task started for key {}", searchKey);
     }
@@ -110,7 +110,7 @@ public class SqlStatisticsStore implements Store {
         LOGGER.debug("destroy called");
         //terminate the search
         // TODO this may need to change in 6.1
-        searchDisposable.dispose();
+        compositeDisposable.clear();
     }
 
     @Override
@@ -178,7 +178,7 @@ public class SqlStatisticsStore implements Store {
         return paramMap;
     }
 
-    private Disposable startAsyncSearch(final Flowable<Val[]> searchResultsFlowable,
+    private CompositeDisposable startAsyncSearch(final Flowable<Val[]> searchResultsFlowable,
                                         final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap,
                                         final Executor executor) {
 
