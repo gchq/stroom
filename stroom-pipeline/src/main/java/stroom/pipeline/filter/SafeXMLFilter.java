@@ -20,10 +20,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import org.xml.sax.helpers.XMLFilterImpl;
 import stroom.util.CharBuffer;
+public class SafeXMLFilter extends AbstractXMLFilter {
 
-public class SafeXMLFilter extends XMLFilterImpl {
     private SafeBuffer safeBuffer = new SafeBuffer(500);
     private SafeAttributes safeAttributes = new SafeAttributes(safeBuffer);
 
@@ -92,7 +91,7 @@ public class SafeXMLFilter extends XMLFilterImpl {
 
         private final OutputBuffer outputBuffer;
 
-        public SafeBuffer(final int initialSize) {
+        SafeBuffer(final int initialSize) {
             super(initialSize);
             outputBuffer = new OutputBuffer(initialSize);
         }
@@ -127,8 +126,8 @@ public class SafeXMLFilter extends XMLFilterImpl {
          * the process.
          */
         private void move(final char[] buffer, final int start, final int end) {
-            char c = 0;
-            int codePoint = 0;
+            char c;
+            int codePoint;
 
             outputBuffer.clear();
             for (int i = start, j = 0; i < end; i++) {
@@ -159,8 +158,8 @@ public class SafeXMLFilter extends XMLFilterImpl {
         }
 
         private boolean inValues(final int codePoint, final int[] codePoints) {
-            for (int i = 0; i < codePoints.length; i++) {
-                if (codePoint == codePoints[i]) {
+            for (final int codePoint1 : codePoints) {
+                if (codePoint == codePoint1) {
                     return true;
                 }
             }
@@ -201,7 +200,7 @@ public class SafeXMLFilter extends XMLFilterImpl {
     private static class OutputBuffer extends CharBuffer {
         private static final long serialVersionUID = 5324120855707144530L;
 
-        public OutputBuffer(final int initialSize) {
+        OutputBuffer(final int initialSize) {
             super(initialSize);
         }
 
@@ -213,7 +212,7 @@ public class SafeXMLFilter extends XMLFilterImpl {
     private class SafeAttributes extends AttributesImpl {
         private final SafeBuffer safeBuffer;
 
-        public SafeAttributes(final SafeBuffer safeBuffer) {
+        SafeAttributes(final SafeBuffer safeBuffer) {
             this.safeBuffer = safeBuffer;
         }
 

@@ -28,7 +28,8 @@ public class SearchResultWriter {
     private final List<Row> rows;
     private final SampleGenerator sampleGenerator;
 
-    public SearchResultWriter(final List<stroom.dashboard.shared.Field> fields, final List<Row> rows,
+    public SearchResultWriter(final List<Field> fields,
+                              final List<Row> rows,
                               final SampleGenerator sampleGenerator) {
         this.fields = fields;
         this.rows = rows;
@@ -51,8 +52,7 @@ public class SearchResultWriter {
 
     private void writeHeadings(final List<Field> fields, final Target target) throws IOException {
         target.startLine();
-        for (int i = 0; i < fields.size(); i++) {
-            final Field field = fields.get(i);
+        for (final Field field : fields) {
             if (field.isVisible()) {
                 target.writeHeading(field, field.getName());
             }
@@ -90,6 +90,6 @@ public class SearchResultWriter {
 
         void writeHeading(Field field, String heading) throws IOException;
 
-        void writeValue(Field field, Object value) throws IOException;
+        void writeValue(Field field, String value) throws IOException;
     }
 }

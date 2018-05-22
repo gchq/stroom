@@ -18,6 +18,7 @@ package stroom.search.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexField;
 import stroom.pipeline.errorhandler.ErrorReceiver;
@@ -76,7 +77,7 @@ public class StreamMapCreator {
         return index;
     }
 
-    void addEvent(final Map<Long, List<Event>> storedDataMap, final String[] storedData) {
+    void addEvent(final Map<Long, List<Event>> storedDataMap, final Val[] storedData) {
         security.useAsRead(() -> {
             final Long longStreamId = getLong(storedData, streamIdIndex);
             final Long longEventId = getLong(storedData, eventIdIndex);
@@ -121,13 +122,13 @@ public class StreamMapCreator {
         });
     }
 
-    private Long getLong(final String[] storedData, final int index) {
+    private Long getLong(final Val[] storedData, final int index) {
         try {
             if (index >= 0 && storedData.length > index) {
-                final String value = storedData[index];
-                return Long.parseLong(value);
+                final Val value = storedData[index];
+                return value.toLong();
             }
-        } catch (final RuntimeException e) {
+        } catch (final Exception e) {
             // Ignore
         }
 

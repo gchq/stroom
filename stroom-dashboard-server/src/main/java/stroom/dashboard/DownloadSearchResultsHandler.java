@@ -19,8 +19,6 @@ package stroom.dashboard;
 import stroom.dashboard.download.DelimitedTarget;
 import stroom.dashboard.download.ExcelTarget;
 import stroom.dashboard.download.SearchResultWriter;
-import stroom.dashboard.format.FieldFormatter;
-import stroom.dashboard.format.FormatterFactory;
 import stroom.dashboard.logging.SearchEventLog;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -36,8 +34,8 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.resource.ResourceStore;
-import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
+import stroom.security.shared.PermissionNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.ResourceGeneration;
@@ -159,8 +157,7 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
                 final List<stroom.dashboard.shared.Field> fields = tableResultRequest.getTableSettings().getFields();
                 final List<Row> rows = tableResult.getRows();
 
-                download(fields, rows, file, action.getFileType(), action.isSample(),
-                        action.getPercent(), action.getDateTimeLocale());
+                download(fields, rows, file, action.getFileType(), action.isSample(), action.getPercent());
 
                 searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
             } catch (final RuntimeException e) {
@@ -173,10 +170,7 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
     }
 
     private void download(final List<stroom.dashboard.shared.Field> fields, final List<Row> rows, final Path file,
-                          final DownloadSearchResultFileType fileType, final boolean sample, final int percent, final String dateTimeLocale) {
-        final FormatterFactory formatterFactory = new FormatterFactory(dateTimeLocale);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
-
+                          final DownloadSearchResultFileType fileType, final boolean sample, final int percent) {
         try {
             final OutputStream outputStream = Files.newOutputStream(file);
             SearchResultWriter.Target target = null;
@@ -184,10 +178,10 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
             // Write delimited file.
             switch (fileType) {
                 case CSV:
-                    target = new DelimitedTarget(fieldFormatter, outputStream, ",");
+                    target = new DelimitedTarget(outputStream, ",");
                     break;
                 case TSV:
-                    target = new DelimitedTarget(fieldFormatter, outputStream, "\t");
+                    target = new DelimitedTarget(outputStream, "\t");
                     break;
                 case EXCEL:
                     target = new ExcelTarget(outputStream);

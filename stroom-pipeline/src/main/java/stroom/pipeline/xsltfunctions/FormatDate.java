@@ -22,28 +22,25 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 import stroom.pipeline.state.StreamHolder;
+import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
-import java.util.Locale;
 
 class FormatDate extends StroomExtensionFunctionCall {
-    private static final String GMT_BST_GUESS = "GMT/BST";
-    private static final ZoneId EUROPE_LONDON_TIME_ZONE = ZoneId.of("Europe/London");
+    private static final String FULL_YEAR_PATTERN = "yyyy";
+    private static final String FULL_MONTH_PATTERN = "MM";
+    private static final String FULL_DAY_PATTERN = "dd";
+
     private final StreamHolder streamHolder;
 
-    private Instant baseTime;
+    private ZonedDateTime baseTime;
 
     @Inject
     FormatDate(final StreamHolder streamHolder) {
@@ -97,7 +94,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     private String convertToStandardDateFormat(final String functionName, final XPathContext context,
                                                final Sequence[] arguments) throws XPathException {
         String result = null;
-        final String date = getSafeString(functionName, context, arguments, 0);
+        final String value = getSafeString(functionName, context, arguments, 0);
         final String pattern = getSafeString(functionName, context, arguments, 1);
         String timeZone = null;
         if (arguments.length == 3) {
@@ -108,11 +105,11 @@ class FormatDate extends StroomExtensionFunctionCall {
         long ms = -1;
         try {
             // If the incoming pattern doesn't contain year then we might need to figure the year out for ourselves.
-            ms = parseDate(context, timeZone, pattern, date);
+            ms = parseDate(context, value, pattern, timeZone);
         } catch (final RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Failed to parse date: \"");
-            sb.append(date);
+            sb.append(value);
             sb.append("\" (Pattern: ");
             sb.append(pattern);
             sb.append(", Time Zone: ");
@@ -131,7 +128,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     private String convertToSpecifiedDateFormat(final String functionName, final XPathContext context,
                                                 final Sequence[] arguments) throws XPathException {
         String result = null;
-        final String date = getSafeString(functionName, context, arguments, 0);
+        final String value = getSafeString(functionName, context, arguments, 0);
         final String patternIn = getSafeString(functionName, context, arguments, 1);
         final String timeZoneIn = getSafeString(functionName, context, arguments, 2);
         final String patternOut = getSafeString(functionName, context, arguments, 3);
@@ -144,11 +141,11 @@ class FormatDate extends StroomExtensionFunctionCall {
         long ms = -1;
         try {
             // If the incoming pattern doesn't contain year then we might need to figure the year out for ourselves.
-            ms = parseDate(context, timeZoneIn, patternIn, date);
+            ms = parseDate(context, value, patternIn, timeZoneIn);
         } catch (final RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Failed to parse date: \"");
-            sb.append(date);
+            sb.append(value);
             sb.append("\" (Pattern: ");
             sb.append(patternIn);
             sb.append(", Time Zone: ");
@@ -160,88 +157,76 @@ class FormatDate extends StroomExtensionFunctionCall {
         if (ms != -1) {
             // Resolve the output time zone.
             final ZoneId zoneId = getTimeZone(context, timeZoneOut);
-            if (zoneId != null) {
-                try {
-                    // Now format the date using the specified pattern and time
-                    // zone.
-                    final ZonedDateTime dateTime = Instant.ofEpochMilli(ms).atZone(zoneId);
-                    final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(patternOut);
-                    result = dateTimeFormatter.format(dateTime);
-                } catch (final RuntimeException e) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append("Failed to format date: \"");
-                    sb.append(date);
-                    sb.append("\" (Pattern: ");
-                    sb.append(patternOut);
-                    sb.append(", Time Zone: ");
-                    sb.append(timeZoneOut);
-                    sb.append(")");
-                    outputWarning(context, sb, e);
-                }
+            try {
+                // Now format the date using the specified pattern and time
+                // zone.
+                final ZonedDateTime dateTime = Instant.ofEpochMilli(ms).atZone(zoneId);
+                final DateTimeFormatter dateTimeFormatter = DateFormatterCache.getFormatter(patternOut);
+                result = dateTimeFormatter.format(dateTime);
+            } catch (final RuntimeException e) {
+                final StringBuilder sb = new StringBuilder();
+                sb.append("Failed to format date: \"");
+                sb.append(value);
+                sb.append("\" (Pattern: ");
+                sb.append(patternOut);
+                sb.append(", Time Zone: ");
+                sb.append(timeZoneOut);
+                sb.append(")");
+                outputWarning(context, sb, e);
             }
         }
 
         return result;
     }
 
-    long parseDate(final XPathContext context, final String timeZone, final String pattern, final String date) {
-        final ZoneId zoneId = getTimeZone(context, timeZone);
-        final ZonedDateTime referenceDateTime = getBaseTime().atZone(zoneId);
-        final DateTimeFormatter parseFormatter = new DateTimeFormatterBuilder()
-                .appendPattern(pattern)
-                .parseDefaulting(ChronoField.YEAR_OF_ERA, referenceDateTime.get(ChronoField.YEAR_OF_ERA))
-                .parseDefaulting(ChronoField.MONTH_OF_YEAR, referenceDateTime.get(ChronoField.MONTH_OF_YEAR))
-                .parseDefaulting(ChronoField.DAY_OF_MONTH, referenceDateTime.get(ChronoField.DAY_OF_MONTH))
-                .toFormatter(Locale.ENGLISH);
-
-        // Parse the date as best we can.
+    long parseDate(final XPathContext context, final String value, final String pattern, final String timeZone) {
         ZonedDateTime dateTime;
-        final TemporalAccessor temporalAccessor = parseFormatter.parseBest(date, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
-        if (temporalAccessor instanceof ZonedDateTime) {
-            dateTime = ((ZonedDateTime) temporalAccessor).withZoneSameInstant(zoneId);
-        } else if (temporalAccessor instanceof LocalDateTime) {
-            dateTime = ((LocalDateTime) temporalAccessor).atZone(zoneId);
-        } else {
-            dateTime = ((LocalDate) temporalAccessor).atStartOfDay(zoneId);
-        }
 
-        // Subtract a year if the date appears to be after our reference time.
-        if (dateTime.isAfter(referenceDateTime)) {
-            if (!pattern.contains("y")) {
-                if (!pattern.contains("M")) {
-                    dateTime = dateTime.minusMonths(1);
-                } else {
-                    dateTime = dateTime.minusYears(1);
+        // Don't use the defaulting formatter if we can help it.
+        if (pattern.contains(FULL_YEAR_PATTERN) && pattern.contains(FULL_MONTH_PATTERN) && pattern.contains(FULL_DAY_PATTERN)) {
+            final DateTimeFormatter formatter = DateFormatterCache.getFormatter(pattern);
+            final ZoneId zoneId = getTimeZone(context, timeZone);
+
+            // Parse the date as best we can.
+            dateTime = DateUtil.parseBest(value, formatter, zoneId);
+
+        } else {
+            final ZonedDateTime referenceDateTime = getBaseTime();
+            final DateTimeFormatter formatter = DateFormatterCache.getDefaultingFormatter(pattern, referenceDateTime);
+            final ZoneId zoneId = getTimeZone(context, timeZone);
+
+            // Parse the date as best we can.
+            dateTime = DateUtil.parseBest(value, formatter, zoneId);
+
+            // Subtract a year if the date appears to be after our reference time.
+            if (dateTime.isAfter(referenceDateTime)) {
+                if (!pattern.contains("y")) {
+                    if (!pattern.contains("M")) {
+                        dateTime = dateTime.minusMonths(1);
+                    } else {
+                        dateTime = dateTime.minusYears(1);
+                    }
                 }
             }
         }
+
         return dateTime.toInstant().toEpochMilli();
     }
 
     private ZoneId getTimeZone(final XPathContext context, final String timeZone) {
-        ZoneId dateTimeZone = null;
         try {
-            if (timeZone != null) {
-                if (GMT_BST_GUESS.equals(timeZone)) {
-                    dateTimeZone = EUROPE_LONDON_TIME_ZONE;
-                } else {
-                    dateTimeZone = ZoneId.of(timeZone);
-                }
-            } else {
-                dateTimeZone = ZoneOffset.UTC;
-            }
-        } catch (final IllegalArgumentException e) {
+            return DateFormatterCache.getZoneId(timeZone);
+        } catch (final RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Time Zone '");
             sb.append(timeZone);
-            sb.append("' is not recognised");
+            sb.append("' is not recognised, defaulting to UTC");
             outputWarning(context, sb, e);
         }
-
-        return dateTimeZone;
+        return ZoneOffset.UTC;
     }
 
-    private Instant getBaseTime() {
+    private ZonedDateTime getBaseTime() {
         if (baseTime == null) {
             Long createMs = null;
             if (streamHolder != null) {
@@ -250,9 +235,9 @@ class FormatDate extends StroomExtensionFunctionCall {
                 }
             }
             if (createMs != null) {
-                baseTime = Instant.ofEpochMilli(createMs);
+                baseTime = Instant.ofEpochMilli(createMs).atZone(ZoneOffset.UTC);
             } else {
-                baseTime = Instant.now();
+                baseTime = Instant.now().atZone(ZoneOffset.UTC);
             }
         }
         return baseTime;

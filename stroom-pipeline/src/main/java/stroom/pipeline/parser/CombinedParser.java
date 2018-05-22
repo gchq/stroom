@@ -90,7 +90,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     @Override
     protected XMLReader createReader() throws SAXException {
-        XMLReader xmlReader = null;
+        XMLReader xmlReader;
 
         if (type != null && type.trim().length() > 0) {
             // TODO : Create a parser type registry that the UI selects from to

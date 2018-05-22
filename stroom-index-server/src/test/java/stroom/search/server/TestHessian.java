@@ -2,6 +2,9 @@ package stroom.search.server;
 
 import com.caucho.hessian.io.Hessian2Output;
 import org.junit.Test;
+import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.StaticValueFunction;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
@@ -23,8 +26,8 @@ import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.common.v2.GroupKey;
 import stroom.query.common.v2.Item;
-import stroom.query.common.v2.Key;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
@@ -115,11 +118,11 @@ public class TestHessian {
 
     @Test
     public void testNodeResult() throws IOException {
-        final Key key = new Key("test");
-        final UnsafePairQueue<Key, Item> pairQueue = new UnsafePairQueue<>();
-        pairQueue.collect(key, new Item(key, new String[]{"v1", "v2"}, 0));
-        pairQueue.collect(key, new Item(key, new String[]{"v4", "v6"}, 0));
-        pairQueue.collect(key, new Item(key, new String[]{"v7", "v8"}, 0));
+        final GroupKey key = new GroupKey(ValString.create("test"));
+        final UnsafePairQueue<GroupKey, Item> pairQueue = new UnsafePairQueue<>();
+        pairQueue.collect(key, new Item(key, new Generator[]{getGenerator("v1"), getGenerator("v2")}, 0));
+        pairQueue.collect(key, new Item(key, new Generator[]{getGenerator("v4"), getGenerator("v6")}, 0));
+        pairQueue.collect(key, new Item(key, new Generator[]{getGenerator("v7"), getGenerator("v8")}, 0));
         final CoprocessorKey coprocessorKey = new CoprocessorKey(100, new String[]{"c1, c2"});
         final TablePayload tablePayload = new TablePayload(pairQueue);
         final Map<CoprocessorKey, Payload> payloadMap = new HashMap<>();
@@ -132,6 +135,10 @@ public class TestHessian {
 
         out.writeObject(nodeResult);
         out.close();
+    }
+
+    private Generator getGenerator(final String string) {
+        return new StaticValueFunction(ValString.create(string)).createGenerator();
     }
 
     private IndexFields createIndexFields() {
