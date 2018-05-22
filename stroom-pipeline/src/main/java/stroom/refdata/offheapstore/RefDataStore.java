@@ -50,11 +50,18 @@ public interface RefDataStore {
              final Supplier<RefDataValue> refDataValueSupplier,
              final boolean overwriteExistingValue);
 
+    /**
+     * Gets a value from the store for the passed mapDefinition and key. If not found returns an empty {@link Optional}.
+     */
     Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
                                     final String key);
 
     Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
 
+    /**
+     * Performs a lookup using the passed mapDefinition and key and then applies the valueConsumer to
+     * the found value. If no value is found the valueConsumer is not called
+     */
     void consumeValue(final MapDefinition mapDefinition,
                       final String key,
                       final Consumer<RefDataValue> valueConsumer);
@@ -65,6 +72,11 @@ public interface RefDataStore {
     void consumeBytes(final ValueStoreKey valueStoreKey,
                       final Consumer<ByteBuffer> valueConsumer);
 
+    /**
+     * Performs a lookup using the passed mapDefinition and key and then applies the valueMapper to
+     * the found value, returning the value in an {@link Optional}. If no value is found an empty
+     * {@link Optional} is returned. The valueMapper will be applied inside a transaction.
+     */
     <T> Optional<T> map(final MapDefinition mapDefinition,
                         final String key,
                         final Function<RefDataValue, T> valueMapper);

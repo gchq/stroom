@@ -17,6 +17,7 @@
 package stroom.pipeline.filter;
 
 import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
+import io.vavr.Tuple3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -36,6 +37,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.refdata.MapStoreHolder;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.MapDefinition;
+import stroom.refdata.offheapstore.RefDataOffHeapStore;
 import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefStreamDefinition;
@@ -47,6 +49,8 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -114,8 +118,11 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
     private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     private final CharBuffer contentBuffer = new CharBuffer(20);
+    private final List<Tuple3> keyValueEntries = new ArrayList<>();
+    private final List<Tuple3> rangeValueEntries = new ArrayList<>();
 
     private RefStreamDefinition refStreamDefinition = null;
+    private RefDataOffHeapStore.RefDataLoader refDataLoader;
 
     private String mapName;
     private String key;
@@ -149,6 +156,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         this.refDataStore = refDataStore;
     }
 
+
     @Override
     public void startStream() {
         super.startStream();
@@ -159,6 +167,11 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 pipelineDocRef,
                 pipelineEntity.getVersion(),
                 streamHolder.getStream().getId());
+        contentBuffer.clear();
+        byteArrayOutputStream.reset();
+        saxDocumentSerializer.reset();
+
+        refDataLoader = new RefDataOffHeapStore.RefDataLoaderImpl()
     }
 
     /**
@@ -261,6 +274,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                         if (key != null) {
                             // TODO we may be able to pass a Consumer<ByteBuffer> and then use a ByteBufferOutputStream
                             // to write directly to a direct byteBuffer, however we will not know the size up front
+                            LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
                             refDataStore.put(mapDefinition, key, this::getRefDataValueFromBuffers, overrideExistingValues);
                         } else if (rangeFrom != null && rangeTo != null) {
                             if (rangeFrom > rangeTo) {
@@ -273,6 +287,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                 // convert from inclusive rangeTo to exclusive rangeTo
                                 // if from==to we still record it as a range
                                 final Range<Long> range = new Range<>(rangeFrom, rangeTo + 1);
+                                LOGGER.trace("Putting range {} into map {}", range, mapDefinition);
                                 refDataStore.put(mapDefinition, range, this::getRefDataValueFromBuffers, overrideExistingValues);
                             }
                         }
@@ -293,6 +308,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 // reset our buffers ready for the next ref data item
                 contentBuffer.clear();
                 byteArrayOutputStream.reset();
+                saxDocumentSerializer.reset();
             }
         }
 
@@ -304,12 +320,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private RefDataValue getRefDataValueFromBuffers() {
         final RefDataValue refDataValue;
         if (haveSeenXmlInValueElement) {
-            LOGGER.debug("Serializing fast infoset events");
+            LOGGER.trace("Serializing fast infoset events");
             //serialize the event list using fastInfoset
             byte[] fastInfosetBytes = byteArrayOutputStream.toByteArray();
             refDataValue = FastInfosetValue.of(fastInfosetBytes);
         } else {
-            LOGGER.debug("Getting string data");
+            LOGGER.trace("Getting string data");
             //serialize the event list using fastInfoset
             // simple string value so use content buffer
             refDataValue = StringValue.of(contentBuffer.toString());

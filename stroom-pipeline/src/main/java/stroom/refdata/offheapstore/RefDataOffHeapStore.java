@@ -17,7 +17,6 @@
 
 package stroom.refdata.offheapstore;
 
-import org.apache.hadoop.fs.ByteBufferUtil;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -31,6 +30,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -130,9 +131,6 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     }
 
-    /**
-     * Gets a value from the store for the passed mapDefinition and key. If not found returns an empty {@link Optional}.
-     */
     @Override
     public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
                                            final String key) {
@@ -144,10 +142,6 @@ public class RefDataOffHeapStore implements RefDataStore {
         return Optional.empty();
     }
 
-    /**
-     * Performs a lookup using the passed mapDefinition and key and then applies the valueConsumer to
-     * the found value. If no value is found the valueConsumer is not called
-     */
     @Override
     public void consumeValue(final MapDefinition mapDefinition,
                              final String key,
@@ -166,11 +160,6 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     }
 
-    /**
-     * Performs a lookup using the passed mapDefinition and key and then applies the valueMapper to
-     * the found value, returning the value in an {@link Optional}. If no value is found an empty
-     * {@link Optional} is returned. The valueMapper will be applied inside a transaction.
-     */
     @Override
     public <T> Optional<T> map(final MapDefinition mapDefinition,
                                final String key,
@@ -195,6 +184,10 @@ public class RefDataOffHeapStore implements RefDataStore {
         return env.openDbi(name, DbiFlags.MDB_CREATE);
     }
 
+    public RefDataLoader loader() {
+        return new RefDataLoaderImpl(env);
+    }
+
 
     /**
      * Class for adding multiple items to the {@link RefDataOffHeapStore} within a single
@@ -203,15 +196,66 @@ public class RefDataOffHeapStore implements RefDataStore {
      * try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }
      * The transaction will be committed when the loader is closed
      */
-    public static class RefDataLoader implements AutoCloseable {
+    public static class RefDataLoaderImpl implements RefDataLoader {
 
-        private final Txn<ByteBufferUtil> txn;
+        private final Txn<ByteBuffer> txn;
+        private boolean initialised = false;
+        private RefStreamDefinition refStreamDefinition;
+        private long effectiveTimeMs;
+        // TODO we could just hit lmdb each time, but there may be serde costs
+        private final Map<MapDefinition, UID> mapDefinitionToUIDMap = new HashMap<>();
 
-        RefDataLoader(final Env<ByteBufferUtil> lmdbEnvironment, final MapDefinition mapDefinition) {
+        RefDataLoaderImpl(final Env<ByteBuffer> lmdbEnvironment) {
             this.txn = lmdbEnvironment.txnWrite();
+
+
         }
 
-//        public void put()
+        @Override
+        public void initialise(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs) {
+            this.refStreamDefinition = refStreamDefinition;
+            this.effectiveTimeMs = effectiveTimeMs;
+            // TODO create processed streams entry if it doesn't exist
+            // TODO if it does exist update the update time
+
+            this.initialised = true;
+        }
+
+        @Override
+        public void put(final String key,
+                        final RefDataValue refDataValue,
+                        final boolean overwriteExistingValue) {
+            throwExceptionIfNotInitialised();
+
+
+            //create forward+reverse map ID entries if they don't exist
+            //hold them in the mapDefinitionToUIDMap if we do create them
+
+            //see if key exists, then put value based on overwriteExistingValue
+
+            //throw exception if entry exists and overwriteExistingValue is false
+        }
+
+        @Override
+        public void put(final Range<Long> keyRange,
+                        final RefDataValue refDataValue,
+                        final boolean overwriteExistingValue) {
+            throwExceptionIfNotInitialised();
+
+            //create forward+reverse map ID entries if they don't exist
+            //hold them in the mapDefinitionToUIDMap if we do create them
+
+            //see if key exists, then put value based on overwriteExistingValue
+
+            //throw exception if entry exists and overwriteExistingValue is false
+
+        }
+
+        private void throwExceptionIfNotInitialised() {
+            if (!initialised) {
+                throw new RuntimeException("Loader not initialised");
+            }
+        }
 
         @Override
         public void close() throws Exception {
