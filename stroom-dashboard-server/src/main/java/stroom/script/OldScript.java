@@ -18,6 +18,7 @@ package stroom.script;
 
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.DocumentEntity;
+import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
 
 import javax.persistence.Column;
@@ -32,28 +33,15 @@ import javax.xml.bind.annotation.XmlTransient;
 public class OldScript extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.SCRIPT;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    //    public static final String RESOURCE = OldRes.FOREIGN_KEY;
     public static final String DEPENDENCIES = SQLNameConstants.DEPENDENCIES;
-    public static final String FETCH_RESOURCE = "resource";
     public static final String ENTITY_TYPE = "Script";
 
     private static final long serialVersionUID = 4519634323788508083L;
 
     private String description;
-//    private OldRes resource;
-
+    private String data;
     private String dependenciesXML;
     private DocRefs dependencies;
-
-//    @Override
-//    public void clearPersistence() {
-//        super.clearPersistence();
-//        if (resource != null) {
-//            final OldRes newResource = new OldRes();
-//            newResource.setData(resource.getData());
-//            resource = newResource;
-//        }
-//    }
 
     @Column(name = SQLNameConstants.DESCRIPTION)
     @Lob
@@ -65,16 +53,16 @@ public class OldScript extends DocumentEntity {
         this.description = description;
     }
 
-//    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, optional = true)
-//    @JoinColumn(name = RESOURCE)
-//    @ExternalFile("js")
-//    public OldRes getResource() {
-//        return resource;
-//    }
-//
-//    public void setResource(final OldRes resource) {
-//        this.resource = resource;
-//    }
+    @Column(name = SQLNameConstants.DATA, length = Integer.MAX_VALUE)
+    @Lob
+    @ExternalFile("js")
+    public String getResource() {
+        return data;
+    }
+
+    public void setResource(final String data) {
+        this.data = data;
+    }
 
     @Column(name = DEPENDENCIES, length = Integer.MAX_VALUE)
     @Lob
@@ -102,21 +90,13 @@ public class OldScript extends DocumentEntity {
         return String.valueOf(getName());
     }
 
-//    @Override
-//    public void copyFrom(final OldScript other) {
-//        this.description = other.description;
-//
-//        if (other.resource != null) {
-//            this.resource = new OldRes();
-//            this.resource.copyFrom(other.resource);
-//        } else {
-//            this.resource = null;
-//        }
-//
-//        this.dependencies = other.dependencies;
-//
-//        super.copyFrom(other);
-//    }
+    @Override
+    public void copyFrom(final Script other) {
+        this.description = other.description;
+        this.data = other.data;
+        this.dependencies = other.dependencies;
+        super.copyFrom(other);
+    }
 
     @Transient
     @Override

@@ -22,6 +22,7 @@ import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.DictionaryStore;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -114,7 +115,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     private ClusterSearchTask task;
 
-    private LinkedBlockingQueue<Optional<String[]>> storedData;
+    private LinkedBlockingQueue<Optional<Val[]>> storedData;
 
     @Inject
     ClusterSearchTaskHandler(final IndexStore indexStore,
@@ -441,7 +442,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             boolean complete = false;
             while (!complete) {
                 // Take the next stored data result.
-                final Optional<String[]> values = storedData.take();
+                final Optional<Val[]> values = storedData.take();
                 if (values.isPresent()) {
                     // Send the data to all coprocessors.
                     for (final Coprocessor coprocessor : coprocessors) {

@@ -16,6 +16,7 @@
 
 package stroom.search.shard;
 
+import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.search.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.shard.IndexShardSearchTask.ResultReceiver;
@@ -60,10 +61,10 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
     private final AtomicInteger tasksRemaining = new AtomicInteger();
     private final AtomicInteger tasksRequested = new AtomicInteger();
     private final CountDownLatch completionLatch = new CountDownLatch(1);
-    private final LinkedBlockingQueue<Optional<String[]>> storedData;
+    private final LinkedBlockingQueue<Optional<Val[]>> storedData;
 
     public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
-                                        final LinkedBlockingQueue<Optional<String[]>> storedData,
+                                        final LinkedBlockingQueue<Optional<Val[]>> storedData,
                                         final IndexShardSearcherCache indexShardSearcherCache,
                                         final List<Long> shards,
                                         final IndexShardQueryFactory queryFactory,

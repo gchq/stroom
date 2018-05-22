@@ -38,6 +38,7 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.query.common.v2.StoreSize;
 import stroom.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.UserTokenUtil;
 
@@ -59,6 +60,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
     private final NodeCache nodeCache;
     private final int maxBooleanClauseCount;
     private final SecurityContext securityContext;
+    private final Security security;
     private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
 
     @Inject
@@ -68,6 +70,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                                     final NodeCache nodeCache,
                                     final StroomPropertyService propertyService,
                                     final SecurityContext securityContext,
+                                    final Security security,
                                     final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory) {
         this.indexStore = indexStore;
         this.dictionaryStore = dictionaryStore;
@@ -75,6 +78,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         this.nodeCache = nodeCache;
         this.maxBooleanClauseCount = propertyService.getIntProperty("stroom.search.maxBooleanClauseCount", DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
         this.securityContext = securityContext;
+        this.security = security;
         this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
     }
 
@@ -86,7 +90,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         final Query query = searchRequest.getQuery();
 
         // Load the index.
-        final IndexDoc index = indexStore.readDocument(query.getDataSource());
+        final IndexDoc index = security.useAsReadResult(() -> indexStore.readDocument(query.getDataSource()));
 
         // Extract highlights.
         final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);

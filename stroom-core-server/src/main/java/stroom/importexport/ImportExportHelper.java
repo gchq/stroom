@@ -34,7 +34,6 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.query.api.v2.DocRef;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -57,8 +56,6 @@ public class ImportExportHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportHelper.class);
 
     private final Provider<GenericEntityService> genericEntityServiceProvider;
-//    private final ClassTypeMap classTypeMap = new ClassTypeMap();
-//    private volatile boolean entitiesInitialised = false;
 
     @Inject
     public ImportExportHelper(final Provider<GenericEntityService> genericEntityServiceProvider) {

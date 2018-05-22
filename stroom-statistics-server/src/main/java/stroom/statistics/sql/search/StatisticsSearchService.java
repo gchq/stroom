@@ -7,7 +7,7 @@ import stroom.statistics.shared.StatisticStoreDoc;
 //TODO StatisticsDatabaseSearchService
 public interface StatisticsSearchService {
 
-    Flowable<String[]> search(final StatisticStoreDoc statisticStoreEntity,
-                              final FindEventCriteria criteria,
-                              final FieldIndexMap fieldIndexMap);
+    Flowable<Val[]> search(final StatisticStoreDoc statisticStoreEntity,
+                           final FindEventCriteria criteria,
+                           final FieldIndexMap fieldIndexMap);
 }

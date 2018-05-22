@@ -170,8 +170,9 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         return stroomStatsStoreDataObject;
     }
 
-    public void setDataObject(final StroomStatsStoreEntityData statisticDataSourceDataObject) {
-        this.stroomStatsStoreDataObject = statisticDataSourceDataObject;
+    public void setDataObject(final StroomStatsStoreEntityData stroomStatsStoreDataObject) {
+        stroomStatsStoreDataObject.reOrderStatisticFields();
+        this.stroomStatsStoreDataObject = stroomStatsStoreDataObject;
     }
 
     @Transient

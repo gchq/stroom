@@ -36,7 +36,6 @@ var cssStr = "" +
 ".vis {" +
 "	margin: 0px;" +
 "	padding: 0px;" +
-"	padding-top: 18px;" +
 "}" +
 "" +
 ".vis-text {" +

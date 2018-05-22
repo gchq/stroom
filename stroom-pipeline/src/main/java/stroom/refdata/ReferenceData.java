@@ -56,6 +56,7 @@ public class ReferenceData {
     private final StreamHolder streamHolder;
     private final ContextDataLoader contextDataLoader;
     private final DocumentPermissionCache documentPermissionCache;
+    private final Map<PipelineReference, Boolean> localDocumentPermissionCache = new HashMap<>();
 
     @Inject
     ReferenceData(final EffectiveStreamCache effectiveStreamCache,
@@ -227,7 +228,15 @@ public class ReferenceData {
                 && pipelineReference.getStreamType() != null && pipelineReference.getStreamType().length() > 0;
 
         // Check that the current user has permission to read the stream.
-        if (documentPermissionCache == null || documentPermissionCache.hasDocumentPermission(Feed.ENTITY_TYPE, pipelineReference.getFeed().getUuid(), DocumentPermissionNames.USE)) {
+        final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
+                documentPermissionCache == null ||
+                        documentPermissionCache.hasDocumentPermission(
+                                Feed.ENTITY_TYPE,
+                                pipelineReference.getFeed().getUuid(),
+                                DocumentPermissionNames.USE));
+
+
+        if (hasPermission) {
             // Create a key to find a set of effective times in the pool.
             final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
                     pipelineReference.getStreamType(), fromMs, toMs);
@@ -311,10 +320,12 @@ public class ReferenceData {
     private static class CachedMapStore {
         private final long streamNo;
         private final MapStore mapStore;
+        private final int hashCode;
 
         CachedMapStore(final long streamNo, final MapStore mapStore) {
             this.streamNo = streamNo;
             this.mapStore = mapStore;
+            hashCode = Long.hashCode(streamNo);
         }
 
         public long getStreamNo() {
@@ -326,19 +337,16 @@ public class ReferenceData {
         }
 
         @Override
-        public int hashCode() {
-            return (int) streamNo;
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final CachedMapStore that = (CachedMapStore) o;
+            return streamNo == that.streamNo;
         }
 
         @Override
-        public boolean equals(final Object obj) {
-            if (obj == null || !(obj instanceof CachedMapStore)) {
-                return false;
-            }
-
-            final CachedMapStore cachedMapStore = (CachedMapStore) obj;
-
-            return cachedMapStore.streamNo == streamNo;
+        public int hashCode() {
+            return hashCode;
         }
     }
 }

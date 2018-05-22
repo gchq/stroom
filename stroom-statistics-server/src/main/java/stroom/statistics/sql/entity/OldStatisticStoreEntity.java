@@ -186,6 +186,10 @@ public class OldStatisticStoreEntity extends DocumentEntity {
     }
 
     public void setStatisticDataSourceDataObject(final StatisticsDataSourceData statisticDataSourceDataObject) {
+        // This is done here as the XML libs in the jdk appear to behave differently to the xerces one.
+        // The jdk one respects XmlAccessType.FIELD while xerces does not, so sorting in the setter has
+        // no affect now.
+        statisticDataSourceDataObject.reOrderStatisticFields();
         this.statisticsDataSourceDataObject = statisticDataSourceDataObject;
     }
 

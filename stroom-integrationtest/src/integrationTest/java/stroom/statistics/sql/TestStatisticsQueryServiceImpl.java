@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,7 +168,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     }
 
     @Test
-    public void testSearchStatistcsData_TwoTags() throws SQLException {
+    public void testSearchStatisticsData_TwoTags() throws SQLException {
 
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
@@ -187,7 +186,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     }
 
     @Test
-    public void testSearchStatistcsData_TwoTags_incrementalNoTimeout() throws SQLException {
+    public void testSearchStatisticsData_TwoTags_incrementalNoTimeout() throws SQLException {
 
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
@@ -201,12 +200,9 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
 
             String queryKey = UUID.randomUUID().toString();
 
-            SearchResponse searchResponse = doSearch(tags, true, queryKey);
+            SearchResponse searchResponse;
 
-            // Incremental search so first n responses will not be complete
-            Assertions.assertThat(searchResponse.complete()).isFalse();
-            Assertions.assertThat(searchResponse.getResults()).isNull();
-
+            // Incremental search so first n responses may not be complete
             Instant timeoutTime = Instant.now().plusSeconds(10);
 
             // keep asking for results till we get a complete one (or timeout)
@@ -219,7 +215,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     }
 
     @Test
-    public void testSearchStatistcsData_TwoTags_incremental10sTimeout() throws SQLException {
+    public void testSearchStatisticsData_TwoTags_incremental10sTimeout() throws SQLException {
 
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();

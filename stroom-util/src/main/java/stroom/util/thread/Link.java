@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.format;
+package stroom.util.thread;
 
-import stroom.dashboard.expression.v1.Val;
+public class Link<T> {
+    private final T object;
+    private final Link<T> parent;
 
-public class Unformatted implements Formatter {
-    private Unformatted() {
+    public Link(final T object) {
+        this.object = object;
+        this.parent = null;
     }
 
-    public static Unformatted create() {
-        return new Unformatted();
+    public Link(final T object, final Link<T> parent) {
+        this.object = object;
+        this.parent = parent;
     }
 
-    @Override
-    public String format(final Val value) {
-        if (value == null) {
-            return null;
-        }
-        return value.toString();
+    public T getObject() {
+        return object;
+    }
+
+    public Link<T> getParent() {
+        return parent;
     }
 }

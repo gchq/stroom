@@ -29,7 +29,6 @@
 //Further to this we could do with some form of prototype for a geeric gridded visualisation as we have a lot of 
 //repeated code.
 
-
 if (!visualisations) {
     var visualisations = {};
 }
@@ -45,11 +44,11 @@ visualisations.GenericGrid = function(element) {
     //padding in px inside each cell visible border box
     var intraCellPadding = 5;
 
-    var margin = { 
-        top: interCellPadding, 
-        right: interCellPadding, 
-        bottom: interCellPadding, 
-        left: interCellPadding 
+    var margin = {
+        top: interCellPadding,
+        right: interCellPadding,
+        bottom: interCellPadding,
+        left: interCellPadding
     };
 
     var gridLayoutPadding = [0.05, 0.05];
@@ -180,7 +179,7 @@ visualisations.GenericGrid = function(element) {
     var visSynchedFields;
 
     var setRectDimensions = function () {
-        this.attr("x",   function(d) {return d.x +"px";}) 
+        this.attr("x",   function(d) {return d.x +"px";})
             .attr("y",    function(d) {return d.y +"px";})
             .attr("width",  getCellWidth() + "px")
             .attr("height", getCellHeight() + "px");
@@ -204,7 +203,7 @@ visualisations.GenericGrid = function(element) {
 
     var removeInvisibleDataPoints = function(keyFieldIndex) {
         var prunePoints = function(data) {
-            if (data.values && data.values.length > 0){
+            if (data.values && data.values.constructor === Array && data.values.length > 0){
                 var visibleSeriesCount = 0;
                 data.values.forEach(function(point) {
                     point.isVisible = legendStateMap.isVisible(point[keyFieldIndex]);
@@ -218,8 +217,8 @@ visualisations.GenericGrid = function(element) {
 
         //return a function that will do the 'removal' for the required keyFieldIndex
         return function(data) {
-            if (data.values) {
-                if (data.values && data.values.length > 0) {
+            if (data.values && data.values.constructor === Array) {
+                if (data.values.length > 0) {
                     if (data.values[0].hasOwnProperty("key")){
                         data.values.forEach(function(d) {
                             prunePoints(d);
@@ -234,7 +233,7 @@ visualisations.GenericGrid = function(element) {
     };
 
     var removeInvisibleData = function(data, removalFunc) {
-        if (data.values) {
+        if (data.values && data.values.constructor === Array) {
             data.values.forEach(function(gridCellData) {
                 removalFunc(gridCellData);
             });
@@ -289,12 +288,12 @@ visualisations.GenericGrid = function(element) {
                 //TODO currently hard coded to always add the mouse events but need to make this
                 //conditional on the coloured elements (e.g. series) being synched between grid cells
                 commonFunctions.buildLegend(
-                    legendDiv, 
-                    colourScale, 
-                    true, 
-                    visNode.width.baseVal.value, 
-                    visNode.height.baseVal.value, 
-                    legendStateMap, 
+                    legendDiv,
+                    colourScale,
+                    true,
+                    visNode.width.baseVal.value,
+                    visNode.height.baseVal.value,
+                    legendStateMap,
                     setDataFunc,
                     legendKeyFormatFunc);
             } else {
@@ -316,7 +315,7 @@ visualisations.GenericGrid = function(element) {
         //console.log('colourScale range size: ' + colourScale.domain().length);
 
         //ensure all series keys are in the state map
-        colourScale.domain().forEach(function(domainValue) { 
+        colourScale.domain().forEach(function(domainValue) {
             legendStateMap.putIfAbsent(domainValue, new commonFunctions.legendState(domainValue, true));
         });
 
@@ -347,14 +346,14 @@ visualisations.GenericGrid = function(element) {
             d.isVisible = true;
         }
         if (!d.hasOwnProperty("visibleValues")) {
-            if (d.values) {
+            if (d.values && d.values.constructor === Array) {
                 //create a function to expose only the visible values
                 d.visibleValues = function() {
                     return d.values.filter(function(d) {
                         //assume true if prop not present
                         return (
-                            (!d.hasOwnProperty("isVisible") || d.isVisible) && 
-                            (!d.hasOwnProperty("isZoomVisible") || d.isZoomVisible) 
+                            (!d.hasOwnProperty("isVisible") || d.isVisible) &&
+                            (!d.hasOwnProperty("isZoomVisible") || d.isZoomVisible)
                         );
                     });
                 };
@@ -362,7 +361,7 @@ visualisations.GenericGrid = function(element) {
                 d.visibleValues = [];
             }
         }
-        if (d.values) {
+        if (d.values && d.values.constructor === Array) {
             d.values.forEach(function(val) {
                 addVisibilityFeatures(val);
             });
