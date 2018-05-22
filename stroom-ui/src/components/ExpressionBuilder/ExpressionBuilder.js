@@ -16,10 +16,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types'; 
 
-import { connect } from 'react-redux'
-
 import ExpressionOperator from './ExpressionOperator';
 import { LineContainer } from 'components/LineTo'
+
+import { withDataSource } from 'components/DataSource';
+import { withExpression } from './withExpression';
 
 import './ExpressionBuilder.css'
 
@@ -57,53 +58,25 @@ let lineElementCreators = {
     'curve' : curve
 }
 
-class ExpressionBuilder extends Component {
-    static propTypes = {
-        dataSourceUuid: PropTypes.string.isRequired,
-        expressionId: PropTypes.string.isRequired,
-        expressions: PropTypes.object.isRequired, // expects the entire map of expressions to be available
-    }
+const ExpressionBuilder = ({expressionId, dataSource, expression}) => (
+    <LineContainer 
+        lineContextId={'expression-lines-' + expressionId}
+        lineElementCreators={lineElementCreators}
+        >
+        <ExpressionOperator 
+            dataSource={dataSource}
+            expressionId={expressionId}
+            isRoot={true}
+            isEnabled={true}
+            operator={expression}  />
+    </LineContainer>
+)
 
-    state = {
-        expression : undefined,
-        dataSource : undefined
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        return {
-            expression : nextProps.expressions[nextProps.expressionId],
-            dataSource : nextProps.dataSources[nextProps.dataSourceUuid]
-        }
-    }
-
-    render() {
-        if (!!this.state.expression && !!this.state.dataSource) {
-            return (
-                <LineContainer 
-                    lineContextId={'expression-lines-' + this.props.expressionId}
-                    lineElementCreators={lineElementCreators}
-                    >
-                    <ExpressionOperator 
-                        dataSource={this.state.dataSource}
-                        expressionId={this.props.expressionId}
-                        isRoot={true}
-                        isEnabled={true}
-                        operator={this.state.expression}  />
-                </LineContainer>
-            )
-        } else {
-            return <div>Error - Data Source ({!this.state.dataSource ? 'missing' : 'ok'}), Expression ({!this.state.expression ? 'missing' : 'ok'})</div>
-        }
-    }
+ExpressionBuilder.propTypes = {
+    dataSource : PropTypes.object.isRequired,
+    expressionId : PropTypes.string.isRequired,
+    expression: PropTypes.object.isRequired, // expects the entire map of expressions to be available
 }
 
-export default connect(
-    (state) => ({
-        dataSources : state.dataSources,
-        expressions : state.expressions
-    }),
-    {
-        // actions
-    }
-)(ExpressionBuilder);
+export default withDataSource(withExpression(ExpressionBuilder));
 

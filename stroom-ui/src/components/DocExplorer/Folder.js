@@ -28,6 +28,8 @@ import DocRef from './DocRef';
 
 import FolderMenu from './FolderMenu';
 
+import { withExistingExplorer } from './withExplorer';
+
 import {
     moveExplorerItem,
     toggleFolderOpen,
@@ -36,8 +38,7 @@ import {
 
 const dragSource = {
 	canDrag(props) {
-        let explorerState = props.explorers[props.explorerId];
-		return explorerState.allowDragAndDrop;
+		return props.explorer.allowDragAndDrop;
 	},
     beginDrag(props) {
         return {
@@ -55,8 +56,7 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
     canDrop(props, monitor) {
-        let explorerState = props.explorers[props.explorerId];
-        return explorerState.allowDragAndDrop && canMove(monitor.getItem(), props.folder)
+        return props.explorer.allowDragAndDrop && canMove(monitor.getItem(), props.folder)
     },
     drop(props, monitor) {
         props.moveExplorerItem(props.explorerId, monitor.getItem(), props.folder);
@@ -78,7 +78,7 @@ class Folder extends Component {
         folder : PropTypes.object.isRequired,
 
         // state
-        explorers : PropTypes.object.isRequired,
+        explorer : PropTypes.object.isRequired,
 
         // actions
         toggleFolderOpen : PropTypes.func.isRequired,
@@ -92,34 +92,14 @@ class Folder extends Component {
         isDragging: PropTypes.bool.isRequired
     }
 
-    state = {
-        isReady : false,
-        isContextMenuOpen : false
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        let explorer = nextProps.explorers[nextProps.explorerId];
-
-        if (!!explorer) {
-            return {
-                isReady : true,
-                isContextMenuOpen : !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === nextProps.folder.uuid
-            }
-        } else {
-            return {
-                isReady : false
-            }
-        }
-    }
-
     onRightClick(e) {
         this.props.openDocRefContextMenu(this.props.explorerId, this.props.folder);
         e.preventDefault();
     }
 
-    renderChildren(explorerState) {
+    renderChildren() {
         return this.props.folder.children
-            .filter(c => !!explorerState.isVisible[c.uuid])
+            .filter(c => !!this.props.explorer.isVisible[c.uuid])
             .map(c => (!!c.children) ?
                 <DndFolder key={c.uuid} explorerId={this.props.explorerId} folder={c} /> :
                 <DocRef key={c.uuid} explorerId={this.props.explorerId} docRef={c} />
@@ -127,14 +107,19 @@ class Folder extends Component {
     }
 
     render() {
-        let explorerState = this.props.explorers[this.props.explorerId];
-
-        if (!explorerState) {
-            return (<div>Awaiting explorer state</div>)
-        }
-
-        const { connectDragSource, isDragging, connectDropTarget, isOver, canDrop } = this.props;
-        let thisIsOpen = !!explorerState.isFolderOpen[this.props.folder.uuid];
+        const {
+            connectDragSource,
+            isDragging,
+            connectDropTarget,
+            isOver,
+            canDrop,
+            explorerId,
+            explorer,
+            folder,
+            toggleFolderOpen
+        } = this.props;
+        let thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
+        let isContextMenuOpen = !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === folder.uuid;
         let icon = thisIsOpen ? 'caret down' : 'caret right';
                 
         let className = '';
@@ -151,7 +136,7 @@ class Folder extends Component {
                 className += ' folder__over_cannot_drop';
             }
         }
-        if (this.state.isContextMenuOpen) {
+        if (isContextMenuOpen) {
             className += ' doc-ref__context-menu-open'
         }
 
@@ -160,21 +145,21 @@ class Folder extends Component {
                 {connectDragSource(connectDropTarget(
                     <span className={className}
                             onContextMenu={this.onRightClick.bind(this)}
-                            onClick={() => this.props.toggleFolderOpen(this.props.explorerId, this.props.folder)}>
+                            onClick={() => toggleFolderOpen(explorerId, folder)}>
                         <FolderMenu
-                            explorerId={this.props.explorerId}
-                            docRef={this.props.folder}
-                            isOpen={this.state.isContextMenuOpen}
+                            explorerId={explorerId}
+                            docRef={folder}
+                            isOpen={isContextMenuOpen}
                         />
                         <span>
                             <Icon name={icon}/>
-                            {this.props.folder.name}
+                            {folder.name}
                         </span>
                     </span>
                 ))}
                 {thisIsOpen && 
                     <div className='folder__children'>
-                        {this.renderChildren(explorerState)}
+                        {this.renderChildren()}
                     </div>
                 }
             </div>
@@ -185,18 +170,18 @@ class Folder extends Component {
 // We need to use this ourself, so create a variable
 const DndFolder = connect(
     (state) => ({
-        explorers : state.explorerTree.explorers
+        // state
     }),
     {
         moveExplorerItem,
         toggleFolderOpen,
         openDocRefContextMenu
     }
-)
+)(withExistingExplorer(
     (DragSource(ItemTypes.FOLDER, dragSource, dragCollect)(
         DropTarget([ItemTypes.FOLDER, ItemTypes.DOC_REF], dropTarget, dropCollect)(
             Folder
         )
-    ));
+    ))));
 
 export default DndFolder;

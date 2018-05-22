@@ -16,5 +16,10 @@
 import PipelineEditor from './PipelineEditor';
 
 import { pipelineReducer } from './redux';
+import { withPipeline } from './withPipeline';
 
-export { PipelineEditor, pipelineReducer };
+export {
+    PipelineEditor, 
+    pipelineReducer,
+    withPipeline
+};

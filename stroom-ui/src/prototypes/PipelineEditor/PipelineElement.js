@@ -16,30 +16,26 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux'
+import { withPipeline } from './withPipeline';
 
 class PipelineEditor extends Component {
     static propTypes = {
         pipelineId : PropTypes.string.isRequired,
+        pipeline : PropTypes.object.isRequired,
         elementId : PropTypes.string.isRequired
     }
 
     render() {
-        let pipeline = this.props.pipelines[this.props.pipelineId];
+        if (!this.state.pipeline) {
+            return <div>Awaiting state</div>
+        }
 
         return (
             <div>
-                <h4>Pipeline Element {this.props.pipelineId} - {this.props.elementId}</h4>
+                <h4>Pipeline Element {this.props.pipelineId} - {this.state.elementId}</h4>
             </div>
         )
     }
 }
 
-export default connect(
-    (state) => ({
-        pipelines : state.pipelines
-    }),
-    {
-        // actions
-    }
-)(PipelineEditor)
+export default withPipeline(PipelineEditor)

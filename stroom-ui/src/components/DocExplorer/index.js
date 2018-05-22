@@ -20,12 +20,15 @@ import { explorerTreeReducer, receiveDocTree } from './redux';
 
 import { testTree } from './storybook/testTree';
 
+import { withExplorer } from './withExplorer';
+
 export {
   DocExplorer,
   DocRefModalPicker,
   DocRefDropdownPicker,
   explorerTreeReducer,
   receiveDocTree,
+  withExplorer,
 };
 
 // Test exports
