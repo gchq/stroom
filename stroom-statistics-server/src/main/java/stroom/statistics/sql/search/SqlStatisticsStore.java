@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
@@ -31,6 +32,8 @@ import stroom.task.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,6 +42,7 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
 public class SqlStatisticsStore implements Store {
@@ -48,6 +52,8 @@ public class SqlStatisticsStore implements Store {
 
     private static final String TASK_NAME = "Sql Statistic Search";
 
+    public static final Duration RESULT_SEND_INTERVAL = Duration.ofSeconds(1);
+
     private final ResultHandler resultHandler;
     private final int resultHandlerBatchSize;
     private final List<Integer> defaultMaxResultsSizes;
@@ -56,7 +62,7 @@ public class SqlStatisticsStore implements Store {
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
     private final TaskContext taskContext;
     private final String searchKey;
-    private final Disposable searchDisposable;
+    private final CompositeDisposable compositeDisposable;
 
     SqlStatisticsStore(final SearchRequest searchRequest,
                        final StatisticStoreEntity statisticStoreEntity,
@@ -93,7 +99,7 @@ public class SqlStatisticsStore implements Store {
         final Flowable<Val[]> searchResultsFlowable = statisticsSearchService.search(
                 statisticStoreEntity, criteria, fieldIndexMap);
 
-        this.searchDisposable = startAsyncSearch(searchResultsFlowable, coprocessorMap, executor);
+        this.compositeDisposable = startAsyncSearch(searchResultsFlowable, coprocessorMap, executor);
 
         LOGGER.debug("Async search task started for key {}", searchKey);
     }
@@ -104,7 +110,7 @@ public class SqlStatisticsStore implements Store {
         LOGGER.debug("destroy called");
         //terminate the search
         // TODO this may need to change in 6.1
-        searchDisposable.dispose();
+        compositeDisposable.clear();
     }
 
     @Override
@@ -172,7 +178,7 @@ public class SqlStatisticsStore implements Store {
         return paramMap;
     }
 
-    private Disposable startAsyncSearch(final Flowable<Val[]> searchResultsFlowable,
+    private CompositeDisposable startAsyncSearch(final Flowable<Val[]> searchResultsFlowable,
                                         final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap,
                                         final Executor executor) {
 
@@ -201,7 +207,6 @@ public class SqlStatisticsStore implements Store {
                 .doOnSubscribe(subscription -> {
                     LOGGER.debug("doOnSubscribeCalled");
                 })
-                .window(resultHandlerBatchSize) // using size based window as time based ones require a scheduler
                 .subscribe(
                         data -> {
                             counter.increment();
@@ -220,7 +225,7 @@ public class SqlStatisticsStore implements Store {
                                         now, nextProcessPayloadsTime,
                                         countSinceLastSend.get(), resultHandlerBatchSize));
 
-                                processPayloads(resultHandler, coprocessorMap, terminationMonitor);
+                                processPayloads(resultHandler, coprocessorMap);
                                 taskContext.setName(TASK_NAME);
                                 taskContext.info(searchKey +
                                         " - running database query (" + counter.longValue() + " rows fetched)");
@@ -238,7 +243,7 @@ public class SqlStatisticsStore implements Store {
                                             counter.longValue()));
                             // completed our window so create and pass on a payload for the
                             // data we have gathered so far
-                            processPayloads(resultHandler, coprocessorMap, terminationMonitor);
+                            processPayloads(resultHandler, coprocessorMap);
                             taskContext.info(searchKey + " - complete");
                             completeSearch();
 
