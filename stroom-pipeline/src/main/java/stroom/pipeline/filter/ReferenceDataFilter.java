@@ -17,35 +17,85 @@
 package stroom.pipeline.filter;
 
 import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.state.PipelineHolder;
+import stroom.pipeline.state.StreamHolder;
+import stroom.query.api.v2.DocRef;
 import stroom.refdata.MapStoreHolder;
-import stroom.refdata.saxevents.EventListValue;
-import stroom.refdata.saxevents.FastInfosetValue;
+import stroom.refdata.offheapstore.FastInfosetValue;
+import stroom.refdata.offheapstore.MapDefinition;
+import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefDataValue;
+import stroom.refdata.offheapstore.RefStreamDefinition;
+import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.saxevents.OffHeapEventListInternPool;
-import stroom.refdata.saxevents.StringValue;
-import stroom.refdata.saxevents.ValueProxy;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Objects;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
  * stored as reference data. The key, value map content is likely to have been
  * produced as the result of an XSL transformation of some reference data.
  */
-@ConfigurableElement(type = "ReferenceDataFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.REFERENCE_DATA)
+@ConfigurableElement(
+        type = "ReferenceDataFilter",
+        category = Category.FILTER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS},
+        icon = ElementIcons.REFERENCE_DATA)
 public class ReferenceDataFilter extends AbstractXMLFilter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataFilter.class);
+
+    /*
+        Example xml data
+        <referenceData>
+            <reference>
+                <map>cityToCountry</map>
+                <key>cardiff</key>
+                <value>Wales</value>
+            </reference>
+            <reference>
+                <map>countryToCity</map>
+                <key>wales</key>
+                <value>cardiff</value>
+            </reference>
+            <reference>
+                <map>employeeIdToCountry</map>
+                <from>1001</from>
+                <to>1700</to>
+                <value>UK</value>
+            </reference>
+            <reference>
+                <map>employeeIdToCountry</map>
+                <key>1701</key>
+                <value>USA</value>
+            </reference>
+            ...
+        </referenceData>
+
+        Note: <Value> can contain either XML or plain string data, e.g.
+            <value><country>UK></country></value>
+            <value>UK</value>
+     */
     private static final String REFERENCE_ELEMENT = "reference";
     private static final String MAP_ELEMENT = "map";
     private static final String KEY_ELEMENT = "key";
@@ -54,15 +104,20 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private static final String VALUE_ELEMENT = "value";
 
     private final MapStoreHolder mapStoreHolder;
+    private final StreamHolder streamHolder;
+    private final PipelineHolder pipelineHolder;
     private final EventListInternPool internPool;
     private final OffHeapEventListInternPool offHeapEventListInternPool;
+    private final RefDataStore refDataStore;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
     private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     private final CharBuffer contentBuffer = new CharBuffer(20);
 
-    private String map;
+    private RefStreamDefinition refStreamDefinition = null;
+
+    private String mapName;
     private String key;
     private boolean inValue;
     private boolean haveSeenXmlInValueElement = false;
@@ -79,13 +134,31 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     @Inject
     public ReferenceDataFilter(final MapStoreHolder mapStoreHolder,
+                               final StreamHolder streamHolder,
+                               final PipelineHolder pipelineHolder,
                                final EventListInternPool internPool,
                                final ErrorReceiverProxy errorReceiverProxy,
-                               final OffHeapEventListInternPool offHeapEventListInternPool) {
+                               final OffHeapEventListInternPool offHeapEventListInternPool,
+                               final RefDataStore refDataStore) {
         this.mapStoreHolder = mapStoreHolder;
+        this.streamHolder = streamHolder;
+        this.pipelineHolder = pipelineHolder;
         this.internPool = internPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.offHeapEventListInternPool = offHeapEventListInternPool;
+        this.refDataStore = refDataStore;
+    }
+
+    @Override
+    public void startStream() {
+        super.startStream();
+        // build the definition of the stream that is being processed
+        final PipelineEntity pipelineEntity = Objects.requireNonNull(pipelineHolder.getPipeline());
+        final DocRef pipelineDocRef = DocRefUtil.create(pipelineEntity);
+        this.refStreamDefinition = new RefStreamDefinition(
+                pipelineDocRef,
+                pipelineEntity.getVersion(),
+                streamHolder.getStream().getId());
     }
 
     /**
@@ -107,10 +180,13 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             throws SAXException {
         contentBuffer.clear();
 
+        LOGGER.trace("startElement {} {} {}", uri, localName, qName);
+
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
             inValue = true;
         } else if (inValue) {
             if (!haveSeenXmlInValueElement) {
+                LOGGER.trace("first XML element inside {} element", VALUE_ELEMENT);
                 // This is the first startElement inside the value element so we are dealing with XML refdata
                 haveSeenXmlInValueElement = true;
                 saxDocumentSerializer.reset();
@@ -137,7 +213,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
+        LOGGER.trace("endElement {} {} {}", uri, localName, qName);
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
+            LOGGER.trace("Leaving {} element", VALUE_ELEMENT);
             inValue = false;
         }
 
@@ -145,12 +223,16 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             saxDocumentSerializer.endElement(uri, localName, qName);
         } else {
             if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
-                map = contentBuffer.toString();
+                // capture the name of the map that the subsequent values will belong to. A ref
+                // stream can contain data for multiple maps
+                mapName = contentBuffer.toString();
 
             } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
+                // the key for the KV pair
                 key = contentBuffer.toString();
 
             } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
+                // the start key for the key range
                 final String string = contentBuffer.toString();
                 try {
                     rangeFrom = Long.parseLong(string);
@@ -160,6 +242,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 }
 
             } else if (TO_ELEMENT.equalsIgnoreCase(localName)) {
+                // the end key for the key range
                 final String string = contentBuffer.toString();
                 try {
                     rangeTo = Long.parseLong(string);
@@ -170,36 +253,15 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
 
-                final EventListValue value;
-                if (haveSeenXmlInValueElement) {
-                    //serialize the event list using fastInfoset
-                    byte[] fastInfosetBytes = byteArrayOutputStream.toByteArray();
-                    value = new FastInfosetValue(fastInfosetBytes);
-                    byteArrayOutputStream.reset();
-                } else {
-                    // simple string value so use content buffer
-                    value = StringValue.of(contentBuffer.toString());
-                }
-
-                ValueProxy<EventListValue> eventListProxy = offHeapEventListInternPool.intern(value);
-
-
-
-
-                // TODO add bEventList to the OffHEapStore, getting a OffHeapInternPool.Key returned
-                //
-
-                // Intern the event list so we only have one identical copy in
-                // memory.
-//                if (internPool != null) {
-//                    eventList = internPool.intern(eventList);
-//                }
-
-                // Store the events.
+                // end of the ref data item so ensure it is persisted in the store
                 try {
-                    if (map != null) {
+                    if (mapName != null) {
+                        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+
                         if (key != null) {
-                            mapStoreHolder.getMapStoreBuilder().setEvents(map, key, eventListProxy, overrideExistingValues);
+                            // TODO we may be able to pass a Consumer<ByteBuffer> and then use a ByteBufferOutputStream
+                            // to write directly to a direct byteBuffer, however we will not know the size up front
+                            refDataStore.put(mapDefinition, key, this::getRefDataValueFromBuffers, overrideExistingValues);
                         } else if (rangeFrom != null && rangeTo != null) {
                             if (rangeFrom > rangeTo) {
                                 errorReceiverProxy
@@ -207,16 +269,11 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                                 "Range from '" + rangeFrom
                                                         + "' must be less than or equal to range to '" + rangeTo + "'",
                                                 null);
-                            } else if (rangeFrom.equals(rangeTo)) {
-                                // If the range from and to are the same then we
-                                // can treat this as a key
-                                // rather than a range. This will improve lookup
-                                // performance.
-                                mapStoreHolder.getMapStoreBuilder().setEvents(map, rangeFrom.toString(), eventListProxy,
-                                        overrideExistingValues);
                             } else {
-                                mapStoreHolder.getMapStoreBuilder().setEvents(map, new Range<>(rangeFrom, rangeTo),
-                                        eventListProxy, overrideExistingValues);
+                                // convert from inclusive rangeTo to exclusive rangeTo
+                                // if from==to we still record it as a range
+                                final Range<Long> range = new Range<>(rangeFrom, rangeTo + 1);
+                                refDataStore.put(mapDefinition, range, this::getRefDataValueFromBuffers, overrideExistingValues);
                             }
                         }
                     }
@@ -227,17 +284,37 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 }
 
                 // Set keys to null.
-                map = null;
+                mapName = null;
                 key = null;
                 rangeFrom = null;
                 rangeTo = null;
                 haveSeenXmlInValueElement = false;
+
+                // reset our buffers ready for the next ref data item
+                contentBuffer.clear();
+                byteArrayOutputStream.reset();
             }
         }
 
         contentBuffer.clear();
 
         super.endElement(uri, localName, qName);
+    }
+
+    private RefDataValue getRefDataValueFromBuffers() {
+        final RefDataValue refDataValue;
+        if (haveSeenXmlInValueElement) {
+            LOGGER.debug("Serializing fast infoset events");
+            //serialize the event list using fastInfoset
+            byte[] fastInfosetBytes = byteArrayOutputStream.toByteArray();
+            refDataValue = FastInfosetValue.of(fastInfosetBytes);
+        } else {
+            LOGGER.debug("Getting string data");
+            //serialize the event list using fastInfoset
+            // simple string value so use content buffer
+            refDataValue = StringValue.of(contentBuffer.toString());
+        }
+        return refDataValue;
     }
 
     /**
@@ -262,6 +339,17 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         }
 
         super.characters(ch, start, length);
+    }
+
+    @Override
+    public void endProcessing() {
+        try {
+            byteArrayOutputStream.close();
+        } catch (IOException e) {
+            errorReceiverProxy
+                    .log(Severity.ERROR, null, null, "Error closing byteArrayOutputStream", e);
+        }
+        super.endProcessing();
     }
 
     @PipelineProperty(description = "Warn if there are duplicate keys found in the reference data?", defaultValue = "false")

@@ -55,10 +55,13 @@ public class RefDataOffHeapStore implements RefDataStore {
     // the DBs that make up the store
     private final BasicLmdbDb<KeyValueStoreKey, ValueStoreKey> keyValueStoreDb;
     private final BasicLmdbDb<RangeStoreKey, ValueStoreKey> rangeStoreDb;
+
     private final BasicLmdbDb<ValueStoreKey, RefDataValue> valueStoreDb;
+
     private final BasicLmdbDb<MapDefinition, UID> mapUidStoreForwardDb;
     private final BasicLmdbDb<UID, MapDefinition> mapUidStoreBackwardDb;
-    private final BasicLmdbDb<UID, ProcessingInfo> processedMapsStoreDb;
+
+    private final BasicLmdbDb<RefStreamDefinition, ProcessingInfo> processedMapsStoreDb;
 
     /**
      * @param dbDir   The directory the LMDB environment will be created in, it must already exist
@@ -87,7 +90,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.mapUidStoreBackwardDb = new BasicLmdbDb<>(
                 env, new UIDSerde(), new MapDefinitionSerde(), MAP_UID_STORE_BACKWARD_DB_NAME);
         this.processedMapsStoreDb = new BasicLmdbDb<>(
-                env, new UIDSerde(), new ProcessingInfoSerde(), PROCESSING_INFO_DB_NAME);
+                env, new RefStreamDefinitionSerde(), new ProcessingInfoSerde(), PROCESSING_INFO_DB_NAME);
     }
 
     /**
@@ -95,32 +98,35 @@ public class RefDataOffHeapStore implements RefDataStore {
      * {@link Optional} if there isn't one.
      */
     @Override
-    public Optional<ProcessingInfo> getProcessingInfo(final MapDefinition mapDefinition) {
+    public Optional<ProcessingInfo> getProcessingInfo(final RefStreamDefinition refStreamDefinition) {
         return Optional.empty();
     }
 
-    /**
-     * Performs a lookup using the passed mapDefinition and key and if not found will call the refDataValueSupplier
-     * to create a new entry for that mapDefinition, key and value. The check-and-put will be done in an atomic way
-     * so no external synchronisation is required.
-     */
-    //TODO consider a bulk put method or a builder type class to check/load them all in one txn
     @Override
-    public void putIfAbsent(final MapDefinition mapDefinition,
-                            final String key,
-                            final Supplier<RefDataValue> refDataValueSupplier) {
+    public void put(final MapDefinition mapDefinition,
+                    final String key,
+                    final Supplier<RefDataValue> refDataValueSupplier,
+                    final boolean overwriteExistingValue) {
+
+        boolean keyExists = false;
+
+        if (!overwriteExistingValue && keyExists) {
+            throw new RuntimeException("key exists");
+        }
 
     }
 
-    /**
-     * Performs a lookup using the passed mapDefinition and keyRange and if not found will call the refDataValueSupplier
-     * to create a new entry for that mapDefinition, keyRange and value. The check-and-put will be done in an atomic way
-     * so no external synchronisation is required.
-     */
     @Override
-    public void putIfAbsent(final MapDefinition mapDefinition,
-                            final Range<Long> keyRange,
-                            final Supplier<RefDataValue> refDataValueSupplier) {
+    public void put(final MapDefinition mapDefinition,
+                    final Range<Long> keyRange,
+                    final Supplier<RefDataValue> refDataValueSupplier,
+                    final boolean overwriteExistingValue) {
+
+        boolean keyExists = false;
+
+        if (!overwriteExistingValue && keyExists) {
+            throw new RuntimeException("key exists");
+        }
 
     }
 
@@ -130,6 +136,11 @@ public class RefDataOffHeapStore implements RefDataStore {
     @Override
     public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
                                            final String key) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey) {
         return Optional.empty();
     }
 
@@ -145,6 +156,16 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     }
 
+    @Override
+    public void consumeValue(final ValueStoreKey valueStoreKey, final Consumer<RefDataValue> valueConsumer) {
+
+    }
+
+    @Override
+    public void consumeBytes(final ValueStoreKey valueStoreKey, final Consumer<ByteBuffer> valueConsumer) {
+
+    }
+
     /**
      * Performs a lookup using the passed mapDefinition and key and then applies the valueMapper to
      * the found value, returning the value in an {@link Optional}. If no value is found an empty
@@ -155,6 +176,16 @@ public class RefDataOffHeapStore implements RefDataStore {
                                final String key,
                                final Function<RefDataValue, T> valueMapper) {
 
+        return Optional.empty();
+    }
+
+    @Override
+    public <T> Optional<T> map(final ValueStoreKey valueStoreKey, final Function<RefDataValue, T> valueMapper) {
+        return Optional.empty();
+    }
+
+    @Override
+    public <T> Optional<T> mapBytes(final ValueStoreKey valueStoreKey, final Function<ByteBuffer, T> valueMapper) {
         return Optional.empty();
     }
 

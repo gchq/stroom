@@ -33,7 +33,7 @@ public class MapDefinition {
     private final RefStreamDefinition refStreamDefinition;
     private final String mapName;
 
-    MapDefinition(final RefStreamDefinition refStreamDefinition, final String mapName) {
+    public MapDefinition(final RefStreamDefinition refStreamDefinition, final String mapName) {
         this.refStreamDefinition = refStreamDefinition;
         this.mapName = mapName;
     }

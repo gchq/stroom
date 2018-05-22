@@ -30,7 +30,7 @@ public class FastInfosetValue extends RefDataValue {
         this.fastInfosetBytes = fastInfosetBytes;
     }
 
-    static FastInfosetValue of(byte[] fastInfosetBytes) {
+    public static FastInfosetValue of(byte[] fastInfosetBytes) {
         return new FastInfosetValue(fastInfosetBytes);
     }
 

@@ -117,7 +117,8 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                     // Get the appropriate encoding for the stream type.
                     final String encoding = EncodingSelection.select(feed, StreamType.CONTEXT);
                     mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
-                    // Parse the stream.
+
+                    // Parse the stream. The ReferenceDataFilter will process the context data
                     pipeline.process(inputStream, encoding);
 
                     if (LOGGER.isDebugEnabled()) {

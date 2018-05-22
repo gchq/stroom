@@ -26,39 +26,52 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface RefDataStore {
-    Optional<ProcessingInfo> getProcessingInfo(MapDefinition mapDefinition);
+
+    Optional<ProcessingInfo> getProcessingInfo(final RefStreamDefinition refStreamDefinition);
 
     //TODO consider a bulk put method or a builder type class to check/load them all in one txn
-    void putIfAbsent(MapDefinition mapDefinition,
-                     String key,
-                     Supplier<RefDataValue> refDataValueSupplier);
+    /**
+     * Performs a lookup using the passed mapDefinition and key and if not found will call the refDataValueSupplier
+     * to create a new entry for that mapDefinition, key and value. The check-and-put will be done in an atomic way
+     * so no external synchronisation is required.
+     */
+    void put(final MapDefinition mapDefinition,
+             final String key,
+             final Supplier<RefDataValue> refDataValueSupplier,
+             final boolean overwriteExistingValue);
 
-    void putIfAbsent(MapDefinition mapDefinition,
-                     Range<Long> keyRange,
-                     Supplier<RefDataValue> refDataValueSupplier);
+    /**
+     * Performs a lookup using the passed mapDefinition and keyRange and if not found will call the refDataValueSupplier
+     * to create a new entry for that mapDefinition, keyRange and value. The check-and-put will be done in an atomic way
+     * so no external synchronisation is required.
+     */
+    void put(final MapDefinition mapDefinition,
+             final Range<Long> keyRange,
+             final Supplier<RefDataValue> refDataValueSupplier,
+             final boolean overwriteExistingValue);
 
-    Optional<RefDataValue> getValue(MapDefinition mapDefinition,
-                                    String key);
+    Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
+                                    final String key);
 
-    Optional<RefDataValue> getValue(ValueStoreKey valueStoreKey);
+    Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
 
-    void consumeValue(MapDefinition mapDefinition,
-                      String key,
-                      Consumer<RefDataValue> valueConsumer);
+    void consumeValue(final MapDefinition mapDefinition,
+                      final String key,
+                      final Consumer<RefDataValue> valueConsumer);
 
-    void consumeValue(ValueStoreKey valueStoreKey,
-                      Consumer<RefDataValue> valueConsumer);
+    void consumeValue(final ValueStoreKey valueStoreKey,
+                      final Consumer<RefDataValue> valueConsumer);
 
-    void consumeBytes(ValueStoreKey valueStoreKey,
-                      Consumer<ByteBuffer> valueConsumer);
+    void consumeBytes(final ValueStoreKey valueStoreKey,
+                      final Consumer<ByteBuffer> valueConsumer);
 
-    <T> Optional<T> map(MapDefinition mapDefinition,
-                        String key,
-                        Function<RefDataValue, T> valueMapper);
+    <T> Optional<T> map(final MapDefinition mapDefinition,
+                        final String key,
+                        final Function<RefDataValue, T> valueMapper);
 
-    <T> Optional<T> map(ValueStoreKey valueStoreKey,
-                        Function<RefDataValue, T> valueMapper);
+    <T> Optional<T> map(final ValueStoreKey valueStoreKey,
+                        final Function<RefDataValue, T> valueMapper);
 
-    <T> Optional<T> mapBytes(ValueStoreKey valueStoreKey,
-                             Function<ByteBuffer, T> valueMapper);
+    <T> Optional<T> mapBytes(final ValueStoreKey valueStoreKey,
+                             final Function<ByteBuffer, T> valueMapper);
 }
