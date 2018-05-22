@@ -26,13 +26,13 @@ class PipelineEditor extends Component {
     }
 
     render() {
-        if (!this.state.pipeline) {
+        if (!this.props.pipeline) {
             return <div>Awaiting state</div>
         }
 
         return (
             <div>
-                <h4>Pipeline Element {this.props.pipelineId} - {this.state.elementId}</h4>
+                <h4>Pipeline Element {this.props.pipelineId} - {this.props.elementId}</h4>
             </div>
         )
     }

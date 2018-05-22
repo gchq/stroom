@@ -25,8 +25,7 @@ import './pipelineEditor.css';
 class PipelineEditor extends Component {
     static propTypes = {
         pipelineId : PropTypes.string.isRequired,
-        pipeline : PropTypes.object.isRequired,
-        pipelineTree : PropTypes.object.isRequired
+        pipeline : PropTypes.object.isRequired
     }
 
     render() {
