@@ -16,11 +16,17 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { LineContainer, LineTo } from 'components/LineTo'
+
 import { withPipeline } from './withPipeline'
 
 import PipelineElement from './PipelineElement';
 
 import './pipelineEditor.css';
+
+import {
+    Grid
+} from 'semantic-ui-react';
 
 class PipelineEditor extends Component {
     static propTypes = {
@@ -28,20 +34,51 @@ class PipelineEditor extends Component {
         pipeline : PropTypes.object.isRequired
     }
 
-    render() {
-        return (
-            <div className='pipeline-editor'>
-                <div>
-                    <h4>Pipeline Editor {this.props.pipelineId}</h4>
-                    <PipelineElement 
-                        pipelineId={this.props.pipelineId}
-                        elementId='test1'
-                        />
-                </div>
-                <div>
-                    Pipeline Element Settings
-                </div>
+    renderElements() {
+        return this.props.pipeline.pipeline.elements.add.element.map(e => (
+            <div key={e.id} id={e.id} className='Pipeline-element'>
+                <PipelineElement 
+                    pipelineId={this.props.pipelineId}
+                    elementId={e.id}
+                    />
             </div>
+        ));
+    }
+
+    renderLines() {
+        return this.props.pipeline.pipeline.links.add.link.map(l => {
+            let lineId = l.from + '-' + l.to;
+            return (
+                <LineTo lineId={lineId} key={lineId} fromId={l.from} toId={l.to} />
+            )
+        });
+    }
+
+    render() {
+        let {
+            pipelineId,
+            pipeline
+        } = this.props;
+
+        return (
+            <Grid padded='vertically' divided='vertically'>
+                <Grid.Row columns={1}>
+                    <Grid.Column>
+                        <LineContainer
+                            lineContextId={'pipeline-lines-' + pipelineId}>
+                            <h4>Pipeline Editor {pipelineId}</h4>
+                            {this.renderElements()}
+                            {this.renderLines()}
+                        </LineContainer>
+                        
+                    </Grid.Column>
+                </Grid.Row>
+                <Grid.Row columns={1}>
+                    <Grid.Column>
+                        Pipeline Element Settings
+                    </Grid.Column>
+                </Grid.Row>
+            </Grid>
         )
     }
 }

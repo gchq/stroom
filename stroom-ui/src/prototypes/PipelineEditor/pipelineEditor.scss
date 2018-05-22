@@ -1,5 +1,9 @@
-.pipeline-editor {
-    display: grid;
-    height: 100%;
-    grid-template-rows: 50% 50%;
+.Pipeline-card {
+    width: 100%;
+    padding: 15px;
+    margin: 0px !important;
+}
+
+.Pipeline-element {
+    margin-right: 3rem;
 }
