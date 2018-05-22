@@ -14,15 +14,71 @@
  * limitations under the License.
  */
 
-import React from 'react'
-import { storiesOf } from '@storybook/react'
-import TrackerDashboard from './TrackerDashboard'
-import StoryRouter from 'storybook-react-router'
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import React from 'react';
+import { storiesOf } from '@storybook/react';
+import { withNotes } from '@storybook/addon-notes';
+import TrackerDashboard from './TrackerDashboard';
+import StoryRouter from 'storybook-react-router';
+import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+
+import { trackers, generateGenericTracker } from '../trackerTestData.test';
+
+import { actionCreators } from '../redux';
+
+const containerStyle = {
+  border: '30px solid green',
+  height: '500px',
+};
+
+const notes =
+  "This is the tracker dashboard. Sorting, searching, and paging happen remotely so they don't work without further customisation.";
 
 storiesOf('TrackerDashboard', module)
-  .addDecorator(ReduxDecorator)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackers(
+      [trackers.minimalTracker_undefinedLastPollAge, trackers.maximalTracker],
+      2,
+    ));
+  }))
   .addDecorator(StoryRouter())
-  .add('basic', () => (
-    <TrackerDashboard />
-  ))
+  .add(
+    'basic',
+    withNotes(notes)(() => (
+      <div style={containerStyle}>
+        <TrackerDashboard />
+      </div>
+    )),
+  );
+
+storiesOf('TrackerDashboard', module)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackers([], undefined));
+  }))
+  .addDecorator(StoryRouter())
+  .add(
+    'No trackers',
+    withNotes(notes)(() => (
+      <div style={containerStyle}>
+        <TrackerDashboard />
+      </div>
+    )),
+  );
+
+const lotsOfTrackers = [];
+[...Array(10).keys()].forEach((i) => {
+  lotsOfTrackers[i] = generateGenericTracker(i);
+});
+
+storiesOf('TrackerDashboard', module)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(actionCreators.updateTrackers(lotsOfTrackers, 100));
+  }))
+  .addDecorator(StoryRouter())
+  .add(
+    'Lots of trackers',
+    withNotes(notes)(() => (
+      <div style={containerStyle}>
+        <TrackerDashboard />
+      </div>
+    )),
+  );

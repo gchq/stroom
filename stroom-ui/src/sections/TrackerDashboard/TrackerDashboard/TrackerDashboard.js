@@ -151,7 +151,7 @@ class TrackerDashboard extends Component {
               <div className="pagination-container">
                 <Pagination 
                 activePage={pageOffset + 1} 
-                totalPages={numberOfPages} 
+                totalPages={numberOfPages ? numberOfPages : 1} 
                 firstItem={null} 
                 lastItem={null} 
                 size='tiny'
@@ -204,8 +204,10 @@ const mapDispatchToProps = dispatch => {
       }
     },
     onHandlePageChange: (data) => {
-      dispatch(actionCreators.changePage(data.activePage - 1))
-      dispatch(fetchTrackers())
+      if(data.activePage < data.totalPages){
+        dispatch(actionCreators.changePage(data.activePage - 1))
+        dispatch(fetchTrackers())
+      }
     },
     onHandlePageRight: () => { 
       dispatch(actionCreators.pageRight())
