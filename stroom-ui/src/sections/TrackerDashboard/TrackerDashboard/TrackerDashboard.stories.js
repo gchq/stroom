@@ -30,6 +30,9 @@ const containerStyle = {
   height: '500px',
 };
 
+const notes =
+  "This is the tracker dashboard. Sorting, searching, and paging happen remotely so they don't work without further customisation.";
+
 storiesOf('TrackerDashboard', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackers(
@@ -38,11 +41,14 @@ storiesOf('TrackerDashboard', module)
     ));
   }))
   .addDecorator(StoryRouter())
-  .add('basic', () => (
-    <div style={containerStyle}>
-      <TrackerDashboard />
-    </div>
-  ));
+  .add(
+    'basic',
+    withNotes(notes)(() => (
+      <div style={containerStyle}>
+        <TrackerDashboard />
+      </div>
+    )),
+  );
 
 storiesOf('TrackerDashboard', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
@@ -51,7 +57,7 @@ storiesOf('TrackerDashboard', module)
   .addDecorator(StoryRouter())
   .add(
     'No trackers',
-    withNotes("This is what the dashboard looks like when it doesn't have any trackers")(() => (
+    withNotes(notes)(() => (
       <div style={containerStyle}>
         <TrackerDashboard />
       </div>
@@ -70,7 +76,7 @@ storiesOf('TrackerDashboard', module)
   .addDecorator(StoryRouter())
   .add(
     'Lots of trackers',
-    withNotes("This is what the dashboard looks like when it doesn't have any trackers")(() => (
+    withNotes(notes)(() => (
       <div style={containerStyle}>
         <TrackerDashboard />
       </div>
