@@ -27,10 +27,12 @@ import { connect } from 'react-redux'
  * 
  * @param {React.Component} WrappedComponent 
  */
-export function withExpression(WrappedComponent) {
-    let hoc = class extends Component {
+export function withExpression(WrappedComponent, customIdPropertyName) {
+    let idPropertyName = customIdPropertyName || 'expressionId';
+
+    let WithExpression = class extends Component {
         static propTypes = {
-            expressionId: PropTypes.string.isRequired,
+            [idPropertyName]: PropTypes.string.isRequired,
             expressions: PropTypes.object.isRequired
         }
 
@@ -40,7 +42,7 @@ export function withExpression(WrappedComponent) {
     
         static getDerivedStateFromProps(nextProps, prevState) {
             return {
-                expression : nextProps.expressions[nextProps.expressionId]
+                expression : nextProps.expressions[nextProps[idPropertyName]]
             }
         }
 
@@ -48,7 +50,7 @@ export function withExpression(WrappedComponent) {
             if (!!this.state.expression) {
                 return <WrappedComponent expression={this.state.expression} {...this.props} />
             } else {
-                return <div>awaiting expression state</div>
+                return <span>awaiting expression state</span>
             }
         }
     }
@@ -60,5 +62,5 @@ export function withExpression(WrappedComponent) {
         {
             // actions
         }
-    )(hoc);
+    )(WithExpression);
 }

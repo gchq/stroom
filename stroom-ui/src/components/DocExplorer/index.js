@@ -16,7 +16,20 @@
 import DocExplorer from './DocExplorer';
 import DocRefModalPicker from './DocRefModalPicker';
 import DocRefDropdownPicker from './DocRefDropdownPicker';
-import { explorerTreeReducer, receiveDocTree } from './redux';
+import {
+  receiveDocTree,
+  explorerTreeOpened,
+  moveExplorerItem,
+  toggleFolderOpen,
+  openDocRef,
+  deleteDocRef,
+  docRefPicked,
+  searchTermChanged,
+  selectDocRef,
+  openDocRefContextMenu,
+  closeDocRefContextMenu,
+  explorerTreeReducer
+} from './redux';
 
 import { testTree } from './storybook/testTree';
 
@@ -26,8 +39,18 @@ export {
   DocExplorer,
   DocRefModalPicker,
   DocRefDropdownPicker,
-  explorerTreeReducer,
   receiveDocTree,
+  explorerTreeOpened,
+  moveExplorerItem,
+  toggleFolderOpen,
+  openDocRef,
+  deleteDocRef,
+  docRefPicked,
+  searchTermChanged,
+  selectDocRef,
+  openDocRefContextMenu,
+  closeDocRefContextMenu,
+  explorerTreeReducer,
   withExplorer,
 };
 

@@ -29,7 +29,8 @@ import {
 } from '../index';
 
 import {
-    receiveDocTree
+    receiveDocTree,
+    docRefPicked
 } from '../redux'
 
 import markdown from './docExplorer.md';
@@ -47,44 +48,11 @@ import {
     DragDropDecorator
 } from 'lib/storybook/DragDropDecorator';
 
-import ManagedPickerHarness from 'lib/storybook/ManagedPickerHarness';
-
-class ManagedDocRefDropdownPicker extends ManagedPickerHarness {
-    static defaultProps = {
-        actionName: 'doc-ref-picked'
-    }
-
-    render() {
-        return (
-            <DocRefDropdownPicker 
-                pickerId={this.props.pickerId}
-                typeFilter={this.props.typeFilter}
-                value={this.state.value}
-                onChange={this.onChange.bind(this)} 
-                />
-        )
-    }
-}
-
-class ManagedDocRefModalPicker extends ManagedPickerHarness {
-    static defaultProps = {
-        actionName: 'doc-ref-picked'
-    }
-    
-    render() {
-        return (
-            <DocRefModalPicker 
-                pickerId={this.props.pickerId}
-                value={this.state.value}
-                onChange={this.onChange.bind(this)} 
-                />
-        )
-    }
-}
-
 storiesOf('Document Explorer', module)
     .addDecorator(ReduxDecoratorWithInitialisation((store) => {
         store.dispatch(receiveDocTree(testTree));
+        store.dispatch(docRefPicked('dropdown2', sam));
+        store.dispatch(docRefPicked('modal2', gimli));
     })) // must be recorder after/outside of the test initialisation decorators
     .addDecorator(DragDropDecorator)
     .add('Explorer Tree (multi-select, dnd)', () => 
@@ -112,38 +80,34 @@ storiesOf('Document Explorer', module)
             />
     )
     .add('Doc Ref Picker (dropdown, no choice made)', () => 
-        <ManagedDocRefDropdownPicker 
+        <DocRefDropdownPicker 
             pickerId='dropdown1' 
             />
     )
     .add('Doc Ref Picker (dropdown, choice made)', () => 
-        <ManagedDocRefDropdownPicker 
-            pickerId='dropdown2' 
-            initialValue={sam} 
+        <DocRefDropdownPicker 
+            pickerId='dropdown2'
             />
     )
     .add('Doc Ref Picker (dropdown, filter to dictionaries)', () => 
-        <ManagedDocRefDropdownPicker 
+        <DocRefDropdownPicker 
             pickerId='dropdown3' 
             typeFilter={DOC_REF_TYPES.DICTIONARY}
             />
     )
     .add('Doc Ref Picker (modal, no choice made)', () => 
-        <ManagedDocRefModalPicker 
+        <DocRefModalPicker 
             pickerId='modal1'  
             />
     )
     .add('Doc Ref Picker (modal, choice made)', () => 
-        <ManagedDocRefModalPicker 
+        <DocRefModalPicker 
             pickerId='modal2' 
-            initialValue={gimli}
             />
     )
     .add('Doc Ref Picker (modal, filter to hobbits)', () => 
-        <ManagedDocRefModalPicker 
+        <DocRefModalPicker 
             pickerId='modal3'  
             typeFilter={DOC_REF_TYPES.HOBBIT}
             />
     )
-    // .add('Single Folder', withNotes(markdown)(() => <TestFolder folder={fellowship} />))
-    // .add('Single DocRef', withNotes(markdown)(() => <TestDocRef docRef={sam} />))

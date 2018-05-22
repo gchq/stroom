@@ -27,10 +27,9 @@ import {
 } from 'semantic-ui-react'
 
 import { findItem } from 'lib/treeUtils';
-
-import {
-    pickDocRef
-} from './redux';
+import { docRefPicked } from './redux';
+import { withCreatedExplorer } from './withExplorer';
+import { withPickedDocRef } from './withPickedDocRef';
 
 import DocExplorer from './DocExplorer';
 
@@ -38,11 +37,11 @@ class DocRefModalPicker extends Component {
     static propTypes = {
         pickerId : PropTypes.string.isRequired,
         documentTree : PropTypes.object.isRequired,
-        explorers : PropTypes.object.isRequired,
+        explorer : PropTypes.object.isRequired,
 
         typeFilter : PropTypes.string,
-        value : PropTypes.object,
-        onChange : PropTypes.func.isRequired
+        docRef : PropTypes.object,
+        docRefPicked : PropTypes.func.isRequired
     }
 
     state = {
@@ -58,16 +57,24 @@ class DocRefModalPicker extends Component {
     }
 
     onDocRefSelected() {
-        Object.keys(this.props.explorers[this.props.pickerId].isSelected)
+        let {
+            isSelected,
+            documentTree,
+            pickerId,
+            explorer,
+            docRefPicked
+        } = this.props;
+
+        Object.keys(explorer.isSelected)
             .forEach(pickedUuid => {
-                let picked = findItem(this.props.documentTree, pickedUuid);
-                this.props.onChange(picked);
+                let picked = findItem(documentTree, pickedUuid);
+                docRefPicked(pickerId, picked);
             });
         this.handleClose();
     }
 
     render() {
-        let value = (!!this.props.value) ? this.props.value.name : '';
+        let value = (!!this.props.docRef) ? this.props.docRef.name : '';
 
         return (
             <Modal
@@ -97,10 +104,10 @@ class DocRefModalPicker extends Component {
 
 export default connect(
     (state) => ({
-        documentTree : state.explorerTree.documentTree,
-        explorers : state.explorerTree.explorers
+        documentTree : state.explorerTree.documentTree
     }),
     {
         // actions
+        docRefPicked
     }
-)(DocRefModalPicker);
+)(withPickedDocRef(withCreatedExplorer(DocRefModalPicker, 'pickerId')));

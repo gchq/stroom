@@ -18,47 +18,47 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
+import { explorerTreeOpened, DEFAULT_EXPLORER_ID } from './redux';
+
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
  * 
- * It provides the data source by connecting to the redux store and using a provided
- * dataSourceUuid to look it up.
+ * It provides the picked doc ref by connecting to the redux store and using a provided
+ * pickerId to look it up.
  * 
  * @param {React.Component} WrappedComponent 
  */
-export function withDataSource(WrappedComponent) {
-    let WithDataSource = class extends Component {
+export function withPickedDocRef(WrappedComponent, customIdPropertyName) {
+    let idPropertyName = customIdPropertyName || 'pickerId';
+
+    let WithPickedDocRef = class extends Component {
         static propTypes = {
-            dataSourceUuid: PropTypes.string.isRequired,
-            dataSources: PropTypes.object.isRequired
+            [idPropertyName]: PropTypes.string.isRequired,
+            pickedDocRefs: PropTypes.object.isRequired
         }
 
         state = {
-            dataSource : undefined
+            docRef : undefined
         }
-    
+
         static getDerivedStateFromProps(nextProps, prevState) {
             return {
-                dataSource : nextProps.dataSources[nextProps.dataSourceUuid]
+                docRef : nextProps.pickedDocRefs[nextProps[idPropertyName]]
             }
         }
 
         render() {
-            if (!!this.state.dataSource) {
-                return <WrappedComponent dataSource={this.state.dataSource} {...this.props} />
-            } else {
-                return <span>awaiting data source state</span>
-            }
+            return <WrappedComponent docRef={this.state.docRef} {...this.props} />
         }
     }
 
     return connect(
         (state) => ({
-            dataSources : state.dataSources
+            pickedDocRefs: state.explorerTree.pickedDocRefs
         }),
         {
             // actions
         }
-    )(WithDataSource);
+    )(WithPickedDocRef);
 }

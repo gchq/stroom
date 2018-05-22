@@ -28,7 +28,14 @@ import {
 
 import DocExplorer from './DocExplorer';
 
-import { iterateNodes, findItem } from 'lib/treeUtils';
+import {
+    iterateNodes, 
+    findItem
+} from 'lib/treeUtils';
+
+import { docRefPicked } from './redux'
+
+import { withPickedDocRef } from './withPickedDocRef';
 
 class DocRefDropdownPicker extends Component {
     static propTypes = {
@@ -36,17 +43,17 @@ class DocRefDropdownPicker extends Component {
         documentTree : PropTypes.object.isRequired,
 
         typeFilter : PropTypes.string,
-        value : PropTypes.object,
-        onChange : PropTypes.func.isRequired
+        docRef : PropTypes.object,
+        docRefPicked : PropTypes.func.isRequired
     }
 
     onDocRefSelected(event, data) {
         let picked = findItem(this.props.documentTree, data.value);
-        this.props.onChange(picked);
+        this.props.docRefPicked(this.props.pickerId, picked);
     }
 
     render() {
-        let value = (!!this.props.value) ? this.props.value.uuid : '';
+        let value = (!!this.props.docRef) ? this.props.docRef.uuid : '';
         
         let options = [];
         iterateNodes(this.props.documentTree, (lineage, node) => {
@@ -98,6 +105,6 @@ export default connect(
         documentTree : state.explorerTree.documentTree
     }),
     {
-        // actions
+        docRefPicked
     }
-)(DocRefDropdownPicker);
+)(withPickedDocRef(DocRefDropdownPicker));

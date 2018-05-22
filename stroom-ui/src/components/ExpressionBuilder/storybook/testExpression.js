@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { evilTrinkets } from 'components/DocExplorer/storybook/testTree';
+
 const testExpression = {
     "type": "operator",
     "op": "OR",
@@ -31,6 +33,14 @@ const testExpression = {
             "condition": "IN",
             "value": "blue",
             "dictionary": null,
+            "enabled": true
+        },
+        {
+            "type": "term",
+            "field": "colour",
+            "condition": "IN_DICTIONARY",
+            "value": null,
+            "dictionary": evilTrinkets,
             "enabled": true
         },
         {

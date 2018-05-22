@@ -25,6 +25,10 @@ import {
     stripUuids
 } from 'lib/treeUtils';
 
+import {
+    docRefPicked
+} from 'components/DocExplorer'
+
 // Expressions
 
 const expressionChanged = createAction('EXPRESSION_CHANGED',
@@ -54,6 +58,16 @@ const NEW_OPERATOR = {
     "enabled" : true,
     "children": []
 };
+
+const splitDictionaryTermId = (value) => {
+    let p = value.split('_');
+    return {
+        expressionId : p[0],
+        termUuid : p[1]
+    }
+}
+
+const joinDictionaryTermId = (expressionId, termUuid) => (expressionId + '_' + termUuid)
 
 const expressionReducer = handleActions({
     // Expression Changed
@@ -115,7 +129,28 @@ const expressionReducer = handleActions({
                 action.payload.itemToMove, 
                 action.payload.destination
             )
-    })
+    }),
+
+    // Doc Ref Picked
+    [docRefPicked]:
+    (state, action) => {
+        let {
+            expressionId,
+            termUuid
+        } = splitDictionaryTermId(action.payload.pickerId);
+
+        return {
+            ...state,
+            [expressionId] : updateItemInTree(
+                    state[expressionId], 
+                    termUuid, 
+                    {
+                        value: undefined,
+                        dictionary: action.payload.docRef
+                    }
+                )
+        }
+    }
 }, defaultExpressionState);
 
 export {
@@ -125,5 +160,6 @@ export {
     expressionItemUpdated,
     expressionItemDeleted,
     expressionItemMoved,
-    expressionReducer
+    expressionReducer,
+    joinDictionaryTermId
 }

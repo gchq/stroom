@@ -73,6 +73,8 @@ const openDocRefContextMenu = createAction('OPEN_DOC_REF_CONTEXT_MENU',
     (explorerId, docRef) => ({explorerId, docRef}));
 const closeDocRefContextMenu = createAction('CLOSE_DOC_REF_CONTEXT_MENU',
     (explorerId) => ({explorerId}));
+const docRefPicked = createAction('DOC_REF_PICKED',
+    (pickerId, docRef) => ({pickerId, docRef}));
 
 const defaultExplorerState = {
     searchTerm : '',
@@ -87,6 +89,7 @@ const defaultExplorerState = {
 const defaultState = {
     documentTree : {}, // The hierarchy of doc refs in folders
     explorers : {},
+    pickedDocRefs : {}, // Picked Doc Refs by pickerId
     isDocRefOpen : {}, // in response to user actions
     allowMultiSelect : true,
     allowDragAndDrop : true
@@ -353,7 +356,17 @@ const explorerTreeReducer = handleActions(
             let documentTree = deleteItemFromTree(state.documentTree, docRef.uuid);
 
             return getStateAfterTreeUpdate(state, documentTree);
-        }
+        },
+
+        // Pick Doc Ref
+        [docRefPicked]:
+        (state, action) => ({
+            ...state,
+            pickedDocRefs : {
+                ...state.pickedDocRefs,
+                [action.payload.pickerId] : action.payload.docRef
+            }
+        })
     },
     defaultState
 )
@@ -366,6 +379,7 @@ export {
     toggleFolderOpen,
     openDocRef,
     deleteDocRef,
+    docRefPicked,
     searchTermChanged,
     selectDocRef,
     openDocRefContextMenu,

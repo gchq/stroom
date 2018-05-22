@@ -31,12 +31,14 @@ import { ItemTypes } from './dragDropTypes';
 import { displayValues } from './conditions';
 import {
     DocRefDropdownPicker,
-    DocRefModalPicker
+    DocRefModalPicker,
+    docRefPicked
 } from '../DocExplorer';
 
 import {
     expressionItemUpdated,
-    expressionItemDeleted
+    expressionItemDeleted,
+    joinDictionaryTermId
 } from './redux';
 
 const dragSource = {
@@ -61,14 +63,62 @@ class ExpressionTerm extends Component {
         expressionId : PropTypes.string.isRequired, // the ID of the overall expression
         term : PropTypes.object.isRequired, // the operator that this particular element is to represent
         isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
+        pickedDocRefs : PropTypes.object.isRequired, // picked dictionary
 
         // Actions
         expressionItemUpdated : PropTypes.func.isRequired,
         expressionItemDeleted : PropTypes.func.isRequired,
+        docRefPicked : PropTypes.func.isRequired,
 
         // React DnD
         connectDragSource: PropTypes.func.isRequired,
         isDragging: PropTypes.bool.isRequired
+    }
+
+    state = {
+        pickerId : undefined
+    }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+        let pickerId = joinDictionaryTermId(nextProps.expressionId, nextProps.term.uuid);
+        return { pickerId }
+    }
+
+    componentDidMount() {
+        this.checkDictionary();
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        this.checkDictionary();
+    }
+
+    /**
+     * This functions is used to check that the picked doc ref matches the one from the expression.
+     * If it doesn't then it triggers a docRefPicked action to ensure that it then does match.
+     * From that point on the expressions and pickedDocRefs should both be monitoring the same state.
+     */
+    checkDictionary() {
+        let {
+            expressionId,
+            term,
+            pickedDocRefs,
+            docRefPicked
+        } = this.props;
+        let {
+            pickerId
+        } = this.state;
+
+        if (term.condition === 'IN_DICTIONARY') {
+            // Get the current state of the picked doc refs
+            let picked = pickedDocRefs[pickerId];
+
+            // If the dictionary is set on the term, but not set or equal to the 'picked' one, update it
+            if (!!term.dictionary) {
+                if (!picked || picked.uuid !== term.dictionary.uuid) {
+                    docRefPicked(pickerId, term.dictionary);
+                }
+            }
+        }
     }
 
     onDeleteTerm() {
@@ -128,24 +178,26 @@ class ExpressionTerm extends Component {
             value: data.value.join()
         })
     }
-
-    onDictionaryChange(docRef) {
-        this.onTermUpdated({
-            value: undefined,
-            dictionary : docRef
-        })
-    }
     
     render() {
-        const { connectDragSource, isDragging } = this.props;
+        const {
+            connectDragSource,
+            isDragging,
+            term,
+            isEnabled,
+            dataSource
+        } = this.props;
+        const {
+            pickerId
+        } = this.state;
 
         let className = 'expression-item';
-        if (!this.props.isEnabled) {
+        if (!isEnabled) {
             className += ' expression-item--disabled';
         }
 
         let enabledButton;
-        if (this.props.term.enabled) {
+        if (term.enabled) {
             enabledButton = <Button 
                                 compact 
                                 color='blue'
@@ -161,14 +213,14 @@ class ExpressionTerm extends Component {
                             </Button>
         }
 
-        let fieldOptions = this.props.dataSource.fields.map(f => {
+        let fieldOptions = dataSource.fields.map(f => {
             return {
                 value: f.name,
                 text: f.name
             }
         })
 
-        let field = this.props.dataSource.fields.filter(f => f.name === this.props.term.field)[0];
+        let field = dataSource.fields.filter(f => f.name === term.field)[0];
         let conditionOptions = [];
         let valueType='text';
         if (!!field) {
@@ -194,7 +246,7 @@ class ExpressionTerm extends Component {
         }
 
         let valueWidget;
-        switch (this.props.term.condition) {
+        switch (term.condition) {
             case 'CONTAINS':
             case 'EQUALS':
             case 'GREATER_THAN':
@@ -204,13 +256,13 @@ class ExpressionTerm extends Component {
                 valueWidget = <Input 
                                 placeholder='value' 
                                 type={valueType}
-                                value={this.props.term.value} 
+                                value={term.value || ''} 
                                 onChange={this.onSingleValueChange.bind(this)}
                                 />;// some single selection
                 break;
             }
             case 'BETWEEN': {
-                let splitValues = this.props.term.value.split(',');
+                let splitValues = term.value.split(',');
                 let fromValue = (splitValues.length == 2) ? splitValues[0] : undefined;
                 let toValue = (splitValues.length == 2) ? splitValues[1] : undefined;
                 valueWidget = (
@@ -233,8 +285,8 @@ class ExpressionTerm extends Component {
                 break;
             }
             case 'IN': {
-                let hasValues = (!!this.props.term.value && this.props.term.value.length > 0)
-                let splitValues = hasValues ? this.props.term.value.split(',') : [];
+                let hasValues = (!!term.value && term.value.length > 0)
+                let splitValues = hasValues ? term.value.split(',') : [];
                 let keyedValues = hasValues ? splitValues.map(s => {
                     return {key: s, value: s, text: s}
                 }) : []
@@ -251,13 +303,11 @@ class ExpressionTerm extends Component {
             }
             case 'IN_DICTIONARY': {
                 let dictUuid = '';
-                if (this.props.term.dictionary) {
-                    dictUuid = this.props.term.dictionary.uuid;
+                if (term.dictionary) {
+                    dictUuid = term.dictionary.uuid;
                 }
                 valueWidget = <DocRefModalPicker 
-                                pickerId={this.props.expressionId + '-' + this.props.term.uuid}
-                                value={this.props.term.dictionary} 
-                                onChange={this.onDictionaryChange.bind(this)}
+                                pickerId={pickerId}
                                 typeFilter='dictionary'
                                 />;
                 break;
@@ -271,13 +321,13 @@ class ExpressionTerm extends Component {
                             selection 
                             options={fieldOptions} 
                             onChange={this.onFieldChange.bind(this)}
-                            value={this.props.term.field}
+                            value={term.field}
                             />
                 <Dropdown placeholder='condition' 
                             selection
                             options={conditionOptions} 
                             onChange={this.onConditionChange.bind(this)}
-                            value={this.props.term.condition}
+                            value={term.condition}
                             />
                 {valueWidget}
                 <Button.Group floated='right'>
@@ -296,10 +346,12 @@ class ExpressionTerm extends Component {
 export default connect(
     (state) => ({
         // terms are nested, so take all their props from parent
+        pickedDocRefs : state.explorerTree.pickedDocRefs
     }),
     {
         expressionItemUpdated,
-        expressionItemDeleted
+        expressionItemDeleted,
+        docRefPicked
     }
 )
     (DragSource(ItemTypes.TERM, dragSource, dragCollect)(ExpressionTerm));

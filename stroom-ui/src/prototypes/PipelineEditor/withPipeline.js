@@ -28,10 +28,12 @@ import { connect } from 'react-redux'
  * 
  * @param {React.Component} WrappedComponent 
  */
-export function withPipeline(WrappedComponent) {
-    let hoc = class extends Component {
+export function withPipeline(WrappedComponent, customIdPropertyName) {
+    let idPropertyName = customIdPropertyName || 'pipelineId';
+
+    let WithPipeline = class extends Component {
         static propTypes = {
-            pipelineId : PropTypes.string.isRequired,
+            [idPropertyName] : PropTypes.string.isRequired,
             pipelines : PropTypes.object.isRequired
         }
 
@@ -40,7 +42,7 @@ export function withPipeline(WrappedComponent) {
         }
     
         static getDerivedStateFromProps(nextProps, prevState) {
-            let pipeline = nextProps.pipelines[nextProps.pipelineId];
+            let pipeline = nextProps.pipelines[nextProps[idPropertyName]];
 
             return {
                 pipeline
@@ -67,5 +69,5 @@ export function withPipeline(WrappedComponent) {
         {
             // actions
         }
-    )(hoc);
+    )(WithPipeline);
 }

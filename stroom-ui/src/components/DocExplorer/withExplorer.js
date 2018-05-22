@@ -29,10 +29,12 @@ import { explorerTreeOpened, DEFAULT_EXPLORER_ID } from './redux';
  * 
  * @param {React.Component} WrappedComponent 
  */
-export function withExistingExplorer(WrappedComponent) {
-    let hoc = class extends Component {
+export function withExistingExplorer(WrappedComponent, customIdPropertyName) {
+    let idPropertyName = customIdPropertyName || 'explorerId';
+
+    let WithExplorer = class extends Component {
         static propTypes = {
-            explorerId: PropTypes.string.isRequired,
+            [idPropertyName]: PropTypes.string.isRequired,
             explorers: PropTypes.object.isRequired
         }
 
@@ -42,7 +44,7 @@ export function withExistingExplorer(WrappedComponent) {
 
         static getDerivedStateFromProps(nextProps, prevState) {
             return {
-                explorer : nextProps.explorers[nextProps.explorerId]
+                explorer : nextProps.explorers[nextProps[idPropertyName]]
             }
         }
 
@@ -50,7 +52,7 @@ export function withExistingExplorer(WrappedComponent) {
             if (!!this.state.explorer) {
                 return <WrappedComponent explorer={this.state.explorer} {...this.props} />
             } else {
-                return <div>awaiting explorer state</div>
+                return <span>awaiting explorer state</span>
             }
         }
     }
@@ -62,16 +64,18 @@ export function withExistingExplorer(WrappedComponent) {
         {
             // actions
         }
-    )(hoc);
+    )(WithExplorer);
 }
 
 /**
  * This higher order component is used to setup a new Doc Explorer.
  * It calls the explorerTreeOpened function on mount.
  */
-export function withCreatedExplorer(WrappedComponent) {
+export function withCreatedExplorer(WrappedComponent, customIdPropertyName) {
+    let idPropertyName = customIdPropertyName || 'explorerId';
+
     // This component will want to retrieve the explorer
-    let WrappedWithExplorer = withExistingExplorer(WrappedComponent);
+    let WrappedWithExplorer = withExistingExplorer(WrappedComponent, customIdPropertyName);
 
     let hoc = class extends Component {
         static propTypes = {
@@ -82,6 +86,7 @@ export function withCreatedExplorer(WrappedComponent) {
 
         static defaultProps = {
             explorerId: DEFAULT_EXPLORER_ID,
+            [idPropertyName] : DEFAULT_EXPLORER_ID,
             allowMultiSelect: true,
             allowDragAndDrop: true,
             typeFilter: undefined,
@@ -91,7 +96,7 @@ export function withCreatedExplorer(WrappedComponent) {
             // We give these properties to the explorer state, then the nested objects can read these values from
             // redux using the explorerId which is passed all the way down.
             this.props.explorerTreeOpened(
-                this.props.explorerId,
+                this.props[idPropertyName],
                 this.props.allowMultiSelect,
                 this.props.allowDragAndDrop,
                 this.props.typeFilter,
