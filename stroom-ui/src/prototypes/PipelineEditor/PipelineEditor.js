@@ -16,71 +16,93 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { LineContainer, LineTo } from 'components/LineTo'
+import { LineContainer, LineTo } from 'components/LineTo';
 
-import { withPipeline } from './withPipeline'
+import { withPipeline } from './withPipeline';
 
 import PipelineElement from './PipelineElement';
 
-import './pipelineEditor.css';
+import './PipelineEditor.css';
 
-import {
-    Grid
-} from 'semantic-ui-react';
+import { iterateNodes } from 'lib/treeUtils';
 
 class PipelineEditor extends Component {
-    static propTypes = {
-        pipelineId : PropTypes.string.isRequired,
-        pipeline : PropTypes.object.isRequired
-    }
+  static propTypes = {
+    pipelineId: PropTypes.string.isRequired,
+    pipeline: PropTypes.object.isRequired,
+  };
 
-    renderElements() {
-        return this.props.pipeline.pipeline.elements.add.element.map(e => (
-            <div key={e.id} id={e.id} className='Pipeline-element'>
-                <PipelineElement 
-                    pipelineId={this.props.pipelineId}
-                    elementId={e.id}
-                    />
-            </div>
-        ));
-    }
+  // the state will hold the layout information, with layout information attached
+  state = {
+    elementLayouts: {},
+  };
 
-    renderLines() {
-        return this.props.pipeline.pipeline.links.add.link.map(l => {
-            let lineId = l.from + '-' + l.to;
-            return (
-                <LineTo lineId={lineId} key={lineId} fromId={l.from} toId={l.to} />
-            )
-        });
-    }
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const elementLayouts = {};
 
-    render() {
-        let {
-            pipelineId,
-            pipeline
-        } = this.props;
+    // Current height of a column, keyed on horizontal position
+    const verticalPositionsByHorz = {};
+    const currentHeight = 1;
 
-        return (
-            <Grid padded='vertically' divided='vertically'>
-                <Grid.Row columns={1}>
-                    <Grid.Column>
-                        <LineContainer
-                            lineContextId={'pipeline-lines-' + pipelineId}>
-                            <h4>Pipeline Editor {pipelineId}</h4>
-                            {this.renderElements()}
-                            {this.renderLines()}
-                        </LineContainer>
-                        
-                    </Grid.Column>
-                </Grid.Row>
-                <Grid.Row columns={1}>
-                    <Grid.Column>
-                        Pipeline Element Settings
-                    </Grid.Column>
-                </Grid.Row>
-            </Grid>
-        )
-    }
+    const HORIZONTAL_SPACING = 150;
+    const VERTICAL_SPACING = 100;
+    const commonStyle = {
+      position: 'absolute',
+    };
+
+    iterateNodes(nextProps.pipeline.asTree, (lineage, node) => {
+      const horizontalPos = lineage.length;
+      let verticalPos = currentHeight;
+      if (verticalPositionsByHorz[horizontalPos]) {
+        verticalPos = verticalPositionsByHorz[horizontalPos] + 1;
+      }
+      verticalPositionsByHorz[horizontalPos] = verticalPos;
+
+      elementLayouts[node.id] = {
+        horizontalPos,
+        verticalPos,
+        style: {
+          ...commonStyle,
+          top: `${verticalPos * VERTICAL_SPACING}px`,
+          left: `${horizontalPos * HORIZONTAL_SPACING}px`,
+        },
+      };
+    });
+
+    return {
+      elementLayouts,
+    };
+  }
+
+  renderElements(element) {
+    return this.props.pipeline.pipeline.elements.add.element.map(e => (
+      <div key={e.id} id={e.id} style={this.state.elementLayouts[e.id].style}>
+        <PipelineElement pipelineId={this.props.pipelineId} elementId={e.id} />
+      </div>
+    ));
+  }
+
+  renderLines() {
+    return this.props.pipeline.pipeline.links.add.link
+      .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
+      .map(l => <LineTo lineId={l.lineId} key={l.lineId} fromId={l.from} toId={l.to} />);
+  }
+
+  render() {
+    const { pipelineId, pipeline } = this.props;
+
+    return (
+      <div className="Pipeline-editor">
+        <LineContainer lineContextId={`pipeline-lines-${pipelineId}`}>
+          <h4>Pipeline Editor {pipelineId}</h4>
+          {this.renderElements(pipeline.asTree)}
+          {this.renderLines()}
+        </LineContainer>
+
+        <div>Pipeline Element Settings</div>
+      </div>
+    );
+  }
 }
 
-export default withPipeline(PipelineEditor)
+export default withPipeline(PipelineEditor);

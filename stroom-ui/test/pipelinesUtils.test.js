@@ -15,25 +15,21 @@
  */
 import expect from 'expect.js';
 
-import { 
-    getPipelineAsTree, 
-} from '../src/prototypes/PipelineEditor/pipelineUtils';
+import { getPipelineAsTree } from '../src/prototypes/PipelineEditor/pipelineUtils';
 
-import {
-    testPipeline
-} from '../src/prototypes/PipelineEditor/storybook/testPipelines';
+import { testPipeline } from '../src/prototypes/PipelineEditor/storybook/testPipelines';
 
 describe('Pipeline Utils', () => {
-    describe('#getPipelineAsTree', () => {
-        it ('should convert a pipeline to a tree', () => {
-            // When
-            let asTree = getPipelineAsTree(testPipeline);
+  describe('#getPipelineAsTree', () => {
+    it('should convert a pipeline to a tree', () => {
+      // When
+      const asTree = getPipelineAsTree(testPipeline);
 
-            // Then
-            expect(asTree.id).to.be('CSV splitter filter');
-            expect(asTree.to[0].id).to.be('XSLT filter');
-            expect(asTree.to[0].to[0].id).to.be('XML writer');
-            expect(asTree.to[0].to[0].to[0].id).to.be('stream appender');
-        })
+      // Then
+      expect(asTree.id).to.be('CSV splitter filter');
+      expect(asTree.children[0].id).children.be('XSLT filter');
+      expect(asTree.children[0].children[0].id).to.be('XML writer');
+      expect(asTree.children[0].children[0].children[0].id).to.be('stream appender');
     });
+  });
 });

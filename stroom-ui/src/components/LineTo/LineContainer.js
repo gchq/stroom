@@ -16,141 +16,137 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
 import LineContext from './LineContext';
 
-import {
-    lineContainerCreated,
-    lineContainerDestroyed
-} from './redux';
+import { lineContainerCreated, lineContainerDestroyed } from './redux';
 
-const straightLineCreator = ({lineId, fromRect, toRect}) => {
-    return (
-        <line key={lineId} 
-            x1={fromRect.right} y1={fromRect.top + (fromRect.height / 2)}
-            x2={toRect.left} y2={toRect.top + (toRect.height / 2)}
-            style={{
-                stroke:'black',
-                strokeWidth: 2,
-                fill: 'none'
-            }}
-            />
-    )
-}
+const straightLineCreator = ({ lineId, fromRect, toRect }) => (
+  <line
+    key={lineId}
+    x1={fromRect.right}
+    y1={fromRect.top + fromRect.height / 2}
+    x2={toRect.left}
+    y2={toRect.top + toRect.height / 2}
+    style={{
+        stroke: 'black',
+        strokeWidth: 2,
+        fill: 'none',
+      }}
+  />
+);
 
 function calculateLine(k) {
-    let lineId = k[0];
-    let lineData = k[1];
+  const lineId = k[0];
+  const lineData = k[1];
 
-    let lineType = lineData.lineType;
-    const fromElement = document.getElementById(lineData.fromId);
-    const toElement = document.getElementById(lineData.toId);
+  const lineType = lineData.lineType;
+  const fromElement = document.getElementById(lineData.fromId);
+  const toElement = document.getElementById(lineData.toId);
 
-    let fromRect = fromElement.getBoundingClientRect();
-    let toRect = toElement.getBoundingClientRect();
+  const fromRect = fromElement.getBoundingClientRect();
+  const toRect = toElement.getBoundingClientRect();
 
-    return {
-        lineId,
-        lineType,
-        fromRect,
-        toRect
-    }
+  return {
+    lineId,
+    lineType,
+    fromRect,
+    toRect,
+  };
 }
 
 const DEFAULT_LINE_TYPE = 'straight-line';
 
 class LineContainer extends Component {
-    static propTypes = {
-        lineContextId : PropTypes.string.isRequired,
-        lineElementCreators : PropTypes.object.isRequired // {'someLineType': ({lineId, fromRect, toRect}) => (<div>)}
+  static propTypes = {
+    lineContextId: PropTypes.string.isRequired,
+    lineElementCreators: PropTypes.object.isRequired, // {'someLineType': ({lineId, fromRect, toRect}) => (<div>)}
+  };
+
+  static defaultProps = {
+    lineElementCreators: {
+      [DEFAULT_LINE_TYPE]: straightLineCreator,
+    },
+  };
+
+  state = {
+    lines: [],
+  };
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const lineContainerState = nextProps.lineContainer[nextProps.lineContextId];
+    let lines = [];
+
+    const thisElement = document.getElementById(nextProps.lineContextId);
+    let thisRect;
+    if (thisElement) {
+      thisRect = thisElement.getBoundingClientRect();
     }
 
-    static defaultProps = {
-        lineElementCreators : {
-            [DEFAULT_LINE_TYPE] : straightLineCreator
-        }
+    if (lineContainerState) {
+      lines = Object.entries(lineContainerState).map(k => calculateLine(k));
     }
 
-    state = {
-        lines : []
+    return { lines, thisRect };
+  }
+
+  componentDidMount() {
+    lineContainerCreated(this.props.lineContextId);
+  }
+
+  componentWillUnmount() {
+    lineContainerDestroyed(this.props.lineContextId);
+  }
+
+  renderChildren() {
+    return this.state.lines.map((l) => {
+      const lt = l.lineType || DEFAULT_LINE_TYPE;
+      const ltf = this.props.lineElementCreators[lt];
+      if (!ltf) {
+        return <text key={l.lineId}>Invalid line type for known creators {lt}</text>;
+      }
+      return ltf(l);
+    });
+  }
+
+  render() {
+    // If the SVG has been scrolled, we need to translate the generated lines to cancel out that effect
+    let transform;
+    if (this.state.thisRect) {
+      transform =
+        `translate(${this.state.thisRect.x * -1}, ${this.state.thisRect.y * -1})`;
     }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        let lineContainerState = nextProps.lineContainer[nextProps.lineContextId];
-        let lines = [];
-
-        const thisElement = document.getElementById(nextProps.lineContextId);
-        let thisRect;
-        if (thisElement) {
-            thisRect = thisElement.getBoundingClientRect();
-        }
-
-        if (!!lineContainerState) {
-            lines = Object
-                .entries(lineContainerState)
-                .map(k => calculateLine(k));
-        }
-
-        return {lines, thisRect}
-    }
-
-    componentDidMount() {
-        lineContainerCreated(this.props.lineContextId);
-    }
-    
-    componentWillUnmount() {
-        lineContainerDestroyed(this.props.lineContextId);
-    }
-
-    renderChildren() {
-        return this.state.lines.map(l => {
-            let lt = l.lineType || DEFAULT_LINE_TYPE;
-            let ltf = this.props.lineElementCreators[lt];
-            if (!ltf) {
-                return <text key={l.lineId}>Invalid line type for known creators {lt}</text>
-            }
-            return ltf(l);
-        })
-    }
-
-    render () {
-        // If the SVG has been scrolled, we need to translate the generated lines to cancel out that effect
-        let transform
-        if (this.state.thisRect) {
-            transform = 'translate(' + (this.state.thisRect.x * -1) + ', ' + (this.state.thisRect.y * -1) + ')';
-        }
-        return (
-            <LineContext.Provider value={this.props.lineContextId}>
-                <div>
-                    <svg 
-                        id={this.props.lineContextId} 
-                        width='1000px'
-                        height='1000px'
-                        style={{
-                            'pointerEvents': 'none',
-                            'position':'absolute',
-                            'top':0,
-                            'left':0
-                        }}>
-                        <g transform={transform}>
-                            {this.renderChildren()}
-                        </g>
-                    </svg>
-                    {this.props.children}
-                </div>
-            </LineContext.Provider>
-        );
-    }
+    return (
+      <LineContext.Provider value={this.props.lineContextId}>
+        <div className={this.props.className}>
+          <svg
+            id={this.props.lineContextId}
+            width="1000px"
+            height="1000px"
+            style={{
+              pointerEvents: 'none',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+            }}
+          >
+            <g transform={transform}>{this.renderChildren()}</g>
+          </svg>
+          {this.props.children}
+        </div>
+      </LineContext.Provider>
+    );
+  }
 }
 
 export default connect(
-    (state) => ({
-        // operators are nested, so take all their props from parent
-        lineContainer : state.lineContainer
-    }),
-    {
-        lineContainerCreated,
-        lineContainerDestroyed
-    }
+  state => ({
+    // operators are nested, so take all their props from parent
+    lineContainer: state.lineContainer,
+  }),
+  {
+    lineContainerCreated,
+    lineContainerDestroyed,
+  },
 )(LineContainer);

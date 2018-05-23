@@ -19,23 +19,21 @@ import PropTypes from 'prop-types';
 import { withPipeline } from './withPipeline';
 
 class PipelineEditor extends Component {
-    static propTypes = {
-        pipelineId : PropTypes.string.isRequired,
-        pipeline : PropTypes.object.isRequired,
-        elementId : PropTypes.string.isRequired
-    }
+  static propTypes = {
+    pipelineId: PropTypes.string.isRequired,
+    pipeline: PropTypes.object.isRequired,
+    elementId: PropTypes.string.isRequired,
+  };
 
-    render() {
-        let {
-            elementId
-        } = this.props;
+  render() {
+    const { elementId } = this.props;
 
-        return (
-            <div>
-                <h4>{elementId}</h4>
-            </div>
-        )
-    }
+    return (
+      <div className="Pipeline-element">
+        <h4>{elementId}</h4>
+      </div>
+    );
+  }
 }
 
-export default withPipeline(PipelineEditor)
+export default withPipeline(PipelineEditor);
